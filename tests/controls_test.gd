@@ -26,6 +26,10 @@ func _ready() -> void:
 # screen stick of (1, 0) is "forward" and (-1, 0) is "behind".
 
 func _run() -> void:
+	# --- flick forward from neutral: instant quick shot
+	var quick := await _shot(func(f, t): f.stick = Vector2(1, 0) if t > 0.2 else Vector2.ZERO)
+	_check(quick > 0.0, "flicking the stick forward shoots")
+
 	# --- pull back, then push forward: wind-up shot
 	var wrist := await _shot(func(f, t): f.stick = Vector2(-1, 0) if t < 0.6 else Vector2(1, 0))
 	_check(wrist > 0.0, "pull back + push forward shoots")
@@ -34,7 +38,7 @@ func _run() -> void:
 	var slap := await _shot(func(f, t):
 		f.stick = Vector2(-1, 0) if t < 0.9 else Vector2(1, 0)
 		f.lift = 1.0 if t < 0.9 else 0.0)
-	print("wind-up shot %.1f m/s, slapshot %.1f m/s" % [wrist, slap])
+	print("quick shot %.1f m/s, wind-up shot %.1f m/s, slapshot %.1f m/s" % [quick, wrist, slap])
 	_check(slap > wrist, "slapshot is harder than the wind-up shot")
 
 	# --- tilt lofts the shot
