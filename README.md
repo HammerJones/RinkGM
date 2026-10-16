@@ -22,7 +22,8 @@ virtual right stick, so both devices drive the same stick model.
 | Hockey stop | R3 (click right stick) | Space |
 | Stick blade (90 degree arc in front of you) | Right stick | Mouse (cursor is captured; Esc frees it) |
 | Stickhandle | Right stick side to side | Mouse side to side |
-| Shoot | Pull the stick behind you, then push it forward | Same with the mouse |
+| Quick shot (instant) | Flick the right stick forward | Flick the mouse forward |
+| Wind-up shot | Pull the stick behind you, then push it forward | Same with the mouse |
 | Slapshot | Hold LT as you pull back | Hold right click as you pull back |
 | Lift stick (offense: over the puck; defense: lift their stick) | LT | Right click |
 | Tilt blade (raises shots and passes) | RT (analog) | Left click (hold longer for more) |
