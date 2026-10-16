@@ -26,8 +26,10 @@ var _state_timer := 0.0
 var _pending_faceoff := Vector2.ZERO
 var _stall := 0.0
 var _marker: MeshInstance3D
-var _flick_back_time := -10.0
-var _flick_back_start := -10.0
+var _arc: MeshInstance3D
+var player_input: PlayerInput
+var stick_control := StickControl.new()
+var _pass_call_until := -10.0
 var _palettes := []
 var _focus_override: Variant = null
 ## `-- --autoplay` lets the AI drive your skater too (attract mode / testing).
@@ -62,10 +64,19 @@ func _ready() -> void:
 	add_child(hud)
 	_marker = _make_marker()
 	add_child(_marker)
+	_arc = _make_arc()
+	add_child(_arc)
+	player_input = PlayerInput.new()
+	add_child(player_input)
 	Tuning.mode_changed.connect(hud.set_mode)
 	hud.set_mode(Tuning.mode_name())
 	_start_faceoff(Vector2.ZERO)
 	_handle_capture_args()
+	# `-- --test=controls` runs the scripted control checks in tests/
+	if "--test=controls" in OS.get_cmdline_user_args():
+		var t: Node = load("res://tests/controls_test.gd").new()
+		t.set("game", self)
+		add_child(t)
 
 
 ## `-- --screenshot=out.png --shot-after=6 [--iso]` saves a frame and quits
@@ -204,10 +215,11 @@ func _process(dt: float) -> void:
 		focus = _focus_override
 	camera_rig.follow(focus, dt)
 	_marker.position = human.position + Vector3(0, 0.02, 0)
+	_arc.visible = not autoplay
+	_arc.transform = Transform3D(human.basis, human.position + Vector3(0, 0.015, 0))
 	hud.set_score(_palettes[0].name, _palettes[1].name, score[0], score[1], clock)
 	hud.set_stamina(human.stamina)
-	var w := clampf((human.shoot_hold_time - Skater.SLAP_DELAY) / 0.8, 0.0, 1.0) if human.ctrl.shoot_held else 0.0
-	hud.set_power(w)
+	hud.set_power(stick_control.charge)
 
 
 func _update_rules(dt: float) -> void:
@@ -230,64 +242,41 @@ func _update_rules(dt: float) -> void:
 
 # ---------------------------------------------------------------- human input
 
-func _update_human(_dt: float) -> void:
+func _update_human(dt: float) -> void:
 	if autoplay:
 		return
 	var c := human.ctrl
 	c.reset()
+	var f := player_input.poll(dt)
 	var fwd := camera_rig.forward_flat()
 	var right := camera_rig.right_flat()
-	var mv := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	var w := right * mv.x - fwd * mv.y
+	var w := right * f.move.x + fwd * f.move.y
 	c.move = Vector2(w.x, w.z)
-	c.sprint = Input.is_action_pressed("sprint")
-	c.brake = Input.is_action_pressed("stop")
-	c.shoot_held = Input.is_action_pressed("shoot")
-	if Input.is_action_just_pressed("check"):
-		c.check_pressed = true
-	if Input.is_action_just_pressed("switch"):
-		_switch_player()
-		return
-	if Input.is_action_just_pressed("pass"):
+	c.brake = f.stop
+	c.dash = f.dash
+	c.check_pressed = f.check_pressed
+	var sw := right * f.stick.x + fwd * f.stick.y
+	var stick := Vector2(sw.x, sw.z)
+	stick_control.update(human, stick, f.lift, f.tilt, dt)
+	if f.pass_pressed:
 		if human.has_puck():
-			c.pass_pressed = true
+			# pass where you're skating, else where the stick points
+			var dir := c.move if c.move.length() > 0.3 else stick
+			stick_control.pass_puck(human, dir, f.tilt)
 		else:
-			_switch_player()
-			return
-
-	if InputSetup.device == InputSetup.Device.KBM:
-		var mp: Variant = camera_rig.mouse_on_ice()
-		if mp != null:
-			c.blade_target = mp
-			c.aim_point = mp
-			c.pass_dir = Vector2(mp.x - human.position.x, mp.z - human.position.z)
-	else:
-		var rs := Input.get_vector("stick_left", "stick_right", "stick_up", "stick_down")
-		var rw := right * rs.x - fwd * rs.y
-		if rs.length() > 0.2:
-			c.blade_target = human.position + rw * Skater.REACH_MAX
-		c.pass_dir = c.move
-		# aim shots at the near or far post with the left stick
-		var goal := human.attack_goal()
-		c.aim_point = goal + Vector3(0, 0, clampf(w.z, -1.0, 1.0) * 0.75)
-		_skill_stick(rw, rs.length())
+			_pass_call_until = time + 1.2
+			hud.show_message("PASS!", 0.6)
 
 
-## NHL-style skill stick: pull the right stick back, then flick it forward.
-## A long pull back becomes a slapshot wind-up.
-func _skill_stick(rw: Vector3, amount: float) -> void:
-	var f := rw.dot(human.heading)
-	if amount > 0.6 and f < -0.5:
-		if _flick_back_time < time - 0.05:
-			_flick_back_start = time
-		_flick_back_time = time
-	elif amount > 0.6 and f > 0.5 and time - _flick_back_time < 0.3 and human.has_puck():
-		var held := _flick_back_time - _flick_back_start
-		if held > 0.35:
-			human.shoot(true, clampf((held - 0.35) / 0.8, 0.0, 1.0), 1.0)
-		else:
-			human.ctrl.flick = 1.0 - (time - _flick_back_time) / 0.3 * 0.4
-		_flick_back_time = -10.0
+## The teammate calling for a pass from `carrier`, if the lane is open enough.
+func pass_caller(carrier: Skater) -> Skater:
+	if autoplay or time > _pass_call_until or carrier.team != human.team or carrier == human:
+		return null
+	var from := Vector2(carrier.position.x, carrier.position.z)
+	if not lane_clear(carrier.team, from, Vector2(human.position.x, human.position.z), 0.8):
+		return null
+	_pass_call_until = -10.0
+	return human
 
 
 func _switch_player(to: Skater = null) -> void:
@@ -310,8 +299,6 @@ func _switch_player(to: Skater = null) -> void:
 
 func on_possession(s: Skater) -> void:
 	stats.possessions += 1
-	if s.team == 0 and s != human:
-		_switch_player(s)
 
 
 func on_shot(_s: Skater, _slap: bool) -> void:
@@ -340,15 +327,26 @@ func _puck_stick_interaction(dt: float) -> void:
 	if carrier:
 		if carrier.stun_timer > 0.0:
 			puck.controller = null
+		elif carrier.stick_lifted():
+			# deke: the blade is up over the puck, so it isn't pulled to the blade;
+			# it drifts along with the skater (stickier in arcade) until the stick
+			# comes back down
+			var gap := carrier.position - puck.position
+			gap.y = 0.0
+			var follow := 1.0 - exp(-lerpf(2.0, 8.0, blend) * dt)
+			puck.vel.x = lerpf(puck.vel.x, carrier.vel.x, follow)
+			puck.vel.z = lerpf(puck.vel.z, carrier.vel.z, follow)
+			if gap.length() > Skater.REACH_MAX + 0.35:
+				puck.controller = null
 		else:
 			var to := carrier.puck_anchor() - puck.position
 			to.y = 0.0
 			var k := lerpf(160.0, 420.0, blend) * carrier.handling
-			var rel := puck.vel - carrier.blade_vel
+			var rel := puck.vel - carrier.anchor_vel()
 			rel.y = 0.0
 			var acc := to * k - rel * 2.0 * sqrt(k) * 0.9
 			puck.vel += acc * dt
-			if to.length() > lerpf(0.5, 0.8, blend):
+			if to.length() > lerpf(0.5, 0.8, blend) + (0.6 if carrier.regrab_timer > 0.0 else 0.0):
 				puck.controller = null
 	if puck.position.y > 0.3:
 		return
@@ -565,5 +563,31 @@ func _make_marker() -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.mesh = torus
 	mi.scale = Vector3(1, 0.08, 1)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mi
+
+
+## The 90 degree arc the stick can reach, drawn on the ice under the player.
+func _make_arc() -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var steps := 18
+	for i in steps:
+		var pts := []
+		for k in [i, i + 1]:
+			var a := lerpf(-StickControl.ARC_HALF, StickControl.ARC_HALF, float(k) / steps)
+			for r in [StickControl.REACH_NEAR, StickControl.REACH_FAR]:
+				# local forward is -Z, right is +X (see Skater._apply_transform)
+				pts.append(Vector3(sin(a) * r, 0, -cos(a) * r))
+		for idx in [0, 1, 2, 2, 1, 3]:
+			st.add_vertex(pts[idx])
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(1.0, 0.82, 0.25, 0.22)
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return mi

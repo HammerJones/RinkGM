@@ -1,7 +1,7 @@
 extends Node
 ## Registers the input map in code (keyboard + mouse and gamepad) and tracks
-## which device the player touched last, so mouse aiming and the right-stick
-## "skill stick" don't fight each other.
+## which device the player touched last, so the mouse's virtual stick and the
+## real right stick don't fight each other. See PlayerInput for the scheme.
 
 enum Device { KBM, PAD }
 
@@ -18,32 +18,34 @@ func _ready() -> void:
 	_axis("move_up", JOY_AXIS_LEFT_Y, -1.0)
 	_axis("move_down", JOY_AXIS_LEFT_Y, 1.0)
 
+	# right stick = the stick blade (the mouse drives a virtual right stick)
 	_axis("stick_left", JOY_AXIS_RIGHT_X, -1.0)
 	_axis("stick_right", JOY_AXIS_RIGHT_X, 1.0)
 	_axis("stick_up", JOY_AXIS_RIGHT_Y, -1.0)
 	_axis("stick_down", JOY_AXIS_RIGHT_Y, 1.0)
 
-	_mouse("shoot", MOUSE_BUTTON_LEFT)
-	_keys("shoot", [KEY_J])
-	_axis("shoot", JOY_AXIS_TRIGGER_RIGHT, 1.0)
-	_button("shoot", JOY_BUTTON_X)
-
-	_mouse("pass", MOUSE_BUTTON_RIGHT)
-	_keys("pass", [KEY_E, KEY_K])
-	_button("pass", JOY_BUTTON_A)
-
-	_keys("sprint", [KEY_SHIFT])
-	_button("sprint", JOY_BUTTON_LEFT_SHOULDER)
-	_button("sprint", JOY_BUTTON_LEFT_STICK)
+	_keys("dash", [KEY_SHIFT])
+	_button("dash", JOY_BUTTON_LEFT_STICK)
 
 	_keys("stop", [KEY_SPACE])
-	_axis("stop", JOY_AXIS_TRIGGER_LEFT, 1.0)
+	_button("stop", JOY_BUTTON_RIGHT_STICK)
+
+	_mouse("lift", MOUSE_BUTTON_RIGHT)
+	_axis("lift", JOY_AXIS_TRIGGER_LEFT, 1.0)
+
+	_mouse("tilt", MOUSE_BUTTON_LEFT)
+	_axis("tilt", JOY_AXIS_TRIGGER_RIGHT, 1.0)
+
+	_keys("pass", [KEY_E])
+	_button("pass", JOY_BUTTON_A)
+	_button("pass", JOY_BUTTON_RIGHT_SHOULDER)
 
 	_keys("check", [KEY_F])
 	_button("check", JOY_BUTTON_B)
 
-	_keys("switch", [KEY_Q, KEY_TAB])
-	_button("switch", JOY_BUTTON_Y)
+	_keys("sens_down", [KEY_BRACKETLEFT])
+	_keys("sens_up", [KEY_BRACKETRIGHT])
+	_keys("free_mouse", [KEY_ESCAPE])
 
 	_keys("cycle_mode", [KEY_F1])
 	_button("cycle_mode", JOY_BUTTON_BACK)

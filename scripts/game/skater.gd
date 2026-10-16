@@ -15,6 +15,8 @@ const REACH_MAX := 1.55
 const DEFAULT_BLADE := Vector2(0.95, 0.3)  # (forward, right) relative to the body
 const SLAP_DELAY := 0.22
 const STICK_ANGLE_LIMIT := 2.1
+const DASH_IMPULSE := 3.0
+const DASH_COOLDOWN := 0.6
 
 
 ## What a controller (human or AI) wants this frame.
@@ -30,6 +32,14 @@ class Controls:
 	var pass_hint: Variant = null     # Skater the AI wants to pass to
 	var check_pressed := false
 	var flick := 0.0                  # >0 when a right-stick flick shot happened, = power
+	# set by StickControl for the human's stick
+	var blade_local_target: Variant = null  # Vector2 (forward, right), already limited to the arc
+	var anchor_local: Variant = null        # Vector2 where the puck sits while the blade winds up
+	var blade_max_speed := 0.0              # 0 = default from handling
+	var blade_height := 0.0
+	var lift := 0.0
+	var tilt := 0.0
+	var dash := false
 
 	func reset() -> void:
 		move = Vector2.ZERO
@@ -43,6 +53,13 @@ class Controls:
 		pass_hint = null
 		check_pressed = false
 		flick = 0.0
+		blade_local_target = null
+		anchor_local = null
+		blade_max_speed = 0.0
+		blade_height = 0.0
+		lift = 0.0
+		tilt = 0.0
+		dash = false
 
 
 var game: Node
@@ -59,6 +76,8 @@ var stamina := 1.0
 var stun_timer := 0.0
 var check_timer := 0.0
 var check_cd := 0.0
+var dash_cd := 0.0
+var regrab_timer := 0.0  # just put the stick back down after a deke: easier to keep the puck
 var shoot_hold_time := 0.0
 
 var blade_local := DEFAULT_BLADE
@@ -134,9 +153,22 @@ func windup() -> float:
 ## Where the puck is pulled to while carried. During a slapshot wind-up the
 ## blade lifts away, so the puck stays where the wind-up started.
 func puck_anchor() -> Vector3:
+	if ctrl.anchor_local != null:
+		return _blade_world(ctrl.anchor_local)
 	if windup() > 0.0:
 		return _blade_world(_anchor_local)
 	return Vector3(blade_pos.x, 0, blade_pos.z)
+
+
+## Velocity of the spot the puck is pulled to: the blade, or the body while
+## the blade is away winding up.
+func anchor_vel() -> Vector3:
+	return vel if ctrl.anchor_local != null else blade_vel
+
+
+## Blade lifted over the puck (dekes): the puck isn't pulled while it's up.
+func stick_lifted() -> bool:
+	return ctrl.lift > 0.5 and ctrl.anchor_local == null
 
 
 func knock_down(impulse: Vector3) -> void:
@@ -152,6 +184,8 @@ func physics_update(dt: float) -> void:
 	stun_timer = maxf(0.0, stun_timer - dt)
 	check_timer = maxf(0.0, check_timer - dt)
 	check_cd = maxf(0.0, check_cd - dt)
+	dash_cd = maxf(0.0, dash_cd - dt)
+	regrab_timer = maxf(0.0, regrab_timer - dt)
 	var frozen: bool = game.is_frozen()
 	var carrying := has_puck()
 	var move := ctrl.move if (stun_timer <= 0.0 and not frozen) else Vector2.ZERO
@@ -180,6 +214,14 @@ func physics_update(dt: float) -> void:
 		vel += heading * a * align * amount * room * dt
 		var room_direct := clampf(1.0 - vel.dot(desired) / top, 0.0, 1.0)
 		vel += desired * a * 0.35 * blend * amount * room_direct * dt
+
+	# dash: a hard push-off toward the stick direction, costs stamina
+	if ctrl.dash and dash_cd <= 0.0 and stun_timer <= 0.0 and not frozen and stamina > 0.1:
+		var dir := desired if amount > 0.15 else heading
+		var room := clampf(1.0 - vel.dot(dir) / (top_speed * 1.15), 0.0, 1.0)
+		vel += dir * DASH_IMPULSE * room
+		stamina -= 0.12
+		dash_cd = DASH_COOLDOWN
 
 	# edges: sideways slide decays, most of it is carved into forward speed
 	var fwd := vel.dot(heading)
@@ -227,20 +269,23 @@ func physics_update(dt: float) -> void:
 
 func _update_blade(dt: float, blend: float) -> void:
 	var target := DEFAULT_BLADE
-	if ctrl.blade_target != null and stun_timer <= 0.0:
-		var d: Vector3 = ctrl.blade_target - position
-		target = Vector2(d.dot(heading), d.dot(right_vec()))
-	# reach: an annulus in front of and beside the body
-	var reach := clampf(target.length(), REACH_MIN, REACH_MAX)
-	var ang := clampf(atan2(target.y, target.x), -STICK_ANGLE_LIMIT, STICK_ANGLE_LIMIT)
-	target = Vector2(cos(ang), sin(ang)) * reach
+	if ctrl.blade_local_target != null and stun_timer <= 0.0:
+		target = ctrl.blade_local_target
+	else:
+		if ctrl.blade_target != null and stun_timer <= 0.0:
+			var d: Vector3 = ctrl.blade_target - position
+			target = Vector2(d.dot(heading), d.dot(right_vec()))
+		# reach: an annulus in front of and beside the body
+		var reach := clampf(target.length(), REACH_MIN, REACH_MAX)
+		var ang := clampf(atan2(target.y, target.x), -STICK_ANGLE_LIMIT, STICK_ANGLE_LIMIT)
+		target = Vector2(cos(ang), sin(ang)) * reach
 	var w := windup()
 	if w > 0.0:
 		target = target.lerp(Vector2(-0.35, 0.8), w)
-	var max_speed := lerpf(8.0, 12.0, blend) * handling
+	var max_speed := ctrl.blade_max_speed if ctrl.blade_max_speed > 0.0 else lerpf(8.0, 12.0, blend) * handling
 	var step := (target - blade_local) * minf(1.0, 22.0 * dt)
 	blade_local += step.limit_length(max_speed * dt)
-	blade_height = w * 0.9
+	blade_height = maxf(w * 0.9, ctrl.blade_height)
 	var prev := blade_pos
 	blade_pos = _blade_world(blade_local)
 	blade_vel = (blade_pos - prev) / dt

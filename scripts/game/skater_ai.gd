@@ -52,6 +52,11 @@ static func _carry(s: Skater, g: Node, dt: float) -> void:
 	s.ai_decide -= dt
 	if s.ai_decide <= 0.0 and s.ai_shoot_timer <= 0.0:
 		s.ai_decide = randf_range(0.15, 0.35)
+		var caller: Skater = g.pass_caller(s)
+		if caller:
+			c.pass_pressed = true
+			c.pass_hint = caller
+			return
 		var aim := Vector3(goal.x, 0, randf_range(0.45, 0.8) * (1.0 if randf() < 0.5 else -1.0))
 		var lane_open: bool = g.lane_clear(s.team, me, Vector2(aim.x, aim.z), 0.7)
 		if ahead > 1.0 and open_angle and d < 16.0 and (d < 9.0 or randf() < 0.3) and (lane_open or randf() < 0.25):
