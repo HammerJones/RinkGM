@@ -4,8 +4,8 @@ Experimenting with a hockey game/rink management sim.
 
 ## Playable demo (Godot 4.3+)
 
-Open the folder in Godot 4.3 or newer and press Play. It's a 3-on-3 game with
-goalies on an NHL-size rink, five-minute clock, in the voxel style of the
+Open the folder in Godot 4.3 or newer and press Play. It's a 5-on-5 game with
+goalies on an NHL-size rink, three 5-minute periods with rotating lines, in the voxel style of the
 reference renders in `art/reference/`. You play the red team; the yellow ring
 marks the skater you control.
 
@@ -20,7 +20,7 @@ marks the skater you control.
 | Sprint | Shift | LB or L3 |
 | Hockey stop | Space | LT |
 | Body check | F | B |
-| Switch player | Q / Tab | Y |
+| Switch player (exhibition) / fast-forward on the bench (career) | Q / Tab | Y |
 | Physics mode (Sim / Hybrid / Arcade) | F1 | Back |
 | Camera (broadcast / isometric) | C | D-pad up |
 | Restart | R | Start |
@@ -82,18 +82,69 @@ scripts/ui/hud.gd        scoreboard, bars, messages, controls card
 art/reference/           the reference renders
 ```
 
+### Career mode and game mechanics
+
+Run with `-- --career` (or open `scenes/career_hub.tscn`) to start a career.
+You create one skater (C, LW, RW or D) in the beginner beer league and play
+that one player: no switching, and when your line is on the bench you watch
+(hold Q / Y to fast-forward). Exhibition games (the default `main.tscn`) use
+the same rules but let you switch skaters.
+
+- **Ratings** (`scripts/career/skills.gd`): speed, agility, stick handling,
+  shot accuracy, shot power, shot release, passing, hitting and toughness, each
+  1-100. `Skills` is the only place a rating becomes a physics number, so the
+  physics reads `skater.skills` and balance is tuned there:
+  - speed: sprint top speed 14 mph at 1, **25 mph at 100**, and acceleration
+  - agility: turn rate, edge grip, and a safe turn rate above which the puck
+    works loose and the skater is easier to knock over
+  - stick handling: blade speed and how tightly the puck stays on it
+  - shot release: wind-up time for a full-quality shot (0.5 s down to 0.14 s)
+    and how good an instant shot is (20% quality at 1, 75% at 100)
+  - shot accuracy / power: aim error and puck speed, scaled by that quality
+  - passing: pass aim error, how hot a pass the skater can trap, and a
+    tape-to-tape bonus for the intended target (near-certain at 100)
+  - hitting / toughness: check strength vs. balance, and injury risk
+- **Injuries** (`injury.gd`): hard hits roll for an injury (harder hits,
+  tired players and low toughness raise the odds). Severity runs day-to-day,
+  minor, moderate, major; each hits the skills tied to the body part while it
+  heals, and some majors leave a permanent loss.
+- **Progression** (`progression.gd`): game XP goes to the skills you used
+  (shots train shooting, hits train hitting, ice time trains skating), plus
+  practice with a chosen training focus. Growth slows near your potential and
+  with age; from 30 the physical skills decline, and missed games add rust.
+- **Seasons** (`season.gd`, `league_tiers.gd`): 12-16 game double round-robin
+  by tier, 2 points a win and 1 for an OT/shootout loss, then a top-4 playoff
+  bracket (single games in the beer leagues, series higher up). Games you
+  don't play are quick-simmed from team strength (`quick_sim.gd`).
+- **Games** (`game_settings.gd`, `scripts/game/bench.gd`): always 3 periods,
+  period length adjustable in the hub (2-20 min). Three forward lines and two
+  defence pairs change on shift clocks; regular-season ties get sudden-death OT
+  then a shootout, playoff OT runs until someone scores.
+- **The ladder**: Beer League D, C, A, Senior AAA, Semi-Pro, Minor League Pro.
+  After each season scouts weigh your rating and production; invitations lead
+  to tryout camps. Fall too far below your level and you get released down a tier.
+- The career keeps a calendar `day` and saves to `user://career.json`, so
+  open-world rink time can hang off the same clock later.
+
+`godot --headless --path . --script tools/career_test.gd -- --seasons=10`
+quick-sims a whole career and checks schedules, standings and save/load.
+`godot --headless --path . --fixed-fps 120 -- --career --career-new --autoplay --period=1 --seasons=1`
+plays a full season of live engine games with the AI driving you.
+
 ### Command-line helpers
 
 Arguments after `--` are read by the game:
 
-- `--autoplay` lets the AI drive your skater too (prints stats on exit).
+- `--autoplay` lets the AI drive your skater too (prints stats and a box score on exit).
+- `--period=N` plays N-minute periods (exhibition default is 5).
+- `--career` opens the career hub; `--career-new` discards the saved career.
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
 - `--screenshot=out.png --shot-after=6 [--iso] [--zoom=10] [--focus=x,z]` saves a frame and quits.
 
 For example, to simulate a full game headless in a few seconds:
 
 ```
-godot --headless --path . --fixed-fps 120 --quit-after 36000 -- --autoplay --mode=hybrid
+godot --headless --path . --fixed-fps 120 --quit-after 36000 -- --autoplay --mode=hybrid --period=1
 ```
 
 `tools/check.sh` re-imports the project and runs it headless to surface script errors.

@@ -8,6 +8,8 @@ extends Node3D
 ##    puck is pulled to it by a spring (see Game._puck_stick_interaction)
 ## Tuning.blend (0 sim .. 1 arcade) adds grip, turn rate, direct thrust and
 ## shot/pass assistance on top of the same model.
+## Player ratings come from `skills` (scripts/career/skills.gd), which turns
+## each 1..100 rating into the speeds, rates and errors used here.
 
 const RADIUS := 0.38
 const REACH_MIN := 0.45
@@ -66,11 +68,15 @@ var blade_pos := Vector3.ZERO
 var blade_vel := Vector3.ZERO
 var blade_height := 0.0
 
-# player ratings
+# player ratings, derived from `skills` by apply_skills()
+var skills: Skills
+var profile: PlayerProfile  # career player on this body right now, or null
 var top_speed := 8.6
 var accel := 6.5
 var shot_power := 1.0
 var handling := 1.0
+var turn_mult := 1.0
+var grip_mult := 1.0
 
 # AI scratch state
 var ai_decide := 0.0
@@ -88,15 +94,37 @@ func setup(g: Node, t: int, idx: int, pal: Dictionary) -> void:
 	puck = g.puck
 	team = t
 	number = idx
-	top_speed = randf_range(8.3, 9.0)
-	accel = randf_range(6.1, 7.0)
-	shot_power = randf_range(0.93, 1.07)
-	handling = randf_range(0.92, 1.08)
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	apply_skills(Skills.create(Skills.SKATER_KEYS, 62.0, 6.0, rng))
 	rig = SkaterRig.new()
 	add_child(rig)
 	rig.build(pal, false)
 	_spray = _make_spray()
 	add_child(_spray)
+
+
+func apply_skills(s: Skills) -> void:
+	skills = s
+	top_speed = s.top_speed()
+	accel = s.accel()
+	shot_power = s.shot_speed_mult()
+	handling = s.handling()
+	turn_mult = s.turn_mult()
+	grip_mult = s.grip_mult()
+
+
+## Puts a career player on this body (line changes swap who is out there).
+func apply_profile(p: PlayerProfile) -> void:
+	profile = p
+	number = p.number
+	apply_skills(p.skills)
+
+
+## How well this skater stays upright right now (skills.balance with the
+## current turn rate).
+func balance() -> float:
+	return skills.balance(yaw_rate)
 
 
 func place(p: Vector2, facing: Vector3) -> void:
@@ -166,7 +194,7 @@ func physics_update(dt: float) -> void:
 
 	# steering: tight at low speed, wide arcs at full speed
 	if amount > 0.15:
-		var turn := lerpf(7.5, 2.3, clampf(speed / top_speed, 0.0, 1.0)) * (1.0 + 0.7 * blend)
+		var turn := lerpf(7.5, 2.3, clampf(speed / top_speed, 0.0, 1.0)) * (1.0 + 0.7 * blend) * turn_mult
 		if braking:
 			turn *= 0.4
 		heading = _rotate_toward(heading, desired, turn * dt)
@@ -185,7 +213,7 @@ func physics_update(dt: float) -> void:
 	var fwd := vel.dot(heading)
 	var lat := vel - heading * fwd
 	lat.y = 0.0
-	var grip := 0.8 if braking else lerpf(3.0, 9.0, blend)
+	var grip := 0.8 if braking else lerpf(3.0, 9.0, blend) * grip_mult
 	var lat_new := lat * exp(-grip * dt)
 	if fwd > 0.3:
 		fwd += (lat.length() - lat_new.length()) * 0.6
@@ -218,6 +246,9 @@ func physics_update(dt: float) -> void:
 	position = Vector3(p2.x, 0, p2.y)
 
 	yaw_rate = prev_heading.signed_angle_to(heading, Vector3.UP) / dt
+	# agility: cutting harder than you can handle works the puck loose
+	if carrying and randf() < skills.turn_puck_loss(yaw_rate) * dt * (1.0 - 0.6 * blend):
+		puck.release(self, vel + right_vec() * signf(yaw_rate) * 2.0)
 	_update_blade(dt, blend)
 	_handle_actions(dt, carrying)
 	_apply_transform()
@@ -265,28 +296,30 @@ func _handle_actions(dt: float, carrying: bool) -> void:
 		check_timer = 0.35
 		check_cd = 1.2
 		game.stats.checks += 1
-		vel += heading * 2.5
+		vel += heading * 2.5 * lerpf(0.85, 1.15, skills.n("hitting"))
 
 
 func _release_shot() -> void:
 	var slap := shoot_hold_time > SLAP_DELAY
-	var charge := clampf((shoot_hold_time - SLAP_DELAY) / 0.8, 0.0, 1.0)
+	var charge := clampf((shoot_hold_time - SLAP_DELAY) / skills.slap_windup_time(), 0.0, 1.0)
+	# release skill: how good a shot is after winding this long
+	var quality := 1.0 if slap else skills.shot_quality(shoot_hold_time)
 	shoot_hold_time = 0.0
 	if has_puck():
-		shoot(slap, charge, 1.0)
+		shoot(slap, charge, 1.0, quality)
 		return
 	# one-timer / snapshot at a loose puck near the blade
 	var reach := lerpf(0.5, 0.95, Tuning.blend)
 	var d := Vector2(puck.position.x - blade_pos.x, puck.position.z - blade_pos.z).length()
 	if puck.controller == null and not puck.frozen and puck.position.y < 0.6 and d < reach and puck.can_be_touched_by(self):
-		shoot(slap, charge, 0.9)
+		shoot(slap, charge, 0.9, quality)
 
 
 func attack_goal() -> Vector3:
 	return Vector3(game.attack_side(team) * Rink.GOAL_X, 0, 0)
 
 
-func shoot(slap: bool, charge: float, power: float) -> void:
+func shoot(slap: bool, charge: float, power: float, quality := 1.0) -> void:
 	var blend: float = Tuning.blend
 	var from := puck.position
 	var net := attack_goal()
@@ -302,9 +335,9 @@ func shoot(slap: bool, charge: float, power: float) -> void:
 		var assisted := Vector3(net.x - from.x, 0, hit_z - from.z).normalized()
 		dir = dir.slerp(assisted, 0.85 * blend)
 	# accuracy suffers when moving fast, more so in sim mode and on slapshots
-	var err := (0.02 + 0.045 * (1.0 - blend)) * (1.0 + Vector2(vel.x, vel.z).length() / top_speed * 0.6) * (1.4 if slap else 1.0)
+	var err := skills.shot_error(quality) * lerpf(1.5, 0.6, blend) * (1.0 + Vector2(vel.x, vel.z).length() / top_speed * 0.6) * (1.4 if slap else 1.0)
 	dir = dir.rotated(Vector3.UP, randf_range(-err, err))
-	var spd := (lerpf(27.0, 43.0, charge) if slap else 24.0 * lerpf(0.75, 1.1, power)) * shot_power
+	var spd := (lerpf(27.0, 43.0, charge) if slap else 24.0 * lerpf(0.75, 1.1, power)) * skills.shot_speed_mult(quality)
 	# choose a target height at the net and solve for the lift that gets there
 	# shooters pick a corner: along the ice or up high
 	var h_target := randf_range(0.05, 0.3) if (slap or randf() < 0.5) else randf_range(0.75, 1.15)
@@ -346,8 +379,10 @@ func pass_puck() -> void:
 	else:
 		target = position + Vector3(dir2.x, 0, dir2.y) * 12.0
 	var d := Vector3(target.x - puck.position.x, 0, target.z - puck.position.z).normalized()
+	d = d.rotated(Vector3.UP, randf_range(-1.0, 1.0) * skills.pass_error() * lerpf(1.3, 0.6, blend))
 	puck.release(self, d * spd)
 	puck.pass_target = best
+	puck.pass_bonus = skills.tape_to_tape_bonus()
 
 
 func _blade_world(local: Vector2) -> Vector3:

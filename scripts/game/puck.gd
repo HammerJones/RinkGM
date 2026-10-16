@@ -14,6 +14,7 @@ var vel := Vector3.ZERO
 var controller: Skater = null
 var last_touch: Skater = null
 var pass_target: Skater = null
+var pass_bonus := 6.0  # extra trap allowance for pass_target, from the passer's skill
 var frozen := false
 var in_net_side := 0
 var _ignore: Skater = null

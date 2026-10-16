@@ -42,6 +42,22 @@ static func palette(team: int) -> Dictionary:
 	}
 
 
+## A full palette from two club colours (career teams).
+static func team_palette(team_name: String, primary: Color, secondary: Color) -> Dictionary:
+	var dark := primary.darkened(0.25)
+	var trim := Color("19191c") if secondary.get_luminance() > 0.5 else Color("ece7dc")
+	return {
+		"name": team_name, "ui": primary.lightened(0.15),
+		"jersey": primary, "jersey_dark": dark,
+		"stripe": secondary, "stripe2": trim,
+		"crest": secondary, "crest_inner": trim,
+		"pants": primary.darkened(0.6), "helmet": primary.darkened(0.45),
+		"sock": primary, "sock_stripe": secondary, "sock_stripe2": trim,
+		"shaft": Color("1b1b1e"), "band": primary, "band2": secondary,
+		"pad": Color("ece6da"), "pad_band": primary, "glove": primary.darkened(0.5),
+	}
+
+
 ## Leg from hip joint (pivot) down to the skate blade. Goalies get pads.
 static func leg(p: Dictionary, goalie: bool) -> VoxelModel:
 	var m := VoxelModel.new(V)

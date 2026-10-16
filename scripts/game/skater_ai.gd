@@ -56,7 +56,10 @@ static func _carry(s: Skater, g: Node, dt: float) -> void:
 		var lane_open: bool = g.lane_clear(s.team, me, Vector2(aim.x, aim.z), 0.7)
 		if ahead > 1.0 and open_angle and d < 16.0 and (d < 9.0 or randf() < 0.3) and (lane_open or randf() < 0.25):
 			s.ai_aim = aim
-			s.ai_shoot_timer = 0.6 if (d > 10.0 and randf() < 0.5) else 0.04
+			# slapshot from range, otherwise a wrister wound as long as the
+			# shooter needs (release skill) unless a defender is right there
+			var wrist := minf(s.skills.release_time(), Skater.SLAP_DELAY - 0.02) if pressure > 2.5 else 0.04
+			s.ai_shoot_timer = 0.6 if (d > 10.0 and randf() < 0.5) else wrist
 			c.shoot_held = true
 			c.aim_point = s.ai_aim
 		elif pressure < 2.6 and randf() < 0.6:
@@ -81,11 +84,15 @@ static func _support(s: Skater, g: Node, owner: Skater) -> void:
 	var o := _v2(owner.position)
 	var others: Array = g.teammates(owner)
 	var idx := others.find(s)
-	var slot: Vector2
-	if idx == 0:
-		slot = Vector2(o.x + att * 5.0, -signf(o.y if absf(o.y) > 0.5 else 1.0) * 6.5)
-	else:
-		slot = Vector2(o.x - att * 6.0, o.y * 0.3)
+	var side := signf(o.y if absf(o.y) > 0.5 else 1.0)
+	# up to four support spots: wide lane, trailer, net front, high point
+	var slots := [
+		Vector2(o.x + att * 5.0, -side * 6.5),
+		Vector2(o.x - att * 6.0, o.y * 0.3),
+		Vector2(o.x + att * 3.5, side * 2.5),
+		Vector2(o.x - att * 11.0, -side * 4.5),
+	]
+	var slot: Vector2 = slots[idx % slots.size()]
 	slot.x = clampf(slot.x, -Rink.GOAL_X + 3.0, Rink.GOAL_X - 3.0)
 	slot.y = clampf(slot.y, -Rink.HALF_W + 2.0, Rink.HALF_W - 2.0)
 	_seek(s, slot, 2.0, 12.0)

@@ -7,7 +7,7 @@ const HELP := """[b]Keyboard + mouse[/b]
 WASD  skate        Mouse  stick blade / aim
 LMB  shoot (hold = slapshot)   RMB / E  pass
 Shift  sprint      Space  hockey stop
-F  body check      Q / Tab  switch player
+F  body check      Q / Tab  switch player (career: fast-forward on the bench)
 F1  physics mode   C  camera   R  restart
 
 [b]Gamepad[/b]
@@ -21,6 +21,7 @@ H  hide this"""
 var _score: Label
 var _mode: Label
 var _message: Label
+var _bench: Label
 var _power: ProgressBar
 var _stamina: ProgressBar
 var _help: RichTextLabel
@@ -60,6 +61,15 @@ func _ready() -> void:
 	_message.add_theme_constant_override("outline_size", 10)
 	root.add_child(_message)
 
+	_bench = _label(30)
+	_bench.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_bench.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_bench.position = Vector2(-300, -150)
+	_bench.size = Vector2(600, 80)
+	_bench.add_theme_color_override("font_outline_color", Color.BLACK)
+	_bench.add_theme_constant_override("outline_size", 8)
+	root.add_child(_bench)
+
 	_power = _bar(Color("f0c040"))
 	_power.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_power.position = Vector2(-120, -60)
@@ -93,9 +103,14 @@ func _process(delta: float) -> void:
 		_message.text = ""
 
 
-func set_score(home: String, away: String, a: int, b: int, clock: float) -> void:
+func set_score(home: String, away: String, a: int, b: int, clock: float, period := "") -> void:
 	var c := maxf(clock, 0.0)
-	_score.text = "%s  %d   %d:%02d   %d  %s" % [home, a, int(c) / 60, int(c) % 60, b, away]
+	_score.text = "%s  %d   %s %d:%02d   %d  %s" % [home, a, period, int(c) / 60, int(c) % 60, b, away]
+
+
+## Bench / injury notice for career games ("" hides it).
+func set_bench(text: String) -> void:
+	_bench.text = text
 
 
 func set_mode(mode_name: String) -> void:
