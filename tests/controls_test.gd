@@ -97,7 +97,7 @@ func _run() -> void:
 		if game.stats.stick_lifts > before:
 			lifts += 1
 	print("stick lift: %d of 20 lifted the carrier's stick" % lifts)
-	_check(lifts > 0, "lift near a carrier's stick lifts it")
+	_check(lifts >= 4 and lifts <= 18, "lift near a carrier's stick often lifts it, but not always")
 
 	# --- pass to a teammate ahead
 	await _carry(Vector2(-12, 0))
@@ -109,6 +109,9 @@ func _run() -> void:
 	var got := await _until(func(): return game.puck.pass_target == mate, 0.5, [mate])
 	print("pass sent to teammate: %s" % got)
 	_check(got, "pass button passes to the teammate")
+	got = await _until(func(): return game.puck.controller == mate, 1.5, [mate])
+	print("teammate caught it: %s" % got)
+	_check(got, "the pass connects")
 
 	# --- without the puck, the pass button calls for it
 	await _carry(Vector2(-4, 0), false)
@@ -161,6 +164,7 @@ func _lift_trial() -> void:
 	opp.stun_timer = 0.0
 	game.puck.reset_at(opp.puck_anchor())
 	game.puck.controller = opp
+	game.human.lift_cd = 0.0
 	_set_plan(func(f, t): f.lift = 1.0 if t > 0.05 else 0.0)
 	await _until(func(): return false, 0.15, [opp])
 
