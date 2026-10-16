@@ -114,6 +114,13 @@ func apply_skills(s: Skills) -> void:
 	grip_mult = s.grip_mult()
 
 
+## A rating as 0..1, by the names the controls code uses ("stickhandling",
+## "shot_release", ...). Unknown names read as average.
+func skill(skill_name: String) -> float:
+	var key := "stick_handling" if skill_name == "stickhandling" else skill_name
+	return skills.n(key) if skills and skills.values.has(key) else 0.5
+
+
 ## Puts a career player on this body (line changes swap who is out there).
 func apply_profile(p: PlayerProfile) -> void:
 	profile = p
