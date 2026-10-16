@@ -102,7 +102,10 @@ RinkGM will become a general rink management sim with open-world elements, so:
 1. imports the project and fails on any script or parse error,
 2. plays a full AI-vs-AI game headless (`-- --autoplay`) and fails on any
    runtime error, or if the game never prints its end-of-game stats,
-3. runs every `tools/tests/test_*.gd` headless; each must exit 0.
+3. runs every `tools/tests/test_*.gd` headless; each must exit 0,
+4. runs each in-game test mode named in `tools/tests/game_tests.txt` (one name
+   per line) as `-- --test=<name>` with the full scene and autoloads; each must
+   exit 0 and print `<name> test: all passed`.
 
 Run it locally before pushing:
 

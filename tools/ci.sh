@@ -4,6 +4,9 @@
 #   2. play a full AI-vs-AI game headless and fail on any runtime error,
 #      or if the game never reports its end-of-game stats
 #   3. run every tools/tests/test_*.gd headless; each must exit 0 to pass
+#   4. run each in-game test mode listed in tools/tests/game_tests.txt
+#      (`-- --test=<name>`, with autoloads and the full scene); each must
+#      exit 0 and print "<name> test: all passed"
 # Usage: GODOT=/path/to/godot tools/ci.sh
 set -uo pipefail
 GODOT=${GODOT:-godot}
@@ -38,6 +41,20 @@ for t in tools/tests/test_*.gd; do
 		tail -3 "$LOG/t.txt"
 	fi
 done
+
+if [ -f tools/tests/game_tests.txt ]; then
+	while read -r name; do
+		[[ -z "$name" || "$name" == \#* ]] && continue
+		echo "== --test=$name"
+		timeout 300 "$GODOT" --headless --path . --fixed-fps 120 --quit-after 72000 -- --test="$name" >"$LOG/g.txt" 2>&1
+		code=$?
+		if [ $code -ne 0 ] || ! grep -q "$name test: all passed" "$LOG/g.txt" || errors "$LOG/g.txt" >/dev/null; then
+			tail -40 "$LOG/g.txt"; echo "exit code $code"; fail=1
+		else
+			grep "$name test:" "$LOG/g.txt"
+		fi
+	done < tools/tests/game_tests.txt
+fi
 
 [ $fail -eq 0 ] && echo "== CI passed" || echo "== CI FAILED"
 exit $fail
