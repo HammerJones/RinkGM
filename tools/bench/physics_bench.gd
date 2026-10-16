@@ -10,7 +10,7 @@ extends Node
 
 const DT := 1.0 / 120.0
 const SUBSTEPS := 4
-const RATINGS := [1, 25, 50, 75, 99]
+const RATINGS := [1, 25, 50, 75, 100]
 const CUT := 85.0
 
 var puck: Puck
@@ -81,14 +81,14 @@ func _line(s: String) -> void:
 	_out.append(s)
 
 
-func _stats(over: Dictionary) -> SkaterStats:
-	var st := SkaterStats.uniform(50)
-	for k in over:
-		st.set(k, over[k])
+func _stats(over: Dictionary) -> Skills:
+	var st := Skills.new()
+	for k in Skills.SKATER_KEYS:
+		st.values[k] = float(over.get(k, 50))
 	return st
 
 
-func _skater(st: SkaterStats, team := 0) -> Skater:
+func _skater(st: Skills, team := 0) -> Skater:
 	var s := Skater.new()
 	add_child(s)
 	s.setup(self, team, skaters.size(), {}, st)
@@ -179,8 +179,8 @@ func _bench_skating() -> void:
 	_line("")
 	_line("## Skating from a standstill (full stick forward)")
 	_line("")
-	_line("| speed | top speed | after 1 s | 0 to 90% | 0 to 90% with a dash at the start |")
-	_line("|---|---|---|---|---|")
+	_line("| speed | top speed | after 1 s | 0 to 90% | 0 to 90% dashing | peak while dashing |")
+	_line("|---|---|---|---|---|---|")
 	for r in RATINGS:
 		var res := []
 		for use_dash in [false, true]:
@@ -189,30 +189,32 @@ func _bench_skating() -> void:
 			var t := 0.0
 			var t90 := -1.0
 			var at1 := 0.0
+			var peak := 0.0
 			while t < 8.0:
 				s.ctrl.reset()
 				s.ctrl.move = Vector2(1, 0)
-				s.ctrl.dash = use_dash and t == 0.0
+				s.ctrl.dash = use_dash
 				_step()
 				_recentre(s)
 				t += DT
+				peak = maxf(peak, s.speed())
 				if absf(t - 1.0) < DT * 0.5:
 					at1 = s.speed()
 				if t90 < 0.0 and s.speed() >= s.profile.max_speed * 0.9:
 					t90 = t
-			res.append([s.profile.max_speed, at1, t90])
-		_line("| %d | %s | %s | %.2f s | %.2f s |" % [r, _mph(res[0][0]), _mph(res[0][1]), res[0][2], res[1][2]])
+			res.append([s.profile.max_speed, at1, t90, peak])
+		_line("| %d | %s | %s | %.2f s | %.2f s | %s |" % [r, _mph(res[0][0]), _mph(res[0][1]), res[0][2], res[1][2], _mph(res[1][3])])
 
 
 func _bench_stop() -> void:
 	_line("")
-	_line("## Hockey stop from top speed (speed 99)")
+	_line("## Hockey stop from top speed (speed 100)")
 	_line("")
 	_line("| agility | stopping distance | time |")
 	_line("|---|---|---|")
 	for r in RATINGS:
 		_clear()
-		var s := _skater(_stats({"speed": 99, "agility": r}))
+		var s := _skater(_stats({"speed": 100, "agility": r}))
 		s.vel = Vector3(s.profile.max_speed, 0, 0)
 		var t := 0.0
 		var x0 := s.position.x
@@ -295,11 +297,11 @@ func _bench_carry() -> void:
 	_line("")
 	_line("Pucks lost per 10 s of cutting. Agility turns you faster, which is harder to hold.")
 	_line("")
-	_line("| stick handling | agility 1 | agility 50 | agility 99 |")
+	_line("| stick handling | agility 1 | agility 50 | agility 100 |")
 	_line("|---|---|---|---|")
 	for r in RATINGS:
 		_line("| %d | %.1f | %.1f | %.1f |" % [r,
-			_carry_losses(r, 1, "HYBRID", 0.4), _carry_losses(r, 50, "HYBRID", 0.4), _carry_losses(r, 99, "HYBRID", 0.4)])
+			_carry_losses(r, 1, "HYBRID", 0.4), _carry_losses(r, 50, "HYBRID", 0.4), _carry_losses(r, 100, "HYBRID", 0.4)])
 	_line("")
 	_line("Same test with both ratings equal, by physics mode:")
 	_line("")
@@ -357,7 +359,7 @@ func _bench_stickhandle() -> void:
 ## Fires `n` shots from the top of the slot (10 m out, centred) and returns
 ## [mean speed, share on net]. On-net is the straight-line crossing at the goal
 ## line inside the posts and under the bar; goalies aren't involved.
-func _shots(st: SkaterStats, held: float, slap: bool, n: int) -> Array:
+func _shots(st: Skills, held: float, slap: bool, n: int) -> Array:
 	_clear()
 	var s := _skater(st)
 	var spot := Vector2(Rink.GOAL_X - 10.0, 0.0)
@@ -404,7 +406,7 @@ func _bench_shots() -> void:
 	for r in RATINGS:
 		var st := _stats({"shot_release": r})
 		var res := _shots(st, 0.0, false, 300)
-		_line("| %d | %s, %d%% | %.2f s |" % [r, _mph(res[0]), int(res[1] * 100.0), PhysicsProfile.from_stats(st).charge_time])
+		_line("| %d | %s, %d%% | %.2f s |" % [r, _mph(res[0]), int(res[1] * 100.0), PhysicsProfile.from_skills(st).charge_time])
 
 
 func _bench_passes() -> void:
@@ -449,13 +451,13 @@ func _bench_hits() -> void:
 	_line("")
 	_line("Impulse / victim's balance. Above 1.0 knocks them down; 0.6 to 1.0 can jar the puck loose.")
 	_line("")
-	_line("| hitting \\ toughness | 1 | 50 | 99 |")
+	_line("| hitting \\ toughness | 1 | 50 | 100 |")
 	_line("|---|---|---|---|")
-	for h in [1, 50, 99]:
-		var hp := PhysicsProfile.from_stats(_stats({"hitting": h}))
+	for h in [1, 50, 100]:
+		var hp := PhysicsProfile.from_skills(_stats({"hitting": h}))
 		var cells := []
-		for tg in [1, 50, 99]:
-			var vp := PhysicsProfile.from_stats(_stats({"toughness": tg}))
+		for tg in [1, 50, 100]:
+			var vp := PhysicsProfile.from_skills(_stats({"toughness": tg}))
 			var impulse := 6.0 * Skater.MASS * 0.5 * hp.hit_power * 1.4
 			cells.append("%.2f" % (impulse / vp.balance))
 		_line("| %d | %s | %s | %s |" % [h, cells[0], cells[1], cells[2]])
