@@ -11,24 +11,47 @@ marks the skater you control.
 
 ### Controls
 
-| Action | Keyboard + mouse | Gamepad |
-| --- | --- | --- |
-| Skate | WASD | Left stick |
-| Stick blade (stickhandle) | Mouse position on the ice | Right stick |
-| Shoot | Left click (hold for slapshot) | RT or X (hold for slapshot), or pull the right stick back then flick it forward |
-| Pass (with puck) / switch player (without) | Right click or E | A |
-| Sprint | Shift | LB or L3 |
-| Hockey stop | Space | LT |
-| Body check | F | B |
-| Switch player (exhibition) / fast-forward on the bench (career) | Q / Tab | Y |
-| Physics mode (Sim / Hybrid / Arcade) | F1 | Back |
-| Camera (broadcast / isometric) | C | D-pad up |
-| Restart | R | Start |
-| Show/hide controls | H | |
+You play one skater (no player switching). The scheme follows Slapshot
+Rebound's physical stick with some NHL-style "puck glue" on top; the
+keyboard + mouse layout turns the mouse into a virtual right stick.
 
-With the mouse, the blade goes where you point (inside the stick's reach), and
-shots and passes go toward the cursor. On a gamepad, the left stick picks the
-near or far side of the net for shots.
+| Action | Gamepad | Keyboard + mouse |
+| --- | --- | --- |
+| Skate | Left stick | WASD |
+| Dash (push-off burst) | L3 (click left stick) | Shift |
+| Hockey stop | R3 (click right stick) | Space |
+| Move the stick blade (90 degree arc in front of you) | Right stick | Mouse (cursor is captured; Esc frees it) |
+| Stickhandle | Right stick side to side | Mouse side to side |
+| Quick shot | Flick the right stick forward | Flick the mouse forward |
+| Wind-up shot | Pull the stick behind you, hold, sweep forward | Same with the mouse |
+| Slapshot | Hold LT while winding up | Hold RMB while winding up |
+| Lift stick: dekes with the puck, stick lift on defense | LT | RMB |
+| Tilt blade (raise shots and passes) | RT (analog) | LMB (hold longer for more) |
+| Pass, or call for a pass without the puck | A or RB | E |
+| Body check | B | F |
+| Mouse sensitivity | | [ and ] |
+| Physics mode (Sim / Hybrid / Arcade) | Back | F1 |
+| Camera (broadcast / isometric) | D-pad up | C |
+| Restart | Start | R |
+| Show/hide controls | | H |
+
+"Forward" and "behind" are relative to the way your skater faces; the stick
+itself is camera-relative, like the left stick. A faint arc on the ice shows
+where the blade can reach.
+
+How the skills feed the controls (`scripts/game/stick_control.gd`; ratings
+come from `Skater.skill(name)` when it exists, otherwise 0.5):
+
+- **Stickhandling** caps how fast the blade moves, so low ratings stickhandle
+  slower, and moving the blade near that cap can fumble the puck (more often
+  at low ratings).
+- **Shot release**: the instant quick shot is weak and wild at low release and
+  gets harder and truer as it improves; wind-ups charge faster too.
+- **Shot power / accuracy** set wind-up and slapshot speed and the spread.
+- **Pass quality**: pass spread shrinks to almost nothing at the top rating.
+- **Hitting** improves defensive stick lifts against the carrier's stickhandling.
+- Lifting the stick with the puck lets the puck drift with you while the blade
+  goes over it; put it down on the other side and pull for a toe drag.
 
 ### How the physics and arcade parts blend
 
@@ -78,7 +101,9 @@ scripts/voxel/           VoxelModel, VoxelMeshBuilder, VoxelPart, VoxLoader
 scripts/art/models.gd    procedural players, goalies, sticks, puck, net
 scripts/rink/rink.gd     rink geometry (board SDF, nets) + ice/boards visuals
 scripts/game/            game rules, skater, goalie, puck, AI, rig, camera
+scripts/input/           PlayerInput: devices -> one frame of intent (mouse = virtual stick)
 scripts/ui/hud.gd        scoreboard, bars, messages, controls card
+tests/                   headless control checks (`-- --test=controls`)
 art/reference/           the reference renders
 ```
 
@@ -87,8 +112,8 @@ art/reference/           the reference renders
 Run with `-- --career` (or open `scenes/career_hub.tscn`) to start a career.
 You create one skater (C, LW, RW or D) in the beginner beer league and play
 that one player: no switching, and when your line is on the bench you watch
-(hold Q / Y to fast-forward). Exhibition games (the default `main.tscn`) use
-the same rules but let you switch skaters.
+(hold Tab / Y to fast-forward). Exhibition games (the default `main.tscn`) use
+the same rules with you on the centre's body, always on the ice.
 
 - **Ratings** (`scripts/career/skills.gd`): speed, agility, stick handling,
   shot accuracy, shot power, shot release, passing, hitting and toughness, each
@@ -139,6 +164,7 @@ Arguments after `--` are read by the game:
 - `--period=N` plays N-minute periods (exhibition default is 5).
 - `--career` opens the career hub; `--career-new` discards the saved career.
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
+- `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
 - `--screenshot=out.png --shot-after=6 [--iso] [--zoom=10] [--focus=x,z]` saves a frame and quits.
 
 For example, to simulate a full game headless in a few seconds:
