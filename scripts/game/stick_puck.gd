@@ -66,7 +66,7 @@ static func _carry(carrier: Skater, puck: Puck, dt: float, blend: float) -> void
 	# with the blade lifted over the puck there's no contact; you keep it only
 	# if you set the blade back down close enough
 	if carrier.blade_down():
-		var sh := carrier.stats.n(&"stick_handling")
+		var sh := carrier.skill("stick_handling")
 		var k := lerpf(180.0, 450.0, blend) * lerpf(0.75, 1.25, sh)
 		var rel := puck.vel - carrier.blade_vel
 		rel.y = 0.0
@@ -85,8 +85,8 @@ static func _carry(carrier: Skater, puck: Puck, dt: float, blend: float) -> void
 ## steady pressure works it free more often against weak stickhandlers.
 static func _poke(s: Skater, holder: Skater, puck: Puck, d: Vector3, dist: float, dt: float) -> void:
 	var poke := (s.blade_vel - holder.blade_vel).length()
-	var h_sh := holder.stats.n(&"stick_handling")
-	var s_sh := s.stats.n(&"stick_handling")
+	var h_sh := holder.skill("stick_handling")
+	var s_sh := s.skill("stick_handling")
 	var needed := lerpf(2.8, 4.8, h_sh)
 	var steal_rate := lerpf(0.6, 2.2, s_sh) * lerpf(1.6, 0.45, h_sh)
 	if poke > needed or randf() < dt * steal_rate:

@@ -1,7 +1,7 @@
 class_name PhysicsProfile
 extends RefCounted
-## Turns a skater's ratings (SkaterStats, 1..99) into the physical numbers the
-## simulation uses. Every rating-to-physics curve lives here so balance can be
+## Turns a skater's ratings (Skills, 1..100) into the physical numbers the
+## simulation uses. This is the only rating-to-physics converter. Every rating-to-physics curve lives here so balance can be
 ## tuned in one place; `tools/physics_bench.sh` prints what they produce.
 ##
 ## Units: metres, seconds, m/s. 25 mph = 11.18 m/s.
@@ -9,7 +9,7 @@ extends RefCounted
 const MPH := 0.44704
 
 # skating
-var max_speed := 9.0       ## m/s, steady top speed with no dash
+var max_speed := 9.0       ## m/s, absolute top skating speed, dash included
 var accel := 7.0           ## m/s^2 from a standstill, falls off toward max_speed
 var turn_slow := 7.5       ## rad/s heading change when nearly stopped
 var turn_fast := 2.4       ## rad/s at top speed (wider arcs)
@@ -39,34 +39,33 @@ var hit_power := 1.0       ## multiplier on body-check impulse
 var stick_lift := 0.5      ## 0..1 strength in stick-lift battles
 
 
-static func from_stats(st: SkaterStats, condition := 1.0) -> PhysicsProfile:
+static func from_skills(sk: Skills) -> PhysicsProfile:
 	var p := PhysicsProfile.new()
-	p.apply(st, condition)
+	p.apply(sk)
 	return p
 
 
-## `condition` is 1.0 when healthy; mechanics lowers it for injuries/fatigue,
-## which slows the skater and dulls their edges.
-func apply(st: SkaterStats, condition := 1.0) -> void:
-	var spd := st.n(&"speed")
-	var agi := st.n(&"agility")
-	var sh := st.n(&"stick_handling")
-	var acc := st.n(&"shot_accuracy")
-	var pw := st.n(&"shot_power")
-	var rel := st.n(&"shot_release")
-	var pq := st.n(&"pass_quality")
-	var hit := st.n(&"hitting")
-	var tough := st.n(&"toughness")
-	var cond := clampf(condition, 0.3, 1.0)
+## Cheap enough to call every frame, so injury and fatigue modifiers on
+## `sk` take effect immediately.
+func apply(sk: Skills) -> void:
+	var spd := sk.n("speed")
+	var agi := sk.n("agility")
+	var sh := sk.n("stick_handling")
+	var acc := sk.n("shot_accuracy")
+	var pw := sk.n("shot_power")
+	var rel := sk.n("shot_release")
+	var pq := sk.n("pass_quality")
+	var hit := sk.n("hitting")
+	var tough := sk.n("toughness")
 
-	# 16.5 mph for a 1, 25 mph for a 99
-	max_speed = lerpf(16.5, 25.0, spd) * MPH * lerpf(0.75, 1.0, cond)
-	accel = lerpf(4.8, 9.0, 0.75 * spd + 0.25 * agi) * cond
-	turn_slow = lerpf(5.5, 9.5, agi) * lerpf(0.8, 1.0, cond)
-	turn_fast = lerpf(1.7, 3.3, agi) * lerpf(0.8, 1.0, cond)
+	# absolute ceiling, dash included: 15 mph for a 1, 25 mph for a 100
+	max_speed = lerpf(15.0, 25.0, spd) * MPH
+	accel = lerpf(4.8, 9.0, 0.75 * spd + 0.25 * agi)
+	turn_slow = lerpf(5.5, 9.5, agi)
+	turn_fast = lerpf(1.7, 3.3, agi)
 	edge_grip = lerpf(3.2, 7.5, agi)
 	stop_decel = lerpf(10.0, 18.0, agi)
-	dash_boost = lerpf(2.0, 3.2, 0.6 * spd + 0.4 * agi) * cond
+	dash_boost = lerpf(2.0, 3.2, 0.6 * spd + 0.4 * agi)
 	dash_cooldown = lerpf(1.1, 0.6, agi)
 	balance = lerpf(170.0, 420.0, tough) * lerpf(0.9, 1.1, agi)
 
@@ -79,10 +78,10 @@ func apply(st: SkaterStats, condition := 1.0) -> void:
 	trap_speed = lerpf(7.0, 13.0, 0.7 * pq + 0.3 * sh)
 	catch_radius = lerpf(0.24, 0.4, 0.6 * pq + 0.4 * sh)
 
-	# ~60 mph slapshot for a 1, ~98 mph for a 99
+	# ~60 mph slapshot for a 1, ~98 mph for a 100
 	shot_speed = lerpf(27.0, 44.0, pw)
 	wrist_ratio = lerpf(0.72, 0.82, rel)
-	# the no-wind-up shot is weak and wild for a beginner, nearly a full shot for a 99
+	# the no-wind-up shot is weak and wild for a beginner, nearly a full shot for a 100
 	instant_ratio = lerpf(0.42, 0.85, rel)
 	instant_error = lerpf(3.0, 1.25, rel)
 	charge_time = lerpf(0.95, 0.35, rel)

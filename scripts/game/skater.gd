@@ -4,7 +4,8 @@ extends Node3D
 ##  * thrust only along the direction the skates point, so you carve turns
 ##  * lateral velocity bleeds off through edge grip (part of it is kept as
 ##    forward speed, the "carve"), turning gets wider the faster you go
-##  * a dash is a burst stride; the hockey stop scrapes speed off sideways
+##  * a dash is a burst stride up to top speed; the hockey stop scrapes
+##    speed off sideways
 ##  * the stick blade is its own point that moves at a limited speed inside a
 ##    90 degree arc in front of the body; the puck follows it on a spring whose
 ##    force is capped by the skater's grip (see StickPuck), so turning or
@@ -65,10 +66,10 @@ var puck: Puck
 var team := 0
 var number := 0
 var ctrl := Controls.new()
-var stats := SkaterStats.new()
+## Ratings (career/skills.gd, 1..100). Injuries and fatigue arrive as
+## Skills.modifiers, so the profile is re-derived every frame.
+var skills: Skills
 var profile := PhysicsProfile.new()
-## 1.0 healthy; mechanics lowers it for injuries (see PhysicsProfile.apply).
-var condition := 1.0
 
 var vel := Vector3.ZERO
 var heading := Vector3(1, 0, 0)
@@ -114,12 +115,16 @@ var _anchor_local := DEFAULT_BLADE
 var _spray: CPUParticles3D
 
 
-func setup(g: Node, t: int, idx: int, pal: Dictionary, st: SkaterStats = null) -> void:
+func setup(g: Node, t: int, idx: int, pal: Dictionary, sk: Skills = null) -> void:
 	game = g
 	puck = g.puck
 	team = t
 	number = idx
-	set_stats(st if st else SkaterStats.around(50, 6))
+	if sk == null:
+		var rng := RandomNumberGenerator.new()
+		rng.randomize()
+		sk = Skills.create(Skills.SKATER_KEYS, 50.0, 6.0, rng)
+	set_skills(sk)
 	if pal.is_empty():
 		return
 	rig = SkaterRig.new()
@@ -129,22 +134,18 @@ func setup(g: Node, t: int, idx: int, pal: Dictionary, st: SkaterStats = null) -
 	add_child(_spray)
 
 
-## Call again whenever ratings or condition change.
-func set_stats(st: SkaterStats) -> void:
-	stats = st
-	profile.apply(stats, condition)
+## Swaps in a player's ratings (line changes call this on a live body).
+func set_skills(sk: Skills) -> void:
+	skills = sk
+	profile.apply(skills)
 
 
-## A rating as 0..1, for code outside the physics (accepts "stickhandling").
-func skill(stat_name: String) -> float:
-	if stat_name == "stickhandling":
-		stat_name = "stick_handling"
-	return stats.n(StringName(stat_name)) if StringName(stat_name) in SkaterStats.NAMES else 0.5
-
-
-func set_condition(c: float) -> void:
-	condition = c
-	profile.apply(stats, condition)
+## A rating as 0..1 (canonical Skills keys only).
+func skill(key: String) -> float:
+	if not key in Skills.SKATER_KEYS:
+		push_error("unknown skill '%s'" % key)
+		return 0.5
+	return skills.n(key)
 
 
 func place(p: Vector2, facing: Vector3) -> void:
@@ -218,6 +219,7 @@ func physics_update(dt: float) -> void:
 	dash_timer = maxf(0.0, dash_timer - dt)
 	lift_cd = maxf(0.0, lift_cd - dt)
 	stick_lifted_timer = maxf(0.0, stick_lifted_timer - dt)
+	profile.apply(skills)
 	var p := profile
 	var frozen: bool = game.is_frozen()
 	var able := stun_timer <= 0.0 and not frozen
@@ -247,11 +249,10 @@ func physics_update(dt: float) -> void:
 		var room_direct := clampf(1.0 - vel.dot(desired) / top, 0.0, 1.0)
 		vel += desired * p.accel * 0.35 * blend * amount * room_direct * dt
 
-	# dash: a burst stride toward the stick, can briefly beat top speed
+	# dash: a burst stride toward the stick, up to (never past) top speed
 	if ctrl.dash and able and dash_cd <= 0.0 and stamina > 0.15 and not braking:
 		var dir := desired if amount > 0.2 else heading
-		var cap := top * 1.12
-		var gain := clampf(cap - vel.dot(dir), 0.0, p.dash_boost)
+		var gain := clampf(top - vel.dot(dir), 0.0, p.dash_boost)
 		vel += dir * gain
 		dash_cd = p.dash_cooldown
 		dash_timer = 0.45
@@ -275,10 +276,11 @@ func physics_update(dt: float) -> void:
 	if s2 > 0.0:
 		var coast := 0.0 if amount > 0.15 else 0.6 * blend
 		var drag := 0.2 + 0.03 * s2 + coast
-		# above top speed (after a dash) you settle back quickly
-		if s2 > top and dash_timer <= 0.0:
-			drag += 2.5
 		vel *= maxf(0.0, s2 - drag * dt) / s2
+	# max_speed is an absolute ceiling for skating (25 mph at speed 100);
+	# only hits can push a skater past it
+	if stun_timer <= 0.0:
+		vel = vel.limit_length(p.max_speed)
 
 	stamina = minf(1.0, stamina + 0.1 * dt)
 
@@ -309,7 +311,7 @@ func physics_update(dt: float) -> void:
 ## Balance against hits: 1.0 when set, lower while carving hard or stopping.
 ## Agile skaters lose less of it.
 func stability() -> float:
-	var agi := stats.n(&"agility")
+	var agi := skill("agility")
 	var load := clampf(turn_load / 30.0, 0.0, 1.0) * lerpf(0.3, 0.1, agi)
 	return (1.0 - load) * (0.85 if braking else 1.0) * (0.8 if dash_timer > 0.0 else 1.0)
 
@@ -379,7 +381,7 @@ func _handle_actions(dt: float) -> void:
 		check_timer = 0.35
 		check_cd = 1.2
 		game.stats.checks += 1
-		vel += heading * lerpf(1.5, 3.0, stats.n(&"hitting"))
+		vel += heading * lerpf(1.5, 3.0, skill("hitting"))
 
 
 ## Two ways to shoot, both through the same wind-up:
@@ -565,7 +567,7 @@ func _try_stick_lift() -> void:
 	var near_shaft := Vector2(blade_pos.x - mid.x, blade_pos.z - mid.z).length()
 	if minf(near_blade, near_shaft) > 0.75:
 		return
-	var odds := 0.5 + 0.45 * (profile.stick_lift - holder.stats.n(&"stick_handling")) + 0.15 * Tuning.blend
+	var odds := 0.5 + 0.45 * (profile.stick_lift - holder.skill("stick_handling")) + 0.15 * Tuning.blend
 	if randf() > clampf(odds, 0.15, 0.92):
 		return
 	holder.stick_lifted_timer = STICK_LIFTED_TIME
