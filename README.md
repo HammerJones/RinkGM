@@ -151,7 +151,7 @@ the same rules with you on the centre's body, always on the ice.
 - The career keeps a calendar `day` and saves to `user://career.json`, so
   open-world rink time can hang off the same clock later.
 
-`godot --headless --path . --script tools/career_test.gd -- --seasons=10`
+`godot --headless --path . --script tools/tests/test_career.gd -- --seasons=10`
 quick-sims a whole career and checks schedules, standings and save/load.
 `godot --headless --path . --fixed-fps 120 -- --career --career-new --autoplay --period=1 --seasons=1`
 plays a full season of live engine games with the AI driving you.

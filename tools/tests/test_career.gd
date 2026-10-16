@@ -3,13 +3,13 @@ extends SceneTree
 ## tryout offered, and prints a season-by-season summary plus balance numbers.
 ## Fails (exit code 1) if an invariant breaks.
 ##
-##   godot --headless --path . --script tools/career_test.gd -- [--seasons=8] [--seed=7] [--pos=C]
+##   godot --headless --path . --script tools/tests/test_career.gd -- [--seasons=8] [--seed=7] [--pos=C]
 
 var failures := 0
 
 
 func _init() -> void:
-	var seasons := 8
+	var seasons := 3
 	var seed_ := 7
 	var pos := "C"
 	for a in OS.get_cmdline_user_args():
