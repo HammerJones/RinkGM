@@ -21,14 +21,15 @@ the owner, and keep the hook to a call into code that lives in your own area.
 
 ## Shared interfaces
 
-### 1. Player skills: `PlayerAttributes` (owned by Game mechanics)
+### 1. Player skills: `Skills` (owned by Game mechanics)
 
-A `Resource` at `scripts/career/player_attributes.gd` holding 0-100 values:
+`scripts/career/skills.gd` holds 1-100 values:
 `speed`, `agility`, `stick_handling`, `shot_accuracy`, `shot_power`,
 `shot_release`, `pass_quality`, `hitting`, `toughness` (plus any stamina or
 endurance stat mechanics adds). Mechanics decides what a skill means and how it
-grows or decays. Physics owns the **one** place that converts skills into
-physical numbers (`Skater.apply_attributes(attrs)`); nothing else converts.
+grows or decays. Gameplay code reads a skill only through
+`Skater.skill(name)`, which returns 0..1. Physics owns the **one** place that
+turns those into physical numbers; nothing else converts.
 
 Fixed anchors from Sean's design:
 
@@ -53,7 +54,8 @@ can do the AI can do.
 
 ### 3. Match events (owned by Game mechanics)
 
-Gameplay code reports what happened (shot, goal, save, pass completed,
+Not built yet; `game.gd` calls `BoxScore` directly until it is. Gameplay code
+will report what happened (shot, goal, save, pass completed,
 giveaway, takeaway, hit, penalty, injury) through one signal hub. Stats,
 progression and the HUD subscribe to it rather than calling into each other or
 reading `game.gd` internals.
@@ -81,9 +83,10 @@ RinkGM will become a general rink management sim with open-world elements, so:
 - The match is a self-contained scene (`scenes/main.tscn` today) that takes a
   setup (teams, lineups, rules) and reports a result. Something else (a season
   screen today, an open world later) loads it.
-- Career, season and league state are plain `Resource`s saved under `user://`,
-  never stored on match nodes.
-- No new autoload may hold match state; autoloads are for settings and services.
+- Career, season and league state are saved under `user://` (JSON today,
+  `user://career.json`) and never stored on match nodes.
+- No autoload may hold live match state. The `CareerState` autoload carries the
+  career and the next fixture between the hub and the rink, and that's all.
 - Rink geometry stays data driven (`Rink` constants today) so other rink sizes
   and venues can exist later.
 

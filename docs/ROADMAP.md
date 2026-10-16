@@ -11,7 +11,7 @@ workstream is in brackets; see `ARCHITECTURE.md` for who owns what.
 
 ## M1: One skater, real controls
 
-- [ ] `PlayerAttributes` resource and the skills-to-physics mapping [Mechanics + Physics]
+- [ ] `Skills` model and the skills-to-physics mapping [Mechanics + Physics]
 - [ ] Slapshot-style controller scheme with 90° stick arc, lift, tilt, dash, stop [Controls + Physics]
 - [ ] Keyboard and mouse version of the same scheme [Controls]
 - [ ] Player switching removed; you play one skater and the AI plays the rest [Mechanics]
