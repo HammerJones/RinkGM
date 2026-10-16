@@ -38,8 +38,11 @@ func on_possession(_s: Skater) -> void:
 	_possessions += 1
 
 
-func on_shot(_s: Skater, _slap: bool) -> void:
-	pass
+var _last_shot := ""
+
+
+func on_shot(_s: Skater, slap: bool) -> void:
+	_last_shot = "%s %.0f mph" % ["slapshot" if slap else "wrist shot", puck.horizontal_speed() / PhysicsProfile.MPH]
 
 
 func on_stick_lift(_by: Skater, _victim: Skater) -> void:
@@ -56,6 +59,7 @@ func _ready() -> void:
 	_line("# RinkGM physics bench")
 	_line("")
 	_line("Mode HYBRID unless noted. Ratings not named in a table are 50. 1 m/s = 2.24 mph.")
+	_bench_gestures()
 	_bench_skating()
 	_bench_stop()
 	_bench_turn()
@@ -129,6 +133,44 @@ func _give_puck(s: Skater) -> void:
 
 func _mph(v: float) -> String:
 	return "%.1f mph" % (v / PhysicsProfile.MPH)
+
+
+# ---------------------------------------------------------------- gestures
+
+## Feeds a right-stick sequence [[stick, lift, frames], ...] to a puck carrier
+## and returns what shot (if any) came off.
+func _gesture(seq: Array) -> String:
+	_clear()
+	var s := _skater(_stats({}))
+	_give_puck(s)
+	_last_shot = "none"
+	for k in 20:
+		_step()
+	for part in seq:
+		for f in part[2]:
+			s.ctrl.reset()
+			s.ctrl.stick = part[0]
+			s.ctrl.lift = part[1]
+			_step()
+	return _last_shot
+
+
+func _bench_gestures() -> void:
+	_line("")
+	_line("## Right-stick gestures (skater facing +x, all ratings 50)")
+	_line("")
+	_line("| gesture | result |")
+	_line("|---|---|")
+	var fwd := Vector2(1, 0)
+	var back := Vector2(-1, 0)
+	var side := Vector2(0.7, 0.7)
+	_line("| flick forward from neutral | %s |" % _gesture([[Vector2.ZERO, false, 10], [fwd, false, 3]]))
+	_line("| slow push forward (stickhandling) | %s |" % _gesture([[Vector2.ZERO, false, 10], [fwd * 0.5, false, 15], [fwd, false, 15]]))
+	_line("| sweep side to side | %s |" % _gesture([[side, false, 30], [Vector2(0.7, -0.7), false, 30], [side, false, 30]]))
+	_line("| pull back 0.1 s, push forward | %s |" % _gesture([[back, false, 12], [fwd, false, 5]]))
+	_line("| pull back 1 s, push forward | %s |" % _gesture([[back, false, 120], [fwd, false, 5]]))
+	_line("| hold lift, pull back 1 s, push forward | %s |" % _gesture([[back, true, 120], [fwd, false, 5]]))
+	_line("| pull back, then let go (cancel) | %s |" % _gesture([[back, false, 60], [Vector2.ZERO, false, 60]]))
 
 
 # ---------------------------------------------------------------- skating

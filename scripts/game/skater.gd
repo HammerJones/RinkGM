@@ -23,6 +23,8 @@ const WIND_SPOT := Vector2(-0.15, 0.8)     # where a drawn-back blade sits
 const SLAP_MIN := 0.18                     # a lifted wind-up shorter than this is a wrist shot
 const LIFT_HEIGHT := 0.22
 const STICK_LIFTED_TIME := 0.55
+const FLICK_WINDOW := 0.09   # a flick is measured over this much stick history
+const FLICK_TRAVEL := 0.9    # forward stick travel inside the window that counts as a flick
 
 
 ## What a controller (human or AI) wants this frame. Input code fills this in;
@@ -107,6 +109,7 @@ var _prev_shoot := false
 var _prev_lift := false
 var _stick_wound := false
 var _wind_grace := 0.0
+var _stick_hist: Array[Vector3] = []  # (x, z, age) of recent right-stick input, for flicks
 var _anchor_local := DEFAULT_BLADE
 var _spray: CPUParticles3D
 
@@ -389,6 +392,9 @@ func _handle_shot_input(dt: float, able: bool) -> void:
 			cancel_shot()
 		_prev_shoot = ctrl.shoot
 		return
+	if _flicked(dt):
+		_fire()
+		return
 	var drawn := _stick_drawn()
 	var held := ctrl.shoot
 	if not winding and ((held and not _prev_shoot) or drawn):
@@ -415,6 +421,26 @@ func _handle_shot_input(dt: float, able: bool) -> void:
 			cancel_shot()
 	elif not held:
 		_fire()
+
+
+## A quick forward flick of the right stick, with no wind-up, fires the
+## instant shot (weak and wild until shot release improves).
+func _flicked(dt: float) -> bool:
+	for i in _stick_hist.size():
+		_stick_hist[i].z += dt
+	_stick_hist.append(Vector3(ctrl.stick.x, ctrl.stick.y, 0.0))
+	while _stick_hist.size() > 2 and _stick_hist[1].z >= FLICK_WINDOW:
+		_stick_hist.pop_front()
+	if winding or ctrl.stick.length() < 0.8 or not has_puck():
+		return false
+	var l := _stick_local(ctrl.stick)
+	if l.x < 0.5:
+		return false
+	var travel := _stick_local(ctrl.stick - Vector2(_stick_hist[0].x, _stick_hist[0].y)).x
+	if travel < FLICK_TRAVEL:
+		return false
+	_stick_hist.clear()
+	return true
 
 
 func _fire() -> void:
