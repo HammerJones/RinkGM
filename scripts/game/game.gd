@@ -65,6 +65,8 @@ func _ready() -> void:
 	randomize()
 	_rng.randomize()
 	if "--career" in OS.get_cmdline_user_args() and CareerState.fixture.is_empty():
+		set_physics_process(false)
+		set_process(false)
 		get_tree().change_scene_to_file.call_deferred(CareerState.HUB_SCENE)
 		return
 	fixture = CareerState.fixture if not CareerState.fixture.is_empty() else Career.exhibition()
