@@ -81,7 +81,8 @@ assistance on top.
   reaction delay, reach toward where the puck will cross, drop to the butterfly
   for low shots, and either hold the puck (whistle) or give up a rebound.
 
-`tools/physics_bench.sh` drives skaters through scripted tests headless and
+`tools/physics_bench.sh` drives skaters through scripted tests headless (including
+the right-stick gestures: flick, pull back and push, lift for a slapshot) and
 prints what each rating produces (acceleration, stops, turns, puck control in
 cuts and while stickhandling, shot speed and accuracy, pass reception, hit
 strength) as Markdown tables. Run it after changing `PhysicsProfile`.
