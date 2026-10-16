@@ -12,21 +12,21 @@ marks the skater you control.
 ### Controls
 
 You play one skater (no player switching). The scheme follows Slapshot
-Rebound's physical stick with some NHL-style "puck glue" on top; the
-keyboard + mouse layout turns the mouse into a virtual right stick.
+Rebound's physical stick; the keyboard + mouse layout turns the mouse into a
+virtual right stick, so both devices drive the same stick model.
 
 | Action | Gamepad | Keyboard + mouse |
 | --- | --- | --- |
 | Skate | Left stick | WASD |
 | Dash (push-off burst) | L3 (click left stick) | Shift |
 | Hockey stop | R3 (click right stick) | Space |
-| Move the stick blade (90 degree arc in front of you) | Right stick | Mouse (cursor is captured; Esc frees it) |
+| Stick blade (90 degree arc in front of you) | Right stick | Mouse (cursor is captured; Esc frees it) |
 | Stickhandle | Right stick side to side | Mouse side to side |
-| Quick shot | Flick the right stick forward | Flick the mouse forward |
-| Wind-up shot | Pull the stick behind you, hold, sweep forward | Same with the mouse |
-| Slapshot | Hold LT while winding up | Hold RMB while winding up |
-| Lift stick: dekes with the puck, stick lift on defense | LT | RMB |
-| Tilt blade (raise shots and passes) | RT (analog) | LMB (hold longer for more) |
+| Shoot | Pull the stick behind you, then push it forward | Same with the mouse |
+| Slapshot | Hold LT as you pull back | Hold right click as you pull back |
+| Lift stick (offense: over the puck; defense: lift their stick) | LT | Right click |
+| Tilt blade (raises shots and passes) | RT (analog) | Left click (hold longer for more) |
+| Aim at the near or far post | Lean the left stick | Lean with W / S |
 | Pass, or call for a pass without the puck | A or RB | E |
 | Body check | B | F |
 | Mouse sensitivity | | [ and ] |
@@ -37,44 +37,54 @@ keyboard + mouse layout turns the mouse into a virtual right stick.
 
 "Forward" and "behind" are relative to the way your skater faces; the stick
 itself is camera-relative, like the left stick. A faint arc on the ice shows
-where the blade can reach.
+where the blade can reach. Device reading lives in `scripts/input/`
+(`PlayerInput` reads devices, `HumanController` fills `Skater.Controls`).
 
-How the skills feed the controls (`scripts/game/stick_control.gd`; ratings
-come from `Skater.skill(name)` when it exists, otherwise 0.5):
+### Physics and player ratings
 
-- **Stickhandling** caps how fast the blade moves, so low ratings stickhandle
-  slower, and moving the blade near that cap can fumble the puck (more often
-  at low ratings).
-- **Shot release**: the instant quick shot is weak and wild at low release and
-  gets harder and truer as it improves; wind-ups charge faster too.
-- **Shot power / accuracy** set wind-up and slapshot speed and the spread.
-- **Pass quality**: pass spread shrinks to almost nothing at the top rating.
-- **Hitting** improves defensive stick lifts against the carrier's stickhandling.
-- Lifting the stick with the puck lets the puck drift with you while the blade
-  goes over it; put it down on the other side and pull for a toe drag.
-
-### How the physics and arcade parts blend
-
-Everything is simulated, and one value, `Tuning.blend` (0 = SIM, 0.5 = HYBRID,
-1 = ARCADE, cycled with F1), adds assistance on top of that model:
+Each skater has `SkaterStats` (ratings 1 to 99: speed, agility, stick handling,
+shot accuracy, shot power, shot release, pass quality, hitting, toughness).
+`PhysicsProfile` turns those ratings into physical numbers, so every
+rating-to-physics curve is in one file. Everything is simulated, and
+`Tuning.blend` (0 = SIM, 0.5 = HYBRID, 1 = ARCADE, cycled with F1) adds
+assistance on top.
 
 - **Skating** (`scripts/game/skater.gd`): you only push along your skates, so
-  turning is carving. Sideways slide bleeds off through edge grip and part of it
-  is kept as forward speed. Turns get wider at speed. The hockey stop slides
-  you sideways with a snow spray. Arcade adds more grip, faster turning, some
-  direct thrust toward the stick direction, and coasting to a stop when you let go.
-- **Puck handling**: the blade is its own point with limited speed and reach.
-  The puck is pulled to it by a damped spring, so it lags, can be knocked loose,
-  and bounces off the blade if it arrives too fast to trap. Arcade makes the
-  spring stiffer and the trap window and blade pocket bigger.
-- **Shooting and passing**: shots pick a target height and solve for the lift
-  to get there. Accuracy drops when you're skating fast and on slapshots. Arcade
-  adds aim assist toward the inside of the posts and a wider pass-target cone
-  with more lead on the receiver.
+  turning is carving, and turns get wider at speed. Top speed runs from
+  16.5 mph (speed 1) to 25 mph (speed 99). A dash is a burst stride that can
+  briefly beat top speed and costs stamina. The hockey stop scrapes speed off
+  sideways; agility sets how fast you turn, how hard your edges grip, and how
+  short you stop. Carving never adds speed past top speed.
+- **Stick and puck** (`scripts/game/stick_puck.gd`): the blade moves inside a
+  90 degree arc with a speed and acceleration set by stick handling. The puck
+  follows it on a spring, but the blade can only push the puck so hard (grip,
+  also from stick handling). Stickhandle faster than your rating, or cut harder
+  than you can hold (agility turns you faster, which is harder to hold), and
+  the puck slides off. Lifting your stick takes the blade off the puck for
+  moves; on defense it lifts the carrier's stick if you're close, with odds
+  from both players' ratings.
+- **Shooting**: one wind-up model for all shots. A shot with no wind-up comes
+  off instantly but weak and wild; shot release sets how good that instant
+  shot is and how fast you reach full power. Shot power sets the top speed
+  (a full slapshot is about 60 mph at 1, 98 mph at 99), shot accuracy the aim
+  error. Skating fast or carving hard costs accuracy. Tilting the blade raises
+  the shot. Arcade adds aim assist toward the inside of the posts.
+- **Passing**: pass quality sets pass accuracy, how soft a pass arrives for its
+  intended target, and how fast a puck you can trap. At 99 the target almost
+  always gets clean control.
+- **Hits**: `Game.hit_landed(hitter, victim, impulse, knocked_down)` fires on
+  every contact between opponents. Impulse comes from closing speed and the
+  hitter's rating, much more for a shoulder check. It knocks the victim down if
+  it beats their balance (toughness, lowered while they carve hard, stop or
+  dash), and a smaller hit can still jar the puck loose.
 - **Goalies** (`scripts/game/goalie.gd`) play the angle, read the shot after a
   reaction delay, reach toward where the puck will cross, drop to the butterfly
-  for low shots, and either hold the puck (whistle) or give up a rebound. Corners
-  beat them, so they aren't affected by the blend.
+  for low shots, and either hold the puck (whistle) or give up a rebound.
+
+`tools/physics_bench.sh` drives skaters through scripted tests headless and
+prints what each rating produces (acceleration, stops, turns, puck control in
+cuts and while stickhandling, shot speed and accuracy, pass reception, hit
+strength) as Markdown tables. Run it after changing `PhysicsProfile`.
 
 ### Voxel models and oriented voxels
 
@@ -100,11 +110,14 @@ scenes/main.tscn         root node -> scripts/game/game.gd
 scripts/voxel/           VoxelModel, VoxelMeshBuilder, VoxelPart, VoxLoader
 scripts/art/models.gd    procedural players, goalies, sticks, puck, net
 scripts/rink/rink.gd     rink geometry (board SDF, nets) + ice/boards visuals
-scripts/game/            game rules, skater, goalie, puck, AI, rig, camera
-scripts/input/           PlayerInput: devices -> one frame of intent (mouse = virtual stick)
+scripts/core/skater_stats.gd   player ratings (1 to 99)
+scripts/game/            game rules, skater, goalie, puck, stick-puck contact,
+                         PhysicsProfile (ratings to physics), AI, rig, camera
+scripts/input/           PlayerInput (devices, mouse = virtual stick), HumanController
 scripts/ui/hud.gd        scoreboard, bars, messages, controls card
 tests/                   headless control checks (`-- --test=controls`)
 art/reference/           the reference renders
+tools/bench/             headless physics bench (tools/physics_bench.sh)
 ```
 
 ### Career mode and game mechanics
@@ -117,18 +130,10 @@ the same rules with you on the centre's body, always on the ice.
 
 - **Ratings** (`scripts/career/skills.gd`): speed, agility, stick handling,
   shot accuracy, shot power, shot release, passing, hitting and toughness, each
-  1-100. `Skills` is the only place a rating becomes a physics number, so the
-  physics reads `skater.skills` and balance is tuned there:
-  - speed: sprint top speed 14 mph at 1, **25 mph at 100**, and acceleration
-  - agility: turn rate, edge grip, and a safe turn rate above which the puck
-    works loose and the skater is easier to knock over
-  - stick handling: blade speed and how tightly the puck stays on it
-  - shot release: wind-up time for a full-quality shot (0.5 s down to 0.14 s)
-    and how good an instant shot is (20% quality at 1, 75% at 100)
-  - shot accuracy / power: aim error and puck speed, scaled by that quality
-  - passing: pass aim error, how hot a pass the skater can trap, and a
-    tape-to-tape bonus for the intended target (near-certain at 100)
-  - hitting / toughness: check strength vs. balance, and injury risk
+  1-100, plus injury/fatigue modifiers. `Skills` is the single store; on the
+  ice they reach the physics as `SkaterStats` (`Skills.to_stats()`) and are
+  read elsewhere through `Skater.skill(key)` (0..1). What each rating does in
+  metres and seconds is the physics' `PhysicsProfile`.
 - **Injuries** (`injury.gd`): hard hits roll for an injury (harder hits,
   tired players and low toughness raise the odds). Severity runs day-to-day,
   minor, moderate, major; each hits the skills tied to the body part while it
@@ -160,11 +165,11 @@ plays a full season of live engine games with the AI driving you.
 
 Arguments after `--` are read by the game:
 
+- `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
 - `--autoplay` lets the AI drive your skater too (prints stats and a box score on exit).
 - `--period=N` plays N-minute periods (exhibition default is 5).
 - `--career` opens the career hub; `--career-new` discards the saved career.
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
-- `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
 - `--screenshot=out.png --shot-after=6 [--iso] [--zoom=10] [--focus=x,z]` saves a frame and quits.
 
 For example, to simulate a full game headless in a few seconds:
@@ -174,3 +179,4 @@ godot --headless --path . --fixed-fps 120 --quit-after 36000 -- --autoplay --mod
 ```
 
 `tools/check.sh` re-imports the project and runs it headless to surface script errors.
+`tools/physics_bench.sh [out.md]` prints the physics bench.

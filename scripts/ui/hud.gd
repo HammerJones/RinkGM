@@ -6,10 +6,9 @@ extends CanvasLayer
 const HELP := """[b]Gamepad[/b]
 L-stick  skate      L3  dash      R3  hockey stop
 R-stick  stick blade (90 deg arc), side to side to stickhandle
-  flick forward = quick shot
-  pull back, hold, sweep forward = wind-up shot
-LT  lift stick (+ wind-up = slapshot, on D = stick lift)
-RT  tilt blade (raises shots and passes)
+  pull back, then push forward = shot
+LT  lift stick (hold while pulling back = slapshot,
+  on D = stick lift)   RT  tilt blade (raise shots/passes)
 A / RB  pass, or call for it    B  body check
 Back  physics mode   D-up  camera   Start  restart
 Y  fast-forward while on the bench (career)

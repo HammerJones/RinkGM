@@ -160,7 +160,7 @@ static func _credit_hits_and_injuries(res: Dictionary, lu: Dictionary, opp: Dict
 			_line(res, h).hits += 1
 			if hurt.has(v.id):
 				continue
-			var inj := Injury.roll_hit(h.skills, v.skills, rng.randf_range(1.5, 5.0) * h.skills.hit_power(), v.fatigue, rng)
+			var inj := Injury.roll_hit(h.skills, v.skills, rng.randf_range(1.5, 5.0) * lerpf(0.6, 1.5, h.skills.n("hitting")), v.fatigue, rng)
 			if inj:
 				hurt[v.id] = true
 				res.injuries.append({"pid": v.id, "injury": inj})

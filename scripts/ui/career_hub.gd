@@ -128,8 +128,6 @@ func _skills_table(parent: Control, u: PlayerProfile) -> void:
 		var mod: float = u.skills.modifiers.get(k, 0.0)
 		var gain: float = u.xp_log.get(k, 0.0)
 		grid.add_child(_label("%d%s%s" % [round(u.skills.eff(k)), "  (%+d hurt)" % round(mod) if mod <= -1.0 else "", "  +%.1f this season" % gain if gain >= 0.1 else ""], 14))
-	var mph := u.skills.max_speed() / Skills.MPH
-	parent.add_child(_label("Top speed %.1f mph   Shot release %.2fs   Instant-shot quality %d%%" % [mph, u.skills.release_time(), int(u.skills.shot_quality(0.0) * 100)], 14))
 
 
 func _actions(parent: Control) -> void:

@@ -17,6 +17,11 @@ const PERIOD_NAMES := ["1ST", "2ND", "3RD"]
 
 enum State { FACEOFF, PLAY, STOPPAGE, OVER }
 
+## Every body contact between opponents. `impulse` is roughly kg*m/s (a hard
+## open-ice hit is 300-600); game mechanics rolls injuries from it.
+signal hit_landed(hitter: Skater, victim: Skater, impulse: float, knocked_down: bool)
+signal stick_lifted(by: Skater, victim: Skater)
+
 var rink: Rink
 var puck: Puck
 var skaters: Array[Skater] = []
@@ -58,7 +63,7 @@ var _palettes := []
 var _focus_override: Variant = null
 ## `-- --autoplay` lets the AI drive your skater too (attract mode / testing).
 var autoplay := "--autoplay" in OS.get_cmdline_user_args()
-var stats := {"shots": 0, "saves": 0, "goals": 0, "possessions": 0, "whistles": 0, "checks": 0}
+var stats := {"shots": 0, "saves": 0, "goals": 0, "possessions": 0, "whistles": 0, "checks": 0, "hits": 0, "knockdowns": 0, "stick_lifts": 0}
 
 
 func _ready() -> void:
@@ -105,6 +110,7 @@ func _ready() -> void:
 		goalies.append(g)
 	clock = settings.period_length()
 	human = skaters[0]
+	hit_landed.connect(_on_hit_landed)
 	if career_mode:
 		user_profile = CareerState.career.players[int(fixture.user_id)]
 		_sync_human()
@@ -254,7 +260,7 @@ func _physics_process(dt: float) -> void:
 	var sdt := dt / PUCK_SUBSTEPS
 	for i in PUCK_SUBSTEPS:
 		var prev := puck.position
-		_puck_stick_interaction(sdt)
+		StickPuck.step(self, puck, sdt)
 		puck.integrate(sdt)
 		_puck_body_collisions()
 		for g in goalies:
@@ -277,7 +283,7 @@ func _process(dt: float) -> void:
 	else:
 		hud.set_bench("")
 	hud.set_stamina(human.stamina)
-	hud.set_power(controller.stick_control.charge)
+	hud.set_power(human.windup())
 	# career: hold fast-forward while you're on the bench
 	var ff := career_mode and not human_on_ice and state != State.OVER and not autoplay and Input.is_action_pressed("fast_forward")
 	Engine.time_scale = 4.0 if ff else 1.0
@@ -313,8 +319,8 @@ func on_possession(s: Skater) -> void:
 	if s.team != _chain_team:
 		_chain.clear()
 		_chain_team = s.team
-	if s.profile and (_chain.is_empty() or _chain[-1] != s.profile):
-		_chain.append(s.profile)
+	if s.player and (_chain.is_empty() or _chain[-1] != s.player):
+		_chain.append(s.player)
 
 
 func on_shot(s: Skater, _slap: bool) -> void:
@@ -333,86 +339,6 @@ func on_save(g: Goalie, frozen: bool) -> void:
 
 
 # ---------------------------------------------------------------- puck & bodies
-
-## Stick-on-puck: the carrier's blade pulls the puck with a damped spring
-## (stiffer in arcade), other blades can trap it if the relative speed is low
-## enough, deflect it otherwise, or poke it off an opponent's stick.
-func _puck_stick_interaction(dt: float) -> void:
-	if puck.frozen or puck.in_net_side != 0:
-		return
-	var blend: float = Tuning.blend
-	var carrier := puck.controller
-	if carrier:
-		if carrier.stun_timer > 0.0:
-			puck.controller = null
-		elif carrier.stick_lifted():
-			# deke: the blade is up over the puck, so it isn't pulled to the blade;
-			# it drifts along with the skater (stickier in arcade) until the stick
-			# comes back down
-			var gap := carrier.position - puck.position
-			gap.y = 0.0
-			var follow := 1.0 - exp(-lerpf(2.0, 8.0, blend) * dt)
-			puck.vel.x = lerpf(puck.vel.x, carrier.vel.x, follow)
-			puck.vel.z = lerpf(puck.vel.z, carrier.vel.z, follow)
-			if gap.length() > Skater.REACH_MAX + 0.35:
-				puck.controller = null
-		else:
-			var to := carrier.puck_anchor() - puck.position
-			to.y = 0.0
-			var k := lerpf(160.0, 420.0, blend) * carrier.handling
-			var rel := puck.vel - carrier.anchor_vel()
-			rel.y = 0.0
-			var acc := to * k - rel * 2.0 * sqrt(k) * 0.9
-			puck.vel += acc * dt
-			if to.length() > lerpf(0.5, 0.8, blend) + (0.6 if carrier.regrab_timer > 0.0 else 0.0):
-				puck.controller = null
-	if puck.position.y > 0.3:
-		return
-	var cap := lerpf(0.26, 0.42, blend)
-	for s in skaters:
-		if s == puck.controller or s.stun_timer > 0.0 or not puck.can_be_touched_by(s):
-			continue
-		var d := puck.position - s.blade_pos
-		d.y = 0.0
-		var dist := d.length()
-		if dist > cap:
-			continue
-		var holder := puck.controller
-		if holder != null:
-			if holder.team == s.team:
-				continue
-			# stick battle: a quick poke knocks it loose, otherwise a small chance per second
-			var poke := (s.blade_vel - holder.blade_vel).length()
-			if poke > 3.5 or randf() < dt * 1.5 / holder.handling:
-				puck.controller = null
-				var away := d.normalized() if dist > 0.001 else s.heading
-				puck.vel = away * 3.0 + s.blade_vel * 0.5
-				puck.vel.y = 0.0
-				puck.ignore_briefly(holder, 0.3)
-				puck.last_touch = s
-			continue
-		var rel := puck.vel - s.blade_vel
-		rel.y = 0.0
-		# receiving skill, plus the passer's tape-to-tape bonus for the intended target
-		var thresh := lerpf(7.0, 13.0, blend) * s.skills.receive_mult() + (puck.pass_bonus if puck.pass_target == s else 0.0)
-		if rel.length() < thresh:
-			puck.controller = s
-			puck.pass_target = null
-			puck.last_touch = s
-			puck.vel.y = 0.0
-			puck.position.y = 0.0
-			on_possession(s)
-			return
-		# too hot to handle: it bounces off the blade
-		if dist > 0.001:
-			var n := d / dist
-			var vn := rel.dot(n)
-			if vn < 0.0:
-				puck.vel -= n * vn * 1.4
-				puck.vel *= 0.8
-				puck.last_touch = s
-			puck.position += n * (cap - dist)
-
 
 ## Skates and shins block pucks that aren't on that skater's stick.
 func _puck_body_collisions() -> void:
@@ -457,12 +383,14 @@ func _collide_bodies() -> void:
 			var imp := (1.0 + 0.25) * closing * 0.5
 			a.vel -= nrm * imp
 			b.vel += nrm * imp
-			if a.team != b.team and closing > 1.0:
-				# hit power against the victim's balance (which drops mid-turn)
-				if a.check_timer > 0.0 and b.stun_timer <= 0.0:
-					_hit(a, b, nrm, closing)
-				elif b.check_timer > 0.0 and a.stun_timer <= 0.0:
-					_hit(b, a, -nrm, closing)
+			if a.team != b.team and closing > 3.0:
+				# whoever is driving into the contact harder is the hitter
+				var a_in := a.vel.dot(nrm) + imp
+				var b_in := -(b.vel.dot(nrm) - imp)
+				if a_in >= b_in:
+					_body_hit(a, b, nrm, closing)
+				else:
+					_body_hit(b, a, -nrm, closing)
 	for g in goalies:
 		for s in skaters:
 			var d := Vector2(s.position.x - g.pos2.x, s.position.z - g.pos2.y)
@@ -476,18 +404,44 @@ func _collide_bodies() -> void:
 					s.vel -= n3 * vn
 
 
-func _hit(attacker: Skater, victim: Skater, nrm: Vector3, closing: float) -> void:
-	var impact := closing * attacker.skills.hit_power() / victim.balance()
-	if impact <= 2.0:
+## Opponents colliding: the impulse grows with closing speed and the hitter's
+## rating (more with a shoulder check). It knocks the victim down if it beats
+## their balance (toughness, less while carving hard or stopping), and a
+## lighter hit can still jar the puck loose.
+func _body_hit(hitter: Skater, victim: Skater, nrm: Vector3, closing: float) -> void:
+	if victim.stun_timer > 0.0:
 		return
-	victim.knock_down(nrm * closing * 0.8 * attacker.skills.hit_power())
-	box.hit(attacker.profile)
-	if victim.profile == null or state != State.PLAY:
+	# a shoulder check carries the hitter's weight; incidental bumps don't
+	var impulse := closing * Skater.MASS * 0.5 * hitter.profile.hit_power
+	impulse *= 1.4 if hitter.check_timer > 0.0 else 0.3
+	var balance := victim.profile.balance * victim.stability()
+	var down := impulse > balance
+	stats.hits += 1
+	if down:
+		stats.knockdowns += 1
+		victim.knock_down(nrm * closing * 0.6)
+	elif victim.has_puck() and impulse > balance * 0.6 and randf() < (impulse / balance - 0.6) * 1.5:
+		puck.release(victim, victim.vel + nrm * 2.0)
+	hit_landed.emit(hitter, victim, impulse, down)
+
+
+func on_stick_lift(by: Skater, victim: Skater) -> void:
+	stats.stick_lifts += 1
+	stick_lifted.emit(by, victim)
+
+
+## Hits feed the box score, and hard ones can injure. Physics impulses run
+## ~50-200 for a bump and ~250-500 for a shoulder check; Injury wants a
+## 2 (routine) .. 6+ (huge) impact scale.
+func _on_hit_landed(hitter: Skater, victim: Skater, impulse: float, knocked_down: bool) -> void:
+	if hitter.check_timer > 0.0 or knocked_down:
+		box.hit(hitter.player)
+	if victim.player == null or state != State.PLAY or impulse < 150.0:
 		return
-	var inj := Injury.roll_hit(attacker.skills, victim.skills, impact, 1.0 - victim.stamina, _rng)
+	var inj := Injury.roll_hit(hitter.skills, victim.skills, impulse / 80.0, 1.0 - victim.stamina, _rng)
 	if inj == null:
 		return
-	var p := victim.profile
+	var p := victim.player
 	box.injuries.append({"pid": p.id, "injury": inj})
 	benches[victim.team].injure(p, team_skaters(victim.team))
 	hud.show_message("%s hurt\n%s" % [p.short_name(), inj.describe()], 2.5)
@@ -685,7 +639,7 @@ func _sync_human() -> void:
 	var was := human_on_ice
 	human_on_ice = false
 	for s in team_skaters(0):
-		if s.profile == user_profile:
+		if s.player == user_profile:
 			if s != human:
 				human.cancel_shot()
 			human = s
@@ -716,20 +670,20 @@ func _period_label() -> String:
 func _on_ice_profiles(team: int) -> Array:
 	var out: Array = []
 	for s in skaters:
-		if (team == -1 or s.team == team) and s.profile:
-			out.append(s.profile)
+		if (team == -1 or s.team == team) and s.player:
+			out.append(s.player)
 	return out
 
 
 func _credit_shot(team: int) -> void:
-	var shooter: PlayerProfile = _last_shooter.profile if _last_shooter and _last_shooter.team == team else null
+	var shooter: PlayerProfile = _last_shooter.player if _last_shooter and _last_shooter.team == team else null
 	box.shot_on_goal(shooter, team)
 	_last_shooter = null
 
 
 func _credit_goal(team: int) -> void:
 	var touch: Skater = puck.last_touch
-	var scorer: PlayerProfile = touch.profile if touch and touch.team == team else null
+	var scorer: PlayerProfile = touch.player if touch and touch.team == team else null
 	if scorer == null and _chain_team == team and not _chain.is_empty():
 		scorer = _chain[-1]
 	box.shot_on_goal(scorer, team)
@@ -790,8 +744,8 @@ func _make_arc() -> MeshInstance3D:
 	for i in steps:
 		var pts := []
 		for k in [i, i + 1]:
-			var a := lerpf(-StickControl.ARC_HALF, StickControl.ARC_HALF, float(k) / steps)
-			for r in [StickControl.REACH_NEAR, StickControl.REACH_FAR]:
+			var a := lerpf(-Skater.ARC_HALF, Skater.ARC_HALF, float(k) / steps)
+			for r in [Skater.REACH_MIN, Skater.REACH_MAX]:
 				# local forward is -Z, right is +X (see Skater._apply_transform)
 				pts.append(Vector3(sin(a) * r, 0, -cos(a) * r))
 		for idx in [0, 1, 2, 2, 1, 3]:

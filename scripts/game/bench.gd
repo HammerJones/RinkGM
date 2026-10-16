@@ -51,7 +51,7 @@ func profile_for(i: int) -> PlayerProfile:
 
 
 func on_ice(bodies: Array) -> Array:
-	return bodies.map(func(s): return s.profile)
+	return bodies.map(func(s): return s.player)
 
 
 ## Puts the current lines on the bodies (start of game / after a goal).
@@ -82,7 +82,7 @@ func tick(dt: float, bodies: Array, stoppage: bool, safe: bool) -> bool:
 	if changed:
 		for i in bodies.size():
 			var want := profile_for(i)
-			if bodies[i].profile != want:
+			if bodies[i].player != want:
 				_put(bodies[i], want)
 	return changed
 
@@ -95,15 +95,15 @@ func _due(t: float, shift: float, stoppage: bool, safe: bool) -> bool:
 
 func _is_on(pid: int, bodies: Array) -> bool:
 	for s in bodies:
-		if s.profile and s.profile.id == pid:
+		if s.player and s.player.id == pid:
 			return true
 	return false
 
 
 func _put(body: Skater, p: PlayerProfile) -> void:
-	if body.profile:
-		energy[body.profile.id] = body.stamina
-	body.apply_profile(p)
+	if body.player:
+		energy[body.player.id] = body.stamina
+	body.apply_player(p)
 	body.stamina = energy.get(p.id, 1.0)
 
 
@@ -126,7 +126,7 @@ func injure(p: PlayerProfile, bodies: Array) -> void:
 					var other_line: Array = lines[(li + 1) % lines.size()]
 					lines[li][slot] = sub if sub else _healthy(other_line[slot], lines, slot)
 	for i in bodies.size():
-		if bodies[i].profile == p:
+		if bodies[i].player == p:
 			_put(bodies[i], profile_for(i))
 
 

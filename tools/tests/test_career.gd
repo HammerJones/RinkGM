@@ -32,20 +32,13 @@ func _expect(cond: bool, what: String) -> void:
 
 
 func _check_skill_curves() -> void:
+	# ratings reach the physics as SkaterStats, injury modifiers included
 	var s := Skills.new()
 	for k in Skills.SKATER_KEYS:
 		s.values[k] = 100.0
-	var mph := s.max_speed() / Skills.MPH
-	_expect(absf(mph - 25.0) < 0.01, "speed 100 sprints at 25 mph (got %.2f)" % mph)
-	var tape := s.tape_to_tape_bonus()
-	var low := Skills.new()
-	for k in Skills.SKATER_KEYS:
-		low.values[k] = 1.0
-	_expect(s.shot_quality(0.0) > low.shot_quality(0.0) + 0.4, "elite instant shot beats a beginner's")
-	_expect(s.shot_quality(s.release_time()) == 1.0, "full wind-up is full quality")
-	_expect(tape > 25.0 and low.tape_to_tape_bonus() < 3.0, "pass quality spans near-guaranteed to unreliable")
-	print("Curves  speed 1->100: %.1f -> %.1f mph | release %.2fs -> %.2fs | instant shot quality %.2f -> %.2f" % [
-		low.max_speed() / Skills.MPH, mph, low.release_time(), s.release_time(), low.shot_quality(0.0), s.shot_quality(0.0)])
+	s.modifiers["speed"] = -30.0
+	var st := s.to_stats()
+	_expect(st.agility == 99 and st.speed == 70, "to_stats clamps to 1..99 and applies modifiers (%d, %d)" % [st.agility, st.speed])
 
 
 func _run_career(seasons: int, seed_: int, pos: String) -> void:

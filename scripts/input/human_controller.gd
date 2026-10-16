@@ -1,11 +1,11 @@
 class_name HumanController
 extends Node
-## Fills the human skater's Controls each tick from PlayerInput (devices) and
-## StickControl (stick gestures). Game calls update() before the skaters move.
+## Fills the human skater's Skater.Controls each tick from PlayerInput. Only
+## reads intent: what the stick, lift and tilt do on the ice (arc, wind-ups,
+## slapshots, dekes, stick lifts, skill effects) is the simulation's job.
 
 var game: Node
 var player_input: PlayerInput
-var stick_control := StickControl.new()
 var _pass_call_until := -10.0
 
 
@@ -23,17 +23,20 @@ func update(dt: float) -> void:
 	var right: Vector3 = game.camera_rig.right_flat()
 	var w := right * f.move.x + fwd * f.move.y
 	c.move = Vector2(w.x, w.z)
-	c.brake = f.stop
 	c.dash = f.dash
-	c.check_pressed = f.check_pressed
+	c.stop = f.stop
+	c.check = f.check_pressed
+	c.lift = f.lift > 0.5
+	c.tilt = f.tilt
 	var sw := right * f.stick.x + fwd * f.stick.y
-	var stick := Vector2(sw.x, sw.z)
-	stick_control.update(human, stick, f.lift, f.tilt, dt)
+	c.stick = Vector2(sw.x, sw.z)
+	# shots go at the net; lean on the left stick to pick the near or far post
+	c.aim_point = human.attack_goal() + Vector3(0, 0, clampf(w.z, -1.0, 1.0) * 0.75)
+	# passes go where you're skating, else where the stick points
+	c.pass_dir = c.move if c.move.length() > 0.3 else c.stick
 	if f.pass_pressed:
 		if human.has_puck():
-			# pass where you're skating, else where the stick points
-			var dir := c.move if c.move.length() > 0.3 else stick
-			stick_control.pass_puck(human, dir, f.tilt)
+			c.pass_pressed = true
 		else:
 			_pass_call_until = game.time + 1.2
 			game.hud.show_message("PASS!", 0.6)
