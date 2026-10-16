@@ -11,25 +11,34 @@ marks the skater you control.
 
 ### Controls
 
-Placeholder bindings for the physics; the final scheme is being designed separately.
+You play one skater (no player switching). The scheme follows Slapshot
+Rebound's physical stick; the keyboard + mouse layout turns the mouse into a
+virtual right stick, so both devices drive the same stick model.
 
-| Action | Keyboard + mouse | Gamepad |
+| Action | Gamepad | Keyboard + mouse |
 | --- | --- | --- |
-| Skate | WASD | Left stick |
-| Dash | Shift | L3 (push the left stick) |
-| Hockey stop | Space | R3 (push the right stick) |
-| Stick blade | Mouse position on the ice | Right stick, inside a 90 degree arc in front of you |
-| Shoot | Left click: hold to wind up, release | Pull the right stick back, then push it forward (or hold X) |
-| Slapshot | Hold Ctrl or middle mouse while winding up | Hold LT while pulling back |
-| Stick lift (offense: over the puck; defense: lift their stick) | Ctrl / middle mouse | LT |
-| Tilt blade (raises shots, saucers passes) | Z | RT |
-| Pass (with puck) / switch player (without) | Right click or E | A |
-| Body check | F | B |
-| Switch player | Q / Tab | Y |
-| Physics mode (Sim / Hybrid / Arcade) | F1 | Back |
-| Camera (broadcast / isometric) | C | D-pad up |
-| Restart | R | Start |
-| Show/hide controls | H | |
+| Skate | Left stick | WASD |
+| Dash (push-off burst) | L3 (click left stick) | Shift |
+| Hockey stop | R3 (click right stick) | Space |
+| Stick blade (90 degree arc in front of you) | Right stick | Mouse (cursor is captured; Esc frees it) |
+| Stickhandle | Right stick side to side | Mouse side to side |
+| Shoot | Pull the stick behind you, then push it forward | Same with the mouse |
+| Slapshot | Hold LT as you pull back | Hold right click as you pull back |
+| Lift stick (offense: over the puck; defense: lift their stick) | LT | Right click |
+| Tilt blade (raises shots and passes) | RT (analog) | Left click (hold longer for more) |
+| Aim at the near or far post | Lean the left stick | Lean with W / S |
+| Pass, or call for a pass without the puck | A or RB | E |
+| Body check | B | F |
+| Mouse sensitivity | | [ and ] |
+| Physics mode (Sim / Hybrid / Arcade) | Back | F1 |
+| Camera (broadcast / isometric) | D-pad up | C |
+| Restart | Start | R |
+| Show/hide controls | | H |
+
+"Forward" and "behind" are relative to the way your skater faces; the stick
+itself is camera-relative, like the left stick. A faint arc on the ice shows
+where the blade can reach. Device reading lives in `scripts/input/`
+(`PlayerInput` reads devices, `HumanController` fills `Skater.Controls`).
 
 ### Physics and player ratings
 
@@ -105,7 +114,9 @@ scripts/rink/rink.gd     rink geometry (board SDF, nets) + ice/boards visuals
 scripts/core/skater_stats.gd   player ratings (1 to 99)
 scripts/game/            game rules, skater, goalie, puck, stick-puck contact,
                          PhysicsProfile (ratings to physics), AI, rig, camera
+scripts/input/           PlayerInput (devices, mouse = virtual stick), HumanController
 scripts/ui/hud.gd        scoreboard, bars, messages, controls card
+tests/                   headless control checks (`-- --test=controls`)
 art/reference/           the reference renders
 tools/bench/             headless physics bench (tools/physics_bench.sh)
 ```
@@ -114,6 +125,7 @@ tools/bench/             headless physics bench (tools/physics_bench.sh)
 
 Arguments after `--` are read by the game:
 
+- `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
 - `--autoplay` lets the AI drive your skater too (prints stats on exit).
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
 - `--screenshot=out.png --shot-after=6 [--iso] [--zoom=10] [--focus=x,z]` saves a frame and quits.

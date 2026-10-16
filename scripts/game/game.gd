@@ -31,6 +31,8 @@ var _state_timer := 0.0
 var _pending_faceoff := Vector2.ZERO
 var _stall := 0.0
 var _marker: MeshInstance3D
+var _arc: MeshInstance3D
+var controller: HumanController
 var _palettes := []
 var _focus_override: Variant = null
 ## `-- --autoplay` lets the AI drive your skater too (attract mode / testing).
@@ -65,10 +67,20 @@ func _ready() -> void:
 	add_child(hud)
 	_marker = _make_marker()
 	add_child(_marker)
+	_arc = _make_arc()
+	add_child(_arc)
+	controller = HumanController.new()
+	controller.game = self
+	add_child(controller)
 	Tuning.mode_changed.connect(hud.set_mode)
 	hud.set_mode(Tuning.mode_name())
 	_start_faceoff(Vector2.ZERO)
 	_handle_capture_args()
+	# `-- --test=controls` runs the scripted control checks in tests/
+	if "--test=controls" in OS.get_cmdline_user_args():
+		var t: Node = load("res://tests/controls_test.gd").new()
+		t.set("game", self)
+		add_child(t)
 
 
 ## `-- --screenshot=out.png --shot-after=6 [--iso]` saves a frame and quits
@@ -181,7 +193,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(dt: float) -> void:
 	time += dt
 	_update_rules(dt)
-	_update_human(dt)
+	if not autoplay:
+		controller.update(dt)
 	for s in skaters:
 		if s != human or autoplay:
 			SkaterAI.think(s, self, dt)
@@ -207,6 +220,8 @@ func _process(dt: float) -> void:
 		focus = _focus_override
 	camera_rig.follow(focus, dt)
 	_marker.position = human.position + Vector3(0, 0.02, 0)
+	_arc.visible = not autoplay
+	_arc.transform = Transform3D(human.basis, human.position + Vector3(0, 0.015, 0))
 	hud.set_score(_palettes[0].name, _palettes[1].name, score[0], score[1], clock)
 	hud.set_stamina(human.stamina)
 	hud.set_power(human.windup())
@@ -230,50 +245,7 @@ func _update_rules(dt: float) -> void:
 				_start_faceoff(_pending_faceoff)
 
 
-# ---------------------------------------------------------------- human input
-
-func _update_human(_dt: float) -> void:
-	if autoplay:
-		return
-	var c := human.ctrl
-	c.reset()
-	var fwd := camera_rig.forward_flat()
-	var right := camera_rig.right_flat()
-	var mv := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	var w := right * mv.x - fwd * mv.y
-	c.move = Vector2(w.x, w.z)
-	c.dash = Input.is_action_just_pressed("dash")
-	c.stop = Input.is_action_pressed("stop")
-	c.shoot = Input.is_action_pressed("shoot")
-	c.lift = Input.is_action_pressed("lift")
-	c.tilt = Input.get_action_strength("tilt")
-	c.check = Input.is_action_just_pressed("check")
-	if Input.is_action_just_pressed("switch"):
-		_switch_player()
-		return
-	if Input.is_action_just_pressed("pass"):
-		if human.has_puck():
-			c.pass_pressed = true
-		else:
-			_switch_player()
-			return
-
-	if InputSetup.device == InputSetup.Device.KBM:
-		var mp: Variant = camera_rig.mouse_on_ice()
-		if mp != null:
-			c.blade_target = mp
-			c.aim_point = mp
-			c.pass_dir = Vector2(mp.x - human.position.x, mp.z - human.position.z)
-	else:
-		# right stick: blade inside the arc; pull back then push forward to shoot
-		var rs := Input.get_vector("stick_left", "stick_right", "stick_up", "stick_down")
-		var rw := right * rs.x - fwd * rs.y
-		c.stick = Vector2(rw.x, rw.z)
-		c.pass_dir = c.move
-		# aim shots at the near or far post with the left stick
-		var goal := human.attack_goal()
-		c.aim_point = goal + Vector3(0, 0, clampf(w.z, -1.0, 1.0) * 0.75)
-
+# ---------------------------------------------------------------- players
 
 func _switch_player(to: Skater = null) -> void:
 	if to == null:
@@ -295,8 +267,6 @@ func _switch_player(to: Skater = null) -> void:
 
 func on_possession(s: Skater) -> void:
 	stats.possessions += 1
-	if s.team == 0 and s != human:
-		_switch_player(s)
 
 
 func on_shot(_s: Skater, _slap: bool) -> void:
@@ -511,5 +481,31 @@ func _make_marker() -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.mesh = torus
 	mi.scale = Vector3(1, 0.08, 1)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mi
+
+
+## The 90 degree arc the stick can reach, drawn on the ice under the player.
+func _make_arc() -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var steps := 18
+	for i in steps:
+		var pts := []
+		for k in [i, i + 1]:
+			var a := lerpf(-Skater.ARC_HALF, Skater.ARC_HALF, float(k) / steps)
+			for r in [Skater.REACH_MIN, Skater.REACH_MAX]:
+				# local forward is -Z, right is +X (see Skater._apply_transform)
+				pts.append(Vector3(sin(a) * r, 0, -cos(a) * r))
+		for idx in [0, 1, 2, 2, 1, 3]:
+			st.add_vertex(pts[idx])
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(1.0, 0.82, 0.25, 0.22)
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return mi

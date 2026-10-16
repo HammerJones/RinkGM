@@ -3,21 +3,20 @@ extends CanvasLayer
 ## Scoreboard, clock, physics-mode readout, shot power / stamina bars,
 ## centre-screen messages and a toggleable controls card.
 
-const HELP := """[b]Keyboard + mouse[/b]
-WASD  skate        Mouse  stick blade / aim
-LMB  shoot (hold to wind up)   RMB / E  pass
-Ctrl / MMB  lift stick (+ shoot = slapshot)
-Z  tilt blade (raise shot)   Shift  dash
-Space  hockey stop   F  check   Q / Tab  switch
-F1  physics mode   C  camera   R  restart
+const HELP := """[b]Gamepad[/b]
+L-stick  skate      L3  dash      R3  hockey stop
+R-stick  stick blade (90 deg arc), side to side to stickhandle
+  pull back, then push forward = shot
+LT  lift stick (hold while pulling back = slapshot,
+  on D = stick lift)   RT  tilt blade (raise shots/passes)
+A / RB  pass, or call for it    B  body check
+Back  physics mode   D-up  camera   Start  restart
 
-[b]Gamepad[/b]
-L-stick  skate     L3  dash     R3  stop
-R-stick  stickhandle in the arc in front,
-  pull back then push forward to shoot
-LT  lift stick (hold while winding = slapshot)
-RT  tilt blade   X  shoot   A  pass / switch
-B  check   Y  switch   Back  physics mode
+[b]Keyboard + mouse[/b]  (the mouse is the right stick)
+WASD  skate    Shift  dash    Space  stop
+RMB  lift stick    LMB  tilt blade (hold for more)
+E  pass / call for it    F  check    [ ]  mouse sensitivity
+Esc  free the cursor   F1  physics mode   C  camera   R  restart
 H  hide this"""
 
 var _score: Label
@@ -76,9 +75,9 @@ func _ready() -> void:
 	_help.bbcode_enabled = true
 	_help.text = HELP
 	_help.fit_content = true
-	_help.custom_minimum_size = Vector2(420, 0)
+	_help.custom_minimum_size = Vector2(470, 0)
 	_help.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_help.position = Vector2(16, -290)
+	_help.position = Vector2(16, -340)
 	_help.add_theme_font_size_override("normal_font_size", 13)
 	_help.add_theme_font_size_override("bold_font_size", 14)
 	_help.add_theme_stylebox_override("normal", _box(Color(0.08, 0.08, 0.1, 0.7)))
