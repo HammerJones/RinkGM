@@ -118,8 +118,9 @@ RinkGM will become a general rink management sim with open-world elements, so:
 - One topic per PR, small enough to review. Rebase onto the latest base before
   asking for review.
 - Sean reviews and merges. Nothing merges with red CI.
-- Current merge order, each built on the one before: demo (#1), Physics (#5),
-  Controls (#3), Mechanics (#4). CI and docs (#2) sits beside them on the demo. Whoever is later in the
+- Current merge order: demo (#1), then Physics (#5), then Controls (#3) and
+  Mechanics (#4), which are both built on Physics. CI and docs (#2) is built on
+  the demo. Whoever is later in the
   order merges the earlier branch in and resolves conflicts.
 
 ## Quality gate
