@@ -1,0 +1,29 @@
+; Engine configuration file.
+; Godot 4.3+
+
+config_version=5
+
+[application]
+
+config/name="RinkGM"
+config/description="Voxel hockey demo: physics-based skating and puck handling with arcade assists."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.3", "Forward Plus")
+
+[autoload]
+
+Tuning="*res://scripts/core/tuning.gd"
+InputSetup="*res://scripts/core/input_setup.gd"
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+
+[physics]
+
+common/physics_ticks_per_second=120
+
+[rendering]
+
+anti_aliasing/quality/msaa_3d=2
