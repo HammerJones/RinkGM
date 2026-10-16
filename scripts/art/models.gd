@@ -1,0 +1,218 @@
+class_name Models
+extends RefCounted
+## Procedural voxel models that match the reference renders in art/reference/.
+## All character parts share one voxel size so they read as one model.
+
+const V := 0.065  # metres per voxel for people and sticks
+
+const SKIN := Color("c99a72")
+const CAGE := Color("c4c4c4")
+const CAGE_DARK := Color("8d8d8d")
+const BOOT := Color("151517")
+const STEEL := Color("a3a9ae")
+const GLOVE := Color("18181b")
+const TAPE := Color("efece4")
+const TAPE_DARK := Color("cbc6bc")
+const PUCK := Color("121214")
+const NET_RED := Color("d0202a")
+const NET_WHITE := Color("efede6")
+
+
+static func palette(team: int) -> Dictionary:
+	if team == 0:
+		return {
+			"name": "RED", "ui": Color("ec3b40"),
+			"jersey": Color("c8191e"), "jersey_dark": Color("97121a"),
+			"stripe": Color("19191c"), "stripe2": Color("ece7dc"),
+			"crest": Color("efeae0"), "crest_inner": Color("19191c"),
+			"pants": Color("1c2033"), "helmet": Color("141416"),
+			"sock": Color("c8191e"), "sock_stripe": Color("19191c"), "sock_stripe2": Color("ece7dc"),
+			"shaft": Color("1b1b1e"), "band": Color("c8191e"), "band2": Color("ece7dc"),
+			"pad": Color("ece6da"), "pad_band": Color("c8191e"), "glove": Color("19191c"),
+		}
+	return {
+		"name": "BLUE", "ui": Color("4a8ae8"),
+		"jersey": Color("1f4f9a"), "jersey_dark": Color("173b75"),
+		"stripe": Color("d6a321"), "stripe2": Color("173b75"),
+		"crest": Color("d6a321"), "crest_inner": Color("f2ead2"),
+		"pants": Color("15203f"), "helmet": Color("2557a8"),
+		"sock": Color("1f4f9a"), "sock_stripe": Color("d6a321"), "sock_stripe2": Color("15203f"),
+		"shaft": Color("a8763e"), "band": Color("6e4220"), "band2": Color("a8763e"),
+		"pad": Color("ece6da"), "pad_band": Color("1f4f9a"), "glove": Color("8d5b2c"),
+	}
+
+
+## Leg from hip joint (pivot) down to the skate blade. Goalies get pads.
+static func leg(p: Dictionary, goalie: bool) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	if goalie:
+		m.box(1, 0, -1, 1, 1, 6, STEEL)
+		m.box(0, 1, -1, 3, 1, 5, BOOT)
+		m.box(-1, 1, -1, 5, 11, 4, p.pad)
+		for y in [3, 6, 9]:
+			m.box(-1, y, -1, 5, 1, 1, p.pad_band)
+			m.box(-1, y, -1, 1, 1, 4, p.pad_band)
+			m.box(3, y, -1, 1, 1, 4, p.pad_band)
+		m.box(0, 7, -2, 3, 2, 1, p.pad)  # knee roll
+		m.set_pivot(1.5, 12, 1.5)
+	else:
+		m.box(1, 0, -1, 1, 1, 6, STEEL)
+		m.box(0, 1, -1, 3, 2, 5, BOOT)
+		m.box(0, 3, 0, 3, 6, 4, p.sock)
+		m.box(0, 5, 0, 3, 1, 4, p.sock_stripe)
+		m.box(0, 6, 0, 3, 1, 4, p.sock_stripe2)
+		m.box(0, 7, 0, 3, 1, 4, p.sock_stripe)
+		m.box(0, 9, 0, 3, 3, 4, p.pants)
+		m.set_pivot(1.5, 12, 2)
+	return m
+
+
+## Hockey pants. Pivot is at the hip joints.
+static func pants(p: Dictionary, goalie: bool) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	if goalie:
+		m.box(0, 0, 0, 10, 4, 6, p.pants)
+		m.box(0, 1, 0, 1, 2, 6, p.stripe)
+		m.box(9, 1, 0, 1, 2, 6, p.stripe)
+		m.set_pivot(5, 1, 3)
+	else:
+		m.box(0, 0, 0, 8, 4, 5, p.pants)
+		m.box(0, 1, 0, 1, 2, 5, p.stripe)
+		m.box(7, 1, 0, 1, 2, 5, p.stripe)
+		m.set_pivot(4, 1, 2.5)
+	return m
+
+
+## Jersey with hem stripe, shoulder yoke, front crest and back number.
+static func torso(p: Dictionary, goalie: bool) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	if goalie:
+		m.box(1, 0, 0, 10, 8, 6, p.jersey)
+		m.box(0, 8, 0, 12, 2, 6, p.jersey)
+		m.box(1, 1, 0, 10, 2, 6, p.stripe)
+		m.box(0, 9, 0, 12, 1, 6, p.jersey_dark)
+		m.box(4, 4, 0, 4, 4, 1, p.crest)
+		m.box(5, 5, 0, 2, 2, 1, p.crest_inner)
+		m.box(5, 4, 5, 2, 3, 1, p.crest)
+		m.set_pivot(6, 0, 3)
+	else:
+		m.box(1, 0, 0, 8, 7, 5, p.jersey)
+		m.box(0, 7, 0, 10, 2, 5, p.jersey)
+		m.box(1, 1, 0, 8, 2, 5, p.stripe)
+		m.box(0, 8, 0, 10, 1, 5, p.jersey_dark)
+		m.box(3, 3, 0, 4, 4, 1, p.crest)
+		m.box(4, 4, 0, 2, 2, 1, p.crest_inner)
+		m.box(4, 3, 4, 2, 3, 1, p.crest)
+		m.set_pivot(5, 0, 2.5)
+	return m
+
+
+## Helmet with a cage over the face. Pivot at the neck.
+static func head(p: Dictionary, goalie: bool) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	if goalie:
+		m.box(0, 0, 0, 6, 6, 6, p.helmet)
+		m.box(1, 6, 1, 4, 1, 4, p.helmet)
+		for x in range(1, 5):
+			for y in range(0, 4):
+				m.set_voxel(x, y, -1, CAGE if (x + y) % 2 == 0 else CAGE_DARK)
+		m.set_pivot(3, 0, 3)
+	else:
+		m.box(1, 0, 1, 4, 3, 4, SKIN)
+		m.box(0, 2, 0, 6, 4, 6, p.helmet)
+		m.box(1, 6, 1, 4, 1, 4, p.helmet)
+		for x in range(1, 5):
+			for y in range(0, 3):
+				m.set_voxel(x, y, 0, CAGE if (x + y) % 2 == 0 else SKIN)
+		m.set_pivot(3, 0, 3)
+	return m
+
+
+## kind: "skater", "glove" (goalie catcher) or "blocker". Pivot at the shoulder.
+static func arm(p: Dictionary, kind: String) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	m.box(0, 3, 0, 3, 6, 3, p.jersey)
+	m.box(0, 4, 0, 3, 1, 3, p.stripe)
+	match kind:
+		"glove":
+			m.box(-1, -1, -1, 5, 5, 4, p.glove)
+			m.box(0, 3, -1, 3, 1, 1, p.glove.darkened(0.25))
+		"blocker":
+			m.box(0, 0, 0, 3, 3, 3, GLOVE)
+			m.box(3, -2, -1, 1, 7, 5, p.pad)
+			m.box(3, 1, -1, 1, 1, 5, p.pad_band)
+		_:
+			m.box(0, 0, 0, 3, 3, 3, GLOVE)
+	m.set_pivot(1.5, 9, 1.5)
+	return m
+
+
+## Stick with its heel at the origin, shaft along +Y and blade along +X.
+static func stick(p: Dictionary, goalie: bool) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	m.jitter = 0.06
+	var length := 24
+	var shaft: Color = p.pad if goalie else p.shaft
+	for y in length:
+		m.set_voxel(0, y, 0, shaft)
+	# tape bands like the reference sticks
+	for y in [10, 11, 14, 15]:
+		m.set_voxel(0, y, 0, p.pad_band if goalie else p.band)
+	for y in [12, 13]:
+		m.set_voxel(0, y, 0, p.stripe if goalie else p.band2)
+	m.box(0, length - 2, 0, 1, 2, 1, TAPE)
+	if goalie:
+		m.box(0, 1, 0, 2, 9, 1, p.pad)
+		m.box(0, 4, 0, 2, 2, 1, p.pad_band)
+		for x in range(0, 8):
+			for y in range(0, 2):
+				m.set_voxel(x, y, 0, TAPE if (x + y) % 2 == 0 else TAPE_DARK)
+	else:
+		for x in range(0, 6):
+			for y in range(0, 2):
+				m.set_voxel(x, y, 0, TAPE if (x + y) % 2 == 0 else TAPE_DARK)
+	m.set_pivot(0.5, 0, 0.5)
+	return m
+
+
+static func puck() -> VoxelModel:
+	var m := VoxelModel.new(0.05)
+	m.jitter = 0.0
+	m.box(0, 0, 0, 3, 2, 3, PUCK)
+	return m.set_pivot(1.5, 0, 1.5)
+
+
+## Goal net, opening at z=0 facing -Z and depth going +Z. Pivot at the
+## centre of the goal line. Posts are 1.83 m apart and 1.22 m tall.
+static func net() -> VoxelModel:
+	var m := VoxelModel.new(0.061)
+	m.jitter = 0.03
+	var w := 30
+	var h := 20
+	for y in h:
+		m.set_voxel(0, y, 0, NET_RED)
+		m.set_voxel(w, y, 0, NET_RED)
+	for x in w + 1:
+		m.set_voxel(x, h - 1, 0, NET_RED)
+	# base frame on the ice
+	for z in range(1, 19):
+		m.set_voxel(0, 0, z, NET_WHITE)
+		m.set_voxel(w, 0, z, NET_WHITE)
+	for x in w + 1:
+		m.set_voxel(x, 0, 18, NET_WHITE)
+	# mesh: sides, slanted back and roof, every other voxel
+	for y in range(1, h):
+		var depth := int(18 - y * 0.5)
+		for z in range(1, depth + 1):
+			if (y + z) % 2 == 0:
+				m.set_voxel(0, y, z, NET_WHITE)
+				m.set_voxel(w, y, z, NET_WHITE)
+		for x in range(1, w):
+			if (x + y) % 2 == 0:
+				m.set_voxel(x, y, depth, NET_WHITE)
+	var top_depth := int(18 - (h - 1) * 0.5)
+	for x in range(1, w):
+		for z in range(1, top_depth):
+			if (x + z) % 2 == 0:
+				m.set_voxel(x, h - 1, z, NET_WHITE)
+	return m.set_pivot(15.5, 0, 0.5)
