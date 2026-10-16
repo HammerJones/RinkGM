@@ -27,9 +27,7 @@ var _pending_faceoff := Vector2.ZERO
 var _stall := 0.0
 var _marker: MeshInstance3D
 var _arc: MeshInstance3D
-var player_input: PlayerInput
-var stick_control := StickControl.new()
-var _pass_call_until := -10.0
+var controller: HumanController
 var _palettes := []
 var _focus_override: Variant = null
 ## `-- --autoplay` lets the AI drive your skater too (attract mode / testing).
@@ -66,8 +64,9 @@ func _ready() -> void:
 	add_child(_marker)
 	_arc = _make_arc()
 	add_child(_arc)
-	player_input = PlayerInput.new()
-	add_child(player_input)
+	controller = HumanController.new()
+	controller.game = self
+	add_child(controller)
 	Tuning.mode_changed.connect(hud.set_mode)
 	hud.set_mode(Tuning.mode_name())
 	_start_faceoff(Vector2.ZERO)
@@ -189,7 +188,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(dt: float) -> void:
 	time += dt
 	_update_rules(dt)
-	_update_human(dt)
+	if not autoplay:
+		controller.update(dt)
 	for s in skaters:
 		if s != human or autoplay:
 			SkaterAI.think(s, self, dt)
@@ -219,7 +219,7 @@ func _process(dt: float) -> void:
 	_arc.transform = Transform3D(human.basis, human.position + Vector3(0, 0.015, 0))
 	hud.set_score(_palettes[0].name, _palettes[1].name, score[0], score[1], clock)
 	hud.set_stamina(human.stamina)
-	hud.set_power(stick_control.charge)
+	hud.set_power(controller.stick_control.charge)
 
 
 func _update_rules(dt: float) -> void:
@@ -240,44 +240,7 @@ func _update_rules(dt: float) -> void:
 				_start_faceoff(_pending_faceoff)
 
 
-# ---------------------------------------------------------------- human input
-
-func _update_human(dt: float) -> void:
-	if autoplay:
-		return
-	var c := human.ctrl
-	c.reset()
-	var f := player_input.poll(dt)
-	var fwd := camera_rig.forward_flat()
-	var right := camera_rig.right_flat()
-	var w := right * f.move.x + fwd * f.move.y
-	c.move = Vector2(w.x, w.z)
-	c.brake = f.stop
-	c.dash = f.dash
-	c.check_pressed = f.check_pressed
-	var sw := right * f.stick.x + fwd * f.stick.y
-	var stick := Vector2(sw.x, sw.z)
-	stick_control.update(human, stick, f.lift, f.tilt, dt)
-	if f.pass_pressed:
-		if human.has_puck():
-			# pass where you're skating, else where the stick points
-			var dir := c.move if c.move.length() > 0.3 else stick
-			stick_control.pass_puck(human, dir, f.tilt)
-		else:
-			_pass_call_until = time + 1.2
-			hud.show_message("PASS!", 0.6)
-
-
-## The teammate calling for a pass from `carrier`, if the lane is open enough.
-func pass_caller(carrier: Skater) -> Skater:
-	if autoplay or time > _pass_call_until or carrier.team != human.team or carrier == human:
-		return null
-	var from := Vector2(carrier.position.x, carrier.position.z)
-	if not lane_clear(carrier.team, from, Vector2(human.position.x, human.position.z), 0.8):
-		return null
-	_pass_call_until = -10.0
-	return human
-
+# ---------------------------------------------------------------- players
 
 func _switch_player(to: Skater = null) -> void:
 	if to == null:

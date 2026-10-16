@@ -13,7 +13,7 @@ var _fails := 0
 func _ready() -> void:
 	seed(12345)
 	await get_tree().physics_frame
-	game.player_input.scripted = func(f, dt):
+	game.controller.player_input.scripted = func(f, dt):
 		_t += dt
 		if _plan.is_valid():
 			_plan.call(f, _t)
@@ -23,7 +23,7 @@ func _ready() -> void:
 
 
 func _run() -> void:
-	var sc: StickControl = game.stick_control
+	var sc: StickControl = game.controller.stick_control
 
 	# --- quick shot: weak at low release, harder at high release
 	for rel in [0.1, 0.5, 0.9]:
@@ -146,11 +146,11 @@ func _run() -> void:
 func _shot_speed(plan: Callable) -> float:
 	await _carry(Vector2(-12, 0))
 	_plan = plan
-	game.stick_control.last_event = ""
+	game.controller.stick_control.last_event = ""
 	for i in 240:
 		await get_tree().physics_frame
 		_freeze_others()
-		if game.stick_control.last_event != "":
+		if game.controller.stick_control.last_event != "":
 			return game.puck.horizontal_speed()
 	return 0.0
 
@@ -161,7 +161,7 @@ func _carry(p: Vector2) -> void:
 	game.state = game.State.PLAY
 	game.clock = 300.0
 	game.human.place(p, Vector3(1, 0, 0))
-	game.stick_control._reset_gesture()
+	game.controller.stick_control._reset_gesture()
 	var puck: Puck = game.puck
 	puck.reset_at(game.human.puck_anchor())
 	puck.controller = game.human
@@ -178,14 +178,14 @@ func _lift_trial() -> void:
 	opp.stun_timer = 0.0
 	game.puck.controller = opp
 	game.puck.position = opp.puck_anchor()
-	game.stick_control._lift_cd = 0.0
-	game.stick_control.last_event = ""
+	game.controller.stick_control._lift_cd = 0.0
+	game.controller.stick_control.last_event = ""
 	_t = 0.0
 	_plan = func(f, t): f.lift = 1.0 if t > 0.05 else 0.0
 	for i in 12:
 		await get_tree().physics_frame
 		_freeze_others([opp])
-		if game.stick_control.last_event != "":
+		if game.controller.stick_control.last_event != "":
 			break
 
 

@@ -52,7 +52,7 @@ static func _carry(s: Skater, g: Node, dt: float) -> void:
 	s.ai_decide -= dt
 	if s.ai_decide <= 0.0 and s.ai_shoot_timer <= 0.0:
 		s.ai_decide = randf_range(0.15, 0.35)
-		var caller: Skater = g.pass_caller(s)
+		var caller: Skater = null if g.autoplay else g.controller.pass_caller(s)
 		if caller:
 			c.pass_pressed = true
 			c.pass_hint = caller
