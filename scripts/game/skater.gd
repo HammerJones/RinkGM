@@ -543,7 +543,8 @@ func pass_puck() -> void:
 		var dist := position.distance_to(best.position)
 		spd = clampf(dist * 0.55 + 7.0, 8.0, 17.0)
 		var t := dist / spd
-		target = best.position + best.vel * t * (0.6 + 0.4 * blend) + best.heading * 0.7
+		# aim at the receiver's blade, led by where they're skating
+		target = best.blade_pos + best.vel * t * (0.6 + 0.4 * blend)
 	else:
 		target = position + Vector3(dir2.x, 0, dir2.y) * 12.0
 	var d := Vector3(target.x - puck.position.x, 0, target.z - puck.position.z).normalized()
@@ -562,10 +563,11 @@ func _try_stick_lift() -> void:
 	var holder: Skater = puck.controller
 	if holder == null or holder.team == team or holder.stick_lifted_timer > 0.0:
 		return
-	var near_blade := Vector2(blade_pos.x - holder.blade_pos.x, blade_pos.z - holder.blade_pos.z).length()
-	var mid := (holder.position + holder.blade_pos) * 0.5
-	var near_shaft := Vector2(blade_pos.x - mid.x, blade_pos.z - mid.z).length()
-	if minf(near_blade, near_shaft) > 0.75:
+	# anywhere along their stick, from the hands out to the blade
+	var me := Vector2(blade_pos.x, blade_pos.z)
+	var on_stick := Geometry2D.get_closest_point_to_segment(me,
+		Vector2(holder.position.x, holder.position.z), Vector2(holder.blade_pos.x, holder.blade_pos.z))
+	if me.distance_to(on_stick) > 0.8:
 		return
 	var odds := 0.5 + 0.45 * (profile.stick_lift - holder.skill("stick_handling")) + 0.15 * Tuning.blend
 	if randf() > clampf(odds, 0.15, 0.92):
