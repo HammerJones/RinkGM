@@ -21,19 +21,40 @@ the owner, and keep the hook to a call into code that lives in your own area.
 
 ## Shared interfaces
 
-### 1. Player skills: `Skills` (owned by Game mechanics)
+### 1. Player skills: one store, one converter
 
-`scripts/career/skills.gd` holds 1-100 values:
-`speed`, `agility`, `stick_handling`, `shot_accuracy`, `shot_power`,
-`shot_release`, `pass_quality`, `hitting`, `toughness` (plus any stamina or
-endurance stat mechanics adds). Mechanics decides what a skill means and how it
-grows or decays. Gameplay code reads a skill only through
-`Skater.skill(name)`, which returns 0..1. Physics owns the **one** place that
-turns those into physical numbers; nothing else converts.
+There is exactly one place skills are stored and one place they become physics.
+
+**Store: `Skills` (`scripts/career/skills.gd`, owned by Game mechanics).**
+Ratings on a **1-100** scale under these exact keys: `speed`, `agility`,
+`stick_handling`, `shot_accuracy`, `shot_power`, `shot_release`,
+`pass_quality`, `hitting`, `toughness` (goalies: `reflexes`, `positioning`,
+`rebound_control`, `glove`, `toughness`). `values` are trained ratings and
+`modifiers` are temporary changes; injuries and fatigue are applied as
+modifiers, so physics never needs its own "condition" input. `n(key)` gives the
+effective rating as 0..1. `Skills` holds no physical curves: no speeds, turn
+rates, error angles or shot speeds. Career-only formulas (overall rating,
+injury risk, the quick-sim goalie number) stay in `Skills`.
+
+**Converter: `PhysicsProfile` (`scripts/game/physics_profile.gd`, owned by
+Physics).** `PhysicsProfile.from_skills(skills)` reads `skills.n(key)` and
+produces every number the simulation uses (top speed, accel, turn and edge
+grip, puck loss on hard turns, blade speed, trap speed, shot speed, release
+time, instant-shot quality, aim and pass error, tape-to-tape bonus, hit power,
+balance, stick-lift strength). It is rebuilt when `Skills` changes (line change,
+injury). `skater.gd`, `stick_control.gd`, `puck.gd` and the goalie read the
+profile, never raw ratings.
+
+**Accessor for everyone else:** `Skater.skill(key)` returns `skills.n(key)`
+(0..1) for AI decisions and UI. It uses the canonical key, with no aliases such
+as `stickhandling`. An unknown key is a bug and should `push_error`, not
+quietly return 0.5.
 
 Fixed anchors from Sean's design:
 
-- `speed` 100 is a top skating speed of 25 mph (11.2 m/s).
+- `speed` 100 is 25 mph (11.2 m/s) and that is the absolute ceiling: no dash or
+  sprint pushes anyone past 25 mph. `speed` 1 is 15 mph. Physics owns the curve
+  in between.
 - `shot_release`: an instant shot is always possible; at low skill it is weak
   and inaccurate, and it gets stronger and more accurate as the skill rises.
 - `pass_quality` near 100 makes it almost certain the intended teammate gains
@@ -97,6 +118,9 @@ RinkGM will become a general rink management sim with open-world elements, so:
 - One topic per PR, small enough to review. Rebase onto the latest base before
   asking for review.
 - Sean reviews and merges. Nothing merges with red CI.
+- Current merge order, each built on the one before: demo (#1), CI and docs
+  (#2), Controls (#3), Physics (#5), Mechanics (#4). Whoever is later in the
+  order merges the earlier branch in and resolves conflicts.
 
 ## Quality gate
 
