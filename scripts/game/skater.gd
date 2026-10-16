@@ -132,6 +132,13 @@ func set_stats(st: SkaterStats) -> void:
 	profile.apply(stats, condition)
 
 
+## A rating as 0..1, for code outside the physics (accepts "stickhandling").
+func skill(stat_name: String) -> float:
+	if stat_name == "stickhandling":
+		stat_name = "stick_handling"
+	return stats.n(StringName(stat_name)) if StringName(stat_name) in SkaterStats.NAMES else 0.5
+
+
 func set_condition(c: float) -> void:
 	condition = c
 	profile.apply(stats, condition)
