@@ -42,7 +42,7 @@ where the blade can reach. Device reading lives in `scripts/input/`
 
 ### Physics and player ratings
 
-Each skater has `SkaterStats` (ratings 1 to 99: speed, agility, stick handling,
+Each skater has `Skills` (`scripts/career/skills.gd`, ratings 1 to 100: speed, agility, stick handling,
 shot accuracy, shot power, shot release, pass quality, hitting, toughness).
 `PhysicsProfile` turns those ratings into physical numbers, so every
 rating-to-physics curve is in one file. Everything is simulated, and
@@ -51,8 +51,8 @@ assistance on top.
 
 - **Skating** (`scripts/game/skater.gd`): you only push along your skates, so
   turning is carving, and turns get wider at speed. Top speed runs from
-  16.5 mph (speed 1) to 25 mph (speed 99). A dash is a burst stride that can
-  briefly beat top speed and costs stamina. The hockey stop scrapes speed off
+  15 mph (speed 1) to 25 mph (speed 100), an absolute ceiling. A dash is a
+  burst stride that gets you to top speed faster and costs stamina. The hockey stop scrapes speed off
   sideways; agility sets how fast you turn, how hard your edges grip, and how
   short you stop. Carving never adds speed past top speed.
 - **Stick and puck** (`scripts/game/stick_puck.gd`): the blade moves inside a
@@ -66,11 +66,11 @@ assistance on top.
 - **Shooting**: one wind-up model for all shots. A shot with no wind-up comes
   off instantly but weak and wild; shot release sets how good that instant
   shot is and how fast you reach full power. Shot power sets the top speed
-  (a full slapshot is about 60 mph at 1, 98 mph at 99), shot accuracy the aim
+  (a full slapshot is about 60 mph at 1, 98 mph at 100), shot accuracy the aim
   error. Skating fast or carving hard costs accuracy. Tilting the blade raises
   the shot. Arcade adds aim assist toward the inside of the posts.
 - **Passing**: pass quality sets pass accuracy, how soft a pass arrives for its
-  intended target, and how fast a puck you can trap. At 99 the target almost
+  intended target, and how fast a puck you can trap. At 100 the target almost
   always gets clean control.
 - **Hits**: `Game.hit_landed(hitter, victim, impulse, knocked_down)` fires on
   every contact between opponents. Impulse comes from closing speed and the
@@ -81,7 +81,8 @@ assistance on top.
   reaction delay, reach toward where the puck will cross, drop to the butterfly
   for low shots, and either hold the puck (whistle) or give up a rebound.
 
-`tools/physics_bench.sh` drives skaters through scripted tests headless and
+`tools/physics_bench.sh` drives skaters through scripted tests headless (including
+the right-stick gestures: flick, pull back and push, lift for a slapshot) and
 prints what each rating produces (acceleration, stops, turns, puck control in
 cuts and while stickhandling, shot speed and accuracy, pass reception, hit
 strength) as Markdown tables. Run it after changing `PhysicsProfile`.
@@ -110,7 +111,7 @@ scenes/main.tscn         root node -> scripts/game/game.gd
 scripts/voxel/           VoxelModel, VoxelMeshBuilder, VoxelPart, VoxLoader
 scripts/art/models.gd    procedural players, goalies, sticks, puck, net
 scripts/rink/rink.gd     rink geometry (board SDF, nets) + ice/boards visuals
-scripts/core/skater_stats.gd   player ratings (1 to 99)
+scripts/career/skills.gd player ratings (1 to 100); injuries/fatigue as modifiers
 scripts/game/            game rules, skater, goalie, puck, stick-puck contact,
                          PhysicsProfile (ratings to physics), AI, rig, camera
 scripts/input/           PlayerInput (devices, mouse = virtual stick), HumanController
@@ -130,10 +131,9 @@ the same rules with you on the centre's body, always on the ice.
 
 - **Ratings** (`scripts/career/skills.gd`): speed, agility, stick handling,
   shot accuracy, shot power, shot release, passing, hitting and toughness, each
-  1-100, plus injury/fatigue modifiers. `Skills` is the single store; on the
-  ice they reach the physics as `SkaterStats` (`Skills.to_stats()`) and are
-  read elsewhere through `Skater.skill(key)` (0..1). What each rating does in
-  metres and seconds is the physics' `PhysicsProfile`.
+  1-100, plus injury/fatigue modifiers. `Skills` is the single store: the
+  physics' `PhysicsProfile` turns it into metres and seconds, and everything
+  else reads `Skater.skill(key)` (0..1).
 - **Injuries** (`injury.gd`): hard hits roll for an injury (harder hits,
   tired players and low toughness raise the odds). Severity runs day-to-day,
   minor, moderate, major; each hits the skills tied to the body part while it

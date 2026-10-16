@@ -32,13 +32,12 @@ func _expect(cond: bool, what: String) -> void:
 
 
 func _check_skill_curves() -> void:
-	# ratings reach the physics as SkaterStats, injury modifiers included
+	# injury/fatigue modifiers change the effective rating physics reads
 	var s := Skills.new()
 	for k in Skills.SKATER_KEYS:
 		s.values[k] = 100.0
 	s.modifiers["speed"] = -30.0
-	var st := s.to_stats()
-	_expect(st.agility == 99 and st.speed == 70, "to_stats clamps to 1..99 and applies modifiers (%d, %d)" % [st.agility, st.speed])
+	_expect(s.eff("speed") == 70.0 and s.eff("agility") == 100.0, "modifiers apply to eff()")
 
 
 func _run_career(seasons: int, seed_: int, pos: String) -> void:

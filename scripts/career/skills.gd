@@ -1,8 +1,8 @@
 class_name Skills
 extends RefCounted
 ## A player's ratings on a 1..100 scale: the single store every system reads
-## (on the ice through Skater.skill() and the physics' SkaterStats/
-## PhysicsProfile, which own the rating-to-physics curves).
+## (on the ice through Skater.skill() and the physics' PhysicsProfile, which
+## owns the rating-to-physics curves).
 ##
 ## `values` hold the trained rating; `modifiers` hold temporary changes
 ## (injuries, fatigue, equipment later on). Everything reads `eff()`, so a
@@ -87,14 +87,6 @@ func injury_risk() -> float:
 func goalie_skill() -> float:
 	var g := (n("reflexes") * 1.3 + n("positioning") * 1.2 + n("glove") + n("rebound_control") * 0.9) / 4.4
 	return lerpf(0.45, 0.8, g)
-
-
-## The physics' SkaterStats (1..99 ints), including injury and fatigue modifiers.
-func to_stats() -> SkaterStats:
-	var st := SkaterStats.new()
-	for k in SkaterStats.NAMES:
-		st.set(k, clampi(roundi(eff(k)), 1, 99))
-	return st
 
 
 # ------------------------------------------------------------ save data
