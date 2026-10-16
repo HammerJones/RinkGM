@@ -5,17 +5,19 @@ extends CanvasLayer
 
 const HELP := """[b]Keyboard + mouse[/b]
 WASD  skate        Mouse  stick blade / aim
-LMB  shoot (hold = slapshot)   RMB / E  pass
-Shift  sprint      Space  hockey stop
-F  body check      Q / Tab  switch player
+LMB  shoot (hold to wind up)   RMB / E  pass
+Ctrl / MMB  lift stick (+ shoot = slapshot)
+Z  tilt blade (raise shot)   Shift  dash
+Space  hockey stop   F  check   Q / Tab  switch
 F1  physics mode   C  camera   R  restart
 
 [b]Gamepad[/b]
-L-stick  skate     R-stick  stickhandle,
-  pull back then flick forward to shoot
-RT / X  shoot (hold = slapshot)   A  pass / switch
-LB  sprint   LT  hockey stop   B  check
-Y  switch   Back  physics mode   D-up  camera
+L-stick  skate     L3  dash     R3  stop
+R-stick  stickhandle in the arc in front,
+  pull back then push forward to shoot
+LT  lift stick (hold while winding = slapshot)
+RT  tilt blade   X  shoot   A  pass / switch
+B  check   Y  switch   Back  physics mode
 H  hide this"""
 
 var _score: Label

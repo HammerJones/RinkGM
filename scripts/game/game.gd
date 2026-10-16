@@ -10,6 +10,11 @@ const FACEOFF_OFFSETS := [Vector2(-0.95, 0.0), Vector2(-2.0, 4.0), Vector2(-6.5,
 
 enum State { FACEOFF, PLAY, STOPPAGE, OVER }
 
+## Every body contact between opponents. `impulse` is roughly kg*m/s (a hard
+## open-ice hit is 300-600); game mechanics rolls injuries from it.
+signal hit_landed(hitter: Skater, victim: Skater, impulse: float, knocked_down: bool)
+signal stick_lifted(by: Skater, victim: Skater)
+
 var rink: Rink
 var puck: Puck
 var skaters: Array[Skater] = []
@@ -26,13 +31,11 @@ var _state_timer := 0.0
 var _pending_faceoff := Vector2.ZERO
 var _stall := 0.0
 var _marker: MeshInstance3D
-var _flick_back_time := -10.0
-var _flick_back_start := -10.0
 var _palettes := []
 var _focus_override: Variant = null
 ## `-- --autoplay` lets the AI drive your skater too (attract mode / testing).
 var autoplay := "--autoplay" in OS.get_cmdline_user_args()
-var stats := {"shots": 0, "saves": 0, "goals": 0, "possessions": 0, "whistles": 0, "checks": 0}
+var stats := {"shots": 0, "saves": 0, "goals": 0, "possessions": 0, "whistles": 0, "checks": 0, "hits": 0, "knockdowns": 0, "stick_lifts": 0}
 
 
 func _ready() -> void:
@@ -190,7 +193,7 @@ func _physics_process(dt: float) -> void:
 	var sdt := dt / PUCK_SUBSTEPS
 	for i in PUCK_SUBSTEPS:
 		var prev := puck.position
-		_puck_stick_interaction(sdt)
+		StickPuck.step(self, puck, sdt)
 		puck.integrate(sdt)
 		_puck_body_collisions()
 		for g in goalies:
@@ -206,8 +209,7 @@ func _process(dt: float) -> void:
 	_marker.position = human.position + Vector3(0, 0.02, 0)
 	hud.set_score(_palettes[0].name, _palettes[1].name, score[0], score[1], clock)
 	hud.set_stamina(human.stamina)
-	var w := clampf((human.shoot_hold_time - Skater.SLAP_DELAY) / 0.8, 0.0, 1.0) if human.ctrl.shoot_held else 0.0
-	hud.set_power(w)
+	hud.set_power(human.windup())
 
 
 func _update_rules(dt: float) -> void:
@@ -240,11 +242,12 @@ func _update_human(_dt: float) -> void:
 	var mv := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var w := right * mv.x - fwd * mv.y
 	c.move = Vector2(w.x, w.z)
-	c.sprint = Input.is_action_pressed("sprint")
-	c.brake = Input.is_action_pressed("stop")
-	c.shoot_held = Input.is_action_pressed("shoot")
-	if Input.is_action_just_pressed("check"):
-		c.check_pressed = true
+	c.dash = Input.is_action_just_pressed("dash")
+	c.stop = Input.is_action_pressed("stop")
+	c.shoot = Input.is_action_pressed("shoot")
+	c.lift = Input.is_action_pressed("lift")
+	c.tilt = Input.get_action_strength("tilt")
+	c.check = Input.is_action_just_pressed("check")
 	if Input.is_action_just_pressed("switch"):
 		_switch_player()
 		return
@@ -262,32 +265,14 @@ func _update_human(_dt: float) -> void:
 			c.aim_point = mp
 			c.pass_dir = Vector2(mp.x - human.position.x, mp.z - human.position.z)
 	else:
+		# right stick: blade inside the arc; pull back then push forward to shoot
 		var rs := Input.get_vector("stick_left", "stick_right", "stick_up", "stick_down")
 		var rw := right * rs.x - fwd * rs.y
-		if rs.length() > 0.2:
-			c.blade_target = human.position + rw * Skater.REACH_MAX
+		c.stick = Vector2(rw.x, rw.z)
 		c.pass_dir = c.move
 		# aim shots at the near or far post with the left stick
 		var goal := human.attack_goal()
 		c.aim_point = goal + Vector3(0, 0, clampf(w.z, -1.0, 1.0) * 0.75)
-		_skill_stick(rw, rs.length())
-
-
-## NHL-style skill stick: pull the right stick back, then flick it forward.
-## A long pull back becomes a slapshot wind-up.
-func _skill_stick(rw: Vector3, amount: float) -> void:
-	var f := rw.dot(human.heading)
-	if amount > 0.6 and f < -0.5:
-		if _flick_back_time < time - 0.05:
-			_flick_back_start = time
-		_flick_back_time = time
-	elif amount > 0.6 and f > 0.5 and time - _flick_back_time < 0.3 and human.has_puck():
-		var held := _flick_back_time - _flick_back_start
-		if held > 0.35:
-			human.shoot(true, clampf((held - 0.35) / 0.8, 0.0, 1.0), 1.0)
-		else:
-			human.ctrl.flick = 1.0 - (time - _flick_back_time) / 0.3 * 0.4
-		_flick_back_time = -10.0
 
 
 func _switch_player(to: Skater = null) -> void:
@@ -328,74 +313,6 @@ func on_save(g: Goalie, frozen: bool) -> void:
 
 
 # ---------------------------------------------------------------- puck & bodies
-
-## Stick-on-puck: the carrier's blade pulls the puck with a damped spring
-## (stiffer in arcade), other blades can trap it if the relative speed is low
-## enough, deflect it otherwise, or poke it off an opponent's stick.
-func _puck_stick_interaction(dt: float) -> void:
-	if puck.frozen or puck.in_net_side != 0:
-		return
-	var blend: float = Tuning.blend
-	var carrier := puck.controller
-	if carrier:
-		if carrier.stun_timer > 0.0:
-			puck.controller = null
-		else:
-			var to := carrier.puck_anchor() - puck.position
-			to.y = 0.0
-			var k := lerpf(160.0, 420.0, blend) * carrier.handling
-			var rel := puck.vel - carrier.blade_vel
-			rel.y = 0.0
-			var acc := to * k - rel * 2.0 * sqrt(k) * 0.9
-			puck.vel += acc * dt
-			if to.length() > lerpf(0.5, 0.8, blend):
-				puck.controller = null
-	if puck.position.y > 0.3:
-		return
-	var cap := lerpf(0.26, 0.42, blend)
-	for s in skaters:
-		if s == puck.controller or s.stun_timer > 0.0 or not puck.can_be_touched_by(s):
-			continue
-		var d := puck.position - s.blade_pos
-		d.y = 0.0
-		var dist := d.length()
-		if dist > cap:
-			continue
-		var holder := puck.controller
-		if holder != null:
-			if holder.team == s.team:
-				continue
-			# stick battle: a quick poke knocks it loose, otherwise a small chance per second
-			var poke := (s.blade_vel - holder.blade_vel).length()
-			if poke > 3.5 or randf() < dt * 1.5 / holder.handling:
-				puck.controller = null
-				var away := d.normalized() if dist > 0.001 else s.heading
-				puck.vel = away * 3.0 + s.blade_vel * 0.5
-				puck.vel.y = 0.0
-				puck.ignore_briefly(holder, 0.3)
-				puck.last_touch = s
-			continue
-		var rel := puck.vel - s.blade_vel
-		rel.y = 0.0
-		var thresh := lerpf(7.0, 13.0, blend) * s.handling + (6.0 if puck.pass_target == s else 0.0)
-		if rel.length() < thresh:
-			puck.controller = s
-			puck.pass_target = null
-			puck.last_touch = s
-			puck.vel.y = 0.0
-			puck.position.y = 0.0
-			on_possession(s)
-			return
-		# too hot to handle: it bounces off the blade
-		if dist > 0.001:
-			var n := d / dist
-			var vn := rel.dot(n)
-			if vn < 0.0:
-				puck.vel -= n * vn * 1.4
-				puck.vel *= 0.8
-				puck.last_touch = s
-			puck.position += n * (cap - dist)
-
 
 ## Skates and shins block pucks that aren't on that skater's stick.
 func _puck_body_collisions() -> void:
@@ -440,11 +357,14 @@ func _collide_bodies() -> void:
 			var imp := (1.0 + 0.25) * closing * 0.5
 			a.vel -= nrm * imp
 			b.vel += nrm * imp
-			if a.team != b.team and closing > 2.0:
-				if a.check_timer > 0.0 and b.stun_timer <= 0.0:
-					b.knock_down(nrm * closing * 0.8)
-				elif b.check_timer > 0.0 and a.stun_timer <= 0.0:
-					a.knock_down(-nrm * closing * 0.8)
+			if a.team != b.team and closing > 3.0:
+				# whoever is driving into the contact harder is the hitter
+				var a_in := a.vel.dot(nrm) + imp
+				var b_in := -(b.vel.dot(nrm) - imp)
+				if a_in >= b_in:
+					_body_hit(a, b, nrm, closing)
+				else:
+					_body_hit(b, a, -nrm, closing)
 	for g in goalies:
 		for s in skaters:
 			var d := Vector2(s.position.x - g.pos2.x, s.position.z - g.pos2.y)
@@ -456,6 +376,32 @@ func _collide_bodies() -> void:
 				var vn := s.vel.dot(n3)
 				if vn < 0.0:
 					s.vel -= n3 * vn
+
+
+## Opponents colliding: the impulse grows with closing speed and the hitter's
+## rating (more with a shoulder check). It knocks the victim down if it beats
+## their balance (toughness, less while carving hard or stopping), and a
+## lighter hit can still jar the puck loose.
+func _body_hit(hitter: Skater, victim: Skater, nrm: Vector3, closing: float) -> void:
+	if victim.stun_timer > 0.0:
+		return
+	# a shoulder check carries the hitter's weight; incidental bumps don't
+	var impulse := closing * Skater.MASS * 0.5 * hitter.profile.hit_power
+	impulse *= 1.4 if hitter.check_timer > 0.0 else 0.3
+	var balance := victim.profile.balance * victim.stability()
+	var down := impulse > balance
+	stats.hits += 1
+	if down:
+		stats.knockdowns += 1
+		victim.knock_down(nrm * closing * 0.6)
+	elif victim.has_puck() and impulse > balance * 0.6 and randf() < (impulse / balance - 0.6) * 1.5:
+		puck.release(victim, victim.vel + nrm * 2.0)
+	hit_landed.emit(hitter, victim, impulse, down)
+
+
+func on_stick_lift(by: Skater, victim: Skater) -> void:
+	stats.stick_lifts += 1
+	stick_lifted.emit(by, victim)
 
 
 func _check_stall(dt: float) -> void:

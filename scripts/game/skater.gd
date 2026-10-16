@@ -4,45 +4,58 @@ extends Node3D
 ##  * thrust only along the direction the skates point, so you carve turns
 ##  * lateral velocity bleeds off through edge grip (part of it is kept as
 ##    forward speed, the "carve"), turning gets wider the faster you go
-##  * the stick blade is its own point with limited speed and reach, and the
-##    puck is pulled to it by a spring (see Game._puck_stick_interaction)
+##  * a dash is a burst stride; the hockey stop scrapes speed off sideways
+##  * the stick blade is its own point that moves at a limited speed inside a
+##    90 degree arc in front of the body; the puck follows it on a spring whose
+##    force is capped by the skater's grip (see StickPuck), so turning or
+##    stickhandling harder than your skill allows works the puck loose
+## Every number comes from `profile` (PhysicsProfile, built from `stats`), and
 ## Tuning.blend (0 sim .. 1 arcade) adds grip, turn rate, direct thrust and
 ## shot/pass assistance on top of the same model.
 
 const RADIUS := 0.38
-const REACH_MIN := 0.45
-const REACH_MAX := 1.55
+const MASS := 85.0
+const REACH_MIN := 0.55
+const REACH_MAX := 1.5
+const ARC_HALF := PI / 4.0                 # the blade's 90 degree arc
 const DEFAULT_BLADE := Vector2(0.95, 0.3)  # (forward, right) relative to the body
-const SLAP_DELAY := 0.22
-const STICK_ANGLE_LIMIT := 2.1
+const WIND_SPOT := Vector2(-0.15, 0.8)     # where a drawn-back blade sits
+const SLAP_MIN := 0.18                     # a lifted wind-up shorter than this is a wrist shot
+const LIFT_HEIGHT := 0.22
+const STICK_LIFTED_TIME := 0.55
 
 
-## What a controller (human or AI) wants this frame.
+## What a controller (human or AI) wants this frame. Input code fills this in;
+## the simulation never reads devices directly.
 class Controls:
-	var move := Vector2.ZERO        # world XZ, length <= 1
-	var sprint := false
-	var brake := false
-	var blade_target: Variant = null  # world Vector3 or null for the default carry spot
-	var aim_point: Variant = null     # world Vector3 or null to aim at the net
-	var shoot_held := false
+	var move := Vector2.ZERO          ## world XZ, length <= 1 (left stick)
+	var dash := false                 ## pressed this frame (L3)
+	var stop := false                 ## held: hockey stop (R3)
+	var stick := Vector2.ZERO         ## world XZ, length <= 1 (right stick); back = wind up
+	var blade_target: Variant = null  ## world Vector3 (mouse); overrides `stick`
+	var lift := false                 ## held: stick lift (LT)
+	var tilt := 0.0                   ## 0..1 blade tilt, lofts shots and passes (RT)
+	var shoot := false                ## held: button shot, release to fire
+	var aim_point: Variant = null     ## world Vector3 or null to aim at the net
 	var pass_pressed := false
 	var pass_dir := Vector2.ZERO
-	var pass_hint: Variant = null     # Skater the AI wants to pass to
-	var check_pressed := false
-	var flick := 0.0                  # >0 when a right-stick flick shot happened, = power
+	var pass_hint: Variant = null     ## Skater the AI wants to pass to
+	var check := false                ## pressed this frame: shoulder check
 
 	func reset() -> void:
 		move = Vector2.ZERO
-		sprint = false
-		brake = false
+		dash = false
+		stop = false
+		stick = Vector2.ZERO
 		blade_target = null
+		lift = false
+		tilt = 0.0
+		shoot = false
 		aim_point = null
-		shoot_held = false
 		pass_pressed = false
 		pass_dir = Vector2.ZERO
 		pass_hint = null
-		check_pressed = false
-		flick = 0.0
+		check = false
 
 
 var game: Node
@@ -50,53 +63,78 @@ var puck: Puck
 var team := 0
 var number := 0
 var ctrl := Controls.new()
+var stats := SkaterStats.new()
+var profile := PhysicsProfile.new()
+## 1.0 healthy; mechanics lowers it for injuries (see PhysicsProfile.apply).
+var condition := 1.0
 
 var vel := Vector3.ZERO
 var heading := Vector3(1, 0, 0)
 var yaw_rate := 0.0
+var turn_load := 0.0   ## m/s^2 of sideways load from turning, hurts balance
 var braking := false
 var stamina := 1.0
 var stun_timer := 0.0
 var check_timer := 0.0
 var check_cd := 0.0
-var shoot_hold_time := 0.0
+var dash_cd := 0.0
+var dash_timer := 0.0
 
 var blade_local := DEFAULT_BLADE
 var blade_pos := Vector3.ZERO
 var blade_vel := Vector3.ZERO
+var blade_lvel := Vector2.ZERO  ## blade velocity relative to the body (forward, right)
 var blade_height := 0.0
+var lifting := false            ## own blade held up over the puck
+var stick_lifted_timer := 0.0   ## an opponent lifted this stick
+var lift_cd := 0.0
+var puck_slip := 0.0            ## seconds the puck spent at the grip limit (for tuning)
 
-# player ratings
-var top_speed := 8.6
-var accel := 6.5
-var shot_power := 1.0
-var handling := 1.0
+# shot wind-up: started by drawing the stick back or holding `shoot`
+var winding := false
+var wind_time := 0.0
+var wind_slap := false
 
 # AI scratch state
 var ai_decide := 0.0
 var ai_shoot_timer := 0.0
 var ai_aim: Variant = null
+var ai_slap := false
+var ai_tilt := 0.0
 
 var rig: SkaterRig
 var _prev_shoot := false
+var _prev_lift := false
+var _stick_wound := false
+var _wind_grace := 0.0
 var _anchor_local := DEFAULT_BLADE
 var _spray: CPUParticles3D
 
 
-func setup(g: Node, t: int, idx: int, pal: Dictionary) -> void:
+func setup(g: Node, t: int, idx: int, pal: Dictionary, st: SkaterStats = null) -> void:
 	game = g
 	puck = g.puck
 	team = t
 	number = idx
-	top_speed = randf_range(8.3, 9.0)
-	accel = randf_range(6.1, 7.0)
-	shot_power = randf_range(0.93, 1.07)
-	handling = randf_range(0.92, 1.08)
+	set_stats(st if st else SkaterStats.around(50, 6))
+	if pal.is_empty():
+		return
 	rig = SkaterRig.new()
 	add_child(rig)
 	rig.build(pal, false)
 	_spray = _make_spray()
 	add_child(_spray)
+
+
+## Call again whenever ratings or condition change.
+func set_stats(st: SkaterStats) -> void:
+	stats = st
+	profile.apply(stats, condition)
+
+
+func set_condition(c: float) -> void:
+	condition = c
+	profile.apply(stats, condition)
 
 
 func place(p: Vector2, facing: Vector3) -> void:
@@ -106,7 +144,9 @@ func place(p: Vector2, facing: Vector3) -> void:
 	blade_local = DEFAULT_BLADE
 	blade_pos = _blade_world(blade_local)
 	blade_vel = Vector3.ZERO
+	blade_lvel = Vector2.ZERO
 	stun_timer = 0.0
+	stick_lifted_timer = 0.0
 	cancel_shot()
 	_apply_transform()
 
@@ -119,22 +159,34 @@ func right_vec() -> Vector3:
 	return heading.cross(Vector3.UP)
 
 
+func speed() -> float:
+	return Vector2(vel.x, vel.z).length()
+
+
 func cancel_shot() -> void:
-	ctrl.shoot_held = false
+	ctrl.shoot = false
 	_prev_shoot = false
-	shoot_hold_time = 0.0
+	_stick_wound = false
+	winding = false
+	wind_time = 0.0
 
 
+## 0..1 visual wind-up for the rig and HUD.
 func windup() -> float:
-	if not _prev_shoot or shoot_hold_time < SLAP_DELAY:
+	if not winding:
 		return 0.0
-	return clampf((shoot_hold_time - SLAP_DELAY) / 0.45, 0.0, 1.0)
+	return profile.charge(wind_time)
+
+
+## True while the blade can touch the puck.
+func blade_down() -> bool:
+	return stun_timer <= 0.0 and stick_lifted_timer <= 0.0 and not lifting and not (winding and wind_slap)
 
 
 ## Where the puck is pulled to while carried. During a slapshot wind-up the
 ## blade lifts away, so the puck stays where the wind-up started.
 func puck_anchor() -> Vector3:
-	if windup() > 0.0:
+	if winding and wind_slap:
 		return _blade_world(_anchor_local)
 	return Vector3(blade_pos.x, 0, blade_pos.z)
 
@@ -152,57 +204,73 @@ func physics_update(dt: float) -> void:
 	stun_timer = maxf(0.0, stun_timer - dt)
 	check_timer = maxf(0.0, check_timer - dt)
 	check_cd = maxf(0.0, check_cd - dt)
+	dash_cd = maxf(0.0, dash_cd - dt)
+	dash_timer = maxf(0.0, dash_timer - dt)
+	lift_cd = maxf(0.0, lift_cd - dt)
+	stick_lifted_timer = maxf(0.0, stick_lifted_timer - dt)
+	var p := profile
 	var frozen: bool = game.is_frozen()
-	var carrying := has_puck()
-	var move := ctrl.move if (stun_timer <= 0.0 and not frozen) else Vector2.ZERO
+	var able := stun_timer <= 0.0 and not frozen
+	var move := ctrl.move if able else Vector2.ZERO
 	if move.length() > 1.0:
 		move = move.normalized()
 	var amount := move.length()
 	var desired := Vector3(move.x, 0, move.y).normalized() if amount > 0.01 else heading
-	var speed := Vector2(vel.x, vel.z).length()
-	var sprinting := ctrl.sprint and stamina > 0.05 and amount > 0.3
-	braking = ctrl.brake and stun_timer <= 0.0 and speed > 0.6 and not frozen
+	var spd := speed()
+	var top := p.max_speed * lerpf(0.9, 1.0, stamina)
+	braking = ctrl.stop and able and spd > 0.6
 	var prev_heading := heading
 
 	# steering: tight at low speed, wide arcs at full speed
 	if amount > 0.15:
-		var turn := lerpf(7.5, 2.3, clampf(speed / top_speed, 0.0, 1.0)) * (1.0 + 0.7 * blend)
+		var turn := lerpf(p.turn_slow, p.turn_fast, clampf(spd / p.max_speed, 0.0, 1.0)) * (1.0 + 0.5 * blend)
 		if braking:
 			turn *= 0.4
 		heading = _rotate_toward(heading, desired, turn * dt)
 
 	# stride thrust along the blades, plus arcade direct thrust
 	if amount > 0.15 and not braking:
-		var top := top_speed * (1.12 if sprinting else 1.0) * (0.94 if carrying else 1.0)
-		var a := accel * (1.3 if sprinting else 1.0)
 		var align := maxf(0.0, heading.dot(desired))
-		var room := clampf(1.0 - vel.dot(heading) / top, 0.0, 1.0)
-		vel += heading * a * align * amount * room * dt
+		# strides stay strong until you're close to top speed
+		var room := sqrt(clampf(1.0 - vel.dot(heading) / top, 0.0, 1.0))
+		vel += heading * p.accel * align * amount * room * dt
 		var room_direct := clampf(1.0 - vel.dot(desired) / top, 0.0, 1.0)
-		vel += desired * a * 0.35 * blend * amount * room_direct * dt
+		vel += desired * p.accel * 0.35 * blend * amount * room_direct * dt
+
+	# dash: a burst stride toward the stick, can briefly beat top speed
+	if ctrl.dash and able and dash_cd <= 0.0 and stamina > 0.15 and not braking:
+		var dir := desired if amount > 0.2 else heading
+		var cap := top * 1.12
+		var gain := clampf(cap - vel.dot(dir), 0.0, p.dash_boost)
+		vel += dir * gain
+		dash_cd = p.dash_cooldown
+		dash_timer = 0.45
+		stamina -= 0.16
 
 	# edges: sideways slide decays, most of it is carved into forward speed
 	var fwd := vel.dot(heading)
 	var lat := vel - heading * fwd
 	lat.y = 0.0
-	var grip := 0.8 if braking else lerpf(3.0, 9.0, blend)
+	var grip := 0.8 if braking else p.edge_grip * lerpf(1.0, 1.8, blend)
 	var lat_new := lat * exp(-grip * dt)
 	if fwd > 0.3:
-		fwd += (lat.length() - lat_new.length()) * 0.6
+		# carving keeps speed through a turn but never adds speed past top
+		fwd = minf(fwd + (lat.length() - lat_new.length()) * 0.6, maxf(fwd, top))
 	vel = heading * fwd + lat_new
 
 	if braking:
 		var s := vel.length()
-		vel *= maxf(0.0, s - 15.0 * dt) / s
+		vel *= maxf(0.0, s - p.stop_decel * dt) / s
 	var s2 := vel.length()
 	if s2 > 0.0:
 		var coast := 0.0 if amount > 0.15 else 0.6 * blend
-		vel *= maxf(0.0, s2 - (0.2 + 0.03 * s2 + coast) * dt) / s2
+		var drag := 0.2 + 0.03 * s2 + coast
+		# above top speed (after a dash) you settle back quickly
+		if s2 > top and dash_timer <= 0.0:
+			drag += 2.5
+		vel *= maxf(0.0, s2 - drag * dt) / s2
 
-	if sprinting:
-		stamina = maxf(0.0, stamina - 0.22 * dt)
-	else:
-		stamina = minf(1.0, stamina + 0.12 * dt)
+	stamina = minf(1.0, stamina + 0.1 * dt)
 
 	position += vel * dt
 	position.y = 0.0
@@ -218,76 +286,158 @@ func physics_update(dt: float) -> void:
 	position = Vector3(p2.x, 0, p2.y)
 
 	yaw_rate = prev_heading.signed_angle_to(heading, Vector3.UP) / dt
+	turn_load = absf(yaw_rate) * speed()
 	_update_blade(dt, blend)
-	_handle_actions(dt, carrying)
+	_handle_actions(dt)
 	_apply_transform()
-	_spray.emitting = braking and speed > 2.0
-	rig.update_skater(self, dt)
+	if _spray:
+		_spray.emitting = braking and spd > 2.0
+	if rig:
+		rig.update_skater(self, dt)
+
+
+## Balance against hits: 1.0 when set, lower while carving hard or stopping.
+## Agile skaters lose less of it.
+func stability() -> float:
+	var agi := stats.n(&"agility")
+	var load := clampf(turn_load / 30.0, 0.0, 1.0) * lerpf(0.3, 0.1, agi)
+	return (1.0 - load) * (0.85 if braking else 1.0) * (0.8 if dash_timer > 0.0 else 1.0)
+
+
+# ---------------------------------------------------------------- stick
+
+func _stick_local(world: Vector2) -> Vector2:
+	var w := Vector3(world.x, 0, world.y)
+	return Vector2(w.dot(heading), w.dot(right_vec()))
+
+
+## True when the right stick points behind the skater (drawing back to shoot).
+func _stick_drawn() -> bool:
+	if ctrl.stick.length() < 0.5:
+		return false
+	var l := _stick_local(ctrl.stick)
+	return absf(atan2(l.y, l.x)) > deg_to_rad(110.0)
 
 
 func _update_blade(dt: float, blend: float) -> void:
 	var target := DEFAULT_BLADE
-	if ctrl.blade_target != null and stun_timer <= 0.0:
+	var able := stun_timer <= 0.0
+	if able and ctrl.blade_target != null:
 		var d: Vector3 = ctrl.blade_target - position
 		target = Vector2(d.dot(heading), d.dot(right_vec()))
-	# reach: an annulus in front of and beside the body
+	elif able and ctrl.stick.length() > 0.2:
+		var l := _stick_local(ctrl.stick)
+		var mag := minf(l.length(), 1.0)
+		target = Vector2(cos(atan2(l.y, l.x)), sin(atan2(l.y, l.x))) * lerpf(REACH_MIN, REACH_MAX, mag)
+	# keep it inside the 90 degree arc and the stick's reach
 	var reach := clampf(target.length(), REACH_MIN, REACH_MAX)
-	var ang := clampf(atan2(target.y, target.x), -STICK_ANGLE_LIMIT, STICK_ANGLE_LIMIT)
+	var ang := clampf(atan2(target.y, target.x), -ARC_HALF, ARC_HALF)
 	target = Vector2(cos(ang), sin(ang)) * reach
-	var w := windup()
-	if w > 0.0:
-		target = target.lerp(Vector2(-0.35, 0.8), w)
-	var max_speed := lerpf(8.0, 12.0, blend) * handling
-	var step := (target - blade_local) * minf(1.0, 22.0 * dt)
-	blade_local += step.limit_length(max_speed * dt)
-	blade_height = w * 0.9
+	if winding:
+		target = target.lerp(WIND_SPOT, minf(1.0, wind_time / 0.12))
+	# the blade chases the target with limited speed and acceleration
+	var want := (target - blade_local) * profile.blade_response
+	want = want.limit_length(profile.blade_speed * lerpf(1.0, 1.25, blend))
+	blade_lvel = blade_lvel.move_toward(want, profile.blade_accel * lerpf(1.0, 1.25, blend) * dt)
+	blade_local += blade_lvel * dt
+	lifting = ctrl.lift and able and not winding
+	var h := 0.0
+	if stick_lifted_timer > 0.0:
+		h = 0.35
+	elif winding and wind_slap:
+		h = 0.9 * windup() + 0.2
+	elif lifting:
+		h = LIFT_HEIGHT
+	blade_height = lerpf(blade_height, h, minf(1.0, 25.0 * dt))
 	var prev := blade_pos
 	blade_pos = _blade_world(blade_local)
 	blade_vel = (blade_pos - prev) / dt
 
 
-func _handle_actions(dt: float, carrying: bool) -> void:
-	var held: bool = ctrl.shoot_held and stun_timer <= 0.0 and not game.is_frozen()
-	if held and not _prev_shoot:
-		shoot_hold_time = 0.0
-		_anchor_local = blade_local
-	if held:
-		shoot_hold_time += dt
-	if not held and _prev_shoot:
-		_release_shot()
-	_prev_shoot = held
+# ---------------------------------------------------------------- actions
 
-	if ctrl.flick > 0.0 and carrying:
-		shoot(false, 0.0, ctrl.flick)
-	if ctrl.pass_pressed and has_puck():
+func _handle_actions(dt: float) -> void:
+	var able: bool = stun_timer <= 0.0 and not game.is_frozen() and stick_lifted_timer <= 0.0
+	_handle_shot_input(dt, able)
+	var lift_pressed := ctrl.lift and not _prev_lift
+	_prev_lift = ctrl.lift
+	if lift_pressed and able and not has_puck() and lift_cd <= 0.0:
+		_try_stick_lift()
+	if ctrl.pass_pressed and has_puck() and able:
 		pass_puck()
-	if ctrl.check_pressed and check_cd <= 0.0 and stun_timer <= 0.0:
+	if ctrl.check and check_cd <= 0.0 and stun_timer <= 0.0:
 		check_timer = 0.35
 		check_cd = 1.2
 		game.stats.checks += 1
-		vel += heading * 2.5
+		vel += heading * lerpf(1.5, 3.0, stats.n(&"hitting"))
 
 
-func _release_shot() -> void:
-	var slap := shoot_hold_time > SLAP_DELAY
-	var charge := clampf((shoot_hold_time - SLAP_DELAY) / 0.8, 0.0, 1.0)
-	shoot_hold_time = 0.0
+## Two ways to shoot, both through the same wind-up:
+##  * stick: pull the right stick back (wind-up), then push it forward
+##  * button: hold `shoot` to wind up, release to fire
+## Holding lift when the wind-up starts makes it a slapshot.
+func _handle_shot_input(dt: float, able: bool) -> void:
+	if not able:
+		if winding:
+			cancel_shot()
+		_prev_shoot = ctrl.shoot
+		return
+	var drawn := _stick_drawn()
+	var held := ctrl.shoot
+	if not winding and ((held and not _prev_shoot) or drawn):
+		winding = true
+		wind_time = 0.0
+		wind_slap = ctrl.lift
+		_stick_wound = drawn and not held
+		_wind_grace = 0.0
+		_anchor_local = blade_local
+	_prev_shoot = held
+	if not winding:
+		return
+	wind_time += dt
+	if _stick_wound:
+		if drawn:
+			_wind_grace = 0.0
+			return
+		var l := _stick_local(ctrl.stick)
+		if ctrl.stick.length() > 0.5 and l.x > 0.0:
+			_fire()
+			return
+		_wind_grace += dt
+		if _wind_grace > 0.25:
+			cancel_shot()
+	elif not held:
+		_fire()
+
+
+func _fire() -> void:
+	var held := wind_time
+	var slap := wind_slap and held >= SLAP_MIN
+	winding = false
+	_stick_wound = false
+	wind_time = 0.0
+	# the blade follows through
+	blade_local = Vector2(REACH_MAX * 0.85, 0.15)
+	blade_lvel = Vector2.ZERO
 	if has_puck():
-		shoot(slap, charge, 1.0)
+		shoot(held, slap)
 		return
 	# one-timer / snapshot at a loose puck near the blade
-	var reach := lerpf(0.5, 0.95, Tuning.blend)
+	var reach := profile.catch_radius * 1.8 * lerpf(1.0, 1.4, Tuning.blend)
 	var d := Vector2(puck.position.x - blade_pos.x, puck.position.z - blade_pos.z).length()
 	if puck.controller == null and not puck.frozen and puck.position.y < 0.6 and d < reach and puck.can_be_touched_by(self):
-		shoot(slap, charge, 0.9)
+		shoot(held, slap, puck.horizontal_speed())
 
 
 func attack_goal() -> Vector3:
 	return Vector3(game.attack_side(team) * Rink.GOAL_X, 0, 0)
 
 
-func shoot(slap: bool, charge: float, power: float) -> void:
+## Fires the puck. `held` is the wind-up time, `incoming` the speed of a puck
+## being one-timed.
+func shoot(held: float, slap: bool, incoming := 0.0) -> void:
 	var blend: float = Tuning.blend
+	var p := profile
 	var from := puck.position
 	var net := attack_goal()
 	var aim: Vector3 = ctrl.aim_point if ctrl.aim_point != null else net
@@ -301,19 +451,34 @@ func shoot(slap: bool, charge: float, power: float) -> void:
 		var hit_z := clampf(from.z + dir.z * t, -0.78, 0.78) if t > 0.0 else 0.0
 		var assisted := Vector3(net.x - from.x, 0, hit_z - from.z).normalized()
 		dir = dir.slerp(assisted, 0.85 * blend)
-	# accuracy suffers when moving fast, more so in sim mode and on slapshots
-	var err := (0.02 + 0.045 * (1.0 - blend)) * (1.0 + Vector2(vel.x, vel.z).length() / top_speed * 0.6) * (1.4 if slap else 1.0)
-	dir = dir.rotated(Vector3.UP, randf_range(-err, err))
-	var spd := (lerpf(27.0, 43.0, charge) if slap else 24.0 * lerpf(0.75, 1.1, power)) * shot_power
-	# choose a target height at the net and solve for the lift that gets there
-	# shooters pick a corner: along the ice or up high
-	var h_target := randf_range(0.05, 0.3) if (slap or randf() < 0.5) else randf_range(0.75, 1.15)
+	var spd: float
+	var err := p.aim_error(held)
+	if slap:
+		spd = p.shot_speed * lerpf(0.6, 1.0, clampf((held - SLAP_MIN) / (p.charge_time + 0.25), 0.0, 1.0))
+		err *= 1.35
+	else:
+		spd = p.wrist_speed(held)
+	if incoming > 0.0:
+		spd += incoming * 0.25
+		err *= 1.3
+	# moving fast, carving hard or being off balance costs accuracy
+	err *= 1.0 + 0.4 * speed() / p.max_speed + turn_load / 40.0
+	err *= lerpf(1.0, 0.6, blend)
+	dir = dir.rotated(Vector3.UP, clampf(randfn(0.0, err), -3.0 * err, 3.0 * err))
+	# pick a target height at the net and solve for the lift that gets there:
+	# tilt opens the blade and raises the shot
+	var h_target: float
+	if ctrl.tilt > 0.05:
+		h_target = lerpf(0.25, 1.1, ctrl.tilt)
+	else:
+		h_target = randf_range(0.04, 0.22)
+	h_target = maxf(0.0, h_target + randfn(0.0, err * net_dist * 0.5))
 	var vy := 0.0
-	if net_dist < 22.0:
+	if net_dist < 24.0:
 		var tt := net_dist / spd
 		vy = minf((h_target + 0.5 * Puck.GRAVITY * tt * tt) / tt, spd * 0.45)
 	else:
-		vy = randf_range(0.0, 2.0)
+		vy = ctrl.tilt * 4.0
 	puck.release(self, dir * spd + Vector3.UP * vy)
 	puck.pass_target = null
 	game.on_shot(self, slap)
@@ -321,6 +486,7 @@ func shoot(slap: bool, charge: float, power: float) -> void:
 
 func pass_puck() -> void:
 	var blend: float = Tuning.blend
+	var p := profile
 	var dir2: Vector2 = ctrl.pass_dir if ctrl.pass_dir.length() > 0.2 else Vector2(heading.x, heading.z)
 	dir2 = dir2.normalized()
 	var best: Skater = ctrl.pass_hint
@@ -340,14 +506,41 @@ func pass_puck() -> void:
 	var spd := 16.0
 	if best:
 		var dist := position.distance_to(best.position)
-		spd = clampf(dist * 0.9 + 8.0, 10.0, 22.0)
+		spd = clampf(dist * 0.55 + 7.0, 8.0, 17.0)
 		var t := dist / spd
 		target = best.position + best.vel * t * (0.6 + 0.4 * blend) + best.heading * 0.7
 	else:
 		target = position + Vector3(dir2.x, 0, dir2.y) * 12.0
 	var d := Vector3(target.x - puck.position.x, 0, target.z - puck.position.z).normalized()
-	puck.release(self, d * spd)
+	var err := p.pass_error * (1.0 + 0.3 * speed() / p.max_speed) * lerpf(1.0, 0.5, blend)
+	d = d.rotated(Vector3.UP, clampf(randfn(0.0, err), -3.0 * err, 3.0 * err))
+	# a tilted blade saucers the pass over sticks
+	puck.release(self, d * spd + Vector3.UP * ctrl.tilt * 3.2)
 	puck.pass_target = best
+	puck.pass_touch = p.pass_touch
+
+
+## Defensive stick lift: lift the carrier's stick off the puck. Works when
+## your blade is near their stick; the odds come from both skaters' ratings.
+func _try_stick_lift() -> void:
+	lift_cd = 0.9
+	var holder: Skater = puck.controller
+	if holder == null or holder.team == team or holder.stick_lifted_timer > 0.0:
+		return
+	var near_blade := Vector2(blade_pos.x - holder.blade_pos.x, blade_pos.z - holder.blade_pos.z).length()
+	var mid := (holder.position + holder.blade_pos) * 0.5
+	var near_shaft := Vector2(blade_pos.x - mid.x, blade_pos.z - mid.z).length()
+	if minf(near_blade, near_shaft) > 0.75:
+		return
+	var odds := 0.5 + 0.45 * (profile.stick_lift - holder.stats.n(&"stick_handling")) + 0.15 * Tuning.blend
+	if randf() > clampf(odds, 0.15, 0.92):
+		return
+	holder.stick_lifted_timer = STICK_LIFTED_TIME
+	holder.cancel_shot()
+	puck.controller = null
+	puck.ignore_briefly(holder, STICK_LIFTED_TIME)
+	puck.last_touch = self
+	game.on_stick_lift(self, holder)
 
 
 func _blade_world(local: Vector2) -> Vector3:

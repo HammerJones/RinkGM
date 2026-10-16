@@ -23,21 +23,28 @@ func _ready() -> void:
 	_axis("stick_up", JOY_AXIS_RIGHT_Y, -1.0)
 	_axis("stick_down", JOY_AXIS_RIGHT_Y, 1.0)
 
+	# Placeholder mapping of Sean's scheme so the physics stays playable; the
+	# Controls thread owns the final bindings.
 	_mouse("shoot", MOUSE_BUTTON_LEFT)
 	_keys("shoot", [KEY_J])
-	_axis("shoot", JOY_AXIS_TRIGGER_RIGHT, 1.0)
 	_button("shoot", JOY_BUTTON_X)
 
 	_mouse("pass", MOUSE_BUTTON_RIGHT)
 	_keys("pass", [KEY_E, KEY_K])
 	_button("pass", JOY_BUTTON_A)
 
-	_keys("sprint", [KEY_SHIFT])
-	_button("sprint", JOY_BUTTON_LEFT_SHOULDER)
-	_button("sprint", JOY_BUTTON_LEFT_STICK)
+	_keys("dash", [KEY_SHIFT])
+	_button("dash", JOY_BUTTON_LEFT_STICK)
 
 	_keys("stop", [KEY_SPACE])
-	_axis("stop", JOY_AXIS_TRIGGER_LEFT, 1.0)
+	_button("stop", JOY_BUTTON_RIGHT_STICK)
+
+	_keys("lift", [KEY_CTRL])
+	_mouse("lift", MOUSE_BUTTON_MIDDLE)
+	_axis("lift", JOY_AXIS_TRIGGER_LEFT, 1.0)
+
+	_keys("tilt", [KEY_Z])
+	_axis("tilt", JOY_AXIS_TRIGGER_RIGHT, 1.0)
 
 	_keys("check", [KEY_F])
 	_button("check", JOY_BUTTON_B)
