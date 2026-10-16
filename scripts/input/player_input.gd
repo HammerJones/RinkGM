@@ -1,8 +1,8 @@
 class_name PlayerInput
 extends Node
 ## Reads the human's devices into one device-neutral frame of intent, in
-## screen space (x right, y up the screen). Game turns it into world space
-## and StickControl turns the stick part into blade moves, shots and dekes.
+## screen space (x right, y up the screen). HumanController turns it into
+## world-space Skater.Controls.
 ##
 ## Gamepad (Slapshot Rebound style):
 ##   left stick  skate              L3  dash          R3  hockey stop
