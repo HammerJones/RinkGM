@@ -182,6 +182,6 @@ godot --headless --path . --fixed-fps 120 --quit-after 36000 -- --autoplay --mod
 
 `tools/check.sh` re-imports the project and runs it headless to surface script errors.
 `tools/physics_bench.sh [out.md]` prints the physics bench.
-`tools/tier_ai_check.sh` plays `GAMES` (default 24; fewer is too noisy at 5-on-5) autoplay games of a beer-league
+`tools/tier_ai_check.sh` plays `GAMES` (default 24; fewer is too noisy at 5-on-5) autoplay games of a Beer League D
 side against a Senior AAA side, swapping ends, and fails unless the higher tier
 outscores and outwins the lower one.
