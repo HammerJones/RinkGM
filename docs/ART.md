@@ -85,6 +85,43 @@ gap in the back wall.
 To add a prop: write a `_name(age)` builder in `props.gd`, add the id to
 `IDS` and `_build()`, then check it on the prop sheet.
 
+### Plant room (`scripts/art/plant_props.gd`)
+
+The ice plant (`docs/world/RINK_SIM.md` 3.1) has its own builder file;
+`Props.model()`/`Props.mesh()` take these ids like any other prop. The parts
+the player services in the plant mini games are modelled where they can be
+seen: cylinder heads and valve plates, the oil sight glass (filled to its
+level), the shaft seal with its drip tray, coupling and belt guards, the pump
+bearing housing and seal, dial gauges, the chiller oil pot, level glasses and
+relief valves. Worn is the 1974 ammonia plant (machinery-green enamel, black
+pipe, frosted suction lines, rust, oil stains); repaired is the same plant
+kept going (fresh paint, yellow replacement guards, a new gauge or hose, tags);
+renovated is modern equipment (navy and charcoal, stainless, jacketed
+insulation, yellow pipe labels, screens).
+
+| Id | What | Size (m) | Pivot |
+| --- | --- | --- | --- |
+| `compressor_recip` | Nordale RC-4 open-drive V-4 ammonia compressor, coupling guard, gauge board, motor, skid | 2.4 x 1.0 x 1.5 | Floor, centre |
+| `compressor_screw` | Screw package: oil separator base, screw, motor, panel with screen (the first upgrade; worn = second-hand) | 3.0 x 1.3 x 1.9 | Floor, centre |
+| `compressor_co2` | CO2 transcritical rack: three semi-hermetics in an open frame, heavy-wall headers, flash tank, relief valves, bright labels | 2.6 x 1.0 x 2.3 | Floor, centre |
+| `chiller` | Flooded shell-and-tube chiller, bolted heads, glycol nozzles, surge drum, oil pot | 3.2 x 1.0 x 2.1 | Floor, centre |
+| `receiver` | Horizontal receiver with gauge glass, king valve and dual relief valves | 2.4 x 0.75 x 1.6 | Floor, centre |
+| `glycol_pump` | End-suction pump, bearing housing, coupling guard, motor, gauges | 1.95 x 0.65 x 1.1 | Floor, centre |
+| `glycol_tank` | Expansion and fill tank with sight tube and makeup water valve | 0.65 x 0.65 x 1.6 | Floor, centre |
+| `header` | One 1.04 m module of the supply and return header with eight jumper hoses; repeat along X | 1.04 x 1.2 x 0.72 | Trench floor, centre: it sits in a `Plant.HEADER_TRENCH` (0.72 m) trench, hoses reaching the floor pipes at the trench's +Z wall |
+| `pipe_glycol`, `pipe_glycol_elbow`, `pipe_glycol_valve` | Insulated glycol pipe, 0.26 m: straight, 90° elbow, butterfly valve | 1.04 long | Under the pipe: centreline 0.13 m up; straight pieces span x = +/-0.52 so they tile (`Plant.PIPE_LEN`); the elbow's corner is at the pivot, joining its -X leg to its -Z leg |
+| `pipe_refrig`, `pipe_refrig_elbow`, `pipe_refrig_valve` | Bare refrigerant pipe, 0.13 m, welded collars: straight, elbow, globe stop valve | 1.04 long | Same as the glycol pieces |
+| `condenser` | Rooftop evaporative condenser: basin, louvres, fan shroud and guard, fan motor and belt guard, spray pump | 3.0 x 1.6 x 3.0 (3.6 long with the spray pump) | Floor (roof), centre of the casing |
+| `control_panel` | Plant control cabinet: analog ammeters, lamps, timer (worn); PLC touchscreen, e-stop, stack light (renovated) | 1.2 x 0.5 x 2.0 | Floor, centre; back to the wall |
+| `ammonia_detector` | Fixed ammonia detector with strobe, horn and NFPA diamond | 0.45 x 0.3 x 1.4 | Wall prop: bottom centre of the backplate on the wall plane (z = 0); mount about 2 m up |
+| `eyewash_station` | Plumbed emergency shower and eyewash on a pedestal, push flag, pull rod, green sign | 0.4 x 0.8 x 2.1 | Floor, centre of its foot |
+
+The big pieces are in `Plant.MERGED` (full detail merges faces, like the
+resurfacer): about 650-5,200 triangles at full detail. Pipe pieces are
+400-920. `art/tools/plant_room_preview.gd` lays them out as Millbrook's plant
+room for review (`--age=worn|repaired|renovated`), and the prop sheet renders
+one age in a labelled grid with `--age=<name> [--cols=N]`.
+
 ## Sticks
 
 The skater stick is two parts posed by `SkaterRig`: `Models.shaft()` and
