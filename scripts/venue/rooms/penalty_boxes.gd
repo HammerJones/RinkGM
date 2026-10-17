@@ -24,13 +24,18 @@ func build(k: VenueKit) -> void:
 		var x0: float = BOXES[i][0]
 		var x1: float = BOXES[i][1]
 		var cx := (x0 + x1) * 0.5
-		k.wall_x(z1 + 0.12, x0, x1, 0, 1.3, 0.25, wall, [{"at": cx, "w": 0.95, "y0": 0.0, "y1": 1.3}])
+		if i == 1:
+			k.wall_x(z1 + 0.12, x0, x1, 0, 1.3, 0.25, wall, [{"at": cx, "w": 0.95, "y0": 0.0, "y1": 1.3}])
+		else:
+			# the kit's booth: open to the ice, benches either side of the back door
+			k.prop("penalty_box", Vector3(cx, 0, (z0 + z1) * 0.5), 0.0, false)
+			var gap := Props.PENALTY_DOOR_W * Props.V * 0.5
+			k.collider(Vector3(x0, 0, z1 - 0.1), Vector3(cx - gap, 1.3, z1 + 0.25))
+			k.collider(Vector3(cx + gap, 0, z1 - 0.1), Vector3(x1, 1.3, z1 + 0.25))
 		add_door(k, Vector3(cx, 0, z1 + 0.12), PI, VenueDoor.Kind.SWING, 0.9, 1.25, k.by_age(Color("6d6a64"), Color("7a828c"), Color("3a404a")), ["Box home", "Timekeeper", "Box away"][i])
 		k.glass(Vector3(x0, 1.3, z1 + 0.1), Vector3(x1, 2.5, z1 + 0.14))
 		if i != 1:
-			# a bench along the back for the guilty
-			k.aged_block(Vector3(x0 + 0.25, 0, z1 - 0.5), Vector3(x1 - 0.25, 0.47, z1 - 0.05), k.by_age(Color("8a6a45"), Color("9b7a50"), Color("3a404a")), 0.5)
-			var pen := VenueSign.make([["// PENALTY", VenueSign.RED], ["--:--", VenueSign.AMBER, true]], 9, 2, 0.022)
+			var pen := VenueSign.make([["// PENALTY", VenueSign.RED], ["--:--", VenueSign.AMBER, true]], 10, 2, 0.022)
 			pen.name = "PenaltyClock%d" % i
 			pen.dead = k.by_age(0.05, 0.0, 0.0)
 			k.sign(pen, Transform3D(Basis(Vector3.UP, PI), Vector3(cx, 2.8, z0 + 0.02)))

@@ -104,7 +104,8 @@ openings, `stairs`, `glass`, `glow`, `sign`, `add_door`), branch on
 - Props come from the World and asset design kit (`Props.mesh(id, age)`,
   `scripts/art/props.gd`) at the room's age, placed with `kit.prop()` and
   drawn as one MultiMesh per prop and room: arena seats (low detail), rink
-  glass panels and frames, lockers, player benches, concession counters, ceiling lights,
+  glass panels and frames, lockers, player benches, penalty boxes, concession
+  counters, scoreboard housings (text placed with `Props.scoreboard_faces`), ceiling lights,
   the resurfacer, vending machines, bins and the old hand-painted rink sign.
   Doors stay venue pieces because they swing and collide.
 - Signs (`VenueSign`) use `RinkOS.sign_3d()` per `assets/ui/STYLE.md`:
