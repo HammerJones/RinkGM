@@ -170,7 +170,7 @@ Arguments after `--` are read by the game:
 - `--demo=controls` plays a captioned showcase of every move (`tests/controls_demo.gd`). Record it with `godot --path . --write-movie demo.avi --fixed-fps 30 --resolution 1280x720 -- --demo=controls`.
 - `--autoplay` lets the AI drive your skater too (prints stats and a box score on exit).
 - `--period=N` plays N-minute periods (exhibition default is 5).
-- `--career` opens the career hub; `--career-new` discards the saved career.
+- `--career` opens the career hub (pick a save: Career, Demo: low tier, Demo: mid tier); `--slot=career|demo_low|demo_mid` skips the picker and `--career-new` discards that slot's save.
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
 - `--screenshot=out.png --shot-after=6 [--iso] [--zoom=10] [--focus=x,z]` saves a frame and quits.
 

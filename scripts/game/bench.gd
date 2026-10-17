@@ -54,6 +54,17 @@ func on_ice(bodies: Array) -> Array:
 	return bodies.map(func(s): return s.player)
 
 
+## Dressed players sitting on the bench right now (not on the ice, not
+## hurt), for the venue to seat. The goalie isn't included.
+func off_ice(bodies: Array) -> Array:
+	var out: Array = []
+	for l in f_lines + d_pairs:
+		for p in l:
+			if p and not hurt.has(p.id) and not _is_on(p.id, bodies) and not out.has(p):
+				out.append(p)
+	return out
+
+
 ## Puts the current lines on the bodies (start of game / after a goal).
 func assign_all(bodies: Array) -> void:
 	for i in bodies.size():
