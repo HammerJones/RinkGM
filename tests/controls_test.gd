@@ -26,6 +26,10 @@ func _ready() -> void:
 # screen stick of (1, 0) is "forward" and (-1, 0) is "behind".
 
 func _run() -> void:
+	# --- flick forward from neutral: instant quick shot
+	var quick := await _shot(func(f, t): f.stick = Vector2(1, 0) if t > 0.2 else Vector2.ZERO)
+	_check(quick > 0.0, "flicking the stick forward shoots")
+
 	# --- pull back, then push forward: wind-up shot
 	var wrist := await _shot(func(f, t): f.stick = Vector2(-1, 0) if t < 0.6 else Vector2(1, 0))
 	_check(wrist > 0.0, "pull back + push forward shoots")
@@ -34,7 +38,7 @@ func _run() -> void:
 	var slap := await _shot(func(f, t):
 		f.stick = Vector2(-1, 0) if t < 0.9 else Vector2(1, 0)
 		f.lift = 1.0 if t < 0.9 else 0.0)
-	print("wind-up shot %.1f m/s, slapshot %.1f m/s" % [wrist, slap])
+	print("quick shot %.1f m/s, wind-up shot %.1f m/s, slapshot %.1f m/s" % [quick, wrist, slap])
 	_check(slap > wrist, "slapshot is harder than the wind-up shot")
 
 	# --- tilt lofts the shot
@@ -93,7 +97,7 @@ func _run() -> void:
 		if game.stats.stick_lifts > before:
 			lifts += 1
 	print("stick lift: %d of 20 lifted the carrier's stick" % lifts)
-	_check(lifts > 0, "lift near a carrier's stick lifts it")
+	_check(lifts >= 4 and lifts <= 18, "lift near a carrier's stick often lifts it, but not always")
 
 	# --- pass to a teammate ahead
 	await _carry(Vector2(-12, 0))
@@ -105,6 +109,9 @@ func _run() -> void:
 	var got := await _until(func(): return game.puck.pass_target == mate, 0.5, [mate])
 	print("pass sent to teammate: %s" % got)
 	_check(got, "pass button passes to the teammate")
+	got = await _until(func(): return game.puck.controller == mate, 1.5, [mate])
+	print("teammate caught it: %s" % got)
+	_check(got, "the pass connects")
 
 	# --- without the puck, the pass button calls for it
 	await _carry(Vector2(-4, 0), false)
@@ -157,6 +164,7 @@ func _lift_trial() -> void:
 	opp.stun_timer = 0.0
 	game.puck.reset_at(opp.puck_anchor())
 	game.puck.controller = opp
+	game.human.lift_cd = 0.0
 	_set_plan(func(f, t): f.lift = 1.0 if t > 0.05 else 0.0)
 	await _until(func(): return false, 0.15, [opp])
 

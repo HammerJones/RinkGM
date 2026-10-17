@@ -22,7 +22,8 @@ virtual right stick, so both devices drive the same stick model.
 | Hockey stop | R3 (click right stick) | Space |
 | Stick blade (90 degree arc in front of you) | Right stick | Mouse (cursor is captured; Esc frees it) |
 | Stickhandle | Right stick side to side | Mouse side to side |
-| Shoot | Pull the stick behind you, then push it forward | Same with the mouse |
+| Quick shot (instant) | Flick the right stick forward | Flick the mouse forward |
+| Wind-up shot | Pull the stick behind you, then push it forward | Same with the mouse |
 | Slapshot | Hold LT as you pull back | Hold right click as you pull back |
 | Lift stick (offense: over the puck; defense: lift their stick) | LT | Right click |
 | Tilt blade (raises shots and passes) | RT (analog) | Left click (hold longer for more) |
@@ -166,6 +167,7 @@ plays a full season of live engine games with the AI driving you.
 Arguments after `--` are read by the game:
 
 - `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
+- `--demo=controls` plays a captioned showcase of every move (`tests/controls_demo.gd`). Record it with `godot --path . --write-movie demo.avi --fixed-fps 30 --resolution 1280x720 -- --demo=controls`.
 - `--autoplay` lets the AI drive your skater too (prints stats and a box score on exit).
 - `--period=N` plays N-minute periods (exhibition default is 5).
 - `--career` opens the career hub; `--career-new` discards the saved career.

@@ -129,7 +129,12 @@ func _ready() -> void:
 	hud.set_mode(Tuning.mode_name())
 	_start_faceoff(Vector2.ZERO)
 	_handle_capture_args()
-	# `-- --test=controls` runs the scripted control checks in tests/
+	# `-- --test=controls` runs the scripted control checks in tests/, and
+	# `-- --demo=controls` plays the captioned controls showcase
+	if "--demo=controls" in OS.get_cmdline_user_args():
+		var d: Node = load("res://tests/controls_demo.gd").new()
+		d.set("game", self)
+		add_child(d)
 	if "--test=controls" in OS.get_cmdline_user_args():
 		var t: Node = load("res://tests/controls_test.gd").new()
 		t.set("game", self)
