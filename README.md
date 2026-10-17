@@ -2,6 +2,9 @@
 
 Experimenting with a hockey game/rink management sim.
 
+Working on RinkGM? Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (who owns
+what, shared interfaces, the CI gate) and [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## Playable demo (Godot 4.3+)
 
 Open the folder in Godot 4.3 or newer and press Play. It's a 5-on-5 game with
@@ -190,3 +193,5 @@ godot --headless --path . --fixed-fps 120 --quit-after 36000 -- --autoplay --mod
 
 `tools/check.sh` re-imports the project and runs it headless to surface script errors.
 `tools/physics_bench.sh [out.md]` prints the physics bench.
+`tools/ci.sh` is the full gate CI runs on every PR: import, a headless autoplay
+game and the `tools/tests/` scripts.
