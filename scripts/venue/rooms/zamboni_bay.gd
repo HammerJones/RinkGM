@@ -51,7 +51,7 @@ func build(k: VenueKit) -> void:
 	var lit: Color = k.by_age(Color("e0d8b0"), Color("f4f6f0"), Color("f4f8ff"))
 	for x in [37.0, 41.0, 44.0]:
 		k.glow(Vector3(x - 0.7, H - 0.1, -0.2), Vector3(x + 0.7, H - 0.05, 0.2), lit)
-	var sign := VenueSign.make([["// ICE RESURFACING", VenueSign.AMBER], ["KEEP CLEAR", VenueSign.RED]], 17, 2, 0.03)
+	var sign := VenueSign.make([["// ICE RESURFACING", VenueSign.AMBER], ["KEEP CLEAR", VenueSign.RED]], 19, 2, 0.03)
 	sign.name = "BaySign"
 	sign.dead = k.by_age(0.06, 0.0, 0.0)
 	k.sign(sign, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(X0 - 0.01, 3.7, 0)))

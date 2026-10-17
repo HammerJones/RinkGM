@@ -61,7 +61,7 @@ func build(k: VenueKit) -> void:
 			k.block(Vector3(bx - 0.035, 1.3, z1 - 0.15), Vector3(bx + 0.035, 1.52, z1 - 0.08), bottle, 0.5, 0.05, false)
 		if k.age == VenueRoom.Age.RENOVATED:
 			k.glow(Vector3(x0 + 0.1, 1.22, z1 + 0.01), Vector3(x1 - 0.1, 1.27, z1 + 0.02), team_col.lightened(0.35))
-		var label := VenueSign.make([["// " + ("HOME" if home else "VISITORS"), VenueSign.CYAN if home else VenueSign.AMBER]], 11, 1, 0.025)
+		var label := VenueSign.make([["// " + ("HOME" if home else "VISITORS"), VenueSign.CYAN if home else VenueSign.AMBER]], 12, 1, 0.025)
 		label.name = "BenchSign%d" % bi
 		label.dead = k.by_age(0.05, 0.0, 0.0)
 		k.sign(label, Transform3D(Basis.IDENTITY, Vector3((x0 + x1) * 0.5, 0.95, z1 + 0.02)))

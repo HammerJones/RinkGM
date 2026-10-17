@@ -69,7 +69,7 @@ func build(k: VenueKit) -> void:
 	board.background = Color("eef0f2") if k.age != Age.WORN else Color("d8d6cc")
 	k.sign(board, Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(X0 + 0.31, 1.7, s * 8.0)))
 	# door plate on the walkway side
-	var plate := VenueSign.make([["// " + ("HOME" if home else "VISITORS"), VenueSign.CYAN if home else VenueSign.AMBER]], 11, 1, 0.03)
+	var plate := VenueSign.make([["// " + ("HOME" if home else "VISITORS"), VenueSign.CYAN if home else VenueSign.AMBER]], 12, 1, 0.03)
 	plate.name = "DoorPlate"
 	plate.dead = k.by_age(0.05, 0.0, 0.0)
 	k.sign(plate, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(X0 - 0.01, 2.6, door_z)))
