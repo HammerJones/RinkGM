@@ -331,6 +331,9 @@ func _xp(p: PlayerProfile, xp: Dictionary) -> void:
 		for k in xp:
 			xp[k] *= xp_scale
 	Progression.apply_xp(p, xp)
+	for m in MoveUnlocks.check(p):
+		if p.is_user:
+			_news("You learned the %s." % MoveUnlocks.LABELS[m].to_lower())
 
 
 func _news_for_user_game(g: Dictionary, res: Dictionary) -> void:
@@ -517,6 +520,12 @@ func dev_set_skill(key: String, value: float) -> void:
 	if u.skills.values.has(key):
 		u.skills.values[key] = clampf(value, 1.0, 100.0)
 		u.potential[key] = maxf(u.potential.get(key, 0.0), u.skills.values[key])
+		MoveUnlocks.check(u)
+
+
+func dev_unlock_all_moves() -> void:
+	for m in MoveUnlocks.ORDER:
+		user().unlock_move(m)
 
 
 ## Feeds `amount` XP into one skill (or all of them for "all") through the
@@ -527,7 +536,9 @@ func dev_add_xp(key: String, amount: float) -> Dictionary:
 	for k in u.skills.values:
 		if key == "all" or k == key:
 			xp[k] = amount
-	return Progression.apply_xp(u, xp)
+	var delta := Progression.apply_xp(u, xp)
+	MoveUnlocks.check(u)
+	return delta
 
 
 ## Injures the user now. `severity` is an Injury.Severity value.

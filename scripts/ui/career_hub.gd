@@ -178,6 +178,7 @@ func _refresh() -> void:
 
 	_actions(left)
 	_skills_table(left, u)
+	_moves_table(left, u)
 	_last_game(right)
 	_season_table(right)
 	_news(right)
@@ -228,6 +229,18 @@ func _skills_table(parent: Control, u: PlayerProfile) -> void:
 			notes += " " + _c(RinkOS.GOOD, "+%.1f" % gain)
 		lines.append("%s %s%s" % [RinkOS.dots(Skills.LABELS[k], _c(RinkOS.READOUT, "%2d" % now), 15), meter, notes])
 	lines.append(_c(RinkOS.DIM, "%s NOW  %s ROOM TO GROW  +SEASON GAIN" % [_c(RinkOS.READOUT, "#"), _c(RinkOS.ACTION, "-")]))
+	box.add_child(_term_text("\n".join(lines)))
+
+
+## Known shots and stick moves, and what the next ones need.
+func _moves_table(parent: Control, u: PlayerProfile) -> void:
+	var box := _section(parent, "moves")
+	var lines := PackedStringArray()
+	for m in MoveUnlocks.ORDER:
+		if u.knows_move(m):
+			lines.append("%s %s" % [_c(RinkOS.GOOD, "[x]"), MoveUnlocks.LABELS[m].to_upper()])
+		else:
+			lines.append("%s %s  %s" % [_c(RinkOS.DIM, "[ ]"), _c(RinkOS.DIM, MoveUnlocks.LABELS[m].to_upper()), _c(RinkOS.DIM, MoveUnlocks.requirement_text(u, m))])
 	box.add_child(_term_text("\n".join(lines)))
 
 
