@@ -16,7 +16,7 @@ it starts as a tired 1970s community rink and visibly gets better.
 | --- | --- | --- |
 | Characters, equipment, props (sticks are Controls') | 0.065 m (`Models.V`) | One size so everything the player stands next to reads as one world. A 1.85 m skater is about 28 voxels tall |
 | Puck, net | 0.05 m, 0.061 m | Kept for regulation sizes |
-| Architecture (walls, floors, roof, stands) | 0.26 m (4 x `Models.V`) | Proposed for Rink environment; big surfaces stay cheap and still line up with the prop grid |
+| Architecture (walls, floors, roof, stands) | Rink environment's tiles, 0.3-1 m | Built by Rink environment in the `Wear` palettes. Flat colour, so big surfaces stay cheap |
 
 Real-world sizes are used throughout: doors are 0.9 x 2.1 m, seats 0.45 m
 off the floor, the ice resurfacer about 2 x 4 m.
@@ -32,6 +32,13 @@ off the floor, the ice resurfacer about 2 x 4 m.
 - One mesh per prop and age, shared by every copy (`Props.mesh(id, age)` caches
   it), so a stand of 400 seats is one mesh drawn 400 times. Use a
   `MultiMeshInstance3D` for big repeats.
+- Two detail levels: `Props.mesh(id, age, 1)` drops the speckle, rust, chips
+  and grime gradient and merges flat faces of one colour
+  (`VoxelModel.build_mesh_merged`). Use it for the stands and anything far
+  away; a seat goes from about 640-860 triangles to 120-210.
+- Doors come whole (`door`) or in two parts so the leaf can swing:
+  `door_frame` has the door's pivot, `door_leaf` has its pivot on the hinge,
+  and `Props.DOOR_HINGE` is where the hinge sits in the frame's space.
 
 ## Renovation ages
 

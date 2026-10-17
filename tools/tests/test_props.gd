@@ -1,32 +1,63 @@
 extends SceneTree
-## Builds every prop in the kit at every renovation age and checks each one
-## is a usable mesh with its pivot on the floor.
+## Builds every prop in the kit at every renovation age and detail level and
+## checks each is a usable, cached mesh with its pivot on the floor.
 ##   godot --headless --path . --script res://tools/tests/test_props.gd
+
+var failures := 0
 
 
 func _initialize() -> void:
-	var failures := 0
 	for id in Props.ids():
 		for age in 3:
-			var m := Props.model(id, age)
-			if m == null or m.voxels.is_empty():
-				printerr("%s/%s: no voxels" % [id, Wear.NAMES[age]])
-				failures += 1
-				continue
-			var mesh := Props.mesh(id, age)
-			if mesh == null or mesh.get_surface_count() == 0:
-				printerr("%s/%s: no mesh" % [id, Wear.NAMES[age]])
-				failures += 1
-			if Props.mesh(id, age) != mesh:
-				printerr("%s/%s: mesh not cached" % [id, Wear.NAMES[age]])
-				failures += 1
-			var aabb := mesh.get_aabb()
-			# floor props stand on y=0; the light hangs below its ceiling mount
-			var expect_top: bool = id == "light"
-			var edge: float = aabb.end.y if expect_top else aabb.position.y
-			if absf(edge) > 0.07:
-				printerr("%s/%s: pivot is %.2f m off the %s" % [id, Wear.NAMES[age], edge, "ceiling" if expect_top else "floor"])
-				failures += 1
+			_check(id, age)
+	# the low-detail seat is what fills the stands, so keep it cheap
+	var seat_tris := 0
+	for age in 3:
+		var full := _tris(Props.mesh("arena_seat", age))
+		var lod := _tris(Props.mesh("arena_seat", age, 1))
+		seat_tris = maxi(seat_tris, lod)
+		print("arena_seat %s: %d tris, low detail %d" % [Wear.NAMES[age], full, lod])
+	if seat_tris > 400:
+		_fail("low-detail arena_seat has %d triangles (budget 400)" % seat_tris)
+	# door parts: the leaf and frame together are the whole door
+	for age in 3:
+		var whole := Props.model("door", age).voxels.size()
+		var parts := Props.model("door_frame", age).voxels.size() + Props.model("door_leaf", age).voxels.size()
+		if whole != parts:
+			_fail("door %s: frame + leaf have %d voxels, door has %d" % [Wear.NAMES[age], parts, whole])
+		var leaf := Props.mesh("door_leaf", age).get_aabb()
+		if absf(leaf.end.x) > 0.01 or leaf.position.x > -0.8:
+			_fail("door_leaf %s: hinge should be at x=0 with the leaf toward -x, got %s" % [Wear.NAMES[age], leaf])
 	if failures == 0:
-		print("props test: all passed (%d props x 3 ages)" % Props.ids().size())
+		print("props test: all passed (%d props x 3 ages x 2 detail levels)" % Props.ids().size())
 	quit(1 if failures else 0)
+
+
+func _check(id: String, age: int) -> void:
+	var label := "%s/%s" % [id, Wear.NAMES[age]]
+	var m := Props.model(id, age)
+	if m == null or m.voxels.is_empty():
+		_fail("%s: no voxels" % label)
+		return
+	for lod in 2:
+		var mesh := Props.mesh(id, age, lod)
+		if mesh == null or mesh.get_surface_count() == 0:
+			_fail("%s lod %d: no mesh" % [label, lod])
+			continue
+		if Props.mesh(id, age, lod) != mesh:
+			_fail("%s lod %d: mesh not cached" % [label, lod])
+		var aabb := mesh.get_aabb()
+		# floor props stand on y=0; the light hangs below its ceiling mount
+		var hangs: bool = id == "light"
+		var edge: float = aabb.end.y if hangs else aabb.position.y
+		if absf(edge) > 0.07:
+			_fail("%s lod %d: pivot is %.2f m off the %s" % [label, lod, edge, "ceiling" if hangs else "floor"])
+
+
+func _tris(mesh: ArrayMesh) -> int:
+	return mesh.surface_get_array_len(0) / 3
+
+
+func _fail(msg: String) -> void:
+	printerr(msg)
+	failures += 1

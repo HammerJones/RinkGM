@@ -74,3 +74,76 @@ func append_to(b: VoxelMeshBuilder, xf: Transform3D) -> void:
 			b.add_quad(
 				xf * (base + f[0] * voxel_size), xf * (base + f[1] * voxel_size),
 				xf * (base + f[2] * voxel_size), xf * (base + f[3] * voxel_size), n, c)
+
+
+## A lighter mesh for distance and big repeats: no per-voxel speckle, and
+## neighbouring faces of the same colour merge into one quad (greedy meshing).
+## `quantize` > 0 snaps colours to that many steps per channel first, so faded
+## or grimy surfaces merge too.
+func build_mesh_merged(quantize := 0) -> ArrayMesh:
+	var b := VoxelMeshBuilder.new()
+	var cols := {}
+	for p in voxels:
+		var c: Color = voxels[p]
+		if quantize > 0:
+			var q := float(quantize)
+			c = Color(roundf(c.r * q) / q, roundf(c.g * q) / q, roundf(c.b * q) / q)
+		cols[p] = c
+	for i in 6:
+		var dir: Vector3i = DIRS[i]
+		var d := 0 if dir.x != 0 else (1 if dir.y != 0 else 2)
+		var ua := (d + 1) % 3
+		var va := (d + 2) % 3
+		var positive := dir[d] > 0
+		# exposed faces grouped by layer: layer -> {Vector2i(u, v): Color}
+		var layers := {}
+		for key in cols:
+			var p: Vector3i = key
+			if cols.has(p + dir):
+				continue
+			var k: int = p[d]
+			if not layers.has(k):
+				layers[k] = {}
+			layers[k][Vector2i(p[ua], p[va])] = cols[p]
+		var n := Vector3(dir)
+		for layer in layers:
+			var k: int = layer
+			var mask: Dictionary = layers[k]
+			var keys := mask.keys()
+			keys.sort_custom(func(a: Vector2i, b2: Vector2i) -> bool: return a.y < b2.y or (a.y == b2.y and a.x < b2.x))
+			var used := {}
+			for key in keys:
+				var start: Vector2i = key
+				if used.has(start):
+					continue
+				var c: Color = mask[start]
+				var w := 1
+				while _same(mask, start + Vector2i(w, 0), c) and not used.has(start + Vector2i(w, 0)):
+					w += 1
+				var h := 1
+				var grow := true
+				while grow:
+					for x in w:
+						var q2 := start + Vector2i(x, h)
+						if not _same(mask, q2, c) or used.has(q2):
+							grow = false
+							break
+					if grow:
+						h += 1
+				for x in w:
+					for y in h:
+						used[start + Vector2i(x, y)] = true
+				var plane := float(k + 1) if positive else float(k)
+				var corners: Array[Vector3] = []
+				for uv in [Vector2(start.x, start.y), Vector2(start.x + w, start.y), Vector2(start.x + w, start.y + h), Vector2(start.x, start.y + h)]:
+					var v3 := Vector3.ZERO
+					v3[d] = plane
+					v3[ua] = uv.x
+					v3[va] = uv.y
+					corners.append((v3 - pivot) * voxel_size)
+				b.add_quad(corners[0], corners[1], corners[2], corners[3], n, c)
+	return b.commit()
+
+
+static func _same(mask: Dictionary, at: Vector2i, c: Color) -> bool:
+	return mask.has(at) and mask[at] == c

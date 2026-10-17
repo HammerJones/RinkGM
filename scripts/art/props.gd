@@ -9,11 +9,21 @@ extends RefCounted
 ## prop has its pivot at the floor, centred, with its front facing -Z.
 ##
 ##   var mesh := Props.mesh("door", Wear.WORN)   # cached, share it freely
+##   var far := Props.mesh("arena_seat", Wear.WORN, 1)   # low detail
+##
+## Doors also come as two parts so the leaf can swing: "door_frame" (same
+## pivot as "door") and "door_leaf", whose pivot is its hinge. Put the leaf at
+## DOOR_HINGE in the frame's space.
 
 const V := Models.V
 
 ## Every prop id. Add new props here and in _build().
 const IDS := ["arena_seat", "door", "light", "vending_machine", "trash_can", "rink_sign", "resurfacer"]
+
+## Where the door leaf's hinge sits in the door frame's local space (metres).
+const DOOR_HINGE := Vector3(7 * Models.V, 0, 0)
+const _DOOR_W := 14
+const _DOOR_H := 32
 
 static var _cache := {}
 
@@ -23,11 +33,28 @@ static func ids() -> Array:
 
 
 static func model(id: String, age: int) -> VoxelModel:
+	if id == "door_frame" or id == "door_leaf":
+		return _door_part(id == "door_leaf", age)
 	var m := _build(id, age)
 	if m == null:
 		push_error("Props: unknown prop '%s'" % id)
 		return null
 	return Wear.weather(m, age, hash(id))
+
+
+## Splits the weathered door into its frame and its leaf.
+static func _door_part(leaf: bool, age: int) -> VoxelModel:
+	var whole := model("door", age)
+	var part := VoxelModel.new(whole.voxel_size)
+	part.jitter = whole.jitter
+	for p in whole.voxels:
+		var in_frame: bool = p.x < 0 or p.x >= _DOOR_W or p.y >= _DOOR_H
+		if in_frame != leaf:
+			part.voxels[p] = whole.voxels[p]
+	if leaf:
+		return part.set_pivot(_DOOR_W, 0, 1)  # hinge edge, on the viewer's left
+	part.pivot = whole.pivot
+	return part
 
 
 static func _build(id: String, age: int) -> VoxelModel:
@@ -42,12 +69,21 @@ static func _build(id: String, age: int) -> VoxelModel:
 	return null
 
 
-## One mesh per (id, age), built on first use. Many seats share one mesh.
-static func mesh(id: String, age: int) -> ArrayMesh:
-	var key := "%s/%d" % [id, age]
+## One mesh per (id, age, lod), built on first use. Many seats share one mesh.
+## lod 0 is full detail; lod 1 drops the speckle and merges flat faces, for
+## big repeats (stands of seats) and distance.
+static func mesh(id: String, age: int, lod := 0) -> ArrayMesh:
+	var key := "%s/%d/%d" % [id, age, lod]
 	if not _cache.has(key):
+		Wear.fine = lod == 0
 		var m := model(id, age)
-		_cache[key] = m.build_mesh() if m else null
+		Wear.fine = true
+		if m == null:
+			_cache[key] = null
+		elif lod == 0:
+			_cache[key] = m.build_mesh()
+		else:
+			_cache[key] = m.build_mesh_merged()
 	return _cache[key]
 
 
@@ -102,8 +138,8 @@ static func _arena_seat(age: int) -> VoxelModel:
 ## mint with a wired-glass window. New: a glass door in a charcoal frame.
 static func _door(age: int) -> VoxelModel:
 	var m := VoxelModel.new(V)
-	var w := 14
-	var h := 32
+	var w := _DOOR_W
+	var h := _DOOR_H
 	if age == Wear.RENOVATED:
 		m.box(-1, 0, 0, 1, h + 1, 2, Wear.CHARCOAL)
 		m.box(w, 0, 0, 1, h + 1, 2, Wear.CHARCOAL)
