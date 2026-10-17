@@ -61,19 +61,64 @@ The shop follows the same worn, repaired and renovated ages as the rink.
 | Repaired | New lights, a second stick rack, fresh paint on the counter, the back room opens up |
 | Renovated | The shooting lane, a proper goalie wall, a glass Grafton case, a small "Bev's at the Rink" window in the arena lobby for sharpening on game night |
 
-### How the shop grows
+### How the shop grows: supplier deals (Sean, 2026-10-17)
 
-The stock grows in five stages. The shop's stage is the higher of what your
-tier unlocks and what Millbrook's rink renovation unlocks, so a player who
-fixes up the home rink gets better gear even before climbing the ladder.
+Stock is a GM decision, not an unlock. Bev runs the counter and the
+sharpener, but what is on the racks depends on the supplier deals you, as the
+rink's GM, set up. The more successful the rink, the better the deals on
+offer.
 
-| Stage | Name | Unlocked by tier | Or by rink age | What it adds |
-| --- | --- | --- | --- | --- |
-| 0 | Old Bertha | Beer League D | Worn | Honest Hockey, Shorewood, CMC basics, the used rack. Hollows 3/8", 1/2", 5/8". Steam curve and lie jobs on wood sticks. Cuts, plugs and tape. |
-| 1 | The New Wheel | Beer League C | Repaired | Hollows 5/16" and 3/4". Heat-gun curve jobs on composites. Kodiak and Warlock entry sticks, CMC mid gear, vintage goalie pads. |
-| 2 | The Back Room | Beer League A | Renovated | 1" hollow, the profiling jig, lie jobs on composites, the full goalie wall, Kodiak and Warlock pro sticks, the shooting lane. |
-| 3 | Authorised Dealer | Senior AAA | | Elite sticks, Grafton Blades fittings by appointment, the dual-radius Kessler Special profile. |
-| 4 | Custom Orders | Semi-Pro | | Grafton Atelier. Custom-order sticks built to your curve, lie and flex with no fee, delivered 7 calendar days later. |
+**Rink reputation** decides who will talk to you. It rises with attendance,
+the renovation age of the building, ice quality, the home clubs' results and
+tournaments hosted, and falls with empty seats and bad ice. Brands open
+negotiations at a reputation threshold:
+
+| Reputation | Who calls | Typical first offer |
+| --- | --- | --- |
+| Any | Honest Hockey Co., Shorewood, Gripley's | Consignment: no money up front, Bev keeps 20% |
+| Fair | CMC, Kodiak entry lines, Warlock entry lines | Buy a starter stock order ($400 to $800), 30% margin |
+| Good | Kodiak pro, Warlock pro, Ironside goalie gear | Larger minimum order, a rink banner as part of the deal |
+| Great | Grafton Blades | "Authorised fitter" status: you buy a fitting kit, they send a rep twice a season |
+| Famous | Custom orders from any brand | Built-to-spec sticks for players, a co-branded rink sponsorship |
+
+**Deal terms** are where the GM game is:
+- Minimum order and margin: bigger orders, better margin, more money tied up.
+- Exclusivity: Warlock pays extra for the only composite rack in the shop;
+  Kodiak will not share a wall with Warlock; Honest does not care.
+- Co-marketing: a brand pays toward a banner, the scoreboard ad or the Zambelli
+  wrap, which feeds the rink's sponsor income.
+- Length: one or two seasons, renegotiated at the new reputation.
+
+Unsold stock sits on the shelf (cash tied up); stock that sells earns the rink
+money. As a player you buy at a staff discount from whatever the rink stocks,
+so running a good rink is how you get good gear.
+
+Services grow with what the rink buys rather than with deals: Old Bertha does
+3/8" to 5/8"; a new wheel adds 5/16" and 3/4"; the profiling jig and the 1"
+hollow come with the renovated back room; the lobby sharpening window comes
+with the renovated rink.
+
+### Broken sticks: the barrel and the carpenter
+
+Sticks break (see the catalogue's break chances), and broken sticks pile up in
+the stick barrel by the rink's back door: yours, your teammates', and every
+team that plays at Millbrook. A busy rink fills it faster. In real rinks
+carpenters and crafters buy these for a couple of bucks each, so this is a
+side hustle the GM can set up:
+
+| Buyer | Pays | Wants | Unlocked |
+| --- | --- | --- | --- |
+| Lorne Pettipiece, Pettipiece Woodworks, Harlow Falls | $3 a wooden shaft, $1 a composite | Wood most of all: coat racks, benches, the odd Adirondack chair | Start (Bev knows him) |
+| The Port Ainsley craft fair | $2 each, any kind, once a month | Bottle openers, signs, "rustic" decor | Good reputation |
+| Millbrook High shop class | $0, but reputation goes up | Anything, for projects | Any time |
+| Doris' retirement fund raffle | Pays in reputation and a banner | A signed broken stick from a home-club star | When a local player gets famous |
+
+The barrel is emptied on a sale; a deal can be a standing order (Lorne takes
+the barrel every two weeks). Bev on the barrel: "Lorne made a bench out of
+forty-one Warlocks. Sturdier than they ever were as sticks."
+
+Stick wear and breaking events on the ice belong to the Physics thread (see
+the open questions).
 
 Sharpening is only at Bev's, so a road trip to Kessler means getting your
 edges done before you leave. Once the rink is renovated, Bev's lobby window
@@ -563,14 +608,13 @@ Every item in the catalogue has its own line in `desc`.
 
 ## 7. Open questions
 
-**For Sean**
+**Decided by Sean (2026-10-17)**
 
-1. Is the beer-league economy right: you pay a season fee and earn through
-   rink shifts and small sponsor bonuses until Senior AAA pays $40 a game?
-2. Should shop stage come from tier or rink renovation, whichever is higher
-   (this design), or only one of them?
-3. Should broken sticks be in at all? They're the main money sink and give
-   Warlock its character, but they can feel bad.
+1. Profit starts at Senior AAA, as above.
+2. Shop stock is a GM job: supplier deals that improve with the rink's
+   success (see "How the shop grows").
+3. Sticks break, and the rink sells the broken ones (see "Broken sticks").
+   Stick wear and breaking events go to the Physics thread.
 
 **For Game mechanics**
 
@@ -585,8 +629,9 @@ Every item in the catalogue has its own line in `desc`.
    unchanged, or a tier-typical kit that nets out to zero.
 8. Rink-rat shifts and reffing need a way to spend a calendar day off a game
    day; is that the hub's job or the world's?
-9. Stick breaks: rolled post-game in the quick sim only, or also mid-game in
-   a live game (which needs a Physics or match event)?
+9. Stick breaks happen mid-game too (Sean wants wear and breaking events);
+   Physics proposes the events, Mechanics stores stick condition in the save
+   and rolls breaks for quick-simmed games.
 10. Is the goalie hollow mapping (deep for reflexes, flat for positioning)
     acceptable, given goalie keys don't include skating?
 
