@@ -91,7 +91,7 @@ assistance on top.
 - **On-ice AI** (`scripts/game/skater_ai.gd`, the goalie) plays to the league
   tier, not just the ratings: each team reads a `TierAI` (`game.ai_for`). A beer
   league reacts late to turnovers, sends two or three skaters after the puck,
-  forces passes and shoots from anywhere, and its goalie is slow and off his
+  forces passes and shoots from anywhere, and its goalie is slow and off the
   angle. Higher tiers hold support spots and gaps, move the puck early to the
   open man and work it in close before shooting.
 
