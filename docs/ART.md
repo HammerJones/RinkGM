@@ -20,7 +20,7 @@ it starts as a tired 1970s community rink and visibly gets better.
 | Architecture (walls, floors, roof, stands) | Rink environment's tiles, 0.3-1 m | Built by Rink environment in the `Wear` palettes. Flat colour, so big surfaces stay cheap |
 
 Real-world sizes are used throughout: doors are 0.9 x 2.1 m, seats 0.45 m
-off the floor, the ice resurfacer about 2 x 4 m.
+off the floor, the ice resurfacer about 1.9 x 3.6 m.
 
 ## Conventions
 
@@ -79,7 +79,7 @@ is yellowed and cloudier). The scoreboard leaves its displays dark:
 `Props.scoreboard_faces(age)` gives each face's centre, outward normal and
 size to fill with `RinkOS.sign_3d()`. The old scoreboard is a 6.5 x 3 m wall
 board; the renovated one is a four-sided centre-hung board, pivoted at its
-ceiling mount like the lights. The penalty box is 4.3 x 1.9 m with a 1 m door
+ceiling mount like the lights. The resurfacer is the world's classic Zambelli Model 525: a boxy gas machine with the tall snow tank in front, the driver up on the left behind it, the engine cowl on the right and the conditioner and towel trailing. The penalty box is 4.3 x 1.9 m with a 1 m door
 gap in the back wall.
 
 To add a prop: write a `_name(age)` builder in `props.gd`, add the id to
@@ -127,7 +127,7 @@ run it under `xvfb-run` with
 
 The full 5-on-5 game must hold 60 fps on a mid-range PC. Props that repeat
 (seats, bins, lights) stay under about 2,000 faces each; one-offs such as the
-resurfacer (about 7,000 today) can go to 8,000. Share meshes, and give large
+resurfacer can go to 8,000. Big one-offs with large flat panels (the resurfacer) are listed in `Props._MERGED` and merge their faces even at full detail, keeping rust and grime but not the speckle (about 650-2,100 triangles). Share meshes, and give large
 repeated sets (seats, crowd) a `MultiMeshInstance3D`. Next pipeline step:
 merge flat runs of faces for architecture, where the per-voxel speckle
 matters less.

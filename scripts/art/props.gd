@@ -86,6 +86,11 @@ static func _build(id: String, age: int) -> VoxelModel:
 	return null
 
 
+## Big one-offs whose flat panels would cost too many faces with per-voxel
+## speckle: full detail keeps their rust and grime but merges the faces.
+const _MERGED := ["resurfacer"]
+
+
 ## One mesh per (id, age, lod), built on first use. Many seats share one mesh.
 ## lod 0 is full detail; lod 1 drops the speckle and merges flat faces, for
 ## big repeats (stands of seats) and distance.
@@ -97,7 +102,7 @@ static func mesh(id: String, age: int, lod := 0) -> ArrayMesh:
 		Wear.fine = true
 		if m == null:
 			_cache[key] = null
-		elif lod == 0:
+		elif lod == 0 and not id in _MERGED:
 			_cache[key] = m.build_mesh()
 		else:
 			_cache[key] = m.build_mesh_merged()
@@ -373,51 +378,89 @@ static func _rink_sign(age: int) -> VoxelModel:
 
 # ---------------------------------------------------------------- ice
 
-## The ice resurfacer, about 2 x 4 m. Front (driver end) faces -Z.
-## Old: a boxy cream machine with an exhaust stack. New: electric, white
-## with club stripes and no stack.
+## The ice resurfacer, a Zambelli Model 525 (see the lore): the classic boxy
+## gas machine, about 1.9 x 3.6 m and 2 m tall. Front faces -Z. The tall snow
+## tank fills the front two thirds; behind it the driver sits up on the
+## machine's left (low x) with the engine cowl on the right, and the
+## conditioner and towel drag behind. Old: cream with a blue band and an
+## exhaust stack. Repaired: a mismatched cowl panel and a taped seat. New: a
+## restored machine in the club colours with LED lights and a beacon.
 static func _resurfacer(age: int) -> VoxelModel:
 	var m := VoxelModel.new(V)
-	var w := 28
-	var l := 58
 	var new := age == Wear.RENOVATED
 	var body := Wear.WHITE if new else Wear.OLD_CREAM
-	var stripe := Wear.RED if new else Color("3d6fb0")
-	var trim := Wear.NAVY if new else Wear.OLD_STEEL
-	# chassis and wheels
-	m.box(1, 3, 2, w - 2, 4, l - 4, Wear.CHARCOAL)
-	for z in [8, l - 14]:
-		m.box(0, 0, z, 3, 8, 8, Wear.RUBBER)
-		m.box(w - 3, 0, z, 3, 8, 8, Wear.RUBBER)
-		m.box(0, 3, z + 3, 3, 2, 2, trim)
-		m.box(w - 3, 3, z + 3, 3, 2, 2, trim)
-	# snow tank: the big box over the back two thirds
-	m.box(1, 7, 18, w - 2, 16, l - 22, body)
-	m.box(1, 12, 18, w - 2, 2, l - 22, stripe)
-	m.box(1, 23, 18, w - 2, 1, l - 22, body.darkened(0.08))
-	# cab: low nose with the seat and wheel
-	m.box(1, 7, 0, w - 2, 7, 18, body)
-	m.box(1, 12, 0, w - 2, 2, 18, stripe)
-	m.box(8, 14, 6, 12, 2, 6, Wear.CHARCOAL)  # seat
-	m.box(8, 16, 11, 12, 6, 1, Wear.CHARCOAL)
-	m.box(12, 14, 2, 4, 4, 1, Wear.CHARCOAL)  # steering column
-	m.box(10, 18, 1, 8, 1, 3, Wear.RUBBER)  # wheel
-	# conditioner at the back
-	m.box(0, 3, l - 4, w, 5, 4, trim)
-	m.box(1, 2, l - 3, w - 2, 1, 2, Wear.STEEL)
+	var band := Wear.NAVY if new else Color("3d6fb0")
+	var pin := Wear.RED if new else Color("2b4f86")
+	var trim := Wear.STEEL if new else Wear.OLD_STEEL
+	var tank_end := 33   # back wall of the snow tank
+	var rear_end := 47   # back of the operator deck and engine cowl
+	# wheels and frame
+	for z in [5, 34]:
+		for x in [0, 25]:
+			m.box(x, 0, z, 3, 9, 9, Wear.RUBBER)
+			m.box(x, 3, z + 3, 3, 3, 3, trim)  # hubs
+	m.box(3, 2, 2, 22, 4, rear_end - 2, Wear.CHARCOAL)
+	# lower body over the water tank, set back under the nose
+	m.box(1, 6, 4, 26, 5, rear_end - 4, body)
+	# snow tank: the tall box at the front, its lower front stepped back
+	m.box(1, 15, 0, 26, 15, tank_end, body)
+	m.box(1, 11, 2, 26, 4, tank_end - 2, body)
+	for x in [1, 26]:
+		m.clear_box(x, 29, 0, 1, 1, tank_end)  # rounded top edges
+	m.clear_box(1, 15, 0, 26, 1, 1)  # chamfer where the nose steps back
+	m.box(2, 30, 2, 24, 1, tank_end - 4, body.darkened(0.12))  # tank lid
+	# the band and pinstripe round the tank
+	m.box(1, 19, 0, 26, 3, tank_end, band)
+	m.box(1, 23, 0, 26, 1, tank_end, pin)
+	m.box(2, 20, -1, 24, 1, 1, band)
+	# front badge: a Z on a panel
+	m.box(8, 22, -1, 11, 7, 1, band)
+	m.box(10, 27, -2, 7, 1, 1, body)
+	m.box(10, 23, -2, 7, 1, 1, body)
+	for p in [Vector2i(11, 26), Vector2i(12, 26), Vector2i(13, 25), Vector2i(14, 24), Vector2i(15, 24)]:
+		m.set_voxel(p.x, p.y, -2, body)  # the diagonal, read from the front
+	# headlights either side of the nose
+	var lamp := Wear.LED if new else Wear.SODIUM
+	m.box(2, 16, -1, 4, 2, 1, lamp)
+	m.box(22, 16, -1, 4, 2, 1, lamp)
+	# operator deck on the left: floor, dash, column, wheel and seat
+	m.box(1, 11, tank_end, 13, 1, rear_end - tank_end, Wear.CHARCOAL)
+	m.box(2, 12, tank_end, 11, 4, 1, Wear.CHARCOAL)  # dash on the tank wall
+	m.box(7, 12, tank_end + 1, 1, 7, 1, Wear.CHARCOAL)  # steering column
+	for p in [Vector2i(4, 1), Vector2i(4, 2), Vector2i(10, 1), Vector2i(10, 2), Vector2i(5, 0), Vector2i(9, 0), Vector2i(5, 3), Vector2i(9, 3)]:
+		m.set_voxel(p.x, 19, tank_end + p.y, Wear.RUBBER)
+	for x in range(6, 9):
+		m.set_voxel(x, 19, tank_end, Wear.RUBBER)
+		m.set_voxel(x, 19, tank_end + 3, Wear.RUBBER)
+	var seat := Wear.NAVY if new else Wear.OLD_BROWN
+	m.box(4, 12, 39, 7, 3, 5, Wear.CHARCOAL)  # seat box
+	m.box(4, 15, 39, 7, 1, 5, seat)
+	m.box(4, 16, 44, 7, 6, 1, seat)  # backrest
+	# engine cowl on the right, with a vent grille
+	m.box(14, 11, tank_end, 13, 11, rear_end - tank_end, body)
+	m.box(14, 17, tank_end, 13, 2, rear_end - tank_end, band)
+	for z in range(36, 45, 2):
+		m.box(27, 12, z, 1, 4, 1, Wear.CHARCOAL)
+	m.box(1, 6, rear_end, 26, 6, 1, body)  # rear guard
+	# conditioner (the board that shaves, washes and lays water) and towel
+	m.box(-1, 1, rear_end + 1, 30, 5, 4, trim)
+	m.box(-1, 6, rear_end + 1, 30, 1, 4, trim.darkened(0.25))
+	m.box(0, 0, rear_end + 2, 28, 1, 2, Wear.STEEL)  # blade
+	m.box(1, 0, rear_end + 5, 26, 1, 3, Wear.PAPER if new else Wear.OLD_CREAM.darkened(0.2))
 	if new:
-		m.box(w - 4, 15, 0, 3, 2, 1, Wear.LED)  # headlights
-		m.box(1, 15, 0, 3, 2, 1, Wear.LED)
+		m.box(23, 22, 44, 2, 3, 2, Wear.CHARCOAL)  # beacon mast and light
+		m.box(23, 25, 44, 2, 2, 2, Wear.SODIUM)
 	else:
-		m.box(w - 5, 14, 14, 2, 18, 2, Wear.CHARCOAL)  # exhaust stack
-		m.box(w - 4, 15, 0, 3, 2, 1, Wear.SODIUM)
-		m.box(1, 15, 0, 3, 2, 1, Wear.SODIUM)
+		m.box(23, 22, 43, 2, 13, 2, Wear.CHARCOAL)  # exhaust stack
+		m.box(22, 34, 42, 4, 1, 4, Wear.CHARCOAL)
 		if age == Wear.WORN:
-			Wear.rust(m, trim, 0.12, 17)
+			Wear.rust(m, trim, 0.15, 17)
 			Wear.rust(m, body, 0.02, 17)
+			m.box(3, 15, 39, 2, 1, 2, Wear.OLD_CREAM.darkened(0.3))  # seat foam showing
 		else:
-			m.box(1, 15, 30, 1, 6, 10, Wear.WHITE)  # replacement side panel
-	return m.set_pivot(w * 0.5, 0, l * 0.5)
+			m.box(14, 12, 38, 1, 5, 7, Wear.WHITE)  # replacement cowl panel
+			m.box(6, 15, 40, 3, 1, 3, Wear.DUCT_TAPE)  # taped seat
+	return m.set_pivot(14, 0, 27)
 
 
 ## See-through material for glass panes. Old glass is yellowed and scuffed,
