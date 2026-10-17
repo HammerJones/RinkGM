@@ -70,6 +70,7 @@ func _run_demo(seed_: int) -> void:
 	_expect(c.is_demo_over(), "demo ends after the mid-tier season")
 	print("demo_low: overall %.1f -> %.1f (after BL-C) -> %.1f (after SR-AAA), moves %s" % [start, after_one, c.user().overall(), c.user().moves])
 	_expect(after_one - start > 2.0, "demo shows progression in one season")
+	_check_league_gate(seed_)
 	var m := Career.new_demo("demo_mid", "Demo", "Player", "D", seed_)
 	_expect(m.tier == 3 and absf(m.user().overall() - 54.0) < 6.0, "mid demo starts in Senior AAA near the tier average")
 	# dev levers
@@ -93,6 +94,27 @@ func _run_demo(seed_: int) -> void:
 	_expect(round_trip.moves == m.user().moves, "moves survive save/load")
 	m.dev_force_invitations()
 	_expect(m.phase == Career.Phase.OFFSEASON and not m.invitations.is_empty(), "dev_force_invitations")
+
+
+## The rink sim's dues gate: a benched owner sits out (their team still
+## plays), and is back once the gate opens.
+func _check_league_gate(seed_: int) -> void:
+	var c := Career.new_demo("demo_low", "Gate", "Test", "C", seed_)
+	var paid := [false]
+	c.league_gate = func() -> bool: return paid[0]
+	var g := c.next_user_game()
+	_expect(c.user().benched and not g.user_can_play, "unpaid dues bench the user")
+	var lu: Dictionary = c.lineup_for(c.user_team())
+	var dressed := false
+	for l in lu.F + lu.D:
+		dressed = dressed or c.user() in l
+	_expect(not dressed, "a benched user isn't in the lineup")
+	var gp: int = c.user().season_stats.gp
+	c.play_round()
+	_expect(c.user().season_stats.gp == gp, "the team plays without a benched user")
+	paid[0] = true
+	g = c.next_user_game()
+	_expect(not c.user().benched and g.user_can_play, "paying dues puts the user back in")
 
 
 func _run_career(seasons: int, seed_: int, pos: String) -> void:

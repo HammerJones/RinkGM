@@ -21,6 +21,9 @@ var skills: Skills
 ## Per-skill ceilings this player can train up to (talent). Ages lower them.
 var potential := {}
 var injury: Injury = null
+## Out of the lineup for something other than injury (unpaid league dues).
+## Not saved: Career re-reads it from `league_gate` before each round.
+var benched := false
 ## 0..1, carried between games (back-to-backs, playing hurt).
 var fatigue := 0.0
 ## What the player's training sessions focus on (a skill key or "balanced").
@@ -110,6 +113,11 @@ func overall() -> float:
 
 func can_play() -> bool:
 	return injury == null or injury.can_play()
+
+
+## Healthy and not benched: in the lineup for the next game.
+func dressed() -> bool:
+	return can_play() and not benched
 
 
 ## Re-applies injury and fatigue modifiers to the skills (call after changes).

@@ -25,7 +25,7 @@ func lineup(players: Dictionary) -> Dictionary:
 	var goalies: Array = []
 	for pid in roster:
 		var p: PlayerProfile = players[pid]
-		if not p.can_play():
+		if not p.dressed():
 			continue
 		match p.group():
 			"F": fwd.append(p)
