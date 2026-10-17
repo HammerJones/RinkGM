@@ -127,6 +127,7 @@ tools/bench/             headless physics bench (tools/physics_bench.sh)
 Arguments after `--` are read by the game:
 
 - `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
+- `--demo=controls` plays a captioned showcase of every move (`tests/controls_demo.gd`). Record it with `godot --path . --write-movie demo.avi --fixed-fps 30 --resolution 1280x720 -- --demo=controls`.
 - `--autoplay` lets the AI drive your skater too (prints stats on exit).
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
 - `--screenshot=out.png --shot-after=6 [--iso] [--zoom=10] [--focus=x,z]` saves a frame and quits.
