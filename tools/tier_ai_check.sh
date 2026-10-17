@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 # Checks that the on-ice AI plays to its tier: a mid-tier side (TierAI level
-# MID, default 3 = Senior AAA) must outscore a low-tier side (LOW, default
-# 0.5, beer league) over GAMES headless autoplay games, swapping ends every
-# game so neither side keeps an edge from the rink. Both sides have the same
-# ratings; only the TierAI knobs differ.
-# Usage: GODOT=/path/to/godot [GAMES=24 LOW=0.5 MID=3 FRAMES=36000 JOBS=4] tools/tier_ai_check.sh
+# MID, default 3 = Senior AAA) must outscore and outwin a low-tier side (LOW,
+# default 0 = Beer League D) over GAMES headless autoplay games, swapping
+# ends every game so neither side keeps an edge from the rink. Both sides have
+# the same ratings; only the TierAI knobs differ. Goals at 5-on-5 are few, so
+# fewer than 24 games, or a closer pair of levels (0.5 vs 3 is only ~1.4x on
+# goals), turns this into a coin flip.
+# Usage: GODOT=/path/to/godot [GAMES=24 LOW=0 MID=3 FRAMES=36000 JOBS=4] tools/tier_ai_check.sh
 set -uo pipefail
 GODOT=${GODOT:-godot}
 GAMES=${GAMES:-24}
-LOW=${LOW:-0.5}
+LOW=${LOW:-0}
 MID=${MID:-3}
 FRAMES=${FRAMES:-36000}
 JOBS=${JOBS:-4}
