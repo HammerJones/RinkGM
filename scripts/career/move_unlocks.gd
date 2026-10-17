@@ -1,31 +1,42 @@
 class_name MoveUnlocks
 extends RefCounted
-## When a player learns each shot and stick move (Controls' Moves catalog in
-## scripts/game/moves.gd). Moves are stored by name ("SNAP") so saves don't
-## depend on enum order; Moves owns what each one does on the ice.
+## When a player learns each shot and stick move. Ids are Controls' catalog
+## ids (scripts/core/moves.gd, e.g. &"snap_shot"), saved as plain strings;
+## the catalog and physics own what each move does on the ice, and they ask
+## Skater.knows(id) before running one.
 ##
 ## A move unlocks once every listed rating reaches its threshold and any
 ## required move is known. Ratings only climb through games and practice, so
 ## the tree reads as a skill path: release and accuracy give the snapshot,
 ## power the slapshot, and so on.
 
-const STARTER := ["QUICK", "WRIST", "BACKHAND"]
+const STARTER := ["quick_shot", "wrist_shot", "backhand"]
 
 const RULES := {
-	"SNAP": {"skills": {"shot_release": 45.0, "shot_accuracy": 40.0}},
-	"SLAP": {"skills": {"shot_power": 50.0}},
-	"TOE_DRAG": {"skills": {"stick_handling": 50.0, "agility": 45.0}},
-	"ONE_TIMER": {"skills": {"shot_release": 55.0, "pass_quality": 50.0}, "needs": ["SLAP"]},
-	"LACROSSE": {"skills": {"stick_handling": 70.0, "agility": 60.0}, "needs": ["TOE_DRAG"]},
+	"snap_shot": {"skills": {"shot_release": 45.0, "shot_accuracy": 40.0}},
+	"slapshot": {"skills": {"shot_power": 50.0}},
+	"quick_deke": {"skills": {"stick_handling": 45.0, "agility": 45.0}},
+	"backhand_shot": {"skills": {"shot_release": 50.0, "stick_handling": 45.0}, "needs": ["snap_shot"]},
+	"toe_drag": {"skills": {"stick_handling": 52.0, "agility": 48.0}, "needs": ["quick_deke"]},
+	"one_timer": {"skills": {"shot_release": 55.0, "pass_quality": 50.0}, "needs": ["slapshot"]},
+	"toe_drag_shot": {"skills": {"stick_handling": 60.0, "shot_release": 55.0}, "needs": ["toe_drag", "snap_shot"]},
+	"lacrosse": {"skills": {"stick_handling": 70.0, "agility": 60.0}, "needs": ["toe_drag"]},
 }
 
 ## In unlock order, for the hub's list.
-const ORDER := ["QUICK", "WRIST", "BACKHAND", "SNAP", "SLAP", "TOE_DRAG", "ONE_TIMER", "LACROSSE"]
+const ORDER := ["quick_shot", "wrist_shot", "backhand", "snap_shot", "slapshot", "quick_deke",
+	"backhand_shot", "toe_drag", "one_timer", "toe_drag_shot", "lacrosse"]
 
 const LABELS := {
-	"QUICK": "Quick shot", "WRIST": "Wrist shot", "BACKHAND": "Backhand", "SNAP": "Snapshot",
-	"SLAP": "Slapshot", "ONE_TIMER": "One-timer", "TOE_DRAG": "Toe drag", "LACROSSE": "Lacrosse",
+	"quick_shot": "Quick shot", "wrist_shot": "Wrist shot", "backhand": "Backhand",
+	"snap_shot": "Snapshot", "slapshot": "Slapshot", "quick_deke": "Quick deke",
+	"backhand_shot": "Backhand snap", "toe_drag": "Toe drag", "one_timer": "One-timer",
+	"toe_drag_shot": "Toe drag shot", "lacrosse": "Lacrosse",
 }
+
+## Saves from before the ids matched Controls' catalog.
+const OLD_NAMES := {"QUICK": "quick_shot", "WRIST": "wrist_shot", "BACKHAND": "backhand",
+	"SNAP": "snap_shot", "SLAP": "slapshot", "ONE_TIMER": "one_timer", "TOE_DRAG": "toe_drag", "LACROSSE": "lacrosse"}
 
 
 static func can_learn(p: PlayerProfile, move: String) -> bool:

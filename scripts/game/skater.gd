@@ -168,6 +168,14 @@ func apply_player(p: PlayerProfile) -> void:
 	set_skills(p.skills)
 
 
+## (mechanics hook) Whether this skater has learned move `id` (catalog id).
+## Only career games gate moves; exhibitions and tests know everything.
+func knows(id: StringName) -> bool:
+	if player == null or game == null or not game.get("career_mode"):
+		return true
+	return player.knows_move(id)
+
+
 ## A rating as 0..1 (canonical Skills keys only).
 func skill(key: String) -> float:
 	if not key in Skills.SKATER_KEYS:

@@ -31,7 +31,7 @@ var playoff_stats := {}
 var career_stats := {}
 ## History rows: {"season", "tier", "team", stats...}
 var history: Array = []
-## Shots and stick moves this player knows, by Moves name ("SNAP"); see
+## Shots and stick moves this player knows, by catalog id ("snap_shot"); see
 ## MoveUnlocks for when each is learned.
 var moves: Array = []
 
@@ -61,7 +61,7 @@ static func create(id_: int, pos: String, base: float, rng: RandomNumberGenerato
 
 
 func knows_move(move: String) -> bool:
-	return moves.has(move)
+	return moves.has(String(move))
 
 
 ## Teaches a move outright (dev menu, events). Returns false if already known.
@@ -184,7 +184,7 @@ static func from_dict(d: Dictionary) -> PlayerProfile:
 	p.playoff_stats = _ints(d.playoff_stats)
 	p.career_stats = _ints(d.career_stats)
 	p.history = d.get("history", [])
-	p.moves = d.get("moves", [])
+	p.moves = d.get("moves", []).map(func(m): return MoveUnlocks.OLD_NAMES.get(m, m))
 	if p.moves.is_empty():
 		p.moves = MoveUnlocks.STARTER.duplicate()
 		MoveUnlocks.check(p)
