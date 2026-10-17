@@ -42,3 +42,5 @@ workstream is in brackets; see `ARCHITECTURE.md` for who owns what.
 
 - Load the match from a world scene instead of as the main scene.
 - Rink management (ice time, staff, upkeep), multiple venues, walking around the rink.
+- The story arc: take a dated community rink and renovate it piece by piece.
+  Upgrades show up in the rink's look, its facilities and the retro UI.

@@ -83,6 +83,14 @@ reading `game.gd` internals.
 
 ## Design decisions already made
 
+- Theme and story: the player is improving and renovating a dated,
+  ancient-feeling community rink. Systems, art and writing should support that
+  arc: things start worn and old, and the player's work visibly upgrades them.
+- UI direction (leaning, final pick in the UI thread): a retro "old computer"
+  look in the spirit of Kerbal Space Program's mission control. That means
+  pixel fonts and pixel UI shown crisp on a high-res display, with terminal
+  signatures such as `//` comment-style line prefixes and `----` dashed
+  dividers. The UI can age or upgrade along with the rink.
 - Godot 4.3, GDScript, voxel art with oriented voxels. Physics at 120 Hz.
 - One `Tuning.blend` value slides between simulation and arcade assists.
 - Controls follow Slapshot Rebound: left stick moves, left-stick press dashes,
