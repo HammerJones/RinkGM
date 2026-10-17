@@ -111,6 +111,7 @@ func _say(text: String) -> void:
 
 func _build() -> void:
 	_panel = PanelContainer.new()
+	_panel.theme_type_variation = &"HudPanel"  # RinkOS (assets/ui/STYLE.md)
 	_panel.set_anchors_preset(Control.PRESET_LEFT_WIDE)
 	_panel.custom_minimum_size = Vector2(440, 0)
 	var sb := StyleBoxFlat.new()
@@ -131,6 +132,7 @@ func _build() -> void:
 	title.text = "// RINKGM DEV CONSOLE\n----------------------------------------"
 	root.add_child(title)
 	_fps_label = Label.new()
+	_fps_label.theme_type_variation = &"TermLabel"
 	root.add_child(_fps_label)
 
 	var opts := HBoxContainer.new()
@@ -159,6 +161,7 @@ func _build() -> void:
 	_tabs.tab_changed.connect(func(_i: int) -> void: refresh())
 
 	_status = Label.new()
+	_status.theme_type_variation = &"TermLabel"
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_status)
 	var hint := Label.new()
