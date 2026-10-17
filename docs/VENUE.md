@@ -109,7 +109,7 @@ openings, `stairs`, `glass`, `glow`, `sign`, `add_door`), branch on
 - Signs (`VenueSign`) use `RinkOS.sign_3d()` per `assets/ui/STYLE.md`:
   Silkscreen for titles, VT323 for numbers, clocks and prices, on a CRT
   panel, crisp and in full colour; only the housing looks worn.
-- Budget (checked by `tools/tests/test_venue.gd`, numbers printed per age):
+- Budget, about 0.6M triangles and 180-200 draws (checked by `tools/tests/test_venue.gd`, numbers printed per age):
   12 lights with no shadows, no venue geometry casts sun shadows, props and
   the crowd drawn as MultiMeshes (the crowd's cheers run in its shader), and
   the live scoreboard only changes Label3D text.

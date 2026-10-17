@@ -10,7 +10,8 @@ extends VenueRoom
 const X0 := Venue.END_FRONT
 const X1 := Venue.HALF_X - Venue.WALL_T
 const H := 3.6
-const PITCH := 0.85
+const BANK := 1.2       # one kit "lockers" bank of three
+const LOCKER_D := 0.46
 
 
 func _ready() -> void:
@@ -42,14 +43,15 @@ func build(k: VenueKit) -> void:
 	_floor(k, team_col, z_in, z_out)
 	# stalls along the back wall and the outer side wall, bench in front
 	var back_x := 42.3  # shower room behind (x 42.5..45.5 at the bay side)
-	var n_back := int((absf(z_out - s * 8.6)) / PITCH)
+	# kit locker banks (three lockers, 1.2 m) along the back and outer walls
+	var n_back := int(absf(z_out - s * 8.6) / BANK)
 	for i in n_back:
-		var z := s * 8.6 + s * (i + 0.5) * PITCH
-		_stall(k, Vector3(X1, 0, z), Vector3(-1, 0, 0), i, team_col)
-	var n_side := int((X1 - 0.9 - (X0 + 2.0)) / PITCH)
+		var z := s * 8.6 + s * (i + 0.5) * BANK
+		k.prop("lockers", Vector3(X1 - LOCKER_D * 0.5, 0, z), PI * 0.5)
+	var n_side := int((X1 - 0.9 - (X0 + 2.0)) / BANK)
 	for i in n_side:
-		var x := X0 + 2.0 + (i + 0.5) * PITCH
-		_stall(k, Vector3(x, 0, z_out), Vector3(0, 0, -s), i + 20, team_col)
+		var x := X0 + 2.0 + (i + 0.5) * BANK
+		k.prop("lockers", Vector3(x, 0, z_out - s * LOCKER_D * 0.5), 0.0 if side > 0 else PI)
 	var bench: Color = k.by_age(Color("7a5c3c"), Color("8a6a45"), team_col.darkened(0.15))
 	k.aged_block(Vector3(X1 - 0.95, 0, s * 8.6), Vector3(X1 - 0.55, 0.45, z_out), bench, 0.5)
 	k.aged_block(Vector3(X0 + 2.0, 0, z_out - s * 0.95), Vector3(X1 - 0.95, 0.45, z_out - s * 0.55), bench, 0.5)
@@ -111,24 +113,3 @@ func _floor(k: VenueKit, team_col: Color, z_in: float, z_out: float) -> void:
 		k.block(Vector3(cx - 0.25, 0.02, cz - 0.25), Vector3(cx + 0.25, 0.03, cz + 0.25), Color("3a3b3e"), 0.1, 0.0, false)  # drain
 
 
-## One player's stall against a wall at `at`, opening toward `into`.
-func _stall(k: VenueKit, at: Vector3, into: Vector3, i: int, team_col: Color) -> void:
-	var across := Vector3(absf(into.z), 0, absf(into.x)) * PITCH * 0.5
-	var depth := into * 0.55
-	var a := at - across
-	var b := at + across + depth
-	match k.age:
-		Age.WORN:
-			# a dented metal locker, door shut
-			var metal := Wear.OLD_ORANGE
-			k.block(a + Vector3(0, 0, 0), b + Vector3(0, 1.9, 0), k.aged(metal, i).lerp(Color("7a8a9a"), 0.15 if i % 4 == 0 else 0.0), 0.3, 0.12)
-			k.block(a + depth * 0.98 + across * 0.2 + Vector3(0, 1.5, 0), a + depth * 1.0 + across * 0.6 + Vector3(0, 1.6, 0), Color("2b2d33"), 0.2, 0.0, false)
-		_:
-			var wood: Color = Wear.OLD_WOOD if k.age == Age.REPAIRED else Color("a7804f")
-			k.block(a, a + depth + Vector3(0, 2.0, 0) + across * 0.06 * 2.0, wood, 0.3, 0.06)  # divider
-			k.block(a + across * 0.03, b + Vector3(0, 0, 0) - depth * 0.92 + Vector3(0, 2.0, 0), wood.darkened(0.2), 0.3, 0.06, false)  # back panel
-			k.block(a + Vector3(0, 1.75, 0), b + Vector3(0, 1.8, 0), wood, 0.3, 0.06, false)  # shelf
-			# hanging jersey
-			k.block(a + across * 0.5 + depth * 0.3 + Vector3(0, 0.9, 0), a + across * 1.5 + depth * 0.5 + Vector3(0, 1.6, 0), team_col, 0.2, 0.05, false)
-			if k.age == Age.RENOVATED:
-				k.glow(a + across * 0.4 + Vector3(0, 2.05, 0) + depth, a + across * 1.6 + Vector3(0, 2.15, 0) + depth * 1.02, team_col.lightened(0.4))

@@ -24,20 +24,11 @@ func build(k: VenueKit) -> void:
 		# floor mat
 		var mat: Color = k.by_age(Color("2b2c30"), Color("303237"), Color("1d1f24"))
 		k.aged_block(Vector3(x0, 0, z0), Vector3(x1, 0.06, z1), mat, 0.5, 0.08)
-		# the bench
-		var wood: Color = k.by_age(Wear.OLD_WOOD, Wear.OLD_WOOD, team_col)
-		k.aged_block(Vector3(x0 + 0.2, 0, -14.65), Vector3(x1 - 0.2, 0.47, z1 + 0.05), k.by_age(Color("4a4c50"), Color("55585e"), Color("23262c")), 0.5, 0.06)
-		var seat_y := 0.47
-		if k.age == VenueRoom.Age.WORN:
-			# slats with one missing
-			var n := int((x1 - x0 - 0.4) / 0.9)
-			for i in n:
-				if i == 3:
-					continue
-				var sx := x0 + 0.2 + i * (x1 - x0 - 0.4) / n
-				k.block(Vector3(sx + 0.02, seat_y, -14.65), Vector3(sx + (x1 - x0 - 0.4) / n - 0.02, seat_y + 0.05, z1 + 0.05), k.aged(wood, i), 0.5, 0.1, false)
-		else:
-			k.block(Vector3(x0 + 0.2, seat_y, -14.65), Vector3(x1 - 0.2, seat_y + k.by_age(0.0, 0.05, 0.1), z1 + 0.05), wood, 0.5, 0.04, false)
+		# the bench: 2 m kit sections facing the ice
+		var n := int((x1 - x0 - 0.4) / 2.0)
+		var bx0 := (x0 + x1) * 0.5 - n * 1.0
+		for i in n:
+			k.prop("player_bench", Vector3(bx0 + 1.0 + i * 2.0, 0, z1 + 0.3), PI)
 		# back wall with a gate at the end nearer centre ice
 		var gate_x := x1 - 0.7 if home else x0 + 0.7
 		var wall: Color = k.by_age(Color("8a8378"), Color("9b958a"), Color("2a2e36"))

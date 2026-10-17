@@ -11,9 +11,9 @@ const ROOMS := ["shell", "roof", "stands_bench", "stands_box", "benches", "penal
 	"lobby", "office", "locker_home", "locker_away", "zamboni_bay", "lighting", "scoreboard"]
 ## Triangles the whole building may use, crowd and props included. A
 ## mid-range GPU (GTX 1060 class) draws several million per frame at 60 fps;
-## 1.6M keeps the building well under that. The kit's arena seats are about
-## 70% of it, so a low-detail seat is the first place to save.
-const TRI_BUDGET := 1600000
+## 900k keeps the building well under that. The stands use the kit's
+## low-detail seats (about 600k triangles for the whole building).
+const TRI_BUDGET := 900000
 ## Meshes, MultiMeshes and sign labels. Forward+ handles thousands of draws
 ## per frame on that class of GPU; a couple of hundred static ones is little.
 const DRAW_BUDGET := 260

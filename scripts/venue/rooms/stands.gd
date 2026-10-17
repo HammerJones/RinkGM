@@ -122,7 +122,8 @@ func _seat_row(k: VenueKit, x0: float, x1: float, r: int, sec: int) -> void:
 		var cx := x0 + pad + (i + 0.5) * pitch
 		if k.age == VenueRoom.Age.WORN and posmod(hash(Vector3i(sec, r, i * side)), 11) == 0:
 			continue  # seat pulled out years ago
-		k.prop("arena_seat", Vector3(cx, y, s * zc), rot, false)
+		# low-detail seats: about 3x fewer triangles, and the stands are seen from afar
+		k.prop("arena_seat", Vector3(cx, y, s * zc), rot, false, -1, 1)
 		_seats.append([Vector3(cx, y + 0.45, s * zc), facing])
 	k.collider(Vector3(x0, y, s * (zc - 0.22)), Vector3(x1, y + 0.45, s * (zc + 0.22)))
 

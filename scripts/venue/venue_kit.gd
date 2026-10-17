@@ -204,8 +204,8 @@ func instance(mesh: Mesh, xf: Transform3D) -> void:
 ## A Props kit piece at this room's age, standing on the floor at `pos`
 ## with its front (-Z) turned by `rot_y`. `solid` adds a box collider
 ## around it.
-func prop(id: String, pos: Vector3, rot_y := 0.0, solid := true, age_override := -1) -> void:
-	var mesh := Props.mesh(id, age if age_override < 0 else age_override)
+func prop(id: String, pos: Vector3, rot_y := 0.0, solid := true, age_override := -1, lod := 0) -> void:
+	var mesh := Props.mesh(id, age if age_override < 0 else age_override, lod)
 	if mesh == null:
 		return
 	var xf := Transform3D(Basis(Vector3.UP, rot_y), pos)

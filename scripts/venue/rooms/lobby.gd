@@ -108,9 +108,9 @@ func _ticket_booth(k: VenueKit) -> void:
 
 
 func _snack_bar(k: VenueKit) -> void:
-	var counter: Color = k.by_age(Wear.OLD_ORANGE.darkened(0.15), Wear.OLD_ORANGE, home_primary())
-	k.aged_block(Vector3(-42.0, 0, -11.5), Vector3(-36.0, 1.05, -11.0), counter, 0.4)
-	k.block(Vector3(-42.1, 1.05, -11.6), Vector3(-35.9, 1.1, -10.9), k.by_age(Color("b8ae98"), Color("c9c2b0"), Color("e8e6e0")), 0.4, 0.03)
+	# two kit counters facing the lobby, with a gap for staff at the end
+	for cx in [-40.8, -38.3]:
+		k.prop("concession_counter", Vector3(cx, 0, -11.25), PI)
 	# back shelf, a coffee urn, a popcorn machine, a cooler
 	k.aged_block(Vector3(-42.0, 0, -13.7), Vector3(-36.0, 0.95, -13.1), Color("6f6a5e"), 0.4)
 	k.block(Vector3(-41.5, 0.95, -13.7), Vector3(-41.1, 1.45, -13.3), Color("b8bcc2"), 0.2, 0.03)
