@@ -14,6 +14,8 @@ var vel := Vector3.ZERO
 var controller: Skater = null
 var last_touch: Skater = null
 var pass_target: Skater = null
+## The passer's touch: added to the intended receiver's trap speed.
+var pass_touch := 0.0
 var frozen := false
 var in_net_side := 0
 var _ignore: Skater = null
@@ -31,6 +33,7 @@ func reset_at(p: Vector3) -> void:
 	vel = Vector3.ZERO
 	controller = null
 	pass_target = null
+	pass_touch = 0.0
 	last_touch = null
 	in_net_side = 0
 	frozen = false

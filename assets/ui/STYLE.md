@@ -34,6 +34,21 @@ the palette, fonts and text helpers, and builds that theme. Run
    `assets/ui/frames/` (4 px notch, 2 px border). Canvas textures use nearest
    filtering project-wide so the frames stay sharp.
 
+## Signs and screens in the world
+
+Rink signage, the arena scoreboard and any in-world screen use the same fonts,
+palette and terminal habits, built with `RinkOS.sign_3d(text, colour, pixel_font)`.
+It sizes the text so one font pixel equals one voxel (0.065 m), uses nearest
+filtering and no lighting, so signs line up with the voxel art.
+
+- Scoreboard: the HUD layout at arena scale. Team abbreviations and two-digit
+  scores in `TEXT`, the clock and period in `ACTION`, on a `CRT` panel with a
+  `BEZEL` frame.
+- Wall signs and banners: Silkscreen, upper case, `TEXT` or `ACTION` on
+  `PANEL`/`CRT`. Schedules, prices and times: VT323 in `READOUT`.
+- The building can look old and worn (faded paint, a dead bulb in the
+  scoreboard), but the UI itself is always full colour and crisp.
+
 ## Changing the style
 
 Edit `scripts/ui/rinkos.gd`, then rebuild the theme:

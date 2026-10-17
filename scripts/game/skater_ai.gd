@@ -10,7 +10,9 @@ static func think(s: Skater, g: Node, dt: float) -> void:
 	c.reset()
 	if s.ai_shoot_timer > 0.0:
 		s.ai_shoot_timer -= dt
-		c.shoot_held = true
+		c.shoot = true
+		c.lift = s.ai_slap
+		c.tilt = s.ai_tilt
 		c.aim_point = s.ai_aim
 	var puck: Puck = g.puck
 	var owner: Skater = puck.controller
@@ -35,9 +37,10 @@ static func _seek(s: Skater, target: Vector2, arrive: float, sprint_dist: float)
 		s.ctrl.move = Vector2.ZERO
 		return
 	s.ctrl.move = d / dist * clampf(dist / arrive, 0.0, 1.0)
-	s.ctrl.sprint = dist > sprint_dist
+	# dash to close long gaps when the skates already point the right way
+	s.ctrl.dash = dist > sprint_dist and s.heading.dot(Vector3(d.x, 0, d.y) / dist) > 0.9 and randf() < 0.05
 	var sp := _v2(s.vel)
-	s.ctrl.brake = dist < 2.0 and sp.length() > 4.5 and sp.dot(d) < 0.0
+	s.ctrl.stop = dist < 2.0 and sp.length() > 4.5 and sp.dot(d) < 0.0
 
 
 static func _carry(s: Skater, g: Node, dt: float) -> void:
@@ -52,12 +55,21 @@ static func _carry(s: Skater, g: Node, dt: float) -> void:
 	s.ai_decide -= dt
 	if s.ai_decide <= 0.0 and s.ai_shoot_timer <= 0.0:
 		s.ai_decide = randf_range(0.15, 0.35)
+		var caller: Skater = null if g.autoplay else g.controller.pass_caller(s)
+		if caller:
+			c.pass_pressed = true
+			c.pass_hint = caller
+			return
 		var aim := Vector3(goal.x, 0, randf_range(0.45, 0.8) * (1.0 if randf() < 0.5 else -1.0))
 		var lane_open: bool = g.lane_clear(s.team, me, Vector2(aim.x, aim.z), 0.7)
 		if ahead > 1.0 and open_angle and d < 16.0 and (d < 9.0 or randf() < 0.3) and (lane_open or randf() < 0.25):
 			s.ai_aim = aim
-			s.ai_shoot_timer = 0.6 if (d > 10.0 and randf() < 0.5) else 0.04
-			c.shoot_held = true
+			s.ai_slap = d > 10.0 and randf() < 0.5
+			s.ai_tilt = 0.0 if randf() < 0.5 else randf_range(0.4, 1.0)
+			s.ai_shoot_timer = 0.6 if s.ai_slap else randf_range(0.02, 0.35)
+			c.shoot = true
+			c.lift = s.ai_slap
+			c.tilt = s.ai_tilt
 			c.aim_point = s.ai_aim
 		elif pressure < 2.6 and randf() < 0.6:
 			var mate: Skater = g.best_pass_option(s)
@@ -81,11 +93,15 @@ static func _support(s: Skater, g: Node, owner: Skater) -> void:
 	var o := _v2(owner.position)
 	var others: Array = g.teammates(owner)
 	var idx := others.find(s)
-	var slot: Vector2
-	if idx == 0:
-		slot = Vector2(o.x + att * 5.0, -signf(o.y if absf(o.y) > 0.5 else 1.0) * 6.5)
-	else:
-		slot = Vector2(o.x - att * 6.0, o.y * 0.3)
+	var side := signf(o.y if absf(o.y) > 0.5 else 1.0)
+	# up to four support spots (5-on-5): wide lane, trailer, net front, high point
+	var slots := [
+		Vector2(o.x + att * 5.0, -side * 6.5),
+		Vector2(o.x - att * 6.0, o.y * 0.3),
+		Vector2(o.x + att * 3.5, side * 2.5),
+		Vector2(o.x - att * 11.0, -side * 4.5),
+	]
+	var slot: Vector2 = slots[idx % slots.size()]
 	slot.x = clampf(slot.x, -Rink.GOAL_X + 3.0, Rink.GOAL_X - 3.0)
 	slot.y = clampf(slot.y, -Rink.HALF_W + 2.0, Rink.HALF_W - 2.0)
 	_seek(s, slot, 2.0, 12.0)
@@ -104,7 +120,9 @@ static func _defend(s: Skater, g: Node, owner: Skater, dt: float) -> void:
 		_seek(s, target, 0.8, 8.0)
 		c.blade_target = g.puck.position
 		if dist < 1.8 and s.check_cd <= 0.0 and randf() < dt * 0.8:
-			c.check_pressed = true
+			c.check = true
+		elif dist < 1.6 and s.lift_cd <= 0.0 and randf() < dt * 1.0:
+			c.lift = true
 		return
 	# mark an opponent who isn't carrying, staying goal-side
 	var opps: Array = g.team_skaters(1 - s.team).filter(func(x): return x != owner)

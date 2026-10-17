@@ -122,6 +122,26 @@ static func button(text: String, primary := true) -> Button:
 	return b
 
 
+## World-space text for rink signage, the arena scoreboard and screens in the
+## open world. Each font pixel is drawn exactly `voxel` metres wide, so signs
+## sit on the same grid as the voxel art (0.065 m by default) and stay sharp.
+## `pixel_font`: Silkscreen for names and titles; false gives VT323 for
+## numbers, clocks and schedules.
+static func sign_3d(text: String, col := TEXT, pixel_font := true, voxel := 0.065) -> Label3D:
+	var l := Label3D.new()
+	l.text = text
+	l.font = PIXEL_FONT if pixel_font else TERM_FONT
+	l.font_size = PIXEL_SIZE if pixel_font else TERM_SIZE
+	# Silkscreen 16 and VT323 25 both draw one font pixel as 2 screen pixels.
+	l.pixel_size = voxel / 2.0
+	l.modulate = col
+	l.outline_size = 0
+	l.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	l.shaded = false
+	l.double_sided = false
+	return l
+
+
 # --- Theme -------------------------------------------------------------------
 
 static func frame(name: String, margin := 10.0) -> StyleBoxTexture:
