@@ -26,8 +26,11 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build()
 	_panel.visible = false
-	if "--test=devmenu" in OS.get_cmdline_user_args():
+	var args := OS.get_cmdline_user_args()
+	if "--test=devmenu" in args:
 		_self_test.call_deferred()
+	elif "--dev-open" in args:  # for screenshots
+		set_open.call_deferred(true)
 
 
 func _input(event: InputEvent) -> void:
@@ -111,7 +114,7 @@ func _build() -> void:
 	_panel.set_anchors_preset(Control.PRESET_LEFT_WIDE)
 	_panel.custom_minimum_size = Vector2(440, 0)
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.04, 0.06, 0.08, 0.94)
+	sb.bg_color = Color(0.04, 0.06, 0.08, 1.0)
 	sb.border_color = Color(0.3, 0.9, 0.6)
 	sb.border_width_right = 2
 	sb.content_margin_left = 12
@@ -542,6 +545,11 @@ func _self_test() -> void:
 		_set_clock(42.0)
 		if absf(g.clock - 42.0) > 0.5:
 			fails.append("clock edit did not apply")
+	var cs := get_node_or_null("/root/CareerState")
+	var career_path := "res://scripts/career/career.gd"
+	if cs != null and _career() == null and ResourceLoader.exists(career_path):
+		cs.career = load(career_path).new_career("Dev", "Tester", "C", 7)  # in memory only
+	print("devmenu test: game=%s skills=%s career=%s" % [_game() != null, _skills() != null, _career() != null])
 	var sk := _skills()
 	if sk != null:
 		_set_rating("speed", 99.0)
@@ -553,6 +561,20 @@ func _self_test() -> void:
 		_sim_rounds(1)
 		if c.day == before:
 			fails.append("sim round did not advance the day")
+		_injure(1.0)
+		if _user_profile().get("injury") == null:
+			fails.append("injure did not apply")
+		_heal()
+		if _user_profile().get("injury") != null:
+			fails.append("heal did not apply")
+		_sim_season()
+		if c.has_method("next_user_game") and not c.next_user_game().is_empty():
+			fails.append("sim season left games to play")
+		if c.has_method("start_next_season"):
+			var season_before: int = c.season_number
+			c.start_next_season()
+			if c.season_number != season_before + 1:
+				fails.append("next season did not start")
 	Engine.time_scale = 1.0
 	set_open(false)
 	for f in fails:

@@ -118,7 +118,11 @@ on the tilde key, and a full rink environment that can be explored later.
   aggression, and goalie reaction and positioning. A beer-league game should
   look scrambly and a mid-tier one structured. These knobs are separate from
   ratings, so a skilled player can still be in a disorganised league.
-- **Developer menu (PM), `scripts/dev/`.** Tilde (`~`) toggles an overlay in
+- **Developer menu (PM), `scripts/dev/dev_menu.gd`, autoload `DevMenu`.**
+  Built: Player (ratings, injury, fatigue, move unlocks), Match (score,
+  clock, period, game speed, physics mode, autoplay), Career (tier, invites,
+  save) and Sim (rounds, regular season, full season, next season) tabs, plus a
+  `-- --test=devmenu` CI self-test. Tilde (`~`) toggles an overlay in
   any build. It can edit the controlled player's ratings, the score, the
   clock and period, the tier and the season day; it can sim to the end of the
   game or the season, give injuries, unlock moves, show AI debug and change
