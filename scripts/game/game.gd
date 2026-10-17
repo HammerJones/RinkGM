@@ -253,6 +253,9 @@ func best_pass_option(s: Skater, vision := 0.5) -> Skater:
 		if open < needs_open:
 			continue
 		var sc := to.x * att * vision + minf(open, 4.0) * 2.0 * vision - dist * (1.0 - vision) * 0.5
+		# a mate open in front of their net is the pass a good reader looks for
+		if to.distance_to(Vector2(att * Rink.GOAL_X, 0)) < 8.0:
+			sc += 6.0 * vision
 		if sc > best_score:
 			best_score = sc
 			best = m

@@ -4,10 +4,10 @@
 # 0.5, beer league) over GAMES headless autoplay games, swapping ends every
 # game so neither side keeps an edge from the rink. Both sides have the same
 # ratings; only the TierAI knobs differ.
-# Usage: GODOT=/path/to/godot [GAMES=8 LOW=0.5 MID=3 FRAMES=36000 JOBS=4] tools/tier_ai_check.sh
+# Usage: GODOT=/path/to/godot [GAMES=24 LOW=0.5 MID=3 FRAMES=36000 JOBS=4] tools/tier_ai_check.sh
 set -uo pipefail
 GODOT=${GODOT:-godot}
-GAMES=${GAMES:-8}
+GAMES=${GAMES:-24}
 LOW=${LOW:-0.5}
 MID=${MID:-3}
 FRAMES=${FRAMES:-36000}
