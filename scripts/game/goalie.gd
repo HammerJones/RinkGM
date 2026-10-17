@@ -71,7 +71,7 @@ func physics_update(dt: float) -> void:
 	if rel.dot(out) < 0.3:
 		desired = nc + out * 0.35 + Vector2(0, clampf(rel.y, -0.7, 0.7))
 	else:
-		var dir := rel.normalized().rotated(sin(game.time * 0.9 + side) * lerpf(0.22, 0.0, gp))
+		var dir := rel.normalized().rotated(sin(game.time * 0.9 + side) * lerpf(0.35, 0.0, gp))
 		desired = nc + dir * clampf(rel.length() * lerpf(0.04, 0.07, gp), 0.35, lerpf(0.7, 1.1, gp))
 	var max_spd := lerpf(2.5, 4.0, skill) * lerpf(0.75, 1.1, gp) * (0.4 if butterfly_timer > 0.0 else 1.0)
 	pos2 += (desired - pos2).limit_length(max_spd * dt)

@@ -44,6 +44,10 @@ static func think(s: Skater, g: Node, dt: float) -> void:
 ## reaction delay.
 static func _believed_owner(s: Skater, g: Node, owner: Skater, ai: TierAI, dt: float) -> Skater:
 	if owner == s or s.ai_owner == s:
+		if owner == s and s.ai_owner != s:
+			# just got it: a sharp player releases or moves it at once, a beer
+			# leaguer settles it first
+			s.ai_decide = randf_range(0.0, ai.decide_min) * (1.0 - ai.anticipation) * 2.0
 		s.ai_owner = owner
 		s.ai_react = -1.0
 	elif owner != s.ai_owner:
@@ -211,6 +215,20 @@ static func _defend(s: Skater, g: Node, ai: TierAI, owner: Skater, dt: float) ->
 	var mine: Array = g.team_skaters(s.team).filter(func(x): return _rank_to(x, g, o) >= _chasers(ai))
 	if opps.is_empty():
 		return
+	var structured := ai.discipline > 0.35
+	if structured:
+		# a system: the deepest defenders take the most dangerous opponents,
+		# and with the puck in our end the deepest one holds the slot
+		var by_depth := func(a, b): return _v2(a.position).distance_squared_to(my_goal) < _v2(b.position).distance_squared_to(my_goal)
+		opps.sort_custom(by_depth)
+		mine.sort_custom(by_depth)
+		if o.distance_to(my_goal) < 18.0 and mine.size() > 0:
+			if mine[0] == s:
+				var slot := my_goal + (o - my_goal).normalized() * 3.0
+				_seek(s, ai, slot, 1.2, 10.0)
+				c.blade_target = g.puck.position
+				return
+			mine.pop_front()
 	var mark: Skater = opps[maxi(mine.find(s), 0) % opps.size()]
 	var m := _v2(mark.position)
 	var spot := m + (my_goal - m).normalized() * lerpf(0.8, 2.0, ai.discipline)
