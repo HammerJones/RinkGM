@@ -61,18 +61,6 @@ static func _carry(carrier: Skater, puck: Puck, dt: float, blend: float) -> void
 	if carrier.stun_timer > 0.0 or carrier.stick_lifted_timer > 0.0:
 		puck.controller = null
 		return
-	if carrier.move != Moves.NONE:
-		# a learned move: the puck rides the blade until it's done
-		var at := carrier.puck_anchor()
-		puck.vel = (at - puck.position) / dt if dt > 0.0 else Vector3.ZERO
-		puck.vel = puck.vel.limit_length(25.0)
-		if at.y <= 0.001:
-			puck.vel.y = 0.0
-		return
-	if carrier.winding and carrier.wind_slap:
-		# the blade is up for the slapshot: the puck settles where it was left,
-		# drifting along with the skater
-		puck.vel = puck.vel.lerp(Vector3(carrier.vel.x, puck.vel.y, carrier.vel.z), 1.0 - exp(-8.0 * dt))
 	var to := carrier.puck_anchor() - puck.position
 	to.y = 0.0
 	# with the blade lifted over the puck there's no contact; you keep it only
