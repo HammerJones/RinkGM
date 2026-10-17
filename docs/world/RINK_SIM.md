@@ -2464,10 +2464,12 @@ up.
 
 ### Open questions
 
-1. **The offseason.** The career's `start_next_season()` adds 120 days. With
-   the rink sim, should the summer be played day by day (projects, ice-in) or
-   time-skipped with a summary? Suggestion: played, with "skip to the next
-   event" making it fast. Game mechanics.
+1. **The offseason.** Agreed with Game mechanics (2026-10-17): the summer is
+   played, with "skip to the next event". When a rink sim runs, its clock
+   owns the calendar and `Career` follows `RinkSim.day` instead of advancing
+   its own; `Career.offseason_events()` gives the dated stops (invitations,
+   late-August tryout camp, early-October season start). The dues gate is
+   wired with `career.league_gate = sim.owner_can_play`.
 2. **Rink-rat shifts.** `PROSHOP.md` has the player earning $30 rink-rat
    shifts at Millbrook. If the player owns Millbrook from day one, those
    shifts become the owner's own work. Suggestion: keep the $30 shifts as
