@@ -61,7 +61,7 @@ static func _carry(carrier: Skater, puck: Puck, dt: float, blend: float) -> void
 	if carrier.stun_timer > 0.0 or carrier.stick_lifted_timer > 0.0:
 		puck.controller = null
 		return
-	if MovePhysics.glued(carrier.move):
+	if MovePhysics.glued(carrier.move_id):
 		# a cradling move (lacrosse): the puck rides up on the blade until it's done
 		var at := carrier.puck_anchor()
 		puck.vel = (at - puck.position) / dt if dt > 0.0 else Vector3.ZERO

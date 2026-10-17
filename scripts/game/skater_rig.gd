@@ -13,7 +13,6 @@ const HIP_Y := 12 * V
 const STICK_LEN := 23.5 * V   # goalie stick
 const SHAFT_LEN := Models.SHAFT_VOX * Models.STICK_V
 const BLADE_HEEL := Vector3(-7.5 * Models.STICK_V, 4.5 * Models.STICK_V, 0)  # in blade space
-const TWO_HANDS := deg_to_rad(45.0)   # both hands on the stick inside the front 90 degrees
 const THIGH := 6.0 * V
 const SHIN := 6.5 * V           # knee to the bottom of the blade
 const UPPER_ARM := 4.0 * V
@@ -59,6 +58,9 @@ var _yaws: Array[float] = [0.0, 0.0]
 var _one_hand := 0.0
 var _follow := 0.0
 var _follow_side := 1.0
+var _shots := -1
+var _prev_wind := 0.0
+var _prev_ang := 0.0
 var _stick_yaw := 0.0
 
 
@@ -116,11 +118,21 @@ func build(pal: Dictionary, is_goalie: bool) -> void:
 	add_child(stick)
 
 
-## Called by the skater when a shot leaves the blade: the stick follows through
-## high towards the target. `side` is +1 forehand, -1 backhand.
+## The stick follows through high towards the target after a shot. `side` is
+## +1 forehand, -1 backhand.
 func follow_through(strength: float, side := 1.0) -> void:
 	_follow = clampf(strength, 0.3, 1.0)
 	_follow_side = side
+
+
+## Starts a follow-through when this skater's shot just left the blade.
+func _watch_shots(s: Skater) -> void:
+	var shots: int = s.game.stats.shots
+	if _shots >= 0 and shots > _shots and s.puck.last_touch == s and not s.has_puck():
+		follow_through(_prev_wind * 1.3 + 0.35, -1.0 if _prev_ang < -0.2 else 1.0)
+	_shots = shots
+	_prev_wind = s.windup()
+	_prev_ang = s.blade_ang
 
 
 func update_skater(s: Skater, dt: float) -> void:
@@ -172,6 +184,7 @@ func update_skater(s: Skater, dt: float) -> void:
 	hips.rotation = Vector3(0.12 * k, -_twist * 0.6, -_shift * 0.6)
 
 	# torso leans forward with speed, counter-rotates the hips, winds up for shots
+	_watch_shots(s)
 	var w := s.windup()
 	# shoulders turn towards the blade: open up for a forehand wind-up, close
 	# for the backhand, square up again on the follow-through
@@ -190,10 +203,10 @@ func update_skater(s: Skater, dt: float) -> void:
 	for i in 2:
 		_pose_leg(i)
 
-	# one hand comes off the stick outside the front 90 degrees, except while
-	# shooting (wind-up and follow-through keep both hands on)
-	var shooting := s.winding or _follow > 0.0
-	var oh := 0.0 if shooting else smoothstep(TWO_HANDS, TWO_HANDS + 0.35, absf(blade_ang))
+	# one hand comes off the stick outside the front 90 degrees (the skater's
+	# one_hand(), which also holds both on for a wind-up) and stays on for the
+	# follow-through
+	var oh := 0.0 if _follow > 0.0 else s.one_hand()
 	_one_hand = lerpf(_one_hand, oh, 1.0 - exp(-10.0 * dt))
 	var center := Vector3(flat.x, s.blade_height + fol * 0.55, flat.z)
 	_pose_stick(center, flat, s.ctrl.tilt, k)
@@ -268,7 +281,7 @@ func _pose_stick(center: Vector3, flat: Vector3, tilt: float, k: float) -> void:
 	var two := Vector3(0.0, hy, -0.22) + flat * 0.22
 	# one-handed: the top (left) hand reaches from its shoulder towards the blade
 	var shoulder := Vector3(-0.3, hy + 0.25, 0.0)
-	var one := shoulder + (Vector3(dir.x, 0, dir.z) * 0.5 + Vector3(0, -0.3, 0))
+	var one := shoulder + (Vector3(dir.x, 0, dir.z) * 0.65 + Vector3(0, -0.3, 0))
 	var grip := two.lerp(one, _one_hand)
 	var y := (grip - heel).normalized()
 	var x := toe - y * toe.dot(y)
