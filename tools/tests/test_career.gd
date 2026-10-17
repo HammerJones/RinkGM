@@ -87,6 +87,8 @@ func _run_demo(seed_: int) -> void:
 	m.user().moves.erase("one_timer")
 	m.dev_set_skill("shot_power", 60.0)
 	_expect(m.user().knows_move("slapshot"), "raising shot power teaches the slapshot")
+	var ids := MoveUnlocks.to_move_ids(["quick_shot", "slapshot", "toe_drag"])
+	_expect(ids.has(Moves.QUICK) and ids.has(Moves.SLAP) and ids.has(Moves.TOE_DRAG) and ids.size() == 3, "learned ids map to Skater.moves")
 	m.dev_unlock_all_moves()
 	_expect(m.user().moves.size() == MoveUnlocks.ORDER.size(), "dev_unlock_all_moves")
 	var round_trip := PlayerProfile.from_dict(m.user().to_dict())

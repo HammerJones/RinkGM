@@ -12,6 +12,8 @@ extends Node3D
 ##    puck follows it on a spring whose force is capped by the skater's grip
 ##    (see StickPuck), so turning or stickhandling harder than your skill
 ##    allows works the puck loose
+##  * shots and stick moves are patterns traced with the right stick (see
+##    Moves, owned by controls); what each does on the ice is in MovePhysics
 ## Every number comes from `profile` (PhysicsProfile, built from `stats`), and
 ## Tuning.blend (0 sim .. 1 arcade) adds grip, turn rate, direct thrust and
 ## shot/pass assistance on top of the same model.
@@ -25,7 +27,7 @@ const ARC_HALF := deg_to_rad(110.0)        # the blade's 220 degree arc
 const TWO_HAND_HALF := PI / 4.0            # two hands in the front 90 degrees
 const WIND_ANGLE := deg_to_rad(95.0)       # stick further back than this winds up a shot
 const DEFAULT_BLADE := Vector2(0.95, 0.3)  # (forward, right) relative to the body
-const WIND_SPOT := Vector2(-0.15, 0.85)     # where a button wind-up draws the blade
+const WIND_SPOT := Vector2(-0.15, 0.85)    # where a button wind-up draws the blade (forehand; y flips for the backhand)
 const SLAP_MIN := 0.18                     # a lifted wind-up shorter than this is a wrist shot
 const LIFT_HEIGHT := 0.22
 const STICK_LIFTED_TIME := 0.55
@@ -49,7 +51,7 @@ class Controls:
 	var pass_dir := Vector2.ZERO
 	var pass_hint: Variant = null     ## Skater the AI wants to pass to
 	var check := false                ## pressed this frame: shoulder check
-	var move_id := &""                ## a recognised stick move to start (see MovePhysics)
+	var move_id := -1                 ## a stick move (Moves id) to start, for AI and scripts
 
 	func reset() -> void:
 		move = Vector2.ZERO
@@ -65,7 +67,7 @@ class Controls:
 		pass_dir = Vector2.ZERO
 		pass_hint = null
 		check = false
-		move_id = &""
+		move_id = -1
 
 
 var game: Node
@@ -99,10 +101,17 @@ var blade_ang := atan2(DEFAULT_BLADE.y, DEFAULT_BLADE.x)  ## radians from straig
 var blade_reach := DEFAULT_BLADE.length()
 var _blade_pvel := Vector2.ZERO  # (tangential, radial) blade speed in m/s
 var _shot_hand := 0.0            # one_hand() when the current shot was released
-## The stick move being performed (MovePhysics id), or &"".
-var move_id := &""
+## The stick move being performed (Moves id), or Moves.NONE.
+var move := Moves.NONE
 var move_time := 0.0             ## seconds along the move's path (at a 50 stickhandler's pace)
-var _move_fired := false
+## Shots and moves this skater knows (Moves ids). The AI knows them all; the
+## human starts with the starters and learns the rest.
+var moves := Moves.all()
+## The kind of shot being wound up or just taken (Moves id).
+var shot_kind := Moves.WRIST
+var _move_from := DEFAULT_BLADE
+var _wind_side := 1.0            # +1 forehand wind-up, -1 backhand
+var _gest: Array[Vector3] = []   # (forward, right, age) of recent stick input in the body frame
 var blade_height := 0.0
 var lifting := false            ## own blade held up over the puck
 var stick_lifted_timer := 0.0   ## an opponent lifted this stick
@@ -166,14 +175,7 @@ func apply_player(p: PlayerProfile) -> void:
 	player = p
 	number = p.number
 	set_skills(p.skills)
-
-
-## (mechanics hook) Whether this skater has learned move `id` (catalog id).
-## Only career games gate moves; exhibitions and tests know everything.
-func knows(id: StringName) -> bool:
-	if player == null or game == null or not game.get("career_mode"):
-		return true
-	return player.knows_move(id)
+	moves = MoveUnlocks.to_move_ids(p.moves)  # (mechanics) learned moves
 
 
 ## A rating as 0..1 (canonical Skills keys only).
@@ -232,8 +234,11 @@ func blade_down() -> bool:
 
 
 ## Where the puck is pulled to while carried. During a slapshot wind-up the
-## blade lifts away, so the puck stays where the wind-up started.
+## blade lifts away, so the puck stays where the wind-up started; a cradling
+## move (lacrosse) carries it up on the blade.
 func puck_anchor() -> Vector3:
+	if move != Moves.NONE and MovePhysics.glued(move):
+		return blade_pos + Vector3.UP * (blade_height + 0.03)
 	if winding and wind_slap:
 		return _blade_world(_anchor_local)
 	return Vector3(blade_pos.x, 0, blade_pos.z)
@@ -260,11 +265,11 @@ func physics_update(dt: float) -> void:
 	var p := profile
 	var frozen: bool = game.is_frozen()
 	var able := stun_timer <= 0.0 and not frozen
-	var move := ctrl.move if able else Vector2.ZERO
-	if move.length() > 1.0:
-		move = move.normalized()
-	var amount := move.length()
-	var desired := Vector3(move.x, 0, move.y).normalized() if amount > 0.01 else heading
+	var mv := ctrl.move if able else Vector2.ZERO
+	if mv.length() > 1.0:
+		mv = mv.normalized()
+	var amount := mv.length()
+	var desired := Vector3(mv.x, 0, mv.y).normalized() if amount > 0.01 else heading
 	var spd := speed()
 	var top := p.max_speed * lerpf(0.9, 1.0, stamina)
 	braking = ctrl.stop and able and spd > 0.6
@@ -368,6 +373,10 @@ func _stick_drawn() -> bool:
 	return absf(atan2(l.y, l.x)) > WIND_ANGLE
 
 
+func knows(id: int) -> bool:
+	return moves.has(id)
+
+
 func _update_blade(dt: float, blend: float) -> void:
 	var target := DEFAULT_BLADE
 	var able := stun_timer <= 0.0
@@ -379,10 +388,10 @@ func _update_blade(dt: float, blend: float) -> void:
 		var mag := minf(l.length(), 1.0)
 		target = Vector2(cos(atan2(l.y, l.x)), sin(atan2(l.y, l.x))) * lerpf(REACH_MIN, REACH_MAX, mag)
 	if winding and not _stick_wound:
-		target = WIND_SPOT
+		target = Vector2(WIND_SPOT.x, WIND_SPOT.y * _wind_side)
 	var move_h := 0.0
-	if move_id != &"":
-		var k := MovePhysics.sample(move_id, move_time)
+	if move != Moves.NONE:
+		var k := MovePhysics.sample(move, move_time, _move_from)
 		target = Vector2(cos(k[0]), sin(k[0])) * k[1]
 		move_h = k[2]
 	# keep it inside the 220 degree arc; one hand reaches further
@@ -395,6 +404,16 @@ func _update_blade(dt: float, blend: float) -> void:
 	var want := Vector2(tan_err, reach - blade_reach) * profile.blade_response
 	want = want.limit_length(profile.blade_speed * lerpf(1.0, 1.25, blend))
 	var acc := profile.blade_accel * lerpf(1.0, 1.25, blend) * lerpf(1.0, 0.8, oh)
+	if has_puck() and blade_down():
+		# carrying, you move the stick about as sharply as your hands can hold
+		# the puck: weak hands stickhandle slower rather than throwing it away.
+		# It still comes loose when you turn harder than that, or when the
+		# grip drops as the bottom hand lets go mid-swing.
+		var oh_to := smoothstep(TWO_HAND_HALF - 0.08, TWO_HAND_HALF + 0.17, absf(ang))
+		acc = minf(acc, profile.puck_grip * lerpf(1.0, 1.4, blend) * lerpf(1.0, 0.7, maxf(oh, oh_to)) * 0.9)
+	# brake in time to stop on the target instead of swinging past it
+	want.x = signf(want.x) * minf(absf(want.x), sqrt(2.0 * acc * absf(tan_err)))
+	want.y = signf(want.y) * minf(absf(want.y), sqrt(2.0 * acc * absf(reach - blade_reach)))
 	_blade_pvel = _blade_pvel.move_toward(want, acc * dt)
 	blade_ang = clampf(blade_ang + _blade_pvel.x / maxf(blade_reach, 0.3) * dt, -ARC_HALF, ARC_HALF)
 	blade_reach = clampf(blade_reach + _blade_pvel.y * dt, REACH_MIN, REACH_ONE_HAND)
@@ -423,9 +442,10 @@ func _update_blade(dt: float, blend: float) -> void:
 
 func _handle_actions(dt: float) -> void:
 	var able: bool = stun_timer <= 0.0 and not game.is_frozen() and stick_lifted_timer <= 0.0
-	if ctrl.move_id != &"" and move_id == &"" and able:
+	_record_gesture(dt)
+	if ctrl.move_id >= 0 and move == Moves.NONE and able:
 		start_move(ctrl.move_id)
-	if move_id != &"":
+	if move != Moves.NONE:
 		_run_move(dt, able)
 	else:
 		_handle_shot_input(dt, able)
@@ -442,41 +462,92 @@ func _handle_actions(dt: float) -> void:
 		vel += heading * lerpf(1.5, 3.0, skill("hitting"))
 
 
-## Starts a stick move. Returns false when it can't be done now (unknown,
-## not learned, already busy, or it needs the puck and you don't have it).
-func start_move(id: StringName) -> bool:
-	if not MovePhysics.has_move(id) or move_id != &"" or winding:
-		return false
-	if has_method("knows") and not call("knows", id):
+## Starts a stick move. Returns false when it can't be done now (no path for
+## it, not learned, already busy, or it needs the puck and you don't have it).
+func start_move(id: int) -> bool:
+	if not MovePhysics.has_move(id) or move != Moves.NONE or winding or not knows(id):
 		return false
 	if MovePhysics.MOVES[id].get("needs_puck", false) and not has_puck():
 		return false
-	move_id = id
+	move = id
 	move_time = 0.0
-	_move_fired = false
+	_move_from = blade_local
+	_gest.clear()
 	return true
 
 
 func cancel_move() -> void:
-	move_id = &""
+	move = Moves.NONE
 	move_time = 0.0
 
 
 func _run_move(dt: float, able: bool) -> void:
-	if not able:
+	if not able or not has_puck():
 		cancel_move()
 		return
 	move_time += dt / MovePhysics.time_scale(self)
-	var spec: Dictionary = MovePhysics.MOVES[move_id]
-	var shot: Dictionary = spec.get("shot", {})
-	if not shot.is_empty() and not _move_fired and move_time >= shot["release"]:
-		_move_fired = true
-		if has_puck():
-			# the move's own power and error already account for how it's held
-			_shot_hand = 0.0
-			shoot(shot["wind"], false, 0.0, shot)
-	if move_time >= MovePhysics.duration(move_id):
+	var spec: Dictionary = MovePhysics.MOVES[move]
+	var dur := MovePhysics.duration(move)
+	if spec.has("cradle"):
+		# cradled on the blade: push the stick forward to throw it, or let go
+		# of the tilt (or hold it too long) and it drops back to the ice
+		if move_time < dur:
+			return
+		var l := _stick_local(ctrl.stick)
+		if ctrl.stick.length() > 0.6 and l.x > 0.5:
+			shot_kind = move
+			cancel_move()
+			wind_time = spec["cradle"]["wind"]
+			_fire()
+		elif move_time > dur + spec["cradle"]["hold"] or ctrl.tilt < 0.2:
+			cancel_move()
+		return
+	if move_time >= dur:
 		cancel_move()
+
+
+# ---------------------------------------------------------------- gestures
+# Controls' pattern recognizer for the learned shots and moves (see Moves).
+
+const GEST_KEEP := 0.7
+
+
+func _record_gesture(dt: float) -> void:
+	for i in _gest.size():
+		_gest[i].z += dt
+	var l := _stick_local(ctrl.stick) if ctrl.stick.length() > 0.2 else Vector2.ZERO
+	_gest.append(Vector3(l.x, l.y, 0.0))
+	while _gest.size() > 2 and _gest[0].z > GEST_KEEP:
+		_gest.pop_front()
+
+
+## Which pattern the recent stick path traced (see Moves), or NONE.
+func _gesture() -> int:
+	var c := _gest[-1]
+	var r := Vector2(c.x, c.y).length()
+	var ang := rad_to_deg(atan2(c.y, c.x))
+	var tilted := ctrl.tilt > 0.5
+	if tilted and knows(Moves.LACROSSE) and r > 0.8 and ang > 45.0:
+		# sweeping round from the backhand side towards the forehand hip; the
+		# scoop finishes the sweep up behind the hip
+		if _was(func(a, rr, age): return a < -45.0 and rr > 0.8 and age < 0.5):
+			return Moves.LACROSSE
+	if tilted and knows(Moves.TOE_DRAG) and r > 0.5 and ang < -55.0:
+		# pulled back across from out in front
+		if _was(func(a, rr, age): return absf(a) < 35.0 and rr > 0.7 and age < 0.3):
+			return Moves.TOE_DRAG
+	if knows(Moves.SNAP) and c.x > 0.85 and absf(ang) < 20.0:
+		# snapped forward from out wide on the forehand
+		if _was(func(a, rr, age): return a > 60.0 and a < 105.0 and rr > 0.6 and age < 0.12):
+			return Moves.SNAP
+	return Moves.NONE
+
+
+func _was(test: Callable) -> bool:
+	for g in _gest:
+		if test.call(rad_to_deg(atan2(g.y, g.x)), Vector2(g.x, g.y).length(), g.z):
+			return true
+	return false
 
 
 ## Two ways to shoot, both through the same wind-up:
@@ -489,18 +560,40 @@ func _handle_shot_input(dt: float, able: bool) -> void:
 			cancel_shot()
 		_prev_shoot = ctrl.shoot
 		return
+	if not winding and has_puck():
+		var g := _gesture()
+		if g == Moves.TOE_DRAG or g == Moves.LACROSSE:
+			start_move(g)
+			return
+		if g == Moves.SNAP:
+			shot_kind = Moves.SNAP
+			wind_time = 0.3
+			_fire()
+			return
 	if _flicked(dt):
+		shot_kind = Moves.QUICK
 		_fire()
 		return
 	var drawn := _stick_drawn()
 	var held := ctrl.shoot
+	# with LT held the slapshot starts as soon as the stick heads back on the
+	# forehand, so the lifted blade doesn't leave the puck behind
+	var sl := _stick_local(ctrl.stick)
+	var slap_draw := ctrl.lift and has_puck() and knows(Moves.SLAP) and ctrl.stick.length() > 0.5 \
+		and rad_to_deg(atan2(sl.y, sl.x)) > 60.0
+	drawn = drawn or slap_draw
 	if not winding and ((held and not _prev_shoot) or drawn):
 		winding = true
 		wind_time = 0.0
-		wind_slap = ctrl.lift
+		_wind_side = -1.0 if drawn and sl.y < 0.0 else 1.0
+		# the slapshot is a learned move; without it a lifted wind-up is a wrist shot
+		wind_slap = ctrl.lift and _wind_side > 0.0 and knows(Moves.SLAP) and (has_puck() or knows(Moves.ONE_TIMER))
+		shot_kind = Moves.SLAP if wind_slap else (Moves.BACKHAND if _wind_side < 0.0 else Moves.WRIST)
 		_stick_wound = drawn and not held
 		_wind_grace = 0.0
-		_anchor_local = blade_local
+		# the puck waits where it is while the blade goes back
+		var pd := puck.position - position
+		_anchor_local = Vector2(pd.dot(heading), pd.dot(right_vec())) if has_puck() else blade_local
 	_prev_shoot = held
 	if not winding:
 		return
@@ -543,13 +636,19 @@ func _flicked(dt: float) -> bool:
 func _fire() -> void:
 	var held := wind_time
 	var slap := wind_slap and held >= SLAP_MIN
-	# a wound-up shot comes through with both hands; a flick can be one-handed
-	_shot_hand = one_hand()
+	if shot_kind == Moves.SLAP and not slap:
+		shot_kind = Moves.WRIST
+	# a wound-up shot comes through with both hands; a flick can be one-handed.
+	# Snapshots and lacrosse throws are their own technique (MovePhysics.SHOTS).
+	_shot_hand = 0.0 if MovePhysics.SHOTS.get(shot_kind, {}).has("wind") else one_hand()
 	winding = false
 	_stick_wound = false
 	wind_time = 0.0
 	# the blade follows through
-	_set_blade(Vector2(REACH_MAX * 0.85, 0.15))
+	var side := -1.0 if shot_kind == Moves.BACKHAND else 1.0
+	_set_blade(Vector2(REACH_MAX * 0.85, 0.15 * side))
+	if rig:
+		rig.follow_through(held * 1.5 + (0.4 if slap else 0.0), side)
 	if has_puck():
 		shoot(held, slap)
 		return
@@ -565,8 +664,8 @@ func attack_goal() -> Vector3:
 
 
 ## Fires the puck. `held` is the wind-up time, `incoming` the speed of a puck
-## being one-timed, `style` a MovePhysics shot entry (power, error, loft).
-func shoot(held: float, slap: bool, incoming := 0.0, style := {}) -> void:
+## being one-timed; `shot_kind` adjusts it (MovePhysics.SHOTS).
+func shoot(held: float, slap: bool, incoming := 0.0) -> void:
 	var blend: float = Tuning.blend
 	var p := profile
 	var from := puck.position
@@ -589,6 +688,11 @@ func shoot(held: float, slap: bool, incoming := 0.0, style := {}) -> void:
 		err *= 1.35
 	else:
 		spd = p.wrist_speed(held)
+	var style: Dictionary = MovePhysics.SHOTS.get(shot_kind, {})
+	if style.has("wind"):
+		# the shot's own release does the work, not how long it was held
+		spd = p.wrist_speed(style["wind"])
+		err = p.aim_error(style.get("aim_wind", style["wind"]))
 	if incoming > 0.0:
 		spd += incoming * 0.25
 		err *= 1.3
@@ -606,12 +710,12 @@ func shoot(held: float, slap: bool, incoming := 0.0, style := {}) -> void:
 	# tilt opens the blade and raises the shot
 	var h_target: float
 	if style.has("loft"):
-		h_target = style["loft"] + ctrl.tilt * 0.4
+		h_target = randf_range(style["loft"][0], style["loft"][1])
 	elif ctrl.tilt > 0.05:
 		h_target = lerpf(0.25, 1.1, ctrl.tilt)
 	else:
 		h_target = randf_range(0.04, 0.22)
-	h_target = maxf(0.0, h_target + randfn(0.0, err * net_dist * 0.5))
+	h_target = maxf(0.0, h_target + randfn(0.0, err * net_dist * 0.5)) - from.y
 	var vy := 0.0
 	if net_dist < 24.0:
 		var tt := net_dist / spd

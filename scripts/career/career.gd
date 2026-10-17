@@ -113,7 +113,9 @@ static func new_demo(slot: String, first: String, last: String, position: String
 
 ## A one-off game between two generated clubs of a tier (no career, the
 ## player can switch skaters). Same shape as next_user_game().
-static func exhibition(t := 4) -> Dictionary:
+## `mirrored` gives the away club the home club's exact ratings, so only
+## the AI settings differ (the tier AI check).
+static func exhibition(t := 4, mirrored := false) -> Dictionary:
 	var c := Career.new()
 	c.rng.randomize()
 	c._ensure_league(t)
@@ -121,6 +123,13 @@ static func exhibition(t := 4) -> Dictionary:
 	ids.shuffle()
 	var home: Team = c.teams[ids[0]]
 	var away: Team = c.teams[ids[1]]
+	if mirrored:
+		for i in mini(home.roster.size(), away.roster.size()):
+			var src: PlayerProfile = c.players[home.roster[i]]
+			var dst: PlayerProfile = c.players[away.roster[i]]
+			dst.position = src.position
+			dst.skills = Skills.from_dict(src.skills.to_dict())
+			dst.moves = src.moves.duplicate()
 	return {
 		"game": {}, "home": home, "away": away, "user_home": true,
 		"home_lineup": home.lineup(c.players), "away_lineup": away.lineup(c.players),

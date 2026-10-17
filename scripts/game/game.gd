@@ -84,7 +84,7 @@ func _ready() -> void:
 		set_process(false)
 		get_tree().change_scene_to_file.call_deferred(CareerState.HUB_SCENE)
 		return
-	fixture = CareerState.fixture if not CareerState.fixture.is_empty() else Career.exhibition()
+	fixture = CareerState.fixture if not CareerState.fixture.is_empty() else Career.exhibition(4, Array(OS.get_cmdline_user_args()).any(func(x: String) -> bool: return x.begins_with("--ai-levels=")))
 	career_mode = int(fixture.user_id) >= 0
 	settings = fixture.settings
 	tier_ai = TierAI.for_tier(int(fixture.get("tier", 4)))
@@ -147,8 +147,8 @@ func _ready() -> void:
 			for team in mini(lv.size(), 2):
 				team_ai[team] = TierAI.for_level(lv[team])
 	# `-- --test=controls` runs the scripted control checks in tests/, and
-	# `-- --demo=controls` plays the captioned controls showcase
-	if "--demo=controls" in OS.get_cmdline_user_args():
+	# `-- --demo=controls|skating|moves` plays a captioned showcase
+	if Array(OS.get_cmdline_user_args()).any(func(a: String) -> bool: return a.begins_with("--demo=")):
 		var d: Node = load("res://tests/controls_demo.gd").new()
 		d.set("game", self)
 		add_child(d)
