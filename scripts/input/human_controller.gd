@@ -7,6 +7,7 @@ extends Node
 var game: Node
 var player_input: PlayerInput
 var _pass_call_until := -10.0
+var gestures := StickGestures.new()
 
 
 func _ready() -> void:
@@ -30,6 +31,9 @@ func update(dt: float) -> void:
 	c.tilt = f.tilt
 	var sw := right * f.stick.x + fwd * f.stick.y
 	c.stick = Vector2(sw.x, sw.z)
+	# stick patterns for learned moves (Moves); physics runs them
+	var local := Vector2(sw.dot(human.heading), sw.dot(human.right_vec()))
+	c.move_id = gestures.feed(local, f.tilt, c.lift, human.has_puck(), dt)
 	# shots go at the net; lean on the left stick to pick the near or far post
 	c.aim_point = human.attack_goal() + Vector3(0, 0, clampf(w.z, -1.0, 1.0) * 0.75)
 	# passes go where you're skating, else where the stick points

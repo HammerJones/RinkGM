@@ -367,13 +367,15 @@ func _bench_stickhandle() -> void:
 
 ## Runs a stick move `n` times from a standstill and returns
 ## [share that kept the puck or got a shot off, mean time, mean shot speed, share on net].
+## A cradling move (lacrosse) is thrown with a push forward once it's up.
 func _move_trials(id: StringName, rating: int, n: int) -> Array:
 	var kept := 0
 	var time := 0.0
 	var shot_speed := 0.0
 	var shots := 0
 	var on := 0
-	var has_shot: bool = MovePhysics.MOVES[id].has("shot")
+	var spec: Dictionary = MovePhysics.MOVES[id]
+	var has_shot: bool = spec.has("cradle") or spec.has("shot")
 	for i in n:
 		_clear()
 		var s := _skater(_stats({"stick_handling": rating, "shot_power": rating, "shot_accuracy": rating, "shot_release": rating}))
@@ -381,16 +383,18 @@ func _move_trials(id: StringName, rating: int, n: int) -> Array:
 		_give_puck(s)
 		for k in 30:
 			_step()
+		var aim := Vector3(Rink.GOAL_X, 0, 0.55 * (1.0 if i % 2 == 0 else -1.0))
 		s.ctrl.reset()
-		s.ctrl.aim_point = Vector3(Rink.GOAL_X, 0, 0.55 * (1.0 if i % 2 == 0 else -1.0))
 		s.ctrl.move_id = id
 		var t := 0.0
 		var fired := false
-		while t < 2.0:
-			var aim: Variant = s.ctrl.aim_point
+		while t < 2.5:
 			_step()
 			s.ctrl.reset()
 			s.ctrl.aim_point = aim
+			s.ctrl.tilt = 1.0
+			if s.move_id == id and s.move_time >= MovePhysics.duration(id):
+				s.ctrl.stick = Vector2(1, 0)
 			t += DT
 			if has_shot and puck.controller == null and puck.horizontal_speed() > 5.0 and not fired:
 				fired = true
@@ -414,7 +418,7 @@ func _bench_moves() -> void:
 	_line("")
 	_line("## Stick moves (MovePhysics), from a standstill 10 m out")
 	_line("")
-	_line("Stick handling and shooting ratings set to the column's rating. Dekes: share that kept the puck. Shots: share that got the shot off, speed, share on net.")
+	_line("Stick handling and shooting ratings set to the column's rating. Dekes: share that kept the puck. Shots (and the lacrosse throw): share that got the shot off, speed, share on net.")
 	_line("")
 	_line("| move | rating 25 | rating 50 | rating 90 |")
 	_line("|---|---|---|---|")
@@ -422,17 +426,30 @@ func _bench_moves() -> void:
 		var cells := []
 		for r in [25, 50, 90]:
 			var res := _move_trials(id, r, 40)
-			if MovePhysics.MOVES[id].has("shot"):
+			if MovePhysics.MOVES[id].has("cradle") or MovePhysics.MOVES[id].has("shot"):
 				cells.append("%d%%, %.2f s, %s, %d%% on net" % [int(res[0] * 100.0), res[1], _mph(res[2]), int(res[3] * 100.0)])
 			else:
 				cells.append("%d%% kept, %.2f s" % [int(res[0] * 100.0), res[1]])
-		_line("| %s | %s | %s | %s |" % [id, cells[0], cells[1], cells[2]])
+		_line("| %s | %s | %s | %s |" % [Moves.display_name(id), cells[0], cells[1], cells[2]])
+	_line("")
+	_line("## Shot kinds, 10 m out, ratings at the column's value: speed, share on net")
+	_line("")
+	_line("| shot | rating 25 | rating 50 | rating 90 |")
+	_line("|---|---|---|---|")
+	var kinds := [[&"quick_shot", 0.0, false], [&"wrist_shot", 0.6, false], [&"backhand", 0.6, false],
+		[&"slapshot", 0.9, true]]
+	for k in kinds:
+		var cells := []
+		for r in [25, 50, 90]:
+			var res := _shots(_stats({"shot_power": r, "shot_accuracy": r, "shot_release": r}), k[1], k[2], 60, k[0])
+			cells.append("%s, %d%%" % [_mph(res[0]), int(res[1] * 100.0)])
+		_line("| %s | %s | %s | %s |" % [Moves.display_name(k[0]), cells[0], cells[1], cells[2]])
 
 
 ## Fires `n` shots from the top of the slot (10 m out, centred) and returns
 ## [mean speed, share on net]. On-net is the straight-line crossing at the goal
 ## line inside the posts and under the bar; goalies aren't involved.
-func _shots(st: Skills, held: float, slap: bool, n: int) -> Array:
+func _shots(st: Skills, held: float, slap: bool, n: int, kind := &"wrist_shot") -> Array:
 	_clear()
 	var s := _skater(st)
 	var spot := Vector2(Rink.GOAL_X - 10.0, 0.0)
@@ -444,6 +461,7 @@ func _shots(st: Skills, held: float, slap: bool, n: int) -> Array:
 		s.ctrl.aim_point = Vector3(Rink.GOAL_X, 0, 0.55 * (1.0 if i % 2 == 0 else -1.0))
 		_give_puck(s)
 		puck.position.y = 0.0
+		s.shot_kind = kind
 		s.shoot(held, slap)
 		var v := puck.vel
 		var from := puck.position

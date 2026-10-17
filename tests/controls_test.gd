@@ -13,6 +13,12 @@ var _fails := 0
 func _ready() -> void:
 	seed(12345)
 	await get_tree().physics_frame
+	# ratings are rolled per run; pin them so every run plays the same. Good
+	# passers, so "the pass connects" checks the controls, not a missed pass.
+	for sk in game.skaters:
+		for key in Skills.SKATER_KEYS:
+			sk.skills.values[key] = 55.0
+		sk.skills.values["pass_quality"] = 85.0
 	game.controller.player_input.scripted = func(f, dt):
 		_t += dt
 		if _plan.is_valid():
@@ -48,14 +54,23 @@ func _run() -> void:
 	print("tilted shot vy %.2f" % game.puck.vel.y)
 	_check(game.puck.vel.y > 1.0, "tilt lifts the shot")
 
-	# --- the blade follows the stick around to the side (220 degree arc)
+	# --- the stick reaches round a 220 degree arc, not all the way behind
 	await _carry(Vector2(-10, 0))
 	_set_plan(func(f, _t2): f.stick = Vector2(0, -1))  # screen down = the skater's right
 	await _wait(0.5)
 	var bl: Vector2 = game.human.blade_local
 	var ang := rad_to_deg(atan2(bl.y, bl.x))
 	print("stick pushed 90 deg right sits at %.0f deg" % ang)
-	_check(ang > 75.0 and ang <= 110.0, "blade follows the stick, limited to the arc")
+	_check(ang > 75.0 and ang <= 110.0, "blade follows the stick round the side")
+	_set_plan(func(f, _t2): f.stick = Vector2(-0.5, -0.87))  # 120 deg back on the forehand
+	await _wait(0.5)
+	bl = game.human.blade_local
+	ang = rad_to_deg(atan2(bl.y, bl.x))
+	print("stick pulled 120 deg back sits at %.0f deg" % ang)
+	_check(ang > 95.0 and ang <= 111.0, "the arc stops at 110 degrees each side")
+
+	# --- learned shots and moves
+	await _moves()
 
 	# --- lift with the puck raises the blade
 	await _carry(Vector2(-10, 0))
@@ -102,7 +117,7 @@ func _run() -> void:
 	# --- pass to a teammate ahead
 	await _carry(Vector2(-12, 0))
 	var mate: Skater = game.teammates(game.human)[0]
-	mate.place(Vector2(-4, 0.5), Vector3(-1, 0, 0))
+	mate.place(Vector2(-4, 0.0), Vector3(-1, 0, 0))
 	mate.stun_timer = 0.0
 	_set_plan(func(f, t): f.pass_pressed = t > 0.1 and t < 0.11)
 	# whether it gets trapped is the receiver's skill (physics); here: it was sent to them
@@ -123,6 +138,79 @@ func _run() -> void:
 	got = await _until(func(): return game.puck.pass_target == game.human, 2.0, [mate])
 	print("called for the puck, carrier passed to you: %s" % got)
 	_check(got, "calling for a pass makes the carrier pass to you")
+
+
+func _moves() -> void:
+	var h: Skater = game.human
+	# good hands: physics runs move paths under the skater's own limits, and a
+	# weak stickhandler is allowed to lose the puck on them
+	h.skills.values["stick_handling"] = 80.0
+	# screen space: +x is forward, -y is the forehand (right), +y the backhand
+	var side := func(deg: float, r := 1.0) -> Vector2: return Vector2(cos(deg_to_rad(deg)), -sin(deg_to_rad(deg))) * r
+
+	# snapshot: out wide on the forehand, snapped forward
+	var seen := await _move_run(func(f, t): f.stick = side.call(50.0, 0.85) if t < 0.4 else Vector2(1, 0))
+	_check(seen[0] == &"snap_shot" and seen[1], "wide forehand snapped forward is a snapshot")
+
+	# backhand snap: the same on the backhand side
+	seen = await _move_run(func(f, t): f.stick = side.call(-50.0, 0.85) if t < 0.4 else Vector2(1, 0))
+	_check(seen[0] == &"backhand_shot" and seen[1], "wide backhand snapped forward is a backhand snap")
+
+	# toe drag: tilt held, stick out front (eased there: snapping it would be a
+	# quick shot), then pulled back across to the backhand
+	var drag := func(f, t):
+		f.tilt = 1.0
+		# then eases back in to the backhand side once the move has it
+		if t < 0.4:
+			f.stick = Vector2(minf(t / 0.25, 1.0) * 0.5, 0)
+		elif t < 0.45:
+			f.stick = side.call(-80.0, 0.8)
+		else:
+			f.stick = side.call(-30.0, 0.6)
+	seen = await _move_run(drag)
+	_check(seen[0] == &"toe_drag" and not seen[1] and h.has_puck(), "toe drag pulls the puck across and keeps it")
+
+	# toe drag shot: the same with lift held too
+	seen = await _move_run(func(f, t):
+		drag.call(f, t)
+		f.lift = t > 0.3)
+	_check(seen[0] == &"toe_drag_shot" and seen[1], "lift + tilt toe drag ends in a shot")
+
+	# quick deke: forehand, backhand, forehand in one quick motion
+	seen = await _move_run(func(f, t):
+		var a: float = 50.0 if t < 0.4 or t > 0.6 else -50.0
+		f.stick = side.call(a, 0.8) if t > 0.1 else Vector2.ZERO)
+	_check(seen[0] == &"quick_deke" and h.has_puck(), "forehand-backhand-forehand whip is a quick deke")
+
+	# lacrosse: tilt held, swept from the backhand round to the forehand, the
+	# puck rides up on the blade; push forward (tilt still held) to throw it
+	var peak := [0.0]
+	seen = await _move_run(func(f, t):
+		peak[0] = maxf(peak[0], game.puck.position.y)
+		f.tilt = 1.0
+		var a: float = lerpf(-60.0, 120.0, clampf((t - 0.4) / 0.4, 0.0, 1.0))
+		f.stick = side.call(a, minf(t / 0.3, 0.85)) if t < 1.3 else Vector2(1, 0))
+	print("lacrosse: puck rode up to %.2f m" % peak[0])
+	_check(seen[0] == &"lacrosse" and seen[1] and peak[0] > 0.6, "lacrosse lifts the puck onto the blade and throws it")
+	h.skills.values["stick_handling"] = 55.0
+
+
+## Carries the puck, runs a stick plan for 1.5 s and returns
+## [the first move the skater performed, whether a shot was taken].
+func _move_run(plan: Callable) -> Array:
+	await _carry(Vector2(-10, 0))
+	var shots: int = game.stats.shots
+	var first := [&""]
+	_set_plan(plan)
+	await _until(func():
+		if first[0] == &"" and game.human.move_id != &"":
+			first[0] = game.human.move_id
+		if OS.has_environment("TRACE_MOVES") and game.human.move_id != &"":
+			print("  t %.2f ang %.0f reach %.2f h %.2f puck %s" % [_t, rad_to_deg(game.human.blade_ang), game.human.blade_reach, game.human.blade_height, game.human.has_puck()])
+		return false, 1.5)
+	var shot: bool = game.stats.shots > shots
+	print("move: %s, shot %s, puck kept %s" % [first[0], shot, game.human.has_puck()])
+	return [first[0], shot]
 
 
 ## Runs a shot plan with the puck on the blade; returns the puck's speed

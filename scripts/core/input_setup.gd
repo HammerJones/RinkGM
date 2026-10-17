@@ -58,6 +58,9 @@ func _ready() -> void:
 	_keys("reset", [KEY_R])
 	_button("reset", JOY_BUTTON_START)
 	_keys("help", [KEY_H])
+	# developer overlay: ` (tilde key) or D-pad down (InputMap has no chords)
+	_keys("dev_menu", [KEY_QUOTELEFT])
+	_button("dev_menu", JOY_BUTTON_DPAD_DOWN)
 
 
 func _input(event: InputEvent) -> void:
