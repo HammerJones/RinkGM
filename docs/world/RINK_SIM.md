@@ -545,6 +545,68 @@ trend is how a creeping discharge pressure or a falling glycol level is
 spotted early. If nobody logs for a few days the trend has a gap, and the
 ammonia inspector asks why.
 
+#### The compressor problem (Sean, 2026-10-17)
+
+The plant is a logistics problem of its own. The new owner learns in the
+first week that compressor 1 is near the end of its life, and the whole
+first year hangs over that: rebuild it again, replace it like for like, or
+use the replacement to change refrigerant. Code: `PlantCatalog`
+(`scripts/world/sim/plant_catalog.gd`) and the "compressor problem" functions
+on `RinkSim`.
+
+**Compressor packages** (`PlantCatalog.COMPRESSORS`):
+
+| Id | Package | kW | Efficiency | Price | Lead time | Out for | Contractor | Runs on | Parts last |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `nordale_rc4` | Nordale RC-4, 1974 reciprocating (what Millbrook has) | 175 | 0.85 | | | | | ammonia, R-22 | 1x |
+| `nordale_rc6` | Nordale RC-6, new reciprocating; fits the old skid | 200 | 1.0 | $38,000 | 6 weeks | 4 days | $9,000 | ammonia, R-22, R-507A | 1.6x |
+| `frostline_fs90` | Frostline FS-90 screw; efficient at part load, needs a new oil separator and starter | 260 | 1.08 | $92,000 | 12 weeks | 7 days | $18,000 | ammonia, R-507A | 2.5x |
+| `kryomax_co2` | Kryomax CO2 transcritical rack; replaces compressors, chiller and receiver | 300 | 1.12 | $240,000 | 20 weeks | 21 days | $60,000 | CO2 | 2.5x |
+
+**How a replacement goes:**
+
+1. **Quote** (`quote_compressor`): the rep's price, deposit, lead time, install
+   days and which refrigerants the machine takes.
+2. **Order** (`order_compressor`): 30% deposit now. Freight is always late,
+   so delivery is the lead time plus up to a day per week of lead.
+3. **Delivery**: the balance is due when it lands on a flatbed in the parking
+   lot (`delivered`). It waits there until the player books the install.
+4. **Rental chiller** (`rent_chiller`, $1,200 delivery plus $650 a day, 180
+   kW): keeps the ice in while a compressor is out. Without one, one old
+   compressor carries the rink and the evening's ice suffers.
+5. **Install** (`job("install_compressor")`): 4 owner hours to supervise; the
+   contractor's crane, rigging, pipework, charging and testing take the
+   compressor out for the install days. Best done in the summer shutdown.
+6. **Commissioning**: the new parts start at 0.85 to 1.0 condition depending
+   on the owner's supervision (`quality`).
+
+**Refrigerants** (`PlantCatalog.REFRIGERANTS`): cost, safety and performance.
+
+| Id | Refrigerant | Efficiency | Refill | Safety | The catch |
+| --- | --- | --- | --- | --- | --- |
+| `ammonia` | Ammonia (R-717), 340 kg | 1.15 (best) | $4/kg | Toxic: a seal that lets go empties the building, cancels the day, costs a $2,500 fine and reputation | $1,800 a year of inspection and an operator certificate |
+| `r22` | R-22 (Freon), 900 kg | 1.0 | $95/kg, rising 60% a year; none to buy from Year 3 | Harmless to people | Phase-out: every leak gets dearer until the plant can't be refilled at all. Harlow Falls' story |
+| `r507` | R-507A (HFC), 800 kg | 0.93 | $38/kg, rising 8% a year | Harmless to people | Costs the most power; a climate levy of $30 per kg leaked from Year 4 |
+| `co2` | CO2 (R-744), 450 kg | 1.08 | $3/kg | Very high pressure, otherwise benign | Only the Kryomax rack runs it. Recovers half the plant's heat for flood water and the lobby (credited at $0.06 a kWh of gas) |
+
+Converting (`job("convert_refrigerant")`) needs every compressor to support
+the new refrigerant, costs the new charge plus $15,000 of contractor work,
+and takes the whole plant down for ten days. Refrigerant leaks slowly from
+worn shaft seals and old joints (`charge`); below about 85% charge the
+chiller starves and capacity falls. `job("recharge_refrigerant")` tops it up
+at that year's price.
+
+The sensible paths: rebuild the RC-4s for a year or two while saving; an
+RC-6 for compressor 1 in the first summer; a screw compressor once the
+Lumber Kings sign; a CO2 conversion as the big late-game renovation (it
+pays back in power, gas and inspections, and it is what the GNHL rinks
+have). The drama path: Harlow Falls stays on R-22 too long and goes dark
+for a month the winter its refills run out.
+
+The plant room props for all of this (compressor packages, chiller,
+receiver, pumps, header, pipe pieces, condenser, control panel, safety
+station) are in `scripts/art/props.gd`; see `docs/ART.md`, "Plant room".
+
 ### 3.2 The ice slab
 
 `IceSlab` today: one surface temperature, one thickness, smoothness,
@@ -561,7 +623,8 @@ The sheet-wide values `IceSlab` already has stay as averages over the grid.
 | Surface temperature, figure skating | -3 to -4 C (code -3.5) | Softer, so jumps land and toe picks grip |
 | Surface temperature, public skating | -4 to -5 C (code -4.5) | |
 | Curling | -4 to -5 C, with pebble | Needs a level sheet within 3 mm |
-| Thickness | 25 to 38 mm (1 to 1.5 in); ideal 32 mm | Thinner risks soft spots and cracking through to the paint; thicker insulates the surface from the pipes. Each extra 25 mm (1 in) costs about 10 to 15% more plant energy |
+| Thickness, hockey | 25 to 34 mm (1 to 1 3/8 in) | Hard, fast, dry. See "Thin ice or thick ice" below |
+| Thickness, figure skating | 36 to 50 mm (1 1/2 to 2 in) | Holds deep edges without skidding |
 | Paint layer | White base about 1 mm, 3 mm (1/8 in) from the concrete | Shaved through when the ice gets thin |
 | Flood water | 55 to 60 C, about 450 L a flood (`ResurfacerSim.FLOOD_LITRES`) | Hot water drives out air and bonds to the old surface; 450 L over 1,586 m2 is about 0.3 mm |
 | Shave per flood | 0.5 to 1 mm | Set by the blade (mini game 4.6) |
@@ -569,8 +632,28 @@ The sheet-wide values `IceSlab` already has stay as averages over the grid.
 | Building air | 10 to 15 C, dew point below 0 C, relative humidity 40 to 50% | Above the ice-surface dew point, fog forms and the ceiling drips |
 | Lighting | 500 lux worn (1970s metal halide), 1,000 lux renovated (LED), 1,500+ for TV | Old lamps put about 30 kW of heat on the ice |
 
-Starting state for Millbrook: average thickness 48 mm (Earl likes it thick;
-`IceSlab` starts at 38, suggest 48 so the first goal has a payoff), 12 mm
+#### Thin ice or thick ice (Sean, 2026-10-17)
+
+| | Thin (25 to 32 mm) | Thick (40 mm and up) |
+| --- | --- | --- |
+| Plant power | Less: the pipes reach the surface (`IceSlab.insulation()`) | More: each extra 16 mm costs about 7% of the rink's kWh |
+| Surface | Colder and harder for the same brine; fast | Softer; holds deep, sharp turns without skidding |
+| Thermal mass | Little (`heat_capacity_mj()`): warms quickly when the plant trips or the lights are hot, melts faster | Lots: stays cold through a trip, melts slowly |
+| After a flood | Dries fast (about 13 min at 32 mm) | Slow to freeze in (about 19 min at 48 mm, 31 at 60) (`dry_minutes()`) |
+| Wear | Deep gouges reach the soft layer and the paint (`gouge` in `run()`) | Takes a beating |
+| Who wants it | Hockey: bone dry the second their window starts | Figure skaters |
+
+Wet ice is the friction: `wetness()` runs from 1 just after a flood to 0
+when it has frozen in. Hockey loses up to 60% of its rating on wet ice,
+public skating 30%, figure skating 20% (`IceSlab.WET_PENALTY`), and a group
+that waits at the gate for the ice to dry loses satisfaction. Doris goes out
+`RinkSim.RESURFACE_LEAD_MIN` (30 minutes) before a booking, so thin ice is
+dry in time and thick ice only just. Back-to-back bookings with a quick
+flood between them are where thick ice hurts, and where the figure club
+and the hockey groups pull the owner in opposite directions.
+
+Starting state for Millbrook: average thickness 48 mm (Earl likes it thick,
+and the first goal, getting it down to 32 mm, pays off on the power bill), 12 mm
 higher along the boards than at centre, a 6 mm low spot at the home blue
 line where the roof drips in spring, surface around -4 C.
 
@@ -2081,6 +2164,7 @@ career and the rink share `Career.day`.
 | Beer League A | Games in Harlow Falls: the competitor's rink, which the player can look at (their ice, their dressing rooms) |
 | Senior AAA | If the Lumber Kings sign a new lease, the player's own team plays at the player's rink in front of the player's crowd. Profit as a player starts here (`PROSHOP.md`), and the rink's beer garden is open |
 | Semi-Pro, Minor Pro | Games every 3 to 4 days, practices most days, road trips: the rink must run on staff |
+| League dues | The owner plays free while learning (the first 8 weeks). Then Dale Huffman, the Valley Beer League commissioner, calls: owner or not, everybody pays their dues, because the $120 season fee (`PROSHOP.md`) buys the refs, the scorekeeper, the pucks and the jerseys. Two weeks' grace, then "no dues, no game" (`RinkSim.league`, `pay_dues()`, `owner_can_play()`; Mechanics reads `owner_can_play()` before the owner's game) |
 | Fatigue | Owner fatigue feeds `Progression.rest` (an overworked owner plays tired); a day off restores both |
 | Fame | The player's career fame raises the rink's Hockey reputation; a famous local player unlocks Doris's retirement fund raffle (`PROSHOP.md`) |
 
@@ -2351,7 +2435,7 @@ One playable week, Monday to Sunday, first week of September, Year 1.
 | Grid | The weekly grid with sessions, auto-floods and who floods them |
 | Economy | The week's P&L with real line items; the electricity bill on the desk |
 | Gus's binder | The first-hour notes and the week's four goals |
-| The player's game | The Tuesday BL-D game at Millbrook, with floods around it |
+| The player's game | The Tuesday BL-D game at Millbrook, with floods around it. Free while the owner learns |
 | UI | Office screens in RinkOS style: grid, log book, P&L, the job queue |
 
 | Out of M1 | Why |
@@ -2390,16 +2474,16 @@ up.
    pay from the town's transition fund for the first season (the Community
    Ice Agreement pays the owner $60 a week while the draw is blocked), so the
    `PROSHOP.md` early economy is unchanged. Sean and Game mechanics.
-3. **Starting thickness.** `IceSlab` starts at 38 mm; this doc proposes 48
-   so the first goal has a payoff. Sim core.
+3. **Starting thickness.** Decided (Sean, 2026-10-17): 48 mm, with the
+   thin-versus-thick trade-offs in 3.2.
 4. **The plant room.** Rink environment to add a `plant_room` room and the
    header trench to `Venue`.
 5. **First person or diorama for mini games.** First person in the real room
    matches the walkable venue; a bench diorama is cheaper for M1. Suggestion:
    first person for the plant room jobs, a raised workbench view for Doris's
    blade and squeegee.
-6. **Ammonia or freon.** This doc uses ammonia (honest for a 1970s
-   community rink and better drama). Harlow Falls' R-22 (freon) plant gives
-   the phase-out story. Sean to confirm.
+6. **Ammonia or freon.** Decided (Sean, 2026-10-17): ammonia at Millbrook,
+   R-22 at Harlow Falls, and the owner can convert later. See "The
+   compressor problem" in 3.1.
 7. **Physics.** Which `IceSurface` fields the puck and skater can take, and
    whether soft spots are worth a per-position lookup.

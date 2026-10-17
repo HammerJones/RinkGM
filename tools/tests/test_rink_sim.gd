@@ -24,6 +24,10 @@ func _initialize() -> void:
 	_check_save()
 	_check_instruments()
 	_check_offers()
+	_check_thickness()
+	_check_compressor_logistics()
+	_check_refrigerants()
+	_check_dues()
 	if failures:
 		printerr("test_rink_sim: %d failure(s)" % failures)
 	else:
@@ -140,6 +144,112 @@ func _check_offers() -> void:
 		_fail("great ice and renovated rooms should bring the Dukes, got %s" % ids)
 	if not s.sign("dukes_practice") or not s.contracts.has("dukes_practice"):
 		_fail("signing the Dukes")
+
+
+## Thin ice is cheap, hard and dry but fragile; thick ice holds its cold and its
+## edges but stays wet longer after a flood.
+func _check_thickness() -> void:
+	var thin := IceSlab.new()
+	var thick := IceSlab.new()
+	thin.thickness_mm = 30.0
+	thick.thickness_mm = 48.0
+	for s in [thin, thick]:
+		s.surface_temp = -5.5
+		s.smoothness = 0.9
+	if thick.dry_minutes(450.0) <= thin.dry_minutes(450.0) + 3.0:
+		_fail("a flood on thick ice should take longer to dry (%.0f vs %.0f min)" % [thick.dry_minutes(450.0), thin.dry_minutes(450.0)])
+	if thin.rating("hockey") <= thick.rating("hockey") or thick.rating("figure") <= thin.rating("figure"):
+		_fail("hockey should prefer thin ice and figure thick")
+	# lights off and the plant down for an hour: the thick sheet holds its cold
+	var a := thin.surface_temp
+	thin.run(1.0, 120.0, 0.0, 0.0)
+	thick.run(1.0, 120.0, 0.0, 0.0)
+	if thick.surface_temp - a >= thin.surface_temp - a:
+		_fail("thick ice should warm more slowly")
+	var t2 := IceSlab.new()
+	t2.thickness_mm = 20.0
+	var t3 := IceSlab.new()
+	t3.thickness_mm = 40.0
+	t2.run(1.0, 0.0, 0.0, 20.0)
+	t3.run(1.0, 0.0, 0.0, 20.0)
+	if t2.smoothness >= t3.smoothness:
+		_fail("thin ice should gouge faster")
+	# a fresh flood: hockey minds the wet, the figure club barely does
+	var f := IceSlab.new()
+	f.thickness_mm = 40.0
+	f.surface_temp = -5.0
+	var before_h := f.rating("hockey")
+	var before_f := f.rating("figure")
+	f.resurface(1.0, 0.0, 450.0)
+	if f.rating("hockey") / before_h >= f.rating("figure") / before_f:
+		_fail("wet ice should cost hockey more than figure skating")
+
+
+func _check_compressor_logistics() -> void:
+	var s := RinkSim.create(4)
+	s.money = 100000.0
+	if not s.order_compressor("nordale_rc6"):
+		_fail("ordering an RC-6")
+		return
+	s.advance_days(7 * 7 + 1)
+	if not "nordale_rc6" in s.delivered:
+		_fail("the RC-6 should have arrived in about six weeks, orders %s" % [s.orders])
+		return
+	var cap_before := s.plant.capacity_kw()
+	var r := s.job("install_compressor", {"compressor": 0, "model": "nordale_rc6"})
+	if not r.ok or s.plant.compressor_health(0) != 0.0:
+		_fail("installing takes compressor 1 out: %s" % r.text)
+	s.rent_chiller(5)
+	if s.plant.capacity_kw() <= cap_before * 0.6:
+		_fail("the rental chiller should keep most of the capacity")
+	s.advance_days(6)
+	if s.plant.compressors[0].model != "nordale_rc6" or s.plant.compressor_health(0) < 0.8:
+		_fail("compressor 1 should be a healthy RC-6 now")
+	if s.plant.rental_kw != 0.0:
+		_fail("the rental should have gone home")
+
+
+func _check_refrigerants() -> void:
+	if PlantCatalog.refill_price("r22", 2) <= PlantCatalog.refill_price("r22", 1) or PlantCatalog.refill_price("r22", 3) >= 0.0:
+		_fail("R-22 should get dearer, then be unobtainable")
+	var s := RinkSim.create(2)
+	s.money = 100000.0
+	if s.job("convert_refrigerant", {"to": "co2"}).ok:
+		_fail("old Nordales can't run on CO2")
+	var p := RefrigerationPlant.create_old()
+	var amm := p.efficiency()
+	p.refrigerant = "r22"
+	if p.efficiency() >= amm:
+		_fail("ammonia should be the more efficient refrigerant")
+	# a CO2 plant pays some of its bill back in heat
+	var c := RinkSim.create(3)
+	for i in c.plant.compressors.size():
+		c.plant.install_compressor(i, "kryomax_co2")
+	c.plant.refrigerant = "co2"
+	c.advance_days(2)
+	if float(c.books[0].ledger.get("heat recovered", 0.0)) <= 0.0:
+		_fail("CO2 should recover heat")
+	# a failed seal on ammonia empties the building
+	var a := RinkSim.create(9)
+	a.plant.compressors[0].seal.condition = 0.0
+	a.advance_days(30)
+	if a.evacuated_day < 0:
+		_fail("a failed seal on ammonia should cause a release within a month")
+
+
+func _check_dues() -> void:
+	var s := RinkSim.create(5)
+	s.advance_days(RinkSim.LEAGUE_FREE_DAYS)
+	if float(s.league.owed) > 0.0:
+		_fail("the owner plays free while they learn")
+	s.advance_days(2)
+	if float(s.league.owed) != RinkSim.LEAGUE_DUES:
+		_fail("Dale should ask for dues")
+	s.advance_days(RinkSim.LEAGUE_GRACE_DAYS)
+	if s.owner_can_play():
+		_fail("no dues, no game")
+	if not s.pay_dues() or not s.owner_can_play():
+		_fail("paying the dues should get the sweater back")
 
 
 func _fail(msg: String) -> void:

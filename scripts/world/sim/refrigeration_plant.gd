@@ -6,13 +6,17 @@ extends RefCounted
 ## of about 175 kW of refrigeration each, glycol supplied at about -9 C.
 ##
 ## Everything here is the hidden truth; the player reads it through
-## SimInstrument and fixes it through jobs on RinkSim.
+## SimInstrument and fixes it through jobs on RinkSim. What can replace the
+## compressors and the refrigerant is in PlantCatalog.
 
-const COMPRESSOR_KW := 175.0
+const COMPRESSOR_KW := 175.0  # the original Nordale RC-4
 const GLYCOL_TARGET := Vector2(30.0, 38.0)  # % by volume that runs well
 const LOOP_LITRES := 9000.0
 
-var compressors: Array = []  # [{"valves", "rings", "bearings", "seal": SimPart, "oil": float, "tripped": bool}]
+var compressors: Array = []  # [{"model", "valves", "rings", "bearings", "seal": SimPart, "oil", "tripped", "out"}]
+var refrigerant := "ammonia"  # PlantCatalog.REFRIGERANTS
+var charge := 0.93            # refrigerant charge, 1 full; seals and old joints leak it
+var rental_kw := 0.0          # a rented portable chiller on the trailer outside
 var condenser_scale := 0.15   # 0 clean, 1 choked with scale
 var condenser_fan_belt: SimPart
 var glycol_pct := 31.0
@@ -23,6 +27,9 @@ var header: SimPart           # leaks glycol as it ages
 var supply_temp := -9.0       # glycol leaving the chiller, C
 var last_cooling_kw := 0.0
 var last_power_kw := 0.0
+var last_leak_kg := 0.0       # refrigerant lost in the last run()
+var last_release := false     # a toxic release this run: the building empties
+var last_recovered_kw := 0.0  # heat recovered for floods and the lobby (CO2)
 
 
 static func create_old() -> RefrigerationPlant:
@@ -30,6 +37,7 @@ static func create_old() -> RefrigerationPlant:
 	for i in 2:
 		var worn := 0.55 if i == 0 else 0.7  # number 1 has always been the grumpy one
 		p.compressors.append({
+			"model": "nordale_rc4", "out": false,
 			"valves": SimPart.make("valves", "Suction and discharge valve plates", 6000.0, 340.0, 0.08, worn),
 			"rings": SimPart.make("rings", "Piston rings", 20000.0, 520.0, 0.05, worn + 0.15),
 			"bearings": SimPart.make("bearings", "Main bearings", 30000.0, 880.0, 0.04, worn + 0.2),
@@ -46,7 +54,7 @@ static func create_old() -> RefrigerationPlant:
 ## How much a compressor can move right now, 0..1 of nominal.
 func compressor_health(i: int) -> float:
 	var c: Dictionary = compressors[i]
-	if c.tripped:
+	if c.tripped or c.get("out", false):
 		return 0.0
 	var valves: SimPart = c.valves
 	var rings: SimPart = c.rings
@@ -68,10 +76,26 @@ func loop_factor() -> float:
 func capacity_kw() -> float:
 	var cap := 0.0
 	for i in compressors.size():
-		cap += COMPRESSOR_KW * compressor_health(i)
+		cap += float(PlantCatalog.compressor(compressors[i].model).kw) * compressor_health(i)
 	var fan := 1.0 if not condenser_fan_belt.failed() else 0.45
-	cap *= (1.0 - 0.3 * condenser_scale) * fan
-	return cap * loop_factor()
+	cap *= (1.0 - 0.3 * condenser_scale) * fan * charge_factor()
+	return (cap + rental_kw) * loop_factor()
+
+
+## A short charge starves the chiller: fine down to about 85%, then falls off.
+func charge_factor() -> float:
+	return clampf((charge - 0.55) / 0.3, 0.15, 1.0)
+
+
+## Efficiency of the running machines on this refrigerant, capacity-weighted.
+func efficiency() -> float:
+	var t := 0.0
+	var w := 0.0
+	for c in compressors:
+		var m := PlantCatalog.compressor(c.model)
+		t += float(m.eff) * float(m.kw)
+		w += float(m.kw)
+	return t / maxf(w, 1.0) * float(PlantCatalog.refrigerant(refrigerant).cop)
 
 
 ## Runs the plant for `h` hours asking for `duty` (0..1) of its capacity.
@@ -79,11 +103,14 @@ func capacity_kw() -> float:
 func run(h: float, duty: float, rng: RandomNumberGenerator) -> float:
 	duty = clampf(duty, 0.0, 1.0)
 	var head := 1.0 + condenser_scale + (0.6 if condenser_fan_belt.failed() else 0.0)
+	last_leak_kg = 0.0
+	last_release = false
+	var kg: float = PlantCatalog.refrigerant(refrigerant).charge_kg
 	for i in compressors.size():
 		var c: Dictionary = compressors[i]
-		if c.tripped:
+		if c.tripped or c.get("out", false):
 			continue
-		var stress := duty * head * (1.0 + 2.0 * (1.0 - float(c.oil)))
+		var stress := duty * head * (1.0 + 2.0 * (1.0 - float(c.oil))) / float(PlantCatalog.compressor(c.model).life)
 		for k in ["valves", "rings", "bearings", "seal"]:
 			(c[k] as SimPart).run(h, stress)
 		c.oil = maxf(float(c.oil) - h * duty / 1500.0, 0.0)
@@ -94,6 +121,13 @@ func run(h: float, duty: float, rng: RandomNumberGenerator) -> float:
 			c.tripped = true
 		if seal.condition < 0.25:
 			c.oil = maxf(float(c.oil) - h * 0.002, 0.0)  # weeping seal loses oil
+			last_leak_kg += h * (0.25 - seal.condition) * 0.4
+			# a failed seal can let go all at once; with ammonia that empties the building
+			if seal.failed() and rng.randf() < 0.01 * h:
+				last_leak_kg += kg * 0.04
+				last_release = PlantCatalog.refrigerant(refrigerant).toxic
+	last_leak_kg += h * kg * 0.000002 * (1.0 - header.condition) * 10.0  # old joints and valve packings
+	charge = maxf(charge - last_leak_kg / kg, 0.0)
 	condenser_scale = minf(condenser_scale + h * duty / 9000.0, 1.0)
 	condenser_fan_belt.run(h, duty)
 	pump_bearing.run(h)
@@ -103,10 +137,41 @@ func run(h: float, duty: float, rng: RandomNumberGenerator) -> float:
 	var leak := (1.0 - header.condition) * 0.6 + (0.4 if pump_seal.condition < 0.2 else 0.0)
 	glycol_litres = maxf(glycol_litres - leak * h, 0.0)
 	last_cooling_kw = capacity_kw() * duty
-	var cop := 2.8 * (1.0 - 0.35 * condenser_scale) / head * 1.6
-	last_power_kw = last_cooling_kw / maxf(cop, 0.8) + 11.0  # pumps and fans
+	var own_kw := maxf(last_cooling_kw - rental_kw * duty * loop_factor(), 0.0)
+	var cop := 2.8 * (1.0 - 0.35 * condenser_scale) / head * 1.6 * efficiency() / 0.98
+	var part_load := _part_load()
+	cop *= lerpf(1.0, part_load, clampf(1.0 - duty, 0.0, 1.0))
+	last_power_kw = own_kw / maxf(cop, 0.8) + 11.0 + rental_kw * duty * 0.4  # pumps, fans, the rental's own draw
+	last_recovered_kw = (own_kw + last_power_kw) * 0.5 if PlantCatalog.refrigerant(refrigerant).has("heat_recovery") else 0.0
 	supply_temp = lerpf(-4.0, -10.0, clampf(capacity_kw() / (2.0 * COMPRESSOR_KW), 0.0, 1.0))
 	return last_cooling_kw
+
+
+func _part_load() -> float:
+	var t := 0.0
+	for c in compressors:
+		t += float(PlantCatalog.compressor(c.model).part_load)
+	return t / maxf(compressors.size(), 1.0)
+
+
+## Swaps compressor `i` for a new `model` package (`quality` from the
+## commissioning). New parts last `life` times longer than the old Nordale's.
+func install_compressor(i: int, model: String, quality := 1.0) -> void:
+	var c: Dictionary = compressors[i]
+	c.model = model
+	for k in ["valves", "rings", "bearings", "seal"]:
+		(c[k] as SimPart).replace(quality)
+	c.oil = 1.0
+	c.tripped = false
+	c.out = false
+
+
+## Can every compressor run on `id`?
+func can_run(id: String) -> bool:
+	for c in compressors:
+		if not id in PlantCatalog.compressor(c.model).refrigerants:
+			return false
+	return true
 
 
 ## Adds `litres` of mixed fluid at `pct` glycol and returns the new mix.
@@ -120,11 +185,12 @@ func top_up(litres: float, pct: float) -> float:
 func to_dict() -> Dictionary:
 	var cs: Array = []
 	for c in compressors:
-		cs.append({"valves": c.valves.to_dict(), "rings": c.rings.to_dict(), "bearings": c.bearings.to_dict(),
+		cs.append({"model": c.model, "out": c.get("out", false), "valves": c.valves.to_dict(), "rings": c.rings.to_dict(), "bearings": c.bearings.to_dict(),
 			"seal": c.seal.to_dict(), "oil": c.oil, "tripped": c.tripped})
 	return {"compressors": cs, "condenser_scale": condenser_scale, "fan_belt": condenser_fan_belt.to_dict(),
 		"glycol_pct": glycol_pct, "glycol_litres": glycol_litres, "pump_bearing": pump_bearing.to_dict(),
-		"pump_seal": pump_seal.to_dict(), "header": header.to_dict()}
+		"pump_seal": pump_seal.to_dict(), "header": header.to_dict(), "refrigerant": refrigerant, "charge": charge,
+		"rental_kw": rental_kw}
 
 
 func load_dict(d: Dictionary) -> void:
@@ -135,6 +201,8 @@ func load_dict(d: Dictionary) -> void:
 			(c[k] as SimPart).load_dict(cs[i].get(k, {}))
 		c.oil = float(cs[i].get("oil", c.oil))
 		c.tripped = bool(cs[i].get("tripped", false))
+		c.model = str(cs[i].get("model", c.model))
+		c.out = bool(cs[i].get("out", false))
 	condenser_scale = float(d.get("condenser_scale", condenser_scale))
 	condenser_fan_belt.load_dict(d.get("fan_belt", {}))
 	glycol_pct = float(d.get("glycol_pct", glycol_pct))
@@ -142,3 +210,6 @@ func load_dict(d: Dictionary) -> void:
 	pump_bearing.load_dict(d.get("pump_bearing", {}))
 	pump_seal.load_dict(d.get("pump_seal", {}))
 	header.load_dict(d.get("header", {}))
+	refrigerant = str(d.get("refrigerant", refrigerant))
+	charge = float(d.get("charge", charge))
+	rental_kw = float(d.get("rental_kw", rental_kw))
