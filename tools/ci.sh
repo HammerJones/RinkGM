@@ -64,8 +64,8 @@ fi
 # 5. tiers feel different: a mid-tier AI side must beat a low-tier side
 #    (Physics' check; skipped on branches that don't have it yet)
 if [ -f tools/tier_ai_check.sh ]; then
-	echo "== tier AI check (${TIER_GAMES:-12} games)"
-	GAMES=${TIER_GAMES:-12} GODOT="$GODOT" bash tools/tier_ai_check.sh || fail=1
+	echo "== tier AI check (${TIER_GAMES:-24} games)"
+	GAMES=${TIER_GAMES:-24} GODOT="$GODOT" bash tools/tier_ai_check.sh || fail=1
 fi
 
 [ $fail -eq 0 ] && echo "== CI passed" || echo "== CI FAILED"
