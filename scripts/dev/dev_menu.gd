@@ -273,15 +273,12 @@ func _build_player() -> void:
 				_say("fatigue cleared"))
 
 	_note(box, "----------------------------------------\n// Moves")
-	if p != null and p.has_method("unlock_move"):
-		var moves_script := "res://scripts/core/moves.gd"
-		if ResourceLoader.exists(moves_script):
-			var moves = load(moves_script)
-			if "ALL" in moves:
-				_button(box, "Unlock every move", func() -> void:
-					for m in moves.ALL:
-						p.unlock_move(m)
-					_say("all moves unlocked"))
+	var cm := _career()
+	if cm != null and cm.has_method("dev_unlock_all_moves"):
+		_button(box, "Unlock every move", func() -> void:
+			cm.dev_unlock_all_moves()
+			_maybe_save()
+			_say("all moves unlocked"))
 	else:
 		_note(box, "// (move unlocks arrive with the moves system)")
 
