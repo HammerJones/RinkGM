@@ -28,6 +28,7 @@ func _initialize() -> void:
 		var leaf := Props.mesh("door_leaf", age).get_aabb()
 		if absf(leaf.end.x) > 0.01 or leaf.position.x > -0.8:
 			_fail("door_leaf %s: hinge should be at x=0 with the leaf toward -x, got %s" % [Wear.NAMES[age], leaf])
+	_check_plant()
 	if failures == 0:
 		print("props test: all passed (%d props x 3 ages x 2 detail levels)" % Props.ids().size())
 	quit(1 if failures else 0)
@@ -52,6 +53,36 @@ func _check(id: String, age: int) -> void:
 		var edge: float = aabb.end.y if hangs else aabb.position.y
 		if absf(edge) > 0.07:
 			_fail("%s lod %d: pivot is %.2f m off the %s" % [label, lod, edge, "ceiling" if hangs else "floor"])
+
+
+## Plant room: triangle budgets (docs/ART.md), pipe pieces and header modules
+## that tile along X, and the detector's pivot on its wall plane.
+func _check_plant() -> void:
+	var small := ["pipe_glycol", "pipe_glycol_elbow", "pipe_glycol_valve", "pipe_refrig",
+		"pipe_refrig_elbow", "pipe_refrig_valve", "ammonia_detector", "eyewash_station", "header"]
+	for id in Props.ids():
+		if not Props.Plant.MERGED.has(id) and not small.has(id):
+			continue
+		var worst := 0
+		var line: String = id
+		for age in 3:
+			var t := _tris(Props.mesh(id, age))
+			worst = maxi(worst, t)
+			line += "  %s %d (lod1 %d)" % [Wear.NAMES[age], t, _tris(Props.mesh(id, age, 1))]
+		print(line)
+		var budget := 2000 if small.has(id) else 8000
+		if worst > budget:
+			_fail("%s: %d triangles (budget %d)" % [id, worst, budget])
+	var tile: float = Props.Plant.PIPE_LEN * Models.V
+	for id in ["pipe_glycol", "pipe_glycol_valve", "pipe_refrig", "pipe_refrig_valve", "header"]:
+		for age in 3:
+			var aabb := Props.mesh(id, age).get_aabb()
+			if absf(aabb.position.x + tile * 0.5) > 0.01 or absf(aabb.end.x - tile * 0.5) > 0.01:
+				_fail("%s %s: should span x = +/-%.2f m to tile, got %s" % [id, Wear.NAMES[age], tile * 0.5, aabb])
+	for age in 3:
+		var aabb := Props.mesh("ammonia_detector", age).get_aabb()
+		if absf(aabb.end.z) > 0.01:
+			_fail("ammonia_detector %s: back should be on the wall plane z=0, got %.2f" % [Wear.NAMES[age], aabb.end.z])
 
 
 func _tris(mesh: ArrayMesh) -> int:

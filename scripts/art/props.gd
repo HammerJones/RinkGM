@@ -22,7 +22,16 @@ const IDS := [
 	"arena_seat", "door", "light", "vending_machine", "trash_can", "rink_sign", "resurfacer",
 	"lockers", "player_bench", "penalty_box", "glass_frame", "glass_pane", "concession_counter",
 	"scoreboard",
+	# the refrigeration plant room (plant_props.gd)
+	"compressor_recip", "compressor_screw", "compressor_co2", "chiller", "receiver",
+	"glycol_pump", "glycol_tank", "header",
+	"pipe_glycol", "pipe_glycol_elbow", "pipe_glycol_valve",
+	"pipe_refrig", "pipe_refrig_elbow", "pipe_refrig_valve",
+	"condenser", "control_panel", "ammonia_detector", "eyewash_station",
 ]
+
+## The plant room builders live in their own file.
+const Plant := preload("res://scripts/art/plant_props.gd")
 
 ## Penalty box size in voxels: 4.3 m along the boards, a 1 m door gap.
 const PENALTY_BOX_W := 66
@@ -83,7 +92,7 @@ static func _build(id: String, age: int) -> VoxelModel:
 		"glass_pane": return _glass_pane(age)
 		"concession_counter": return _concession_counter(age)
 		"scoreboard": return _scoreboard(age)
-	return null
+	return Plant.build(id, age)
 
 
 ## Big one-offs whose flat panels would cost too many faces with per-voxel
@@ -102,7 +111,7 @@ static func mesh(id: String, age: int, lod := 0) -> ArrayMesh:
 		Wear.fine = true
 		if m == null:
 			_cache[key] = null
-		elif lod == 0 and not id in _MERGED:
+		elif lod == 0 and not id in _MERGED and not id in Plant.MERGED:
 			_cache[key] = m.build_mesh()
 		else:
 			_cache[key] = m.build_mesh_merged()
