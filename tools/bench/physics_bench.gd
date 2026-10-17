@@ -171,6 +171,9 @@ func _bench_gestures() -> void:
 	_line("| pull back 1 s, push forward | %s |" % _gesture([[back, false, 120], [fwd, false, 5]]))
 	_line("| hold lift, pull back 1 s, push forward | %s |" % _gesture([[back, true, 120], [fwd, false, 5]]))
 	_line("| pull back, then let go (cancel) | %s |" % _gesture([[back, false, 60], [Vector2.ZERO, false, 60]]))
+	# deke: blade on the right, lift it over to the far left, set it down, pull
+	_gesture([[Vector2(0.7, 0.6), false, 40], [Vector2(0.7, 0.0), true, 25], [Vector2(0.6, -0.8), false, 40]])
+	_line("| deke: lift over to the far side, set down, pull | %s |" % ("kept the puck" if puck.controller == skaters[0] else "lost the puck"))
 
 
 # ---------------------------------------------------------------- skating

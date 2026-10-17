@@ -92,6 +92,7 @@ var blade_height := 0.0
 var lifting := false            ## own blade held up over the puck
 var stick_lifted_timer := 0.0   ## an opponent lifted this stick
 var lift_cd := 0.0
+var regrab_timer := 0.0         ## grace after a deke to set the blade back on the puck
 var puck_slip := 0.0            ## seconds the puck spent at the grip limit (for tuning)
 
 # shot wind-up: started by drawing the stick back or holding `shoot`
@@ -360,7 +361,9 @@ func _update_blade(dt: float, blend: float) -> void:
 	want = want.limit_length(profile.blade_speed * lerpf(1.0, 1.25, blend))
 	blade_lvel = blade_lvel.move_toward(want, profile.blade_accel * lerpf(1.0, 1.25, blend) * dt)
 	blade_local += blade_lvel * dt
+	var was_lifting := lifting
 	lifting = ctrl.lift and able and not winding
+	regrab_timer = 0.3 if (was_lifting and not lifting) else maxf(0.0, regrab_timer - dt)
 	var h := 0.0
 	if stick_lifted_timer > 0.0:
 		h = 0.35
