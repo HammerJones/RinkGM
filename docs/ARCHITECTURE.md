@@ -82,7 +82,7 @@ shared list:
 
 - **Move catalog** (`scripts/core/moves.gd`, owned by Controls): one entry per
   move with its id, display name, the gesture pattern that triggers it, and its
-  gamepad and mouse descriptions. Every other system refers to a move by the same identifier (one type, agreed between Controls, Physics and Mechanics; Mechanics currently stores names such as `SNAP`).
+  gamepad and mouse descriptions. Every system refers to a move by its catalog id, a `StringName` such as `&"snap_shot"` (saves store it as a string).
 - **Recognising gestures** (`scripts/input/`, Controls) turns stick or mouse
   paths into a move id on `Skater.Controls` (for example `move_request`). The
   AI requests moves through the same field.
