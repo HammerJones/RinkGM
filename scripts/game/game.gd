@@ -485,16 +485,16 @@ func _make_marker() -> MeshInstance3D:
 	return mi
 
 
-## The 90 degree arc the stick can reach, drawn on the ice under the player.
+## The 220 degree arc the stick can reach, drawn on the ice under the player.
 func _make_arc() -> MeshInstance3D:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var steps := 18
+	var steps := 44
 	for i in steps:
 		var pts := []
 		for k in [i, i + 1]:
 			var a := lerpf(-Skater.ARC_HALF, Skater.ARC_HALF, float(k) / steps)
-			for r in [Skater.REACH_MIN, Skater.REACH_MAX]:
+			for r in [Skater.REACH_MIN, Skater.reach_limit(a)]:
 				# local forward is -Z, right is +X (see Skater._apply_transform)
 				pts.append(Vector3(sin(a) * r, 0, -cos(a) * r))
 		for idx in [0, 1, 2, 2, 1, 3]:

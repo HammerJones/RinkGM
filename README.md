@@ -20,7 +20,7 @@ virtual right stick, so both devices drive the same stick model.
 | Skate | Left stick | WASD |
 | Dash (push-off burst) | L3 (click left stick) | Shift |
 | Hockey stop | R3 (click right stick) | Space |
-| Stick blade (90 degree arc in front of you) | Right stick | Mouse (cursor is captured; Esc frees it) |
+| Stick blade (220 degree arc around you) | Right stick | Mouse (cursor is captured; Esc frees it) |
 | Stickhandle | Right stick side to side | Mouse side to side |
 | Shoot | Pull the stick behind you, then push it forward | Same with the mouse |
 | Slapshot | Hold LT as you pull back | Hold right click as you pull back |
@@ -55,14 +55,22 @@ assistance on top.
   burst stride that gets you to top speed faster and costs stamina. The hockey stop scrapes speed off
   sideways; agility sets how fast you turn, how hard your edges grip, and how
   short you stop. Carving never adds speed past top speed.
-- **Stick and puck** (`scripts/game/stick_puck.gd`): the blade moves inside a
-  90 degree arc with a speed and acceleration set by stick handling. The puck
+- **Stick and puck** (`scripts/game/stick_puck.gd`): the blade swings around
+  the body inside a 220 degree arc, with a speed and acceleration set by stick
+  handling. Both hands are on the stick in the front 90 degrees; beyond that
+  it's one hand: more reach, but a weaker hold on the puck and weaker, wilder
+  shots. Pulling the stick back past 95 degrees winds up a shot. The puck
   follows it on a spring, but the blade can only push the puck so hard (grip,
   also from stick handling). Stickhandle faster than your rating, or cut harder
   than you can hold (agility turns you faster, which is harder to hold), and
   the puck slides off. Lifting your stick takes the blade off the puck for
   moves; on defense it lifts the carrier's stick if you're close, with odds
   from both players' ratings.
+- **Stick moves** (`scripts/game/move_physics.gd`): unlockable shots and dekes
+  (snap shot, backhand, quick deke, toe drag, toe-drag shot) run as blade paths
+  around the body. Gesture recognition sets `Controls.move_id`; the path still
+  runs under the skater's own blade limits, so weak hands run it slower and can
+  lose the puck.
 - **Shooting**: one wind-up model for all shots. A shot with no wind-up comes
   off instantly but weak and wild; shot release sets how good that instant
   shot is and how fast you reach full power. Shot power sets the top speed

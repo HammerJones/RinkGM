@@ -44,14 +44,14 @@ func _run() -> void:
 	print("tilted shot vy %.2f" % game.puck.vel.y)
 	_check(game.puck.vel.y > 1.0, "tilt lifts the shot")
 
-	# --- the stick stays inside the 90 degree arc
+	# --- the blade follows the stick around to the side (220 degree arc)
 	await _carry(Vector2(-10, 0))
 	_set_plan(func(f, _t2): f.stick = Vector2(0, -1))  # screen down = the skater's right
 	await _wait(0.5)
 	var bl: Vector2 = game.human.blade_local
 	var ang := rad_to_deg(atan2(bl.y, bl.x))
 	print("stick pushed 90 deg right sits at %.0f deg" % ang)
-	_check(ang > 30.0 and ang <= 46.0, "blade follows the stick, limited to the arc")
+	_check(ang > 75.0 and ang <= 110.0, "blade follows the stick, limited to the arc")
 
 	# --- lift with the puck raises the blade
 	await _carry(Vector2(-10, 0))
