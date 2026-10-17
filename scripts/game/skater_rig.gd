@@ -136,6 +136,9 @@ func _watch_shots(s: Skater) -> void:
 
 
 func update_skater(s: Skater, dt: float) -> void:
+	# a broken stick is lying on the ice (StickDebris)
+	stick.visible = not s.stick_broken
+	blade.visible = not s.stick_broken
 	_time += dt
 	var speed := Vector2(s.vel.x, s.vel.z).length()
 	var k := clampf(speed / 9.0, 0.0, 1.0)
