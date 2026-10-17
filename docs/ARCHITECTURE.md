@@ -11,10 +11,10 @@ change this file in the same PR and say why.
 | --- | --- |
 | Physics | `scripts/game/skater.gd` (skating, blade, puck handling, shots, passes, checks), `puck.gd`, `goalie.gd`, on-ice AI (`skater_ai.gd`, goalie decisions), rink collision in `rink.gd`, `scripts/core/tuning.gd`, the fixed-step sim loop in `game.gd` (`_physics_process`, body and puck contact) |
 | Game mechanics | `scripts/career/` (player attributes, progression, injuries, season, playoffs, league tiers, saves), match rules in `game.gd` (periods, lineups, line changes, game length), stats, the match event hub |
-| Controls | `scripts/core/input_setup.gd`, `scripts/input/` (human controller, device handling, bindings), the move catalog `scripts/core/moves.gd`, and how players hold and swing the stick (grip and hand IK in `scripts/game/skater_rig.gd`). Only `scripts/input/` reads `Input` |
-| UI and styling | `scripts/ui/`, `assets/ui/` (Theme resource, fonts with their licences) |
+| Controls | `scripts/core/input_setup.gd`, `scripts/input/` (human controller, device handling, bindings), the move catalog `scripts/core/moves.gd`, stick models, and how players hold and swing the stick (grip and hand IK in `scripts/game/skater_rig.gd`). Only `scripts/input/` reads `Input` |
+| UI and styling | `scripts/ui/`, `assets/ui/` (the project-wide RinkOS theme `assets/ui/rinkos_theme.tres`, fonts with their licences). **Every screen follows `assets/ui/STYLE.md`**: use the RinkOS constants, type variations and helpers, never hard-coded fonts or colours |
 | Project manager | `docs/`, `tools/`, `.github/`, `README.md`, the developer menu in `scripts/dev/` |
-| World and asset design | The look and the asset library: art direction and the voxel style guide (`docs/ART.md`), palettes and materials, `scripts/art/` (characters, goalies, equipment, **stick meshes**, puck, nets, and a props kit of seats, doors, benches, glass, signage, Zamboni and so on), `scripts/voxel/`, `art/` (MagicaVoxel sources). Later, the world beyond the rink (town, other venues) |
+| World and asset design | The look and the asset library: art direction and the voxel style guide (`docs/ART.md`), palettes and materials, `scripts/art/` (characters, goalies, equipment, puck, nets, and a props kit of seats, doors, benches, glass, signage, Zamboni and so on), `scripts/voxel/`, `art/` (MagicaVoxel sources). Later, the open-world map and town around the rink (`scenes/world/`, `scripts/world/`) |
 | Rink environment | The building around the ice: `scenes/venue/` and `scripts/venue/`, laid out from the asset kit, plus room layout, collision, walkable floors and doors, lighting, crowd placement, and renovation states (worn, repaired, renovated). `rink.gd` keeps the playing surface, boards and nets |
 
 Editing a file you don't own is fine for a small, clearly commented hook. Tell
@@ -130,7 +130,8 @@ on the tilde key, and a full rink environment that can be explored later.
   and it never saves those edits into the career unless asked to.
 - **World and asset design** makes the meshes and the props kit, and Rink
   environment places them. Asset design owns how a thing looks; Rink
-  environment owns where it goes and how it behaves. Renovation variants
+  environment owns where it goes and how it behaves. Rink environment can
+  make venue-only pieces itself; anything reusable moves into the library. Renovation variants
   (worn, repaired, renovated) of a prop are made by Asset design and switched
   by Rink environment.
 - **Rink environment.** The building is its own scene,

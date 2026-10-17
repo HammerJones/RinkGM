@@ -121,7 +121,8 @@ func _build() -> void:
 	sb.content_margin_right = 12
 	sb.content_margin_top = 10
 	sb.content_margin_bottom = 10
-	_panel.add_theme_stylebox_override("panel", sb)
+	if str(ProjectSettings.get_setting("gui/theme/custom", "")) == "":
+		_panel.add_theme_stylebox_override("panel", sb)  # no project theme yet (RinkOS, PR #6)
 	add_child(_panel)
 
 	var root := VBoxContainer.new()
@@ -272,6 +273,11 @@ func _build_player() -> void:
 
 
 func _set_rating(key: String, val: float) -> void:
+	var g := _game()
+	if g != null and g.has_method("dev_set_skill"):
+		g.dev_set_skill(key, val)
+		_maybe_save()
+		return
 	var sk := _skills()
 	if sk == null:
 		return
@@ -308,6 +314,12 @@ func _refresh_mods(p: Object) -> void:
 func _injure(impact: float) -> void:
 	var p := _user_profile()
 	var path := "res://scripts/career/injury.gd"
+	var c := _career()
+	if c != null and c.has_method("dev_injure"):
+		c.dev_injure(3 if impact >= 1.0 else 1)
+		_maybe_save()
+		_say("injured")
+		return
 	if p == null or not p.has_method("add_injury") or not ResourceLoader.exists(path):
 		_say("injuries aren't available in this build")
 		return
@@ -320,6 +332,12 @@ func _injure(impact: float) -> void:
 
 
 func _heal() -> void:
+	var c := _career()
+	if c != null and c.has_method("dev_heal"):
+		c.dev_heal()
+		_maybe_save()
+		_say("healed")
+		return
 	var p := _user_profile()
 	if p == null or not "injury" in p:
 		return
@@ -330,6 +348,11 @@ func _heal() -> void:
 
 func _maybe_save() -> void:
 	if not _save_edits.button_pressed:
+		return
+	var cs := get_node_or_null("/root/CareerState")
+	if cs != null and cs.has_method("save_career"):
+		cs.save_career()
+		_say("saved to career")
 		return
 	var c := _career()
 	if c != null and c.has_method("save"):
@@ -366,13 +389,15 @@ func _build_match() -> void:
 		var st: Object = g.get("settings")
 		_set_clock(st.period_length() if st != null and st.has_method("period_length") else 300.0))
 	var r3 := _row(box)
-	if g.has_method("_end_period"):
+	var end_period := "dev_end_period" if g.has_method("dev_end_period") else "_end_period"
+	var end_game := "dev_end_game" if g.has_method("dev_end_game") else "_game_over"
+	if g.has_method(end_period):
 		_button(r3, "End period", func() -> void:
-			g._end_period()
+			g.call(end_period)
 			_say("period ended"))
-	if g.has_method("_game_over"):
+	if g.has_method(end_game):
 		_button(r3, "End game now", func() -> void:
-			g._game_over()
+			g.call(end_game)
 			_say("game ended %d-%d" % [g.score[0], g.score[1]]))
 
 	_note(box, "----------------------------------------\n// Game speed")
@@ -404,7 +429,11 @@ func _add_score(team: int, d: int) -> void:
 	var g := _game()
 	if g == null:
 		return
-	g.score[team] = maxi(0, g.score[team] + d)  # the HUD redraws the score every frame
+	var n := maxi(0, g.score[team] + d)
+	if g.has_method("dev_set_score"):
+		g.dev_set_score(team, n)
+	else:
+		g.score[team] = n  # the HUD redraws the score every frame
 	_say("score %d - %d" % [g.score[0], g.score[1]])
 
 
@@ -412,7 +441,10 @@ func _set_clock(t: float) -> void:
 	var g := _game()
 	if g == null:
 		return
-	g.clock = t
+	if g.has_method("dev_set_clock"):
+		g.dev_set_clock(t)
+	else:
+		g.clock = t
 	_say("clock set to %s" % _fmt_time(t))
 
 
@@ -444,7 +476,12 @@ func _build_career() -> void:
 		for i in tiers.count():
 			_button(r, str(i), func() -> void: _set_tier(i))
 	var r2 := _row(box)
-	if c.has_method("compute_invitations"):
+	if c.has_method("dev_force_invitations"):
+		_button(r2, "Force tryout invites", func() -> void:
+			c.dev_force_invitations()
+			_maybe_save()
+			_say("%d invitation(s)" % c.invitations.size()))
+	elif c.has_method("compute_invitations"):
 		_button(r2, "Get tryout invites", func() -> void:
 			c.invitations = c.compute_invitations()
 			_maybe_save()
@@ -458,6 +495,11 @@ func _build_career() -> void:
 func _set_tier(t: int) -> void:
 	var c := _career()
 	if c == null:
+		return
+	if c.has_method("dev_set_tier"):
+		c.dev_set_tier(t)
+		_maybe_save()
+		_say("tier set to %d; season rebuilt at that tier" % t)
 		return
 	c.tier = t
 	_maybe_save()
