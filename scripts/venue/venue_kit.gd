@@ -24,6 +24,7 @@ var _glass := VoxelMeshBuilder.new()
 var _shapes: Array[AABB] = []
 var _signs: Array = []  # [VenueSign, Transform3D]
 var _extra: Array[Node3D] = []
+var _instances := {}  # ArrayMesh -> Array[Transform3D]
 
 
 func _init(seed_: int, age_: int) -> void:
@@ -190,6 +191,30 @@ func sign(s: VenueSign, xf: Transform3D) -> void:
 	_signs.append([s, xf])
 
 
+## A copy of a shared mesh (a Props kit piece). All copies of one mesh in a
+## room become one MultiMesh draw. Visual only; add a collider if it's solid.
+func instance(mesh: Mesh, xf: Transform3D) -> void:
+	if mesh == null:
+		return
+	if not _instances.has(mesh):
+		_instances[mesh] = []
+	_instances[mesh].append(xf)
+
+
+## A Props kit piece at this room's age, standing on the floor at `pos`
+## with its front (-Z) turned by `rot_y`. `solid` adds a box collider
+## around it.
+func prop(id: String, pos: Vector3, rot_y := 0.0, solid := true, age_override := -1) -> void:
+	var mesh := Props.mesh(id, age if age_override < 0 else age_override)
+	if mesh == null:
+		return
+	var xf := Transform3D(Basis(Vector3.UP, rot_y), pos)
+	instance(mesh, xf)
+	if solid:
+		var box := xf * mesh.get_aabb()
+		_shapes.append(box)
+
+
 ## Any other node (doors, lights) to add with the room.
 func add(n: Node3D) -> void:
 	_extra.append(n)
@@ -252,6 +277,18 @@ func commit(parent: Node3D) -> void:
 			cs.position = box.get_center()
 			body.add_child(cs)
 		parent.add_child(body)
+	for mesh in _instances:
+		var xfs: Array = _instances[mesh]
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = mesh
+		mm.instance_count = xfs.size()
+		for i in xfs.size():
+			mm.set_instance_transform(i, xfs[i])
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(mmi)
 	for pair in _signs:
 		var s: VenueSign = pair[0]
 		s.transform = pair[1]

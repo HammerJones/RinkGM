@@ -30,7 +30,7 @@ func build(k: VenueKit) -> void:
 		if i != 1:
 			# a bench along the back for the guilty
 			k.aged_block(Vector3(x0 + 0.25, 0, z1 - 0.5), Vector3(x1 - 0.25, 0.47, z1 - 0.05), k.by_age(Color("8a6a45"), Color("9b7a50"), Color("3a404a")), 0.5)
-			var pen := VenueSign.make([["// PENALTY", VenueSign.RED], ["--:--", VenueSign.WHITE]], 9, 2, 0.022)
+			var pen := VenueSign.make([["// PENALTY", VenueSign.RED], ["--:--", VenueSign.AMBER, true]], 9, 2, 0.022)
 			pen.name = "PenaltyClock%d" % i
 			pen.dead = k.by_age(0.05, 0.0, 0.0)
 			k.sign(pen, Transform3D(Basis(Vector3.UP, PI), Vector3(cx, 2.8, z0 + 0.02)))
@@ -42,7 +42,7 @@ func build(k: VenueKit) -> void:
 	k.block(Vector3(-0.45, 0.95, z0 + 0.2), Vector3(0.45, 1.5, z0 + 0.5), k.by_age(Color("c9c0a8"), Color("b8b4a8"), Color("1b1d22")), 0.3, 0.04)
 	k.block(Vector3(0.8, 0.95, z0 + 0.2), Vector3(1.0, 1.1, z0 + 0.4), Color("b8312f"), 0.2, 0.0)
 	k.aged_block(Vector3(-0.3, 0, z0 + 1.0), Vector3(0.3, 0.48, z0 + 1.4), Color("3a3d44"), 0.3)
-	_terminal = VenueSign.make([["// GAME CLOCK", VenueSign.CYAN], ["----", VenueSign.DIM], ["1ST 20:00", VenueSign.GREEN]], 12, 3, 0.009)
+	_terminal = VenueSign.make([["// GAME CLOCK", VenueSign.CYAN], ["----", VenueSign.DIM], ["1ST 20:00", VenueSign.AMBER, true]], 12, 3, 0.009)
 	_terminal.name = "TimekeeperTerminal"
 	_terminal.dead = k.by_age(0.03, 0.0, 0.0)
 	k.sign(_terminal, Transform3D(Basis.IDENTITY, Vector3(0, 1.22, z0 + 0.505)))
@@ -50,4 +50,4 @@ func build(k: VenueKit) -> void:
 
 func show_score(st: Dictionary, home: String, away: String) -> void:
 	if is_instance_valid(_terminal):
-		_terminal.set_lines([["// GAME CLOCK", VenueSign.CYAN], ["%s %d  %s %d" % [home, st.home, away, st.away], VenueSign.WHITE], ["%s %s" % [st.period, st.clock], VenueSign.GREEN]])
+		_terminal.set_lines([["// GAME CLOCK", VenueSign.CYAN], ["%s %d  %s %d" % [home, st.home, away, st.away], VenueSign.WHITE], ["%s %s" % [st.period, st.clock], VenueSign.AMBER, true]])

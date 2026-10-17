@@ -1,5 +1,6 @@
 extends VenueRoom
-## The scoreboard, live with score, period and clock. A worn or repaired rink
+## The scoreboard, live with score, period and clock (the HUD layout at
+## arena scale: teams and scores in TEXT, period and clock in ACTION). A worn or repaired rink
 ## has the old board bolted to the +X end wall (dead pixels on a worn one);
 ## renovating it hangs a four-sided board over centre ice with LED rings in
 ## the home colour. The centre-hung board is overhead (hidden in iso view).
@@ -75,15 +76,15 @@ func show_score(st: Dictionary, home: String, away: String) -> void:
 
 func _hung_lines(st: Dictionary, home: String, away: String) -> Array:
 	return [
-		["%-4s %2d" % [home, st.home], VenueSign.CYAN],
-		["%-4s %2d" % [away, st.away], VenueSign.AMBER],
-		["%s %s" % [st.period, st.clock], VenueSign.GREEN],
+		["%-4s %2d" % [home, st.home], VenueSign.WHITE],
+		["%-4s %2d" % [away, st.away], VenueSign.WHITE],
+		["%s %s" % [st.period, st.clock], VenueSign.AMBER, true],
 	]
 
 
 func _wall_lines(st: Dictionary, home: String, away: String) -> Array:
 	return [
-		["%-4s %2d  %2d %4s" % [home, st.home, st.away, away], VenueSign.CYAN],
+		["%-4s %2d  %2d %4s" % [home, st.home, st.away, away], VenueSign.WHITE],
 		["----", VenueSign.DIM],
-		["   %s %s" % [st.period, st.clock], VenueSign.GREEN],
+		["      %s  %s" % [st.period, st.clock], VenueSign.AMBER, true],
 	]

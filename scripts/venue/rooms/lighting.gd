@@ -1,7 +1,7 @@
 extends VenueRoom
-## Lights over the ice. Worn: old metal-halide domes, dim and patchy, two
-## dead and one flickering. Repaired: every lamp working. Renovated: LED
-## panels, bright and cool. A few shadowless spot lights carry the look onto
+## Lights over the ice, using the Props kit's ceiling light. Worn: old
+## sodium domes, dim, two dead and one flickering. Repaired: every lamp
+## working. Renovated: LED panels, bright and cool. A few shadowless spot lights carry the look onto
 ## the ice, and apply() sets the match's sun and ambient to match, so the
 ## overall brightness stays where the gameplay was tuned.
 
@@ -25,35 +25,33 @@ func _ready() -> void:
 
 func build(k: VenueKit) -> void:
 	_spots.clear()
-	var lamp: Color = k.by_age(Color("f2efdc"), Color("fff6e8"), Color("f2f7ff"))
-	var housing: Color = k.by_age(Color("4a4540"), Color("5a5f66"), Color("1d2026"))
-	var y := Venue.ROOF_Y - 1.6
+	# the Props kit's ceiling light hangs from the truss bottom chord; a glow
+	# face under it does the emitting (sodium domes, later LED panels)
+	var lamp: Color = k.by_age(Wear.SODIUM_DIM, Wear.SODIUM, Wear.LED)
+	var mount := Venue.ROOF_Y - 1.4
 	var i := 0
 	for z in ROWS_Z:
 		for x in COLS_X:
-			if k.age == Age.RENOVATED:
-				# slim LED panel
-				k.block(Vector3(x - 1.4, y - 0.12, z - 0.35), Vector3(x + 1.4, y, z + 0.35), housing, 1.0, 0.0, false)
-				k.glow(Vector3(x - 1.3, y - 0.14, z - 0.28), Vector3(x + 1.3, y - 0.12, z + 0.28), lamp)
-			else:
-				k.block(Vector3(x - 0.03, y, z - 0.03), Vector3(x + 0.03, Venue.ROOF_Y - 1.4, z + 0.03), housing, 1.0, 0.0, false)
-				k.block(Vector3(x - 0.4, y - 0.45, z - 0.4), Vector3(x + 0.4, y, z + 0.4), housing, 0.4, 0.05, false)
-				var dead := k.age == Age.WORN and (i == 5 or i == 15)
-				var flick := k.age == Age.WORN and i == 9
-				if flick:
-					continue  # drawn on its own below so it can flicker
-				k.glow(Vector3(x - 0.32, y - 0.47, z - 0.32), Vector3(x + 0.32, y - 0.45, z + 0.32), Color("3a3936") if dead else lamp)
+			k.prop("light", Vector3(x, mount, z), 0.0, false)
+			var dead := k.age == Age.WORN and (i == 5 or i == 15)
+			var flick := k.age == Age.WORN and i == 9
 			i += 1
+			if flick:
+				continue  # drawn on its own below so it can flicker
+			k.glow(_glow_lo(k, x, z, mount), _glow_hi(k, x, z, mount), Color("3a3936") if dead else lamp)
 	if k.age == Age.WORN:
 		var b := VoxelMeshBuilder.new()
 		var x: float = COLS_X[2]
 		var z: float = ROWS_Z[1]
-		b.add_box(Transform3D(Basis.from_scale(Vector3(0.64, 0.02, 0.64)), Vector3(x, y - 0.46, z)), lamp)
+		var lo := _glow_lo(k, x, z, mount)
+		var hi := _glow_hi(k, x, z, mount)
+		b.add_box(Transform3D(Basis.from_scale(hi - lo), (lo + hi) * 0.5), lamp)
 		_flicker = MeshInstance3D.new()
 		_flicker.name = "FlickerLamp"
 		_flicker.mesh = b.commit(VenueKit.glow_material())
 		_flicker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		k.add(_flicker)
+	var spot_col: Color = k.by_age(Color("ffe9cc"), Color("fff1dc"), Color("f2f7ff"))
 	var energy: float = k.by_age(0.55, 0.7, 0.85)
 	for p in SPOTS:
 		var sp := SpotLight3D.new()
@@ -63,7 +61,7 @@ func build(k: VenueKit) -> void:
 		sp.spot_angle = 62.0
 		sp.spot_attenuation = 0.6
 		sp.light_energy = energy
-		sp.light_color = lamp
+		sp.light_color = spot_col
 		sp.shadow_enabled = false
 		sp.light_specular = 0.3
 		sp.set_meta("energy", energy)
@@ -71,11 +69,24 @@ func build(k: VenueKit) -> void:
 		k.add(sp)
 
 
+## The emitting face under a light prop: the dome's bulb, or the LED panel.
+func _glow_lo(k: VenueKit, x: float, z: float, mount: float) -> Vector3:
+	if k.age == Age.RENOVATED:
+		return Vector3(x - 0.42, mount - 0.55, z - 0.1)
+	return Vector3(x - 0.2, mount - 0.86, z - 0.2)
+
+
+func _glow_hi(k: VenueKit, x: float, z: float, mount: float) -> Vector3:
+	if k.age == Age.RENOVATED:
+		return Vector3(x + 0.42, mount - 0.53, z + 0.1)
+	return Vector3(x + 0.2, mount - 0.84, z + 0.2)
+
+
 ## Seen from above the roof only the lamps hide; the light stays on the ice.
 func set_overhead_hidden(hidden: bool) -> void:
 	_hidden = hidden
 	for c in get_children():
-		if c is MeshInstance3D:
+		if c is GeometryInstance3D:
 			c.visible = not hidden
 
 

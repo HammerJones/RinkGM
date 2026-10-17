@@ -4,9 +4,7 @@ extends VenueRoom
 ## the four corners. The end rooms (lobby, locker rooms, Zamboni bay) close
 ## the envelope between z -14 and 14 themselves.
 
-const BLOCK := Color("bdb4a2")
 const RUBBER := Color("34373d")
-const CONCRETE := Color("8b877e")
 
 ## Gaps in the walker's board collider: bench and penalty-box gates on the
 ## sides, the Zamboni gate at the +X end. [axis value, from, to, which wall]
@@ -39,7 +37,7 @@ func build(k: VenueKit) -> void:
 	k.collider(Vector3(-rx, -0.3, -rz), Vector3(rx, 0, rz))
 	_board_colliders(k)
 	# outer walls
-	var wall_col: Color = k.by_age(Color("a9a191"), BLOCK, Color("d8d4cb"))
+	var wall_col: Color = k.by_age(Wear.CONCRETE.darkened(0.08), Wear.CONCRETE, Color("d8d4cb"))
 	var t := Venue.WALL_T
 	for s in [-1, 1]:
 		var z: float = s * (hz - t * 0.5)
@@ -54,11 +52,13 @@ func build(k: VenueKit) -> void:
 			var z0: float = s * Venue.ROOM_Z
 			var z1: float = s * hz
 			k.wall_z(x, z0, z1, 0, Venue.ROOF_Y, t, wall_col, [], 1.0)
-	# a painted band at eye level, faded on a worn building
-	var band: Color = k.aged(home_primary())
+	# painted bands at eye level: the old 70s orange and gold, or the club colour
+	var bands: Array = [home_primary()] if k.age == VenueRoom.Age.RENOVATED else [Wear.OLD_ORANGE, Wear.OLD_GOLD]
 	for s in [-1, 1]:
 		var zf: float = s * (hz - t - 0.01)
-		k.aged_block(Vector3(-hx + t, 2.6, zf), Vector3(hx - t, 3.1, zf - s * 0.03), band, 1.0, 0.05, false)
+		for bi in bands.size():
+			var y0 := 2.6 + bi * 0.4
+			k.aged_block(Vector3(-hx + t, y0, zf), Vector3(hx - t, y0 + 0.3, zf - s * 0.03), bands[bi], 1.0, 0.05, false)
 	_corners(k)
 
 
@@ -124,22 +124,19 @@ func _corners(k: VenueKit) -> void:
 			var z0: float = cz * 26.5
 			match k.age:
 				VenueRoom.Age.WORN:
-					# stacked folding chairs, a dead vending machine, puck buckets
+					# stacked folding chairs, puck buckets
 					for i in 4:
-						k.block(Vector3(x0 + cx * i * 0.6, 0, z0), Vector3(x0 + cx * (i * 0.6 + 0.5), 0.9 + 0.12 * (i % 2), z0 + cz * 0.5), k.aged(Color("6f7378"), i), 0.25, 0.1)
-					k.block(Vector3(x0 + cx * 3.0, 0, z0 + cz * 1.6), Vector3(x0 + cx * 3.9, 1.9, z0 + cz * 2.5), k.aged(Color("9a3b32")), 0.3, 0.08)
-					k.glow(Vector3(x0 + cx * 3.1, 1.0, z0 + cz * 1.58), Vector3(x0 + cx * 3.8, 1.7, z0 + cz * 1.6), Color("3a3f46"))
+						k.block(Vector3(x0 + cx * i * 0.6, 0, z0), Vector3(x0 + cx * (i * 0.6 + 0.5), 0.9 + 0.12 * (i % 2), z0 + cz * 0.5), k.aged(Wear.OLD_STEEL, i), 0.25, 0.1)
 					for i in 3:
 						k.block(Vector3(x0 - cx * 1.2, 0, z0 + cz * (i * 0.55)), Vector3(x0 - cx * 0.8, 0.45, z0 + cz * (i * 0.55 + 0.4)), Color("2c2d31"), 0.2, 0.1)
 				VenueRoom.Age.REPAIRED:
-					k.block(Vector3(x0 + cx * 3.0, 0, z0 + cz * 1.6), Vector3(x0 + cx * 3.9, 1.9, z0 + cz * 2.5), Color("2f6fa3"), 0.3, 0.05)
-					k.glow(Vector3(x0 + cx * 3.1, 1.0, z0 + cz * 1.58), Vector3(x0 + cx * 3.8, 1.7, z0 + cz * 1.6), Color("bfe6ff"))
 					for i in 3:
-						k.block(Vector3(x0 + cx * i * 1.4, 0, z0), Vector3(x0 + cx * (i * 1.4 + 1.0), 0.45, z0 + cz * 0.4), Color("6b5a44"), 0.25, 0.06)
+						k.block(Vector3(x0 + cx * i * 1.4, 0, z0), Vector3(x0 + cx * (i * 1.4 + 1.0), 0.45, z0 + cz * 0.4), Wear.OLD_WOOD, 0.25, 0.06)
 				VenueRoom.Age.RENOVATED:
 					for i in 3:
 						var tx: float = x0 + cx * i * 1.8
-						k.block(Vector3(tx - 0.05, 0, z0 - 0.05), Vector3(tx + 0.05, 1.05, z0 + 0.05), Color("2a2d33"), 0.5, 0.0)
+						k.block(Vector3(tx - 0.05, 0, z0 - 0.05), Vector3(tx + 0.05, 1.05, z0 + 0.05), Wear.CHARCOAL, 0.5, 0.0)
 						k.block(Vector3(tx - 0.4, 1.05, z0 - 0.4), Vector3(tx + 0.4, 1.1, z0 + 0.4), home_primary(), 0.4, 0.03)
-					k.block(Vector3(x0 + cx * 3.0, 0, z0 + cz * 1.6), Vector3(x0 + cx * 3.9, 1.9, z0 + cz * 2.5), Color("1e2229"), 0.3, 0.03)
-					k.glow(Vector3(x0 + cx * 3.1, 1.0, z0 + cz * 1.58), Vector3(x0 + cx * 3.8, 1.7, z0 + cz * 1.6), home_primary().lightened(0.3))
+			# a drinks machine and a bin from the Props kit in every corner
+			k.prop("vending_machine", Vector3(x0 + cx * 3.45, 0, z0 + cz * 2.05), 0.0 if cz > 0 else PI)
+			k.prop("trash_can", Vector3(x0 + cx * 4.4, 0, z0 + cz * 2.1), 0.0 if cz > 0 else PI)

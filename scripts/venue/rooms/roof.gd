@@ -4,9 +4,9 @@ extends VenueRoom
 
 const TRUSS_STEP := 6.0
 const BANNERS := [
-	[["// LEAGUE", VenueSign.CYAN], ["CHAMPIONS", VenueSign.WHITE], ["----", VenueSign.DIM], ["1987-88", VenueSign.AMBER]],
-	[["// RETIRED", VenueSign.CYAN], ["#9", VenueSign.WHITE], ["----", VenueSign.DIM], ["D. PELLETIER", VenueSign.AMBER]],
-	[["// PROVINCIAL", VenueSign.CYAN], ["FINALISTS", VenueSign.WHITE], ["----", VenueSign.DIM], ["1994", VenueSign.AMBER]],
+	[["// LEAGUE", VenueSign.AMBER], ["CHAMPIONS", VenueSign.WHITE], ["----", VenueSign.DIM], ["1987-88", VenueSign.CYAN, true]],
+	[["// RETIRED", VenueSign.AMBER], ["#9", VenueSign.WHITE], ["----", VenueSign.DIM], ["D. PELLETIER", VenueSign.CYAN, true]],
+	[["// PROVINCIAL", VenueSign.AMBER], ["FINALISTS", VenueSign.WHITE], ["----", VenueSign.DIM], ["1994", VenueSign.CYAN, true]],
 ]
 
 

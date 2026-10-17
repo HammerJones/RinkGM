@@ -17,8 +17,8 @@ add_child(venue)
 venue.bind_game(self)                    # scoreboard, goal cheers, lighting
 ```
 
-`bind_game` reads `score`, `clock`, `period`, `overtime`, `shootout`,
-`fixture` and `puck.goal_scored` from the game, and sets the sun and ambient
+`bind_game` reads `score`, `clock`, `period`, `overtime`, `shootout` and
+`fixture` from the game and listens to `events.goal` (MatchEvents), and sets the sun and ambient
 of the game's `WorldEnvironment` / `DirectionalLight3D` to suit the rink's
 lighting. Nothing in the hockey simulation reads the venue.
 
@@ -96,13 +96,20 @@ openings, `stairs`, `glass`, `glow`, `sign`, `add_door`), branch on
 
 ## Look and budget
 
-- Voxel style: every block's faces are cut into 0.3–1 m tiles with colour
-  jitter; worn rooms add grime, stains and missing pieces.
-- Signs (`VenueSign`, `PixelFont`) are the pixel-terminal RINK-OS style in
-  full colour: `//` headers, `----` rules, a 5x7 bitmap font drawn with
-  nearest filtering, so they stay crisp. Worn screens have dead pixels.
-- Budget (checked by the test): about 230–270k triangles in ~55 meshes plus
-  ~43 signs, 12 lights with no shadows, no venue mesh casts sun shadows,
-  one MultiMesh draw for the whole crowd with cheers animated in the
-  shader. Building takes about 0.8 s when the match loads; the live
-  scoreboard redraw costs about 0.5 ms once a second.
+- Voxel style, following `docs/ART.md`: architecture is blocks whose faces
+  are cut into 0.3–1 m tiles with colour jitter, in the old-rink palette
+  (`Wear`: concrete, institutional mint, harvest gold, burnt orange, wood)
+  when worn or repaired, and steel, white, charcoal and the home club's
+  colour when renovated. Worn rooms add grime, stains and missing pieces.
+- Props come from the World and asset design kit (`Props.mesh(id, age)`,
+  `scripts/art/props.gd`) at the room's age, placed with `kit.prop()` and
+  drawn as one MultiMesh per prop and room: arena seats, ceiling lights,
+  the resurfacer, vending machines, bins and the old hand-painted rink sign.
+  Doors stay venue pieces because they swing and collide.
+- Signs (`VenueSign`) use `RinkOS.sign_3d()` per `assets/ui/STYLE.md`:
+  Silkscreen for titles, VT323 for numbers, clocks and prices, on a CRT
+  panel, crisp and in full colour; only the housing looks worn.
+- Budget (checked by `tools/tests/test_venue.gd`, numbers printed per age):
+  12 lights with no shadows, no venue geometry casts sun shadows, props and
+  the crowd drawn as MultiMeshes (the crowd's cheers run in its shader), and
+  the live scoreboard only changes Label3D text.

@@ -31,7 +31,8 @@ func build(k: VenueKit) -> void:
 	k.block(Vector3(42.8, 0.02, -4.6), Vector3(45.3, 0.04, -2.4), Color("2e3033"), 0.25, 0.1, false)  # snow-melt pit grate
 	if k.age != Age.RENOVATED:
 		k.block(Vector3(41.5, 0.02, -4.2), Vector3(42.8, 0.025, -2.2), Color("4d5257"), 0.5, 0.05, false)  # puddle
-	_resurfacer(k)
+	# the Props kit's resurfacer, parked nose-first toward the rink door
+	k.prop("resurfacer", Vector3(39.7, 0, 0), PI * 0.5)
 	# workbench, tool wall, tyres, paint drums
 	var wood: Color = k.by_age(Color("6b5136"), Color("7a5c3c"), Color("3a3d44"))
 	k.aged_block(Vector3(35.0, 0, -4.85), Vector3(38.5, 0.9, -4.15), wood, 0.4)
@@ -54,40 +55,3 @@ func build(k: VenueKit) -> void:
 	sign.name = "BaySign"
 	sign.dead = k.by_age(0.06, 0.0, 0.0)
 	k.sign(sign, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(X0 - 0.01, 3.7, 0)))
-
-
-## The resurfacer, parked nose-first toward the rink door (facing -X).
-func _resurfacer(k: VenueKit) -> void:
-	var x0 := 37.6
-	var x1 := 41.8
-	var hw := 1.1
-	var body: Color = k.by_age(Color("d8d2c2"), Color("eeeae0"), home_primary())
-	var stripe: Color = k.by_age(Color("4a6a96"), Color("2c5aa3"), home_secondary())
-	var rust := Color("8a4b2a")
-	# wheels
-	for wx in [x0 + 0.7, x1 - 0.7]:
-		for wz in [-hw, hw]:
-			k.block(Vector3(wx - 0.4, 0, wz - 0.18), Vector3(wx + 0.4, 0.75, wz + 0.18), Color("1b1c1f"), 0.2, 0.05)
-	# chassis and body
-	k.block(Vector3(x0, 0.35, -hw + 0.1), Vector3(x1, 1.0, hw - 0.1), body.darkened(0.15), 0.3, 0.06)
-	k.block(Vector3(x0 + 1.2, 1.0, -hw + 0.05), Vector3(x1, 1.9, hw - 0.05), body, 0.3, 0.06)
-	k.block(Vector3(x0 + 1.18, 1.25, -hw + 0.03), Vector3(x1 + 0.02, 1.45, hw - 0.03), stripe, 0.3, 0.04, false)
-	# snow tank on top
-	k.block(Vector3(x0 + 1.4, 1.9, -hw + 0.15), Vector3(x1 - 0.1, 2.3, hw - 0.15), body.darkened(0.08), 0.3, 0.05)
-	# cab: seat, wheel, dash
-	k.block(Vector3(x0 + 0.2, 1.0, -0.35), Vector3(x0 + 0.75, 1.15, 0.35), Color("2b2d33"), 0.2, 0.04)
-	k.block(Vector3(x0 + 0.65, 1.15, -0.35), Vector3(x0 + 0.78, 1.7, 0.35), Color("2b2d33"), 0.2, 0.04)
-	k.block(Vector3(x0 + 0.05, 1.0, -hw + 0.1), Vector3(x0 + 0.2, 1.45, hw - 0.1), body.darkened(0.2), 0.2, 0.04)
-	k.block(Vector3(x0 + 0.15, 1.45, -0.18), Vector3(x0 + 0.22, 1.5, 0.18), Color("1b1c1f"), 0.1, 0.0, false)
-	# conditioner (the blade box) at the back
-	k.block(Vector3(x1, 0.1, -hw), Vector3(x1 + 0.5, 0.55, hw), Color("5c6066"), 0.25, 0.06)
-	k.glow(Vector3(x1 + 0.5, 0.4, -0.9), Vector3(x1 + 0.52, 0.5, -0.7), Color("ff7a33"))
-	k.glow(Vector3(x1 + 0.5, 0.4, 0.7), Vector3(x1 + 0.52, 0.5, 0.9), Color("ff7a33"))
-	if k.age == Age.WORN:
-		for i in 6:
-			var rx := x0 + 1.3 + i * 0.45
-			k.block(Vector3(rx, 1.05 + 0.1 * (i % 3), -hw + 0.03), Vector3(rx + 0.18, 1.2 + 0.1 * (i % 3), -hw + 0.04), rust, 0.1, 0.1, false)
-	var tag := VenueSign.make([["RINK-1" if k.age != Age.RENOVATED else "// E-RINK", VenueSign.WHITE]], 9, 1, 0.02)
-	tag.name = "ResurfacerTag"
-	tag.background = stripe.darkened(0.3)
-	k.sign(tag, Transform3D(Basis(Vector3.UP, PI), Vector3((x0 + x1) * 0.5 + 0.6, 1.62, -hw - 0.01)))

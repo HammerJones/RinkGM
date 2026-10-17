@@ -21,8 +21,8 @@ func _ready() -> void:
 
 func build(k: VenueKit) -> void:
 	var t := Venue.WALL_T
-	var brick: Color = k.by_age(Color("8e5a45"), Color("9c6650"), Color("b7b0a4"))
-	var paint: Color = k.by_age(Color("b9b08f"), Color("c9c2a6"), Color("e4e1da"))
+	var brick: Color = k.by_age(Color("8e5a45"), Color("9c6650"), Wear.STEEL)
+	var paint: Color = k.by_age(Wear.OLD_MINT, Wear.OLD_MINT, Wear.WHITE)
 	# street wall (full height, it is the building's envelope here)
 	var xs := -Venue.HALF_X + t * 0.5
 	k.wall_z(xs, -Z, Z, 0, Venue.ROOF_Y, t, brick, [
@@ -72,8 +72,8 @@ func build(k: VenueKit) -> void:
 
 
 func _floor(k: VenueKit) -> void:
-	var a: Color = k.by_age(Color("b5a37e"), Color("c4b48e"), Color("9c9a94"))
-	var b: Color = k.by_age(Color("6e5a3f"), Color("7a6648"), Color("8e8c86"))
+	var a: Color = k.by_age(Wear.OLD_CREAM.darkened(0.12), Wear.OLD_CREAM, Color("9c9a94"))
+	var b: Color = k.by_age(Wear.OLD_BROWN.lightened(0.1), Wear.OLD_BROWN.lightened(0.2), Color("8e8c86"))
 	var tile := 0.6
 	var nx := int((X1 - X0) / tile)
 	var nz := int(Z * 2 / tile)
@@ -101,14 +101,14 @@ func _ticket_booth(k: VenueKit) -> void:
 	k.aged_block(Vector3(X0, 0, -9.1), Vector3(bx + 0.1, 2.4, -8.9), wood, 0.4)
 	k.aged_block(Vector3(X0, 2.4, -12.6), Vector3(bx + 0.3, 2.6, -8.9), wood, 0.4)
 	k.block(Vector3(bx + 0.1, 1.05, -12.2), Vector3(bx + 0.4, 1.12, -9.3), wood.lightened(0.15), 0.4)
-	var s := VenueSign.make([["// TICKETS", VenueSign.CYAN], ["SKATE 4.00", VenueSign.WHITE]], 10, 2, 0.03)
+	var s := VenueSign.make([["// TICKETS", VenueSign.CYAN], ["SKATE 4.00", VenueSign.CYAN, true]], 10, 2, 0.03)
 	s.name = "TicketSign"
 	s.dead = k.by_age(0.04, 0.0, 0.0)
 	k.sign(s, Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(bx + 0.32, 2.9, -10.75)))
 
 
 func _snack_bar(k: VenueKit) -> void:
-	var counter: Color = k.by_age(Color("8c3b2e"), Color("a04535"), home_primary())
+	var counter: Color = k.by_age(Wear.OLD_ORANGE.darkened(0.15), Wear.OLD_ORANGE, home_primary())
 	k.aged_block(Vector3(-42.0, 0, -11.5), Vector3(-36.0, 1.05, -11.0), counter, 0.4)
 	k.block(Vector3(-42.1, 1.05, -11.6), Vector3(-35.9, 1.1, -10.9), k.by_age(Color("b8ae98"), Color("c9c2b0"), Color("e8e6e0")), 0.4, 0.03)
 	# back shelf, a coffee urn, a popcorn machine, a cooler
@@ -120,7 +120,7 @@ func _snack_bar(k: VenueKit) -> void:
 	k.glow(Vector3(-37.3, 0.2, -13.09), Vector3(-36.3, 1.8, -13.08), k.by_age(Color("7a8a7a"), Color("cfe8ff"), Color("e8f6ff")))
 	var menu := VenueSign.make([
 		["// SNACK BAR", VenueSign.AMBER], ["----", VenueSign.DIM],
-		["HOT DOG   3.50", VenueSign.WHITE], ["POPCORN   2.00", VenueSign.WHITE], ["COFFEE    1.25", VenueSign.WHITE],
+		["HOT DOG   3.50", VenueSign.CYAN, true], ["POPCORN   2.00", VenueSign.CYAN, true], ["COFFEE    1.25", VenueSign.CYAN, true],
 	], 14, 5, 0.03)
 	menu.name = "SnackMenu"
 	menu.dead = k.by_age(0.05, 0.01, 0.0)
@@ -148,11 +148,11 @@ func _seating(k: VenueKit) -> void:
 	var wood: Color = k.by_age(Color("7a5c3c"), Color("8a6a45"), Color("2a2e36"))
 	for z in [-2.5, 2.5]:
 		k.aged_block(Vector3(-40.0, 0, z - 0.25), Vector3(-37.0, 0.45, z + 0.25), wood, 0.5)
-	# vending machines by the rink doors
+	# vending machines by the rink doors, bins by the doors
 	for i in 2:
-		var z0 := 11.0 + i * 1.0
-		k.block(Vector3(-35.1, 0, z0), Vector3(-34.3, 1.9, z0 + 0.9), [Color("1f4f9a"), Color("b8312f")][i].darkened(0.2 if k.age == VenueRoom.Age.WORN else 0.0), 0.3, 0.05)
-		k.glow(Vector3(-35.12, 0.9, z0 + 0.1), Vector3(-35.11, 1.8, z0 + 0.8), Color("d8ecff") if k.age != VenueRoom.Age.WORN or i == 0 else Color("3a3f46"))
+		k.prop("vending_machine", Vector3(-34.72, 0, 11.45 + i * 1.0), PI * 0.5)
+	k.prop("trash_can", Vector3(-44.9, 0, 2.2), PI * 0.5)
+	k.prop("trash_can", Vector3(-34.75, 0, -6.6), -PI * 0.5)
 
 
 func _ceiling_lights(k: VenueKit) -> void:
@@ -169,16 +169,19 @@ func _ceiling_lights(k: VenueKit) -> void:
 
 func _signs(k: VenueKit) -> void:
 	var name := rink_name()
-	var outside := VenueSign.make([["// " + name, VenueSign.CYAN]], name.length() + 3, 1, 0.07)
-	outside.name = "StreetSign"
-	outside.dead = k.by_age(0.08, 0.02, 0.0)
-	k.sign(outside, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(-Venue.HALF_X - 0.02, 4.2, 0)))
+	if k.age == VenueRoom.Age.RENOVATED:
+		var outside := VenueSign.make([["// " + name, VenueSign.CYAN]], name.length() + 3, 1, 0.07)
+		outside.name = "StreetSign"
+		k.sign(outside, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(-Venue.HALF_X - 0.02, 4.2, 0)))
+	else:
+		# the old hand-painted board over the front doors (letters missing when worn)
+		k.prop("rink_sign", Vector3(-Venue.HALF_X - 0.12, 2.65, 0), PI * 0.5, false)
 	var over_ice := VenueSign.make([["// " + name, VenueSign.CYAN]], name.length() + 3, 1, 0.05)
 	over_ice.name = "MezzanineSign"
 	over_ice.dead = k.by_age(0.06, 0.01, 0.0)
 	k.sign(over_ice, Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(X1 + 0.02, H + 0.15, 0)))
 	var welcome := VenueSign.make([
-		["// WELCOME TO", VenueSign.WHITE], [name, VenueSign.CYAN], ["PUBLIC SKATE SAT 2PM", VenueSign.GREEN],
+		["// WELCOME TO", VenueSign.WHITE], [name, VenueSign.CYAN], ["PUBLIC SKATE SAT 2PM", VenueSign.CYAN, true],
 	], maxi(20, name.length()), 3, 0.025)
 	welcome.name = "WelcomeBoard"
 	welcome.dead = k.by_age(0.04, 0.0, 0.0)

@@ -1,9 +1,8 @@
 extends VenueRoom
 ## A side grandstand: ten rows on concrete risers in seven sections, aisles
 ## with half-height steps (0.21 m) a walker can climb, a front rail and a
-## concourse along the top. Worn stands are splintered bleacher planks with
-## gaps, repaired ones are painted planks, renovated ones are individual
-## seats in the home colours.
+## concourse along the top. Seats are the Props kit's arena seat at the
+## stand's age: worn rows have gaps, renovated seats are the new design.
 
 ## -1 = the players' bench side (-Z), 1 = the penalty-box side (+Z).
 @export var side := -1
@@ -11,7 +10,6 @@ extends VenueRoom
 const SECTIONS := 7
 const AISLE := 1.2
 const SEAT_PITCH := 0.55
-const CONCRETE := Color("8f8a80")
 
 var _seats: Array = []
 
@@ -47,7 +45,7 @@ func build(k: VenueKit) -> void:
 	var s := float(side)
 	var span := Venue.STAND_X * 2.0
 	var sec_w := (span - AISLE * (SECTIONS + 1)) / SECTIONS
-	var concrete: Color = k.by_age(Color("7f7a70"), CONCRETE, Color("a7a39b"))
+	var concrete: Color = k.by_age(Wear.CONCRETE.darkened(0.1), Wear.CONCRETE, Color("b4b0a8"))
 	var rows := Venue.STAND_ROWS
 	# aisles: half steps inside the stand and a short stair down to the walkway
 	for a in SECTIONS + 1:
@@ -89,7 +87,7 @@ func build(k: VenueKit) -> void:
 		k.aged_block(Vector3(ax0, 0, s * cz0), Vector3(ax0 + AISLE, top_y() - Venue.ROW_RISE * 0.5, s * strip), concrete, 0.6)
 		if a < SECTIONS:
 			k.aged_block(Vector3(ax0 + AISLE, 0, s * cz0), Vector3(ax0 + AISLE + sec_w, top_y(), s * strip), concrete, 0.6)
-	var rail: Color = k.by_age(Color("6b5d4a"), Color("5c6a78"), Color("2a2d33"))
+	var rail: Color = k.by_age(Wear.RUST, Wear.OLD_STEEL, Wear.CHARCOAL)
 	for sec in SECTIONS:
 		var x0 := -Venue.STAND_X + AISLE + sec * (sec_w + AISLE)
 		k.block(Vector3(x0, top_y() + 0.95, s * (cz0 + 0.05)), Vector3(x0 + sec_w, top_y() + 1.02, s * (cz0 + 0.12)), rail, 0.5, 0.04)
@@ -101,49 +99,32 @@ func build(k: VenueKit) -> void:
 	for ex in [-1, 1]:
 		var x: float = ex * (Venue.STAND_X + 0.15)
 		k.aged_block(Vector3(x - 0.15, 0, s * Venue.STAND_FRONT), Vector3(x + 0.15, top_y() + 1.0, s * cz1), concrete, 0.6)
+	for bx in [-16.0, 0.0, 16.0]:
+		k.prop("trash_can", Vector3(bx, top_y(), s * (cz1 - 0.5)), PI if side < 0 else 0.0)
 	if k.age == VenueRoom.Age.RENOVATED:
 		# LED ribbon along the concourse fascia in the home colour
 		k.glow(Vector3(-Venue.STAND_X, top_y() - 0.25, s * (cz0 - 0.02)), Vector3(Venue.STAND_X, top_y() - 0.05, s * cz0), home_primary().lightened(0.15))
 
 
+## One row of the Props kit's arena seats (one MultiMesh per age). Worn rows
+## have gaps where seats were pulled out; renovated seats are wider.
 func _seat_row(k: VenueKit, x0: float, x1: float, r: int, sec: int) -> void:
 	var s := float(side)
 	var y := tread(r)
-	var zf := front(r)
+	var zc := front(r) + 0.42
 	var facing := Vector3(0, 0, -s)
-	match k.age:
-		VenueRoom.Age.RENOVATED:
-			var n := int(floor((x1 - x0) / 0.5))
-			var pad := ((x1 - x0) - n * 0.5) * 0.5
-			var c1 := home_primary()
-			var c2 := home_primary().darkened(0.25)
-			for i in n:
-				var cx := x0 + pad + (i + 0.5) * 0.5
-				var col := c1 if (r + sec) % 2 == 0 else c2
-				if r == Venue.STAND_ROWS - 1:
-					col = home_secondary()
-				k.block(Vector3(cx - 0.21, y + 0.36, s * (zf + 0.22)), Vector3(cx + 0.21, y + 0.44, s * (zf + 0.6)), col, 0.5, 0.03, false)
-				k.block(Vector3(cx - 0.21, y + 0.44, s * (zf + 0.6)), Vector3(cx + 0.21, y + 0.86, s * (zf + 0.66)), col, 0.5, 0.03, false)
-				k.block(Vector3(cx - 0.03, y, s * (zf + 0.35)), Vector3(cx + 0.03, y + 0.36, s * (zf + 0.45)), Color("2a2d33"), 0.5, 0.0, false)
-				_seats.append([Vector3(cx, y + 0.44, s * (zf + 0.42)), facing])
-			k.collider(Vector3(x0, y, s * (zf + 0.22)), Vector3(x1, y + 0.44, s * (zf + 0.6)))
-		_:
-			# bleacher planks in 1.1 m pieces; worn rows are missing some
-			var piece := 1.1
-			var n := int(floor((x1 - x0) / piece))
-			var pad := ((x1 - x0) - n * piece) * 0.5
-			var wood := Color("9a7a52")
-			var paint := Color("4f6d8a")
-			for i in n:
-				var px0 := x0 + pad + i * piece
-				var key := Vector3i(sec, r, i * side)
-				if k.age == VenueRoom.Age.WORN and posmod(hash(key), 9) == 0:
-					continue  # plank gone
-				var col: Color = k.aged(wood, key) if k.age == VenueRoom.Age.WORN else (paint if posmod(hash(key), 5) != 0 else wood)
-				k.block(Vector3(px0 + 0.02, y + 0.38, s * (zf + 0.2)), Vector3(px0 + piece - 0.02, y + 0.45, s * (zf + 0.55)), col, 0.55, 0.08)
-				k.block(Vector3(px0 + 0.45, y, s * (zf + 0.3)), Vector3(px0 + 0.65, y + 0.38, s * (zf + 0.45)), Color("55575c"), 0.5, 0.05, false)
-				for j in 2:
-					_seats.append([Vector3(px0 + SEAT_PITCH * (j + 0.5), y + 0.45, s * (zf + 0.38)), facing])
+	var pitch: float = k.by_age(SEAT_PITCH, SEAT_PITCH, 0.68)
+	var n := int(floor((x1 - x0) / pitch))
+	var pad := ((x1 - x0) - n * pitch) * 0.5
+	# the seat's front faces -Z; on the bench side the ice is toward +Z
+	var rot := PI if side < 0 else 0.0
+	for i in n:
+		var cx := x0 + pad + (i + 0.5) * pitch
+		if k.age == VenueRoom.Age.WORN and posmod(hash(Vector3i(sec, r, i * side)), 11) == 0:
+			continue  # seat pulled out years ago
+		k.prop("arena_seat", Vector3(cx, y, s * zc), rot, false)
+		_seats.append([Vector3(cx, y + 0.45, s * zc), facing])
+	k.collider(Vector3(x0, y, s * (zc - 0.22)), Vector3(x1, y + 0.45, s * (zc + 0.22)))
 
 
 func _section_sign(k: VenueKit, sec: int, x: float) -> void:

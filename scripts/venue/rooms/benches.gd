@@ -25,7 +25,7 @@ func build(k: VenueKit) -> void:
 		var mat: Color = k.by_age(Color("2b2c30"), Color("303237"), Color("1d1f24"))
 		k.aged_block(Vector3(x0, 0, z0), Vector3(x1, 0.06, z1), mat, 0.5, 0.08)
 		# the bench
-		var wood: Color = k.by_age(Color("8a6a45"), Color("9b7a50"), team_col)
+		var wood: Color = k.by_age(Wear.OLD_WOOD, Wear.OLD_WOOD, team_col)
 		k.aged_block(Vector3(x0 + 0.2, 0, -14.65), Vector3(x1 - 0.2, 0.47, z1 + 0.05), k.by_age(Color("4a4c50"), Color("55585e"), Color("23262c")), 0.5, 0.06)
 		var seat_y := 0.47
 		if k.age == VenueRoom.Age.WORN:

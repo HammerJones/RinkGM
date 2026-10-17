@@ -113,24 +113,38 @@ func _ready() -> void:
 		print("venue: built in %.0f ms, %s" % [(Time.get_ticks_usec() - t0) / 1000.0, stats()])
 
 
-## Geometry budget: {meshes, triangles, colliders, lights, signs, fans}.
+## Geometry budget: {draws, triangles, colliders, lights, signs, fans}.
+## A sign is a panel plus one label per line; a MultiMesh is one draw.
 func stats() -> Dictionary:
-	var d := {"meshes": 0, "triangles": 0, "colliders": 0, "lights": 0, "signs": 0, "fans": crowd.count() if crowd else 0}
+	var d := {"draws": 0, "triangles": 0, "colliders": 0, "lights": 0, "signs": 0, "fans": crowd.count() if crowd else 0}
 	var stack: Array = [self]
 	while not stack.is_empty():
 		var n: Node = stack.pop_back()
-		stack.append_array(n.get_children())
 		if n is VenueSign:
 			d.signs += 1
-		elif n is MeshInstance3D and n.mesh:
-			d.meshes += 1
-			for si in n.mesh.get_surface_count():
-				d.triangles += n.mesh.surface_get_array_len(si) / 3
+			d.draws += n.get_child_count()
+			continue
+		stack.append_array(n.get_children())
+		if n is MeshInstance3D and n.mesh:
+			d.draws += 1
+			d.triangles += _tris(n.mesh)
+		elif n is MultiMeshInstance3D and n.multimesh and n.multimesh.mesh:
+			d.draws += 1
+			d.triangles += _tris(n.multimesh.mesh) * n.multimesh.instance_count
 		elif n is CollisionShape3D:
 			d.colliders += 1
 		elif n is Light3D:
 			d.lights += 1
 	return d
+
+
+static func _tris(m: Mesh) -> int:
+	var t := 0
+	for si in m.get_surface_count():
+		var a := m.surface_get_arrays(si)
+		var idx = a[Mesh.ARRAY_INDEX]
+		t += (idx.size() if idx != null and not idx.is_empty() else a[Mesh.ARRAY_VERTEX].size()) / 3
+	return t
 
 
 func _room_nodes() -> Array:
@@ -245,16 +259,16 @@ func all_doors() -> Array[VenueDoor]:
 # ---------------------------------------------------------------- match hook
 
 ## Hooks the venue to a running match: the scoreboard and the timekeeper's
-## clock read the score, the crowd cheers goals, and the venue's lighting
+## clock read the score, the crowd cheers goals (game.events), and the lighting
 ## sets the sun and ambient light of the match environment.
 func bind_game(g: Node) -> void:
 	game = g
 	var f: Dictionary = g.get("fixture") if g.get("fixture") else {}
 	if not f.is_empty() and _fixture.is_empty():
 		configure(f)
-	var puck = g.get("puck")
-	if puck and puck.has_signal("goal_scored"):
-		puck.goal_scored.connect(_on_goal)
+	var events = g.get("events")
+	if events is MatchEvents:
+		events.goal.connect(_on_goal)
 	for c in g.get_children():
 		if c is WorldEnvironment:
 			apply_lighting(c.environment, null)
@@ -268,14 +282,13 @@ func apply_lighting(env: Environment, sun: DirectionalLight3D) -> void:
 		lights.apply(env, sun)
 
 
-func _on_goal(net_side: int) -> void:
-	if game == null or crowd == null:
+## A goal by match team `team` (0 = the user's club): the home crowd erupts
+## for the home side and groans politely for the visitors.
+func _on_goal(team: int, _scorer, _assists) -> void:
+	if crowd == null:
 		return
-	# team 0 (the user's club) attacks +x; the home crowd cheers home goals
-	var scorer := 0 if net_side == (game.attack_side(0) if game.has_method("attack_side") else 1) else 1
 	var user_home: bool = _fixture.get("user_home", true)
-	var home_scored := (scorer == 0) == user_home
-	crowd.cheer(1.0 if home_scored else 0.25)
+	crowd.cheer(1.0 if (team == 0) == user_home else 0.25)
 
 
 ## Score shown on the boards: [home, away] whatever side the user is on.

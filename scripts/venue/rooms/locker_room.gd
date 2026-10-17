@@ -26,7 +26,7 @@ func build(k: VenueKit) -> void:
 	var s := float(side)
 	var home := side < 0
 	var team_col := home_primary() if home else Color("4a5563")
-	var paint: Color = k.by_age(Color("a9a58f"), Color("bdb9a6"), Color("e4e1da"))
+	var paint: Color = k.by_age(Wear.OLD_MINT.darkened(0.1), Wear.OLD_MINT, Wear.WHITE)
 	var z_in := s * 5.15        # inside face of the wall shared with the Zamboni bay
 	var z_out := s * (Venue.ROOM_Z - 0.3)  # inside face of the outer side wall
 	# front wall onto the rink walkway, with the door
@@ -120,11 +120,11 @@ func _stall(k: VenueKit, at: Vector3, into: Vector3, i: int, team_col: Color) ->
 	match k.age:
 		Age.WORN:
 			# a dented metal locker, door shut
-			var metal := Color("5d7286")
+			var metal := Wear.OLD_ORANGE
 			k.block(a + Vector3(0, 0, 0), b + Vector3(0, 1.9, 0), k.aged(metal, i).lerp(Color("7a8a9a"), 0.15 if i % 4 == 0 else 0.0), 0.3, 0.12)
 			k.block(a + depth * 0.98 + across * 0.2 + Vector3(0, 1.5, 0), a + depth * 1.0 + across * 0.6 + Vector3(0, 1.6, 0), Color("2b2d33"), 0.2, 0.0, false)
 		_:
-			var wood: Color = Color("8a6a45") if k.age == Age.REPAIRED else Color("a7804f")
+			var wood: Color = Wear.OLD_WOOD if k.age == Age.REPAIRED else Color("a7804f")
 			k.block(a, a + depth + Vector3(0, 2.0, 0) + across * 0.06 * 2.0, wood, 0.3, 0.06)  # divider
 			k.block(a + across * 0.03, b + Vector3(0, 0, 0) - depth * 0.92 + Vector3(0, 2.0, 0), wood.darkened(0.2), 0.3, 0.06, false)  # back panel
 			k.block(a + Vector3(0, 1.75, 0), b + Vector3(0, 1.8, 0), wood, 0.3, 0.06, false)  # shelf

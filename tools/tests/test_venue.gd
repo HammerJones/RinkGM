@@ -9,12 +9,14 @@ extends SceneTree
 
 const ROOMS := ["shell", "roof", "stands_bench", "stands_box", "benches", "penalty_boxes", "glass",
 	"lobby", "office", "locker_home", "locker_away", "zamboni_bay", "lighting", "scoreboard"]
-## Triangles the whole building may use (crowd included). A mid-range GPU
-## draws millions per frame at 60 fps; this keeps the venue a small share.
-const TRI_BUDGET := 400000
-## Meshes + signs + door leaves. Forward+ handles thousands of draws per
-## frame on a mid-range GPU; a hundred-odd static ones is a small share.
-const DRAW_BUDGET := 150
+## Triangles the whole building may use, crowd and props included. A
+## mid-range GPU (GTX 1060 class) draws several million per frame at 60 fps;
+## 1.6M keeps the building well under that. The kit's arena seats are about
+## 70% of it, so a low-detail seat is the first place to save.
+const TRI_BUDGET := 1600000
+## Meshes, MultiMeshes and sign labels. Forward+ handles thousands of draws
+## per frame on that class of GPU; a couple of hundred static ones is little.
+const DRAW_BUDGET := 260
 
 var failures := 0
 var _root: Node3D
@@ -34,6 +36,10 @@ func _expect(cond: bool, what: String) -> void:
 
 
 func _run() -> void:
+	# a script error stops this coroutine; don't let CI hang on it
+	create_timer(300.0).timeout.connect(func():
+		printerr("FAIL: test_venue timed out")
+		quit(1))
 	_root = Node3D.new()
 	root.add_child(_root)
 	# low tier: worn, a handful of fans
@@ -63,7 +69,7 @@ func _run() -> void:
 		seats.append(n)
 		print("  %-9s built in %d ms: %s, %d seats" % [VenueRoom.AGE_NAMES[age], Time.get_ticks_msec() - t0, st, n])
 		_expect(st.triangles < TRI_BUDGET, "%s: %d triangles within budget %d" % [VenueRoom.AGE_NAMES[age], st.triangles, TRI_BUDGET])
-		_expect(st.meshes + st.signs < DRAW_BUDGET, "%s: %d meshes + %d signs within %d draws" % [VenueRoom.AGE_NAMES[age], st.meshes, st.signs, DRAW_BUDGET])
+		_expect(st.draws < DRAW_BUDGET, "%s: %d draws within %d" % [VenueRoom.AGE_NAMES[age], st.draws, DRAW_BUDGET])
 		_expect(st.lights <= 12 and _no_shadows(_venue), "%s: %d lights, none casting shadows" % [VenueRoom.AGE_NAMES[age], st.lights])
 	_expect(seats[0] < seats[1], "worn stands have missing planks (%d < %d seats)" % [seats[0], seats[1]])
 	# human-scale doors (bench and box gates are half doors by design)
