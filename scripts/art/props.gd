@@ -24,10 +24,9 @@ const IDS := [
 	"scoreboard",
 ]
 
-## The scoreboard's display area in its local space (metres, x and y, on the
-## plane z = SCOREBOARD_FACE_Z). Put RinkOS.sign_3d() text inside it.
-const SCOREBOARD_FACE := Rect2(-1.235, 0.26, 2.47, 0.91)
-const SCOREBOARD_FACE_Z := -0.2275
+## Penalty box size in voxels: 4.3 m along the boards, a 1 m door gap.
+const PENALTY_BOX_W := 66
+const PENALTY_DOOR_W := 16
 
 static var _glass := {}
 
@@ -517,35 +516,46 @@ static func _player_bench(age: int) -> VoxelModel:
 	return m.set_pivot(w * 0.5, 0, d * 0.5)
 
 
-## The penalty box: a short bench in a three-sided booth, open to the ice
-## (-Z), where the boards and gate are. Old: plywood walls under a hand-made
-## SIN BIN sign plank. New: navy walls, padded bench, red trim.
+## The penalty box: a 4.3 x 1.9 m booth along the boards, open to the ice
+## (-Z) where the boards and gate are, with a 1 m door gap in the middle of
+## the back wall (+Z) and a bench either side of it. Old: plywood walls under
+## a hand-made SIN BIN plank. New: navy walls, padded benches, red trim.
 static func _penalty_box(age: int) -> VoxelModel:
 	var m := VoxelModel.new(V)
-	var w := 28
-	var d := 16
+	var w := PENALTY_BOX_W
+	var d := 29
 	var h := 16  # wall height, level with the boards
+	var gap := PENALTY_DOOR_W
+	var g0 := (w - gap) / 2
 	var new := age == Wear.RENOVATED
 	var wall := Wear.NAVY if new else Wear.PLYWOOD.darkened(0.15)
+	var top := Wear.RED if new else Wear.OLD_GOLD
 	m.box(0, 0, 0, w, 1, d, Wear.RUBBER)  # rubber floor
-	m.box(0, 1, d - 1, w, h, 1, wall)  # back
+	m.box(0, 1, d - 1, w, h, 1, wall)  # back wall...
+	m.clear_box(g0, 1, d - 1, gap, h, 1)  # ...with the door gap
 	m.box(0, 1, 0, 1, h, d - 1, wall)  # sides
 	m.box(w - 1, 1, 0, 1, h, d - 1, wall)
-	var top := Wear.RED if new else Wear.OLD_GOLD
 	m.box(0, h + 1, 0, 1, 1, d, top)  # cap rails
 	m.box(w - 1, h + 1, 0, 1, 1, d, top)
-	m.box(0, h + 1, d - 1, w, 1, 1, top)
+	m.box(0, h + 1, d - 1, g0, 1, 1, top)
+	m.box(g0 + gap, h + 1, d - 1, w - g0 - gap, 1, 1, top)
 	var bench := Wear.NAVY.lightened(0.15) if new else Wear.OLD_WOOD
-	m.box(2, 1, d - 6, w - 4, 6, 5, Wear.CHARCOAL if new else Wear.OLD_WOOD_DARK)
-	m.box(2, 7, d - 6, w - 4, 1, 5, bench)
+	var base := Wear.CHARCOAL if new else Wear.OLD_WOOD_DARK
+	for x0 in [1, g0 + gap + 1]:
+		var bw := g0 - 2
+		m.box(x0, 1, d - 7, bw, 6, 6, base)
+		m.box(x0, 7, d - 7, bw, 1, 6, bench)
+		if new:
+			m.box(x0, 8, d - 2, bw, 5, 1, Wear.NAVY.lightened(0.15))  # back pad
 	if not new:
-		m.box(4, 11, d - 2, w - 8, 3, 1, Wear.OLD_CREAM)  # the old SIN BIN plank
-		for x in range(6, w - 6, 2):
+		m.box(4, 11, d - 2, g0 - 6, 3, 1, Wear.OLD_CREAM)  # the old SIN BIN plank
+		for x in range(6, g0 - 3, 2):
 			m.set_voxel(x, 12, d - 3, Wear.RED.darkened(0.3))
 		if age == Wear.WORN:
-			m.box(10, 1, d - 1, 3, 4, 1, Wear.CHARCOAL)  # hole kicked in the wall
+			m.box(g0 + gap + 8, 1, d - 1, 3, 4, 1, Wear.CHARCOAL)  # hole kicked in the wall
 	else:
-		m.box(4, 12, d - 2, w - 8, 1, 1, Wear.RED)
+		m.box(1, 14, d - 2, g0 - 1, 1, 1, Wear.RED)
+		m.box(g0 + gap, 14, d - 2, w - g0 - gap - 1, 1, 1, Wear.RED)
 	return m.set_pivot(w * 0.5, 0, d * 0.5)
 
 
@@ -640,34 +650,85 @@ static func _concession_counter(age: int) -> VoxelModel:
 
 # ---------------------------------------------------------------- scoreboard
 
-## The wall scoreboard housing, about 3 x 1.6 m, mounted with its bottom at
-## the pivot. The display area (SCOREBOARD_FACE) is left as a dark panel for
-## RinkOS.sign_3d() text; this is just the box around it. Old: a wooden
-## cabinet with a gold sponsor header and a bulb grid. New: slim charcoal
-## with LED trim.
+## Old: a 6.5 x 3 m wooden cabinet on the end wall, pivot at its bottom
+## centre, with a gold sponsor header and an unlit bulb grid behind the
+## display. New: a centre-hung four-sided board about 5 m across and 3 m tall,
+## hanging from its cables (pivot at the ceiling mount), LED trim and a red
+## band round the bottom. The display areas are dark panels for
+## RinkOS.sign_3d() text; scoreboard_faces(age) says where they are.
 static func _scoreboard(age: int) -> VoxelModel:
 	var m := VoxelModel.new(V)
-	var w := 46
-	var h := 25
-	var d := 5
-	var new := age == Wear.RENOVATED
-	var body := Wear.CHARCOAL if new else Wear.OLD_BROWN
-	m.box(0, 0, 0, w, h, d, body)
-	m.box(4, 4, -1, w - 8, 14, 1, Wear.RUBBER)  # display area (SCOREBOARD_FACE)
-	if new:
-		for x in range(0, w, 2):
-			m.set_voxel(x, h - 1, -1, Wear.LED)
-			m.set_voxel(x, 0, -1, Wear.LED)
-		m.box(4, 19, -1, w - 8, 4, 1, Wear.NAVY)  # club panel
-		m.box(5, 20, -2, w - 10, 2, 1, Wear.RED)
-	else:
-		m.box(2, 19, -1, w - 4, 5, 1, Wear.OLD_GOLD)  # sponsor header
-		for x in range(6, w - 6, 3):
-			m.set_voxel(x, 21, -2, Wear.OLD_ORANGE)
-		# unlit bulb grid behind the display
-		for x in range(5, w - 5, 2):
-			for y in range(5, 17, 2):
-				m.set_voxel(x, y, -1, Wear.SODIUM_DIM.darkened(0.6))
-		if age == Wear.WORN:
-			m.box(w - 9, 19, -1, 5, 5, 1, Wear.CHARCOAL)  # header panel missing
+	if age == Wear.RENOVATED:
+		var s := _HUNG_SIDE
+		var h := _HUNG_H
+		# shell: four walls, a top and a bottom
+		m.box(0, 0, 0, s, h, s, Wear.CHARCOAL)
+		m.clear_box(1, 1, 1, s - 2, h - 2, s - 2)
+		m.box(0, 0, 0, s, 4, s, Wear.RED)  # bottom band
+		m.clear_box(1, 0, 1, s - 2, 4, s - 2)
+		m.box(1, 0, 1, s - 2, 1, s - 2, Wear.CHARCOAL)
+		for f in 4:
+			_hung_face(m, f, s, h)
+		for c in [Vector2i(6, 6), Vector2i(s - 7, 6), Vector2i(6, s - 7), Vector2i(s - 7, s - 7)]:
+			m.box(c.x, h, c.y, 1, _HUNG_CABLE, 1, Wear.STEEL)  # cables
+		return m.set_pivot(s * 0.5, h + _HUNG_CABLE, s * 0.5)
+	var w := _WALL_W
+	var h := _WALL_H
+	var d := 6
+	m.box(0, 0, 0, w, h, d, Wear.OLD_BROWN)
+	m.box(_WALL_INSET, _WALL_INSET, -1, w - 2 * _WALL_INSET, _WALL_DISPLAY_H, 1, Wear.RUBBER)
+	m.box(2, h - 9, -1, w - 4, 7, 1, Wear.OLD_GOLD)  # sponsor header
+	for x in range(6, w - 6, 4):
+		m.box(x, h - 6, -2, 2, 1, 1, Wear.OLD_ORANGE)
+	for x in range(_WALL_INSET + 1, w - _WALL_INSET, 2):
+		for y in range(_WALL_INSET + 1, _WALL_INSET + _WALL_DISPLAY_H, 2):
+			m.set_voxel(x, y, -1, Wear.SODIUM_DIM.darkened(0.6))  # unlit bulbs
+	if age == Wear.WORN:
+		m.box(w - 20, h - 9, -1, 9, 7, 1, Wear.CHARCOAL)  # header panel missing
 	return m.set_pivot(w * 0.5, 0, d * 0.5)
+
+
+## One face of the hung board: f 0..3 = -Z, +X, +Z, -X sides.
+static func _hung_face(m: VoxelModel, f: int, s: int, h: int) -> void:
+	for i in range(_HUNG_INSET, s - _HUNG_INSET):
+		for y in range(6, h - 3):
+			var c := Wear.RUBBER
+			if y == h - 4:
+				c = Wear.LED if i % 2 == 0 else Wear.CHARCOAL  # LED trim
+			match f:
+				0: m.set_voxel(i, y, -1, c)
+				1: m.set_voxel(s, y, i, c)
+				2: m.set_voxel(i, y, s, c)
+				3: m.set_voxel(-1, y, i, c)
+
+
+const _WALL_W := 100  # 6.5 m
+const _WALL_H := 46  # 3 m
+const _WALL_INSET := 4
+const _WALL_DISPLAY_H := 31
+const _HUNG_SIDE := 77  # 5 m
+const _HUNG_H := 46  # 3 m
+const _HUNG_INSET := 4
+const _HUNG_CABLE := 12
+
+
+## Where to put scoreboard text: one entry per display face, each with its
+## centre and outward normal (metres, in the scoreboard's local space) and its
+## size. Text goes on the plane through `center`, facing `normal`.
+static func scoreboard_faces(age: int) -> Array[Dictionary]:
+	var faces: Array[Dictionary] = []
+	if age != Wear.RENOVATED:
+		var pw := float(_WALL_W - 2 * _WALL_INSET) * V
+		var ph := float(_WALL_DISPLAY_H) * V
+		faces.append({
+			"center": Vector3(0, (_WALL_INSET + _WALL_DISPLAY_H * 0.5) * V, -4.0 * V),
+			"normal": Vector3(0, 0, -1),
+			"size": Vector2(pw, ph),
+		})
+		return faces
+	var half := (_HUNG_SIDE * 0.5 + 1.0) * V
+	var y := ((6 + _HUNG_H - 3 - 1) * 0.5 - _HUNG_H - _HUNG_CABLE) * V
+	var size := Vector2((_HUNG_SIDE - 2 * _HUNG_INSET) * V, (_HUNG_H - 10) * V)
+	for n in [Vector3(0, 0, -1), Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(-1, 0, 0)]:
+		faces.append({"center": Vector3(n.x * half, y, n.z * half), "normal": n, "size": size})
+	return faces

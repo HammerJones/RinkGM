@@ -45,14 +45,15 @@ func _initialize() -> void:
 			elif ids[r] == "rink_sign":
 				mi.position.y = 0.8
 			elif ids[r] == "scoreboard":
-				mi.position.y = 0.6
+				mi.scale = Vector3.ONE * 0.45
+				mi.position.y = 1.7 if age == Wear.RENOVATED else 0.3
 			elif ids[r] == "glass_pane":
 				var fr := MeshInstance3D.new()
 				fr.mesh = Props.mesh("glass_frame", age, _lod)
 				fr.position = mi.position
 				fr.rotation.y = mi.rotation.y
 				world.add_child(fr)
-			elif ids[r] == "resurfacer":
+			elif ids[r] == "resurfacer" or ids[r] == "penalty_box":
 				mi.scale = Vector3.ONE * 0.6
 			world.add_child(mi)
 	var cam := Camera3D.new()

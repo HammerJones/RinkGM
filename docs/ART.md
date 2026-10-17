@@ -74,9 +74,12 @@ stay in `Models.palette()`.
 flooring, crowd figures and staff.
 
 Glass panes are drawn with `Props.glass_material(age)` (see-through; old glass
-is yellowed and cloudier). The scoreboard leaves its display dark:
-`Props.SCOREBOARD_FACE` and `SCOREBOARD_FACE_Z` give the rectangle to fill
-with `RinkOS.sign_3d()`.
+is yellowed and cloudier). The scoreboard leaves its displays dark:
+`Props.scoreboard_faces(age)` gives each face's centre, outward normal and
+size to fill with `RinkOS.sign_3d()`. The old scoreboard is a 6.5 x 3 m wall
+board; the renovated one is a four-sided centre-hung board, pivoted at its
+ceiling mount like the lights. The penalty box is 4.3 x 1.9 m with a 1 m door
+gap in the back wall.
 
 To add a prop: write a `_name(age)` builder in `props.gd`, add the id to
 `IDS` and `_build()`, then check it on the prop sheet.
