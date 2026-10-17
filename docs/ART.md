@@ -16,7 +16,7 @@ it starts as a tired 1970s community rink and visibly gets better.
 | --- | --- | --- |
 | Characters, equipment, props (sticks are Controls') | 0.065 m (`Models.V`) | One size so everything the player stands next to reads as one world. A 1.85 m skater is about 28 voxels tall |
 | Puck, net | 0.05 m, 0.061 m | Kept for regulation sizes |
-| Architecture (walls, floors, roof, stands) | 0.26 m (4 x `Models.V`) | Proposed for Rink environment; big surfaces stay cheap and still line up with the prop grid |
+| Architecture (walls, floors, roof, stands) | Rink environment's tiles, 0.3-1 m | Built by Rink environment in the `Wear` palettes. Flat colour, so big surfaces stay cheap |
 
 Real-world sizes are used throughout: doors are 0.9 x 2.1 m, seats 0.45 m
 off the floor, the ice resurfacer about 2 x 4 m.
@@ -32,6 +32,13 @@ off the floor, the ice resurfacer about 2 x 4 m.
 - One mesh per prop and age, shared by every copy (`Props.mesh(id, age)` caches
   it), so a stand of 400 seats is one mesh drawn 400 times. Use a
   `MultiMeshInstance3D` for big repeats.
+- Two detail levels: `Props.mesh(id, age, 1)` drops the speckle, rust, chips
+  and grime gradient and merges flat faces of one colour
+  (`VoxelModel.build_mesh_merged`). Use it for the stands and anything far
+  away; a seat goes from about 640-860 triangles to 120-210.
+- Doors come whole (`door`) or in two parts so the leaf can swing:
+  `door_frame` has the door's pivot, `door_leaf` has its pivot on the hinge,
+  and `Props.DOOR_HINGE` is where the hinge sits in the frame's space.
 
 ## Renovation ages
 
@@ -59,10 +66,17 @@ stay in `Models.palette()`.
 
 ## Props kit (`scripts/art/props.gd`)
 
-`arena_seat`, `door`, `light`, `vending_machine`, `trash_can`, `rink_sign`,
-`resurfacer`, each at all three ages. More to come: benches, penalty box,
-glass and stanchions, scoreboard, skate-sharpening bench, lockers, concession
-counter, rubber flooring, crowd figures and staff.
+`arena_seat`, `door` (or `door_frame` + `door_leaf`), `light`,
+`vending_machine`, `trash_can`, `rink_sign`, `resurfacer`, `lockers`,
+`player_bench` (a 2 m section), `penalty_box`, `glass_frame` + `glass_pane`
+(one 1.83 m panel on top of the boards), `concession_counter` and
+`scoreboard`, each at all three ages. Next: skate-sharpening bench, rubber
+flooring, crowd figures and staff.
+
+Glass panes are drawn with `Props.glass_material(age)` (see-through; old glass
+is yellowed and cloudier). The scoreboard leaves its display dark:
+`Props.SCOREBOARD_FACE` and `SCOREBOARD_FACE_Z` give the rectangle to fill
+with `RinkOS.sign_3d()`.
 
 To add a prop: write a `_name(age)` builder in `props.gd`, add the id to
 `IDS` and `_build()`, then check it on the prop sheet.

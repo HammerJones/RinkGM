@@ -49,6 +49,11 @@ const LED := Color("f4f8ff")
 
 const RUBBER := Color("17181b")
 
+## False while building low-detail meshes: skips rust speckle, chipped
+## corners and the grime gradient, which would break big flat faces into
+## many small ones.
+static var fine := true
+
 
 ## Ages a finished model in place. Colours fade toward grime (more near the
 ## floor), and WORN also loses a few corner voxels. Deterministic per seed.
@@ -67,12 +72,13 @@ static func weather(m: VoxelModel, age: int, seed := 0) -> VoxelModel:
 	var chipped: Array[Vector3i] = []
 	for p in m.voxels:
 		var c: Color = m.voxels[p]
-		var low := 1.0 - clampf(float(p.y - lo) / height, 0.0, 1.0)
+		# low detail uses one grime level so flat faces stay one colour
+		var low := 1.0 - clampf(float(p.y - lo) / height, 0.0, 1.0) if fine else 0.4
 		var g := grime * (0.6 + 0.8 * low * low)
 		var grey := c.get_luminance()
 		c = c.lerp(Color(grey, grey, grey), fade).lerp(GRIME, g)
 		m.voxels[p] = c
-		if age == WORN and _exposed(m, p) >= 3 and _roll(p, seed) < 0.05:
+		if age == WORN and fine and _exposed(m, p) >= 3 and _roll(p, seed) < 0.05:
 			chipped.append(p)
 	for p in chipped:
 		m.voxels.erase(p)
@@ -82,6 +88,8 @@ static func weather(m: VoxelModel, age: int, seed := 0) -> VoxelModel:
 
 ## Speckles rust over voxels of one colour (steel parts on old props).
 static func rust(m: VoxelModel, of: Color, amount: float, seed := 0) -> void:
+	if not fine:
+		return
 	for p in m.voxels:
 		if m.voxels[p].is_equal_approx(of) and _roll(p, seed + 7) < amount:
 			m.voxels[p] = RUST if _roll(p, seed + 11) < 0.6 else RUST_DARK

@@ -1,13 +1,14 @@
 extends SceneTree
 ## Renders every prop in the kit at each renovation age to one PNG, for
 ## reviewing the look. Needs a renderer (not --headless); see docs/ART.md for the cloud recipe:
-##   godot --path . --script res://art/tools/prop_sheet.gd -- --out=props.png [--ids=door,light]
+##   godot --path . --script res://art/tools/prop_sheet.gd -- --out=props.png [--ids=door,light] [--lod=1]
 
 const COL_GAP := 3.2
 const ROW_GAP := 4.2
 
 var _out := "prop_sheet.png"
 var _frames := 0
+var _lod := 0
 
 
 func _initialize() -> void:
@@ -17,6 +18,8 @@ func _initialize() -> void:
 			_out = arg.trim_prefix("--out=")
 		elif arg.begins_with("--ids="):
 			ids = Array(arg.trim_prefix("--ids=").split(","))
+		elif arg.begins_with("--lod="):
+			_lod = int(arg.trim_prefix("--lod="))
 	var view_h := ROW_GAP * ids.size() * 0.56 + 2.0
 	DisplayServer.window_set_size(Vector2i(1800, int(1800.0 * view_h / 11.0)))
 	var world := Node3D.new()
@@ -34,13 +37,21 @@ func _initialize() -> void:
 	for r in ids.size():
 		for age in 3:
 			var mi := MeshInstance3D.new()
-			mi.mesh = Props.mesh(ids[r], age)
+			mi.mesh = Props.mesh(ids[r], age, _lod)
 			mi.position = Vector3(age * COL_GAP, 0, r * ROW_GAP)
 			mi.rotation.y = PI - 0.55  # props face -Z; turn them three-quarters to the camera
 			if ids[r] == "light":
 				mi.position.y = 1.6
 			elif ids[r] == "rink_sign":
 				mi.position.y = 0.8
+			elif ids[r] == "scoreboard":
+				mi.position.y = 0.6
+			elif ids[r] == "glass_pane":
+				var fr := MeshInstance3D.new()
+				fr.mesh = Props.mesh("glass_frame", age, _lod)
+				fr.position = mi.position
+				fr.rotation.y = mi.rotation.y
+				world.add_child(fr)
 			elif ids[r] == "resurfacer":
 				mi.scale = Vector3.ONE * 0.6
 			world.add_child(mi)
