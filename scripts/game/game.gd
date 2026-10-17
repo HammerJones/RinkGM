@@ -87,7 +87,12 @@ func _ready() -> void:
 			var lv := arg.trim_prefix("--ai-levels=").split_floats(",")
 			for team in mini(lv.size(), 2):
 				team_ai[team] = TierAI.for_level(lv[team])
-	# `-- --test=controls` runs the scripted control checks in tests/
+	# `-- --test=controls` runs the scripted control checks in tests/, and
+	# `-- --demo=controls|skating|moves` plays a captioned showcase
+	if Array(OS.get_cmdline_user_args()).any(func(a: String) -> bool: return a.begins_with("--demo=")):
+		var d: Node = load("res://tests/controls_demo.gd").new()
+		d.set("game", self)
+		add_child(d)
 	if "--test=controls" in OS.get_cmdline_user_args():
 		var t: Node = load("res://tests/controls_test.gd").new()
 		t.set("game", self)

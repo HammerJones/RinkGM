@@ -20,10 +20,12 @@ virtual right stick, so both devices drive the same stick model.
 | Skate | Left stick | WASD |
 | Dash (push-off burst) | L3 (click left stick) | Shift |
 | Hockey stop | R3 (click right stick) | Space |
-| Stick blade (220 degree arc around you) | Right stick | Mouse (cursor is captured; Esc frees it) |
+| Stick blade (220 degree arc, back past each hip) | Right stick | Mouse (cursor is captured; Esc frees it) |
 | Stickhandle | Right stick side to side | Mouse side to side |
-| Shoot | Pull the stick behind you, then push it forward | Same with the mouse |
-| Slapshot | Hold LT as you pull back | Hold right click as you pull back |
+| Quick shot (instant) | Flick the right stick forward | Flick the mouse forward |
+| Wrist shot | Draw the stick back behind your forehand hip, then sweep it forward | Same with the mouse |
+| Backhand | Draw back behind your backhand hip, then sweep forward | Same with the mouse |
+| Learned moves (snapshot, slapshot, one-timer, toe drag, lacrosse) | Stick patterns, see below | Same with the mouse |
 | Lift stick (offense: over the puck; defense: lift their stick) | LT | Right click |
 | Tilt blade (raises shots and passes) | RT (analog) | Left click (hold longer for more) |
 | Aim at the near or far post | Lean the left stick | Lean with W / S |
@@ -34,11 +36,32 @@ virtual right stick, so both devices drive the same stick model.
 | Camera (broadcast / isometric) | D-pad up | C |
 | Restart | Start | R |
 | Show/hide controls | | H |
+| Dev: unlock every learned move | | F2 |
 
 "Forward" and "behind" are relative to the way your skater faces; the stick
 itself is camera-relative, like the left stick. A faint arc on the ice shows
 where the blade can reach. Device reading lives in `scripts/input/`
 (`PlayerInput` reads devices, `HumanController` fills `Skater.Controls`).
+Both hands stay on the stick in the front 90 degrees; past that the bottom
+hand lets go and the top hand reaches.
+
+#### Shots and stick moves
+
+Shots and dekes are patterns you trace with the right stick (`scripts/game/moves.gd`).
+You start with the quick shot, wrist shot and backhand; the others are
+learned. A locked move's pattern falls back to the nearest starter (a
+slapshot pattern without the slapshot is a wrist shot).
+
+| Move | Pattern | |
+| --- | --- | --- |
+| Quick shot | Flick forward from neutral | Starter |
+| Wrist shot | Draw back behind the forehand hip, sweep forward | Starter |
+| Backhand | Draw back behind the backhand hip, sweep forward | Starter |
+| Snapshot | Hold the stick out wide on the forehand (60 degrees or more), snap it forward | Learned |
+| Slapshot | Hold LT and draw back on the forehand, then forward | Learned |
+| One-timer | Slapshot wind-up without the puck, fire as the pass arrives | Learned |
+| Toe drag | Hold RT, stick out front, pull it back across to the backhand | Learned |
+| Lacrosse | Hold RT, sweep from the backhand round to the forehand: the puck rides up on the blade; keep RT held, push forward to throw it | Learned |
 
 ### Physics and player ratings
 
@@ -66,11 +89,11 @@ assistance on top.
   the puck slides off. Lifting your stick takes the blade off the puck for
   moves; on defense it lifts the carrier's stick if you're close, with odds
   from both players' ratings.
-- **Stick moves** (`scripts/game/move_physics.gd`): unlockable shots and dekes
-  (snap shot, backhand, quick deke, toe drag, toe-drag shot) run as blade paths
-  around the body. Gesture recognition sets `Controls.move_id`; the path still
-  runs under the skater's own blade limits, so weak hands run it slower and can
-  lose the puck.
+- **Stick moves** (`scripts/game/move_physics.gd`): each learned shot (see
+  Shots and stick moves above) has its own power, accuracy and loft, and the
+  dekes run as blade paths around the body. A toe drag still runs under the
+  skater's own blade limits, so weak hands run it slower and can lose the
+  puck; the lacrosse carries the puck up on the blade.
 - **Shooting**: one wind-up model for all shots. A shot with no wind-up comes
   off instantly but weak and wild; shot release sets how good that instant
   shot is and how fast you reach full power. Shot power sets the top speed
@@ -140,6 +163,8 @@ tools/bench/             headless physics bench (tools/physics_bench.sh)
 Arguments after `--` are read by the game:
 
 - `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
+- `--demo=controls` plays a captioned showcase of every move (`tests/controls_demo.gd`). Record it with `godot --path . --write-movie demo.avi --fixed-fps 30 --resolution 1280x720 -- --demo=controls`.
+- `--demo=skating` and `--demo=moves` are close-up reels of the skating animation and of the stick arc and every shot and stick move, with the right stick's path drawn on a pad.
 - `--autoplay` lets the AI drive your skater too (prints stats on exit).
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
 - `--ai-levels=0.5,3` sets how organised each team plays (TierAI level, 0 = Beer League D to 5 = Minor League Pro).

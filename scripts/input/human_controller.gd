@@ -7,17 +7,31 @@ extends Node
 var game: Node
 var player_input: PlayerInput
 var _pass_call_until := -10.0
+var _moves_human: Skater = null
 
 
 func _ready() -> void:
 	player_input = PlayerInput.new()
 	add_child(player_input)
+	_take_over(game.human)
+
+
+## You start with the starter shots; the rest are learned (Moves).
+func _take_over(human: Skater) -> void:
+	_moves_human = human
+	human.moves = Moves.starter()
 
 
 func update(dt: float) -> void:
 	var human: Skater = game.human
 	var c := human.ctrl
 	c.reset()
+	if _moves_human != human:
+		_take_over(human)
+	if Input.is_action_just_pressed("unlock_moves"):
+		var all := human.moves.size() < Moves.ALL.size()
+		human.moves = Moves.all() if all else Moves.starter()
+		game.hud.show_message("ALL MOVES" if all else "STARTER MOVES", 1.0)
 	var f := player_input.poll(dt)
 	var fwd: Vector3 = game.camera_rig.forward_flat()
 	var right: Vector3 = game.camera_rig.right_flat()

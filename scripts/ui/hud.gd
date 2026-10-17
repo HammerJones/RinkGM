@@ -5,8 +5,9 @@ extends CanvasLayer
 
 const HELP := """[b]Gamepad[/b]
 L-stick  skate      L3  dash      R3  hockey stop
-R-stick  stick blade (90 deg arc), side to side to stickhandle
-  pull back, then push forward = shot
+R-stick  stick blade (220 deg arc), side to side to stickhandle
+  flick forward = quick shot, back past a hip then forward =
+  wrist shot / backhand; learned moves are stick patterns too
 LT  lift stick (hold while pulling back = slapshot,
   on D = stick lift)   RT  tilt blade (raise shots/passes)
 A / RB  pass, or call for it    B  body check
@@ -17,7 +18,7 @@ WASD  skate    Shift  dash    Space  stop
 RMB  lift stick    LMB  tilt blade (hold for more)
 E  pass / call for it    F  check    [ ]  mouse sensitivity
 Esc  free the cursor   F1  physics mode   C  camera   R  restart
-H  hide this"""
+F2  unlock all moves (dev)   H  hide this"""
 
 var _score: Label
 var _mode: Label
