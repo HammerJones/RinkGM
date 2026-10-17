@@ -20,7 +20,7 @@ var _auto := "--autoplay" in OS.get_cmdline_user_args()
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
-	bg.color = Color("16171c")
+	bg.color = RinkOS.CRT
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 	var scroll := ScrollContainer.new()
@@ -147,14 +147,14 @@ func _refresh() -> void:
 	var team := career.user_team()
 	var info := LeagueTiers.get_tier(career.tier)
 	_title("%s  #%d  %s" % [u.full_name().to_upper(), u.number, u.position])
-	_text("Age %d   Overall %.1f   %s, %s   Season %d%s" % [int(u.age), u.overall(), team.name, info.name, career.season_number, "   [color=#7fd4ff]DEMO[/color]" if career.demo != "" else ""])
+	_text("Age %d   Overall %.1f   %s, %s   Season %d%s" % [int(u.age), u.overall(), team.name, info.name, career.season_number, "   [%s]DEMO[/color]" % RinkOS.bb(RinkOS.READOUT) if career.demo != "" else ""])
 	if career.is_demo_over():
-		_text("[color=#7fd4ff]Demo complete. That's both demo seasons; keep playing this save or start another from the main menu.[/color]")
+		_text("[%s]Demo complete. That's both demo seasons; keep playing this save or start another from the main menu.[/color]" % RinkOS.bb(RinkOS.READOUT))
 	_last_game()
 	if u.injury and not u.injury.is_healed():
-		_text("[color=#ff7a6b]%s: %s[/color]" % [u.injury.describe(), "out %d more game%s" % [u.injury.games_out, "" if u.injury.games_out == 1 else "s"] if not u.injury.can_play() else "playing through it"])
+		_text("[%s]%s: %s[/color]" % [RinkOS.bb(RinkOS.ALERT), u.injury.describe(), "out %d more game%s" % [u.injury.games_out, "" if u.injury.games_out == 1 else "s"] if not u.injury.can_play() else "playing through it"])
 	if u.fatigue > 0.3:
-		_text("[color=#f0c040]Tired (%d%%): skating and hitting are down until you rest.[/color]" % int(u.fatigue * 100))
+		_text("[%s]Tired (%d%%): skating and hitting are down until you rest.[/color]" % [RinkOS.bb(RinkOS.ACTION), int(u.fatigue * 100)])
 
 	var cols := HBoxContainer.new()
 	cols.add_theme_constant_override("separation", 40)
@@ -191,7 +191,7 @@ func _last_game() -> void:
 	var line: Dictionary = res.box.get(career.user_id, res.box.get(str(career.user_id), {}))
 	if not line.is_empty():
 		txt += "    You: %dG %dA  %d shots  %d hits  %+d  TOI %d:%02d" % [line.g, line.a, line.shots, line.hits, line.pm, int(line.toi) / 60, int(line.toi) % 60]
-	_text("[color=#c8d0dc]%s[/color]" % txt)
+	_text("[%s]%s[/color]" % [RinkOS.bb(RinkOS.READOUT), txt])
 
 
 func _skills_table(parent: Control, u: PlayerProfile) -> void:
@@ -207,7 +207,7 @@ func _skills_table(parent: Control, u: PlayerProfile) -> void:
 		bar.show_percentage = false
 		bar.value = u.skills.eff(k)
 		var cap := ColorRect.new()
-		cap.color = Color("ffd23f")
+		cap.color = RinkOS.ACTION
 		cap.size = Vector2(2, 14)
 		cap.position = Vector2(220.0 * u.potential[k] / 100.0, 0)
 		bar.add_child(cap)
@@ -296,7 +296,7 @@ func _season_table(parent: Control) -> void:
 		var r: Dictionary = s.standings[tid]
 		var nm: String = career.teams[tid].name
 		if tid == career.user().team_id:
-			nm = "[color=#ffd23f]%s[/color]" % nm
+			nm = "[%s]%s[/color]" % [RinkOS.bb(RinkOS.ACTION), nm]
 		lines.append("[cell]%s   [/cell][cell]%d[/cell][cell]%d[/cell][cell]%d[/cell][cell]%d[/cell][cell]%d[/cell]" % [nm, r.gp, r.w, r.l, r.otl, r.pts])
 	lines.append("[/table]")
 	_rich(parent, "".join(lines))
@@ -373,19 +373,16 @@ func _rich(parent: Control, t: String) -> void:
 	r.fit_content = true
 	r.text = t
 	r.custom_minimum_size = Vector2(400, 0)
-	r.add_theme_font_size_override("normal_font_size", 15)
 	parent.add_child(r)
 
 
+## Sizes map onto RinkOS type variations: 26+ title, 18+ heading, else body.
 func _label(t: String, size: int) -> Label:
-	var l := Label.new()
-	l.text = t
-	l.add_theme_font_size_override("font_size", size)
-	return l
+	var v := RinkOS.TITLE if size >= 26 else (RinkOS.PIXEL if size >= 18 else RinkOS.TERM)
+	return RinkOS.label(t, v)
 
 
 func _button(t: String, cb: Callable) -> Button:
-	var b := Button.new()
-	b.text = t
+	var b := RinkOS.button(t)
 	b.pressed.connect(cb)
 	return b

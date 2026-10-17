@@ -277,7 +277,8 @@ func _build_player() -> void:
 
 func _set_rating(key: String, val: float) -> void:
 	var g := _game()
-	if g != null and g.has_method("dev_set_skill"):
+	# (mechanics) only when the body on the ice carries the profile being edited
+	if g != null and g.has_method("dev_set_skill") and g.human.player != null and g.human.player.skills == _skills():
 		g.dev_set_skill(key, val)
 		_maybe_save()
 		return
