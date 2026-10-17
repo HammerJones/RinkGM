@@ -15,7 +15,7 @@ const ORGS := [
 	{"id": "broomball", "name": "Harlow Falls Broomball Club", "use": "public", "slots": [[3, 21.0, 1.5]],
 		"rate": 130.0, "min_ice": 30.0, "min_rooms": 0.0, "weeks": 12},
 	{"id": "minor_hockey", "name": "Millbrook Minor Hockey Association", "use": "hockey",
-		"slots": [[1, 17.0, 3.0], [3, 17.0, 3.0], [5, 8.0, 4.0], [6, 8.0, 4.0]],
+		"slots": [[1, 17.0, 3.0], [3, 17.0, 3.0], [6, 8.0, 4.0], [0, 8.0, 4.0]],
 		"rate": 175.0, "min_ice": 50.0, "min_rooms": 25.0, "weeks": 24},
 	{"id": "figure_club", "name": "Millbrook Figure Skating Club", "use": "figure", "slots": [[2, 6.0, 2.0], [4, 6.0, 2.0], [6, 12.0, 2.0]],
 		"rate": 170.0, "min_ice": 55.0, "min_rooms": 30.0, "weeks": 24},
