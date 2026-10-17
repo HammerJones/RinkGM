@@ -14,8 +14,9 @@ it starts as a tired 1970s community rink and visibly gets better.
 
 | Use | Voxel size | Notes |
 | --- | --- | --- |
-| Characters, equipment, props (sticks are Controls') | 0.065 m (`Models.V`) | One size so everything the player stands next to reads as one world. A 1.85 m skater is about 28 voxels tall |
+| Characters, equipment, props | 0.065 m (`Models.V`) | One size so everything the player stands next to reads as one world. A 1.85 m skater is about 28 voxels tall |
 | Puck, net | 0.05 m, 0.061 m | Kept for regulation sizes |
+| Skater stick (shaft and blade) | 0.0175 m (`Models.STICK_V`) | Finer so the shaft reads as a stick |
 | Architecture (walls, floors, roof, stands) | Rink environment's tiles, 0.3-1 m | Built by Rink environment in the `Wear` palettes. Flat colour, so big surfaces stay cheap |
 
 Real-world sizes are used throughout: doors are 0.9 x 2.1 m, seats 0.45 m
@@ -27,8 +28,8 @@ off the floor, the ice resurfacer about 2 x 4 m.
 - Props have their pivot on the floor, centred. Hanging things (lights) have
   it at the ceiling mount. `tools/tests/test_props.gd` checks this.
 - Grid voxels for anything that sits square; oriented voxels
-  (`VoxelMeshBuilder.add_box`) for things that don't, such as curved boards or
-  a stick at an angle.
+  (`VoxelModel.add_oriented`, drawn with `VoxelMeshBuilder.add_box`) for
+  things that don't, such as curved boards or a stick's heel.
 - One mesh per prop and age, shared by every copy (`Props.mesh(id, age)` caches
   it), so a stand of 400 seats is one mesh drawn 400 times. Use a
   `MultiMeshInstance3D` for big repeats.
@@ -83,6 +84,16 @@ gap in the back wall.
 
 To add a prop: write a `_name(age)` builder in `props.gd`, add the id to
 `IDS` and `_build()`, then check it on the prop sheet.
+
+## Sticks
+
+The skater stick is two parts posed by `SkaterRig`: `Models.shaft()` and
+`Models.blade()`. The blade's heel is not a right angle: it curves smoothly
+up into a hosel at the stick's lie (47° off the ice, so the heel is an
+obtuse angle of about 133°), and the shaft starts where the hosel ends,
+`Models.blade_heel`. Controls owns the grip and how the stick is posed.
+`art/tools/stick_sheet.gd` renders the stick on its own
+(`--view=full|heel|top`), and `tools/tests/test_stick.gd` checks the heel.
 
 ## Text on signs
 
