@@ -308,36 +308,40 @@ static func _trash_can(age: int) -> VoxelModel:
 
 # ---------------------------------------------------------------- signage
 
+## 5x7 capitals, big enough to read across the rink.
 const _GLYPHS := {
-	"R": ["110", "101", "110", "101", "101"],
-	"I": ["111", "010", "010", "010", "111"],
-	"N": ["101", "111", "111", "111", "101"],
-	"K": ["101", "110", "100", "110", "101"],
-	"E": ["111", "100", "110", "100", "111"],
-	"C": ["011", "100", "100", "100", "011"],
-	"A": ["010", "101", "111", "101", "101"],
-	"O": ["010", "101", "101", "101", "010"],
-	"M": ["101", "111", "111", "101", "101"],
-	"U": ["101", "101", "101", "101", "111"],
-	"T": ["111", "010", "010", "010", "010"],
-	"Y": ["101", "101", "010", "010", "010"],
-	" ": ["000", "000", "000", "000", "000"],
+	"R": ["11110", "10001", "10001", "11110", "10100", "10010", "10001"],
+	"I": ["11111", "00100", "00100", "00100", "00100", "00100", "11111"],
+	"N": ["10001", "11001", "11001", "10101", "10011", "10011", "10001"],
+	"K": ["10001", "10010", "10100", "11000", "10100", "10010", "10001"],
+	"E": ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+	"C": ["01110", "10001", "10000", "10000", "10000", "10001", "01110"],
+	"A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
+	"O": ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
+	"M": ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+	"U": ["10001", "10001", "10001", "10001", "10001", "10001", "01110"],
+	"T": ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
+	"Y": ["10001", "10001", "01010", "00100", "00100", "00100", "00100"],
+	" ": ["00000", "00000", "00000", "00000", "00000", "00000", "00000"],
 }
+const GLYPH_ADVANCE := 6
 
 
-## Writes text in a 3x5 voxel font on the plane z, readable from the front
+## Writes text in a 5x7 voxel font on the plane z, readable from the front
 ## (-Z). (x, y) is the top-left of the first letter as the viewer sees it,
-## which is its highest x, since +X is the viewer's left.
+## which is its highest x, since +X is the viewer's left. Paint letters into
+## a surface (same z as the board) so ageing doesn't chip them; raised
+## letters sit in front of it.
 ## `skip` lists letter indexes to leave off (letters that fell down).
 static func letters(m: VoxelModel, text: String, x: int, y: int, z: int, c: Color, skip := []) -> void:
 	for i in text.length():
 		if i in skip:
 			continue
 		var g: Array = _GLYPHS.get(text[i], _GLYPHS[" "])
-		for row in 5:
-			for col in 3:
+		for row in 7:
+			for col in 5:
 				if g[row][col] == "1":
-					m.set_voxel(x - i * 4 - col, y - row, z, c)
+					m.set_voxel(x - i * GLYPH_ADVANCE - col, y - row, z, c)
 
 
 ## The board over the main entrance. Old: hand-painted "RINK" with a letter
@@ -345,26 +349,26 @@ static func letters(m: VoxelModel, text: String, x: int, y: int, z: int, c: Colo
 ## box sign with red letters and bulb trim.
 static func _rink_sign(age: int) -> VoxelModel:
 	var m := VoxelModel.new(V)
-	var w := 25
+	var w := 27
 	var h := 11
 	if age == Wear.RENOVATED:
 		m.box(0, 0, 0, w, h, 2, Wear.CHARCOAL)
 		for x in range(0, w, 2):
 			m.set_voxel(x, h - 1, -1, Wear.LED)
 			m.set_voxel(x, 0, -1, Wear.LED)
-		letters(m, "RINK", 19, 7, -1, Wear.RED)
+		letters(m, "RINK", 24, 8, -1, Wear.RED)
 		return m.set_pivot(w * 0.5, 0, 1)
 	m.box(0, 0, 0, w, h, 1, Wear.OLD_CREAM)
 	m.box(0, 0, 1, w, h, 1, Wear.OLD_WOOD_DARK)
 	m.box(-1, -1, 0, w + 2, 1, 1, Wear.OLD_BROWN)
 	m.box(-1, h, 0, w + 2, 1, 1, Wear.OLD_BROWN)
 	if age == Wear.WORN:
-		letters(m, "RINK", 19, 7, -1, Wear.RED.darkened(0.25), [2])
-		# the ghost of the missing N, where the paint stayed cleaner
-		letters(m, "  N ", 19, 7, 0, Wear.OLD_CREAM.lightened(0.25))
+		# painted into the board; the N has peeled off, leaving a cleaner ghost
+		letters(m, "  N ", 24, 8, 0, Wear.OLD_CREAM.lightened(0.3))
+		letters(m, "RINK", 24, 8, 0, Wear.RED.darkened(0.25), [2])
 	else:
-		letters(m, "RI K", 19, 7, -1, Wear.RED.darkened(0.25))
-		letters(m, "  N ", 19, 7, -1, Color("e0403a"))
+		letters(m, "RI K", 24, 8, 0, Wear.RED.darkened(0.25))
+		letters(m, "  N ", 24, 8, 0, Color("e0403a"))
 	return m.set_pivot(w * 0.5, 0, 0.5)
 
 
