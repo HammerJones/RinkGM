@@ -12,7 +12,8 @@ workstream is in brackets; see `ARCHITECTURE.md` for who owns what.
 ## M1: One skater, real controls
 
 - [ ] `Skills` model and the skills-to-physics mapping [Mechanics + Physics]
-- [ ] Slapshot-style controller scheme with 90° stick arc, lift, tilt, dash, stop [Controls + Physics]
+- [ ] Slapshot-style controller scheme with ~220° stick arc, lift, tilt, dash, stop [Controls + Physics]
+- [ ] Better stick models and natural grip: two hands in front, one hand out wide [Controls]
 - [ ] Keyboard and mouse version of the same scheme [Controls]
 - [ ] Player switching removed; you play one skater and the AI plays the rest [Mechanics]
 - [ ] Faster, snappier skating and puck feel, still balanced in autoplay [Physics]
@@ -25,6 +26,12 @@ workstream is in brackets; see `ARCHITECTURE.md` for who owns what.
 - [ ] Stick lifts, hits, puck-loss on hard turns, stick-handling speed from skills [Physics]
 - [ ] Match event hub feeding stats and the HUD [Mechanics + UI]
 - [ ] AI that plays positions and changes lines [Physics + Mechanics]
+
+## M2.5: Moves
+
+- [ ] Animated side-by-side comparisons of shot types and dekes with their gestures, for Sean to pick from [Controls]
+- [ ] Move catalog, gesture recognition and move execution [Controls + Physics]
+- [ ] Learning and unlocking moves through the career [Mechanics]
 
 ## M3: A season
 

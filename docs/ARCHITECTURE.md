@@ -14,7 +14,7 @@ change this file in the same PR and say why.
 | Controls | `scripts/core/input_setup.gd`, `scripts/input/` (human controller, device handling, bindings). Only `scripts/input/` reads `Input` |
 | UI and styling | `scripts/ui/`, `assets/ui/` (Theme resource, fonts with their licences) |
 | Project manager | `docs/`, `tools/`, `.github/`, `README.md` |
-| Art (shared) | `scripts/art/`, `scripts/voxel/`, `art/` |
+| Art (shared) | `scripts/art/`, `scripts/voxel/`, `art/`. Stick models and the hands/grip IK in `scripts/game/skater_rig.gd` are with Controls for now, because Sean asked that thread for them |
 
 Editing a file you don't own is fine for a small, clearly commented hook. Tell
 the owner, and keep the hook to a call into code that lives in your own area.
@@ -60,20 +60,41 @@ Fixed anchors from Sean's design:
 - `pass_quality` near 100 makes it almost certain the intended teammate gains
   control.
 - `agility`: sharp turns can work the puck loose and weaken hits.
-- `stick_handling`: how fast the stick moves across the 90° arc and how likely
+- `stick_handling`: how fast the stick moves across the stick arc and how likely
   the puck stays on the blade.
 - `toughness`: how hard the player hits and how likely they are to be injured.
 
 ### 2. Input intent: `Skater.Controls` (fields owned by Controls)
 
 The one struct a human controller and the AI both fill each tick. Controls owns
-its fields (stick position in the 90° arc, stick lift, stick tilt, dash, stop,
+its fields (stick position in the arc, stick lift, stick tilt, dash, stop,
 ...). Physics owns what the skater does with them. Skill-based limits (how fast
 the stick can move) are applied in physics from attributes, never in the input
 layer. The AI must drive skaters through the same struct, so anything a player
 can do the AI can do.
 
-### 3. Match events (owned by Game mechanics)
+### 3. Moves: shot types and dekes as learned gestures
+
+Sean wants shot types and stick moves to be skills the player unlocks and then
+performs by tracing a pattern with the right stick or mouse. Three owners, one
+shared list:
+
+- **Move catalog** (`scripts/core/moves.gd`, owned by Controls): one entry per
+  move with its id, display name, the gesture pattern that triggers it, and its
+  gamepad and mouse descriptions. Every other system refers to moves by id.
+- **Recognising gestures** (`scripts/input/`, Controls) turns stick or mouse
+  paths into a move id on `Skater.Controls` (for example `move_request`). The
+  AI requests moves through the same field.
+- **Doing the move** (Physics): the blade path, puck behaviour, shot speed and
+  accuracy for each move id, read from `PhysicsProfile`, plus the ~220° arc
+  limit and how grip changes it. Two hands on the stick in the front ~90° of
+  travel and one hand beyond that, which trades control for reach.
+- **Knowing the move** (Mechanics): which move ids a player has unlocked and
+  how they unlock (`PlayerProfile`), exposed as `Skater.knows(move_id)`. A
+  move the skater hasn't learned is not performed; the gesture falls back to
+  a basic stickhandle or shot.
+
+### 4. Match events (owned by Game mechanics)
 
 Not built yet; `game.gd` calls `BoxScore` directly until it is. Gameplay code
 will report what happened (shot, goal, save, pass completed,
@@ -94,8 +115,8 @@ reading `game.gd` internals.
 - Godot 4.3, GDScript, voxel art with oriented voxels. Physics at 120 Hz.
 - One `Tuning.blend` value slides between simulation and arcade assists.
 - Controls follow Slapshot Rebound: left stick moves, left-stick press dashes,
-  right-stick press stops, right stick places the stick in a 90° arc in front of
-  the player, left trigger lifts the stick (stick lift on defence), right
+  right-stick press stops, right stick places the stick in a ~220° arc around
+  the player (enough to reach behind for a wind-up, not a full circle), left trigger lifts the stick (stick lift on defence), right
   trigger tilts it. Keyboard and mouse get an equivalent mapping.
 - The player controls one skater for the whole game, RPG style. No player
   switching.
