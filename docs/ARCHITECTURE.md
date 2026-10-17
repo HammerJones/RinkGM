@@ -11,11 +11,11 @@ change this file in the same PR and say why.
 | --- | --- |
 | Physics | `scripts/game/skater.gd` (skating, blade, puck handling, shots, passes, checks), `puck.gd`, `goalie.gd`, on-ice AI (`skater_ai.gd`, goalie decisions), rink collision in `rink.gd`, `scripts/core/tuning.gd`, the fixed-step sim loop in `game.gd` (`_physics_process`, body and puck contact) |
 | Game mechanics | `scripts/career/` (player attributes, progression, injuries, season, playoffs, league tiers, saves), match rules in `game.gd` (periods, lineups, line changes, game length), stats, the match event hub |
-| Controls | `scripts/core/input_setup.gd`, `scripts/input/` (human controller, device handling, bindings). Only `scripts/input/` reads `Input` |
+| Controls | `scripts/core/input_setup.gd`, `scripts/input/` (human controller, device handling, bindings), the move catalog `scripts/core/moves.gd`, and how players hold and swing the stick (grip and hand IK in `scripts/game/skater_rig.gd`). Only `scripts/input/` reads `Input` |
 | UI and styling | `scripts/ui/`, `assets/ui/` (Theme resource, fonts with their licences) |
-| Rink environment (new thread) | `scenes/venue/`, `scripts/venue/`: the building around the ice (stands, benches, penalty boxes, lobby, locker rooms, Zamboni bay, lighting, crowd). `rink.gd` keeps the playing surface, boards and nets |
 | Project manager | `docs/`, `tools/`, `.github/`, `README.md`, the developer menu in `scripts/dev/` |
-| Art (shared) | `scripts/art/`, `scripts/voxel/`, `art/`. Stick models and the hands/grip IK in `scripts/game/skater_rig.gd` are with Controls for now, because Sean asked that thread for them |
+| World and asset design | The look and the asset library: art direction and the voxel style guide (`docs/ART.md`), palettes and materials, `scripts/art/` (characters, goalies, equipment, **stick meshes**, puck, nets, and a props kit of seats, doors, benches, glass, signage, Zamboni and so on), `scripts/voxel/`, `art/` (MagicaVoxel sources). Later, the world beyond the rink (town, other venues) |
+| Rink environment | The building around the ice: `scenes/venue/` and `scripts/venue/`, laid out from the asset kit, plus room layout, collision, walkable floors and doors, lighting, crowd placement, and renovation states (worn, repaired, renovated). `rink.gd` keeps the playing surface, boards and nets |
 
 Editing a file you don't own is fine for a small, clearly commented hook. Tell
 the owner, and keep the hook to a call into code that lives in your own area.
@@ -124,7 +124,12 @@ on the tilde key, and a full rink environment that can be explored later.
   game or the season, give injuries, unlock moves, show AI debug and change
   game speed. It changes game state only through the owners' public functions,
   and it never saves those edits into the career unless asked to.
-- **Rink environment (new thread).** The building is its own scene,
+- **World and asset design** makes the meshes and the props kit, and Rink
+  environment places them. Asset design owns how a thing looks; Rink
+  environment owns where it goes and how it behaves. Renovation variants
+  (worn, repaired, renovated) of a prop are made by Asset design and switched
+  by Rink environment.
+- **Rink environment.** The building is its own scene,
   `scenes/venue/venue.tscn`, which the match scene instances around the ice.
   Build it at real human scale with walkable floors, doors and collision, so
   an explorable player can be added later without rebuilding it. Rooms are
