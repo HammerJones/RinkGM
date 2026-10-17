@@ -266,24 +266,28 @@ func update_goalie(g: Goalie, dt: float) -> void:
 	stick.transform = Transform3D(stick_basis, heel)
 
 
-## Blade flat on the ice at `center` (rig space), square to the line from the
-## body; the shaft runs from the heel up to the top hand. Two hands: top hand
-## on the knob, bottom hand a forearm's length down. One hand: the top hand
-## reaches out towards the blade and the bottom hand drops to the hip.
+## Blade flat on the ice at `center` (rig space), in line with the shaft as
+## on a real stick: seen from above, the toe points away from the hands and
+## the shaft rises over the heel. Two hands: top hand on the knob, bottom
+## hand a forearm's length down. One hand: the top hand reaches out towards
+## the blade and the bottom hand drops to the hip.
 func _pose_stick(center: Vector3, flat: Vector3, tilt: float, k: float) -> void:
 	var dir := flat.normalized() if flat.length() > 0.05 else Vector3.FORWARD
-	var toe := Vector3.UP.cross(dir)
-	var bb := Basis(toe, Vector3.UP, toe.cross(Vector3.UP))
-	# tilt rolls the blade open about its length
-	bb = bb.rotated(toe, -tilt * 0.7)
-	blade.transform = Transform3D(bb, center)
-	var heel := center + bb * BLADE_HEEL
 	var hy := 0.95 - 0.1 * k - _crouch + center.y * 0.5
 	var two := Vector3(0.0, hy, -0.22) + flat * 0.22
 	# one-handed: the top (left) hand reaches from its shoulder towards the blade
 	var shoulder := Vector3(-0.3, hy + 0.25, 0.0)
 	var one := shoulder + (Vector3(dir.x, 0, dir.z) * 0.65 + Vector3(0, -0.3, 0))
 	var grip := two.lerp(one, _one_hand)
+	var reach := Vector3(center.x - grip.x, 0, center.z - grip.z)
+	var toe := reach.normalized() if reach.length() > 0.05 else dir
+	# the blade model curves towards +Z, its forehand; a right shot's forehand
+	# is left of the toe, so the blade basis is mirrored
+	var bb := Basis(toe, Vector3.UP, Vector3.UP.cross(toe))
+	# tilt rolls the blade open about its length
+	bb = Basis(toe, tilt * 0.7) * bb
+	blade.transform = Transform3D(bb, center)
+	var heel := center + bb * BLADE_HEEL
 	var y := (grip - heel).normalized()
 	var x := toe - y * toe.dot(y)
 	x = x.normalized() if x.length() > 0.01 else Vector3.RIGHT
