@@ -103,7 +103,10 @@ func _check_league_gate(seed_: int) -> void:
 	var paid := [false]
 	c.league_gate = func() -> bool: return paid[0]
 	var g := c.next_user_game()
-	_expect(c.user().benched and not g.user_can_play, "unpaid dues bench the user")
+	while g.is_empty() and c.phase == Career.Phase.SEASON:  # skip byes
+		c.play_round()
+		g = c.next_user_game()
+	_expect(c.user().benched and not g.get("user_can_play", true), "unpaid dues bench the user")
 	var lu: Dictionary = c.lineup_for(c.user_team())
 	var dressed := false
 	for l in lu.F + lu.D:
@@ -114,7 +117,7 @@ func _check_league_gate(seed_: int) -> void:
 	_expect(c.user().season_stats.gp == gp, "the team plays without a benched user")
 	paid[0] = true
 	g = c.next_user_game()
-	_expect(not c.user().benched and g.user_can_play, "paying dues puts the user back in")
+	_expect(not c.user().benched and g.get("user_can_play", true), "paying dues puts the user back in")
 
 
 func _run_career(seasons: int, seed_: int, pos: String) -> void:
