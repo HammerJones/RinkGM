@@ -128,7 +128,8 @@ func follow_through(strength: float, side := 1.0) -> void:
 ## Starts a follow-through when this skater's shot just left the blade.
 func _watch_shots(s: Skater) -> void:
 	var shots: int = s.game.stats.shots
-	if _shots >= 0 and shots > _shots and s.puck.last_touch == s and not s.has_puck():
+	# wind-up shots call follow_through() themselves; this catches move shots
+	if _shots >= 0 and shots > _shots and _follow <= 0.0 and s.puck.last_touch == s and not s.has_puck():
 		follow_through(_prev_wind * 1.3 + 0.35, -1.0 if _prev_ang < -0.2 else 1.0)
 	_shots = shots
 	_prev_wind = s.windup()

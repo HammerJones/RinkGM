@@ -46,8 +46,8 @@ const CATALOG := [
 	{"id": &"toe_drag_shot", "name": "Toe drag shot", "starter": false, "executor": "move",
 		"pad": "Hold LT and RT, stick out front, pull it back across to the backhand",
 		"mouse": "Hold both buttons, mouse forward, pull it back across"},
-	{"id": &"lacrosse", "name": "Lacrosse", "starter": false, "executor": "proposed",
-		"pad": "Hold RT, sweep from the backhand round to the forehand, then push forward",
+	{"id": &"lacrosse", "name": "Lacrosse", "starter": false, "executor": "move",
+		"pad": "Hold RT, sweep from the backhand round to the forehand; keep RT held and push forward to throw",
 		"mouse": "Same with left click and the mouse"},
 ]
 

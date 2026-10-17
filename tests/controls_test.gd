@@ -168,8 +168,7 @@ func _moves() -> void:
 		else:
 			f.stick = side.call(-30.0, 0.6)
 	seen = await _move_run(drag)
-	# (whether the puck survives the path is physics' to tune: tools/bench)
-	_check(seen[0] == &"toe_drag" and not seen[1], "tilt + pull back across is a toe drag")
+	_check(seen[0] == &"toe_drag" and not seen[1] and h.has_puck(), "toe drag pulls the puck across and keeps it")
 
 	# toe drag shot: the same with lift held too
 	seen = await _move_run(func(f, t):
@@ -182,6 +181,17 @@ func _moves() -> void:
 		var a: float = 50.0 if t < 0.4 or t > 0.6 else -50.0
 		f.stick = side.call(a, 0.8) if t > 0.1 else Vector2.ZERO)
 	_check(seen[0] == &"quick_deke" and h.has_puck(), "forehand-backhand-forehand whip is a quick deke")
+
+	# lacrosse: tilt held, swept from the backhand round to the forehand, the
+	# puck rides up on the blade; push forward (tilt still held) to throw it
+	var peak := [0.0]
+	seen = await _move_run(func(f, t):
+		peak[0] = maxf(peak[0], game.puck.position.y)
+		f.tilt = 1.0
+		var a: float = lerpf(-60.0, 120.0, clampf((t - 0.4) / 0.4, 0.0, 1.0))
+		f.stick = side.call(a, minf(t / 0.3, 0.85)) if t < 1.3 else Vector2(1, 0))
+	print("lacrosse: puck rode up to %.2f m" % peak[0])
+	_check(seen[0] == &"lacrosse" and seen[1] and peak[0] > 0.6, "lacrosse lifts the puck onto the blade and throws it")
 	h.skills.values["stick_handling"] = 55.0
 
 

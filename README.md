@@ -64,7 +64,7 @@ moves a player has learned is up to progression (`Skater.knows`).
 | Quick deke | Whip the stick forehand, backhand, forehand | Learned |
 | Toe drag | Hold RT, stick out front, pull it back across to the backhand | Learned |
 | Toe drag shot | Hold LT and RT, stick out front, pull it back across | Learned |
-| Lacrosse | Hold RT, sweep from the backhand round to the forehand, push forward | Proposed |
+| Lacrosse | Hold RT, sweep from the backhand round to the forehand: the puck rides up on the blade; keep RT held and push forward to throw it | Learned |
 
 ### Physics and player ratings
 

@@ -28,6 +28,10 @@ func feed(local: Vector2, tilt: float, lift: bool, has_puck: bool, dt: float) ->
 func _match(c: Vector2, tilted: bool, lift: bool) -> StringName:
 	var r := c.length()
 	var ang := rad_to_deg(atan2(c.y, c.x))
+	if tilted and r > 0.8 and ang > 45.0:
+		# swept round from the backhand: the puck rides up on the blade
+		if _was(func(a, rr, age): return a < -45.0 and rr > 0.8 and age < 0.5):
+			return &"lacrosse"
 	if tilted and r > 0.5 and ang < -55.0:
 		# pulled back across from out in front
 		if _was(func(a, rr, age): return absf(a) < 35.0 and rr > 0.45 and age < 0.3):

@@ -137,6 +137,9 @@ func _run_moves() -> void:
 		f.tilt = 1.0 if t > 0.3 and t < 1.4 else 0.0
 		f.lift = 1.0 if t > 0.7 and t < 1.0 else 0.0
 		f.stick = _at(0.0, minf(t / 0.4, 1.0) * 0.5) if t < 0.8 else (_at(-80.0, 0.8) if t < 0.86 else _at(-25.0, 0.5)), 3.2, 30.0)
+	await _move_clip("Lacrosse", "Learned. Hold RT, sweep from the backhand round to the forehand, then push forward.", func(f, t):
+		f.tilt = 1.0 if t > 0.2 and t < 2.0 else 0.0
+		f.stick = _at(lerpf(-60.0, 120.0, clampf((t - 0.5) / 0.4, 0.0, 1.0)), minf(t / 0.3, 0.85)) if t < 1.7 else _at(0.0, 1.0), 4.0, 125.0)
 	_seg("", "")
 	_title("", "")
 
