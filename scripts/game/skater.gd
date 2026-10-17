@@ -7,7 +7,7 @@ extends Node3D
 ##  * a dash is a burst stride up to top speed; the hockey stop scrapes
 ##    speed off sideways
 ##  * the stick blade is its own point that moves at a limited speed inside a
-##    90 degree arc in front of the body; the puck follows it on a spring whose
+##    220 degree arc around the body (reaching back past each hip); the puck follows it on a spring whose
 ##    force is capped by the skater's grip (see StickPuck), so turning or
 ##    stickhandling harder than your skill allows works the puck loose
 ## Every number comes from `profile` (PhysicsProfile, built from `stats`), and
@@ -18,9 +18,10 @@ const RADIUS := 0.38
 const MASS := 85.0
 const REACH_MIN := 0.55
 const REACH_MAX := 1.5
-const ARC_HALF := PI / 4.0                 # the blade's 90 degree arc
+const ARC_HALF := deg_to_rad(110.0)       # the blade's 220 degree arc
 const DEFAULT_BLADE := Vector2(0.95, 0.3)  # (forward, right) relative to the body
-const WIND_SPOT := Vector2(-0.15, 0.8)     # where a drawn-back blade sits
+const WIND_SPOT := Vector2(-0.15, 0.8)     # where a drawn-back blade sits (forehand; y flips for the backhand)
+const DRAWN_ANGLE := deg_to_rad(95.0)      # stick further back than this draws the shot back
 const SLAP_MIN := 0.18                     # a lifted wind-up shorter than this is a wrist shot
 const LIFT_HEIGHT := 0.22
 const STICK_LIFTED_TIME := 0.55
@@ -106,6 +107,16 @@ var ai_aim: Variant = null
 var ai_slap := false
 var ai_tilt := 0.0
 
+# shots and stick moves (see Moves): what this skater knows, the kind of shot
+# being wound up, and a canned stick move in progress
+var moves := Moves.all()
+var shot_kind := Moves.WRIST
+var move := Moves.NONE
+var move_time := 0.0
+var _move_from := Vector2.ZERO
+var _wind_side := 1.0
+var _gest: Array[Vector3] = []  # (forward, right, age) of recent stick input in the body frame
+
 var rig: SkaterRig
 var _prev_shoot := false
 var _prev_lift := false
@@ -181,6 +192,7 @@ func cancel_shot() -> void:
 	_stick_wound = false
 	winding = false
 	wind_time = 0.0
+	move = Moves.NONE
 
 
 ## 0..1 visual wind-up for the rig and HUD.
@@ -198,6 +210,8 @@ func blade_down() -> bool:
 ## Where the puck is pulled to while carried. During a slapshot wind-up the
 ## blade lifts away, so the puck stays where the wind-up started.
 func puck_anchor() -> Vector3:
+	if move == Moves.LACROSSE:
+		return blade_pos + Vector3.UP * (blade_height + 0.03)
 	if winding and wind_slap:
 		return _blade_world(_anchor_local)
 	return Vector3(blade_pos.x, 0, blade_pos.z)
@@ -329,7 +343,11 @@ func _stick_drawn() -> bool:
 	if ctrl.stick.length() < 0.5:
 		return false
 	var l := _stick_local(ctrl.stick)
-	return absf(atan2(l.y, l.x)) > deg_to_rad(110.0)
+	return absf(atan2(l.y, l.x)) > DRAWN_ANGLE
+
+
+func knows(id: int) -> bool:
+	return moves.has(id)
 
 
 func _update_blade(dt: float, blend: float) -> void:
@@ -342,12 +360,14 @@ func _update_blade(dt: float, blend: float) -> void:
 		var l := _stick_local(ctrl.stick)
 		var mag := minf(l.length(), 1.0)
 		target = Vector2(cos(atan2(l.y, l.x)), sin(atan2(l.y, l.x))) * lerpf(REACH_MIN, REACH_MAX, mag)
-	# keep it inside the 90 degree arc and the stick's reach
+	# keep it inside the 220 degree arc and the stick's reach
 	var reach := clampf(target.length(), REACH_MIN, REACH_MAX)
 	var ang := clampf(atan2(target.y, target.x), -ARC_HALF, ARC_HALF)
 	target = Vector2(cos(ang), sin(ang)) * reach
 	if winding:
-		target = target.lerp(WIND_SPOT, minf(1.0, wind_time / 0.12))
+		target = target.lerp(Vector2(WIND_SPOT.x, WIND_SPOT.y * _wind_side), minf(1.0, wind_time / 0.12))
+	if move != Moves.NONE:
+		target = _move_target()
 	# the blade chases the target with limited speed and acceleration
 	var want := (target - blade_local) * profile.blade_response
 	want = want.limit_length(profile.blade_speed * lerpf(1.0, 1.25, blend))
@@ -361,6 +381,8 @@ func _update_blade(dt: float, blend: float) -> void:
 		h = 0.35
 	elif winding and wind_slap:
 		h = 0.9 * windup() + 0.2
+	elif move == Moves.LACROSSE:
+		h = 1.05 * smoothstep(0.05, LACROSSE_SCOOP, move_time)
 	elif lifting:
 		h = LIFT_HEIGHT
 	blade_height = lerpf(blade_height, h, minf(1.0, 25.0 * dt))
@@ -397,18 +419,43 @@ func _handle_shot_input(dt: float, able: bool) -> void:
 			cancel_shot()
 		_prev_shoot = ctrl.shoot
 		return
+	_record_gesture(dt)
+	if move != Moves.NONE:
+		_update_move(dt)
+		return
+	if not winding and has_puck():
+		var g := _gesture()
+		if g == Moves.TOE_DRAG or g == Moves.LACROSSE:
+			_start_move(g)
+			return
+		if g == Moves.SNAP:
+			shot_kind = Moves.SNAP
+			wind_time = 0.3
+			_fire()
+			return
 	if _flicked(dt):
+		shot_kind = Moves.QUICK
 		_fire()
 		return
 	var drawn := _stick_drawn()
 	var held := ctrl.shoot
+	# with LT held the slapshot starts as soon as the stick heads back on the
+	# forehand, so the lifted blade doesn't leave the puck behind
+	var slap_draw := ctrl.lift and has_puck() and knows(Moves.SLAP) and ctrl.stick.length() > 0.5 \
+		and rad_to_deg(atan2(_stick_local(ctrl.stick).y, _stick_local(ctrl.stick).x)) > 60.0
+	drawn = drawn or slap_draw
 	if not winding and ((held and not _prev_shoot) or drawn):
 		winding = true
 		wind_time = 0.0
-		wind_slap = ctrl.lift
+		_wind_side = -1.0 if drawn and _stick_local(ctrl.stick).y < 0.0 else 1.0
+		# the slapshot is a learned move; without it a lifted wind-up is a wrist shot
+		wind_slap = ctrl.lift and _wind_side > 0.0 and knows(Moves.SLAP) and (has_puck() or knows(Moves.ONE_TIMER))
+		shot_kind = Moves.SLAP if wind_slap else (Moves.BACKHAND if _wind_side < 0.0 else Moves.WRIST)
 		_stick_wound = drawn and not held
 		_wind_grace = 0.0
-		_anchor_local = blade_local
+		# the puck waits where it is while the blade goes back
+		var pd := puck.position - position
+		_anchor_local = Vector2(pd.dot(heading), pd.dot(right_vec())) if has_puck() else blade_local
 	_prev_shoot = held
 	if not winding:
 		return
@@ -448,15 +495,110 @@ func _flicked(dt: float) -> bool:
 	return true
 
 
+# ---------------------------------------------------------------- moves
+
+const GEST_KEEP := 0.7
+const TOE_DRAG_TIME := 0.32
+const LACROSSE_SCOOP := 0.4
+const LACROSSE_HOLD := 1.6
+
+
+func _record_gesture(dt: float) -> void:
+	for i in _gest.size():
+		_gest[i].z += dt
+	var l := _stick_local(ctrl.stick) if ctrl.stick.length() > 0.2 else Vector2.ZERO
+	_gest.append(Vector3(l.x, l.y, 0.0))
+	while _gest.size() > 2 and _gest[0].z > GEST_KEEP:
+		_gest.pop_front()
+
+
+## Which pattern the recent stick path traced (see Moves), or NONE.
+func _gesture() -> int:
+	var c := _gest[-1]
+	var r := Vector2(c.x, c.y).length()
+	var ang := rad_to_deg(atan2(c.y, c.x))
+	var tilted := ctrl.tilt > 0.5
+	if tilted and knows(Moves.LACROSSE) and r > 0.8 and ang > 45.0:
+		# sweeping round from the backhand side towards the forehand hip; the
+		# scoop finishes the sweep up behind the hip
+		if _was(func(a, rr, age): return a < -45.0 and rr > 0.8 and age < 0.5):
+			return Moves.LACROSSE
+	if tilted and knows(Moves.TOE_DRAG) and r > 0.5 and ang < -55.0:
+		# pulled back across from out in front
+		if _was(func(a, rr, age): return absf(a) < 35.0 and rr > 0.7 and age < 0.3):
+			return Moves.TOE_DRAG
+	if knows(Moves.SNAP) and c.x > 0.85 and absf(ang) < 20.0:
+		# snapped forward from out wide on the forehand
+		if _was(func(a, rr, age): return a > 60.0 and a < 105.0 and rr > 0.6 and age < 0.12):
+			return Moves.SNAP
+	return Moves.NONE
+
+
+func _was(test: Callable) -> bool:
+	for g in _gest:
+		if test.call(rad_to_deg(atan2(g.y, g.x)), Vector2(g.x, g.y).length(), g.z):
+			return true
+	return false
+
+
+func _start_move(id: int) -> void:
+	move = id
+	move_time = 0.0
+	_move_from = blade_local
+	_gest.clear()
+
+
+## Canned blade paths; the puck rides the blade (NHL-style) until they finish.
+func _move_target() -> Vector2:
+	match move:
+		Moves.TOE_DRAG:
+			var e := smoothstep(0.0, 1.0, move_time / TOE_DRAG_TIME)
+			return _move_from.lerp(Vector2(0.5, -0.65), e)
+		Moves.LACROSSE:
+			var e := smoothstep(0.0, 1.0, move_time / LACROSSE_SCOOP)
+			# round the front and up behind the forehand hip
+			var a := lerpf(atan2(_move_from.y, _move_from.x), deg_to_rad(100.0), e)
+			return Vector2(cos(a), sin(a)) * lerpf(_move_from.length(), 0.8, e)
+	return blade_local
+
+
+func _update_move(dt: float) -> void:
+	move_time += dt
+	if not has_puck():
+		move = Moves.NONE
+		return
+	match move:
+		Moves.TOE_DRAG:
+			if move_time >= TOE_DRAG_TIME:
+				move = Moves.NONE
+		Moves.LACROSSE:
+			if move_time < LACROSSE_SCOOP:
+				return
+			var l := _stick_local(ctrl.stick)
+			if ctrl.stick.length() > 0.6 and l.x > 0.5:
+				shot_kind = Moves.LACROSSE
+				move = Moves.NONE
+				wind_time = 0.4
+				_fire()
+			elif move_time > LACROSSE_SCOOP + LACROSSE_HOLD or ctrl.tilt < 0.2:
+				# let it drop back to the ice
+				move = Moves.NONE
+
+
 func _fire() -> void:
 	var held := wind_time
 	var slap := wind_slap and held >= SLAP_MIN
+	if shot_kind == Moves.SLAP and not slap:
+		shot_kind = Moves.WRIST
 	winding = false
 	_stick_wound = false
 	wind_time = 0.0
 	# the blade follows through
-	blade_local = Vector2(REACH_MAX * 0.85, 0.15)
+	var side := -1.0 if shot_kind == Moves.BACKHAND else 1.0
+	blade_local = Vector2(REACH_MAX * 0.85, 0.15 * side)
 	blade_lvel = Vector2.ZERO
+	if rig:
+		rig.follow_through(held * 1.5 + (0.4 if slap else 0.0), side)
 	if has_puck():
 		shoot(held, slap)
 		return
@@ -496,6 +638,17 @@ func shoot(held: float, slap: bool, incoming := 0.0) -> void:
 		err *= 1.35
 	else:
 		spd = p.wrist_speed(held)
+	match shot_kind:
+		Moves.BACKHAND:
+			spd *= 0.8
+			err *= 1.3
+		Moves.SNAP:
+			# barely any wind-up, but the flex of the shaft does the work
+			spd = p.wrist_speed(0.55)
+			err = p.aim_error(0.3)
+		Moves.LACROSSE:
+			spd = p.wrist_speed(0.4) * 0.9
+			err *= 1.25
 	if incoming > 0.0:
 		spd += incoming * 0.25
 		err *= 1.3
@@ -506,11 +659,13 @@ func shoot(held: float, slap: bool, incoming := 0.0) -> void:
 	# pick a target height at the net and solve for the lift that gets there:
 	# tilt opens the blade and raises the shot
 	var h_target: float
-	if ctrl.tilt > 0.05:
+	if shot_kind == Moves.LACROSSE:
+		h_target = randf_range(0.75, 1.05)
+	elif ctrl.tilt > 0.05:
 		h_target = lerpf(0.25, 1.1, ctrl.tilt)
 	else:
 		h_target = randf_range(0.04, 0.22)
-	h_target = maxf(0.0, h_target + randfn(0.0, err * net_dist * 0.5))
+	h_target = maxf(0.0, h_target + randfn(0.0, err * net_dist * 0.5)) - from.y
 	var vy := 0.0
 	if net_dist < 24.0:
 		var tt := net_dist / spd

@@ -77,8 +77,8 @@ func _ready() -> void:
 	_start_faceoff(Vector2.ZERO)
 	_handle_capture_args()
 	# `-- --test=controls` runs the scripted control checks in tests/, and
-	# `-- --demo=controls` plays the captioned controls showcase
-	if "--demo=controls" in OS.get_cmdline_user_args():
+	# `-- --demo=controls|skating|moves` plays a captioned showcase
+	if Array(OS.get_cmdline_user_args()).any(func(a: String) -> bool: return a.begins_with("--demo=")):
 		var d: Node = load("res://tests/controls_demo.gd").new()
 		d.set("game", self)
 		add_child(d)

@@ -67,6 +67,46 @@ static func leg(p: Dictionary, goalie: bool) -> VoxelModel:
 	return m
 
 
+## Skater thigh: pants leg and the top of the sock, hip joint to knee.
+static func thigh(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	m.box(0, 0, 0, 3, 2, 4, p.sock)
+	m.box(0, 1, 0, 3, 1, 4, p.sock_stripe2)
+	m.box(0, 2, 0, 3, 4, 4, p.pants)
+	m.set_pivot(1.5, 6, 2)
+	return m
+
+
+## Skater shin and skate, knee down to the blade. The blade runs along z.
+static func shin(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	m.box(1, 0, -2, 1, 1, 6, STEEL)
+	m.box(0, 1, -2, 3, 2, 5, BOOT)
+	m.box(0, 3, 0, 3, 3, 4, p.sock)
+	m.box(0, 4, 0, 3, 1, 4, p.sock_stripe)
+	m.box(0, 6, 0, 3, 1, 4, p.sock_stripe)  # knee
+	m.set_pivot(1.5, 6.5, 2)
+	return m
+
+
+## Skater upper arm (shoulder to elbow) and forearm with glove (elbow to hand).
+static func upper_arm(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	m.box(0, 0, 0, 3, 4, 3, p.jersey)
+	m.box(0, 0, 0, 3, 1, 3, p.stripe)
+	m.set_pivot(1.5, 4, 1.5)
+	return m
+
+
+static func forearm(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	m.box(0, 3, 0, 3, 2, 3, p.jersey_dark)
+	m.box(0, 0, 0, 3, 3, 3, GLOVE)
+	m.box(0, 3, 0, 3, 1, 3, p.jersey_dark.darkened(0.4))  # cuff
+	m.set_pivot(1.5, 5, 1.5)
+	return m
+
+
 ## Hockey pants. Pivot is at the hip joints.
 static func pants(p: Dictionary, goalie: bool) -> VoxelModel:
 	var m := VoxelModel.new(V)
@@ -172,6 +212,52 @@ static func stick(p: Dictionary, goalie: bool) -> VoxelModel:
 			for y in range(0, 2):
 				m.set_voxel(x, y, 0, TAPE if (x + y) % 2 == 0 else TAPE_DARK)
 	m.set_pivot(0.5, 0, 0.5)
+	return m
+
+
+## Skater stick, two parts on a finer grid so it reads as a real stick: the
+## shaft (heel at the pivot, butt end up +Y) and the blade.
+const STICK_V := 0.0175
+const SHAFT_VOX := 84
+
+
+static func shaft(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(STICK_V)
+	m.jitter = 0.03
+	var top := SHAFT_VOX
+	m.box(0, 0, 0, 2, top, 2, p.shaft)
+	# tapered hosel down into the blade
+	m.box(0, 0, 0, 2, 4, 2, p.shaft.darkened(0.15))
+	# team graphics on the upper shaft
+	m.box(0, top - 30, 0, 2, 3, 2, p.band)
+	m.box(0, top - 27, 0, 2, 1, 2, p.band2)
+	m.box(0, top - 26, 0, 2, 3, 2, p.band)
+	# taped grip and knob at the butt end
+	for y in range(top - 10, top):
+		m.box(0, y, 0, 2, 1, 2, TAPE if y % 2 == 0 else TAPE_DARK)
+	m.box(-1, top, -1, 4, 2, 4, TAPE)
+	m.set_pivot(1, 0, 1)
+	return m
+
+
+## Blade lying along +X from heel to toe, +Z is the forehand face; the toe
+## curves towards the forehand. Pivot is the middle of the blade on the ice,
+## where the puck sits.
+static func blade(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(STICK_V)
+	m.jitter = 0.03
+	var length := 17
+	for x in length:
+		var bend := 0 if x < 10 else (1 if x < 14 else 2)
+		var h := 4 if x < length - 2 else (3 if x == length - 2 else 2)
+		for y in h:
+			var c: Color = p.shaft
+			if x >= 2 and x < length - 1:
+				c = TAPE if (x + y) % 2 == 0 else TAPE_DARK
+			m.set_voxel(x, y, bend, c)
+	# heel rises into the hosel
+	m.box(0, 4, 0, 2, 2, 1, p.shaft)
+	m.set_pivot(8.5, 0, 0.5)
 	return m
 
 

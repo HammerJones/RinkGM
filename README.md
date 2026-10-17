@@ -20,11 +20,12 @@ virtual right stick, so both devices drive the same stick model.
 | Skate | Left stick | WASD |
 | Dash (push-off burst) | L3 (click left stick) | Shift |
 | Hockey stop | R3 (click right stick) | Space |
-| Stick blade (90 degree arc in front of you) | Right stick | Mouse (cursor is captured; Esc frees it) |
+| Stick blade (220 degree arc, back past each hip) | Right stick | Mouse (cursor is captured; Esc frees it) |
 | Stickhandle | Right stick side to side | Mouse side to side |
 | Quick shot (instant) | Flick the right stick forward | Flick the mouse forward |
-| Wind-up shot | Pull the stick behind you, then push it forward | Same with the mouse |
-| Slapshot | Hold LT as you pull back | Hold right click as you pull back |
+| Wrist shot | Draw the stick back behind your forehand hip, then sweep it forward | Same with the mouse |
+| Backhand | Draw back behind your backhand hip, then sweep forward | Same with the mouse |
+| Learned moves (snapshot, slapshot, one-timer, toe drag, lacrosse) | Stick patterns, see below | Same with the mouse |
 | Lift stick (offense: over the puck; defense: lift their stick) | LT | Right click |
 | Tilt blade (raises shots and passes) | RT (analog) | Left click (hold longer for more) |
 | Aim at the near or far post | Lean the left stick | Lean with W / S |
@@ -35,11 +36,32 @@ virtual right stick, so both devices drive the same stick model.
 | Camera (broadcast / isometric) | D-pad up | C |
 | Restart | Start | R |
 | Show/hide controls | | H |
+| Dev: unlock every learned move | | F2 |
 
 "Forward" and "behind" are relative to the way your skater faces; the stick
 itself is camera-relative, like the left stick. A faint arc on the ice shows
 where the blade can reach. Device reading lives in `scripts/input/`
 (`PlayerInput` reads devices, `HumanController` fills `Skater.Controls`).
+Both hands stay on the stick in the front 90 degrees; past that the bottom
+hand lets go and the top hand reaches.
+
+#### Shots and stick moves
+
+Shots and dekes are patterns you trace with the right stick (`scripts/game/moves.gd`).
+You start with the quick shot, wrist shot and backhand; the others are
+learned. A locked move's pattern falls back to the nearest starter (a
+slapshot pattern without the slapshot is a wrist shot).
+
+| Move | Pattern | |
+| --- | --- | --- |
+| Quick shot | Flick forward from neutral | Starter |
+| Wrist shot | Draw back behind the forehand hip, sweep forward | Starter |
+| Backhand | Draw back behind the backhand hip, sweep forward | Starter |
+| Snapshot | Hold the stick out wide on the forehand (60 degrees or more), snap it forward | Learned |
+| Slapshot | Hold LT and draw back on the forehand, then forward | Learned |
+| One-timer | Slapshot wind-up without the puck, fire as the pass arrives | Learned |
+| Toe drag | Hold RT, stick out front, pull it back across to the backhand | Learned |
+| Lacrosse | Hold RT, sweep from the backhand round to the forehand: the puck rides up on the blade; keep RT held, push forward to throw it | Learned |
 
 ### Physics and player ratings
 
@@ -57,7 +79,7 @@ assistance on top.
   sideways; agility sets how fast you turn, how hard your edges grip, and how
   short you stop. Carving never adds speed past top speed.
 - **Stick and puck** (`scripts/game/stick_puck.gd`): the blade moves inside a
-  90 degree arc with a speed and acceleration set by stick handling. The puck
+  220 degree arc with a speed and acceleration set by stick handling. The puck
   follows it on a spring, but the blade can only push the puck so hard (grip,
   also from stick handling). Stickhandle faster than your rating, or cut harder
   than you can hold (agility turns you faster, which is harder to hold), and
@@ -128,6 +150,7 @@ Arguments after `--` are read by the game:
 
 - `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
 - `--demo=controls` plays a captioned showcase of every move (`tests/controls_demo.gd`). Record it with `godot --path . --write-movie demo.avi --fixed-fps 30 --resolution 1280x720 -- --demo=controls`.
+- `--demo=skating` and `--demo=moves` are close-up reels of the skating animation and of the stick arc and every shot and stick move, with the right stick's path drawn on a pad.
 - `--autoplay` lets the AI drive your skater too (prints stats on exit).
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
 - `--screenshot=out.png --shot-after=6 [--iso] [--zoom=10] [--focus=x,z]` saves a frame and quits.

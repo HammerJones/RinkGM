@@ -54,6 +54,7 @@ func _ready() -> void:
 	_keys("reset", [KEY_R])
 	_button("reset", JOY_BUTTON_START)
 	_keys("help", [KEY_H])
+	_keys("unlock_moves", [KEY_F2])  # dev: try every learned move before progression unlocks them
 
 
 func _input(event: InputEvent) -> void:
