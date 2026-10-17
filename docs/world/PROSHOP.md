@@ -117,8 +117,15 @@ The barrel is emptied on a sale; a deal can be a standing order (Lorne takes
 the barrel every two weeks). Bev on the barrel: "Lorne made a bench out of
 forty-one Warlocks. Sturdier than they ever were as sticks."
 
-Stick wear and breaking events on the ice belong to the Physics thread (see
-the open questions).
+Stick wear and breaking on the ice is built by Physics (claude/physics-chvqi7,
+f2751aa). `Game.stick_broken(skater, stick_id, cause)` fires on every break,
+with `cause` one of slapshot, block, slash, lift or check; each break drops one
+stick in the barrel. Per-stick state maps onto the skater: condition is
+`Skater.stick_health` (1 new, 0 worn out; a worn stick breaks up to about 9x
+as often) and the catalogue's `break_per_game` becomes
+`Skater.stick_durability = StickWear.durability_for(break_per_game)`
+(0.02 / break_per_game: wood about 3.3, the NECRO-X 0.4). A used-rack stick
+divides its durability by 1.5.
 
 Sharpening is only at Bev's, so a road trip to Kessler means getting your
 edges done before you leave. Once the rink is renovated, Bev's lobby window
@@ -562,7 +569,8 @@ two copies of the same stick can have different curves.
 3. After an injury is rolled, Mechanics checks the part's protection and may
    drop it one severity step.
 4. After each game: edge `games` go up by 1 (0.5 for a practice), tape
-   `games_left` goes down, and each stick rolls `break_per_game`.
+   `games_left` goes down, and stick condition carries over from
+   `Skater.stick_health`. Breaks come from Physics during play, not a roll.
 
 ### Ownership
 

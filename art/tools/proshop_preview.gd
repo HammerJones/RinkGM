@@ -72,7 +72,7 @@ const CAST_IRON := Color("4d6b5c")  # Old Bertha's enamel
 const CHALK := Color("e8e4d6")
 const CHALKBOARD := Color("2e3b31")
 const LINO_A := Color("d2b27a")
-const LINO_B := Color("9c6a38")
+const LINO_B := Color("a8774a")
 const SECTION := Color("2a1d14")  # cut tops of the walls
 const LEATHER := Color("7a4a26")
 const PAD_TAN := Color("c08a52")
@@ -580,7 +580,7 @@ func _wire_bin(at: Vector3, cols: Array, kind: String, seed: int) -> void:
 		var c: Color = cols[r.randi() % cols.size()]
 		var px := r.randi_range(1, w - 8)
 		var pz := r.randi_range(1, d - 8)
-		var py := 3 + r.randi_range(0, 10) + (4 if px > 4 and px < w - 10 else 0)
+		var py := 3 + r.randi_range(0, 10) + (4 if px > 4 and px < w - 10 else 0) + (5 if kind != "glove" else 0)
 		if kind == "glove":
 			m.box(px, py, pz, 7, 5, 6, c)  # glove body
 			m.box(px + 1, py + 5, pz + 1, 5, 2, 4, c.darkened(0.2))  # fingers
@@ -997,7 +997,7 @@ func _clutter() -> void:
 	_put(cb2, Vector3(-2.2, 0, 11.3), 12, true, 221)
 	var tc := MeshInstance3D.new()
 	tc.mesh = Props.mesh("trash_can", _age)
-	tc.position = Vector3(-1.75, 0, 3.55)
+	tc.position = Vector3(-3.3, 0, 9.9)
 	_world.add_child(tc)
 	if not _ren():
 		var r := VoxelModel.new(V)
@@ -1022,14 +1022,14 @@ func _lights() -> void:
 		_put(fx.set_pivot(10, 0, 2.5), Vector3(0.6, 2.75, 4.2), 0, true, 170)
 		for k in 2:
 			var cm := VoxelModel.new(V)
-			cm.box(0, 0, 0, 1, 4, 1, Wear.OLD_STEEL.darkened(0.2))
+			cm.box(0, 0, 0, 1, 9, 1, Wear.OLD_STEEL.darkened(0.2))
 			_put(cm, Vector3(0.1 + k * 1.0, 2.8, 4.2), 0, false)
-		_box_mesh(Vector3(1.18, 0.05, 0.05), Vector3(0.6, 2.7, 4.12), Color(0.88, 0.98, 1.0), 4.0)
+		_box_mesh(Vector3(1.18, 0.05, 0.05), Vector3(0.6, 2.7, 4.12), Color(0.8, 0.95, 1.0), 9.0)
 		var dead := _box_mesh(Vector3(1.18, 0.05, 0.05), Vector3(0.6, 2.7, 4.28), Color(0.55, 0.55, 0.52), 0.0)
 		dead.name = "dead_tube"
 		# the flickering end glows a little pink
 		_box_mesh(Vector3(0.12, 0.052, 0.052), Vector3(1.13, 2.7, 4.28), Color(0.95, 0.75, 0.8), 1.5)
-		_omni(Vector3(0.6, 2.5, 4.2), Color(0.82, 0.95, 1.0), 1.6, 8.0, true)
+		_omni(Vector3(0.6, 2.5, 4.2), Color(0.7, 0.9, 1.0), 2.2, 6.5, true)
 		# warm light: a bulb over the counter, a lamp over Bertha, the arena across the lot
 		_bulb(Vector3(-2.4, 2.6, 1.8))
 		_bulb(Vector3(2.9, 2.5, 11.0))
