@@ -5,6 +5,7 @@ extends VenueRoom
 ## the envelope between z -14 and 14 themselves.
 
 const RUBBER := Color("34373d")
+const PlantRoom := preload("res://scripts/venue/rooms/plant_room.gd")
 
 ## Gaps in the walker's board collider: bench and penalty-box gates on the
 ## sides, the Zamboni gate at the +X end. [axis value, from, to, which wall]
@@ -30,7 +31,12 @@ func build(k: VenueKit) -> void:
 	var floor_col: Color = k.by_age(Color("2f3136"), RUBBER, Color("25272c"))
 	# rubber floor around the ice (four slabs leave the rink rectangle open)
 	k.slab(Vector3(-hx, -0.3, -hz), Vector3(hx, 0, -rz), floor_col)
-	k.slab(Vector3(-hx, -0.3, rz), Vector3(hx, 0, hz), floor_col)
+	# the +Z side leaves a hole for the plant room's header trench
+	var tr := PlantRoom.trench_rect()
+	k.slab(Vector3(-hx, -0.3, rz), Vector3(tr.position.x, 0, hz), floor_col)
+	k.slab(Vector3(tr.end.x, -0.3, rz), Vector3(hx, 0, hz), floor_col)
+	k.slab(Vector3(tr.position.x, -0.3, rz), Vector3(tr.end.x, 0, tr.position.y), floor_col)
+	k.slab(Vector3(tr.position.x, -0.3, tr.end.y), Vector3(tr.end.x, 0, hz), floor_col)
 	k.slab(Vector3(-hx, -0.3, -rz), Vector3(-rx, 0, rz), floor_col)
 	k.slab(Vector3(rx, -0.3, -rz), Vector3(hx, 0, rz), floor_col)
 	# the ice itself is the rink's mesh; a walker still needs something to stand on

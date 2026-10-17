@@ -8,7 +8,7 @@ extends SceneTree
 ##   godot --headless --path . --script tools/tests/test_venue.gd
 
 const ROOMS := ["shell", "roof", "stands_bench", "stands_box", "benches", "penalty_boxes", "glass",
-	"lobby", "office", "locker_home", "locker_away", "zamboni_bay", "lighting", "scoreboard"]
+	"lobby", "office", "locker_home", "locker_away", "zamboni_bay", "plant_room", "lighting", "scoreboard"]
 ## Triangles the whole building may use, crowd and props included. A
 ## mid-range GPU (GTX 1060 class) draws several million per frame at 60 fps;
 ## 900k keeps the building well under that. The stands use the kit's
@@ -70,7 +70,7 @@ func _run() -> void:
 		print("  %-9s built in %d ms: %s, %d seats" % [VenueRoom.AGE_NAMES[age], Time.get_ticks_msec() - t0, st, n])
 		_expect(st.triangles < TRI_BUDGET, "%s: %d triangles within budget %d" % [VenueRoom.AGE_NAMES[age], st.triangles, TRI_BUDGET])
 		_expect(st.draws < DRAW_BUDGET, "%s: %d draws within %d" % [VenueRoom.AGE_NAMES[age], st.draws, DRAW_BUDGET])
-		_expect(st.lights <= 12 and _no_shadows(_venue), "%s: %d lights, none casting shadows" % [VenueRoom.AGE_NAMES[age], st.lights])
+		_expect(st.lights <= 13 and _no_shadows(_venue), "%s: %d lights, none casting shadows" % [VenueRoom.AGE_NAMES[age], st.lights])
 	_expect(seats[0] < seats[1], "worn stands have missing planks (%d < %d seats)" % [seats[0], seats[1]])
 	# human-scale doors (bench and box gates are half doors by design)
 	for d in _venue.all_doors():
@@ -120,6 +120,7 @@ func _walk_tests() -> void:
 		Vector3(-45.0, 0, 12.6), Vector3(-45.0, 0, 10.5), Vector3(-38.5, 0, 9.0), Vector3(-38.5, 0, -7.2), Vector3(-42.0, 0, -7.2),
 	], "office", Venue.LOBBY_H + 0.3)
 	await _walk("Zamboni bay from the rink walkway", Vector3(32.0, 0, 0.0), [Vector3(36.0, 0, 0.0), Vector3(37.0, 0, 3.0)], "zamboni_bay")
+	await _walk("ice plant room from the corner", Vector3(35.0, 0, 23.7), [Vector3(38.5, 0, 23.8)], "plant_room")
 
 
 ## Walks a VenueWalker from `start` through `points`; passes if it ends in

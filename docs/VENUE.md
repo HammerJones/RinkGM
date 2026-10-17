@@ -51,6 +51,11 @@ the room you're standing in, F/Y fly.
 - +X end: home dressing room (z −14..−5), resurfacer bay (z ±5, roll-up doors
   to the rink and outside), visitors' dressing room (z 5..14). The old
   scoreboard hangs on this wall until it is renovated.
+- +X/+Z corner: the ice plant room (x 36.7..45.5, z 14.3..28.1), door at
+  z 23.7 facing the rink end, with the header in a 0.72 m floor trench
+  (`plant_room.gd` places the kit's plant props in the layout of
+  `art/tools/plant_room_preview.gd`; the shell leaves the trench out of its
+  floor).
 - Corners: open floor with fire exits; clutter changes with the shell's age.
 
 ## Rooms and renovation
@@ -67,7 +72,7 @@ venue.room_at(position)           # which room a point is in (smallest wins)
 
 Room ids: `shell`, `roof`, `stands_bench`, `stands_box`, `benches`,
 `penalty_boxes`, `glass`, `lobby`, `office`, `locker_home`, `locker_away`,
-`zamboni_bay`, `lighting`, `scoreboard`.
+`zamboni_bay`, `plant_room`, `lighting`, `scoreboard`.
 
 Default age comes from the home club's tier: beer league rinks are worn,
 Senior AAA and Semi-Pro repaired, Minor Pro renovated, with a few rooms one
@@ -112,6 +117,6 @@ openings, `stairs`, `glass`, `glow`, `sign`, `add_door`), branch on
   Silkscreen for titles, VT323 for numbers, clocks and prices, on a CRT
   panel, crisp and in full colour; only the housing looks worn.
 - Budget, about 0.6M triangles and 180-200 draws (checked by `tools/tests/test_venue.gd`, numbers printed per age):
-  12 lights with no shadows, no venue geometry casts sun shadows, props and
+  13 lights with no shadows, no venue geometry casts sun shadows, props and
   the crowd drawn as MultiMeshes (the crowd's cheers run in its shader), and
   the live scoreboard only changes Label3D text.
