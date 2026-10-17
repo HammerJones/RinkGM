@@ -26,12 +26,14 @@ var _score_away: Label
 var _clock: Label
 var _mode: RichTextLabel
 var _message: Label
+var _detail: Label
 var _message_panel: PanelContainer
 var _bench: Label
 var _bench_panel: PanelContainer
 var _gauge: RichTextLabel
 var _help: RichTextLabel
 var _help_panel: PanelContainer
+var _pending_detail := ""
 var _power := 0.0
 var _stamina := 1.0
 var _message_timer := 0.0
@@ -69,9 +71,16 @@ func _ready() -> void:
 	# Banner (GOAL!, SAVE, end of game), centre.
 	_message_panel = _panel(root, Vector2(0.5, 0.5), Vector2(0, -150))
 	_message_panel.theme_type_variation = ""
+	var banner := VBoxContainer.new()
+	_message_panel.add_child(banner)
 	_message = RinkOS.label("", RinkOS.BANNER)
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_message_panel.add_child(_message)
+	banner.add_child(_message)
+	_detail = RinkOS.label("", RinkOS.TERM)
+	_detail.add_theme_color_override("font_color", RinkOS.READOUT)
+	_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	banner.add_child(_detail)
+	_detail.visible = false
 	_message_panel.visible = false
 
 	# Bench / injury notice, above the meters.
@@ -94,6 +103,11 @@ func _ready() -> void:
 	_help.text = _terminal_help(HELP)
 	_help_panel.add_child(_help)
 
+	# Match events (scorer and assists under the GOAL banner).
+	var game := get_parent()
+	if game and "events" in game and game.events is MatchEvents:
+		game.events.goal.connect(_on_goal)
+
 
 func _process(delta: float) -> void:
 	_message_timer -= delta
@@ -103,6 +117,7 @@ func _process(delta: float) -> void:
 			_help_panel.visible = false
 	if _message_timer <= 0.0 and _message_panel.visible:
 		_message.text = ""
+		_detail.visible = false
 		_message_panel.visible = false
 
 
@@ -124,8 +139,25 @@ func set_mode(mode_name: String) -> void:
 
 func show_message(text: String, seconds: float) -> void:
 	_message.text = text.to_upper()
+	_detail.text = _pending_detail
+	_detail.visible = _pending_detail != ""
+	_pending_detail = ""
 	_message_panel.visible = text != ""
 	_message_timer = seconds
+
+
+## "> KOWALSKI // REID, GAGNON" under the goal banner. The banner itself
+## comes from game.gd's show_message, which runs right after this signal.
+func _on_goal(_team: int, scorer: PlayerProfile, assists: Array) -> void:
+	if scorer == null:
+		return
+	var names := PackedStringArray()
+	for a in assists:
+		if a is PlayerProfile:
+			names.append(a.short_name().to_upper())
+	var text := "> " + scorer.short_name().to_upper()
+	text += (" // " + ", ".join(names)) if not names.is_empty() else " // UNASSISTED"
+	_pending_detail = text
 
 
 func set_power(v: float) -> void:

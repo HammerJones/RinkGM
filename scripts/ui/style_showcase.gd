@@ -51,7 +51,7 @@ func _ready() -> void:
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	buttons.add_child(hint)
 
-	_handle_capture_args()
+	RinkOS.capture_from_args(self)
 
 
 func _player_card() -> PanelContainer:
@@ -122,12 +122,3 @@ func _controls_column() -> VBoxContainer:
 	slider.value = 40
 	v.add_child(slider)
 	return v
-
-
-func _handle_capture_args() -> void:
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--screenshot="):
-			await get_tree().create_timer(1.0).timeout
-			await RenderingServer.frame_post_draw
-			get_viewport().get_texture().get_image().save_png(arg.trim_prefix("--screenshot="))
-			get_tree().quit()

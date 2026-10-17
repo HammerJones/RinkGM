@@ -142,6 +142,24 @@ static func sign_3d(text: String, col := TEXT, pixel_font := true, voxel := 0.06
 	return l
 
 
+## `-- --screenshot=out.png [--shot-after=1.5]` on any UI screen: saves a
+## frame and quits (used to check screens from the command line).
+static func capture_from_args(node: Node) -> void:
+	var path := ""
+	var after := 1.5
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--screenshot="):
+			path = arg.trim_prefix("--screenshot=")
+		elif arg.begins_with("--shot-after="):
+			after = arg.trim_prefix("--shot-after=").to_float()
+	if path == "":
+		return
+	await node.get_tree().create_timer(after).timeout
+	await RenderingServer.frame_post_draw
+	node.get_viewport().get_texture().get_image().save_png(path)
+	node.get_tree().quit()
+
+
 # --- Theme -------------------------------------------------------------------
 
 static func frame(name: String, margin := 10.0) -> StyleBoxTexture:
@@ -208,6 +226,20 @@ static func build_theme() -> Theme:
 
 	# Buttons (OptionButton, MenuButton and CheckButton inherit from Button)
 	_button(t, "Button", "button", "button_hover", "button_pressed", ON_ACTION)
+	# Dropdowns read as fields: dark box, cyan terminal text, amber arrow.
+	for type in ["OptionButton", "MenuButton"]:
+		_button(t, type, "field", "button_ghost", "button_ghost", READOUT)
+		t.set_font("font", type, TERM_FONT)
+		t.set_font_size("font_size", type, TERM_SIZE)
+		t.set_color("font_hover_color", type, TEXT)
+		t.set_color("font_pressed_color", type, TEXT)
+		t.set_color("font_hover_pressed_color", type, TEXT)
+		t.set_color("font_focus_color", type, READOUT)
+	t.set_font("font", "PopupMenu", TERM_FONT)
+	t.set_font_size("font_size", "PopupMenu", TERM_SIZE)
+	t.set_color("font_color", "PopupMenu", TEXT)
+	t.set_color("font_hover_color", "PopupMenu", ACTION)
+	t.set_stylebox("hover", "PopupMenu", flat(Color(BEZEL, 0.6)))
 	t.set_type_variation(GHOST_BUTTON, "Button")
 	_button(t, GHOST_BUTTON, "button_ghost", "button_ghost_hover", "button_pressed", TEXT)
 	for type in ["CheckBox", "CheckButton"]:
