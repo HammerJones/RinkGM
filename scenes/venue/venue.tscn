@@ -1,0 +1,68 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://scripts/venue/venue.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/shell.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/roof.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/stands.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/benches.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/penalty_boxes.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/glass.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/lobby.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/office.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/locker_room.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/zamboni_bay.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/lighting.gd" id="12"]
+[ext_resource type="Script" path="res://scripts/venue/rooms/scoreboard.gd" id="13"]
+[ext_resource type="Script" path="res://scripts/venue/venue_crowd.gd" id="14"]
+
+[node name="Venue" type="Node3D"]
+script = ExtResource("1")
+
+[node name="Shell" type="Node3D" parent="."]
+script = ExtResource("2")
+
+[node name="Roof" type="Node3D" parent="."]
+script = ExtResource("3")
+
+[node name="StandsBench" type="Node3D" parent="."]
+script = ExtResource("4")
+side = -1
+
+[node name="StandsBox" type="Node3D" parent="."]
+script = ExtResource("4")
+side = 1
+
+[node name="Benches" type="Node3D" parent="."]
+script = ExtResource("5")
+
+[node name="PenaltyBoxes" type="Node3D" parent="."]
+script = ExtResource("6")
+
+[node name="Glass" type="Node3D" parent="."]
+script = ExtResource("7")
+
+[node name="Lobby" type="Node3D" parent="."]
+script = ExtResource("8")
+
+[node name="Office" type="Node3D" parent="."]
+script = ExtResource("9")
+
+[node name="LockerHome" type="Node3D" parent="."]
+script = ExtResource("10")
+side = -1
+
+[node name="LockerAway" type="Node3D" parent="."]
+script = ExtResource("10")
+side = 1
+
+[node name="ZamboniBay" type="Node3D" parent="."]
+script = ExtResource("11")
+
+[node name="Lighting" type="Node3D" parent="."]
+script = ExtResource("12")
+
+[node name="Scoreboard" type="Node3D" parent="."]
+script = ExtResource("13")
+
+[node name="Crowd" type="MultiMeshInstance3D" parent="."]
+script = ExtResource("14")
