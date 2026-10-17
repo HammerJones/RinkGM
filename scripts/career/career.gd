@@ -113,7 +113,9 @@ static func new_demo(slot: String, first: String, last: String, position: String
 
 ## A one-off game between two generated clubs of a tier (no career, the
 ## player can switch skaters). Same shape as next_user_game().
-static func exhibition(t := 4) -> Dictionary:
+## `mirrored` gives the away club the home club's exact ratings, so only
+## the AI settings differ (the tier AI check).
+static func exhibition(t := 4, mirrored := false) -> Dictionary:
 	var c := Career.new()
 	c.rng.randomize()
 	c._ensure_league(t)
@@ -121,6 +123,13 @@ static func exhibition(t := 4) -> Dictionary:
 	ids.shuffle()
 	var home: Team = c.teams[ids[0]]
 	var away: Team = c.teams[ids[1]]
+	if mirrored:
+		for i in mini(home.roster.size(), away.roster.size()):
+			var src: PlayerProfile = c.players[home.roster[i]]
+			var dst: PlayerProfile = c.players[away.roster[i]]
+			dst.position = src.position
+			dst.skills = Skills.from_dict(src.skills.to_dict())
+			dst.moves = src.moves.duplicate()
 	return {
 		"game": {}, "home": home, "away": away, "user_home": true,
 		"home_lineup": home.lineup(c.players), "away_lineup": away.lineup(c.players),
@@ -331,6 +340,9 @@ func _xp(p: PlayerProfile, xp: Dictionary) -> void:
 		for k in xp:
 			xp[k] *= xp_scale
 	Progression.apply_xp(p, xp)
+	for m in MoveUnlocks.check(p):
+		if p.is_user:
+			_news("You learned the %s." % MoveUnlocks.LABELS[m].to_lower())
 
 
 func _news_for_user_game(g: Dictionary, res: Dictionary) -> void:
@@ -517,6 +529,12 @@ func dev_set_skill(key: String, value: float) -> void:
 	if u.skills.values.has(key):
 		u.skills.values[key] = clampf(value, 1.0, 100.0)
 		u.potential[key] = maxf(u.potential.get(key, 0.0), u.skills.values[key])
+		MoveUnlocks.check(u)
+
+
+func dev_unlock_all_moves() -> void:
+	for m in MoveUnlocks.ORDER:
+		user().unlock_move(m)
 
 
 ## Feeds `amount` XP into one skill (or all of them for "all") through the
@@ -527,7 +545,9 @@ func dev_add_xp(key: String, amount: float) -> Dictionary:
 	for k in u.skills.values:
 		if key == "all" or k == key:
 			xp[k] = amount
-	return Progression.apply_xp(u, xp)
+	var delta := Progression.apply_xp(u, xp)
+	MoveUnlocks.check(u)
+	return delta
 
 
 ## Injures the user now. `severity` is an Injury.Severity value.

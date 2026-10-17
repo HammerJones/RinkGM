@@ -61,6 +61,18 @@ static func _carry(carrier: Skater, puck: Puck, dt: float, blend: float) -> void
 	if carrier.stun_timer > 0.0 or carrier.stick_lifted_timer > 0.0:
 		puck.controller = null
 		return
+	if MovePhysics.glued(carrier.move_id):
+		# a cradling move (lacrosse): the puck rides up on the blade until it's done
+		var at := carrier.puck_anchor()
+		puck.vel = (at - puck.position) / dt if dt > 0.0 else Vector3.ZERO
+		puck.vel = puck.vel.limit_length(25.0)
+		if at.y <= 0.001:
+			puck.vel.y = 0.0
+		return
+	if carrier.winding and carrier.wind_slap:
+		# the blade is up for the slapshot: the puck settles where it was left,
+		# drifting along with the skater
+		puck.vel = puck.vel.lerp(Vector3(carrier.vel.x, puck.vel.y, carrier.vel.z), 1.0 - exp(-8.0 * dt))
 	var to := carrier.puck_anchor() - puck.position
 	to.y = 0.0
 	# with the blade lifted over the puck there's no contact; you keep it only
@@ -71,16 +83,18 @@ static func _carry(carrier: Skater, puck: Puck, dt: float, blend: float) -> void
 		var rel := puck.vel - carrier.blade_vel
 		rel.y = 0.0
 		var acc := to * k - rel * 2.0 * sqrt(k) * 0.9
-		var grip := carrier.profile.puck_grip * lerpf(1.0, 1.4, blend)
+		# one hand on the stick holds the puck far less firmly
+		var grip := carrier.profile.puck_grip * lerpf(1.0, 1.4, blend) * lerpf(1.0, 0.7, carrier.one_hand())
 		if acc.length() > grip:
 			acc = acc.limit_length(grip)
 			carrier.puck_slip += dt
 		puck.vel += acc * dt
 	# a deke (blade lifted over to the far side, then set back down) gets the
 	# stick's full reach before the puck counts as lost
-	var keep := lerpf(0.45, 0.7, blend)
+	# one-handed the puck rides further out on the blade
+	var keep := lerpf(0.45, 0.7, blend) * lerpf(1.0, 1.35, carrier.one_hand())
 	if carrier.lifting or carrier.regrab_timer > 0.0:
-		keep = Skater.REACH_MAX * 0.8
+		keep = Skater.REACH_ONE_HAND * 0.7
 	if to.length() > keep:
 		puck.controller = null
 		puck.last_touch = carrier

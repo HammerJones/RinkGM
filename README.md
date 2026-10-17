@@ -2,6 +2,9 @@
 
 Experimenting with a hockey game/rink management sim.
 
+Working on RinkGM? Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (who owns
+what, shared interfaces, the CI gate) and [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## Playable demo (Godot 4.3+)
 
 Open the folder in Godot 4.3 or newer and press Play. It's a 5-on-5 game with
@@ -20,11 +23,12 @@ virtual right stick, so both devices drive the same stick model.
 | Skate | Left stick | WASD |
 | Dash (push-off burst) | L3 (click left stick) | Shift |
 | Hockey stop | R3 (click right stick) | Space |
-| Stick blade (90 degree arc in front of you) | Right stick | Mouse (cursor is captured; Esc frees it) |
+| Stick blade (220 degree arc, back past each hip) | Right stick | Mouse (cursor is captured; Esc frees it) |
 | Stickhandle | Right stick side to side | Mouse side to side |
 | Quick shot (instant) | Flick the right stick forward | Flick the mouse forward |
-| Wind-up shot | Pull the stick behind you, then push it forward | Same with the mouse |
-| Slapshot | Hold LT as you pull back | Hold right click as you pull back |
+| Wrist shot | Draw the stick back behind your forehand hip, then sweep it forward | Same with the mouse |
+| Backhand | Draw back behind your backhand hip, then sweep forward | Same with the mouse |
+| Learned moves (snapshot, dekes, toe drag...) | Stick patterns, see below | Same with the mouse |
 | Lift stick (offense: over the puck; defense: lift their stick) | LT | Right click |
 | Tilt blade (raises shots and passes) | RT (analog) | Left click (hold longer for more) |
 | Aim at the near or far post | Lean the left stick | Lean with W / S |
@@ -35,11 +39,35 @@ virtual right stick, so both devices drive the same stick model.
 | Camera (broadcast / isometric) | D-pad up | C |
 | Restart | Start | R |
 | Show/hide controls | | H |
+| Developer menu | D-pad down | ` (tilde key) |
 
 "Forward" and "behind" are relative to the way your skater faces; the stick
 itself is camera-relative, like the left stick. A faint arc on the ice shows
 where the blade can reach. Device reading lives in `scripts/input/`
 (`PlayerInput` reads devices, `HumanController` fills `Skater.Controls`).
+Both hands stay on the stick in the front 90 degrees; past that the bottom
+hand lets go and the top hand reaches.
+
+#### Shots and stick moves
+
+Shots and dekes are patterns you trace with the right stick. The catalog is
+`scripts/core/moves.gd`; `StickGestures` (`scripts/input/`) recognises the
+pattern and asks for the move, physics (`MovePhysics`) runs it, and which
+moves a player has learned is up to progression (`Skater.knows`).
+
+| Move | Pattern | |
+| --- | --- | --- |
+| Quick shot | Flick forward from neutral | Starter |
+| Wrist shot | Draw back past the forehand hip, sweep forward | Starter |
+| Backhand | Draw back past the backhand hip, sweep forward | Starter |
+| Slapshot | Hold LT and draw back on the forehand, then forward | Learned |
+| One-timer | Slapshot wind-up without the puck, fire as the pass arrives | Learned |
+| Snapshot | Pull out to the forehand side (30 to 70 degrees), hold a beat, snap all the way forward | Learned |
+| Backhand snap | The same on the backhand side | Learned |
+| Quick deke | Whip the stick forehand, backhand, forehand | Learned |
+| Toe drag | Hold RT, stick out front, pull it back across to the backhand | Learned |
+| Toe drag shot | Hold LT and RT, stick out front, pull it back across | Learned |
+| Lacrosse | Hold RT, sweep from the backhand round to the forehand: the puck rides up on the blade; keep RT held and push forward to throw it | Learned |
 
 ### Physics and player ratings
 
@@ -56,14 +84,23 @@ assistance on top.
   burst stride that gets you to top speed faster and costs stamina. The hockey stop scrapes speed off
   sideways; agility sets how fast you turn, how hard your edges grip, and how
   short you stop. Carving never adds speed past top speed.
-- **Stick and puck** (`scripts/game/stick_puck.gd`): the blade moves inside a
-  90 degree arc with a speed and acceleration set by stick handling. The puck
+- **Stick and puck** (`scripts/game/stick_puck.gd`): the blade swings around
+  the body inside a 220 degree arc, with a speed and acceleration set by stick
+  handling. Both hands are on the stick in the front 90 degrees; beyond that
+  it's one hand: more reach, but a weaker hold on the puck and weaker, wilder
+  shots. Pulling the stick back past 95 degrees winds up a shot. The puck
   follows it on a spring, but the blade can only push the puck so hard (grip,
   also from stick handling). Stickhandle faster than your rating, or cut harder
   than you can hold (agility turns you faster, which is harder to hold), and
   the puck slides off. Lifting your stick takes the blade off the puck for
   moves; on defense it lifts the carrier's stick if you're close, with odds
   from both players' ratings.
+- **Stick moves** (`scripts/game/move_physics.gd`): each learned move from the
+  catalog (Shots and stick moves above) runs as a blade path around the body,
+  from wherever the blade is, under the skater's own blade limits, so weak
+  hands run it slower and can lose the puck. Move shots (snapshot, backhand
+  snap, toe drag shot) have their own power, accuracy and loft; the lacrosse
+  carries the puck up on the blade until it's thrown.
 - **Shooting**: one wind-up model for all shots. A shot with no wind-up comes
   off instantly but weak and wild; shot release sets how good that instant
   shot is and how fast you reach full power. Shot power sets the top speed
@@ -81,6 +118,12 @@ assistance on top.
 - **Goalies** (`scripts/game/goalie.gd`) play the angle, read the shot after a
   reaction delay, reach toward where the puck will cross, drop to the butterfly
   for low shots, and either hold the puck (whistle) or give up a rebound.
+- **On-ice AI** (`scripts/game/skater_ai.gd`, the goalie) plays to the league
+  tier, not just the ratings: each team reads a `TierAI` (`game.ai_for`). A beer
+  league reacts late to turnovers, sends two or three skaters after the puck,
+  forces passes and shoots from anywhere, and its goalie is slow and off the
+  angle. Higher tiers hold support spots and gaps, move the puck early to the
+  open man and work it in close before shooting.
 
 `tools/physics_bench.sh` drives skaters through scripted tests headless (including
 the right-stick gestures: flick, pull back and push, lift for a slapshot) and
@@ -168,10 +211,12 @@ Arguments after `--` are read by the game:
 
 - `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
 - `--demo=controls` plays a captioned showcase of every move (`tests/controls_demo.gd`). Record it with `godot --path . --write-movie demo.avi --fixed-fps 30 --resolution 1280x720 -- --demo=controls`.
+- `--demo=skating` and `--demo=moves` are close-up reels of the skating animation and of the stick arc and every shot and stick move, with the right stick's path drawn on a pad.
 - `--autoplay` lets the AI drive your skater too (prints stats and a box score on exit).
 - `--period=N` plays N-minute periods (exhibition default is 5).
 - `--career` opens the career hub (pick a save: Career, Demo: low tier, Demo: mid tier); `--slot=career|demo_low|demo_mid` skips the picker and `--career-new` discards that slot's save.
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
+- `--ai-levels=0.5,3` sets how organised each team plays (TierAI level, 0 = Beer League D to 5 = Minor League Pro).
 - `--screenshot=out.png --shot-after=6 [--iso] [--zoom=10] [--focus=x,z]` saves a frame and quits.
 
 For example, to simulate a full game headless in a few seconds:
@@ -182,3 +227,8 @@ godot --headless --path . --fixed-fps 120 --quit-after 36000 -- --autoplay --mod
 
 `tools/check.sh` re-imports the project and runs it headless to surface script errors.
 `tools/physics_bench.sh [out.md]` prints the physics bench.
+`tools/ci.sh` is the full gate CI runs on every PR: import, a headless autoplay
+game and the `tools/tests/` scripts.
+`tools/tier_ai_check.sh` plays `GAMES` (default 8) autoplay games of a beer-league
+side against a Senior AAA side, swapping ends, and fails unless the higher tier
+outscores and outwins the lower one.

@@ -44,6 +44,12 @@ func delete_slot(s: String) -> void:
 		last_round = {}
 
 
+## Saves the loaded career to its slot (the dev menu calls this).
+func save_career() -> void:
+	if career:
+		career.save()
+
+
 func play_match(m: Dictionary) -> void:
 	fixture = m
 	get_tree().change_scene_to_file(RINK_SCENE)
