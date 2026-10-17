@@ -47,8 +47,8 @@ func _check(id: String, age: int) -> void:
 		if Props.mesh(id, age, lod) != mesh:
 			_fail("%s lod %d: mesh not cached" % [label, lod])
 		var aabb := mesh.get_aabb()
-		# floor props stand on y=0; the light hangs below its ceiling mount
-		var hangs: bool = id == "light"
+		# floor props stand on y=0; hung ones sit below their ceiling mount
+		var hangs: bool = id == "light" or (id == "scoreboard" and age == Wear.RENOVATED)
 		var edge: float = aabb.end.y if hangs else aabb.position.y
 		if absf(edge) > 0.07:
 			_fail("%s lod %d: pivot is %.2f m off the %s" % [label, lod, edge, "ceiling" if hangs else "floor"])
