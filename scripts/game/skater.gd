@@ -151,7 +151,7 @@ func setup(g: Node, t: int, idx: int, pal: Dictionary, sk: Skills = null) -> voi
 	number = idx
 	if sk == null:
 		var rng := RandomNumberGenerator.new()
-		rng.randomize()
+		rng.seed = randi()
 		sk = Skills.create(Skills.SKATER_KEYS, 50.0, 6.0, rng)
 	set_skills(sk)
 	if pal.is_empty():

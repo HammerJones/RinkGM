@@ -48,6 +48,11 @@ var stats := {"shots": 0, "saves": 0, "goals": 0, "possessions": 0, "whistles": 
 
 func _ready() -> void:
 	randomize()
+	# `-- --seed=N` replays the same game (the tier check uses it so results
+	# don't change with nothing but art in a diff)
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--seed="):
+			seed(hash(arg.trim_prefix("--seed=")))
 	_build_environment()
 	rink = Rink.new()
 	add_child(rink)
