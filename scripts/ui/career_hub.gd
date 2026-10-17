@@ -4,8 +4,13 @@ extends Control
 ## In the offseason it lists tryout invitations. Deliberately plain: the
 ## UI/styling thread owns the look; this is the flow and the data.
 ##
+## The first screen picks a save slot: the open career or one of the two
+## playtest demos (a low-tier season that leads to a mid-tier tryout, or a
+## mid-tier season straight away).
+##
 ## `-- --career --autoplay` plays games hands-off (headless testing);
-## `-- --career-new` throws away the save and starts over.
+## `-- --slot=demo_low|demo_mid|career` skips the slot screen;
+## `-- --career-new` throws away that slot's save and starts over.
 
 var career: Career
 var _root: VBoxContainer
@@ -15,7 +20,7 @@ var _auto := "--autoplay" in OS.get_cmdline_user_args()
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
-	bg.color = Color("16171c")
+	bg.color = RinkOS.CRT
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 	var scroll := ScrollContainer.new()
@@ -29,8 +34,58 @@ func _ready() -> void:
 	_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_root.add_theme_constant_override("separation", 14)
 	scroll.add_child(_root)
-	if "--career-new" in OS.get_cmdline_user_args() and CareerState.career == null:
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(Career.SAVE_PATH))
+	var slot_arg := ""
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--slot="):
+			slot_arg = a.trim_prefix("--slot=")
+	if CareerState.career != null:
+		career = CareerState.career
+		_refresh()
+		return
+	if slot_arg == "" and _auto:
+		slot_arg = "career"
+	if slot_arg != "" and Career.SLOTS.has(slot_arg):
+		if "--career-new" in OS.get_cmdline_user_args():
+			CareerState.delete_slot(slot_arg)
+		_open_slot(slot_arg)
+	else:
+		_show_slots()
+
+
+# ------------------------------------------------------------ save slots
+
+func _show_slots() -> void:
+	_clear()
+	_title("RINK GM")
+	_text("Pick a save. The demos are short playtest careers: they grow faster than a normal career so you can feel progression within a season or two.")
+	for slot in Career.SLOTS:
+		var info: Dictionary = Career.SLOTS[slot]
+		var box := VBoxContainer.new()
+		_root.add_child(box)
+		box.add_child(_label(info.label.to_upper(), 20))
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		box.add_child(row)
+		var summary: String = info.desc
+		var has: bool = CareerState.has_save(slot)
+		if has:
+			var c := Career.load_from(CareerState.slot_path(slot))
+			if c:
+				var u := c.user()
+				summary = "%s, %s. Season %d, %s, overall %.1f." % [u.full_name(), u.position, c.season_number, LeagueTiers.get_tier(c.tier).name, u.overall()]
+		var b := _button("Continue" if has else "New", _open_slot.bind(slot))
+		row.add_child(b)
+		if has:
+			row.add_child(_button("Start over", func():
+				CareerState.delete_slot(slot)
+				_open_slot(slot)))
+		row.add_child(_label(summary, 15))
+		if slot == "demo_low" and _root.get_child_count() > 0:
+			b.grab_focus()
+
+
+func _open_slot(slot: String) -> void:
+	CareerState.use_slot(slot)
 	career = CareerState.load_or_null()
 	if career == null:
 		_show_new_career()
@@ -42,8 +97,14 @@ func _ready() -> void:
 
 func _show_new_career() -> void:
 	_clear()
-	_title("NEW CAREER")
-	_text("You start in the beginner beer league as one skater in one position. Play well, train, and earn tryouts with better teams. Every rating can grow, and every rating can slip.")
+	var slot := CareerState.slot
+	var demo := Career.DEMOS.has(slot)
+	_title("NEW " + Career.SLOTS[slot].label.to_upper())
+	if demo:
+		var t: int = Career.DEMOS[slot].tier
+		_text("%s You start as a regular in the %s. %s" % [Career.SLOTS[slot].desc, LeagueTiers.get_tier(t).name, LeagueTiers.get_tier(t).desc])
+	else:
+		_text("You start in the beginner beer league as one skater in one position. Play well, train, and earn tryouts with better teams. Every rating can grow, and every rating can slip.")
 	var grid := GridContainer.new()
 	grid.columns = 2
 	_root.add_child(grid)
@@ -54,12 +115,16 @@ func _show_new_career() -> void:
 	for p in Career.USER_POSITIONS:
 		pos.add_item({"C": "Center", "LW": "Left wing", "RW": "Right wing", "D": "Defence"}[p])
 	grid.add_child(pos)
-	var go := _button("Start career", func():
-		CareerState.career = Career.new_career(first.text.strip_edges(), last.text.strip_edges(), Career.USER_POSITIONS[pos.selected])
+	var go := _button("Start demo" if demo else "Start career", func():
+		var fn := first.text.strip_edges()
+		var ln := last.text.strip_edges()
+		var ps: String = Career.USER_POSITIONS[pos.selected]
+		CareerState.career = Career.new_demo(slot, fn, ln, ps) if demo else Career.new_career(fn, ln, ps)
 		career = CareerState.career
 		career.save()
 		_refresh())
 	_root.add_child(go)
+	_root.add_child(_button("Back", _show_slots))
 	go.grab_focus()
 	if _auto:
 		go.pressed.emit()
@@ -82,11 +147,14 @@ func _refresh() -> void:
 	var team := career.user_team()
 	var info := LeagueTiers.get_tier(career.tier)
 	_title("%s  #%d  %s" % [u.full_name().to_upper(), u.number, u.position])
-	_text("Age %d   Overall %.1f   %s, %s   Season %d" % [int(u.age), u.overall(), team.name, info.name, career.season_number])
+	_text("Age %d   Overall %.1f   %s, %s   Season %d%s" % [int(u.age), u.overall(), team.name, info.name, career.season_number, "   [%s]DEMO[/color]" % RinkOS.bb(RinkOS.READOUT) if career.demo != "" else ""])
+	if career.is_demo_over():
+		_text("[%s]Demo complete. That's both demo seasons; keep playing this save or start another from the main menu.[/color]" % RinkOS.bb(RinkOS.READOUT))
+	_last_game()
 	if u.injury and not u.injury.is_healed():
-		_text("[color=#ff7a6b]%s: %s[/color]" % [u.injury.describe(), "out %d more game%s" % [u.injury.games_out, "" if u.injury.games_out == 1 else "s"] if not u.injury.can_play() else "playing through it"])
+		_text("[%s]%s: %s[/color]" % [RinkOS.bb(RinkOS.ALERT), u.injury.describe(), "out %d more game%s" % [u.injury.games_out, "" if u.injury.games_out == 1 else "s"] if not u.injury.can_play() else "playing through it"])
 	if u.fatigue > 0.3:
-		_text("[color=#f0c040]Tired (%d%%): skating and hitting are down until you rest.[/color]" % int(u.fatigue * 100))
+		_text("[%s]Tired (%d%%): skating and hitting are down until you rest.[/color]" % [RinkOS.bb(RinkOS.ACTION), int(u.fatigue * 100)])
 
 	var cols := HBoxContainer.new()
 	cols.add_theme_constant_override("separation", 40)
@@ -102,9 +170,28 @@ func _refresh() -> void:
 	_actions(left)
 	_season_table(right)
 	_news(right)
+	_root.add_child(_button("Main menu", func():
+		CareerState.career = null
+		career = null
+		_show_slots()))
 
 	if _auto:
 		_autopilot()
+
+
+## The result of the round just played: your game's score and your line.
+func _last_game() -> void:
+	var res: Dictionary = CareerState.last_round.get("user_result", {})
+	if res.is_empty() or not career.teams.has(int(res.home)) or not career.teams.has(int(res.away)):
+		return
+	var home: Team = career.teams[int(res.home)]
+	var away: Team = career.teams[int(res.away)]
+	var tag := " OT" if res.ot else (" SO" if res.so else "")
+	var txt := "LAST GAME  %s %d - %d %s%s" % [away.name, res.ag, res.hg, home.name, tag]
+	var line: Dictionary = res.box.get(career.user_id, res.box.get(str(career.user_id), {}))
+	if not line.is_empty():
+		txt += "    You: %dG %dA  %d shots  %d hits  %+d  TOI %d:%02d" % [line.g, line.a, line.shots, line.hits, line.pm, int(line.toi) / 60, int(line.toi) % 60]
+	_text("[%s]%s[/color]" % [RinkOS.bb(RinkOS.READOUT), txt])
 
 
 func _skills_table(parent: Control, u: PlayerProfile) -> void:
@@ -120,7 +207,7 @@ func _skills_table(parent: Control, u: PlayerProfile) -> void:
 		bar.show_percentage = false
 		bar.value = u.skills.eff(k)
 		var cap := ColorRect.new()
-		cap.color = Color("ffd23f")
+		cap.color = RinkOS.ACTION
 		cap.size = Vector2(2, 14)
 		cap.position = Vector2(220.0 * u.potential[k] / 100.0, 0)
 		bar.add_child(cap)
@@ -161,7 +248,7 @@ func _actions(parent: Control) -> void:
 		row.add_child(_button("Sim round", _sim_round))
 	else:
 		var opp: Team = g.away if g.user_home else g.home
-		var tag := "PLAYOFFS  " if g.playoff else ""
+		var tag := "PLAYOFFS  " if g.playoff else "GAME %d OF %d  " % [u.season_stats.gp + 1, LeagueTiers.get_tier(career.tier).games]
 		parent.add_child(_label("%sNEXT: %s %s" % [tag, "vs" if g.user_home else "at", opp.name], 18))
 		var play := _button("Play game", func(): CareerState.play_match(g))
 		play.disabled = not u.can_play()
@@ -209,7 +296,7 @@ func _season_table(parent: Control) -> void:
 		var r: Dictionary = s.standings[tid]
 		var nm: String = career.teams[tid].name
 		if tid == career.user().team_id:
-			nm = "[color=#ffd23f]%s[/color]" % nm
+			nm = "[%s]%s[/color]" % [RinkOS.bb(RinkOS.ACTION), nm]
 		lines.append("[cell]%s   [/cell][cell]%d[/cell][cell]%d[/cell][cell]%d[/cell][cell]%d[/cell][cell]%d[/cell]" % [nm, r.gp, r.w, r.l, r.otl, r.pts])
 	lines.append("[/table]")
 	_rich(parent, "".join(lines))
@@ -286,19 +373,16 @@ func _rich(parent: Control, t: String) -> void:
 	r.fit_content = true
 	r.text = t
 	r.custom_minimum_size = Vector2(400, 0)
-	r.add_theme_font_size_override("normal_font_size", 15)
 	parent.add_child(r)
 
 
+## Sizes map onto RinkOS type variations: 26+ title, 18+ heading, else body.
 func _label(t: String, size: int) -> Label:
-	var l := Label.new()
-	l.text = t
-	l.add_theme_font_size_override("font_size", size)
-	return l
+	var v := RinkOS.TITLE if size >= 26 else (RinkOS.PIXEL if size >= 18 else RinkOS.TERM)
+	return RinkOS.label(t, v)
 
 
 func _button(t: String, cb: Callable) -> Button:
-	var b := Button.new()
-	b.text = t
+	var b := RinkOS.button(t)
 	b.pressed.connect(cb)
 	return b

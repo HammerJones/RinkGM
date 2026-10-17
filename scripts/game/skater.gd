@@ -6,10 +6,12 @@ extends Node3D
 ##    forward speed, the "carve"), turning gets wider the faster you go
 ##  * a dash is a burst stride up to top speed; the hockey stop scrapes
 ##    speed off sideways
-##  * the stick blade is its own point that moves at a limited speed inside a
-##    90 degree arc in front of the body; the puck follows it on a spring whose
-##    force is capped by the skater's grip (see StickPuck), so turning or
-##    stickhandling harder than your skill allows works the puck loose
+##  * the stick blade swings around the body (angle + reach) at a limited
+##    speed inside a 220 degree arc: two hands on the stick in the front 90
+##    degrees, one hand beyond that (more reach, less control and power). The
+##    puck follows it on a spring whose force is capped by the skater's grip
+##    (see StickPuck), so turning or stickhandling harder than your skill
+##    allows works the puck loose
 ## Every number comes from `profile` (PhysicsProfile, built from `stats`), and
 ## Tuning.blend (0 sim .. 1 arcade) adds grip, turn rate, direct thrust and
 ## shot/pass assistance on top of the same model.
@@ -17,10 +19,13 @@ extends Node3D
 const RADIUS := 0.38
 const MASS := 85.0
 const REACH_MIN := 0.55
-const REACH_MAX := 1.5
-const ARC_HALF := PI / 4.0                 # the blade's 90 degree arc
+const REACH_MAX := 1.5                     # two hands on the stick
+const REACH_ONE_HAND := 1.8                # one hand, arm out
+const ARC_HALF := deg_to_rad(110.0)        # the blade's 220 degree arc
+const TWO_HAND_HALF := PI / 4.0            # two hands in the front 90 degrees
+const WIND_ANGLE := deg_to_rad(95.0)       # stick further back than this winds up a shot
 const DEFAULT_BLADE := Vector2(0.95, 0.3)  # (forward, right) relative to the body
-const WIND_SPOT := Vector2(-0.15, 0.8)     # where a drawn-back blade sits
+const WIND_SPOT := Vector2(-0.15, 0.85)     # where a button wind-up draws the blade
 const SLAP_MIN := 0.18                     # a lifted wind-up shorter than this is a wrist shot
 const LIFT_HEIGHT := 0.22
 const STICK_LIFTED_TIME := 0.55
@@ -44,6 +49,7 @@ class Controls:
 	var pass_dir := Vector2.ZERO
 	var pass_hint: Variant = null     ## Skater the AI wants to pass to
 	var check := false                ## pressed this frame: shoulder check
+	var move_id := &""                ## a recognised stick move to start (see MovePhysics)
 
 	func reset() -> void:
 		move = Vector2.ZERO
@@ -59,6 +65,7 @@ class Controls:
 		pass_dir = Vector2.ZERO
 		pass_hint = null
 		check = false
+		move_id = &""
 
 
 var game: Node
@@ -88,10 +95,19 @@ var blade_local := DEFAULT_BLADE
 var blade_pos := Vector3.ZERO
 var blade_vel := Vector3.ZERO
 var blade_lvel := Vector2.ZERO  ## blade velocity relative to the body (forward, right)
+var blade_ang := atan2(DEFAULT_BLADE.y, DEFAULT_BLADE.x)  ## radians from straight ahead, + = right
+var blade_reach := DEFAULT_BLADE.length()
+var _blade_pvel := Vector2.ZERO  # (tangential, radial) blade speed in m/s
+var _shot_hand := 0.0            # one_hand() when the current shot was released
+## The stick move being performed (MovePhysics id), or &"".
+var move_id := &""
+var move_time := 0.0             ## seconds along the move's path (at a 50 stickhandler's pace)
+var _move_fired := false
 var blade_height := 0.0
 var lifting := false            ## own blade held up over the puck
 var stick_lifted_timer := 0.0   ## an opponent lifted this stick
 var lift_cd := 0.0
+var regrab_timer := 0.0         ## grace after a deke to set the blade back on the puck
 var puck_slip := 0.0            ## seconds the puck spent at the grip limit (for tuning)
 
 # shot wind-up: started by drawing the stick back or holding `shoot`
@@ -160,7 +176,7 @@ func place(p: Vector2, facing: Vector3) -> void:
 	position = Vector3(p.x, 0, p.y)
 	vel = Vector3.ZERO
 	heading = facing.normalized()
-	blade_local = DEFAULT_BLADE
+	_set_blade(DEFAULT_BLADE)
 	blade_pos = _blade_world(blade_local)
 	blade_vel = Vector3.ZERO
 	blade_lvel = Vector2.ZERO
@@ -188,6 +204,7 @@ func cancel_shot() -> void:
 	_stick_wound = false
 	winding = false
 	wind_time = 0.0
+	cancel_move()
 
 
 ## 0..1 visual wind-up for the rig and HUD.
@@ -336,7 +353,7 @@ func _stick_drawn() -> bool:
 	if ctrl.stick.length() < 0.5:
 		return false
 	var l := _stick_local(ctrl.stick)
-	return absf(atan2(l.y, l.x)) > deg_to_rad(110.0)
+	return absf(atan2(l.y, l.x)) > WIND_ANGLE
 
 
 func _update_blade(dt: float, blend: float) -> void:
@@ -349,23 +366,39 @@ func _update_blade(dt: float, blend: float) -> void:
 		var l := _stick_local(ctrl.stick)
 		var mag := minf(l.length(), 1.0)
 		target = Vector2(cos(atan2(l.y, l.x)), sin(atan2(l.y, l.x))) * lerpf(REACH_MIN, REACH_MAX, mag)
-	# keep it inside the 90 degree arc and the stick's reach
-	var reach := clampf(target.length(), REACH_MIN, REACH_MAX)
+	if winding and not _stick_wound:
+		target = WIND_SPOT
+	var move_h := 0.0
+	if move_id != &"":
+		var k := MovePhysics.sample(move_id, move_time)
+		target = Vector2(cos(k[0]), sin(k[0])) * k[1]
+		move_h = k[2]
+	# keep it inside the 220 degree arc; one hand reaches further
 	var ang := clampf(atan2(target.y, target.x), -ARC_HALF, ARC_HALF)
-	target = Vector2(cos(ang), sin(ang)) * reach
-	if winding:
-		target = target.lerp(WIND_SPOT, minf(1.0, wind_time / 0.12))
-	# the blade chases the target with limited speed and acceleration
-	var want := (target - blade_local) * profile.blade_response
+	var reach := clampf(target.length(), REACH_MIN, reach_limit(ang))
+	# the blade swings around the body (it never cuts through it) with limited
+	# speed and acceleration; one hand makes it harder to whip around
+	var oh := one_hand()
+	var tan_err := wrapf(ang - blade_ang, -PI, PI) * blade_reach
+	var want := Vector2(tan_err, reach - blade_reach) * profile.blade_response
 	want = want.limit_length(profile.blade_speed * lerpf(1.0, 1.25, blend))
-	blade_lvel = blade_lvel.move_toward(want, profile.blade_accel * lerpf(1.0, 1.25, blend) * dt)
-	blade_local += blade_lvel * dt
-	lifting = ctrl.lift and able and not winding
+	var acc := profile.blade_accel * lerpf(1.0, 1.25, blend) * lerpf(1.0, 0.8, oh)
+	_blade_pvel = _blade_pvel.move_toward(want, acc * dt)
+	blade_ang = clampf(blade_ang + _blade_pvel.x / maxf(blade_reach, 0.3) * dt, -ARC_HALF, ARC_HALF)
+	blade_reach = clampf(blade_reach + _blade_pvel.y * dt, REACH_MIN, REACH_ONE_HAND)
+	var prev_local := blade_local
+	blade_local = Vector2(cos(blade_ang), sin(blade_ang)) * blade_reach
+	blade_lvel = (blade_local - prev_local) / dt
+	var was_lifting := lifting
+	lifting = (ctrl.lift and able and not winding) or move_h > 0.05
+	regrab_timer = 0.3 if (was_lifting and not lifting) else maxf(0.0, regrab_timer - dt)
 	var h := 0.0
 	if stick_lifted_timer > 0.0:
 		h = 0.35
 	elif winding and wind_slap:
 		h = 0.9 * windup() + 0.2
+	elif move_h > 0.05:
+		h = move_h
 	elif lifting:
 		h = LIFT_HEIGHT
 	blade_height = lerpf(blade_height, h, minf(1.0, 25.0 * dt))
@@ -378,7 +411,12 @@ func _update_blade(dt: float, blend: float) -> void:
 
 func _handle_actions(dt: float) -> void:
 	var able: bool = stun_timer <= 0.0 and not game.is_frozen() and stick_lifted_timer <= 0.0
-	_handle_shot_input(dt, able)
+	if ctrl.move_id != &"" and move_id == &"" and able:
+		start_move(ctrl.move_id)
+	if move_id != &"":
+		_run_move(dt, able)
+	else:
+		_handle_shot_input(dt, able)
 	var lift_pressed := ctrl.lift and not _prev_lift
 	_prev_lift = ctrl.lift
 	if lift_pressed and able and not has_puck() and lift_cd <= 0.0:
@@ -390,6 +428,43 @@ func _handle_actions(dt: float) -> void:
 		check_cd = 1.2
 		game.stats.checks += 1
 		vel += heading * lerpf(1.5, 3.0, skill("hitting"))
+
+
+## Starts a stick move. Returns false when it can't be done now (unknown,
+## not learned, already busy, or it needs the puck and you don't have it).
+func start_move(id: StringName) -> bool:
+	if not MovePhysics.has_move(id) or move_id != &"" or winding:
+		return false
+	if has_method("knows") and not call("knows", id):
+		return false
+	if MovePhysics.MOVES[id].get("needs_puck", false) and not has_puck():
+		return false
+	move_id = id
+	move_time = 0.0
+	_move_fired = false
+	return true
+
+
+func cancel_move() -> void:
+	move_id = &""
+	move_time = 0.0
+
+
+func _run_move(dt: float, able: bool) -> void:
+	if not able:
+		cancel_move()
+		return
+	move_time += dt / MovePhysics.time_scale(self)
+	var spec: Dictionary = MovePhysics.MOVES[move_id]
+	var shot: Dictionary = spec.get("shot", {})
+	if not shot.is_empty() and not _move_fired and move_time >= shot["release"]:
+		_move_fired = true
+		if has_puck():
+			# the move's own power and error already account for how it's held
+			_shot_hand = 0.0
+			shoot(shot["wind"], false, 0.0, shot)
+	if move_time >= MovePhysics.duration(move_id):
+		cancel_move()
 
 
 ## Two ways to shoot, both through the same wind-up:
@@ -456,12 +531,13 @@ func _flicked(dt: float) -> bool:
 func _fire() -> void:
 	var held := wind_time
 	var slap := wind_slap and held >= SLAP_MIN
+	# a wound-up shot comes through with both hands; a flick can be one-handed
+	_shot_hand = one_hand()
 	winding = false
 	_stick_wound = false
 	wind_time = 0.0
 	# the blade follows through
-	blade_local = Vector2(REACH_MAX * 0.85, 0.15)
-	blade_lvel = Vector2.ZERO
+	_set_blade(Vector2(REACH_MAX * 0.85, 0.15))
 	if has_puck():
 		shoot(held, slap)
 		return
@@ -477,8 +553,8 @@ func attack_goal() -> Vector3:
 
 
 ## Fires the puck. `held` is the wind-up time, `incoming` the speed of a puck
-## being one-timed.
-func shoot(held: float, slap: bool, incoming := 0.0) -> void:
+## being one-timed, `style` a MovePhysics shot entry (power, error, loft).
+func shoot(held: float, slap: bool, incoming := 0.0, style := {}) -> void:
 	var blend: float = Tuning.blend
 	var p := profile
 	var from := puck.position
@@ -507,11 +583,19 @@ func shoot(held: float, slap: bool, incoming := 0.0) -> void:
 	# moving fast, carving hard or being off balance costs accuracy
 	err *= 1.0 + 0.4 * speed() / p.max_speed + turn_load / 40.0
 	err *= lerpf(1.0, 0.6, blend)
+	spd *= style.get("power", 1.0)
+	err *= style.get("error", 1.0)
+	# a one-handed shot is weaker and wilder
+	spd *= lerpf(1.0, 0.7, _shot_hand)
+	err *= lerpf(1.0, 1.6, _shot_hand)
+	_shot_hand = 0.0
 	dir = dir.rotated(Vector3.UP, clampf(randfn(0.0, err), -3.0 * err, 3.0 * err))
 	# pick a target height at the net and solve for the lift that gets there:
 	# tilt opens the blade and raises the shot
 	var h_target: float
-	if ctrl.tilt > 0.05:
+	if style.has("loft"):
+		h_target = style["loft"] + ctrl.tilt * 0.4
+	elif ctrl.tilt > 0.05:
 		h_target = lerpf(0.25, 1.1, ctrl.tilt)
 	else:
 		h_target = randf_range(0.04, 0.22)
@@ -586,6 +670,27 @@ func _try_stick_lift() -> void:
 	puck.ignore_briefly(holder, STICK_LIFTED_TIME)
 	puck.last_touch = self
 	game.on_stick_lift(self, holder)
+
+
+## 0 with both hands on the stick (front 90 degrees), 1 with one hand.
+## While winding up a shot both hands stay on.
+func one_hand() -> float:
+	if winding:
+		return 0.0
+	return smoothstep(TWO_HAND_HALF - 0.08, TWO_HAND_HALF + 0.17, absf(blade_ang))
+
+
+## How far the blade can reach at this angle.
+static func reach_limit(ang: float) -> float:
+	return lerpf(REACH_MAX, REACH_ONE_HAND, smoothstep(TWO_HAND_HALF - 0.08, TWO_HAND_HALF + 0.17, absf(ang)))
+
+
+func _set_blade(local: Vector2) -> void:
+	blade_local = local
+	blade_ang = atan2(local.y, local.x)
+	blade_reach = local.length()
+	blade_lvel = Vector2.ZERO
+	_blade_pvel = Vector2.ZERO
 
 
 func _blade_world(local: Vector2) -> Vector3:

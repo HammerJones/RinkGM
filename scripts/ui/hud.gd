@@ -4,22 +4,19 @@ extends CanvasLayer
 ## physics-mode readout, shot charge and stamina meters, centre-screen banners,
 ## a bench / injury notice and a toggleable controls card.
 
-const HELP := """[b]Gamepad[/b]
-L-stick  skate      L3  dash      R3  hockey stop
-R-stick  stick blade (90 deg arc), side to side to stickhandle
-  pull back, then push forward = shot
-LT  lift stick (hold while pulling back = slapshot,
-  on D = stick lift)   RT  tilt blade (raise shots/passes)
-A / RB  pass, or call for it    B  body check
-Back  physics mode   D-up  camera   Start  restart
-Y  fast-forward while on the bench (career)
+const HELP := """[b]Keyboard + mouse[/b]
+WASD  skate        Mouse  stick blade / aim
+LMB  shoot (hold = slapshot)   RMB / E  pass
+Shift  sprint      Space  hockey stop
+F  body check      Q / Tab  switch player
+F1  physics mode   C  camera   R  restart
 
-[b]Keyboard + mouse[/b]  (the mouse is the right stick)
-WASD  skate    Shift  dash    Space  stop
-RMB  lift stick    LMB  tilt blade (hold for more)
-E  pass / call for it    F  check    [ ]  mouse sensitivity
-Esc  free the cursor   F1  physics mode   C  camera   R  restart
-Tab  fast-forward while on the bench (career)
+[b]Gamepad[/b]
+L-stick  skate     R-stick  stickhandle,
+  pull back then flick forward to shoot
+RT / X  shoot (hold = slapshot)   A  pass / switch
+LB  sprint   LT  hockey stop   B  check
+Y  switch   Back  physics mode   D-up  camera
 H  hide this"""
 
 var _home := ""
