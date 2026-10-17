@@ -1015,21 +1015,21 @@ func _clutter() -> void:
 func _lights() -> void:
 	# the fluorescent fixture: two tubes, one lit, one flickering out
 	var fx := VoxelModel.new(V)
-	fx.box(0, 0, 0, 20, 1, 5, Wear.OLD_CREAM if not _ren() else Wear.WHITE)
-	fx.box(0, -1, 0, 1, 1, 5, Wear.OLD_CREAM)
-	fx.box(19, -1, 0, 1, 1, 5, Wear.OLD_CREAM)
+	fx.box(0, -1, 0, 1, 2, 5, Wear.OLD_CREAM)  # end caps
+	fx.box(19, -1, 0, 1, 2, 5, Wear.OLD_CREAM)
+	fx.box(1, 0, 2, 18, 1, 1, Wear.OLD_CREAM)  # spine; the tubes show either side
 	if not _ren():
-		_put(fx.set_pivot(10, 0, 2.5), Vector3(0.6, 2.75, 4.2), 0, true, 170)
+		_put(fx.set_pivot(10, 0, 2.5), Vector3(-0.4, 2.75, 4.2), 0, true, 170)
 		for k in 2:
 			var cm := VoxelModel.new(V)
 			cm.box(0, 0, 0, 1, 9, 1, Wear.OLD_STEEL.darkened(0.2))
-			_put(cm, Vector3(0.1 + k * 1.0, 2.8, 4.2), 0, false)
-		_box_mesh(Vector3(1.18, 0.05, 0.05), Vector3(0.6, 2.7, 4.12), Color(0.8, 0.95, 1.0), 9.0)
-		var dead := _box_mesh(Vector3(1.18, 0.05, 0.05), Vector3(0.6, 2.7, 4.28), Color(0.55, 0.55, 0.52), 0.0)
+			_put(cm, Vector3(-0.9 + k * 1.0, 2.8, 4.2), 0, false)
+		_box_mesh(Vector3(1.18, 0.05, 0.05), Vector3(-0.4, 2.7, 4.12), Color(0.8, 0.95, 1.0), 9.0)
+		var dead := _box_mesh(Vector3(1.18, 0.05, 0.05), Vector3(-0.4, 2.7, 4.28), Color(0.55, 0.55, 0.52), 0.0)
 		dead.name = "dead_tube"
 		# the flickering end glows a little pink
-		_box_mesh(Vector3(0.12, 0.052, 0.052), Vector3(1.13, 2.7, 4.28), Color(0.95, 0.75, 0.8), 1.5)
-		_omni(Vector3(0.6, 2.5, 4.2), Color(0.7, 0.9, 1.0), 2.2, 6.5, true)
+		_box_mesh(Vector3(0.12, 0.052, 0.052), Vector3(0.13, 2.7, 4.28), Color(0.95, 0.75, 0.8), 1.5)
+		_omni(Vector3(-0.4, 2.5, 4.2), Color(0.7, 0.9, 1.0), 2.2, 6.5, true)
 		# warm light: a bulb over the counter, a lamp over Bertha, the arena across the lot
 		_bulb(Vector3(-2.4, 2.6, 1.8))
 		_bulb(Vector3(2.9, 2.5, 11.0))
@@ -1040,10 +1040,10 @@ func _lights() -> void:
 		_omni(Vector3(-3.0, 2.2, 6.5), Color(1.0, 0.74, 0.45), 0.8, 5.0, false)
 		_omni(Vector3(3.0, 2.0, 5.0), Color(1.0, 0.74, 0.45), 0.8, 5.0, false)
 	else:
-		for z in [2.5, 5.8, 9.1]:
+		for z in [2.2, 5.0, 7.8]:
 			for x in [-2.0, 2.0]:
-				_box_mesh(Vector3(0.6, 0.04, 0.6), Vector3(x, 2.95, z), Wear.LED, 3.0)
-				_omni(Vector3(x, 2.7, z), Color(1.0, 0.97, 0.92), 1.0, 6.0, x < 0 and z == 5.8)
+				_box_mesh(Vector3(0.5, 0.03, 0.5), Vector3(x, 2.95, z), Wear.LED, 2.0)
+				_omni(Vector3(x, 2.7, z), Color(1.0, 0.97, 0.92), 1.0, 6.0, x < 0 and z == 5.0)
 
 
 func _bulb(at: Vector3) -> void:
