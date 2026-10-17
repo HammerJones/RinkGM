@@ -14,6 +14,7 @@ config/features=PackedStringArray("4.3", "Forward Plus")
 
 Tuning="*res://scripts/core/tuning.gd"
 InputSetup="*res://scripts/core/input_setup.gd"
+DevMenu="*res://scripts/dev/dev_menu.gd"
 
 [display]
 
