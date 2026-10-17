@@ -92,6 +92,12 @@ assistance on top.
 - **Goalies** (`scripts/game/goalie.gd`) play the angle, read the shot after a
   reaction delay, reach toward where the puck will cross, drop to the butterfly
   for low shots, and either hold the puck (whistle) or give up a rebound.
+- **On-ice AI** (`scripts/game/skater_ai.gd`, the goalie) plays to the league
+  tier, not just the ratings: each team reads a `TierAI` (`game.ai_for`). A beer
+  league reacts late to turnovers, sends two or three skaters after the puck,
+  forces passes and shoots from anywhere, and its goalie is slow and off the
+  angle. Higher tiers hold support spots and gaps, move the puck early to the
+  open man and work it in close before shooting.
 
 `tools/physics_bench.sh` drives skaters through scripted tests headless (including
 the right-stick gestures: flick, pull back and push, lift for a slapshot) and
@@ -183,6 +189,7 @@ Arguments after `--` are read by the game:
 - `--period=N` plays N-minute periods (exhibition default is 5).
 - `--career` opens the career hub (pick a save: Career, Demo: low tier, Demo: mid tier); `--slot=career|demo_low|demo_mid` skips the picker and `--career-new` discards that slot's save.
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
+- `--ai-levels=0.5,3` sets how organised each team plays (TierAI level, 0 = Beer League D to 5 = Minor League Pro).
 - `--screenshot=out.png --shot-after=6 [--iso] [--zoom=10] [--focus=x,z]` saves a frame and quits.
 
 For example, to simulate a full game headless in a few seconds:
@@ -195,3 +202,6 @@ godot --headless --path . --fixed-fps 120 --quit-after 36000 -- --autoplay --mod
 `tools/physics_bench.sh [out.md]` prints the physics bench.
 `tools/ci.sh` is the full gate CI runs on every PR: import, a headless autoplay
 game and the `tools/tests/` scripts.
+`tools/tier_ai_check.sh` plays `GAMES` (default 8) autoplay games of a beer-league
+side against a Senior AAA side, swapping ends, and fails unless the higher tier
+outscores and outwins the lower one.

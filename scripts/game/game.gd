@@ -67,6 +67,12 @@ var _palettes := []
 var _focus_override: Variant = null
 ## `-- --autoplay` lets the AI drive your skater too (attract mode / testing).
 var autoplay := "--autoplay" in OS.get_cmdline_user_args()
+## Per-team override of the match's TierAI (see ai_for).
+var team_ai: Array = [null, null]
+var _default_ai := TierAI.for_tier(4)
+## Shots and seconds of possession per team (the tier check prints them).
+var team_shots := [0, 0]
+var team_possession := [0.0, 0.0]
 var stats := {"shots": 0, "saves": 0, "goals": 0, "possessions": 0, "whistles": 0, "checks": 0, "hits": 0, "knockdowns": 0, "stick_lifts": 0}
 
 
@@ -135,6 +141,11 @@ func _ready() -> void:
 	_start_faceoff(Vector2.ZERO)
 	events.period_started.emit(period, _period_label())
 	_handle_capture_args()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--ai-levels="):
+			var lv := arg.trim_prefix("--ai-levels=").split_floats(",")
+			for team in mini(lv.size(), 2):
+				team_ai[team] = TierAI.for_level(lv[team])
 	# `-- --test=controls` runs the scripted control checks in tests/, and
 	# `-- --demo=controls` plays the captioned controls showcase
 	if "--demo=controls" in OS.get_cmdline_user_args():
@@ -221,20 +232,27 @@ func lane_clear(team: int, from: Vector2, to: Vector2, margin: float) -> bool:
 	return true
 
 
-## The open teammate furthest up ice, or null.
-func best_pass_option(s: Skater) -> Skater:
+## The best open teammate, or null. `vision` (TierAI, 0..1) is how well the
+## passer reads the ice: low only sees nearby mates and will force a pass
+## into traffic, high finds the open man furthest up ice.
+func best_pass_option(s: Skater, vision := 0.5) -> Skater:
 	var att := attack_side(s.team)
 	var from := Vector2(s.position.x, s.position.z)
+	var sees := lerpf(12.0, 45.0, vision)
+	var needs_open := lerpf(0.5, 1.8, vision)
 	var best: Skater = null
 	var best_score := -INF
 	for m in teammates(s):
 		var to := Vector2(m.position.x, m.position.z)
+		var dist := from.distance_to(to)
+		if dist > sees:
+			continue
 		var open := INF
 		for o in team_skaters(1 - s.team):
 			open = minf(open, Geometry2D.get_closest_point_to_segment(Vector2(o.position.x, o.position.z), from, to).distance_to(Vector2(o.position.x, o.position.z)))
-		if open < 1.4:
+		if open < needs_open:
 			continue
-		var sc := to.x * att + minf(open, 4.0) * 2.0
+		var sc := to.x * att * vision + minf(open, 4.0) * 2.0 * vision - dist * (1.0 - vision) * 0.5
 		if sc > best_score:
 			best_score = sc
 			best = m
@@ -316,6 +334,16 @@ func dev_set_skill(key: String, value: float) -> void:
 	human.set_skills(p.skills)
 
 
+## How organised `team` plays (TierAI). The match's tier sets both sides
+## (`tier_ai`, set by the match setup); `team_ai[team]` overrides one side, as
+## `-- --ai-levels=0.5,3` does (team 0 at level 0.5, team 1 at level 3).
+func ai_for(team: int) -> TierAI:
+	if team_ai[team] != null:
+		return team_ai[team]
+	var t: TierAI = get("tier_ai")
+	return t if t != null else _default_ai
+
+
 # ---------------------------------------------------------------- loop
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -352,6 +380,8 @@ func _physics_process(dt: float) -> void:
 		for g in goalies:
 			g.check_save(puck, prev)
 	_check_stall(dt)
+	if puck.controller:
+		team_possession[puck.controller.team] += dt
 
 
 func _process(dt: float) -> void:
@@ -414,6 +444,7 @@ func on_possession(s: Skater) -> void:
 
 func on_shot(s: Skater, slap: bool) -> void:
 	stats.shots += 1
+	team_shots[s.team] += 1
 	_last_shooter = s
 	events.shot.emit(s.team, s.player, slap)
 
@@ -613,6 +644,9 @@ func _exit_tree() -> void:
 	if autoplay and settings:
 		print("autoplay stats: ", stats, " score ", score, " period ", period, " clock ", snappedf(clock, 0.1))
 		_print_box()
+		if team_ai[0] or team_ai[1]:
+			print("ai levels: ", team_ai.map(func(a): return a.level if a else -1.0),
+				" shots ", team_shots, " possession ", team_possession.map(func(x): return roundi(x)))
 
 
 func _print_box() -> void:
