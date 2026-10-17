@@ -16,6 +16,10 @@ static func think(s: Skater, g: Node, dt: float) -> void:
 	var was_blade: Variant = c.blade_target
 	c.reset()
 	var ai: TierAI = g.ai_for(s.team)
+	if s.stick_broken:
+		s.ai_shoot_timer = 0.0
+		_no_stick(s, g, ai)
+		return
 	if s.ai_shoot_timer > 0.0:
 		s.ai_shoot_timer -= dt
 		c.shoot = true
@@ -37,6 +41,18 @@ static func think(s: Skater, g: Node, dt: float) -> void:
 		_defend(s, g, ai, owner, dt)
 	else:
 		_loose(s, g, ai)
+
+
+## A broken stick: off to the bench door for a new one. A disciplined
+## player with the puck deep in their own end stays to block in front of the
+## net until it's cleared.
+static func _no_stick(s: Skater, g: Node, ai: TierAI) -> void:
+	var my_goal := Vector2(-g.attack_side(s.team) * Rink.GOAL_X, 0)
+	var p := _v2(g.puck.position)
+	if ai.discipline > 0.5 and p.distance_to(my_goal) < 15.0:
+		_seek(s, ai, my_goal + (p - my_goal).normalized() * 3.0, 1.0, 8.0)
+		return
+	_seek(s, ai, g.bench_spot(s.team), 2.5, 6.0)
 
 
 ## Who this skater acts as if has the puck. Your own puck (and losing it) you
