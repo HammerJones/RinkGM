@@ -66,10 +66,17 @@ stay in `Models.palette()`.
 
 ## Props kit (`scripts/art/props.gd`)
 
-`arena_seat`, `door`, `light`, `vending_machine`, `trash_can`, `rink_sign`,
-`resurfacer`, each at all three ages. More to come: benches, penalty box,
-glass and stanchions, scoreboard, skate-sharpening bench, lockers, concession
-counter, rubber flooring, crowd figures and staff.
+`arena_seat`, `door` (or `door_frame` + `door_leaf`), `light`,
+`vending_machine`, `trash_can`, `rink_sign`, `resurfacer`, `lockers`,
+`player_bench` (a 2 m section), `penalty_box`, `glass_frame` + `glass_pane`
+(one 1.83 m panel on top of the boards), `concession_counter` and
+`scoreboard`, each at all three ages. Next: skate-sharpening bench, rubber
+flooring, crowd figures and staff.
+
+Glass panes are drawn with `Props.glass_material(age)` (see-through; old glass
+is yellowed and cloudier). The scoreboard leaves its display dark:
+`Props.SCOREBOARD_FACE` and `SCOREBOARD_FACE_Z` give the rectangle to fill
+with `RinkOS.sign_3d()`.
 
 To add a prop: write a `_name(age)` builder in `props.gd`, add the id to
 `IDS` and `_build()`, then check it on the prop sheet.

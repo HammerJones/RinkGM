@@ -44,6 +44,14 @@ func _initialize() -> void:
 				mi.position.y = 1.6
 			elif ids[r] == "rink_sign":
 				mi.position.y = 0.8
+			elif ids[r] == "scoreboard":
+				mi.position.y = 0.6
+			elif ids[r] == "glass_pane":
+				var fr := MeshInstance3D.new()
+				fr.mesh = Props.mesh("glass_frame", age, _lod)
+				fr.position = mi.position
+				fr.rotation.y = mi.rotation.y
+				world.add_child(fr)
 			elif ids[r] == "resurfacer":
 				mi.scale = Vector3.ONE * 0.6
 			world.add_child(mi)

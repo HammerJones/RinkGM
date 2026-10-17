@@ -18,7 +18,18 @@ extends RefCounted
 const V := Models.V
 
 ## Every prop id. Add new props here and in _build().
-const IDS := ["arena_seat", "door", "light", "vending_machine", "trash_can", "rink_sign", "resurfacer"]
+const IDS := [
+	"arena_seat", "door", "light", "vending_machine", "trash_can", "rink_sign", "resurfacer",
+	"lockers", "player_bench", "penalty_box", "glass_frame", "glass_pane", "concession_counter",
+	"scoreboard",
+]
+
+## The scoreboard's display area in its local space (metres, x and y, on the
+## plane z = SCOREBOARD_FACE_Z). Put RinkOS.sign_3d() text inside it.
+const SCOREBOARD_FACE := Rect2(-1.235, 0.26, 2.47, 0.91)
+const SCOREBOARD_FACE_Z := -0.2275
+
+static var _glass := {}
 
 ## Where the door leaf's hinge sits in the door frame's local space (metres).
 const DOOR_HINGE := Vector3(7 * Models.V, 0, 0)
@@ -66,6 +77,13 @@ static func _build(id: String, age: int) -> VoxelModel:
 		"trash_can": return _trash_can(age)
 		"rink_sign": return _rink_sign(age)
 		"resurfacer": return _resurfacer(age)
+		"lockers": return _lockers(age)
+		"player_bench": return _player_bench(age)
+		"penalty_box": return _penalty_box(age)
+		"glass_frame": return _glass_frame(age)
+		"glass_pane": return _glass_pane(age)
+		"concession_counter": return _concession_counter(age)
+		"scoreboard": return _scoreboard(age)
 	return null
 
 
@@ -84,6 +102,8 @@ static func mesh(id: String, age: int, lod := 0) -> ArrayMesh:
 			_cache[key] = m.build_mesh()
 		else:
 			_cache[key] = m.build_mesh_merged()
+		if id == "glass_pane" and _cache[key]:
+			_cache[key].surface_set_material(0, glass_material(age))
 	return _cache[key]
 
 
@@ -395,3 +415,255 @@ static func _resurfacer(age: int) -> VoxelModel:
 		else:
 			m.box(1, 15, 30, 1, 6, 10, Wear.WHITE)  # replacement side panel
 	return m.set_pivot(w * 0.5, 0, l * 0.5)
+
+
+## See-through material for glass panes. Old glass is yellowed and scuffed,
+## new glass is nearly clear.
+static func glass_material(age: int) -> StandardMaterial3D:
+	if not _glass.has(age):
+		var m := StandardMaterial3D.new()
+		m.vertex_color_use_as_albedo = true
+		m.vertex_color_is_srgb = true
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.albedo_color = Color(1, 1, 1, [0.55, 0.4, 0.22][age])
+		m.roughness = [0.6, 0.35, 0.1][age]
+		m.cull_mode = BaseMaterial3D.CULL_DISABLED
+		_glass[age] = m
+	return _glass[age]
+
+
+# ---------------------------------------------------------------- dressing rooms
+
+## A bank of three lockers, 1.2 m wide. Old: dented painted steel with vents
+## and one door hanging open; repaired: a replacement locker in the wrong
+## colour and padlocks. New: open wooden stalls with a navy back, a bench and
+## hooks, like a pro dressing room.
+static func _lockers(age: int) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	var each := 6
+	var w := each * 3
+	var h := 28
+	var d := 7
+	if age == Wear.RENOVATED:
+		m.box(0, 0, d - 1, w, h, 1, Wear.NAVY)
+		m.box(0, h, 0, w, 1, d, Wear.NEW_WOOD)  # top shelf
+		m.box(0, 20, 1, w, 1, d - 1, Wear.NEW_WOOD)
+		for i in 4:
+			m.box(i * each - (1 if i == 3 else 0), 0, 0, 1, h, d, Wear.NEW_WOOD)  # dividers
+		m.box(0, 6, 0, w, 1, d - 1, Wear.NEW_WOOD)  # bench
+		m.box(0, 0, 0, w, 1, d - 1, Wear.CHARCOAL)
+		for i in 3:
+			m.box(i * each + 3, 16, d - 2, 1, 1, 1, Wear.STEEL)  # hooks
+			m.box(i * each + 2, 24, d - 2, 3, 2, 1, Wear.WHITE)  # name plate
+		return m.set_pivot(w * 0.5, 0, d * 0.5)
+	for i in 3:
+		var c := Wear.OLD_MINT
+		if age == Wear.REPAIRED and i == 1:
+			c = Wear.OLD_ORANGE  # salvaged from another room
+		var x := i * each
+		m.box(x, 1, 0, each, h - 1, d, c)
+		m.box(x, 1, 0, 1, h - 1, 1, c.darkened(0.3))  # door seam
+		for y in [23, 21, 19]:
+			m.box(x + 2, y, 0, 3, 1, 1, c.darkened(0.45))  # vents
+		m.set_voxel(x + each - 2, 14, -1, Wear.OLD_STEEL)  # latch
+		if age == Wear.REPAIRED:
+			m.box(x + each - 2, 12, -2, 1, 2, 1, Color("c9a227"))  # padlock
+	m.box(0, 0, 0, w, 1, d, Wear.CHARCOAL)  # plinth
+	if age == Wear.WORN:
+		# the middle door hangs open: clear it and stand it out at an angle
+		m.clear_box(each, 1, 0, each, h - 1, 1)
+		m.box(each + 1, 2, 1, each - 2, h - 4, 1, Wear.CHARCOAL)  # dark inside
+		for k in each:
+			m.box(each - 1 - k / 2, 2, -1 - k, 1, h - 3, 1, Wear.OLD_MINT)
+		m.set_voxel(4, 9, 0, Wear.OLD_MINT.darkened(0.35))  # dents
+		m.set_voxel(15, 6, 0, Wear.OLD_MINT.darkened(0.35))
+		Wear.rust(m, Wear.OLD_STEEL, 0.5, 21)
+	return m.set_pivot(w * 0.5, 0, d * 0.5)
+
+
+# ---------------------------------------------------------------- benches
+
+## A 2 m section of the players' bench; line them up for the full bench.
+## Old: a long plank on steel legs, scuffed by skates. New: a padded navy
+## bench with a back rail and a rubber kick plate.
+static func _player_bench(age: int) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	var w := 31
+	var d := 6
+	if age == Wear.RENOVATED:
+		m.box(0, 0, 1, w, 6, d - 1, Wear.CHARCOAL)
+		m.box(0, 0, 0, w, 3, 1, Wear.RUBBER)  # kick plate
+		m.box(0, 6, 0, w, 2, d, Wear.NAVY)  # pad
+		m.box(0, 7, d - 1, w, 1, 1, Wear.RED)
+		m.box(0, 8, d, w, 6, 1, Wear.NAVY)  # back pad
+		return m.set_pivot(w * 0.5, 0, d * 0.5)
+	var legs := Wear.OLD_STEEL.darkened(0.3)
+	for x in [1, 15, 29]:
+		m.box(x, 0, 1, 1, 6, 1, legs)
+		m.box(x, 0, d - 2, 1, 6, 1, legs)
+	m.box(0, 6, 0, w, 1, d, Wear.OLD_WOOD)
+	m.box(0, 6, 0, w, 1, 1, Wear.OLD_WOOD_DARK)  # front edge
+	if age == Wear.WORN:
+		for x in range(2, w, 4):
+			m.set_voxel(x, 6, 0, Wear.CONCRETE)  # skate gouges
+			m.set_voxel(x + 1, 6, 1, Wear.OLD_WOOD_DARK)
+		Wear.rust(m, legs, 0.3, 31)
+	else:
+		m.box(10, 6, 0, 8, 1, d, Wear.NEW_WOOD)  # replaced plank
+	return m.set_pivot(w * 0.5, 0, d * 0.5)
+
+
+## The penalty box: a short bench in a three-sided booth, open to the ice
+## (-Z), where the boards and gate are. Old: plywood walls under a hand-made
+## SIN BIN sign plank. New: navy walls, padded bench, red trim.
+static func _penalty_box(age: int) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	var w := 28
+	var d := 16
+	var h := 16  # wall height, level with the boards
+	var new := age == Wear.RENOVATED
+	var wall := Wear.NAVY if new else Wear.PLYWOOD.darkened(0.15)
+	m.box(0, 0, 0, w, 1, d, Wear.RUBBER)  # rubber floor
+	m.box(0, 1, d - 1, w, h, 1, wall)  # back
+	m.box(0, 1, 0, 1, h, d - 1, wall)  # sides
+	m.box(w - 1, 1, 0, 1, h, d - 1, wall)
+	var top := Wear.RED if new else Wear.OLD_GOLD
+	m.box(0, h + 1, 0, 1, 1, d, top)  # cap rails
+	m.box(w - 1, h + 1, 0, 1, 1, d, top)
+	m.box(0, h + 1, d - 1, w, 1, 1, top)
+	var bench := Wear.NAVY.lightened(0.15) if new else Wear.OLD_WOOD
+	m.box(2, 1, d - 6, w - 4, 6, 5, Wear.CHARCOAL if new else Wear.OLD_WOOD_DARK)
+	m.box(2, 7, d - 6, w - 4, 1, 5, bench)
+	if not new:
+		m.box(4, 11, d - 2, w - 8, 3, 1, Wear.OLD_CREAM)  # the old SIN BIN plank
+		for x in range(6, w - 6, 2):
+			m.set_voxel(x, 12, d - 3, Wear.RED.darkened(0.3))
+		if age == Wear.WORN:
+			m.box(10, 1, d - 1, 3, 4, 1, Wear.CHARCOAL)  # hole kicked in the wall
+	else:
+		m.box(4, 12, d - 2, w - 8, 1, 1, Wear.RED)
+	return m.set_pivot(w * 0.5, 0, d * 0.5)
+
+
+# ---------------------------------------------------------------- glass
+
+const _GLASS_W := 28  # one 1.83 m panel
+const _GLASS_H := 18  # 1.17 m above the boards
+
+
+## The steel that holds one panel of glass on top of the boards: a stanchion
+## on the panel's +X edge and the bottom channel. Its pivot is the top of the
+## boards. Pair with "glass_pane". Old: painted posts with rusty bolts. New:
+## seamless, just low clear clips, no posts.
+static func _glass_frame(age: int) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	if age == Wear.RENOVATED:
+		for x in [2, _GLASS_W - 3]:
+			m.box(x, 0, -1, 2, 1, 3, Wear.STEEL)  # clips
+		return m.set_pivot(_GLASS_W * 0.5, 0, 0.5)
+	var post := Wear.OLD_GOLD if age == Wear.WORN else Wear.OLD_GOLD.lightened(0.1)
+	m.box(0, 0, -1, _GLASS_W, 1, 3, Wear.OLD_STEEL)  # channel
+	m.box(_GLASS_W - 1, 0, -1, 2, _GLASS_H + 1, 3, post)  # stanchion
+	for y in [3, 9, 15]:
+		m.set_voxel(_GLASS_W - 1, y, -2, Wear.OLD_STEEL)  # bolts
+	if age == Wear.WORN:
+		Wear.rust(m, Wear.OLD_STEEL, 0.5, 41)
+	return m.set_pivot(_GLASS_W * 0.5, 0, 0.5)
+
+
+## One pane of glass, drawn with glass_material(age). Old panes are yellowed
+## with puck scuffs; the repaired one has a taped crack.
+static func _glass_pane(age: int) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	var tint := Wear.GLASS.lerp(Wear.OLD_CREAM, 0.5) if age != Wear.RENOVATED else Wear.GLASS
+	m.box(0, 1, 0, _GLASS_W - 1, _GLASS_H - 1, 1, tint)
+	if age != Wear.RENOVATED:
+		for p in [Vector2i(5, 4), Vector2i(6, 4), Vector2i(12, 7), Vector2i(19, 3), Vector2i(20, 5), Vector2i(9, 11)]:
+			m.set_voxel(p.x, p.y, 0, tint.darkened(0.3))  # puck marks
+	if age == Wear.REPAIRED:
+		for i in 7:
+			m.set_voxel(14 + i, 6 + i, -1, Wear.DUCT_TAPE)  # tape over a crack
+	m.jitter = 0.0
+	return m.set_pivot(_GLASS_W * 0.5, 0, 0.5)
+
+
+# ---------------------------------------------------------------- concessions
+
+## A 2.4 m concession counter. Old: wood-panel front, harvest-gold laminate
+## top, a popcorn machine and a chunky cash register. New: navy front with a
+## red band, white top, a glass display case and a card reader.
+static func _concession_counter(age: int) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	var w := 37
+	var h := 16
+	var d := 11
+	if age == Wear.RENOVATED:
+		m.box(0, 0, 0, w, h, d, Wear.NAVY)
+		m.box(0, 12, 0, w, 1, 1, Wear.RED)
+		m.box(0, 0, 0, w, 1, 1, Wear.CHARCOAL)
+		m.box(-1, h, -1, w + 2, 1, d + 1, Wear.WHITE)
+		m.box(2, h + 1, 1, 14, 5, 7, Wear.GLASS)  # display case
+		m.box(3, h + 1, 2, 12, 1, 5, Wear.WHITE)
+		for x in range(4, 15, 3):
+			m.box(x, h + 2, 3, 2, 1, 2, Color("e3b04b"))  # pastries
+		m.box(28, h + 1, 2, 3, 3, 2, Wear.CHARCOAL)  # card reader
+		m.set_voxel(29, h + 3, 1, Wear.TEAL)
+		return m.set_pivot(w * 0.5, 0, d * 0.5)
+	m.box(0, 0, 0, w, h, d, Wear.OLD_WOOD)
+	for x in range(0, w, 3):
+		m.box(x, 1, 0, 1, h - 2, 1, Wear.OLD_WOOD_DARK)  # panel grooves
+	m.box(0, 0, 0, w, 1, 1, Wear.OLD_BROWN)
+	m.box(-1, h, -1, w + 2, 1, d + 1, Wear.OLD_GOLD)
+	# popcorn machine: red cart, glass box of popcorn
+	m.box(3, h + 1, 2, 9, 2, 7, Wear.RED.darkened(0.2))
+	m.box(3, h + 3, 2, 9, 7, 7, Wear.GLASS)
+	m.box(4, h + 3, 3, 7, 3, 5, Color("f3e3a2"))
+	m.box(3, h + 10, 2, 9, 2, 7, Wear.RED.darkened(0.2))
+	# cash register
+	m.box(25, h + 1, 3, 8, 4, 6, Wear.OLD_STEEL.darkened(0.2))
+	m.box(26, h + 5, 6, 6, 3, 2, Wear.OLD_STEEL.darkened(0.2))
+	for x in range(26, 32, 2):
+		m.set_voxel(x, h + 5, 4, Wear.OLD_CREAM)  # keys
+	if age == Wear.WORN:
+		for p in [Vector3i(7, h, -1), Vector3i(8, h, -1), Vector3i(20, h, -1), Vector3i(33, h, -1)]:
+			m.set_voxel(p.x, p.y, p.z, Wear.OLD_WOOD_DARK)  # chipped laminate edge
+		m.box(16, 6, -1, 5, 4, 1, Wear.PAPER)  # CASH ONLY note
+		Wear.rust(m, Wear.OLD_STEEL.darkened(0.2), 0.15, 51)
+	else:
+		m.box(14, 2, 0, 9, h - 4, 1, Wear.PLYWOOD)  # patched front panel
+	return m.set_pivot(w * 0.5, 0, d * 0.5)
+
+
+# ---------------------------------------------------------------- scoreboard
+
+## The wall scoreboard housing, about 3 x 1.6 m, mounted with its bottom at
+## the pivot. The display area (SCOREBOARD_FACE) is left as a dark panel for
+## RinkOS.sign_3d() text; this is just the box around it. Old: a wooden
+## cabinet with a gold sponsor header and a bulb grid. New: slim charcoal
+## with LED trim.
+static func _scoreboard(age: int) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	var w := 46
+	var h := 25
+	var d := 5
+	var new := age == Wear.RENOVATED
+	var body := Wear.CHARCOAL if new else Wear.OLD_BROWN
+	m.box(0, 0, 0, w, h, d, body)
+	m.box(4, 4, -1, w - 8, 14, 1, Wear.RUBBER)  # display area (SCOREBOARD_FACE)
+	if new:
+		for x in range(0, w, 2):
+			m.set_voxel(x, h - 1, -1, Wear.LED)
+			m.set_voxel(x, 0, -1, Wear.LED)
+		m.box(4, 19, -1, w - 8, 4, 1, Wear.NAVY)  # club panel
+		m.box(5, 20, -2, w - 10, 2, 1, Wear.RED)
+	else:
+		m.box(2, 19, -1, w - 4, 5, 1, Wear.OLD_GOLD)  # sponsor header
+		for x in range(6, w - 6, 3):
+			m.set_voxel(x, 21, -2, Wear.OLD_ORANGE)
+		# unlit bulb grid behind the display
+		for x in range(5, w - 5, 2):
+			for y in range(5, 17, 2):
+				m.set_voxel(x, y, -1, Wear.SODIUM_DIM.darkened(0.6))
+		if age == Wear.WORN:
+			m.box(w - 9, 19, -1, 5, 5, 1, Wear.CHARCOAL)  # header panel missing
+	return m.set_pivot(w * 0.5, 0, d * 0.5)
