@@ -7,33 +7,18 @@ extends Node
 var game: Node
 var player_input: PlayerInput
 var _pass_call_until := -10.0
-var _moves_human: Skater = null
+var gestures := StickGestures.new()
 
 
 func _ready() -> void:
 	player_input = PlayerInput.new()
 	add_child(player_input)
-	_take_over(game.human)
-
-
-## You start with the starter shots; the rest are learned (Moves).
-func _take_over(human: Skater) -> void:
-	_moves_human = human
-	# (mechanics) a career player keeps what they've learned (Skater.apply_player)
-	if human.player == null or not game.career_mode:
-		human.moves = Moves.starter()
 
 
 func update(dt: float) -> void:
 	var human: Skater = game.human
 	var c := human.ctrl
 	c.reset()
-	if _moves_human != human:
-		_take_over(human)
-	if Input.is_action_just_pressed("unlock_moves"):
-		var all := human.moves.size() < Moves.ALL.size()
-		human.moves = Moves.all() if all else Moves.starter()
-		game.hud.show_message("ALL MOVES" if all else "STARTER MOVES", 1.0)
 	var f := player_input.poll(dt)
 	var fwd: Vector3 = game.camera_rig.forward_flat()
 	var right: Vector3 = game.camera_rig.right_flat()
@@ -46,6 +31,9 @@ func update(dt: float) -> void:
 	c.tilt = f.tilt
 	var sw := right * f.stick.x + fwd * f.stick.y
 	c.stick = Vector2(sw.x, sw.z)
+	# stick patterns for learned moves (Moves); physics runs them
+	var local := Vector2(sw.dot(human.heading), sw.dot(human.right_vec()))
+	c.move_id = gestures.feed(local, f.tilt, c.lift, human.has_puck(), dt)
 	# shots go at the net; lean on the left stick to pick the near or far post
 	c.aim_point = human.attack_goal() + Vector3(0, 0, clampf(w.z, -1.0, 1.0) * 0.75)
 	# passes go where you're skating, else where the stick points

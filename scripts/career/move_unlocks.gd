@@ -39,23 +39,6 @@ const OLD_NAMES := {"QUICK": "quick_shot", "WRIST": "wrist_shot", "BACKHAND": "b
 	"SNAP": "snap_shot", "SLAP": "slapshot", "ONE_TIMER": "one_timer", "TOE_DRAG": "toe_drag", "LACROSSE": "lacrosse"}
 
 
-## Catalog id -> Controls' Moves enum name, until the catalog's ids reach
-## the physics branch. Moves this table doesn't list aren't playable yet.
-const ENUM_NAMES := {"quick_shot": "QUICK", "wrist_shot": "WRIST", "backhand": "BACKHAND",
-	"snap_shot": "SNAP", "slapshot": "SLAP", "one_timer": "ONE_TIMER", "toe_drag": "TOE_DRAG", "lacrosse": "LACROSSE"}
-
-
-## The `Skater.moves` set (Moves enum id -> true) for a list of learned ids.
-static func to_move_ids(learned: Array) -> Dictionary:
-	var consts: Dictionary = (Moves as Script).get_script_constant_map()
-	var out := {}
-	for m in learned:
-		var en: String = ENUM_NAMES.get(m, "")
-		if en != "" and consts.has(en):
-			out[consts[en]] = true
-	return out
-
-
 static func can_learn(p: PlayerProfile, move: String) -> bool:
 	if not RULES.has(move):
 		return STARTER.has(move)

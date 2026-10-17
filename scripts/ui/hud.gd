@@ -20,7 +20,7 @@ RMB  lift stick    LMB  tilt blade (hold for more)
 E  pass / call for it    F  check    [ ]  mouse sensitivity
 Esc  free the cursor   F1  physics mode   C  camera   R  restart
 Tab / Y  fast-forward on the bench (career)
-F2  unlock all moves (dev)   H  hide this"""
+`  dev menu   H  hide this"""
 
 var _home := ""
 var _away := ""
