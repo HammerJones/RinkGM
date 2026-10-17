@@ -21,6 +21,10 @@ var voxel_size := 0.065
 ## Mesh origin in voxel units (e.g. a joint). Vertices are offset by -pivot.
 var pivot := Vector3.ZERO
 var jitter := 0.04
+## Off-grid voxels for shapes the grid can't follow (a curved heel, an angled
+## brace): [Transform3D of a unit cube centred on the origin, in voxel units,
+## Color]. Drawn whole, with no face culling or speckle.
+var oriented: Array = []
 
 
 func _init(size := 0.065) -> void:
@@ -45,6 +49,13 @@ func clear_box(x: int, y: int, z: int, sx: int, sy: int, sz: int) -> VoxelModel:
 		for j in sy:
 			for k in sz:
 				voxels.erase(Vector3i(x + i, y + j, z + k))
+	return self
+
+
+## Adds an off-grid voxel: a box of `size` voxels centred on `center`, its
+## local axes turned by `basis` (no scale). All in voxel units.
+func add_oriented(center: Vector3, basis: Basis, size: Vector3, c: Color) -> VoxelModel:
+	oriented.append([Transform3D(basis * Basis.from_scale(size), center), c])
 	return self
 
 
@@ -74,6 +85,13 @@ func append_to(b: VoxelMeshBuilder, xf: Transform3D) -> void:
 			b.add_quad(
 				xf * (base + f[0] * voxel_size), xf * (base + f[1] * voxel_size),
 				xf * (base + f[2] * voxel_size), xf * (base + f[3] * voxel_size), n, c)
+	_append_oriented(b, xf)
+
+
+func _append_oriented(b: VoxelMeshBuilder, xf: Transform3D) -> void:
+	for o in oriented:
+		var t: Transform3D = o[0]
+		b.add_box(xf * Transform3D(t.basis * voxel_size, (t.origin - pivot) * voxel_size), o[1])
 
 
 ## A lighter mesh for distance and big repeats: no per-voxel speckle, and
@@ -142,6 +160,7 @@ func build_mesh_merged(quantize := 0) -> ArrayMesh:
 					v3[va] = uv.y
 					corners.append((v3 - pivot) * voxel_size)
 				b.add_quad(corners[0], corners[1], corners[2], corners[3], n, c)
+	_append_oriented(b, Transform3D.IDENTITY)
 	return b.commit()
 
 

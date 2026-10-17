@@ -12,7 +12,6 @@ const V := Models.V
 const HIP_Y := 12 * V
 const STICK_LEN := 23.5 * V   # goalie stick
 const SHAFT_LEN := Models.SHAFT_VOX * Models.STICK_V
-const BLADE_HEEL := Vector3(-7.5 * Models.STICK_V, 4.5 * Models.STICK_V, 0)  # in blade space
 const THIGH := 6.0 * V
 const SHIN := 6.5 * V           # knee to the bottom of the blade
 const UPPER_ARM := 4.0 * V
@@ -277,7 +276,7 @@ func _pose_stick(center: Vector3, flat: Vector3, tilt: float, k: float) -> void:
 	# tilt rolls the blade open about its length
 	bb = bb.rotated(toe, -tilt * 0.7)
 	blade.transform = Transform3D(bb, center)
-	var heel := center + bb * BLADE_HEEL
+	var heel := center + bb * Models.blade_heel
 	var hy := 0.95 - 0.1 * k - _crouch + center.y * 0.5
 	var two := Vector3(0.0, hy, -0.22) + flat * 0.22
 	# one-handed: the top (left) hand reaches from its shoulder towards the blade

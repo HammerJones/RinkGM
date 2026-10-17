@@ -11,7 +11,7 @@ change this file in the same PR and say why.
 | --- | --- |
 | Physics | `scripts/game/skater.gd` (skating, blade, puck handling, shots, passes, checks), `puck.gd`, `goalie.gd`, on-ice AI (`skater_ai.gd`, goalie decisions), rink collision in `rink.gd`, `scripts/core/tuning.gd`, the fixed-step sim loop in `game.gd` (`_physics_process`, body and puck contact) |
 | Game mechanics | `scripts/career/` (player attributes, progression, injuries, season, playoffs, league tiers, saves), match rules in `game.gd` (periods, lineups, line changes, game length), stats, the match event hub |
-| Controls | `scripts/core/input_setup.gd`, `scripts/input/` (human controller, device handling, bindings), the move catalog `scripts/game/moves.gd`, stick models, and how players hold and swing the stick (grip and hand IK in `scripts/game/skater_rig.gd`). Only `scripts/input/` reads `Input` |
+| Controls | `scripts/core/input_setup.gd`, `scripts/input/` (human controller, device handling, bindings), the move catalog `scripts/core/moves.gd`, stick models, and how players hold and swing the stick (grip and hand IK in `scripts/game/skater_rig.gd`). Only `scripts/input/` reads `Input` |
 | UI and styling | `scripts/ui/`, `assets/ui/` (the project-wide RinkOS theme `assets/ui/rinkos_theme.tres`, fonts with their licences). **Every screen follows `assets/ui/STYLE.md`**: use the RinkOS constants, type variations and helpers, never hard-coded fonts or colours |
 | Project manager | `docs/`, `tools/`, `.github/`, `README.md`, the developer menu in `scripts/dev/` |
 | World and asset design | The look and the asset library: art direction and the voxel style guide (`docs/ART.md`), palettes and materials, `scripts/art/` (characters, goalies, equipment, puck, nets, and a props kit of seats, doors, benches, glass, signage, Zamboni and so on), `scripts/voxel/`, `art/` (MagicaVoxel sources). Later, the open-world map and town around the rink (`scenes/world/`, `scripts/world/`) |
@@ -80,9 +80,9 @@ Sean wants shot types and stick moves to be skills the player unlocks and then
 performs by tracing a pattern with the right stick or mouse. Three owners, one
 shared list:
 
-- **Move catalog** (`scripts/game/moves.gd`, owned by Controls): one entry per
+- **Move catalog** (`scripts/core/moves.gd`, owned by Controls): one entry per
   move with its id, display name, the gesture pattern that triggers it, and its
-  gamepad and mouse descriptions. Every other system refers to a move by the same identifier (one type, agreed between Controls, Physics and Mechanics; Mechanics currently stores names such as `SNAP`).
+  gamepad and mouse descriptions. Every system refers to a move by its catalog id, a `StringName` such as `&"snap_shot"` (saves store it as a string).
 - **Recognising gestures** (`scripts/input/`, Controls) turns stick or mouse
   paths into a move id on `Skater.Controls` (for example `move_request`). The
   AI requests moves through the same field.

@@ -217,6 +217,7 @@ Arguments after `--` are read by the game:
 - `--career` opens the career hub (pick a save: Career, Demo: low tier, Demo: mid tier); `--slot=career|demo_low|demo_mid` skips the picker and `--career-new` discards that slot's save.
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
 - `--ai-levels=0.5,3` sets how organised each team plays (TierAI level, 0 = Beer League D to 5 = Minor League Pro).
+- `--seed=N` replays the same game every run.
 - `--screenshot=out.png --shot-after=6 [--iso] [--zoom=10] [--focus=x,z]` saves a frame and quits.
 
 For example, to simulate a full game headless in a few seconds:
@@ -229,6 +230,7 @@ godot --headless --path . --fixed-fps 120 --quit-after 36000 -- --autoplay --mod
 `tools/physics_bench.sh [out.md]` prints the physics bench.
 `tools/ci.sh` is the full gate CI runs on every PR: import, a headless autoplay
 game and the `tools/tests/` scripts.
-`tools/tier_ai_check.sh` plays `GAMES` (default 8) autoplay games of a beer-league
+`tools/tier_ai_check.sh` plays `GAMES` (default 24; fewer is too noisy at 5-on-5) autoplay games of a Beer League D
 side against a Senior AAA side, swapping ends, and fails unless the higher tier
-outscores and outwins the lower one.
+outscores and outwins the lower one. Each game has a fixed seed, so the result
+only moves when a change affects how the game plays.

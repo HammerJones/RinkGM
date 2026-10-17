@@ -1,28 +1,33 @@
 #!/usr/bin/env bash
 # Checks that the on-ice AI plays to its tier: a mid-tier side (TierAI level
-# MID, default 3 = Senior AAA) must outscore a low-tier side (LOW, default
-# 0.5, beer league) over GAMES headless autoplay games, swapping ends every
-# game so neither side keeps an edge from the rink. Both sides have the same
-# ratings; only the TierAI knobs differ.
-# Usage: GODOT=/path/to/godot [GAMES=8 LOW=0.5 MID=3 FRAMES=36000 JOBS=4] tools/tier_ai_check.sh
+# MID, default 3 = Senior AAA) must outscore and outwin a low-tier side (LOW,
+# default 0 = Beer League D) over GAMES headless autoplay games, swapping
+# ends every game so neither side keeps an edge from the rink. Both sides have
+# the same ratings; only the TierAI knobs differ. Goals at 5-on-5 are few, so
+# fewer than 24 games, or a closer pair of levels (0.5 vs 3 is only ~1.4x on
+# goals), turns this into a coin flip. Game i plays `--seed=SEED-i`, so the
+# result only changes when a diff changes how the game plays, not on every
+# run (set SEED to draw a fresh set).
+# Usage: GODOT=/path/to/godot [GAMES=24 LOW=0 MID=3 FRAMES=36000 JOBS=4 SEED=tier] tools/tier_ai_check.sh
 set -uo pipefail
 GODOT=${GODOT:-godot}
-GAMES=${GAMES:-8}
-LOW=${LOW:-0.5}
+GAMES=${GAMES:-24}
+LOW=${LOW:-0}
 MID=${MID:-3}
 FRAMES=${FRAMES:-36000}
 JOBS=${JOBS:-4}
+SEED=${SEED:-tier}
 cd "$(dirname "$0")/.."
 OUT=$(mktemp -d)
 
 play() {
 	local i=$1 levels
 	if (( i % 2 == 0 )); then levels="$LOW,$MID"; else levels="$MID,$LOW"; fi
-	timeout 600 "$GODOT" --headless --path . --fixed-fps 120 --quit-after "$FRAMES" -- --autoplay --ai-levels="$levels" \
+	timeout 600 "$GODOT" --headless --path . --fixed-fps 120 --quit-after "$FRAMES" -- --autoplay --ai-levels="$levels" --seed="$SEED-$i" \
 		2>&1 | grep -E "autoplay stats|ai levels|SCRIPT ERROR|Invalid (call|access)" >"$OUT/$i.txt"
 }
 export -f play
-export GODOT LOW MID FRAMES OUT
+export GODOT LOW MID FRAMES OUT SEED
 seq 0 $((GAMES - 1)) | xargs -P "$JOBS" -I{} bash -c 'play {}'
 
 low_goals=0; mid_goals=0; low_wins=0; mid_wins=0; low_shots=0; mid_shots=0; fail=0

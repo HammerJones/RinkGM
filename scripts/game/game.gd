@@ -79,7 +79,12 @@ var stats := {"shots": 0, "saves": 0, "goals": 0, "possessions": 0, "whistles": 
 
 func _ready() -> void:
 	randomize()
-	_rng.randomize()
+	# `-- --seed=N` replays the same game (the tier check uses it so results
+	# don't change with nothing but art in a diff)
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--seed="):
+			seed(hash(arg.trim_prefix("--seed=")))
+	_rng.seed = randi()
 	# `-- --venue-walk` explores the building on foot instead of playing
 	if "--venue-walk" in OS.get_cmdline_user_args():
 		set_physics_process(false)
@@ -265,6 +270,9 @@ func best_pass_option(s: Skater, vision := 0.5) -> Skater:
 		if open < needs_open:
 			continue
 		var sc := to.x * att * vision + minf(open, 4.0) * 2.0 * vision - dist * (1.0 - vision) * 0.5
+		# a mate open in front of their net is the pass a good reader looks for
+		if to.distance_to(Vector2(att * Rink.GOAL_X, 0)) < 8.0:
+			sc += 6.0 * vision
 		if sc > best_score:
 			best_score = sc
 			best = m

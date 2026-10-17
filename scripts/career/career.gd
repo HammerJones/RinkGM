@@ -117,7 +117,7 @@ static func new_demo(slot: String, first: String, last: String, position: String
 ## the AI settings differ (the tier AI check).
 static func exhibition(t := 4, mirrored := false) -> Dictionary:
 	var c := Career.new()
-	c.rng.randomize()
+	c.rng.seed = randi()
 	c._ensure_league(t)
 	var ids: Array = c.leagues[t].duplicate()
 	ids.shuffle()
