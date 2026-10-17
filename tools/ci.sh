@@ -20,6 +20,10 @@ IGNORE_RE='Parameter "m" is null'
 errors() { grep -E "$ERR_RE" "$1" | grep -vE "$IGNORE_RE"; }
 
 echo "== import"
+# On a fresh checkout the first import loads the project theme before its
+# textures and fonts are imported and logs "No loader found"; a second
+# import is clean, so only that one is checked.
+"$GODOT" --headless --path . --import >"$LOG/import0.txt" 2>&1
 "$GODOT" --headless --path . --import >"$LOG/import.txt" 2>&1
 if errors "$LOG/import.txt"; then fail=1; fi
 

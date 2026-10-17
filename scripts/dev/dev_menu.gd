@@ -247,6 +247,17 @@ func _build_player() -> void:
 	_button(r2, "All 75", func() -> void: _set_all(75.0))
 	_button(r2, "All 100", func() -> void: _set_all(100.0))
 
+	var c := _career()
+	if c != null and c.has_method("dev_add_xp"):
+		var rx := _row(box)
+		_button(rx, "+XP all (small)", func() -> void:
+			c.dev_add_xp("all", 50.0)
+			_maybe_save()
+			_say("added XP"))
+		_button(rx, "+XP all (big)", func() -> void:
+			c.dev_add_xp("all", 500.0)
+			_maybe_save()
+			_say("added lots of XP"))
 	_note(box, "----------------------------------------\n// Health")
 	if p != null:
 		var inj: Object = p.get("injury")
@@ -277,8 +288,9 @@ func _build_player() -> void:
 
 func _set_rating(key: String, val: float) -> void:
 	var g := _game()
-	# (mechanics) only when the body on the ice carries the profile being edited
-	if g != null and g.has_method("dev_set_skill") and g.human.player != null and g.human.player.skills == _skills():
+	# only when the body on the ice carries the profile being edited
+	var body: Object = g.human.get("player") if g != null and g.get("human") != null else null
+	if g != null and g.has_method("dev_set_skill") and body != null and body.get("skills") == _skills():
 		g.dev_set_skill(key, val)
 		_maybe_save()
 		return
@@ -415,6 +427,23 @@ func _build_match() -> void:
 	var tuning := get_node_or_null("/root/Tuning")
 	if tuning != null and tuning.has_method("cycle_mode"):
 		_button(box, "Physics mode: %s (cycle)" % tuning.mode_name(), func() -> void: tuning.cycle_mode())
+	var tier_ai_path := "res://scripts/career/tier_ai.gd"
+	if g.has_method("set_tier_ai") and ResourceLoader.exists(tier_ai_path):
+		var r5 := _row(box)
+		var l5 := Label.new()
+		l5.text = "AI level"
+		l5.custom_minimum_size.x = 130
+		r5.add_child(l5)
+		var ai_slider := HSlider.new()
+		ai_slider.min_value = 0.0
+		ai_slider.max_value = 1.0
+		ai_slider.step = 0.05
+		ai_slider.value = 0.5
+		ai_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		r5.add_child(ai_slider)
+		ai_slider.drag_ended.connect(func(_changed: bool) -> void:
+			g.set_tier_ai(load(tier_ai_path).for_level(ai_slider.value))
+			_say("AI level %.2f" % ai_slider.value))
 	if "autoplay" in g:
 		var cb := CheckBox.new()
 		cb.text = "AI controls my skater (autoplay)"
@@ -469,7 +498,9 @@ func _build_career() -> void:
 	var tiers = load(tiers_path) if ResourceLoader.exists(tiers_path) else null
 	if tiers != null and tiers.has_method("get_tier"):
 		tier_name = "%d %s" % [c.tier, tiers.get_tier(c.tier).get("name", "")]
-	_note(box, "// Season %d   tier %s   day %d" % [c.season_number, tier_name, c.day])
+	var cs := get_node_or_null("/root/CareerState")
+	var slot := str(cs.get("slot")) if cs != null and cs.get("slot") != null else "career"
+	_note(box, "// Slot %s   season %d   tier %s   day %d" % [slot, c.season_number, tier_name, c.day])
 	var s: Object = c.get("season")
 	if s != null:
 		_note(box, "// Round %d of %d" % [s.round_index + 1, s.rounds.size()])
@@ -549,6 +580,11 @@ func _sim_rounds(n: int) -> void:
 
 func _sim_until_phase_change() -> void:
 	var c := _career()
+	if c.has_method("dev_sim_regular_season"):
+		c.dev_sim_regular_season()
+		_maybe_save()
+		_say("simmed the regular season")
+		return
 	var start_phase = c.season.phase
 	var done := 0
 	while c.season.phase == start_phase and done < 500 and _play_round(c):
