@@ -62,17 +62,22 @@ func physics_update(dt: float) -> void:
 	var out := Vector2(-side, 0)
 	var rel := p2 - nc
 
-	# positioning: on the line between net and puck, deeper when the puck is far
+	# positioning: on the line between net and puck, deeper when the puck is far.
+	# A goalie with poor positioning (TierAI) drifts off the angle, comes out
+	# less and moves across slower.
+	var ai: TierAI = game.ai_for(team)
+	var gp := ai.goalie_positioning
 	var desired: Vector2
 	if rel.dot(out) < 0.3:
 		desired = nc + out * 0.35 + Vector2(0, clampf(rel.y, -0.7, 0.7))
 	else:
-		desired = nc + rel.normalized() * clampf(rel.length() * 0.07, 0.35, 1.1)
-	var max_spd := lerpf(2.5, 4.0, skill) * (0.4 if butterfly_timer > 0.0 else 1.0)
+		var dir := rel.normalized().rotated(sin(game.time * 0.9 + side) * lerpf(0.22, 0.0, gp))
+		desired = nc + dir * clampf(rel.length() * lerpf(0.04, 0.07, gp), 0.35, lerpf(0.7, 1.1, gp))
+	var max_spd := lerpf(2.5, 4.0, skill) * lerpf(0.75, 1.1, gp) * (0.4 if butterfly_timer > 0.0 else 1.0)
 	pos2 += (desired - pos2).limit_length(max_spd * dt)
 	var look := p2 - pos2
 	if look.length() > 0.3 and look.dot(out) > -0.2:
-		facing = facing.lerp(look.normalized(), 1.0 - exp(-10.0 * dt)).normalized()
+		facing = facing.lerp(look.normalized(), 1.0 - exp(-lerpf(5.0, 12.0, gp) * dt)).normalized()
 
 	# shot reading
 	var pv := Vector2(puck.vel.x, puck.vel.z)
@@ -86,7 +91,7 @@ func physics_update(dt: float) -> void:
 			var t := dist / closing
 			tracked = true
 			if not _tracking:
-				_reaction = lerpf(0.26, 0.12, skill) + randf() * 0.06
+				_reaction = (lerpf(0.26, 0.12, skill) + randf() * 0.06) * game.ai_for(team).goalie_reaction
 			var hit := p2 + pv * t
 			var hy := maxf(0.0, puck.position.y + puck.vel.y * t - 0.5 * Puck.GRAVITY * t * t)
 			reach_target = Vector2(clampf((hit - pos2).dot(right2()), -1.0, 1.0), clampf(hy, 0.0, 1.5))

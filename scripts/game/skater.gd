@@ -120,6 +120,10 @@ var ai_shoot_timer := 0.0
 var ai_aim: Variant = null
 var ai_slap := false
 var ai_tilt := 0.0
+## who the AI thinks has the puck; it catches up with a change after the
+## tier's reaction delay (ai_react counts down, -1 when not waiting)
+var ai_owner: Skater = null
+var ai_react := -1.0
 
 var rig: SkaterRig
 var _prev_shoot := false
