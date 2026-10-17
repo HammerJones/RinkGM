@@ -76,7 +76,9 @@ func step(dt: float) -> void:
 	if holding:
 		puck.controller = self
 		puck.last_touch = self
-		puck.position = Vector3(blade_pos.x, 0.0, blade_pos.z) if blade_h < 0.05 else blade_pos + Vector3.UP * (blade_height + 0.03)
+		# a lifted blade (slapshot wind-up) leaves the puck waiting on the ice
+		if blade_h < 0.05:
+			puck.position = Vector3(blade_pos.x, 0.0, blade_pos.z)
 	elif puck.controller == self:
 		puck.controller = null
 	if _spray:
