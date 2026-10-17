@@ -14,7 +14,7 @@ it starts as a tired 1970s community rink and visibly gets better.
 
 | Use | Voxel size | Notes |
 | --- | --- | --- |
-| Characters, equipment, sticks, props | 0.065 m (`Models.V`) | One size so everything the player stands next to reads as one world. A 1.85 m skater is about 28 voxels tall |
+| Characters, equipment, props (sticks are Controls') | 0.065 m (`Models.V`) | One size so everything the player stands next to reads as one world. A 1.85 m skater is about 28 voxels tall |
 | Puck, net | 0.05 m, 0.061 m | Kept for regulation sizes |
 | Architecture (walls, floors, roof, stands) | 0.26 m (4 x `Models.V`) | Proposed for Rink environment; big surfaces stay cheap and still line up with the prop grid |
 
@@ -66,6 +66,15 @@ counter, rubber flooring, crowd figures and staff.
 
 To add a prop: write a `_name(age)` builder in `props.gd`, add the id to
 `IDS` and `_build()`, then check it on the prop sheet.
+
+## Text on signs
+
+In-world text follows the UI style (`assets/ui/STYLE.md`, PR #6): signs,
+banners and the scoreboard use `RinkOS.sign_3d()`, which puts one font pixel
+on one 0.065 m voxel. Props supply the board and frame. The voxel letters in
+`Props.letters()` are only for the old hand-painted sign, where the worn and
+repaired versions need letters that can fall off or be repainted; the
+renovated sign switches to `RinkOS.sign_3d()` once PR #6 is merged.
 
 ## Authoring in MagicaVoxel
 
