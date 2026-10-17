@@ -5,8 +5,14 @@ extends Node3D
 ## with two-bone IK: the feet follow a skating stride (glide, push out and
 ## back, lift and recover under the hips), the hips shift over the gliding
 ## skate, the shoulders counter-rotate, the outside leg crosses over in
-## turns, and the hands follow the simulated stick. Goalies keep one-piece
-## limbs.
+## turns, and the hands follow the simulated stick. On top of that come the
+## one-shot actions: shot and pass follow-throughs, body checks, falls and
+## goal celebrations. Goalies keep one-piece limbs.
+##
+## Every shaping number lives in AnimTuning (scripts/anim/anim_tuning.gd),
+## tuned live in the animation studio (scenes/anim/anim_studio.tscn).
+## Animations own the body; Controls owns the grip and hand IK on the stick
+## (`_pose_stick`).
 
 const V := Models.V
 const HIP_Y := 12 * V
@@ -18,13 +24,12 @@ const SHIN := 6.5 * V           # knee to the bottom of the blade
 const UPPER_ARM := 4.0 * V
 const FOREARM := 3.5 * V        # elbow to the middle of the glove
 const LEG_X := 2.0 * V
-
-# stride cycle, per leg (u in 0..1): glide under the hips, push out and back,
-# then lift and recover forward
-const GLIDE_END := 0.45
-const PUSH_END := 0.8
+const CHECK_TIME := 0.35        # Skater sets check_timer to this when a check starts
+## Goal celebrations, picked per scorer.
+const CELEBRATIONS: Array[StringName] = [&"arms_up", &"fist_pump", &"knee_slide"]
 
 var goalie := false
+var faller: Node3D        # tips the whole skater, stick included, in a fall
 var body: Node3D
 var hips: VoxelPart
 var torso: VoxelPart
@@ -51,6 +56,8 @@ var _cross := 0.0
 var _lean := 0.0
 var _brake := 0.0
 var _fall := 0.0
+var _fall_dir := 1.0      # +1 falls backward, -1 forward
+var _check := 0.0
 var _bf := 0.0
 var _time := 0.0
 var _feet: Array[Vector3] = [Vector3(-0.15, 0, 0), Vector3(0.15, 0, 0)]
@@ -58,16 +65,26 @@ var _yaws: Array[float] = [0.0, 0.0]
 var _one_hand := 0.0
 var _follow := 0.0
 var _follow_side := 1.0
+var _follow_h := 1.0
 var _shots := -1
+var _had_puck := false
 var _prev_wind := 0.0
 var _prev_ang := 0.0
 var _stick_yaw := 0.0
+var _cel_kind := &""
+var _cel_t := 0.0
+var _cel := 0.0
+var _hooked := false
+var _grip_top := Vector3.ZERO     # faller space, set by _pose_stick
+var _grip_bottom := Vector3.ZERO
 
 
 func build(pal: Dictionary, is_goalie: bool) -> void:
 	goalie = is_goalie
+	faller = Node3D.new()
+	add_child(faller)
 	body = Node3D.new()
-	add_child(body)
+	faller.add_child(body)
 	hips = VoxelPart.make(Models.pants(pal, goalie))
 	hips.position.y = HIP_Y
 	body.add_child(hips)
@@ -114,8 +131,8 @@ func build(pal: Dictionary, is_goalie: bool) -> void:
 	else:
 		stick = VoxelPart.make(Models.shaft(pal))
 		blade = VoxelPart.make(Models.blade(pal))
-		add_child(blade)
-	add_child(stick)
+		faller.add_child(blade)
+	faller.add_child(stick)
 
 
 ## The stick follows through high towards the target after a shot. `side` is
@@ -123,20 +140,61 @@ func build(pal: Dictionary, is_goalie: bool) -> void:
 func follow_through(strength: float, side := 1.0) -> void:
 	_follow = clampf(strength, 0.3, 1.0)
 	_follow_side = side
+	_follow_h = 1.0
 
 
-## Starts a follow-through when this skater's shot just left the blade.
+## A short, low follow-through after a pass.
+func pass_through(side := 1.0) -> void:
+	var t := AnimTuning.current()
+	_follow = t.pass_follow
+	_follow_side = side
+	_follow_h = t.pass_height
+
+
+## Plays a goal celebration (one of CELEBRATIONS) for `seconds`, or the
+## tuned length when it is 0.
+func celebrate(kind: StringName, seconds := 0.0) -> void:
+	_cel_kind = kind
+	_cel_t = seconds if seconds > 0.0 else AnimTuning.current().celebrate_time
+
+
+## The celebration playing now, or &"" when there is none.
+func celebrating() -> StringName:
+	return _cel_kind if _cel_t > 0.0 else &""
+
+
+## Starts a follow-through when this skater's shot or pass just left the
+## blade, and listens for goals to celebrate.
 func _watch_shots(s: Skater) -> void:
-	var shots: int = s.game.stats.shots
+	if not _hooked:
+		_hooked = true
+		var ev: Variant = s.game.get("events") if s.game else null
+		if ev and ev.has_signal("goal"):
+			ev.goal.connect(_on_goal.bind(s))
+	var stats: Variant = s.game.get("stats") if s.game else null
+	var shots: int = stats.shots if stats else 0
+	var has := s.has_puck()
+	var gone := _had_puck and not has and s.puck.last_touch == s and s.stun_timer <= 0.0
 	# wind-up shots call follow_through() themselves; this catches move shots
-	if _shots >= 0 and shots > _shots and _follow <= 0.0 and s.puck.last_touch == s and not s.has_puck():
+	if _shots >= 0 and shots > _shots and _follow <= 0.0 and s.puck.last_touch == s and not has:
 		follow_through(_prev_wind * 1.3 + 0.35, -1.0 if _prev_ang < -0.2 else 1.0)
+	elif gone and shots == _shots and _follow <= 0.0 and s.puck.vel.length() > 4.0:
+		pass_through(-1.0 if _prev_ang < -0.2 else 1.0)
 	_shots = shots
+	_had_puck = has
 	_prev_wind = s.windup()
 	_prev_ang = s.blade_ang
 
 
+func _on_goal(team: int, scorer: PlayerProfile, _assists: Array, s: Skater) -> void:
+	if scorer != null and scorer == s.player:
+		celebrate(CELEBRATIONS[s.number % CELEBRATIONS.size()])
+	elif team == s.team:
+		celebrate(&"arms_up", AnimTuning.current().celebrate_time * 0.6)
+
+
 func update_skater(s: Skater, dt: float) -> void:
+	var T := AnimTuning.current()
 	_time += dt
 	var speed := Vector2(s.vel.x, s.vel.z).length()
 	var k := clampf(speed / 9.0, 0.0, 1.0)
@@ -145,17 +203,28 @@ func update_skater(s: Skater, dt: float) -> void:
 	var dashing := s.dash_timer > 0.0
 	var smooth := 1.0 - exp(-8.0 * dt)
 
+	_cel_t = maxf(0.0, _cel_t - dt)
+	_cel = lerpf(_cel, 1.0 if _cel_t > 0.0 and able else 0.0, 1.0 - exp(-6.0 * dt))
+	var slide := _cel if _cel_kind == &"knee_slide" else 0.0
+
 	# stride: long, wide pushes at speed, short quick ones from a standstill
-	var amp_target := (0.4 + 0.6 * k) * (1.25 if dashing else 1.0) if pushing else 0.0
-	_amp = lerpf(_amp, amp_target, 1.0 - exp(-4.0 * dt))
-	var cadence := lerpf(1.7, 1.25, k) * (1.35 if dashing else 1.0)
+	var amp_target := (T.stride_amp + T.stride_amp_speed * k) * (T.dash_amp if dashing else 1.0) if pushing else 0.0
+	_amp = lerpf(_amp, amp_target * (1.0 - slide), 1.0 - exp(-4.0 * dt))
+	var cadence := lerpf(T.stride_cadence, T.stride_cadence_fast, k) * (T.dash_cadence if dashing else 1.0)
 	if _amp > 0.02:
 		_cycle = fmod(_cycle + dt * cadence, 1.0)
-	_lean = lerpf(_lean, clampf(s.yaw_rate * speed * 0.05, -0.45, 0.45), smooth)
-	_cross = lerpf(_cross, clampf((absf(_lean) - 0.08) / 0.25, 0.0, 1.0) if pushing and speed > 2.5 else 0.0, smooth)
-	_brake = lerpf(_brake, 1.15 if s.braking else 0.0, 1.0 - exp(-12.0 * dt))
-	_fall = lerpf(_fall, 1.0 if s.stun_timer > 0.25 else 0.0, 1.0 - exp(-7.0 * dt))
-	var stop := _brake / 1.15
+	_lean = lerpf(_lean, clampf(s.yaw_rate * speed * T.cross_lean, -T.cross_lean_max, T.cross_lean_max), smooth)
+	_cross = lerpf(_cross, clampf((absf(_lean) - T.cross_start) / T.cross_range, 0.0, 1.0) if pushing and speed > 2.5 else 0.0, smooth)
+	_brake = lerpf(_brake, T.stop_turn if s.braking else 0.0, 1.0 - exp(-T.stop_speed * dt))
+	var down := s.stun_timer > 0.25
+	if down and _fall < 0.05:
+		# pushed back while skating slowly (or backwards) goes over backwards
+		_fall_dir = -1.0 if s.vel.dot(-s.global_basis.z) > T.fall_forward_speed else 1.0
+	_fall = lerpf(_fall, 1.0 if down else 0.0, 1.0 - exp(-(T.fall_speed if down else T.fall_rise_speed) * dt))
+	var check_p := 1.0 - s.check_timer / CHECK_TIME if s.check_timer > 0.0 else 1.0
+	_check = lerpf(_check, 1.0 if s.check_timer > 0.0 else 0.0, 1.0 - exp(-16.0 * dt))
+	var rise := _check * smoothstep(0.3, 0.8, check_p)
+	var stop := _brake / maxf(T.stop_turn, 0.01)
 
 	# feet: blend the stride with a two-skate glide and the hockey-stop stance
 	var outside := 1.0 if _lean > 0.0 else -1.0
@@ -164,24 +233,29 @@ func update_skater(s: Skater, dt: float) -> void:
 	for i in 2:
 		var sd := -1.0 if i == 0 else 1.0
 		var u := fmod(_cycle + (0.0 if i == 0 else 0.5), 1.0)
-		var r := _stride_foot(sd, u, _amp, _cross if sd == outside else 0.0, _cross if sd != outside else 0.0)
-		var glide := Vector3(sd * 0.15, 0, -sd * 0.05 * k)
+		var r := _stride_foot(T, sd, u, _amp, _cross if sd == outside else 0.0, _cross if sd != outside else 0.0)
+		var glide := Vector3(sd * T.stance_width, 0, -sd * 0.05 * k)
 		var foot: Vector3 = glide.lerp(r[0], stride_w)
 		var yaw: float = r[1] * stride_w
-		foot = foot.lerp(Vector3(sd * 0.3, 0, sd * 0.04), stop)
+		foot = foot.lerp(Vector3(sd * T.stop_width, 0, sd * 0.04), stop)
 		yaw = lerpf(yaw, 0.0, stop)
+		# knee slide: left knee down on the ice behind, right skate out front
+		foot = foot.lerp(Vector3(-0.12, 0.02, 0.45) if i == 0 else Vector3(0.18, 0, -0.3), slide)
 		_feet[i] = _feet[i].lerp(foot, 1.0 - exp(-30.0 * dt))
 		_yaws[i] = lerpf(_yaws[i], yaw, 1.0 - exp(-20.0 * dt))
-		support[i] = 1.0 if (u < GLIDE_END or stride_w < 0.5) else 0.0
+		support[i] = 1.0 if (u < T.stride_glide_end or stride_w < 0.5) else 0.0
 
 	# hips: low athletic stance, sink at speed and in the stop, ride over the
 	# gliding skate, a little bob with each push
 	var sup_x: float = (_feet[0].x * support[0] + _feet[1].x * support[1]) / maxf(support[0] + support[1], 1.0)
-	_shift = lerpf(_shift, sup_x * 0.55 * stride_w, 1.0 - exp(-6.0 * dt))
-	_crouch = lerpf(_crouch, 0.12 + 0.05 * k + 0.07 * stop + (0.03 if dashing else 0.0), smooth)
-	var bob := absf(sin(_cycle * TAU)) * 0.025 * _amp + sin(_time * 2.2) * 0.006 * (1.0 - stride_w)
+	_shift = lerpf(_shift, sup_x * T.stride_hip_shift * stride_w, 1.0 - exp(-6.0 * dt))
+	var crouch := T.stance_crouch + T.stance_crouch_speed * k + T.stop_crouch * stop + (T.dash_crouch if dashing else 0.0)
+	crouch += T.check_crouch * _check - (T.check_crouch + T.check_rise) * rise
+	crouch += T.fall_drop * _fall + T.celebrate_knee_drop * slide
+	_crouch = lerpf(_crouch, crouch, smooth)
+	var bob := absf(sin(_cycle * TAU)) * T.stride_bob * _amp + sin(_time * 2.2) * T.stance_breathe * (1.0 - stride_w)
 	hips.position = Vector3(_shift, HIP_Y - _crouch - bob, 0.03 * k)
-	_twist = lerpf(_twist, sin(_cycle * TAU) * 0.16 * _amp * (1.0 - _cross * 0.5), smooth)
+	_twist = lerpf(_twist, sin(_cycle * TAU) * T.stride_hip_twist * _amp * (1.0 - _cross * 0.5), smooth)
 	hips.rotation = Vector3(0.12 * k, -_twist * 0.6, -_shift * 0.6)
 
 	# torso leans forward with speed, counter-rotates the hips, winds up for shots
@@ -193,13 +267,25 @@ func update_skater(s: Skater, dt: float) -> void:
 	var flat := Vector3(heel.x, 0, heel.z)
 	var blade_ang := atan2(flat.x, -flat.z) if flat.length() > 0.05 else 0.0
 	_stick_yaw = lerpf(_stick_yaw, blade_ang, 1.0 - exp(-10.0 * dt))
-	_follow = maxf(0.0, _follow - dt * 2.2)
+	_follow = maxf(0.0, _follow - dt * T.shot_follow_fade)
 	var fol := smoothstep(0.0, 1.0, _follow)
-	torso.rotation.x = lerpf(torso.rotation.x, -(0.22 + 0.42 * k) + w * 0.15 + stop * 0.2 - fol * 0.15, smooth)
-	torso.rotation.y = lerpf(torso.rotation.y, _twist - _stick_yaw * 0.4 + fol * 0.35 * _follow_side, smooth)
+	var lean_x := -(T.stance_lean + T.stance_lean_speed * k) + w * T.shot_windup_rise + stop * T.stop_lean - fol * T.shot_follow_rise * _follow_h
+	lean_x -= T.check_lean * _check
+	lean_x = lerpf(lean_x, T.celebrate_lean_back, _cel)
+	var turn_y := _twist - _stick_yaw * T.shot_shoulder_turn + fol * T.shot_follow_turn * _follow_side
+	turn_y = lerpf(turn_y, -T.check_shoulder, _check)
+	torso.rotation.x = lerpf(torso.rotation.x, lean_x, smooth)
+	torso.rotation.y = lerpf(torso.rotation.y, lerpf(turn_y, 0.0, _cel), smooth)
 	torso.rotation.z = lerpf(torso.rotation.z, _shift * 1.2, smooth)
-	head.rotation = Vector3(-(torso.rotation.x + hips.rotation.x) * 0.85, -(torso.rotation.y + hips.rotation.y) * 0.7, -torso.rotation.z * 0.8)
-	body.rotation = Vector3(_fall * 1.35, _brake, _lean + _brake * 0.25)
+	head.rotation = Vector3(-(torso.rotation.x + hips.rotation.x) * T.stance_head_level, -(torso.rotation.y + hips.rotation.y) * 0.7, -torso.rotation.z * 0.8)
+	body.rotation = Vector3(0.0, _brake, _lean + _brake * T.stop_tilt)
+	# leaning in a turn or a stop tips the body over its skates: lift it so
+	# the low skate stays on the ice instead of sinking through it
+	var sink := 0.0
+	for f in _feet:
+		sink = maxf(sink, -(body.basis * Vector3(f.x, 0.0, f.z)).y)
+	body.position.y = sink
+	faller.rotation.x = _fall * T.fall_angle * _fall_dir
 
 	for i in 2:
 		_pose_leg(i)
@@ -209,29 +295,32 @@ func update_skater(s: Skater, dt: float) -> void:
 	# follow-through
 	var oh := 0.0 if _follow > 0.0 else s.one_hand()
 	_one_hand = lerpf(_one_hand, oh, 1.0 - exp(-10.0 * dt))
-	var center := Vector3(flat.x, s.blade_height + fol * 0.55, flat.z)
+	var center := Vector3(flat.x, s.blade_height + fol * T.shot_follow_height * _follow_h, flat.z)
 	_pose_stick(center, flat, s.ctrl.tilt, k)
+	_pose_actions(T)
 
 
 ## Foot position (body space, +z is behind) and toe-out yaw for one leg at
 ## cycle point `u`. `cross` brings the outside skate over in a turn; `under`
 ## pushes the inside skate under the body.
-func _stride_foot(sd: float, u: float, amp: float, cross: float, under: float) -> Array:
+func _stride_foot(T: AnimTuning, sd: float, u: float, amp: float, cross: float, under: float) -> Array:
 	var front := Vector3(sd * 0.11, 0, -0.1 * amp)
 	var mid := Vector3(sd * 0.13, 0, 0.06 * amp)
-	var out := Vector3(sd * (0.14 + 0.3 * amp), 0, 0.12 + 0.2 * amp)
-	out.x = lerpf(out.x, -sd * 0.12, under * 0.7)
-	front.x = lerpf(front.x, -sd * 0.12, cross)
-	var toe_out := -sd * 0.6 * amp
-	if u < GLIDE_END:
-		var e := u / GLIDE_END
+	var out := Vector3(sd * (0.14 + T.stride_push_out * amp), 0, 0.12 + T.stride_push_back * amp)
+	out.x = lerpf(out.x, -sd * 0.12, under * T.cross_under)
+	front.x = lerpf(front.x, -sd * T.cross_over, cross)
+	var toe_out := -sd * T.stride_toe_out * amp
+	var glide_end := T.stride_glide_end
+	var push_end := maxf(T.stride_push_end, glide_end + 0.05)
+	if u < glide_end:
+		var e := u / glide_end
 		return [front.lerp(mid, e), toe_out * 0.2 * e]
-	if u < PUSH_END:
-		var e := smoothstep(0.0, 1.0, (u - GLIDE_END) / (PUSH_END - GLIDE_END))
+	if u < push_end:
+		var e := smoothstep(0.0, 1.0, (u - glide_end) / (push_end - glide_end))
 		return [mid.lerp(out, e), lerpf(toe_out * 0.2, toe_out, e)]
-	var r := (u - PUSH_END) / (1.0 - PUSH_END)
+	var r := (u - push_end) / (1.0 - push_end)
 	var p := out.lerp(front, smoothstep(0.0, 1.0, r))
-	p.y = sin(PI * r) * (0.09 + 0.06 * cross) * maxf(amp, 0.3)
+	p.y = sin(PI * r) * (T.stride_lift + T.cross_lift * cross) * maxf(amp, 0.3)
 	return [p, lerpf(toe_out, 0.0, r)]
 
 
@@ -272,9 +361,12 @@ func update_goalie(g: Goalie, dt: float) -> void:
 ## hand a forearm's length down. One hand: the top hand reaches out towards
 ## the blade and the bottom hand drops to the hip.
 func _pose_stick(center: Vector3, flat: Vector3, tilt: float, k: float) -> void:
+	var T := AnimTuning.current()
 	var dir := flat.normalized() if flat.length() > 0.05 else Vector3.FORWARD
 	var hy := 0.95 - 0.1 * k - _crouch + center.y * 0.5
 	var two := Vector3(0.0, hy, -0.22) + flat * 0.22
+	# a check pulls the hands in to the chest
+	two = two.lerp(Vector3(-0.05, hy + 0.12, -0.18), _check * T.check_tuck)
 	# one-handed: the top (left) hand reaches from its shoulder towards the blade
 	var shoulder := Vector3(-0.3, hy + 0.25, 0.0)
 	var one := shoulder + (Vector3(dir.x, 0, dir.z) * 0.65 + Vector3(0, -0.3, 0))
@@ -296,10 +388,66 @@ func _pose_stick(center: Vector3, flat: Vector3, tilt: float, k: float) -> void:
 	# hands grip where the shaft passes them, never past the knob
 	var along := clampf((grip - heel).dot(y), SHAFT_LEN * 0.5, SHAFT_LEN - 0.04)
 	var top := heel + y * along
-	_pose_arm(0, to_global(top))
+	_grip_top = top
+	_pose_arm(0, faller.to_global(top))
 	var bottom := heel + y * (along - 0.42)
-	var rest := Vector3(0.32, hy - 0.05, -0.05 + sin(_cycle * TAU) * 0.12 * _amp)
-	_pose_arm(1, to_global(bottom.lerp(rest, _one_hand)))
+	var rest := Vector3(0.32, hy - 0.05, -0.05 + sin(_cycle * TAU) * T.stride_arm_swing * _amp)
+	_grip_bottom = bottom.lerp(rest, _one_hand)
+	_pose_arm(1, faller.to_global(_grip_bottom))
+
+
+## Layers the celebration and fall arm poses over the stick pose: the stick
+## goes into the top hand and the free hand flails, pumps or reaches.
+func _pose_actions(T: AnimTuning) -> void:
+	if _cel < 0.01 and _fall < 0.01:
+		return
+	var hy := HIP_Y - _crouch + 0.55
+	var free := Vector3.ZERO
+	var stick_dir := Vector3.UP
+	var hand := _grip_top
+	var w := _cel
+	match _cel_kind:
+		&"arms_up":
+			# stick straight up overhead, other arm raised too
+			hand = Vector3(-0.22, hy + 0.35 + T.celebrate_reach, -0.05)
+			stick_dir = Vector3(0.1, 1, 0.05).normalized()
+			free = Vector3(0.3, hy + 0.3 + T.celebrate_reach * 0.8, -0.05)
+		_:
+			# stick held out low in the top hand, the free fist pumps
+			hand = Vector3(-0.38, hy - 0.2, -0.2)
+			stick_dir = Vector3(-0.2, -0.6, -0.75).normalized()
+			var pump := 0.5 + 0.5 * sin(_time * TAU * T.celebrate_pump_rate)
+			free = Vector3(0.25, hy + 0.05, -0.3).lerp(Vector3(0.22, hy + 0.05 + T.celebrate_pump, -0.12), pump)
+	if _fall > _cel:
+		# going down: stick stays in the top hand, the other arm flies out
+		w = _fall
+		hand = _grip_top
+		stick_dir = (blade.position + blade.basis * BLADE_HEEL - _grip_top).normalized()
+		free = Vector3(0.45 + 0.3 * T.fall_flail, hy + 0.1 + 0.4 * T.fall_flail, -0.1 * _fall_dir)
+	var held := _stick_in_hand(hand, stick_dir)
+	stick.transform = stick.transform.interpolate_with(held[0], w)
+	blade.transform = blade.transform.interpolate_with(held[1], w)
+	var grip: Vector3 = stick.transform.origin + stick.transform.basis.y * (SHAFT_LEN - 0.05)
+	_pose_arm(0, faller.to_global(grip))
+	_pose_arm(1, faller.to_global(_grip_bottom.lerp(free, w)))
+
+
+## Shaft and blade transforms (faller space) for a stick held near the knob
+## in `hand`, the blade end pointing along `dir` away from the hand.
+func _stick_in_hand(hand: Vector3, dir: Vector3) -> Array:
+	# a reference stick lying normally: blade flat at the origin, toe along +X,
+	# shaft rising back towards the hands
+	var bb := Basis(Vector3.RIGHT, Vector3.UP, Vector3.UP.cross(Vector3.RIGHT))
+	var heel := bb * BLADE_HEEL
+	var y := Vector3(-0.7, 0.7, 0).normalized()
+	var x := Vector3.RIGHT - y * Vector3.RIGHT.dot(y)
+	x = x.normalized()
+	var sb := Basis(x, y, x.cross(y))
+	var grip := heel + y * (SHAFT_LEN - 0.05)
+	# turn it so the shaft points from the blade towards the hand along -dir
+	var rot := Basis(Quaternion(y, -dir.normalized()))
+	var off := hand - rot * grip
+	return [Transform3D(rot * sb, rot * heel + off), Transform3D(rot * bb, off)]
 
 
 ## Two-bone IK for one arm: the elbow bends out to the side and back.

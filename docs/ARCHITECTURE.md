@@ -16,6 +16,7 @@ change this file in the same PR and say why.
 | Project manager | `docs/`, `tools/`, `.github/`, `README.md`, the developer menu in `scripts/dev/` |
 | World and asset design | The look and the asset library: art direction and the voxel style guide (`docs/ART.md`), palettes and materials, `scripts/art/` (characters, goalies, equipment, puck, nets, and a props kit of seats, doors, benches, glass, signage, Zamboni and so on), `scripts/voxel/`, `art/` (MagicaVoxel sources). Later, the open-world map and town around the rink (`scenes/world/`, `scripts/world/`) |
 | Rink environment | The building around the ice: `scenes/venue/` and `scripts/venue/`, laid out from the asset kit, plus room layout, collision, walkable floors and doors, lighting, crowd placement, and renovation states (worn, repaired, renovated). `rink.gd` keeps the playing surface, boards and nets |
+| Animations | How every skater moves: the body poses in `scripts/game/skater_rig.gd` (stride, crossovers, stops, shot and pass follow-throughs, checks, falls, celebrations; Controls keeps the grip and hand IK on the stick in `_pose_stick`), every animation number in `scripts/anim/anim_tuning.gd` and its saved values `assets/anim/anim_tuning.tres`, and the animation studio (`scenes/anim/`, `scripts/anim/`). See `docs/ANIMATION.md` |
 
 Editing a file you don't own is fine for a small, clearly commented hook. Tell
 the owner, and keep the hook to a call into code that lives in your own area.

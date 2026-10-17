@@ -1,2 +1,3 @@
 controls
 devmenu
+anim res://scenes/anim/anim_studio.tscn

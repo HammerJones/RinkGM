@@ -5,7 +5,8 @@
 #      or if the game never reports its end-of-game stats
 #   3. run every tools/tests/test_*.gd headless; each must exit 0 to pass
 #   4. run each in-game test mode listed in tools/tests/game_tests.txt
-#      (`-- --test=<name>`, with autoloads and the full scene); each must
+#      (`-- --test=<name>`, with autoloads and the full scene, or the scene
+#      named after it on the line); each must
 #      exit 0 and print "<name> test: all passed"
 #   5. tools/tier_ai_check.sh when present (mid-tier AI must beat low tier)
 # Usage: GODOT=/path/to/godot tools/ci.sh
@@ -48,10 +49,11 @@ for t in tools/tests/test_*.gd; do
 done
 
 if [ -f tools/tests/game_tests.txt ]; then
-	while read -r name; do
+	# a line is "<name>" (runs the main scene) or "<name> res://scene.tscn"
+	while read -r name scene; do
 		[[ -z "$name" || "$name" == \#* ]] && continue
-		echo "== --test=$name"
-		timeout 300 "$GODOT" --headless --path . --fixed-fps 120 --quit-after 72000 -- --test="$name" >"$LOG/g.txt" 2>&1
+		echo "== --test=$name ${scene}"
+		timeout 300 "$GODOT" --headless --path . --fixed-fps 120 --quit-after 72000 ${scene} -- --test="$name" >"$LOG/g.txt" 2>&1
 		code=$?
 		if [ $code -ne 0 ] || ! grep -q "$name test: all passed" "$LOG/g.txt" || errors "$LOG/g.txt" >/dev/null; then
 			tail -40 "$LOG/g.txt"; echo "exit code $code"; fail=1
