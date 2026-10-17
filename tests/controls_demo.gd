@@ -81,7 +81,6 @@ func _process(dt: float) -> void:
 
 func _run_moves() -> void:
 	var h = game.human
-	h.moves = Moves.all()
 	h.skills.values["shot_release"] = 70.0
 	h.skills.values["stick_handling"] = 70.0
 	_pad = StickPad.new()
@@ -110,27 +109,34 @@ func _run_moves() -> void:
 	_seg("Wide reach", "Past the front 90 degrees the bottom hand lets go and the top hand reaches.")
 	_set_plan(func(f, t):
 		f.move = _screen(Vector2(0.25, 0))
-		f.stick = _at(sin(t * TAU * 0.45) * 85.0, 0.95))
+		f.stick = _at(sin(t * TAU * 0.45 + asin(40.0 / 85.0)) * 85.0, 0.95))  # carries on from 40 deg
 	await _hold(4.5)
 
 	await _move_clip("Quick shot", "Starter. Flick forward from neutral: instant, weak.", func(f, t):
 		f.stick = _at(0.0, 1.0) if t > 0.5 else Vector2.ZERO)
 	await _move_clip("Wrist shot", "Starter. Draw back behind the forehand hip, sweep forward.", func(f, t):
 		f.stick = _at(lerpf(30.0, 110.0, clampf(t / 0.4, 0.0, 1.0)), 0.9) if t < 1.1 else _at(lerpf(110.0, 0.0, clampf((t - 1.1) / 0.12, 0.0, 1.0)), 1.0))
-	await _move_clip("Snapshot", "Unlock. Hold the stick out wide on the forehand, then snap it forward.", func(f, t):
-		f.stick = _at(lerpf(20.0, 80.0, clampf(t / 0.3, 0.0, 1.0)), 0.9) if t < 0.75 else _at(0.0, 1.0))
-	await _move_clip("Slapshot", "Unlock. Hold LT while you draw back, then forward.", func(f, t):
-		f.lift = 1.0 if t < 1.3 else 0.0
+	await _move_clip("Snapshot", "Learned. Pull out to the forehand side, then snap all the way forward.", func(f, t):
+		f.stick = _at(lerpf(10.0, 50.0, clampf(t / 0.3, 0.0, 1.0)), 0.85) if t < 0.75 else _at(0.0, 1.0))
+	await _move_clip("Slapshot", "Learned. Hold LT while you draw back, then forward.", func(f, t):
+		f.lift = 1.0 if t > 0.35 and t < 1.3 else 0.0
 		f.stick = _at(lerpf(30.0, 110.0, clampf(t / 0.4, 0.0, 1.0)), 0.95) if t < 1.3 else _at(0.0, 1.0))
 	await _move_clip("Backhand", "Starter. Draw back behind the backhand hip, sweep forward.", func(f, t):
 		f.stick = _at(lerpf(-30.0, -110.0, clampf(t / 0.4, 0.0, 1.0)), 0.9) if t < 1.0 else _at(lerpf(-110.0, 0.0, clampf((t - 1.0) / 0.12, 0.0, 1.0)), 1.0), 3.0, -75.0)
-	await _move_clip("Toe drag", "Unlock. Hold RT, stick out front, pull it back across to the backhand.", func(f, t):
-		f.move = _screen(Vector2(0.35, 0))
+	await _move_clip("Backhand snap", "Learned. Pull out to the backhand side, then snap all the way forward.", func(f, t):
+		f.stick = _at(lerpf(-10.0, -50.0, clampf(t / 0.3, 0.0, 1.0)), 0.85) if t < 0.75 else _at(0.0, 1.0), 3.0, -75.0)
+	await _move_clip("Quick deke", "Learned. Whip the stick forehand, backhand, forehand.", func(f, t):
+		f.move = _screen(Vector2(0.3, 0))
+		var a: float = 40.0 if t < 0.6 or t > 0.8 else -50.0
+		f.stick = _at(a, 0.8) if t > 0.3 else Vector2.ZERO, 3.0, 30.0)
+	await _move_clip("Toe drag", "Learned. Hold RT, stick out front, pull it back across to the backhand.", func(f, t):
+		f.move = _screen(Vector2(0.3, 0))
 		f.tilt = 1.0 if t > 0.3 and t < 1.4 else 0.0
-		f.stick = _at(0.0, minf(t / 0.4, 1.0)) if t < 0.8 else _at(-80.0, 0.8), 3.2, 30.0)
-	await _move_clip("Lacrosse", "Unlock. Hold RT, sweep from the backhand round to the forehand, then push forward.", func(f, t):
-		f.tilt = 1.0 if t > 0.2 and t < 2.0 else 0.0
-		f.stick = _at(lerpf(-60.0, 120.0, clampf((t - 0.5) / 0.4, 0.0, 1.0)), minf(t / 0.3, 0.85)) if t < 2.0 else _at(0.0, 1.0), 4.0, 125.0)
+		f.stick = _at(0.0, minf(t / 0.4, 1.0) * 0.5) if t < 0.8 else (_at(-80.0, 0.8) if t < 0.86 else _at(-25.0, 0.5)), 3.2, 30.0)
+	await _move_clip("Toe drag shot", "Learned. Hold LT and RT, stick out front, pull it back across.", func(f, t):
+		f.tilt = 1.0 if t > 0.3 and t < 1.4 else 0.0
+		f.lift = 1.0 if t > 0.7 and t < 1.0 else 0.0
+		f.stick = _at(0.0, minf(t / 0.4, 1.0) * 0.5) if t < 0.8 else (_at(-80.0, 0.8) if t < 0.86 else _at(-25.0, 0.5)), 3.2, 30.0)
 	_seg("", "")
 	_title("", "")
 
@@ -421,7 +427,7 @@ class StickPad extends Control:
 	var game: Node
 	var _trail: Array[Vector2] = []
 	var _shots := 0
-	var _move := -1
+	var _move := &""
 	var _label := ""
 	var _label_t := 0.0
 	var _font: Font
@@ -443,12 +449,13 @@ class StickPad extends Control:
 			_trail.pop_front()
 		if game.stats.shots > _shots:
 			_shots = game.stats.shots
-			_label = Moves.NAMES.get(skater.shot_kind, "")
-			_label_t = 1.6
-		if skater.move != _move:
-			_move = skater.move
-			if _move != Moves.NONE:
-				_label = Moves.NAMES.get(_move, "")
+			if _label_t <= 0.0:
+				_label = "Shot"
+				_label_t = 1.6
+		if skater.move_id != _move:
+			_move = skater.move_id
+			if _move != &"":
+				_label = Moves.display_name(_move)
 				_label_t = 1.6
 		_label_t -= dt
 		queue_redraw()

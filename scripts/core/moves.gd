@@ -1,43 +1,71 @@
 class_name Moves
 extends RefCounted
-## Shots and stick moves a skater can know. Each one is a pattern traced with
-## the right stick (mouse), in the skater's own frame: 0 deg is straight ahead,
-## + is the forehand side, - the backhand, and the blade reaches 110 deg either
-## way (a 220 degree arc). Starters are known from the first game; the rest are
-## unlocked through progression. A locked move's pattern falls back to the
-## nearest starter (a slapshot pattern without the slapshot is a wrist shot).
+## The catalog of shots and stick moves, and the stick pattern that performs
+## each one. Patterns are traced with the right stick (or the mouse) in the
+## skater's own frame: 0 deg is straight ahead, + is the forehand side, - the
+## backhand, and the blade reaches 110 deg either way.
 ##
-##   QUICK      flick forward from neutral                         instant, weak
-##   WRIST      draw back behind the forehand hip, sweep forward     the default
-##   BACKHAND   draw back behind the backhand hip, sweep forward     weaker, wilder
-##   SNAP       hold out wide on the forehand (60 deg+), snap forward  quick and hard
-##   SLAP       hold LT and draw back on the forehand, then forward  hardest, slow
-##   ONE_TIMER  slapshot wind-up with no puck, fire as the pass lands
-##   TOE_DRAG   hold RT, stick out front, pull back across to the backhand
-##   LACROSSE   hold RT, sweep from the backhand round to the forehand: the
-##              puck rides up on the blade behind the hip (keep RT held to
-##              cradle it); push forward to throw it at the net
+## Who does what:
+##   * this catalog and StickGestures (scripts/input/) recognise the pattern
+##     and set Skater.Controls.move_id
+##   * physics (MovePhysics, Skater) runs the move: blade path, puck, shot
+##   * mechanics decides who has learned which move (Skater.knows)
+##
+## `executor` says how a move runs: "windup" moves are the stick's own shot
+## mechanics (no move id is sent), "move" ids are MovePhysics entries, and
+## "proposed" moves have no physics yet (the recogniser skips them).
 
-enum { NONE = -1, QUICK, WRIST, BACKHAND, SNAP, SLAP, ONE_TIMER, TOE_DRAG, LACROSSE }
+const CATALOG := [
+	{"id": &"quick_shot", "name": "Quick shot", "starter": true, "executor": "windup",
+		"pad": "Flick the right stick forward from neutral",
+		"mouse": "Flick the mouse forward"},
+	{"id": &"wrist_shot", "name": "Wrist shot", "starter": true, "executor": "windup",
+		"pad": "Draw the stick back past your forehand hip, then sweep it forward",
+		"mouse": "Same with the mouse"},
+	{"id": &"backhand", "name": "Backhand", "starter": true, "executor": "windup",
+		"pad": "Draw the stick back past your backhand hip, then sweep it forward",
+		"mouse": "Same with the mouse"},
+	{"id": &"slapshot", "name": "Slapshot", "starter": false, "executor": "windup",
+		"pad": "Hold LT and draw the stick back on the forehand, then forward",
+		"mouse": "Hold right click and draw back, then forward"},
+	{"id": &"one_timer", "name": "One-timer", "starter": false, "executor": "windup",
+		"pad": "Slapshot wind-up without the puck; push forward as the pass arrives",
+		"mouse": "Same with right click and the mouse"},
+	{"id": &"snap_shot", "name": "Snapshot", "starter": false, "executor": "move",
+		"pad": "Pull the stick out to the forehand side, then snap it all the way forward",
+		"mouse": "Mouse out to the forehand side, then snap it forward"},
+	{"id": &"backhand_shot", "name": "Backhand snap", "starter": false, "executor": "move",
+		"pad": "Pull the stick out to the backhand side, then snap it all the way forward",
+		"mouse": "Mouse out to the backhand side, then snap it forward"},
+	{"id": &"quick_deke", "name": "Quick deke", "starter": false, "executor": "move",
+		"pad": "Whip the stick forehand, backhand, forehand in one quick motion",
+		"mouse": "Same with the mouse"},
+	{"id": &"toe_drag", "name": "Toe drag", "starter": false, "executor": "move",
+		"pad": "Hold RT, stick out front, pull it back across to the backhand",
+		"mouse": "Hold left click, mouse forward, pull it back across"},
+	{"id": &"toe_drag_shot", "name": "Toe drag shot", "starter": false, "executor": "move",
+		"pad": "Hold LT and RT, stick out front, pull it back across to the backhand",
+		"mouse": "Hold both buttons, mouse forward, pull it back across"},
+	{"id": &"lacrosse", "name": "Lacrosse", "starter": false, "executor": "proposed",
+		"pad": "Hold RT, sweep from the backhand round to the forehand, then push forward",
+		"mouse": "Same with left click and the mouse"},
+]
 
-const NAMES := {
-	QUICK: "Quick shot", WRIST: "Wrist shot", BACKHAND: "Backhand", SNAP: "Snapshot",
-	SLAP: "Slapshot", ONE_TIMER: "One-timer", TOE_DRAG: "Toe drag", LACROSSE: "Lacrosse",
-}
-const STARTER := [QUICK, WRIST, BACKHAND]
-const ALL := [QUICK, WRIST, BACKHAND, SNAP, SLAP, ONE_TIMER, TOE_DRAG, LACROSSE]
+
+static func info(id: StringName) -> Dictionary:
+	for m in CATALOG:
+		if m["id"] == id:
+			return m
+	return {}
 
 
-static func starter() -> Dictionary:
-	return _id_set(STARTER)
+static func display_name(id: StringName) -> String:
+	return info(id).get("name", String(id))
 
 
-static func all() -> Dictionary:
-	return _id_set(ALL)
-
-
-static func _id_set(ids: Array) -> Dictionary:
-	var d := {}
-	for id in ids:
-		d[id] = true
-	return d
+static func starters() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for m in CATALOG:
+		if m["starter"]:
+			out.append(m["id"])
+	return out
