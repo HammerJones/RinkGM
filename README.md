@@ -2,6 +2,9 @@
 
 Experimenting with a hockey game/rink management sim.
 
+Working on RinkGM? Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (who owns
+what, shared interfaces, the CI gate) and [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## Playable demo (Godot 4.3+)
 
 Open the folder in Godot 4.3 or newer and press Play. It's a 5-on-5 game with
@@ -20,9 +23,10 @@ virtual right stick, so both devices drive the same stick model.
 | Skate | Left stick | WASD |
 | Dash (push-off burst) | L3 (click left stick) | Shift |
 | Hockey stop | R3 (click right stick) | Space |
-| Stick blade (90 degree arc in front of you) | Right stick | Mouse (cursor is captured; Esc frees it) |
+| Stick blade (220 degree arc around you) | Right stick | Mouse (cursor is captured; Esc frees it) |
 | Stickhandle | Right stick side to side | Mouse side to side |
-| Shoot | Pull the stick behind you, then push it forward | Same with the mouse |
+| Quick shot (instant) | Flick the right stick forward | Flick the mouse forward |
+| Wind-up shot | Pull the stick behind you, then push it forward | Same with the mouse |
 | Slapshot | Hold LT as you pull back | Hold right click as you pull back |
 | Lift stick (offense: over the puck; defense: lift their stick) | LT | Right click |
 | Tilt blade (raises shots and passes) | RT (analog) | Left click (hold longer for more) |
@@ -55,14 +59,22 @@ assistance on top.
   burst stride that gets you to top speed faster and costs stamina. The hockey stop scrapes speed off
   sideways; agility sets how fast you turn, how hard your edges grip, and how
   short you stop. Carving never adds speed past top speed.
-- **Stick and puck** (`scripts/game/stick_puck.gd`): the blade moves inside a
-  90 degree arc with a speed and acceleration set by stick handling. The puck
+- **Stick and puck** (`scripts/game/stick_puck.gd`): the blade swings around
+  the body inside a 220 degree arc, with a speed and acceleration set by stick
+  handling. Both hands are on the stick in the front 90 degrees; beyond that
+  it's one hand: more reach, but a weaker hold on the puck and weaker, wilder
+  shots. Pulling the stick back past 95 degrees winds up a shot. The puck
   follows it on a spring, but the blade can only push the puck so hard (grip,
   also from stick handling). Stickhandle faster than your rating, or cut harder
   than you can hold (agility turns you faster, which is harder to hold), and
   the puck slides off. Lifting your stick takes the blade off the puck for
   moves; on defense it lifts the carrier's stick if you're close, with odds
   from both players' ratings.
+- **Stick moves** (`scripts/game/move_physics.gd`): unlockable shots and dekes
+  (snap shot, backhand, quick deke, toe drag, toe-drag shot) run as blade paths
+  around the body. Gesture recognition sets `Controls.move_id`; the path still
+  runs under the skater's own blade limits, so weak hands run it slower and can
+  lose the puck.
 - **Shooting**: one wind-up model for all shots. A shot with no wind-up comes
   off instantly but weak and wild; shot release sets how good that instant
   shot is and how fast you reach full power. Shot power sets the top speed
@@ -80,6 +92,12 @@ assistance on top.
 - **Goalies** (`scripts/game/goalie.gd`) play the angle, read the shot after a
   reaction delay, reach toward where the puck will cross, drop to the butterfly
   for low shots, and either hold the puck (whistle) or give up a rebound.
+- **On-ice AI** (`scripts/game/skater_ai.gd`, the goalie) plays to the league
+  tier, not just the ratings: each team reads a `TierAI` (`game.ai_for`). A beer
+  league reacts late to turnovers, sends two or three skaters after the puck,
+  forces passes and shoots from anywhere, and its goalie is slow and off the
+  angle. Higher tiers hold support spots and gaps, move the puck early to the
+  open man and work it in close before shooting.
 
 `tools/physics_bench.sh` drives skaters through scripted tests headless (including
 the right-stick gestures: flick, pull back and push, lift for a slapshot) and
@@ -166,10 +184,12 @@ plays a full season of live engine games with the AI driving you.
 Arguments after `--` are read by the game:
 
 - `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
+- `--demo=controls` plays a captioned showcase of every move (`tests/controls_demo.gd`). Record it with `godot --path . --write-movie demo.avi --fixed-fps 30 --resolution 1280x720 -- --demo=controls`.
 - `--autoplay` lets the AI drive your skater too (prints stats and a box score on exit).
 - `--period=N` plays N-minute periods (exhibition default is 5).
-- `--career` opens the career hub; `--career-new` discards the saved career.
+- `--career` opens the career hub (pick a save: Career, Demo: low tier, Demo: mid tier); `--slot=career|demo_low|demo_mid` skips the picker and `--career-new` discards that slot's save.
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
+- `--ai-levels=0.5,3` sets how organised each team plays (TierAI level, 0 = Beer League D to 5 = Minor League Pro).
 - `--screenshot=out.png --shot-after=6 [--iso] [--zoom=10] [--focus=x,z]` saves a frame and quits.
 
 For example, to simulate a full game headless in a few seconds:
@@ -180,3 +200,8 @@ godot --headless --path . --fixed-fps 120 --quit-after 36000 -- --autoplay --mod
 
 `tools/check.sh` re-imports the project and runs it headless to surface script errors.
 `tools/physics_bench.sh [out.md]` prints the physics bench.
+`tools/ci.sh` is the full gate CI runs on every PR: import, a headless autoplay
+game and the `tools/tests/` scripts.
+`tools/tier_ai_check.sh` plays `GAMES` (default 8) autoplay games of a beer-league
+side against a Senior AAA side, swapping ends, and fails unless the higher tier
+outscores and outwins the lower one.

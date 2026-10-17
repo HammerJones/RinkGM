@@ -53,6 +53,10 @@ var _chain_team := -1
 var _last_shooter: Skater = null
 var _rng := RandomNumberGenerator.new()
 var _finished := false
+## Everything that happens in the match, for the HUD, venue, stats and dev menu.
+var events := MatchEvents.new()
+## How organised the play is at this level (read by the on-ice AI).
+var tier_ai: TierAI
 
 var _state_timer := 0.0
 var _pending_faceoff := Vector2.ZERO
@@ -64,6 +68,12 @@ var _palettes := []
 var _focus_override: Variant = null
 ## `-- --autoplay` lets the AI drive your skater too (attract mode / testing).
 var autoplay := "--autoplay" in OS.get_cmdline_user_args()
+## Per-team override of the match's TierAI (see ai_for).
+var team_ai: Array = [null, null]
+var _default_ai := TierAI.for_tier(4)
+## Shots and seconds of possession per team (the tier check prints them).
+var team_shots := [0, 0]
+var team_possession := [0.0, 0.0]
 var stats := {"shots": 0, "saves": 0, "goals": 0, "possessions": 0, "whistles": 0, "checks": 0, "hits": 0, "knockdowns": 0, "stick_lifts": 0}
 
 
@@ -84,6 +94,7 @@ func _ready() -> void:
 	fixture = CareerState.fixture if not CareerState.fixture.is_empty() else Career.exhibition()
 	career_mode = int(fixture.user_id) >= 0
 	settings = fixture.settings
+	tier_ai = TierAI.for_tier(int(fixture.get("tier", 4)))
 	for arg in OS.get_cmdline_user_args():
 		# `-- --period=2` plays 2-minute periods (quick tests)
 		if arg.begins_with("--period="):
@@ -140,8 +151,19 @@ func _ready() -> void:
 	Tuning.mode_changed.connect(hud.set_mode)
 	hud.set_mode(Tuning.mode_name())
 	_start_faceoff(Vector2.ZERO)
+	events.period_started.emit(period, _period_label())
 	_handle_capture_args()
-	# `-- --test=controls` runs the scripted control checks in tests/
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--ai-levels="):
+			var lv := arg.trim_prefix("--ai-levels=").split_floats(",")
+			for team in mini(lv.size(), 2):
+				team_ai[team] = TierAI.for_level(lv[team])
+	# `-- --test=controls` runs the scripted control checks in tests/, and
+	# `-- --demo=controls` plays the captioned controls showcase
+	if "--demo=controls" in OS.get_cmdline_user_args():
+		var d: Node = load("res://tests/controls_demo.gd").new()
+		d.set("game", self)
+		add_child(d)
 	if "--test=controls" in OS.get_cmdline_user_args():
 		var t: Node = load("res://tests/controls_test.gd").new()
 		t.set("game", self)
@@ -222,24 +244,116 @@ func lane_clear(team: int, from: Vector2, to: Vector2, margin: float) -> bool:
 	return true
 
 
-## The open teammate furthest up ice, or null.
-func best_pass_option(s: Skater) -> Skater:
+## The best open teammate, or null. `vision` (TierAI, 0..1) is how well the
+## passer reads the ice: low only sees nearby mates and will force a pass
+## into traffic, high finds the open man furthest up ice.
+func best_pass_option(s: Skater, vision := 0.5) -> Skater:
 	var att := attack_side(s.team)
 	var from := Vector2(s.position.x, s.position.z)
+	var sees := lerpf(12.0, 45.0, vision)
+	var needs_open := lerpf(0.5, 1.8, vision)
 	var best: Skater = null
 	var best_score := -INF
 	for m in teammates(s):
 		var to := Vector2(m.position.x, m.position.z)
+		var dist := from.distance_to(to)
+		if dist > sees:
+			continue
 		var open := INF
 		for o in team_skaters(1 - s.team):
 			open = minf(open, Geometry2D.get_closest_point_to_segment(Vector2(o.position.x, o.position.z), from, to).distance_to(Vector2(o.position.x, o.position.z)))
-		if open < 1.4:
+		if open < needs_open:
 			continue
-		var sc := to.x * att + minf(open, 4.0) * 2.0
+		var sc := to.x * att * vision + minf(open, 4.0) * 2.0 * vision - dist * (1.0 - vision) * 0.5
 		if sc > best_score:
 			best_score = sc
 			best = m
 	return best
+
+
+# ---------------------------------------------------------------- match API
+# Read-only views and the dev menu's levers. Other systems call these rather
+# than reaching into the rules state.
+
+## A snapshot for scoreboards and overlays.
+func match_info() -> Dictionary:
+	return {
+		"names": [_palettes[0].name, _palettes[1].name],
+		"colors": [_palettes[0].ui, _palettes[1].ui],
+		"score": score.duplicate(), "period": period, "period_label": _period_label(),
+		"clock": clock, "state": State.keys()[state], "overtime": overtime, "shootout": shootout,
+		"shots": box.shots_on.duplicate(), "playoff": bool(fixture.get("playoff", false)),
+		"tier": int(fixture.get("tier", 4)), "user_on_ice": human_on_ice,
+	}
+
+
+func team_palette(team: int) -> Dictionary:
+	return _palettes[team]
+
+
+## The body the user drives (the centre in an exhibition).
+func user_skater() -> Skater:
+	return human
+
+
+func set_tier_ai(ai: TierAI) -> void:
+	tier_ai = ai
+
+
+func dev_set_score(team: int, n: int) -> void:
+	score[team] = maxi(n, 0)
+	events.score_changed.emit(score[0], score[1])
+
+
+func dev_set_clock(seconds: float) -> void:
+	clock = maxf(seconds, 0.0)
+
+
+## Jumps to the start of period `n` (regulation only).
+func dev_set_period(n: int) -> void:
+	if state == State.OVER:
+		return
+	period = clampi(n, 1, settings.periods)
+	overtime = false
+	clock = settings.period_length()
+	_whistle(Vector2.ZERO, "dev")
+
+
+func dev_end_period() -> void:
+	if state == State.OVER:
+		return
+	clock = 0.0
+	_end_period()
+
+
+## Ends the game now with the current score (a tie goes to the shootout).
+func dev_end_game() -> void:
+	if state == State.OVER:
+		return
+	if score[0] == score[1]:
+		_shootout()
+	else:
+		_game_over()
+
+
+## Changes one of the user's ratings for the rest of this game (and in the
+## career, since the profile is shared; the hub saves it).
+func dev_set_skill(key: String, value: float) -> void:
+	var p := human.player
+	if p == null:
+		return
+	p.skills.values[key] = clampf(value, 1.0, 100.0)
+	human.set_skills(p.skills)
+
+
+## How organised `team` plays (TierAI). The match's tier sets both sides
+## (`tier_ai`, set by the match setup); `team_ai[team]` overrides one side, as
+## `-- --ai-levels=0.5,3` does (team 0 at level 0.5, team 1 at level 3).
+func ai_for(team: int) -> TierAI:
+	if team_ai[team] != null:
+		return team_ai[team]
+	var t: TierAI = get("tier_ai")
+	return t if t != null else _default_ai
 
 
 # ---------------------------------------------------------------- loop
@@ -278,6 +392,8 @@ func _physics_process(dt: float) -> void:
 		for g in goalies:
 			g.check_save(puck, prev)
 	_check_stall(dt)
+	if puck.controller:
+		team_possession[puck.controller.team] += dt
 
 
 func _process(dt: float) -> void:
@@ -317,10 +433,13 @@ func _update_rules(dt: float) -> void:
 				_end_period()
 		State.STOPPAGE:
 			if _state_timer <= 0.0:
+				var new_period := _between_periods
 				if _between_periods:
 					_between_periods = false
 					clock = settings.ot_length(fixture.playoff) if overtime else settings.period_length()
 				_start_faceoff(_pending_faceoff)
+				if new_period:
+					events.period_started.emit(period, _period_label())
 
 
 # ---------------------------------------------------------------- players
@@ -335,9 +454,11 @@ func on_possession(s: Skater) -> void:
 		_chain.append(s.player)
 
 
-func on_shot(s: Skater, _slap: bool) -> void:
+func on_shot(s: Skater, slap: bool) -> void:
 	stats.shots += 1
+	team_shots[s.team] += 1
 	_last_shooter = s
+	events.shot.emit(s.team, s.player, slap)
 
 
 func on_save(g: Goalie, frozen: bool) -> void:
@@ -345,9 +466,10 @@ func on_save(g: Goalie, frozen: bool) -> void:
 		return
 	stats.saves += 1
 	_credit_shot(1 - g.team)
+	events.save.emit(g.team, benches[g.team].goalie, frozen)
 	if frozen:
 		hud.show_message("SAVE", 1.2)
-		_whistle(Vector2(g.side * Rink.DOT_X, Rink.DOT_Z * signf(puck.position.z if puck.position.z != 0.0 else 1.0)))
+		_whistle(Vector2(g.side * Rink.DOT_X, Rink.DOT_Z * signf(puck.position.z if puck.position.z != 0.0 else 1.0)), "frozen")
 
 
 # ---------------------------------------------------------------- puck & bodies
@@ -448,6 +570,7 @@ func on_stick_lift(by: Skater, victim: Skater) -> void:
 func _on_hit_landed(hitter: Skater, victim: Skater, impulse: float, knocked_down: bool) -> void:
 	if hitter.check_timer > 0.0 or knocked_down:
 		box.hit(hitter.player)
+		events.hit.emit(hitter.team, hitter.player, victim.player, impulse / 80.0, knocked_down)
 	if victim.player == null or state != State.PLAY or impulse < 150.0:
 		return
 	var inj := Injury.roll_hit(hitter.skills, victim.skills, impulse / 80.0, 1.0 - victim.stamina, _rng)
@@ -455,6 +578,7 @@ func _on_hit_landed(hitter: Skater, victim: Skater, impulse: float, knocked_down
 		return
 	var p := victim.player
 	box.injuries.append({"pid": p.id, "injury": inj})
+	events.injury.emit(victim.team, p, inj)
 	benches[victim.team].injure(p, team_skaters(victim.team))
 	hud.show_message("%s hurt\n%s" % [p.short_name(), inj.describe()], 2.5)
 	if career_mode:
@@ -469,7 +593,7 @@ func _check_stall(dt: float) -> void:
 	if _stall > 8.0:
 		var p := puck.position
 		var spot := Vector2(signf(p.x) * (Rink.DOT_X if absf(p.x) > Rink.BLUE_X else Rink.NEUTRAL_DOT_X), signf(p.z if p.z != 0.0 else 1.0) * Rink.DOT_Z)
-		_whistle(spot)
+		_whistle(spot, "stall")
 
 
 # ---------------------------------------------------------------- rules
@@ -481,6 +605,7 @@ func _on_goal(side: int) -> void:
 	score[scorer] += 1
 	stats.goals += 1
 	_credit_goal(scorer)
+	events.score_changed.emit(score[0], score[1])
 	hud.show_message("%s GOAL!" % _palettes[scorer].name, 2.8)
 	state = State.STOPPAGE
 	_state_timer = 3.0
@@ -489,8 +614,9 @@ func _on_goal(side: int) -> void:
 		_game_over()
 
 
-func _whistle(spot: Vector2) -> void:
+func _whistle(spot: Vector2, reason := "whistle") -> void:
 	stats.whistles += 1
+	events.whistle.emit(reason)
 	state = State.STOPPAGE
 	_state_timer = 1.3
 	_pending_faceoff = spot
@@ -505,10 +631,13 @@ func _start_faceoff(spot: Vector2) -> void:
 	_chain.clear()
 	_last_shooter = null
 	for b in benches:
-		if b.tick(0.0, team_skaters(b.team), true, true) and career_mode:
-			_sync_human()
+		if b.tick(0.0, team_skaters(b.team), true, true):
+			events.line_change.emit(b.team, b.on_ice(team_skaters(b.team)))
+			if career_mode:
+				_sync_human()
 	puck.reset_at(Vector3(spot.x, 1.0, spot.y))
 	puck.frozen = true
+	events.faceoff.emit(spot)
 	for team in 2:
 		var att := attack_side(team)
 		var list := team_skaters(team)
@@ -527,6 +656,9 @@ func _exit_tree() -> void:
 	if autoplay and settings:
 		print("autoplay stats: ", stats, " score ", score, " period ", period, " clock ", snappedf(clock, 0.1))
 		_print_box()
+		if team_ai[0] or team_ai[1]:
+			print("ai levels: ", team_ai.map(func(a): return a.level if a else -1.0),
+				" shots ", team_shots, " possession ", team_possession.map(func(x): return roundi(x)))
 
 
 func _print_box() -> void:
@@ -547,6 +679,7 @@ func _print_box() -> void:
 
 ## Clock hit zero: intermission, overtime, shootout or final.
 func _end_period() -> void:
+	events.period_ended.emit(period, _period_label())
 	var regulation_over := period >= settings.periods
 	if not regulation_over:
 		hud.show_message("END OF %s PERIOD" % PERIOD_NAMES[mini(period - 1, 2)], settings.intermission_seconds)
@@ -566,7 +699,7 @@ func _end_period() -> void:
 func _intermission() -> void:
 	period += 1
 	_between_periods = true
-	_whistle(Vector2.ZERO)
+	_whistle(Vector2.ZERO, "period")
 	_state_timer = settings.intermission_seconds
 	for s in skaters:
 		s.stamina = minf(1.0, s.stamina + 0.5)
@@ -602,6 +735,7 @@ func _game_over() -> void:
 		text += " IN OT"
 	var next := "R / Start for the career hub" if career_mode else "R / Start to play again"
 	hud.show_message("%s\n%s" % [text, next], 9999.0)
+	events.game_over.emit(-1 if score[0] == score[1] else (0 if score[0] > score[1] else 1), text)
 	if career_mode and not _finished:
 		_finished = true
 		CareerState.finish_match(_result())
@@ -641,7 +775,9 @@ func _update_benches(dt: float) -> void:
 	for b in benches:
 		# change on the fly unless the puck is in our end
 		var safe: bool = puck.position.x * attack_side(b.team) > -Rink.BLUE_X
-		changed = b.tick(dt, team_skaters(b.team), false, safe) or changed
+		if b.tick(dt, team_skaters(b.team), false, safe):
+			changed = true
+			events.line_change.emit(b.team, b.on_ice(team_skaters(b.team)))
 	if changed and career_mode:
 		_sync_human()
 
@@ -709,6 +845,7 @@ func _credit_goal(team: int) -> void:
 			if assists.size() == 2:
 				break
 	box.goal(scorer, assists, _on_ice_profiles(team), _on_ice_profiles(1 - team))
+	events.goal.emit(team, scorer, assists)
 
 
 # ---------------------------------------------------------------- scene
@@ -748,16 +885,16 @@ func _make_marker() -> MeshInstance3D:
 	return mi
 
 
-## The 90 degree arc the stick can reach, drawn on the ice under the player.
+## The 220 degree arc the stick can reach, drawn on the ice under the player.
 func _make_arc() -> MeshInstance3D:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var steps := 18
+	var steps := 44
 	for i in steps:
 		var pts := []
 		for k in [i, i + 1]:
 			var a := lerpf(-Skater.ARC_HALF, Skater.ARC_HALF, float(k) / steps)
-			for r in [Skater.REACH_MIN, Skater.REACH_MAX]:
+			for r in [Skater.REACH_MIN, Skater.reach_limit(a)]:
 				# local forward is -Z, right is +X (see Skater._apply_transform)
 				pts.append(Vector3(sin(a) * r, 0, -cos(a) * r))
 		for idx in [0, 1, 2, 2, 1, 3]:

@@ -20,6 +20,8 @@ func _init() -> void:
 		elif a.begins_with("--pos="):
 			pos = a.trim_prefix("--pos=")
 	_check_skill_curves()
+	_check_tier_ai()
+	_run_demo(seed_)
 	_run_career(seasons, seed_, pos)
 	print("\n%s (%d failure%s)" % ["FAILED" if failures else "OK", failures, "" if failures == 1 else "s"])
 	quit(1 if failures else 0)
@@ -38,6 +40,59 @@ func _check_skill_curves() -> void:
 		s.values[k] = 100.0
 	s.modifiers["speed"] = -30.0
 	_expect(s.eff("speed") == 70.0 and s.eff("agility") == 100.0, "modifiers apply to eff()")
+
+
+func _check_tier_ai() -> void:
+	var lo := TierAI.for_tier(0)
+	var hi := TierAI.for_tier(LeagueTiers.count() - 1)
+	_expect(lo.reaction > hi.reaction and lo.vision < hi.vision and lo.discipline < hi.discipline, "tier AI sharpens up the ladder")
+	var mid := TierAI.for_level(2.5)
+	_expect(is_equal_approx(mid.vision, (TierAI.for_tier(2).vision + TierAI.for_tier(3).vision) * 0.5), "tier AI blends between tiers")
+	for t in LeagueTiers.count():
+		for f in TierAI.FIELDS:
+			_expect(LeagueTiers.get_tier(t).ai.has(f), "tier %d sets ai.%s" % [t, f])
+
+
+## The low-tier demo: a Beer League C season, a guaranteed Senior AAA tryout,
+## a Senior AAA season, then the demo is over. Skills should visibly grow.
+func _run_demo(seed_: int) -> void:
+	var c := Career.new_demo("demo_low", "Demo", "Player", "C", seed_)
+	_expect(c.tier == 1 and c.save_path == Career.SLOTS.demo_low.path, "low demo starts in Beer League C with its own slot")
+	var start := c.user().overall()
+	c.dev_sim_rest_of_season()
+	_expect(c.phase == Career.Phase.OFFSEASON, "demo season ends")
+	_expect(c.invitations.size() == 2 and c.invitations.all(func(i): return i.tier == 3), "demo gets Senior AAA invitations")
+	var r := c.try_out(c.invitations[0].team)
+	_expect(r.made and c.tier == 3, "demo tryout is made")
+	var after_one := c.user().overall()
+	c.start_next_season()
+	c.dev_sim_rest_of_season()
+	_expect(c.is_demo_over(), "demo ends after the mid-tier season")
+	print("demo_low: overall %.1f -> %.1f (after BL-C) -> %.1f (after SR-AAA), moves %s" % [start, after_one, c.user().overall(), c.user().moves])
+	_expect(after_one - start > 2.0, "demo shows progression in one season")
+	var m := Career.new_demo("demo_mid", "Demo", "Player", "D", seed_)
+	_expect(m.tier == 3 and absf(m.user().overall() - 54.0) < 6.0, "mid demo starts in Senior AAA near the tier average")
+	# dev levers
+	m.dev_set_skill("speed", 99.0)
+	_expect(m.user().skills.values.speed == 99.0, "dev_set_skill")
+	m.dev_injure(Injury.Severity.MODERATE)
+	_expect(not m.user().can_play(), "dev_injure keeps the user out")
+	m.dev_heal()
+	_expect(m.user().can_play(), "dev_heal")
+	m.dev_set_tier(5)
+	_expect(m.tier == 5 and m.season.tier == 5 and m.user_team().tier == 5, "dev_set_tier")
+	_expect(m.user().moves.has("wrist_shot") and m.user().moves.has("slapshot") == (m.user().skills.values.shot_power >= 50.0), "moves follow ratings")
+	m.dev_set_skill("shot_power", 30.0)
+	m.user().moves.erase("slapshot")
+	m.user().moves.erase("one_timer")
+	m.dev_set_skill("shot_power", 60.0)
+	_expect(m.user().knows_move("slapshot"), "raising shot power teaches the slapshot")
+	m.dev_unlock_all_moves()
+	_expect(m.user().moves.size() == MoveUnlocks.ORDER.size(), "dev_unlock_all_moves")
+	var round_trip := PlayerProfile.from_dict(m.user().to_dict())
+	_expect(round_trip.moves == m.user().moves, "moves survive save/load")
+	m.dev_force_invitations()
+	_expect(m.phase == Career.Phase.OFFSEASON and not m.invitations.is_empty(), "dev_force_invitations")
 
 
 func _run_career(seasons: int, seed_: int, pos: String) -> void:

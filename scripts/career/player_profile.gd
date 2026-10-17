@@ -31,6 +31,9 @@ var playoff_stats := {}
 var career_stats := {}
 ## History rows: {"season", "tier", "team", stats...}
 var history: Array = []
+## Shots and stick moves this player knows, by catalog id ("snap_shot"); see
+## MoveUnlocks for when each is learned.
+var moves: Array = []
 
 
 static func create(id_: int, pos: String, base: float, rng: RandomNumberGenerator) -> PlayerProfile:
@@ -52,7 +55,21 @@ static func create(id_: int, pos: String, base: float, rng: RandomNumberGenerato
 		p.potential[k] = clampf(p.skills.values[k] + rng.randf_range(4.0, 30.0), 1.0, 100.0)
 	p.reset_season_stats()
 	p.career_stats = _blank_stats()
+	p.moves = MoveUnlocks.STARTER.duplicate()
+	MoveUnlocks.check(p)
 	return p
+
+
+func knows_move(move: String) -> bool:
+	return moves.has(String(move))
+
+
+## Teaches a move outright (dev menu, events). Returns false if already known.
+func unlock_move(move: String) -> bool:
+	if moves.has(move):
+		return false
+	moves.append(move)
+	return true
 
 
 func _nudge(d: Dictionary) -> void:
@@ -143,7 +160,7 @@ func to_dict() -> Dictionary:
 		"skills": skills.to_dict(), "potential": potential, "fatigue": fatigue,
 		"injury": injury.to_dict() if injury else null, "training_focus": training_focus,
 		"season_stats": season_stats, "playoff_stats": playoff_stats, "career_stats": career_stats,
-		"history": history, "xp_log": xp_log,
+		"history": history, "xp_log": xp_log, "moves": moves,
 	}
 
 
@@ -167,6 +184,10 @@ static func from_dict(d: Dictionary) -> PlayerProfile:
 	p.playoff_stats = _ints(d.playoff_stats)
 	p.career_stats = _ints(d.career_stats)
 	p.history = d.get("history", [])
+	p.moves = d.get("moves", []).map(func(m): return MoveUnlocks.OLD_NAMES.get(m, m))
+	if p.moves.is_empty():
+		p.moves = MoveUnlocks.STARTER.duplicate()
+		MoveUnlocks.check(p)
 	p.xp_log = d.get("xp_log", {})
 	return p
 

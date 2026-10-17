@@ -12,6 +12,18 @@ extends RefCounted
 ## (practices, jobs, rink time) on the same clock later.
 
 const SAVE_PATH := "user://career.json"
+## Save slots: the open career plus the two playtest demos.
+const SLOTS := {
+	"career": {"path": "user://career.json", "label": "Career", "desc": "Start at the bottom of the ladder and climb."},
+	"demo_low": {"path": "user://demo_low.json", "label": "Demo: low tier", "desc": "A season in Beer League C, then a tryout for Senior AAA."},
+	"demo_mid": {"path": "user://demo_mid.json", "label": "Demo: mid tier", "desc": "Jump straight into a Senior AAA season."},
+}
+## Demo careers: the tier each demo starts in, the tier its second season is
+## played in, and how fast skills grow (so 12-14 games show real progress).
+const DEMOS := {
+	"demo_low": {"tier": 1, "next_tier": 3, "base": 41.0, "xp_scale": 1.3},
+	"demo_mid": {"tier": 3, "next_tier": -1, "base": 54.0, "xp_scale": 1.3},
+}
 const VERSION := 1
 const ROSTER := {"C": 4, "LW": 4, "RW": 4, "D": 6, "G": 2}
 const USER_POSITIONS := ["C", "LW", "RW", "D"]
@@ -34,6 +46,12 @@ var phase := Phase.SEASON
 var invitations: Array = []
 ## News feed, oldest first: [{"day", "text"}]
 var news: Array = []
+## The DEMOS key for a playtest demo, or "" for a normal career.
+var demo := ""
+## Multiplier on every XP gain (demos grow faster).
+var xp_scale := 1.0
+## Where save() writes (set by the slot it was created or loaded from).
+var save_path := SAVE_PATH
 
 
 # ------------------------------------------------------------ setup
@@ -61,6 +79,38 @@ static func new_career(first: String, last: String, position: String, seed_: int
 	return c
 
 
+## A playtest demo: the user is a solid regular at the demo's tier, grows
+## faster than in a career, and (for the low-tier demo) is guaranteed a
+## Senior AAA tryout at the end of the season.
+static func new_demo(slot: String, first: String, last: String, position: String, seed_: int = 0) -> Career:
+	var cfg: Dictionary = DEMOS[slot]
+	var c := Career.new()
+	if seed_ != 0:
+		c.rng.seed = seed_
+	else:
+		c.rng.randomize()
+	c.demo = slot
+	c.xp_scale = cfg.xp_scale
+	c.save_path = SLOTS[slot].path
+	var t: int = cfg.tier
+	c.tier = t
+	var u := PlayerProfile.create(c._new_id(), position, cfg.base, c.rng)
+	u.first_name = first
+	u.last_name = last
+	u.age = 23.0
+	u.is_user = true
+	for k in u.potential:
+		u.potential[k] = c.rng.randf_range(78.0, 92.0)
+	c.players[u.id] = u
+	c.user_id = u.id
+	c._ensure_league(t)
+	var team: Team = c.teams[c.leagues[t][c.rng.randi() % c.leagues[t].size()]]
+	c._join(u, team)
+	c.season = Season.create(t, 1, c.leagues[t], c.rng)
+	c._news("DEMO: %s signs with the %s of the %s." % [u.full_name(), team.name, LeagueTiers.get_tier(t).name])
+	return c
+
+
 ## A one-off game between two generated clubs of a tier (no career, the
 ## player can switch skaters). Same shape as next_user_game().
 static func exhibition(t := 4) -> Dictionary:
@@ -74,7 +124,7 @@ static func exhibition(t := 4) -> Dictionary:
 	return {
 		"game": {}, "home": home, "away": away, "user_home": true,
 		"home_lineup": home.lineup(c.players), "away_lineup": away.lineup(c.players),
-		"playoff": false, "settings": c.settings, "user_id": -1, "user_can_play": true,
+		"playoff": false, "settings": c.settings, "user_id": -1, "user_can_play": true, "tier": t,
 	}
 
 
@@ -162,7 +212,7 @@ func next_user_game() -> Dictionary:
 				"game": g, "home": home, "away": away, "user_home": g.home == tid,
 				"home_lineup": lineup_for(home), "away_lineup": lineup_for(away),
 				"playoff": season.phase == Season.Phase.PLAYOFFS,
-				"settings": settings, "user_id": user_id, "user_can_play": user().can_play(),
+				"settings": settings, "user_id": user_id, "user_can_play": user().can_play(), "tier": tier,
 			}
 	return {}
 
@@ -235,7 +285,7 @@ func apply_result(res: Dictionary) -> void:
 			continue
 		var line: Dictionary = res.box[pid]
 		p.add_game_stats(line, res.playoff)
-		Progression.apply_xp(p, Progression.game_xp(p, line, glen))
+		_xp(p, Progression.game_xp(p, line, glen))
 		Progression.add_game_fatigue(p, line.get("toi", 0.0) / glen * 3.0)
 	for entry in res.injuries:
 		var p: PlayerProfile = players.get(int(entry.pid))
@@ -267,13 +317,23 @@ func _after_round(played_teams: Dictionary) -> void:
 				p.refresh_modifiers()
 			Progression.rest(p, days)
 			for i in practices:
-				Progression.apply_xp(p, Progression.practice_xp(p, 0.8))
+				_xp(p, Progression.practice_xp(p, 0.8))
 	# the user also gets their own weekly stick-and-puck session
 	var u := user()
 	if u.can_play():
 		for i in maxi(1, days / 7):
-			Progression.apply_xp(u, Progression.practice_xp(u, 0.6))
+			_xp(u, Progression.practice_xp(u, 0.6))
 	day += days
+
+
+func _xp(p: PlayerProfile, xp: Dictionary) -> void:
+	if xp_scale != 1.0:
+		for k in xp:
+			xp[k] *= xp_scale
+	Progression.apply_xp(p, xp)
+	for m in MoveUnlocks.check(p):
+		if p.is_user:
+			_news("You learned the %s." % MoveUnlocks.LABELS[m].to_lower())
 
 
 func _news_for_user_game(g: Dictionary, res: Dictionary) -> void:
@@ -308,6 +368,8 @@ func end_season() -> void:
 		var p: PlayerProfile = leader[0]
 		_news("Scoring title: %s (%s), %d points." % [p.full_name(), teams[p.team_id].name, p.points()])
 	invitations = compute_invitations()
+	if demo != "":
+		invitations = _demo_invitations()
 	for inv in invitations:
 		_news("Tryout invitation: %s (%s)." % [teams[inv.team].name, LeagueTiers.get_tier(inv.tier).name])
 	if invitations.is_empty() and tier < LeagueTiers.count() - 1:
@@ -342,6 +404,23 @@ func scouting_score() -> float:
 	return u.overall() + bonus
 
 
+## The low-tier demo always gets two looks from its next tier; a finished
+## demo gets none.
+func _demo_invitations() -> Array:
+	var nt: int = DEMOS[demo].next_tier
+	if nt < 0 or tier >= nt:
+		_news("DEMO: that's the end of the demo seasons. Thanks for playtesting!")
+		return []
+	_ensure_league(nt)
+	var ids: Array = leagues[nt].duplicate()
+	ids.shuffle()
+	return [{"team": ids[0], "tier": nt}, {"team": ids[1], "tier": nt}]
+
+
+func is_demo_over() -> bool:
+	return demo != "" and phase == Phase.OFFSEASON and invitations.is_empty() and (DEMOS[demo].next_tier < 0 or tier >= DEMOS[demo].next_tier)
+
+
 ## Teams one tier up (two for a standout) that want a look at the user.
 func compute_invitations() -> Array:
 	var out: Array = []
@@ -369,7 +448,7 @@ func try_out(team_id: int) -> Dictionary:
 	var t: int = inv[0].tier
 	var cut: float = LeagueTiers.get_tier(t).tryout_cut
 	var eval := scouting_score() + rng.randfn(0.0, 3.0)
-	var made := eval >= cut
+	var made := eval >= cut or demo != ""
 	var team: Team = teams[team_id]
 	if made:
 		_join(user(), team)
@@ -433,9 +512,106 @@ func _check_release() -> void:
 	_news("Released by the %s. You catch on with the %s." % [old.name, team.name])
 
 
+# ------------------------------------------------------------ dev menu
+# Playtest levers for scripts/dev/. None of them save; the caller decides.
+
+func dev_set_skill(key: String, value: float) -> void:
+	var u := user()
+	if u.skills.values.has(key):
+		u.skills.values[key] = clampf(value, 1.0, 100.0)
+		u.potential[key] = maxf(u.potential.get(key, 0.0), u.skills.values[key])
+		MoveUnlocks.check(u)
+
+
+func dev_unlock_all_moves() -> void:
+	for m in MoveUnlocks.ORDER:
+		user().unlock_move(m)
+
+
+## Feeds `amount` XP into one skill (or all of them for "all") through the
+## normal growth curve, so age and potential still apply.
+func dev_add_xp(key: String, amount: float) -> Dictionary:
+	var u := user()
+	var xp := {}
+	for k in u.skills.values:
+		if key == "all" or k == key:
+			xp[k] = amount
+	var delta := Progression.apply_xp(u, xp)
+	MoveUnlocks.check(u)
+	return delta
+
+
+## Injures the user now. `severity` is an Injury.Severity value.
+func dev_injure(severity: int) -> Injury:
+	var inj := Injury.create(rng, 3.0)
+	inj.severity = clampi(severity, 0, Injury.GAMES_OUT.size() - 1)
+	var r: Array = Injury.GAMES_OUT[inj.severity]
+	inj.games_out = rng.randi_range(r[0], r[1])
+	inj.games_total = inj.games_out
+	inj.permanent = {}
+	var u := user()
+	u.injury = inj
+	u.refresh_modifiers()
+	return inj
+
+
+func dev_heal() -> void:
+	var u := user()
+	u.injury = null
+	u.fatigue = 0.0
+	u.refresh_modifiers()
+
+
+## Moves the user to a random club of tier `t` and starts a fresh season there.
+func dev_set_tier(t: int) -> void:
+	t = clampi(t, 0, LeagueTiers.count() - 1)
+	_ensure_league(t)
+	var team: Team = teams[leagues[t][rng.randi() % leagues[t].size()]]
+	_join(user(), team)
+	tier = t
+	invitations.clear()
+	user().reset_season_stats()
+	season = Season.create(t, season_number, leagues[t], rng)
+	phase = Phase.SEASON
+	_news("DEV: moved to the %s (%s)." % [team.name, LeagueTiers.get_tier(t).name])
+
+
+## Quick-sims every remaining game, the user's included, through the playoffs.
+func dev_sim_rest_of_season() -> void:
+	var guard := 0
+	while phase == Phase.SEASON and guard < 500:
+		play_round()
+		guard += 1
+
+
+## Sims rounds until the regular season is over (playoffs not started).
+func dev_sim_regular_season() -> void:
+	var guard := 0
+	while phase == Phase.SEASON and season.phase == Season.Phase.REGULAR and guard < 500:
+		play_round()
+		guard += 1
+
+
+## Finishes the season (simming what's left) and hands out invitations from
+## clubs one tier up, ignoring scouting.
+func dev_force_invitations() -> void:
+	dev_sim_rest_of_season()
+	var t := mini(tier + 1, LeagueTiers.count() - 1)
+	_ensure_league(t)
+	invitations = []
+	for tid in leagues[t].slice(0, 3):
+		invitations.append({"team": tid, "tier": t})
+
+
+func dev_set_day(d: int) -> void:
+	day = maxi(d, 0)
+
+
 # ------------------------------------------------------------ save / load
 
-func save(path := SAVE_PATH) -> Error:
+func save(path := "") -> Error:
+	if path == "":
+		path = save_path
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f == null:
 		return FileAccess.get_open_error()
@@ -449,7 +625,9 @@ static func load_from(path := SAVE_PATH) -> Career:
 	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	if typeof(data) != TYPE_DICTIONARY or int(data.get("version", 0)) != VERSION:
 		return null
-	return from_dict(data)
+	var c := from_dict(data)
+	c.save_path = path
+	return c
 
 
 func to_dict() -> Dictionary:
@@ -467,6 +645,7 @@ func to_dict() -> Dictionary:
 		"season_number": season_number, "tier": tier, "user_id": user_id, "next_id": next_id,
 		"players": ps, "teams": ts, "leagues": ls, "season": season.to_dict(),
 		"settings": settings.to_dict(), "phase": phase, "invitations": invitations, "news": news,
+		"demo": demo, "xp_scale": xp_scale,
 	}
 
 
@@ -490,4 +669,6 @@ static func from_dict(d: Dictionary) -> Career:
 	c.phase = int(d.phase)
 	c.invitations = d.invitations.map(func(i): return {"team": int(i.team), "tier": int(i.tier)})
 	c.news = d.news
+	c.demo = d.get("demo", "")
+	c.xp_scale = float(d.get("xp_scale", 1.0))
 	return c

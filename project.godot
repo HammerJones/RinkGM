@@ -15,11 +15,16 @@ config/features=PackedStringArray("4.3", "Forward Plus")
 Tuning="*res://scripts/core/tuning.gd"
 InputSetup="*res://scripts/core/input_setup.gd"
 CareerState="*res://scripts/career/career_state.gd"
+DevMenu="*res://scripts/dev/dev_menu.gd"
 
 [display]
 
 window/size/viewport_width=1600
 window/size/viewport_height=900
+
+[gui]
+
+theme/custom="res://assets/ui/rinkos_theme.tres"
 
 [physics]
 
@@ -27,4 +32,5 @@ common/physics_ticks_per_second=120
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 anti_aliasing/quality/msaa_3d=2

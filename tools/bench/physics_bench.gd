@@ -65,6 +65,7 @@ func _ready() -> void:
 	_bench_turn()
 	_bench_carry()
 	_bench_stickhandle()
+	_bench_moves()
 	_bench_shots()
 	_bench_passes()
 	_bench_hits()
@@ -171,6 +172,9 @@ func _bench_gestures() -> void:
 	_line("| pull back 1 s, push forward | %s |" % _gesture([[back, false, 120], [fwd, false, 5]]))
 	_line("| hold lift, pull back 1 s, push forward | %s |" % _gesture([[back, true, 120], [fwd, false, 5]]))
 	_line("| pull back, then let go (cancel) | %s |" % _gesture([[back, false, 60], [Vector2.ZERO, false, 60]]))
+	# deke: blade on the right, lift it over to the far left, set it down, pull
+	_gesture([[Vector2(0.7, 0.6), false, 40], [Vector2(0.7, 0.0), true, 25], [Vector2(0.6, -0.8), false, 40]])
+	_line("| deke: lift over to the far side, set down, pull | %s |" % ("kept the puck" if puck.controller == skaters[0] else "lost the puck"))
 
 
 # ---------------------------------------------------------------- skating
@@ -314,16 +318,18 @@ func _bench_carry() -> void:
 
 func _bench_stickhandle() -> void:
 	_line("")
-	_line("## Stickhandling in place (right stick swept edge to edge of the arc)")
+	_line("## Stickhandling in place")
 	_line("")
-	_line("| stick handling | arc crossing time | losses / 10 s at 1 sweep/s | at 1.5 sweeps/s | at 2 sweeps/s |")
-	_line("|---|---|---|---|---|")
+	_line("Right stick swept edge to edge of the front 90 degrees (two hands). The last two columns compare the same 40 degree sweep at 2 sweeps/s with two hands (-20 to 20 degrees) and one hand (50 to 90 degrees).")
+	_line("")
+	_line("| stick handling | crossing time | losses / 10 s at 1 sweep/s | at 1.5 sweeps/s | at 2 sweeps/s | 40 degrees, two hands | 40 degrees, one hand |")
+	_line("|---|---|---|---|---|---|---|")
 	for r in RATINGS:
 		var cells := []
-		# crossing time: blade from one edge of the arc to the other
+		# crossing time: blade from one edge of the two-hand zone to the other
 		_clear()
 		var s := _skater(_stats({"stick_handling": r}))
-		var left := Vector2(cos(-Skater.ARC_HALF), sin(-Skater.ARC_HALF))
+		var left := Vector2(cos(-Skater.TWO_HAND_HALF), sin(-Skater.TWO_HAND_HALF))
 		for i in 120:
 			s.ctrl.reset()
 			s.ctrl.stick = left
@@ -334,26 +340,93 @@ func _bench_stickhandle() -> void:
 			s.ctrl.stick = Vector2(left.x, -left.y)
 			_step()
 			t += DT
-			if atan2(s.blade_local.y, s.blade_local.x) > Skater.ARC_HALF * 0.9:
+			if s.blade_ang > Skater.TWO_HAND_HALF * 0.9:
 				break
 		cells.append("%.2f s" % t)
-		for hz in [1.0, 1.5, 2.0]:
+		var a45 := Skater.TWO_HAND_HALF
+		for c in [[-a45, a45, 1.0], [-a45, a45, 1.5], [-a45, a45, 2.0],
+				[deg_to_rad(-20.0), deg_to_rad(20.0), 2.0], [deg_to_rad(50.0), deg_to_rad(90.0), 2.0]]:
+			var hz: float = c[2]
 			var losses := 0
 			_clear()
 			s = _skater(_stats({"stick_handling": r}))
 			_give_puck(s)
 			t = 0.0
 			while t < 10.0:
-				var side := 1.0 if fmod(t * hz, 1.0) < 0.5 else -1.0
+				var ang: float = c[0] if fmod(t * hz, 1.0) < 0.5 else c[1]
 				s.ctrl.reset()
-				s.ctrl.stick = Vector2(left.x, left.y * side)
+				s.ctrl.stick = Vector2(cos(ang), sin(ang))
 				_step()
 				t += DT
 				if puck.controller != s:
 					losses += 1
 					_give_puck(s)
 			cells.append(str(losses))
-		_line("| %d | %s | %s | %s | %s |" % [r, cells[0], cells[1], cells[2], cells[3]])
+		_line("| %d | %s | %s | %s | %s | %s | %s |" % ([r] + cells))
+
+
+## Runs a stick move `n` times from a standstill and returns
+## [share that kept the puck or got a shot off, mean time, mean shot speed, share on net].
+func _move_trials(id: StringName, rating: int, n: int) -> Array:
+	var kept := 0
+	var time := 0.0
+	var shot_speed := 0.0
+	var shots := 0
+	var on := 0
+	var has_shot: bool = MovePhysics.MOVES[id].has("shot")
+	for i in n:
+		_clear()
+		var s := _skater(_stats({"stick_handling": rating, "shot_power": rating, "shot_accuracy": rating, "shot_release": rating}))
+		s.place(Vector2(Rink.GOAL_X - 10.0, 0.0), Vector3(1, 0, 0))
+		_give_puck(s)
+		for k in 30:
+			_step()
+		s.ctrl.reset()
+		s.ctrl.aim_point = Vector3(Rink.GOAL_X, 0, 0.55 * (1.0 if i % 2 == 0 else -1.0))
+		s.ctrl.move_id = id
+		var t := 0.0
+		var fired := false
+		while t < 2.0:
+			var aim: Variant = s.ctrl.aim_point
+			_step()
+			s.ctrl.reset()
+			s.ctrl.aim_point = aim
+			t += DT
+			if has_shot and puck.controller == null and puck.horizontal_speed() > 5.0 and not fired:
+				fired = true
+				shots += 1
+				shot_speed += puck.horizontal_speed()
+				var v := puck.vel
+				var tt := (Rink.GOAL_X - puck.position.x) / maxf(v.x, 0.1)
+				var z := puck.position.z + v.z * tt
+				var y := puck.position.y + v.y * tt - 0.5 * Puck.GRAVITY * tt * tt
+				if absf(z) < Rink.NET_HALF_W - Puck.RADIUS and y < Rink.NET_H - Puck.RADIUS and y > -0.5:
+					on += 1
+			if s.move_id == &"":
+				break
+		time += t
+		if (has_shot and fired) or (not has_shot and puck.controller == s):
+			kept += 1
+	return [kept / float(n), time / n, shot_speed / maxf(shots, 1), on / maxf(shots, 1.0)]
+
+
+func _bench_moves() -> void:
+	_line("")
+	_line("## Stick moves (MovePhysics), from a standstill 10 m out")
+	_line("")
+	_line("Stick handling and shooting ratings set to the column's rating. Dekes: share that kept the puck. Shots: share that got the shot off, speed, share on net.")
+	_line("")
+	_line("| move | rating 25 | rating 50 | rating 90 |")
+	_line("|---|---|---|---|")
+	for id in MovePhysics.MOVES:
+		var cells := []
+		for r in [25, 50, 90]:
+			var res := _move_trials(id, r, 40)
+			if MovePhysics.MOVES[id].has("shot"):
+				cells.append("%d%%, %.2f s, %s, %d%% on net" % [int(res[0] * 100.0), res[1], _mph(res[2]), int(res[3] * 100.0)])
+			else:
+				cells.append("%d%% kept, %.2f s" % [int(res[0] * 100.0), res[1]])
+		_line("| %s | %s | %s | %s |" % [id, cells[0], cells[1], cells[2]])
 
 
 ## Fires `n` shots from the top of the slot (10 m out, centred) and returns

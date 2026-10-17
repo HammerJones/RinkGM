@@ -71,12 +71,18 @@ static func _carry(carrier: Skater, puck: Puck, dt: float, blend: float) -> void
 		var rel := puck.vel - carrier.blade_vel
 		rel.y = 0.0
 		var acc := to * k - rel * 2.0 * sqrt(k) * 0.9
-		var grip := carrier.profile.puck_grip * lerpf(1.0, 1.4, blend)
+		# one hand on the stick holds the puck far less firmly
+		var grip := carrier.profile.puck_grip * lerpf(1.0, 1.4, blend) * lerpf(1.0, 0.55, carrier.one_hand())
 		if acc.length() > grip:
 			acc = acc.limit_length(grip)
 			carrier.puck_slip += dt
 		puck.vel += acc * dt
-	if to.length() > lerpf(0.45, 0.7, blend):
+	# a deke (blade lifted over to the far side, then set back down) gets the
+	# stick's full reach before the puck counts as lost
+	var keep := lerpf(0.45, 0.7, blend)
+	if carrier.lifting or carrier.regrab_timer > 0.0:
+		keep = Skater.REACH_ONE_HAND * 0.7
+	if to.length() > keep:
 		puck.controller = null
 		puck.last_touch = carrier
 
