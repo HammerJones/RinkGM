@@ -9,11 +9,12 @@ change this file in the same PR and say why.
 
 | Workstream | Owns |
 | --- | --- |
-| Physics | `scripts/game/skater.gd` (skating, blade, puck handling, shots, passes, checks), `puck.gd`, `goalie.gd`, rink collision in `rink.gd`, `scripts/core/tuning.gd`, the fixed-step sim loop in `game.gd` (`_physics_process`, body and puck contact) |
+| Physics | `scripts/game/skater.gd` (skating, blade, puck handling, shots, passes, checks), `puck.gd`, `goalie.gd`, on-ice AI (`skater_ai.gd`, goalie decisions), rink collision in `rink.gd`, `scripts/core/tuning.gd`, the fixed-step sim loop in `game.gd` (`_physics_process`, body and puck contact) |
 | Game mechanics | `scripts/career/` (player attributes, progression, injuries, season, playoffs, league tiers, saves), match rules in `game.gd` (periods, lineups, line changes, game length), stats, the match event hub |
 | Controls | `scripts/core/input_setup.gd`, `scripts/input/` (human controller, device handling, bindings). Only `scripts/input/` reads `Input` |
 | UI and styling | `scripts/ui/`, `assets/ui/` (Theme resource, fonts with their licences) |
-| Project manager | `docs/`, `tools/`, `.github/`, `README.md` |
+| Rink environment (new thread) | `scenes/venue/`, `scripts/venue/`: the building around the ice (stands, benches, penalty boxes, lobby, locker rooms, Zamboni bay, lighting, crowd). `rink.gd` keeps the playing surface, boards and nets |
+| Project manager | `docs/`, `tools/`, `.github/`, `README.md`, the developer menu in `scripts/dev/` |
 | Art (shared) | `scripts/art/`, `scripts/voxel/`, `art/`. Stick models and the hands/grip IK in `scripts/game/skater_rig.gd` are with Controls for now, because Sean asked that thread for them |
 
 Editing a file you don't own is fine for a small, clearly commented hook. Tell
@@ -101,6 +102,39 @@ will report what happened (shot, goal, save, pass completed,
 giveaway, takeaway, hit, penalty, injury) through one signal hub. Stats,
 progression and the HUD subscribe to it rather than calling into each other or
 reading `game.gd` internals.
+
+## Demo seasons (current goal)
+
+Sean asked for a playtestable build: one season in a low tier and one in a mid
+tier, crisp gameplay, AI that plays like the tier you're in, a developer menu
+on the tilde key, and a full rink environment that can be explored later.
+
+- **Mechanics leads the build.** That covers the two seasons start to finish
+  (hub, schedule, games, standings, playoffs, tryout into the next tier) and
+  the tier definitions in `league_tiers.gd`. Each tier sets its rating ranges
+  and a `TierAI` set of AI parameters.
+- **Tier-adaptive AI (Physics).** On-ice AI reads `TierAI` values such as
+  reaction time, read and anticipation, passing vision, positional discipline,
+  aggression, and goalie reaction and positioning. A beer-league game should
+  look scrambly and a mid-tier one structured. These knobs are separate from
+  ratings, so a skilled player can still be in a disorganised league.
+- **Developer menu (PM), `scripts/dev/`.** Tilde (`~`) toggles an overlay in
+  any build. It can edit the controlled player's ratings, the score, the
+  clock and period, the tier and the season day; it can sim to the end of the
+  game or the season, give injuries, unlock moves, show AI debug and change
+  game speed. It changes game state only through the owners' public functions,
+  and it never saves those edits into the career unless asked to.
+- **Rink environment (new thread).** The building is its own scene,
+  `scenes/venue/venue.tscn`, which the match scene instances around the ice.
+  Build it at real human scale with walkable floors, doors and collision, so
+  an explorable player can be added later without rebuilding it. Rooms are
+  modular and each has an `age`/renovation state (worn, repaired, renovated),
+  so the renovation story can swap them later. Keep the voxel style, and stay
+  within budget: the full 5-on-5 game must still hold 60 fps on a mid-range PC.
+- **UI** builds the hub, standings, schedule, box score and HUD screens in the
+  chosen pixel-terminal style, and styles the dev menu.
+- **Controls** continues with moves and sticks, and makes sure every menu works
+  with a gamepad.
 
 ## Design decisions already made
 
