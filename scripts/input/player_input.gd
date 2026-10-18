@@ -26,11 +26,12 @@ class Frame:
 ## Virtual stick travel per pixel of mouse motion.
 var mouse_sensitivity := 0.006
 ## How fast the virtual stick drifts back to centre once the mouse rests
-## (per second). 0 keeps it wherever you left it, like a real stick held still.
-var mouse_recenter := 1.2
-## LMB has no analog travel, so the tilt eases in while it's held: a tap
-## gives a little lift, a hold gives full tilt.
-var kbm_tilt_ramp := 0.25
+## (per second). 0, the default, keeps it wherever you left it, like a real
+## stick held still: inputs are direct, any feel comes from the simulated stick.
+var mouse_recenter := 0.0
+## Seconds LMB takes to ease the tilt in (it has no analog travel). 0, the
+## default, is direct: full tilt while held.
+var kbm_tilt_ramp := 0.0
 
 var frame := Frame.new()
 ## Tests can drive the human instead of the devices: Callable(frame, dt)
@@ -106,7 +107,7 @@ func poll(dt: float) -> Frame:
 		if _mouse_idle > 0.2 and mouse_recenter > 0.0:
 			_vstick = _vstick.move_toward(Vector2.ZERO, mouse_recenter * dt)
 		f.stick = _vstick
-		var held := Input.is_action_pressed("tilt")
-		_kbm_tilt = move_toward(_kbm_tilt, 1.0 if held else 0.0, dt / kbm_tilt_ramp if held else dt * 8.0)
+		var held := 1.0 if Input.is_action_pressed("tilt") else 0.0
+		_kbm_tilt = held if kbm_tilt_ramp <= 0.0 else move_toward(_kbm_tilt, held, dt / kbm_tilt_ramp)
 		f.tilt = _kbm_tilt
 	return f
