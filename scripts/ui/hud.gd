@@ -12,13 +12,14 @@ R-stick  stick blade (220 deg arc), side to side to stickhandle
 LT  lift stick (hold while pulling back = slapshot,
   on D = stick lift)   RT  tilt blade (raise shots/passes)
 A / RB  pass, or call for it    B  body check
-Back  physics mode   D-up  camera   Start  restart
+Back  physics mode   D-up  camera   Start  menu (pause)
 
 [b]Keyboard + mouse[/b]  (the mouse is the right stick)
 WASD  skate    Shift  dash    Space  stop
 RMB  lift stick    LMB  tilt blade (hold for more)
 E  pass / call for it    F  check    [ ]  mouse sensitivity
-Esc  free the cursor   F1  physics mode   C  camera   R  restart
+Esc  menu (pause, frees the cursor)   F1  physics mode
+C  camera   R  restart (practice: reset the puck)
 Tab / Y  fast-forward on the bench (career)
 `  dev menu   H  hide this"""
 
@@ -130,6 +131,13 @@ func set_score(home: String, away: String, a: int, b: int, clock: float, period 
 	_clock.text = ("%s %s" % [period.to_upper(), RinkOS.clock(clock)]).strip_edges()
 
 
+## Practice mode: no teams or clock on the scoreboard.
+func set_practice() -> void:
+	_score_home.text = ""
+	_score_away.text = ""
+	_clock.text = "PRACTICE"
+
+
 ## Bench / injury notice for career games ("" hides it).
 func set_bench(text: String) -> void:
 	_bench.text = ("> " + text.to_upper()) if text != "" else ""
@@ -193,7 +201,7 @@ func _refresh_gauge() -> void:
 
 ## Turns the plain controls list into terminal text: "[b]Gamepad[/b]" headings
 ## become "// GAMEPAD ----" rules.
-func _terminal_help(text: String) -> String:
+static func _terminal_help(text: String) -> String:
 	var out := PackedStringArray()
 	for line in text.split("\n"):
 		if line.begins_with("[b]"):

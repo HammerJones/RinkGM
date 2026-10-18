@@ -84,6 +84,12 @@ func _show_slots() -> void:
 		row.add_child(sum)
 		if slot == "demo_low" and _root.get_child_count() > 0:
 			b.grab_focus()
+	var practice := _section(_root, "PRACTICE", 60)
+	var prow := _row(practice)
+	prow.add_child(_button("Practice", CareerState.start_practice, false))
+	var pl := _label("Skate alone with a puck and the nets: no opponents, no clock, nothing recorded.")
+	pl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	prow.add_child(pl)
 
 
 func _open_slot(slot: String) -> void:
@@ -152,6 +158,7 @@ func _field(grid: GridContainer, label: String, value: String) -> LineEdit:
 
 func _refresh() -> void:
 	_clear()
+	career.check_league_gate()
 	var u := career.user()
 	var team := career.user_team()
 	var info := LeagueTiers.get_tier(career.tier)
@@ -161,6 +168,8 @@ func _refresh() -> void:
 		_term(_c(RinkOS.READOUT, "> DEMO COMPLETE. Keep playing this save or start another from the main menu."))
 	if u.injury and not u.injury.is_healed():
 		_term(_c(RinkOS.ALERT, "> INJURED: %s, %s" % [u.injury.describe(), "out %d more game%s" % [u.injury.games_out, "" if u.injury.games_out == 1 else "s"] if not u.injury.can_play() else "playing through it"]))
+	if u.benched:
+		_term(_c(RinkOS.ALERT, "> BENCHED: league dues unpaid. Your team plays without you."))
 	if u.fatigue > 0.3:
 		_term(_c(RinkOS.ACTION, "> TIRED %d%%: skating and hitting are down until you rest." % int(u.fatigue * 100)))
 
@@ -182,7 +191,9 @@ func _refresh() -> void:
 	_last_game(right)
 	_season_table(right)
 	_news(right)
-	_row(_root).add_child(_button("Main menu", func():
+	var bottom := _row(_root)
+	bottom.add_child(_button("Practice", CareerState.start_practice, false))
+	bottom.add_child(_button("Main menu", func():
 		CareerState.career = null
 		career = null
 		_show_slots(), false))
@@ -279,7 +290,7 @@ func _actions(parent: Control) -> void:
 		parent.add_child(_term_text("%s  //  %s %s" % [tag, "VS" if g.user_home else "AT", _c(RinkOS.ACTION, opp.name.to_upper())]))
 		var row := _row(parent)
 		var play := _button("Play game", func(): CareerState.play_match(g))
-		play.disabled = not u.can_play()
+		play.disabled = not u.dressed()
 		row.add_child(play)
 		row.add_child(_button("Sim game", _sim_round, false))
 		if not play.disabled:
@@ -375,7 +386,7 @@ func _autopilot() -> void:
 		_refresh()
 		return
 	var g := career.next_user_game()
-	if g.is_empty() or not career.user().can_play():
+	if g.is_empty() or not career.user().dressed():
 		_sim_round()
 	else:
 		CareerState.play_match(g)

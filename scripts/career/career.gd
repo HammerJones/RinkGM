@@ -52,6 +52,10 @@ var demo := ""
 var xp_scale := 1.0
 ## Where save() writes (set by the slot it was created or loaded from).
 var save_path := SAVE_PATH
+## (world hook) Whether the user may play their next game, set by the rink sim
+## when one runs alongside the career (RinkSim.owner_can_play: the owner sits
+## while Beer League dues are unpaid). Unset means always.
+var league_gate: Callable
 
 
 # ------------------------------------------------------------ setup
@@ -212,6 +216,7 @@ func _news(text: String) -> void:
 func next_user_game() -> Dictionary:
 	if phase != Phase.SEASON:
 		return {}
+	check_league_gate()
 	var tid := user().team_id
 	for g in season.games_in_round():
 		if g.home == tid or g.away == tid:
@@ -221,7 +226,7 @@ func next_user_game() -> Dictionary:
 				"game": g, "home": home, "away": away, "user_home": g.home == tid,
 				"home_lineup": lineup_for(home), "away_lineup": lineup_for(away),
 				"playoff": season.phase == Season.Phase.PLAYOFFS,
-				"settings": settings, "user_id": user_id, "user_can_play": user().can_play(), "tier": tier,
+				"settings": settings, "user_id": user_id, "user_can_play": user().dressed(), "tier": tier,
 			}
 	return {}
 
@@ -231,7 +236,7 @@ func next_user_game() -> Dictionary:
 func lineup_for(team: Team) -> Dictionary:
 	var u := user()
 	var lu := team.lineup(players)
-	if u.team_id != team.id or not u.can_play():
+	if u.team_id != team.id or not u.dressed():
 		return lu
 	for l in lu.F + lu.D:
 		if u in l:
@@ -259,6 +264,7 @@ func play_round(user_result: Dictionary = {}) -> Dictionary:
 	var summary := {"results": [], "user_result": {}, "season_over": false}
 	if phase != Phase.SEASON:
 		return summary
+	check_league_gate()
 	var tid := user().team_id
 	var playoff := season.phase == Season.Phase.PLAYOFFS
 	var played_teams := {}
@@ -283,6 +289,16 @@ func play_round(user_result: Dictionary = {}) -> Dictionary:
 		end_season()
 		summary.season_over = true
 	return summary
+
+
+## Benches or reinstates the user from `league_gate`, with a news line when
+## that changes.
+func check_league_gate() -> void:
+	var u := user()
+	var benched := league_gate.is_valid() and not bool(league_gate.call())
+	if benched != u.benched:
+		_news("You're out of the lineup until your league dues are paid." if benched else "Dues paid: you're back in the lineup.")
+	u.benched = benched
 
 
 ## Adds a game result to every player's stats, XP, fatigue and health.

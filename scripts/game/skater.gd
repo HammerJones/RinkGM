@@ -115,6 +115,13 @@ var _wind_side := 1.0            # +1 forehand wind-up, -1 backhand
 var blade_height := 0.0
 var lifting := false            ## own blade held up over the puck
 var stick_lifted_timer := 0.0   ## an opponent lifted this stick
+## Stick condition (StickWear): 1 new .. 0 worn out. Durability comes from the
+## stick model (equipment), 1 = a standard stick.
+var stick_health := 1.0
+var stick_durability := 1.0
+var stick_id := &""             ## the shop item, when the career gave one (Mechanics sets it)
+var stick_broken := false       ## playing without a stick until the bench hands over a new one
+var bench_wait := 0.0
 var lift_cd := 0.0
 var regrab_timer := 0.0         ## grace after a deke to set the blade back on the puck
 var puck_slip := 0.0            ## seconds the puck spent at the grip limit (for tuning)
@@ -195,6 +202,10 @@ func place(p: Vector2, facing: Vector3) -> void:
 	blade_lvel = Vector2.ZERO
 	stun_timer = 0.0
 	stick_lifted_timer = 0.0
+	# a stoppage is time enough to grab a new stick from the bench
+	if stick_broken:
+		StickWear.fresh(self)
+		game.on_new_stick(self)
 	cancel_shot()
 	_apply_transform()
 
@@ -229,7 +240,8 @@ func windup() -> float:
 
 ## True while the blade can touch the puck.
 func blade_down() -> bool:
-	return stun_timer <= 0.0 and stick_lifted_timer <= 0.0 and not lifting and not (winding and wind_slap)
+	return stun_timer <= 0.0 and stick_lifted_timer <= 0.0 and not lifting and not (winding and wind_slap) \
+		and not stick_broken
 
 
 ## Where the puck is pulled to while carried. During a slapshot wind-up the
@@ -247,6 +259,7 @@ func knock_down(impulse: Vector3) -> void:
 	stun_timer = 1.3
 	vel += impulse
 	cancel_shot()
+	StickWear.stress(self, 0.4, &"check")
 	if has_puck():
 		puck.release(self, vel * 0.8 + Vector3(randf_range(-3, 3), 0, randf_range(-3, 3)))
 
@@ -260,6 +273,10 @@ func physics_update(dt: float) -> void:
 	dash_timer = maxf(0.0, dash_timer - dt)
 	lift_cd = maxf(0.0, lift_cd - dt)
 	stick_lifted_timer = maxf(0.0, stick_lifted_timer - dt)
+	if stick_broken:
+		if winding or move_id != &"":
+			cancel_shot()
+		StickWear.update(self, dt)
 	profile.apply(skills)
 	var p := profile
 	var frozen: bool = game.is_frozen()
@@ -373,12 +390,15 @@ func _stick_drawn() -> bool:
 
 
 ## Whether this skater has learned a move (Moves catalog id).
-## (mechanics hook) A career player's PlayerProfile.moves decides; outside
-## career games (exhibitions, tests) everyone knows everything.
+## (mechanics hook) A career player's PlayerProfile.moves decides, in career
+## games and in practice with a career loaded; otherwise (exhibitions, tests)
+## everyone knows everything.
 func knows(id: StringName) -> bool:
-	if player == null or game == null or not game.get("career_mode"):
+	if player == null or game == null:
 		return true
-	return player.knows_move(id)
+	if game.get("career_mode") or (game.get("practice") and game.get("user_profile") == player):
+		return player.knows_move(id)
+	return true
 
 
 func _update_blade(dt: float, blend: float) -> void:
@@ -445,7 +465,7 @@ func _update_blade(dt: float, blend: float) -> void:
 # ---------------------------------------------------------------- actions
 
 func _handle_actions(dt: float) -> void:
-	var able: bool = stun_timer <= 0.0 and not game.is_frozen() and stick_lifted_timer <= 0.0
+	var able: bool = stun_timer <= 0.0 and not game.is_frozen() and stick_lifted_timer <= 0.0 and not stick_broken
 	if ctrl.move_id != &"" and move_id == &"" and able:
 		start_move(ctrl.move_id)
 	if move_id != &"":
@@ -667,6 +687,15 @@ func shoot(held: float, slap: bool, incoming := 0.0, style := {}) -> void:
 	spd *= lerpf(1.0, 0.7, _shot_hand)
 	err *= lerpf(1.0, 1.6, _shot_hand)
 	_shot_hand = 0.0
+	# a worn stick has lost some of its pop
+	spd *= lerpf(0.94, 1.0, stick_health)
+	# the load on the stick: a slapshot or one-timer leans the whole body into
+	# the shaft; a wrister or snapshot loads it far less
+	var stick_load := (spd / 30.0) * (spd / 30.0) * (2.0 if slap else 0.15) * (1.3 if incoming > 0.0 else 1.0)
+	if StickWear.stress(self, stick_load, &"slapshot"):
+		# it snapped on the shot: the puck dribbles off what's left of the blade
+		spd *= randf_range(0.15, 0.4)
+		err *= 3.0
 	dir = dir.rotated(Vector3.UP, clampf(randfn(0.0, err), -3.0 * err, 3.0 * err))
 	# pick a target height at the net and solve for the lift that gets there:
 	# tilt opens the blade and raises the shot
@@ -744,6 +773,8 @@ func _try_stick_lift() -> void:
 		return
 	holder.stick_lifted_timer = STICK_LIFTED_TIME
 	holder.cancel_shot()
+	StickWear.stress(holder, 0.12, &"lift")
+	StickWear.stress(self, 0.06, &"lift")
 	puck.controller = null
 	puck.ignore_briefly(holder, STICK_LIFTED_TIME)
 	puck.last_touch = self
