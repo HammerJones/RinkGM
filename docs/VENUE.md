@@ -118,6 +118,32 @@ lights and furniture in code, in all three ages.
   renders eye-level views; `tools/venue_plan.gd --wings` renders the plan with
   walls drawn where the cut crosses them.
 
+## The puck and the building
+
+The glass is real: 1.2 m above the boards along the sides, 1.4 m in front
+of the penalty boxes, 2.4 m at the ends and corners, and open over the
+player benches. `VenuePhysics` holds those heights, and the glass you see
+and the board colliders both use them. Kit props collide with their
+shape-following boxes (`Props.collision_boxes`), and fans get one box per run
+of neighbours in a row (`VenueCrowd`, about 140 boxes for a full house), all
+on physics layer 2.
+
+The puck stays Hockey physics' and the whistle stays the game's. The
+interface between them and the building is static:
+
+- `VenuePhysics.clears_glass(pos, radius)`: true once a puck touching the
+  boards is above the glass there. Below it, `Rink.confine` keeps it in.
+- `VenuePhysics.contact(space, pos, vel, radius, dt)`: the first contact of
+  this step's move with the building, `{point, normal, fraction,
+  restitution, friction}`, or `{}` when clear.
+- `VenuePhysics.bounce(vel, contact)`: the velocity after it, if the caller
+  has no contact model of its own.
+
+The intended flow: the puck checks `clears_glass`, and once true it flies
+under gravity with `contact`/`bounce` and emits an event, and the game blows
+the whistle and faces off at the nearest dot. `tools/tests/test_puck_out.gd`
+runs that flow with a stand-in integrator.
+
 ## Built for exploring later
 
 - Human scale: doors 0.95–2.6 m wide and 2.2 m+ high (bench and box gates are

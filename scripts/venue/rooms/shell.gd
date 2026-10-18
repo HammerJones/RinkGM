@@ -68,8 +68,9 @@ func build(k: VenueKit) -> void:
 	_corners(k)
 
 
-## Boards and glass for a walker: boxes along the board line up to the top
-## of the end glass, with gaps where the gates are.
+## Boards and glass: boxes along the board line up to the top of the glass
+## (VenuePhysics), with gaps where the gates are. A walker can't climb them and
+## a puck flying back from the stands bounces off them.
 func _board_colliders(k: VenueKit) -> void:
 	var step := 1.0
 	var sx := Rink.HALF_L - Rink.CORNER_R
@@ -99,7 +100,7 @@ func _board_colliders(k: VenueKit) -> void:
 			continue
 		var c := p + n * 0.16
 		var half := Vector2(absf(n.y) * step * 0.5 + absf(n.x) * 0.16, absf(n.x) * step * 0.5 + absf(n.y) * 0.16)
-		k.collider(Vector3(c.x - half.x, 0, c.y - half.y), Vector3(c.x + half.x, 3.5, c.y + half.y))
+		k.collider(Vector3(c.x - half.x, 0, c.y - half.y), Vector3(c.x + half.x, VenuePhysics.board_top() + VenuePhysics.glass_height(p, n), c.y + half.y))
 
 
 func _in_gate(p: Vector2, n: Vector2) -> bool:

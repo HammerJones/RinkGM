@@ -94,6 +94,53 @@ func fill(seats: Array, fill_: float, primary: Color, secondary: Color, seed_: i
 		shirt = VoxelMeshBuilder.jitter_color(shirt, k, 0.08)
 		mm.set_instance_custom_data(k, Color(shirt.r, shirt.g, shirt.b, float(rng.randi() % 4) / 4.0))
 	multimesh = mm
+	var taken := []
+	for k in n:
+		taken.append(seats[keyed[k][1]])
+	_build_colliders(taken)
+
+
+## Cheap colliders for the fans, so a puck over the glass hits people, not
+## just seats: one box per run of neighbouring fans in a row (head height,
+## torso depth), on the venue layer like the rest of the building.
+func _build_colliders(taken: Array) -> void:
+	var old := get_node_or_null("FanColliders")
+	if old:
+		old.free()
+	if taken.is_empty():
+		return
+	var rows := {}
+	for s in taken:
+		var p: Vector3 = s[0]
+		var key := Vector2i(roundi(p.y * 100.0), roundi(p.z * 100.0))
+		if not rows.has(key):
+			rows[key] = []
+		rows[key].append(p.x)
+	var body := StaticBody3D.new()
+	body.name = "FanColliders"
+	body.collision_layer = 1 << (VenueKit.VENUE_LAYER - 1)
+	body.collision_mask = 0
+	for key in rows:
+		var xs: Array = rows[key]
+		xs.sort()
+		var y: float = key.x / 100.0
+		var z: float = key.y / 100.0
+		var a: float = xs[0]
+		var b: float = xs[0]
+		for i in range(1, xs.size() + 1):
+			if i < xs.size() and xs[i] - b < 0.8:
+				b = xs[i]
+				continue
+			var cs := CollisionShape3D.new()
+			var box := BoxShape3D.new()
+			box.size = Vector3(b - a + 0.45, 0.96, 0.32)
+			cs.shape = box
+			cs.position = Vector3((a + b) * 0.5, y + 0.48, z)
+			body.add_child(cs)
+			if i < xs.size():
+				a = xs[i]
+				b = xs[i]
+	add_child(body)
 
 
 func count() -> int:

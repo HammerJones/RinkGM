@@ -1,12 +1,12 @@
 extends VenueRoom
 ## Rink glass on top of the boards: tall panels at the ends and corners,
-## shorter along the sides, none in front of the player benches. Visual only;
-## the shell's board collider already stops a walker. Panels and frames are
+## shorter along the sides, none in front of the player benches. Heights come
+## from VenuePhysics, which the puck and the shell's board collider use too, so
+## a puck clears exactly the glass you see. Panels and frames are
 ## the asset kit's glass_pane and glass_frame at the room's age.
 
 const PANEL := 1.83   # the kit panel (6 ft)
 const PANE_H := 1.17  # kit panel height above the boards
-const BENCH_GAPS := [[-11.4, -2.6], [2.6, 11.4]]
 
 
 func _ready() -> void:
@@ -27,25 +27,14 @@ func build(k: VenueKit) -> void:
 		var n := Vector2(t.y, -t.x)
 		if n.dot(p) < 0.0:
 			n = -n
-		if _bench_front(p, n):
-			continue
-		var h := 1.2 if absf(n.y) > 0.99 else 2.4
-		if absf(n.y) > 0.99 and n.y > 0.0 and absf(p.x) < 5.8:
-			h = 1.4  # penalty boxes
+		var h := VenuePhysics.glass_height(p, n)
+		if h <= 0.0:
+			continue  # open over the player benches
 		# stretch the kit panel to this run's spacing and height
 		var basis := Basis(Vector3(t.x, 0, t.y) * (w / PANEL), Vector3.UP * (h / PANE_H), Vector3(n.x, 0, n.y))
 		var xf := Transform3D(basis, Vector3(p.x + n.x * 0.16, top, p.y + n.y * 0.16))
 		k.instance(pane, xf)
 		k.instance(frame, xf)
-
-
-func _bench_front(p: Vector2, n: Vector2) -> bool:
-	if n.y > -0.99:
-		return false
-	for g in BENCH_GAPS:
-		if p.x > g[0] and p.x < g[1]:
-			return true
-	return false
 
 
 ## Board line samples [[position, unit tangent, spacing], ...], about `step` apart.

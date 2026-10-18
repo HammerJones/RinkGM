@@ -213,8 +213,8 @@ func instance(mesh: Mesh, xf: Transform3D) -> void:
 
 
 ## A Props kit piece at this room's age, standing on the floor at `pos`
-## with its front (-Z) turned by `rot_y`. `solid` adds a box collider
-## around it.
+## with its front (-Z) turned by `rot_y`. `solid` adds the kit's
+## shape-following box colliders (Props.collision_boxes).
 func prop(id: String, pos: Vector3, rot_y := 0.0, solid := true, age_override := -1, lod := 0) -> void:
 	var mesh := Props.mesh(id, age if age_override < 0 else age_override, lod)
 	if mesh == null:
@@ -222,8 +222,9 @@ func prop(id: String, pos: Vector3, rot_y := 0.0, solid := true, age_override :=
 	var xf := Transform3D(Basis(Vector3.UP, rot_y), pos)
 	instance(mesh, xf)
 	if solid:
-		var box := xf * mesh.get_aabb()
-		_shapes.append(box)
+		# the kit's shape-following boxes (seat, back, legs), not one hull
+		for b in Props.collision_boxes(id, age if age_override < 0 else age_override):
+			_shapes.append(xf * b)
 
 
 ## Any other node (doors, lights) to add with the room.
