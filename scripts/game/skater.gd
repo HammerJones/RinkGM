@@ -204,6 +204,7 @@ func place(p: Vector2, facing: Vector3) -> void:
 	blade_from = blade_pos
 	blade_vel = Vector3.ZERO
 	blade_yaw = 0.0
+	_blade_heading = heading
 	puck_side = 0.0
 	crossing = false
 	blade_lvel = Vector2.ZERO

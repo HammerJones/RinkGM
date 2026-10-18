@@ -167,7 +167,7 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 	if opp and me.distance_to(_v2(opp.position)) < lerpf(2.5, 5.0, ai.vision):
 		target += (me - _v2(opp.position)).normalized() * 3.0
 	_seek(s, ai, target, 1.0, 20.0)
-	c.blade_target = _carry_blade(s, g)
+	c.blade_target = _carry_blade(s, g, ai)
 
 
 ## Which post to shoot for: a disciplined shooter picks the side the goalie
@@ -294,14 +294,15 @@ static func _loose(s: Skater, g: Node, ai: TierAI) -> void:
 
 ## Where a carrier's blade goes: it keeps the puck on its face and works it
 ## gently from side to side in front, rather than leaving it to chase a spot.
-static func _carry_blade(s: Skater, g: Node) -> Vector3:
+static func _carry_blade(s: Skater, g: Node, ai: TierAI) -> Vector3:
 	var puck: Puck = g.puck
 	var n: Vector2 = StickPuck.blade_at(s, 1.0)[2] * (s.puck_side if s.puck_side != 0.0 else 1.0)
 	var p := Vector2(puck.position.x, puck.position.z)
 	var hold := p - n * StickPuck.gap()
-	var wobble := 0.15 * sin(g.time * 4.0 + s.number)
+	# a beer leaguer stickhandles big and loose; a tidy side keeps it close
+	var wobble := lerpf(0.3, 0.12, ai.discipline) * sin(g.time * lerpf(6.0, 4.0, ai.discipline) + s.number)
 	var spot := _v2(s.position + s.heading * Skater.DEFAULT_BLADE.x + s.right_vec() * (0.1 + wobble))
 	# draw the puck toward the carrying spot through the face it's on
-	var at := hold + (spot - hold).limit_length(0.12)
+	var at := hold + (spot - hold).limit_length(lerpf(0.2, 0.12, ai.discipline))
 	return Vector3(at.x, 0, at.y)
 
