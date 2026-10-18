@@ -13,6 +13,7 @@ const SPOTS := [
 	"office_phone", "office_desk", "power_bill", "corkboard", "ice_grid",
 	"door_of_notes", "screwdriver", "gus_binder", "pamphlet_ammonia", "compressor_1", "compressor_2", "oil_drum", "glycol_thermometer", "log_book", "nordale_manual",
 	"doris", "doris_blade", "plug_drawer", "zambelli_525_manual", "snow_pit",
+	"ice_check",
 ]
 
 var failures := 0

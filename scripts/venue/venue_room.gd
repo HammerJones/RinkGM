@@ -83,6 +83,13 @@ func add_door(kit: VenueKit, pos: Vector3, rot_y: float, kind: int, w: float, h:
 
 ## Helper for subclasses: a VenueSpot at `pos` (venue space; the point the
 ## walker looks at). See VenueSpot for kinds and data.
+## Named places people go in this room, in venue space: {"canteen": [Vector3,
+## ...]} (World's RinkPeople). Venue.places() adds each room's spawn under its
+## own key, so rooms only list what that doesn't cover.
+func places() -> Dictionary:
+	return {}
+
+
 func add_spot(kit: VenueKit, kind: int, id: String, pos: Vector3, label: String, data := {}, reach := 1.6) -> VenueSpot:
 	var s := VenueSpot.make(kind, id, label, data, reach)
 	s.position = pos

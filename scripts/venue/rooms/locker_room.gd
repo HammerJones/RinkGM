@@ -23,6 +23,11 @@ func _ready() -> void:
 	spawn = Vector3(X0 + 1.2, 0, side * 11.5)
 
 
+## A spot in the middle of the room, clear of the benches.
+func places() -> Dictionary:
+	return {"dressing_room": [Vector3(X0 + 2.5, 0, side * 11.5)]}
+
+
 func build(k: VenueKit) -> void:
 	var s := float(side)
 	var home := side < 0

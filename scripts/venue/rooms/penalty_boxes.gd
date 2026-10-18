@@ -14,6 +14,11 @@ func _ready() -> void:
 	spawn = Vector3(0, 0, 14.6)
 
 
+## Inside the home and away boxes.
+func places() -> Dictionary:
+	return {"penalty_box": [Vector3(-3.65, 0, 14.2), Vector3(3.65, 0, 14.2)]}
+
+
 func build(k: VenueKit) -> void:
 	var z0 := Venue.BOARD_OUT
 	var z1 := Venue.BENCH_BACK

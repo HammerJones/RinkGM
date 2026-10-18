@@ -13,6 +13,11 @@ func _ready() -> void:
 	spawn = Vector3(-7.0, 0, -14.2)
 
 
+## One standing spot behind each bench (spawn is the home one).
+func places() -> Dictionary:
+	return {"bench": [Vector3(7.0, 0, -14.2)]}
+
+
 func build(k: VenueKit) -> void:
 	var z0 := -Venue.BOARD_OUT
 	var z1 := -Venue.BENCH_BACK
@@ -56,3 +61,7 @@ func build(k: VenueKit) -> void:
 		label.name = "BenchSign%d" % bi
 		label.dead = k.by_age(0.05, 0.0, 0.0)
 		k.sign(label, Transform3D(Basis.IDENTITY, Vector3((x0 + x1) * 0.5, 0.95, z1 + 0.02)))
+	# the morning ice check: Gus's screwdriver, from the home bench's
+	# centre-ice gate (Game.bench_spot)
+	add_spot(k, VenueSpot.Kind.JOB, "ice_check", Vector3(-3.05, 1.0, z0 - 0.3), "Check the ice",
+		{"job": "ice_check", "target": "ice", "readable": "note_screwdriver"}, 1.6)

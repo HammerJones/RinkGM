@@ -195,6 +195,17 @@ kinds:
 `tools/tests/test_first_hour.gd` plays the hour headless.
 `tools/venue_shots.gd --first-hour [--lights]` renders it.
 
+## Places for people
+
+`Venue.places()` is for World's RinkPeople. It returns where people go as
+`{key: Array[Vector3]}` in venue space. The keys are canteen (the snack bar
+line, front first), washroom, glass, pro_shop, skate_rental, bench, entrance,
+lobby, office, plant_room, zamboni_bay, dressing_room and penalty_box. The
+washroom and pro shop are in the rec wing. A room lists its own with
+`places()`, and Venue adds the spawns of the rooms in `PLACE_ROOMS`. The stand
+rooms' `seats()` gives `[[position, facing], ...]`. `tools/tests/test_places.gd`
+checks that every place has a floor under it and room to stand.
+
 ## Built for exploring later
 
 - Human scale: doors 0.95–2.6 m wide and 2.2 m+ high (bench and box gates are
