@@ -21,8 +21,8 @@ static func think(s: Skater, g: Node, dt: float) -> void:
 		_no_stick(s, g, ai)
 		return
 	if s.changing:
-		# line change: straight to the bench door, where a fresh body comes on
-		_seek(s, ai, g.bench_spot(s.team), 1.0, 6.0)
+		# line change: off through the bench's far gate; a fresh body comes on
+		_seek(s, ai, g.bench_exit(s.team), 1.0, 6.0)
 		return
 	if s.ai_shoot_timer > 0.0:
 		s.ai_shoot_timer -= dt

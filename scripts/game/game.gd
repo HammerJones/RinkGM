@@ -18,7 +18,9 @@ const PUCK_SUBSTEPS := 4
 ## Faceoff spots per body, in Bench.SLOTS order (C, LD, RW, LW, RD).
 const FACEOFF_OFFSETS := [Vector2(-0.95, 0.0), Vector2(-6.5, -2.5), Vector2(-2.0, 4.0), Vector2(-2.0, -4.0), Vector2(-6.5, 2.5)]
 const PERIOD_NAMES := ["1ST", "2ND", "3RD"]
-const DOOR_REACH := 1.3        # a called skater this close to the bench door is off
+const BENCH_GATES := [3.05, 10.95]  # |x| of each bench's centre-ice and far gates
+const GATE_IN := 0.6           # how far out from the boards the gate spots sit
+const DOOR_REACH := 1.3        # a called skater this close to the exit gate is off
 const DOOR_EXIT_SPEED := 3.0   # m/s the fresh skater steps onto the ice with
 const BENCH_X := [[-11.4, -2.6], [11.4, 2.6]]  # each bench's length along the boards, door end last
 const BENCH_ROW := 12          # players standing in a row along a bench
@@ -673,10 +675,16 @@ func _on_hit_landed(hitter: Skater, victim: Skater, impulse: float, knocked_down
 		human_on_ice = false
 
 
-## Where a team's bench door is (line changes, new sticks): on the ice by the
-## boards on the -Z side, home bench on the -X half.
+## A team's bench gate nearer centre ice, where fresh skaters step on and
+## new sticks are handed over: on the ice in front of the gap in the boards
+## (the venue's gates, scripts/venue/rooms/shell.gd), home bench on the -X half.
 func bench_spot(team: int) -> Vector2:
-	return Vector2(-7.0 if team == 0 else 7.0, -Rink.HALF_W + 0.8)
+	return Vector2(-BENCH_GATES[0] if team == 0 else BENCH_GATES[0], -Rink.HALF_W + GATE_IN)
+
+
+## The bench's far gate, where skaters coming off leave the ice.
+func bench_exit(team: int) -> Vector2:
+	return Vector2(-BENCH_GATES[1] if team == 0 else BENCH_GATES[1], -Rink.HALF_W + GATE_IN)
 
 
 func on_stick_broken(s: Skater, cause: StringName) -> void:
@@ -1027,8 +1035,8 @@ func _update_benches(dt: float) -> void:
 
 ## Brings bodies off and on for the lines the bench wants out. At a stoppage
 ## (`on_fly` false) they swap before the faceoff. On the fly a called skater
-## (Skater.changing) heads for the bench door, unless carrying the puck, and
-## the fresh one steps out of the door the moment they reach it. Returns true
+## (Skater.changing) heads for the bench's far gate, unless carrying the puck,
+## and the fresh one steps out of the centre-ice gate the moment they reach it. Returns true
 ## when anyone changed.
 func _change_lines(b: Bench, on_fly: bool) -> bool:
 	var on := team_skaters(b.team)
@@ -1050,7 +1058,7 @@ func _change_lines(b: Bench, on_fly: bool) -> bool:
 			s.changing = true
 			if s == human and human_on_ice and not autoplay:
 				hud.show_message("LINE CHANGE\nskate to the bench door", 1.6)
-		if Vector2(s.position.x, s.position.z).distance_to(bench_spot(b.team)) < DOOR_REACH:
+		if Vector2(s.position.x, s.position.z).distance_to(bench_exit(b.team)) < DOOR_REACH:
 			_swap_body(s, fresh, true)
 			changed = true
 	return changed

@@ -1,9 +1,9 @@
 extends Node
 ## Headless checks for real line changes: every dressed player has their own
 ## body; the ones on the bench stand behind the boards; on the fly a called
-## skater skates to the bench door and leaves, and the fresh one steps out
-## of that door; at a stoppage the lines swap before the faceoff; all three
-## forward lines and both defence pairs see the ice. Also: a puck over the
+## skater skates to the bench's far gate and leaves, and the fresh one steps
+## out of the centre-ice gate; at a stoppage the lines swap before the
+## faceoff; all three forward lines and both defence pairs see the ice. Also: a puck over the
 ## glass is whistled dead, with the faceoff in the zone it was last played.
 ## Run: godot --headless --path . --fixed-fps 120 -- --test=lines
 
@@ -59,7 +59,7 @@ func _run() -> void:
 	# play a stretch: shifts run out and lines change on the fly
 	await _wait(150.0)
 	print("  door changes %d, elsewhere %d, bodies %d/%d" % [_door_changes, _far_changes, game.benches[0].bodies.size(), game.benches[1].bodies.size()])
-	_check(_door_changes > 0, "on-the-fly changes happen at the bench door (%d)" % _door_changes)
+	_check(_door_changes > 0, "on-the-fly changes come through the bench gate (%d)" % _door_changes)
 	_check(_far_changes == 0, "nobody appears away from the door (%d)" % _far_changes)
 	for team in 2:
 		var b: Bench = game.benches[team]
