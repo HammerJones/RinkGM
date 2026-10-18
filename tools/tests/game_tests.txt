@@ -3,5 +3,7 @@ devmenu
 sticks
 pausemenu
 practice
+lines
+shootout
 notes
 anim res://scenes/anim/anim_studio.tscn

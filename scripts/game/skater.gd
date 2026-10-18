@@ -125,6 +125,7 @@ var stick_durability := 1.0
 var stick_id := &""             ## the shop item, when the career gave one (Mechanics sets it)
 var stick_broken := false       ## playing without a stick until the bench hands over a new one
 var bench_wait := 0.0
+var changing := false           ## called off in a line change: heading for the bench door (Game._change_lines)
 var lift_cd := 0.0
 var regrab_timer := 0.0         ## grace after a deke to set the blade back on the puck
 ## Which face of the blade the puck is on (+1 forehand side, -1 backhand, 0

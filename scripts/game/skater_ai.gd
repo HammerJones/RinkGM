@@ -20,6 +20,10 @@ static func think(s: Skater, g: Node, dt: float) -> void:
 		s.ai_shoot_timer = 0.0
 		_no_stick(s, g, ai)
 		return
+	if s.changing:
+		# line change: straight to the bench door, where a fresh body comes on
+		_seek(s, ai, g.bench_spot(s.team), 1.0, 6.0)
+		return
 	if s.ai_shoot_timer > 0.0:
 		s.ai_shoot_timer -= dt
 		c.shoot = true
@@ -33,7 +37,9 @@ static func think(s: Skater, g: Node, dt: float) -> void:
 		c.move = was_moving
 		c.blade_target = was_blade
 		return
-	if owner == s:
+	if owner == s and g.shootout:
+		_shootout_carry(s, g, ai)
+	elif owner == s:
 		_carry(s, g, ai, dt)
 	elif owner != null and owner.team == s.team:
 		_support(s, g, ai, owner)
@@ -169,6 +175,40 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 	_seek(s, ai, target, 1.0, 20.0)
 	var wobble := 0.25 + 0.25 * sin(g.time * 5.0 + s.number)
 	c.blade_target = s.position + s.heading * Skater.DEFAULT_BLADE.x + s.right_vec() * wobble
+
+
+## Shootout, alone with the goalie: come in wide on one side at speed, cut
+## across the slot and pick a corner, the far post or the side the goalie
+## has left open. A better shot-picker comes in closer before letting go.
+static func _shootout_carry(s: Skater, g: Node, ai: TierAI) -> void:
+	var c := s.ctrl
+	var att: int = g.attack_side(s.team)
+	var me := _v2(s.position)
+	var goal := Vector2(att * Rink.GOAL_X, 0)
+	var ahead := (goal.x - me.x) * att
+	# each shooter has their own lane and release distance
+	var lane := 1.6 if s.number % 2 == 0 else -1.6
+	var release := lerpf(9.5, 6.0, ai.shot_selection) + fmod(s.number * 0.73, 1.0)
+	c.blade_target = s.position + s.heading * Skater.DEFAULT_BLADE.x + s.right_vec() * 0.3
+	if ahead > release:
+		var aim_lane := lane if ahead > release + 6.0 else lane * 0.4
+		_seek(s, ai, Vector2(goal.x - att * (release - 1.0), aim_lane), 1.0, 30.0)
+		return
+	if s.ai_shoot_timer > 0.0:
+		return
+	var side := -signf(me.y) if absf(me.y) > 0.3 else (1.0 if randf() < 0.5 else -1.0)
+	if randf() < ai.shot_selection:
+		for gk: Goalie in g.goalies:
+			if gk.team != s.team and absf(gk.pos2.y) > 0.1:
+				side = -signf(gk.pos2.y)
+	s.ai_aim = Vector3(goal.x, 0, side * (Rink.NET_HALF_W - 0.15))
+	s.ai_slap = false
+	s.ai_tilt = randf_range(0.3, 0.9)
+	s.ai_shoot_timer = randf_range(0.15, 0.35)
+	c.shoot = true
+	c.tilt = s.ai_tilt
+	c.aim_point = s.ai_aim
+	_seek(s, ai, goal, 1.0, 30.0)
 
 
 ## Which post to shoot for: a disciplined shooter picks the side the goalie
