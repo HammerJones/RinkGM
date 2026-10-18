@@ -6,9 +6,9 @@ extends Node3D
 ## a renovation that moves a wall just rebakes. Doors are baked open; people
 ## open and close the real ones as they pass (RinkPeople).
 ##
-## Rooms can name their own spots with `func places() -> Dictionary`
-## ({"canteen": [Vector3...], ...} in venue space); until they do, the
-## fallbacks below place them from the rooms' bounds and spawns.
+## The venue (Venue.places()) or its rooms can name spots as
+## {"canteen": [Vector3...], ...} in venue space; anything still missing
+## falls back to the guesses below, from the rooms' bounds and spawns.
 
 signal ready_to_walk
 
@@ -45,6 +45,11 @@ func _collect_places() -> void:
 	places.clear()
 	seats.clear()
 	doors = venue.all_doors() if venue and venue.has_method("all_doors") else []
+	if venue and venue.has_method("places"):
+		# the venue names its own spots (checked for floor and standing room)
+		var vp: Dictionary = venue.places()
+		for k in vp:
+			_add(k, vp[k])
 	for r in _rooms():
 		if r.has_method("seats"):
 			seats.append_array(r.seats())
