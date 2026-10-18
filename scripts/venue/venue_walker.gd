@@ -68,6 +68,30 @@ func _step_up(motion: Vector3) -> void:
 
 
 ## The nearest door within reach, or null.
+## The spot the walker is looking at: within its reach, in front of the head
+## (within about 50 degrees of `forward`), the closest to the line of sight.
+func nearest_spot(venue: Venue, forward: Vector3) -> VenueSpot:
+	var eye := head.global_position if head else global_position + Vector3(0, 1.6, 0)
+	var best: VenueSpot = null
+	var best_score := INF
+	for s in venue.all_spots():
+		if not s.is_inside_tree():
+			continue
+		var to := s.global_position - eye
+		var flat := Vector2(s.global_position.x - global_position.x, s.global_position.z - global_position.z).length()
+		if flat > s.reach or absf(to.y) > 2.2:
+			continue
+		var d := to.length()
+		var cosang := to.dot(forward) / maxf(d, 0.001)
+		if cosang < 0.64:
+			continue
+		var score := d * (2.0 - cosang)
+		if score < best_score:
+			best_score = score
+			best = s
+	return best
+
+
 func nearest_door(venue: Venue, reach := 2.0) -> VenueDoor:
 	var best: VenueDoor = null
 	var best_d := reach

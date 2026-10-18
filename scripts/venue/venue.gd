@@ -272,6 +272,27 @@ func room_at(p: Vector3) -> VenueRoom:
 	return best
 
 
+func all_spots() -> Array[VenueSpot]:
+	var out: Array[VenueSpot] = []
+	for r in _room_nodes():
+		out.append_array(r.spots)
+	return out
+
+
+func spot(id: String) -> VenueSpot:
+	for s in all_spots():
+		if s.id == id:
+			return s
+	return null
+
+
+func door(label: String) -> VenueDoor:
+	for d in all_doors():
+		if d.label == label:
+			return d
+	return null
+
+
 func all_doors() -> Array[VenueDoor]:
 	var out: Array[VenueDoor] = []
 	for r in _room_nodes():
@@ -297,6 +318,18 @@ func bind_game(g: Node) -> void:
 			apply_lighting(c.environment, null)
 		elif c is DirectionalLight3D:
 			apply_lighting(null, c)
+
+
+## The ice lights' breakers (walking the building at 05:00 they start off).
+func set_ice_lights(on: bool) -> void:
+	var l = rooms.get("lighting")
+	if l and l.has_method("switch"):
+		l.switch(on)
+
+
+func ice_lights_on() -> bool:
+	var l = rooms.get("lighting")
+	return l != null and l.lights_on
 
 
 func apply_lighting(env: Environment, sun: DirectionalLight3D) -> void:

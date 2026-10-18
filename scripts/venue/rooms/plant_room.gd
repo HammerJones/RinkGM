@@ -49,6 +49,7 @@ func build(k: VenueKit) -> void:
 	_plant(k)
 	_plumbing(k)
 	_lights(k)
+	_spots(k)
 
 
 # ---------------------------------------------------------------- helpers
@@ -246,3 +247,33 @@ func _lights(k: VenueKit) -> void:
 		k.glow(PLANT * (p - half), PLANT * (p + half), Wear.LED if ren else Color(0.85, 0.95, 1.0))
 	# one shadowless light for the room (the building's light budget is tight)
 	room_light(k, PLANT * Vector3(0.3, H - 0.5, 4.4), 9.0)
+
+
+## RINK_SIM M1: the door of notes and the binder outside, the compressors'
+## oil sight glasses, the blue oil drum, the glycol thermometers and the log
+## book. Jobs launch World and assets' mini games (scenes/world/jobs/).
+func _spots(k: VenueKit) -> void:
+	var paper := [Color("f2e27a"), Color("eeeae0"), Color("f4c9a0"), Color("cfe3f2")]
+	if k.age != Age.RENOVATED:
+		for i in 14:
+			var px := DOOR_X - 0.38 + (i % 4) * 0.2 + (0.04 if i % 3 == 0 else 0.0)
+			var py := 1.05 + (i / 4) * 0.24 + (0.03 if i % 2 == 0 else 0.0)
+			_block(k, Vector3(px, py, -0.34), Vector3(px + 0.17, py + 0.2, -0.32), paper[i % 4], 0.1, 0.0, false)
+		_block(k, Vector3(DOOR_X + 0.1, 0.95, -0.36), Vector3(DOOR_X + 0.4, 1.3, -0.32), Color("1e3b6a"), 0.1, 0.02, false)  # the binder
+	add_spot(k, VenueSpot.Kind.READ, "door_of_notes", PLANT * Vector3(DOOR_X - 0.2, 1.5, -0.4), "Notes on the plant room door", {"readable": "note_door_oil", "note": "door_of_notes"}, 1.6)
+	add_spot(k, VenueSpot.Kind.READ, "screwdriver", PLANT * Vector3(DOOR_X - 0.45, 1.2, -0.4), "Screwdriver with a card", {"readable": "note_screwdriver"}, 1.4)
+	add_spot(k, VenueSpot.Kind.READ, "gus_binder", PLANT * Vector3(DOOR_X + 0.25, 1.1, -0.4), "Gus's binder", {"readable": "gus_binder"}, 1.6)
+	add_spot(k, VenueSpot.Kind.READ, "pamphlet_ammonia", PLANT * Vector3(DOOR_X + 0.6, 1.5, 0.05), "Pamphlet: That Smell", {"readable": "pamphlet_ammonia"}, 1.4)
+	for i in 2:
+		var cx: float = [-3.6, -0.3][i]
+		add_spot(k, VenueSpot.Kind.JOB, "compressor_%d" % (i + 1), PLANT * Vector3(cx, 0.8, 3.6), "Compressor No. %d" % (i + 1),
+			{"job": "compressor_oil_change", "args": {"compressor": i}, "target": "comp%d" % (i + 1), "scene": "res://scenes/world/jobs/compressor_oil_service.tscn"}, 1.7)
+	add_spot(k, VenueSpot.Kind.READ, "oil_drum", PLANT * Vector3(-5.2, 0.45, 4.9), "Blue oil drum", {"note": "oil_drum"}, 1.5)
+	# two dial thermometers on the glycol mains by the pumps
+	for j in 2:
+		var tz := 3.25 + j * 0.45
+		_block(k, Vector3(4.85, 1.45, tz), Vector3(4.9, 1.6, tz + 0.15), Color("e8e8e2"), 0.1, 0.0, false)
+	add_spot(k, VenueSpot.Kind.JOB, "glycol_thermometer", PLANT * Vector3(4.85, 1.5, 3.5), "Glycol thermometers",
+		{"job": "plant_round", "target": "glycol", "note": "glycol_thermometer"}, 1.5)
+	add_spot(k, VenueSpot.Kind.SCREEN, "log_book", PLANT * Vector3(LEFT + 0.15, 1.3, 3.2), "Plant log book", {"screen": "log_book"}, 1.5)
+	add_spot(k, VenueSpot.Kind.READ, "nordale_manual", PLANT * Vector3(LEFT + 0.15, 1.3, 2.7), "Nordale RC-4 manual", {"readable": "nordale_manual"}, 1.3)

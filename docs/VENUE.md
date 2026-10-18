@@ -144,6 +144,57 @@ under gravity with `contact`/`bounce` and emits an event, and the game blows
 the whistle and faces off at the nearest dot. `tools/tests/test_puck_out.gd`
 runs that flow with a stand-in integrator.
 
+## The first hour (RINK_SIM M1)
+
+`--venue-walk` now starts the first hour at Millbrook (RINK_SIM.md 1.6):
+05:00 on Monday in the dark lot, with the front doors locked and the ice
+lights off. `--free-walk` gives the old walk from the lobby.
+
+Spots (`VenueSpot`) are the things you can press use on. Rooms place them
+with `VenueRoom.add_spot`, so they come back after a renovation rebuild, and
+`VenueWalker.nearest_spot` picks the one you are looking at. There are five
+kinds:
+
+- **READ** opens a note from `data/venue/notes.json` or a readable from
+  `data/world/readables.json`. Examples are Gus's envelope under the mat
+  (it gives the keys), the door of notes, the binder, the power bill and the
+  manuals.
+- **JOB** hands over to a World mini game: the compressors' oil, Doris's
+  plugs (she needs them from the parts drawer first) and her blade. The
+  glycol thermometers are the plant round, which has no scene and happens
+  on the spot.
+- **SCREEN** asks UI for a screen: the office phone, the desk, the corkboard
+  (Gus's goals), the ice grid and the log book.
+- **SWITCH** works a building system: the lighting panel in the lobby turns
+  the ice lights on, and the metal halides take about 40 s to warm up.
+- **USE** covers the rest by id: the snow pit. Its heater melts a full pit
+  in 120 sim minutes, and the pile out back is Mount Doris.
+
+`WalkStory` decides what using a spot does and keeps the RinkSim clock
+(about 1.75 sim minutes per real second). The walk scene does what it says:
+
+- Screen spots open UI's rink office (`scenes/ui/rink_office.tscn`) on the
+  walk's sim: the ice grid, log book, corkboard (Gus's goals) and the desk
+  (jobs). Q, Esc or B leaves it. The phone has no screen yet, so it shows a
+  plain panel. `screen_requested(id, sim)` fires for every screen spot.
+- A job instances its scene under `scenes/world/jobs/`
+  (`compressor_oil_service`, `doris_plugs`, `doris_blade`; the contract is
+  World's). The walk calls the root's `begin(ctx)` with
+  `{sim, job, target, room, args}`. When its `finished(result)` signal
+  fires, `WalkStory.finish_job` runs the job with the args merged with
+  `result`, through `RinkLife.job` when the walk has one (`WalkStory.life`),
+  else `RinkSim.job`. Until the sim knows `doris_plugs`, `engine_tune` stands
+  in for it.
+- If the scene isn't built yet, the job offers the quick way instead.
+- Texts prefer World's readables (`note_door_oil`, `note_screwdriver`,
+  `note_doris_dash`) and fall back to `data/venue/notes.json`.
+- The breaker calls `sim.set_lights(on)`. Once the sim has `lights_warm` and
+  `snow_pit`, the lamps and the pit show those numbers; until then the
+  venue keeps its own.
+
+`tools/tests/test_first_hour.gd` plays the hour headless.
+`tools/venue_shots.gd --first-hour [--lights]` renders it.
+
 ## Built for exploring later
 
 - Human scale: doors 0.95–2.6 m wide and 2.2 m+ high (bench and box gates are

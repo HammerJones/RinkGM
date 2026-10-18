@@ -25,6 +25,9 @@ var bounds := AABB()
 ## Where a walker enters the room, in venue space.
 var spawn := Vector3.ZERO
 var doors: Array[VenueDoor] = []
+## Things a walker can read, work on or use here (VenueSpot), rebuilt with
+## the room like its doors.
+var spots: Array[VenueSpot] = []
 ## "" for the arena itself; "rec" for the recreation centre wing, which is
 ## only built when someone can walk to it (Venue.instantiate_for's `wings`).
 var wing := ""
@@ -48,6 +51,7 @@ func rebuild() -> void:
 		remove_child(c)
 		c.queue_free()
 	doors.clear()
+	spots.clear()
 	var kit := VenueKit.new(hash(room_id), age)
 	build(kit)
 	kit.commit(self)
@@ -75,6 +79,16 @@ func add_door(kit: VenueKit, pos: Vector3, rot_y: float, kind: int, w: float, h:
 	doors.append(d)
 	kit.add(d)
 	return d
+
+
+## Helper for subclasses: a VenueSpot at `pos` (venue space; the point the
+## walker looks at). See VenueSpot for kinds and data.
+func add_spot(kit: VenueKit, kind: int, id: String, pos: Vector3, label: String, data := {}, reach := 1.6) -> VenueSpot:
+	var s := VenueSpot.make(kind, id, label, data, reach)
+	s.position = pos
+	spots.append(s)
+	kit.add(s)
+	return s
 
 
 ## A shadowless ceiling light for an interior room (worn rooms are dimmer
