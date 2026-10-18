@@ -49,6 +49,23 @@ filtering and no lighting, so signs line up with the voxel art.
 - The building can look old and worn (faded paint, a dead bulb in the
   scoreboard), but the UI itself is always full colour and crisp.
 
+## The rink office
+
+`scenes/ui/rink_office.tscn` (scripts/ui/office/) holds the management
+screens: the ice grid, the plant log book, the week's P&L, the job queue and
+Gus's corkboard. `FootHud` is the small clock, block and hours readout the
+owner carries on foot (`scenes/ui/foot_hud_demo.tscn` shows it over the
+venue walk). Screens read the sim only through `OfficeData`.
+
+- Readings taken with the starting tools are words, never numbers
+  ("amber, probably", "thick?"). A bought tool shows a number and its error
+  ("-4.6 C +/-0.5"). Bad words read ALERT, good ones GOOD.
+- The grid colours bookings by ice use (hockey READOUT, public GOOD, figure
+  TEXT), shades free ice by slot class, marks floods with pixel ripples
+  (ALERT when nobody can do it) and open bids with an ACTION dashed outline.
+- In-world paper (sticky notes, the corkboard) uses its own paper colours
+  with VT323 in pencil ink, kept square: rotated pixel text blurs.
+
 ## Changing the style
 
 Edit `scripts/ui/rinkos.gd`, then rebuild the theme:
