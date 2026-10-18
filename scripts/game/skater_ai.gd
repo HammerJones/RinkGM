@@ -212,10 +212,14 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 	c.blade_target = _carry_blade(s, g, ai)
 
 
-## Shootout, alone with the goalie. A shooter comes in wide on their lane
-## and lets a high shot go for the far side; a deker (every third shooter)
-## comes in close, cuts hard across the crease to pull the goalie over and
-## shoots for the side they've left. A better shot-picker reads the goalie.
+const SETTLED_TURN := 6.0  # m/s^2 of turn load a shootout shooter waits to drop under
+
+
+## Shootout, alone with the goalie. A shooter comes in wide on their lane,
+## squares up, eases off and lets a high shot go for the far side; a deker
+## (every third shooter) comes in close, cuts hard across the crease to pull
+## the goalie over and shoots for the side they've left. A better
+## shot-picker reads the goalie.
 static func _shootout_carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 	var c := s.ctrl
 	var att: int = g.attack_side(s.team)
@@ -249,8 +253,9 @@ static func _shootout_carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 			var aim_lane := lane if ahead > release + 6.0 else lane * 0.5
 			_seek(s, ai, Vector2(goal.x - att * (release - 1.0), aim_lane), 1.0, 30.0)
 			return
-		_seek(s, ai, goal, 1.0, 30.0)
-		ready = true
+		# square up and settle: carving hard or at full speed sprays the shot
+		_seek(s, ai, goal, 1.0, 30.0, 0.4)
+		ready = s.turn_load < SETTLED_TURN or ahead < release - 3.0
 	if not ready:
 		return
 	# one shot, then let go of the button (a re-press the next frame would
