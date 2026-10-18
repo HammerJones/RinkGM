@@ -17,6 +17,7 @@ const SLOTS := {
 	"career": {"path": "user://career.json", "label": "Career", "desc": "Start at the bottom of the ladder and climb."},
 	"demo_low": {"path": "user://demo_low.json", "label": "Demo: low tier", "desc": "A season in Beer League C, then a tryout for Senior AAA."},
 	"demo_mid": {"path": "user://demo_mid.json", "label": "Demo: mid tier", "desc": "Jump straight into a Senior AAA season."},
+	"owner": {"path": "user://owner_millbrook.json", "label": "Owner: Millbrook", "desc": "Run Millbrook Community Arena and play Beer League D on its late ice."},
 }
 ## Demo careers: the tier each demo starts in, the tier its second season is
 ## played in, and how fast skills grow (so 12-14 games show real progress).
@@ -56,6 +57,16 @@ var save_path := SAVE_PATH
 ## when one runs alongside the career (RinkSim.owner_can_play: the owner sits
 ## while Beer League dues are unpaid). Unset means always.
 var league_gate: Callable
+## (world hook) True while a rink sim owns the calendar (RINK_SIM.md 6.1):
+## Career stops adding days itself and RinkLink calls pass_day() at each of
+## the sim's midnights, so `day` always equals the sim's day.
+var follows_world := false
+## The day the user's team plays its next round, while `follows_world`.
+var game_day := 0
+## The open world's state under the save's `world` key (RINK_SIM.md 7.4):
+## {"rink_sim": ...}. A value is either its saved dictionary or the live
+## object (anything with to_dict()), which is saved as it stands.
+var world := {}
 
 
 # ------------------------------------------------------------ setup
@@ -340,7 +351,8 @@ func _after_round(played_teams: Dictionary) -> void:
 						_news("You're fully healed.")
 					p.injury = null
 				p.refresh_modifiers()
-			Progression.rest(p, days)
+			if not (follows_world and p.is_user):  # the user rests a day at a time in pass_day()
+				Progression.rest(p, days)
 			for i in practices:
 				_xp(p, Progression.practice_xp(p, 0.8))
 	# the user also gets their own weekly stick-and-puck session
@@ -348,7 +360,24 @@ func _after_round(played_teams: Dictionary) -> void:
 	if u.can_play():
 		for i in maxi(1, days / 7):
 			_xp(u, Progression.practice_xp(u, 0.6))
-	day += days
+	if follows_world:
+		game_day = day + days
+	else:
+		day += days
+
+
+## One day passes on the world's clock. `rested` is false when the day's work
+## left the user too tired to recover (the rink owner's fatigue, RINK_SIM.md 2.1).
+func pass_day(rested: bool) -> void:
+	day += 1
+	if rested:
+		Progression.rest(user(), 1)
+
+
+## Whether the current round is due: always, unless the world's clock hasn't
+## reached the next game day yet.
+func round_due() -> bool:
+	return not follows_world or day >= game_day
 
 
 func _xp(p: PlayerProfile, xp: Dictionary) -> void:
@@ -495,7 +524,10 @@ func start_next_season() -> void:
 			_offseason_team(teams[tid])
 	_check_release()
 	season_number += 1
-	day += 120
+	if follows_world:
+		game_day = day + 120  # TODO(M4/M5): the summer is played (RINK_SIM.md open question 1)
+	else:
+		day += 120
 	season = Season.create(tier, season_number, leagues[tier], rng)
 	phase = Phase.SEASON
 	_news("Season %d begins: %s with the %s." % [season_number, LeagueTiers.get_tier(tier).name, user_team().name])
@@ -670,8 +702,16 @@ func to_dict() -> Dictionary:
 		"season_number": season_number, "tier": tier, "user_id": user_id, "next_id": next_id,
 		"players": ps, "teams": ts, "leagues": ls, "season": season.to_dict(),
 		"settings": settings.to_dict(), "phase": phase, "invitations": invitations, "news": news,
-		"demo": demo, "xp_scale": xp_scale,
+		"demo": demo, "xp_scale": xp_scale, "follows_world": follows_world, "game_day": game_day,
+		"world": _world_dict(),
 	}
+
+
+func _world_dict() -> Dictionary:
+	var out := {}
+	for k in world:
+		out[k] = world[k].to_dict() if world[k] is Object else world[k]
+	return out
 
 
 static func from_dict(d: Dictionary) -> Career:
@@ -696,4 +736,7 @@ static func from_dict(d: Dictionary) -> Career:
 	c.news = d.news
 	c.demo = d.get("demo", "")
 	c.xp_scale = float(d.get("xp_scale", 1.0))
+	c.follows_world = bool(d.get("follows_world", false))
+	c.game_day = int(d.get("game_day", 0))
+	c.world = d.get("world", {})
 	return c

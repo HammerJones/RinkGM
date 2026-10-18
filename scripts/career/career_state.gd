@@ -6,6 +6,8 @@ const HUB_SCENE := "res://scenes/career_hub.tscn"
 const RINK_SCENE := "res://scenes/main.tscn"
 
 var career: Career
+## The owner's rink running alongside the career (the "owner" slot), or null.
+var rink: RinkLink
 ## Which Career.SLOTS entry is loaded ("career", "demo_low", "demo_mid").
 var slot := "career"
 ## Career.next_user_game() for the game being played, or {} for an exhibition.
@@ -19,6 +21,7 @@ var practice := false
 func load_or_null() -> Career:
 	if career == null:
 		career = Career.load_from(slot_path(slot))
+		rink = RinkLink.resume(career) if career else null
 	return career
 
 
@@ -36,6 +39,7 @@ func use_slot(s: String) -> void:
 		return
 	slot = s
 	career = null
+	rink = null
 	last_round = {}
 
 
@@ -43,6 +47,7 @@ func delete_slot(s: String) -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(slot_path(s)))
 	if s == slot:
 		career = null
+		rink = null
 		last_round = {}
 
 
@@ -71,9 +76,14 @@ func start_practice() -> void:
 func finish_match(result: Dictionary) -> void:
 	if career == null or fixture.is_empty():
 		return
-	last_round = career.play_round(result)
+	last_round = play_round(result)
 	career.save()
 	fixture = {}
+
+
+## Plays the career's current round, through the rink when one runs.
+func play_round(result: Dictionary = {}) -> Dictionary:
+	return rink.play_round(result) if rink else career.play_round(result)
 
 
 func back_to_hub() -> void:
