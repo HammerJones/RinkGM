@@ -19,6 +19,9 @@ var _save_edits: CheckBox
 var _pause_while_open: CheckBox
 var _fps_label: Label
 var _was_paused := false
+var _was_mouse_mode := Input.MOUSE_MODE_VISIBLE
+var _input_node: Node  # the game's PlayerInput, switched off while the menu is open
+var _input_mode := Node.PROCESS_MODE_INHERIT
 
 
 func _ready() -> void:
@@ -52,9 +55,35 @@ func set_open(open: bool) -> void:
 		_was_paused = get_tree().paused
 		if _pause_while_open.button_pressed:
 			get_tree().paused = true
+		_release_mouse()
 		refresh()
 	else:
 		get_tree().paused = _was_paused
+		_restore_mouse()
+
+
+## The match captures the mouse for the virtual stick and recaptures it on any
+## click, so free it and switch the game's input reader off while the menu is up.
+func _release_mouse() -> void:
+	_was_mouse_mode = Input.mouse_mode
+	var g := _game()
+	var ctl: Object = g.get("controller") if g != null else null
+	_input_node = ctl.get("player_input") as Node if ctl != null else null
+	if _input_node != null:
+		_input_mode = _input_node.process_mode
+		_input_node.process_mode = Node.PROCESS_MODE_DISABLED
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _restore_mouse() -> void:
+	if is_instance_valid(_input_node):
+		_input_node.process_mode = _input_mode
+		if _was_mouse_mode == Input.MOUSE_MODE_CAPTURED and _input_node.has_method("capture_mouse"):
+			_input_node.call("capture_mouse")  # also re-centres the virtual stick
+			_input_node = null
+			return
+	_input_node = null
+	Input.mouse_mode = _was_mouse_mode
 
 
 func is_open() -> bool:
@@ -615,6 +644,12 @@ func _self_test() -> void:
 	if g == null:
 		fails.append("no game scene found")
 	else:
+		var ctl: Object = g.get("controller")
+		var pin: Node = ctl.get("player_input") as Node if ctl != null else null
+		if pin != null and pin.process_mode != Node.PROCESS_MODE_DISABLED:
+			fails.append("game input still live while the menu is open")
+		if DisplayServer.get_name() != "headless" and Input.mouse_mode != Input.MOUSE_MODE_VISIBLE:
+			fails.append("mouse still captured while the menu is open")
 		_add_score(0, 2)
 		if g.score[0] != 2:
 			fails.append("score edit did not apply")
@@ -656,6 +691,10 @@ func _self_test() -> void:
 				fails.append("next season did not start")
 	Engine.time_scale = 1.0
 	set_open(false)
+	var gc: Object = _game().get("controller") if _game() != null else null
+	var pin2: Node = gc.get("player_input") as Node if gc != null else null
+	if pin2 != null and pin2.process_mode == Node.PROCESS_MODE_DISABLED:
+		fails.append("game input not restored after closing")
 	for f in fails:
 		print("  FAIL: ", f)
 	print("devmenu test: ", "all passed" if fails.is_empty() else "FAILED %d" % fails.size())

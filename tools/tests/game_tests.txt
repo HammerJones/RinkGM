@@ -1,4 +1,6 @@
 controls
 devmenu
 sticks
+pausemenu
+practice
 anim res://scenes/anim/anim_studio.tscn

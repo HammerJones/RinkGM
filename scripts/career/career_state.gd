@@ -12,6 +12,8 @@ var slot := "career"
 var fixture: Dictionary = {}
 ## The last round's summary (for the hub to show).
 var last_round: Dictionary = {}
+## True while the rink scene runs practice mode (see start_practice).
+var practice := false
 
 
 func load_or_null() -> Career:
@@ -52,6 +54,15 @@ func save_career() -> void:
 
 func play_match(m: Dictionary) -> void:
 	fixture = m
+	practice = false
+	get_tree().change_scene_to_file(RINK_SCENE)
+
+
+## Practice: the user's skater alone on the ice with a puck (the loaded
+## career's player, or a default skater without one). Nothing is recorded.
+func start_practice() -> void:
+	fixture = {}
+	practice = true
 	get_tree().change_scene_to_file(RINK_SCENE)
 
 
@@ -67,4 +78,5 @@ func finish_match(result: Dictionary) -> void:
 
 func back_to_hub() -> void:
 	fixture = {}
+	practice = false
 	get_tree().change_scene_to_file(HUB_SCENE)
