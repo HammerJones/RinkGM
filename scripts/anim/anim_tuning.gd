@@ -105,7 +105,7 @@ func tunables() -> Array:
 # The top hand (opposite the shooting side) never leaves the knob; the bottom
 # hand slides along the shaft and lets go to reach.
 ## Where the top hand sits across the body (- is its own side).
-@export_range(-0.5, 0.3, 0.01) var grip_top_side := -0.14
+@export_range(-0.5, 0.3, 0.01) var grip_top_side := -0.1
 ## Top hand height above the hips (it stays between grip_top_low and
 ## grip_top_high: hips to chest).
 @export_range(0.0, 0.8, 0.01) var grip_top_height := 0.22
@@ -133,9 +133,8 @@ func tunables() -> Array:
 ## How quickly the bottom hand slides to its new spot.
 @export_range(1.0, 30.0, 0.5) var grip_slide_speed := 10.0
 ## Arm length (shoulder to the middle of the glove), times the model's
-## 0.49 m. The voxel arms are short for a 2 m skater, so both hands
-## can't reach a full-size stick without stretching them.
-@export_range(1.0, 1.8, 0.01) var grip_arm_length := 1.5
+## 0.68 m (World's character sheet). Leave at 1 unless testing.
+@export_range(0.8, 1.5, 0.01) var grip_arm_length := 1.0
 ## Two hands on: the shoulders turn towards the stick (radians) so the
 ## bottom shoulder comes forward to the shaft ...
 @export_range(0.0, 1.0, 0.01) var grip_shoulder_turn := 0.4

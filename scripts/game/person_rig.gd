@@ -47,6 +47,10 @@ func build_person(pal: Dictionary) -> void:
 	build(pal, false)
 	stick.visible = false
 	blade.visible = false
+	# shoes, not skates
+	shin_len = (Models.SHIN_V + Models.SHOE_V) * V
+	for sh in shins:
+		sh.mesh = Models.shin_shoe(pal).build_mesh()
 
 
 ## Poses the body for a walker moving at `vel` (world space).
@@ -82,7 +86,7 @@ func update_person(vel: Vector3, dt: float) -> void:
 		_phase = fmod(_phase + freq * dt, 1.0)
 	var span := speed * duty / freq if speed > 0.05 else 0.0
 	var lift := lerpf(T.walk_lift, T.walk_lift_run, _run)
-	var legs := (THIGH + SHIN) * 0.98
+	var legs := (THIGH + shin_len) * 0.98
 	var hip_h := legs * 0.97
 	var on_floor: Array[bool] = [true, true]
 	for i in 2:
@@ -198,4 +202,4 @@ func hand_pos(i: int) -> Vector3:
 
 ## Where foot `i` is now (world space): the bottom of the shin.
 func foot_pos(i: int) -> Vector3:
-	return shins[i].global_transform * Vector3(0.0, -SHIN, 0.0)
+	return shins[i].global_transform * Vector3(0.0, -shin_len, 0.0)

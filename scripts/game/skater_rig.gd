@@ -15,13 +15,14 @@ extends Node3D
 ## hands hold the stick in `_pose_stick`; Controls owns the stick's swing.
 
 const V := Models.V
-const HIP_Y := 12 * V
+const HIP_Y := (Models.HIP_SKATE_V - 0.5) * V   # knees a little bent at rest
+const GOALIE_HIP_Y := 12 * V   # the goalie's one-piece legs
 const STICK_LEN := 23.5 * V   # goalie stick
 const SHAFT_LEN := Models.SHAFT_VOX * Models.STICK_V   # model size; AnimTuning stick_* scale it
-const THIGH := 6.0 * V
-const SHIN := 6.5 * V           # knee to the bottom of the blade
-const UPPER_ARM := 4.0 * V
-const FOREARM := 3.5 * V        # elbow to the middle of the glove
+const THIGH := Models.THIGH_V * V
+const SHIN := (Models.SHIN_V + Models.SKATE_V) * V   # knee to the bottom of the blade
+const UPPER_ARM := Models.UPPER_ARM_V * V
+const FOREARM := Models.FOREARM_V * V        # elbow to the middle of the glove
 const LEG_X := 2.0 * V
 const SHOULDER_REACH := 0.08    # how far a shoulder can roll forward to reach
 const CHECK_TIME := 0.35        # Skater sets check_timer to this when a check starts
@@ -63,6 +64,8 @@ var _fall_dir := 1.0      # +1 falls backward, -1 forward
 var _check := 0.0
 var _bf := 0.0
 var _time := 0.0
+## Knee to the sole: a skate (SHIN) or, on PersonRig, a shoe.
+var shin_len := SHIN
 var _feet: Array[Vector3] = [Vector3(-0.15, 0, 0), Vector3(0.15, 0, 0)]
 var _yaws: Array[float] = [0.0, 0.0]
 var _one_hand := 0.0
@@ -103,7 +106,7 @@ func build(pal: Dictionary, is_goalie: bool) -> void:
 	body = Node3D.new()
 	faller.add_child(body)
 	hips = VoxelPart.make(Models.pants(pal, goalie))
-	hips.position.y = HIP_Y
+	hips.position.y = GOALIE_HIP_Y if goalie else HIP_Y
 	body.add_child(hips)
 	torso = VoxelPart.make(Models.torso(pal, goalie))
 	torso.position.y = 3 * V
@@ -111,7 +114,7 @@ func build(pal: Dictionary, is_goalie: bool) -> void:
 	head = VoxelPart.make(Models.head(pal, goalie))
 	head.position.y = (10 if goalie else 9) * V
 	torso.add_child(head)
-	var arm_x := (6.5 if goalie else 5.5) * V
+	var arm_x := 6.5 * V if goalie else (Models.SHOULDERS_V * 0.5 + 0.5) * V
 	var arm_y := (10 if goalie else 9) * V
 	if goalie:
 		var leg_x := 2.6 * V
@@ -377,8 +380,8 @@ func _pose_leg(i: int) -> void:
 	var sd := -1.0 if i == 0 else 1.0
 	var root := Vector3(sd * LEG_X, 0, 0)
 	var target: Vector3 = hips.transform.affine_inverse() * (_feet[i] + Vector3(0, 0, 0))
-	var knee := _two_bone(root, target, THIGH, SHIN, Vector3(sd * 0.25, 0, -1))
-	var foot := root + (target - root).limit_length(THIGH + SHIN - 0.002) if root.distance_to(target) > THIGH + SHIN else target
+	var knee := _two_bone(root, target, THIGH, shin_len, Vector3(sd * 0.25, 0, -1))
+	var foot := root + (target - root).limit_length(THIGH + shin_len - 0.002) if root.distance_to(target) > THIGH + shin_len else target
 	thighs[i].transform = Transform3D(_basis_along(root - knee, 0.0), root)
 	shins[i].transform = Transform3D(_basis_along(knee - foot, _yaws[i] - hips.rotation.y), knee)
 
@@ -386,7 +389,7 @@ func _pose_leg(i: int) -> void:
 func update_goalie(g: Goalie, dt: float) -> void:
 	var smooth := 1.0 - exp(-14.0 * dt)
 	_bf = lerpf(_bf, 1.0 if g.butterfly_timer > 0.0 else 0.0, smooth)
-	hips.position.y = lerpf(HIP_Y - 0.1, 0.34, _bf)
+	hips.position.y = lerpf(GOALIE_HIP_Y - 0.1, 0.34, _bf)
 	leg_l.rotation = Vector3(lerpf(0.0, -0.25, _bf), 0, -lerpf(0.14, 1.35, _bf))
 	leg_r.rotation = Vector3(lerpf(0.0, -0.25, _bf), 0, lerpf(0.14, 1.35, _bf))
 	torso.rotation.x = -0.18

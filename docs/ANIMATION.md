@@ -26,10 +26,10 @@ it, and the blade never re-levels itself, so it tips onto its heel or toe
 when the hands are higher or lower than a flat lie. The top hand mostly goes
 to the height that lays the blade flat (`grip_top_flat`), sways with the
 blade (`grip_top_sway`), and with both hands on, the shoulders turn and dip
-towards the stick (`grip_shoulder_*`). The voxel arms are short for a 2 m
-skater, so `grip_arm_length` stretches them to a real proportion; that and
-a blade about 1.2 m out (`AnimPuppet.READY_BLADE`) are what let the bottom
-hand reach the shaft.
+towards the stick (`grip_shoulder_*`). Limb lengths come from World's
+character sheet (`Models.THIGH_V`, `UPPER_ARM_V` and so on: 28 V tall on
+skates, 27 V in shoes), and a blade about 1.2 m out
+(`AnimPuppet.READY_BLADE`) lets the bottom hand reach the shaft.
 
 The drawn blade sits exactly on the simulated one (`Skater.blade_pos` and
 `blade_height`) every frame; only the body and arms are smoothed. The
