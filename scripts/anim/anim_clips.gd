@@ -11,12 +11,14 @@ const FOREHAND_WIND := 100.0  # Skater.WIND_SPOT as an angle (deg) ...
 const WIND_REACH := 0.86      # ... and reach (m)
 
 const LIST := [
-	{"id": &"neutral", "title": "Ready stance", "groups": ["stance"], "len": 4.0,
+	{"id": &"neutral", "title": "Ready stance", "groups": ["stance", "stick", "grip"], "len": 4.0,
 		"note": "Standing still, knees bent, blade on the ice."},
-	{"id": &"stickhandle", "title": "Stickhandling", "groups": ["stance", "shot"], "len": 4.0,
+	{"id": &"stickhandle", "title": "Stickhandling", "groups": ["grip", "stick"], "len": 4.0,
 		"note": "Two hands, quick forehand-backhand moves in front of the body."},
-	{"id": &"wide_reach", "title": "Wide reach", "groups": ["stance", "stride"], "len": 4.0,
-		"note": "Past the front 90 degrees the bottom hand lets go and the top hand reaches."},
+	{"id": &"wide_reach", "title": "Wide reach", "groups": ["grip"], "len": 4.0,
+		"note": "Past the front 90 degrees the bottom hand lets go; the top hand keeps the knob and swings the stick on a straight arm."},
+	{"id": &"poke_check", "title": "Poke check", "groups": ["grip"], "len": 3.0,
+		"note": "Stick jabbed straight out front: the bottom hand lets go for the extra reach."},
 	{"id": &"stride_easy", "title": "Skating stride: easy", "groups": ["stance", "stride"], "len": 4.0,
 		"note": "Striding at about 9 mph."},
 	{"id": &"stride_full", "title": "Skating stride: full speed", "groups": ["stance", "stride"], "len": 4.0,
@@ -31,15 +33,15 @@ const LIST := [
 		"note": "The same turning right."},
 	{"id": &"hockey_stop", "title": "Hockey stop", "groups": ["stop"], "len": 3.6,
 		"note": "Skate, stop hard sideways with a spray of snow, stand, go again."},
-	{"id": &"wrist_shot", "title": "Wrist shot", "groups": ["shot"], "len": 3.5,
+	{"id": &"wrist_shot", "title": "Wrist shot", "groups": ["shot", "grip"], "len": 3.5,
 		"note": "Draw the puck back behind the forehand hip, sweep forward, follow through."},
-	{"id": &"snap_shot", "title": "Snapshot", "groups": ["shot"], "len": 3.0,
+	{"id": &"snap_shot", "title": "Snapshot", "groups": ["shot", "grip"], "len": 3.0,
 		"note": "Pull out to the forehand side and snap straight through."},
-	{"id": &"slapshot", "title": "Slapshot", "groups": ["shot"], "len": 3.5,
+	{"id": &"slapshot", "title": "Slapshot", "groups": ["shot", "grip"], "len": 3.5,
 		"note": "Blade lifted high behind, slammed through, big follow-through."},
-	{"id": &"backhand", "title": "Backhand", "groups": ["shot"], "len": 3.5,
+	{"id": &"backhand", "title": "Backhand", "groups": ["shot", "grip"], "len": 3.5,
 		"note": "Draw back behind the backhand hip, sweep forward."},
-	{"id": &"backhand_snap", "title": "Backhand snap", "groups": ["shot"], "len": 3.0,
+	{"id": &"backhand_snap", "title": "Backhand snap", "groups": ["shot", "grip"], "len": 3.0,
 		"note": "Pull out to the backhand side and snap through."},
 	{"id": &"pass_forehand", "title": "Forehand pass", "groups": ["pass"], "len": 2.5,
 		"note": "Short sweep from the forehand side, low follow-through."},
@@ -81,6 +83,10 @@ static func run(id: StringName, p: AnimPuppet, t: float, dt: float, mem: Diction
 		&"wide_reach":
 			p.blade_deg = sin(t * TAU * 0.25) * 95.0
 			p.blade_m = 1.0 + 0.4 * absf(sin(t * TAU * 0.25))
+		&"poke_check":
+			var jab := smoothstep(0.8, 1.0, t) * (1.0 - smoothstep(1.5, 1.9, t))
+			p.blade_deg = 5.0
+			p.blade_m = lerpf(0.9, 1.8, jab)
 		&"stride_easy":
 			_skate(p, 4.0)
 		&"stride_full":

@@ -11,13 +11,13 @@ extends Node3D
 ##
 ## Every shaping number lives in AnimTuning (scripts/anim/anim_tuning.gd),
 ## tuned live in the animation studio (scenes/anim/anim_studio.tscn).
-## Animations own the body; Controls owns the grip and hand IK on the stick
-## (`_pose_stick`).
+## Animations own the body and (since Sean's grip notes, 2026-10-18) how the
+## hands hold the stick in `_pose_stick`; Controls owns the stick's swing.
 
 const V := Models.V
 const HIP_Y := 12 * V
 const STICK_LEN := 23.5 * V   # goalie stick
-const SHAFT_LEN := Models.SHAFT_VOX * Models.STICK_V
+const SHAFT_LEN := Models.SHAFT_VOX * Models.STICK_V   # model size; AnimTuning stick_* scale it
 const BLADE_HEEL := Vector3(-7.5 * Models.STICK_V, 4.5 * Models.STICK_V, 0)  # in blade space
 const THIGH := 6.0 * V
 const SHIN := 6.5 * V           # knee to the bottom of the blade
@@ -77,6 +77,11 @@ var _cel := 0.0
 var _hooked := false
 var _grip_top := Vector3.ZERO     # faller space, set by _pose_stick
 var _grip_bottom := Vector3.ZERO
+var _bottom_d := 0.45            # bottom hand, metres below the knob
+var _bottom_off := false          # the bottom hand couldn't reach the shaft last frame
+var _shaft_base: Mesh             # stick meshes at model size, rescaled by AnimTuning
+var _blade_base: Mesh
+var _stick_size := Vector4.ZERO
 
 
 func build(pal: Dictionary, is_goalie: bool) -> void:
@@ -131,6 +136,8 @@ func build(pal: Dictionary, is_goalie: bool) -> void:
 	else:
 		stick = VoxelPart.make(Models.shaft(pal))
 		blade = VoxelPart.make(Models.blade(pal))
+		_shaft_base = stick.mesh
+		_blade_base = blade.mesh
 		faller.add_child(blade)
 	faller.add_child(stick)
 
@@ -195,6 +202,7 @@ func _on_goal(team: int, scorer: PlayerProfile, _assists: Array, s: Skater) -> v
 
 func update_skater(s: Skater, dt: float) -> void:
 	var T := AnimTuning.current()
+	_size_stick(T)
 	# a broken stick is lying on the ice (StickDebris)
 	stick.visible = not s.stick_broken
 	blade.visible = not s.stick_broken
@@ -297,9 +305,13 @@ func update_skater(s: Skater, dt: float) -> void:
 	# one_hand(), which also holds both on for a wind-up) and stays on for the
 	# follow-through
 	var oh := 0.0 if _follow > 0.0 else s.one_hand()
+	if _bottom_off:
+		oh = 1.0
 	_one_hand = lerpf(_one_hand, oh, 1.0 - exp(-10.0 * dt))
 	var center := Vector3(flat.x, s.blade_height + fol * T.shot_follow_height * _follow_h, flat.z)
-	_pose_stick(center, flat, s.ctrl.tilt, k)
+	var bottom := lerpf(T.grip_bottom, T.grip_bottom_slap if s.wind_slap else T.grip_bottom_shot, w)
+	_bottom_d = lerpf(_bottom_d, bottom, 1.0 - exp(-T.grip_slide_speed * dt))
+	_pose_stick(center, flat, s.ctrl.tilt, _bottom_d)
 	_pose_actions(T)
 
 
@@ -360,21 +372,22 @@ func update_goalie(g: Goalie, dt: float) -> void:
 
 ## Blade flat on the ice at `center` (rig space), in line with the shaft as
 ## on a real stick: seen from above, the toe points away from the hands and
-## the shaft rises over the heel. Two hands: top hand on the knob, bottom
-## hand a forearm's length down. One hand: the top hand reaches out towards
-## the blade and the bottom hand drops to the hip.
-func _pose_stick(center: Vector3, flat: Vector3, tilt: float, k: float) -> void:
+## the shaft rises over the heel. The top hand never lets go of the knob: it
+## stays in front of the belly on its own side and the stick pivots in it,
+## so a wide reach swings the knob out on a straight arm. The bottom hand
+## slides along the shaft (`bottom` metres below the knob: higher to
+## stickhandle, lower to shoot), slides up when that spot is out of reach and
+## lets go when the shaft is out of reach altogether or the blade is past the
+## front 90 degrees.
+func _pose_stick(center: Vector3, flat: Vector3, tilt: float, bottom: float) -> void:
 	var T := AnimTuning.current()
 	var dir := flat.normalized() if flat.length() > 0.05 else Vector3.FORWARD
-	var hy := 0.95 - 0.1 * k - _crouch + center.y * 0.5
-	var two := Vector3(0.0, hy, -0.22) + flat * 0.22
+	var hip_y := HIP_Y - _crouch
+	var want := Vector3(T.grip_top_side, hip_y + T.grip_top_height + center.y * 0.5, -T.grip_top_fwd)
+	want += Vector3(dir.x, 0, dir.z) * T.grip_top_follow
 	# a check pulls the hands in to the chest
-	two = two.lerp(Vector3(-0.05, hy + 0.12, -0.18), _check * T.check_tuck)
-	# one-handed: the top (left) hand reaches from its shoulder towards the blade
-	var shoulder := Vector3(-0.3, hy + 0.25, 0.0)
-	var one := shoulder + (Vector3(dir.x, 0, dir.z) * 0.65 + Vector3(0, -0.3, 0))
-	var grip := two.lerp(one, _one_hand)
-	var reach := Vector3(center.x - grip.x, 0, center.z - grip.z)
+	want = want.lerp(Vector3(-0.05, hip_y + T.grip_top_height + 0.15, -0.15), _check * T.check_tuck)
+	var reach := Vector3(center.x - want.x, 0, center.z - want.z)
 	var toe := reach.normalized() if reach.length() > 0.05 else dir
 	# the blade model curves towards +Z, its forehand; a right shot's forehand
 	# is left of the toe, so the blade basis is mirrored
@@ -382,21 +395,93 @@ func _pose_stick(center: Vector3, flat: Vector3, tilt: float, k: float) -> void:
 	# tilt rolls the blade open about its length
 	bb = Basis(toe, tilt * 0.7) * bb
 	blade.transform = Transform3D(bb, center)
-	var heel := center + bb * BLADE_HEEL
-	var y := (grip - heel).normalized()
+	var heel := center + bb * _blade_heel(T)
+	var length := SHAFT_LEN * T.stick_length
+	var arm := (UPPER_ARM + FOREARM) * T.grip_reach
+	var knob := _knob(heel, want, length, faller.to_local(uppers[0].global_position), arm)
+	var y := (knob - heel).normalized()
 	var x := toe - y * toe.dot(y)
 	x = x.normalized() if x.length() > 0.01 else Vector3.RIGHT
-	var sb := Basis(x, y, x.cross(y))
-	stick.transform = Transform3D(sb, heel)
-	# hands grip where the shaft passes them, never past the knob
-	var along := clampf((grip - heel).dot(y), SHAFT_LEN * 0.5, SHAFT_LEN - 0.04)
-	var top := heel + y * along
-	_grip_top = top
-	_pose_arm(0, faller.to_global(top))
-	var bottom := heel + y * (along - 0.42)
-	var rest := Vector3(0.32, hy - 0.05, -0.05 + sin(_cycle * TAU) * T.stride_arm_swing * _amp)
-	_grip_bottom = bottom.lerp(rest, _one_hand)
+	stick.transform = Transform3D(Basis(x, y, x.cross(y)), heel)
+	_grip_top = heel + y * (length - 0.04)
+	_pose_arm(0, faller.to_global(_grip_top))
+	var along := _slide(knob, -y, bottom, length, faller.to_local(uppers[1].global_position), arm)
+	_bottom_off = along < 0.0
+	var on := knob - y * maxf(along, 0.2)
+	var rest := Vector3(0.32, hip_y + 0.25, -0.05 + sin(_cycle * TAU) * T.stride_arm_swing * _amp)
+	_grip_bottom = on.lerp(rest, _one_hand)
 	_pose_arm(1, faller.to_global(_grip_bottom))
+
+
+## Where the knob goes: `length` from the heel, as close to `want` as it can
+## be while the top hand (shoulder `sh`, reach `arm`) still holds it.
+static func _knob(heel: Vector3, want: Vector3, length: float, sh: Vector3, arm: float) -> Vector3:
+	var k := heel + (want - heel).normalized() * length
+	if k.distance_to(sh) <= arm:
+		return k
+	var v := sh - heel
+	var d := v.length()
+	if d > length + arm or d < absf(length - arm) or d < 0.001:
+		# out of reach: the arm goes straight towards it
+		return heel + v.normalized() * length if d > length + arm else k
+	# the knob can be anywhere on the circle where the stick's reach meets the
+	# arm's; take the point nearest where the hand wants to be
+	var n := v / d
+	var a := (length * length - arm * arm + d * d) / (2.0 * d)
+	var c := heel + n * a
+	var q := want - c
+	q -= n * q.dot(n)
+	if q.length() < 0.0001:
+		q = n.cross(Vector3.UP)
+	return c + q.normalized() * sqrt(maxf(length * length - a * a, 0.0))
+
+
+## How far below the knob the bottom hand holds the shaft (running from
+## `knob` along `down`): `want` if it can reach, otherwise the nearest spot
+## it can, or -1 when it can't reach the shaft at all.
+static func _slide(knob: Vector3, down: Vector3, want: float, length: float, sh: Vector3, arm: float) -> float:
+	var t0 := (sh - knob).dot(down)
+	var perp := (sh - knob).length_squared() - t0 * t0
+	if perp > arm * arm:
+		return -1.0
+	var h := sqrt(arm * arm - perp)
+	var lo := maxf(0.2, t0 - h)
+	var hi := minf(length - 0.15, t0 + h)
+	return -1.0 if lo > hi else clampf(want, lo, hi)
+
+
+## The blade's heel (where the shaft joins) in blade space, at the tuned size.
+static func _blade_heel(T: AnimTuning) -> Vector3:
+	return BLADE_HEEL * Vector3(T.stick_blade_length, T.stick_blade_height, T.stick_thickness)
+
+
+## Rebuilds the shaft and blade meshes when the tuned stick size changes.
+func _size_stick(T: AnimTuning) -> void:
+	var size := Vector4(T.stick_length, T.stick_thickness, T.stick_blade_length, T.stick_blade_height)
+	if size == _stick_size or _shaft_base == null:
+		return
+	_stick_size = size
+	stick.mesh = _scaled_mesh(_shaft_base, Vector3(size.y, size.x, size.y))
+	blade.mesh = _scaled_mesh(_blade_base, Vector3(size.z, size.w, size.y))
+
+
+## A copy of `mesh` stretched by `s` about its pivot.
+static func _scaled_mesh(mesh: Mesh, s: Vector3) -> ArrayMesh:
+	var out := ArrayMesh.new()
+	for i in mesh.get_surface_count():
+		var arr := mesh.surface_get_arrays(i)
+		var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		for j in v.size():
+			v[j] *= s
+		arr[Mesh.ARRAY_VERTEX] = v
+		if arr[Mesh.ARRAY_NORMAL] != null:
+			var n: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
+			for j in n.size():
+				n[j] = (n[j] / s).normalized()
+			arr[Mesh.ARRAY_NORMAL] = n
+		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+		out.surface_set_material(i, mesh.surface_get_material(i))
+	return out
 
 
 ## Layers the celebration and fall arm poses over the stick pose: the stick
@@ -425,28 +510,28 @@ func _pose_actions(T: AnimTuning) -> void:
 		# going down: stick stays in the top hand, the other arm flies out
 		w = _fall
 		hand = _grip_top
-		stick_dir = (blade.position + blade.basis * BLADE_HEEL - _grip_top).normalized()
+		stick_dir = (blade.position + blade.basis * _blade_heel(T) - _grip_top).normalized()
 		free = Vector3(0.45 + 0.3 * T.fall_flail, hy + 0.1 + 0.4 * T.fall_flail, -0.1 * _fall_dir)
-	var held := _stick_in_hand(hand, stick_dir)
+	var held := _stick_in_hand(T, hand, stick_dir)
 	stick.transform = stick.transform.interpolate_with(held[0], w)
 	blade.transform = blade.transform.interpolate_with(held[1], w)
-	var grip: Vector3 = stick.transform.origin + stick.transform.basis.y * (SHAFT_LEN - 0.05)
+	var grip: Vector3 = stick.transform.origin + stick.transform.basis.y.normalized() * (SHAFT_LEN * T.stick_length - 0.04)
 	_pose_arm(0, faller.to_global(grip))
 	_pose_arm(1, faller.to_global(_grip_bottom.lerp(free, w)))
 
 
 ## Shaft and blade transforms (faller space) for a stick held near the knob
 ## in `hand`, the blade end pointing along `dir` away from the hand.
-func _stick_in_hand(hand: Vector3, dir: Vector3) -> Array:
+func _stick_in_hand(T: AnimTuning, hand: Vector3, dir: Vector3) -> Array:
 	# a reference stick lying normally: blade flat at the origin, toe along +X,
 	# shaft rising back towards the hands
 	var bb := Basis(Vector3.RIGHT, Vector3.UP, Vector3.UP.cross(Vector3.RIGHT))
-	var heel := bb * BLADE_HEEL
+	var heel := bb * _blade_heel(T)
 	var y := Vector3(-0.7, 0.7, 0).normalized()
 	var x := Vector3.RIGHT - y * Vector3.RIGHT.dot(y)
 	x = x.normalized()
 	var sb := Basis(x, y, x.cross(y))
-	var grip := heel + y * (SHAFT_LEN - 0.05)
+	var grip := heel + y * (SHAFT_LEN * T.stick_length - 0.04)
 	# turn it so the shaft points from the blade towards the hand along -dir
 	var rot := Basis(Quaternion(y, -dir.normalized()))
 	var off := hand - rot * grip

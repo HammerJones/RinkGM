@@ -6,6 +6,20 @@ pushing, turning, braking, the blade's place on its arc, wind-ups, checks,
 knockdowns) and poses the jointed voxel body with two-bone IK. Every number
 that shapes those poses lives in `AnimTuning` (`scripts/anim/anim_tuning.gd`).
 
+## Holding the stick
+
+Sean's grip notes (2026-10-18): a player's handedness is the side the stick
+lies on, and the top hand is the other one. The top hand stays on the knob
+the whole time; wrist movement swings the stick through a wide, weak arc.
+The bottom hand slides up and down the shaft: higher to stickhandle, lower
+for power on a shot, and it lets go for a long poke check or a wide sweep.
+`_pose_stick` does exactly that: the knob is placed as near the top hand's
+preferred spot as the top arm can hold it, and the bottom hand takes the
+shaft `grip_bottom*` metres below the knob, slides up if that spot is out of
+reach and lets go if the shaft is out of reach or the blade is past the
+front 90 degrees. The stick's size is tuned with the `stick_*` values (the
+voxel players are blocky, so the stick is thicker than a real one).
+
 ## The studio
 
 `scenes/anim/anim_studio.tscn` puts one skater on a treadmill: the skater stays
@@ -21,7 +35,7 @@ view sits beside side and front views.
   the defaults in `anim_tuning.gd`.
 
 The clips live in `scripts/anim/anim_clips.gd`: ready stance, stickhandling,
-wide reach, easy and full-speed strides, dash, glide, crossovers both ways,
+wide reach, poke check, easy and full-speed strides, dash, glide, crossovers both ways,
 hockey stop, wrist shot, snapshot, slapshot, backhand, backhand snap,
 forehand and backhand passes, body check, backward and forward knockdowns,
 and three goal celebrations. A clip only says what the skater is doing; the

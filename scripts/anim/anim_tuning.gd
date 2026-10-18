@@ -45,11 +45,11 @@ func tunables() -> Array:
 
 # ----------------------------------------------------------------- stance
 ## How far the hips sink below standing height when still.
-@export_range(0.0, 0.4, 0.005) var stance_crouch := 0.12
+@export_range(0.0, 0.4, 0.005) var stance_crouch := 0.16
 ## Extra hip sink at full speed.
 @export_range(0.0, 0.3, 0.005) var stance_crouch_speed := 0.05
 ## Forward lean of the upper body when still.
-@export_range(0.0, 1.2, 0.01) var stance_lean := 0.22
+@export_range(0.0, 1.2, 0.01) var stance_lean := 0.5
 ## Extra forward lean at full speed.
 @export_range(0.0, 1.2, 0.01) var stance_lean_speed := 0.42
 ## Gap between the skates when gliding on both feet (each side).
@@ -88,6 +88,40 @@ func tunables() -> Array:
 @export_range(0.5, 0.95, 0.01) var stride_push_end := 0.8
 ## Swing of the free hand when skating one-handed.
 @export_range(0.0, 0.4, 0.005) var stride_arm_swing := 0.12
+
+# ------------------------------------------------------------------ stick
+# Real sticks are about 163 cm tall with a 32-39 cm blade 5-9 cm high; the
+# blocky voxel players need a chunkier stick to read at that scale.
+## Shaft length, times the model's 1.47 m.
+@export_range(0.7, 1.5, 0.01) var stick_length := 0.85
+## Shaft and blade thickness, times the model's 3.5 cm shaft.
+@export_range(0.8, 3.0, 0.05) var stick_thickness := 1.9
+## Blade length, times the model's 30 cm.
+@export_range(0.7, 2.0, 0.05) var stick_blade_length := 1.3
+## Blade height, times the model's 7 cm.
+@export_range(0.7, 2.5, 0.05) var stick_blade_height := 1.6
+
+# ------------------------------------------------------------------- grip
+# The top hand (opposite the shooting side) never leaves the knob; the bottom
+# hand slides along the shaft and lets go to reach.
+## Where the top hand sits across the body (- is its own side).
+@export_range(-0.5, 0.3, 0.01) var grip_top_side := -0.14
+## Top hand height above the hips.
+@export_range(0.0, 0.8, 0.01) var grip_top_height := 0.28
+## How far in front of the body the top hand sits.
+@export_range(0.0, 0.6, 0.01) var grip_top_fwd := 0.3
+## How far the top hand drifts towards the blade's side.
+@export_range(0.0, 0.6, 0.01) var grip_top_follow := 0.2
+## Bottom hand, metres below the knob, while carrying and stickhandling.
+@export_range(0.2, 1.2, 0.01) var grip_bottom := 0.45
+## Bottom hand on a wrist shot or backhand wind-up (lower = more power).
+@export_range(0.2, 1.2, 0.01) var grip_bottom_shot := 0.62
+## Bottom hand on a slapshot wind-up.
+@export_range(0.2, 1.2, 0.01) var grip_bottom_slap := 0.8
+## How quickly the bottom hand slides to its new spot.
+@export_range(1.0, 30.0, 0.5) var grip_slide_speed := 10.0
+## Share of the arm's length the hands can use before letting go.
+@export_range(0.7, 1.0, 0.01) var grip_reach := 0.97
 
 # ------------------------------------------------------------------- dash
 ## Stride length multiplier during a dash.
