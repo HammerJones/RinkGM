@@ -38,6 +38,15 @@ static func step(g: Node, puck: Puck, dt: float) -> void:
 		var thresh := s.profile.trap_speed * lerpf(1.0, 1.4, blend)
 		if puck.pass_target == s:
 			thresh += puck.pass_touch
+		# a little hotter than that, good hands cushion it: the blade gives
+		# with the puck and kills most of its speed, ready to settle it
+		var sh := s.skill("stick_handling")
+		var cushion := thresh * lerpf(1.15, 1.45, sh)
+		if rel.length() >= thresh and rel.length() < cushion and randf() < lerpf(0.3, 0.75, sh):
+			puck.vel = s.blade_vel + rel * 0.35
+			puck.vel.y = 0.0
+			puck.last_touch = s
+			continue
 		if rel.length() < thresh:
 			puck.controller = s
 			puck.pass_target = null
