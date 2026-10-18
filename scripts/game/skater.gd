@@ -886,13 +886,12 @@ func pass_puck() -> void:
 	var d := Vector3(target.x - puck.position.x, 0, target.z - puck.position.z).normalized()
 	var err := p.pass_error * (1.0 + 0.3 * speed() / p.max_speed)
 	var shake := hand_shake()
-	d = d.rotated(Vector3.UP, shake.x * err)
 	# a tilted blade saucers the pass over sticks
 	var loft := atan2(ctrl.tilt * 3.2, spd)
-	var n := (d * cos(loft) + Vector3.UP * sin(loft)).normalized()
 	const PASS_E := 0.35  # a sweep barely flexes the shaft
-	var swing := Vector3(vel.x, 0, vel.z) + n * (spd / StickPuck.strike_gain(PASS_E))
-	StickPuck.strike(self, puck, swing, n, PASS_E)
+	d = _aim_face(d, loft, spd, PASS_E).rotated(Vector3.UP, shake.x * err)
+	var n := _face_normal(d, loft)
+	StickPuck.strike(self, puck, _swing(n, spd, PASS_E), n, PASS_E)
 	puck.pass_target = best
 
 
