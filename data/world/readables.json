@@ -570,5 +570,43 @@
       "Renovating the roof adds the final brass strip: a visible reward",
       "The plaque is a keepsake: polished at RENOVATED, never moved"
     ]
+  },
+  {
+    "id": "note_door_oil",
+    "title": "Note on the plant room door",
+    "author": "Gus Tremblay",
+    "kind": "note",
+    "location": "plant_room",
+    "unlock": null,
+    "excerpt": "Oil's in the blue drum. Hand pump. HALF the glass, not full. Number 1 drinks, Number 2 sips. If the glass is empty you are already late.",
+    "hooks": [
+      "M1 day 1: the first taste of the oil service (RINK_SIM.md 2.x, mini game 4.2)",
+      "Hung on the door of notes (DECOR.md)"
+    ]
+  },
+  {
+    "id": "note_screwdriver",
+    "title": "Index card taped to the screwdriver",
+    "author": "Gus Tremblay",
+    "kind": "note",
+    "location": "plant_room",
+    "unlock": null,
+    "excerpt": "Push a screwdriver in at the blue line. If it goes in easy, the ice is soft. If it bounces, you've hit concrete and we have problems. Centre ice and both blue lines. Every morning. Wipe it after.",
+    "hooks": [
+      "The T0 ice check (job ice_check)",
+      "Hung on the door of notes (DECOR.md)"
+    ]
+  },
+  {
+    "id": "note_doris_dash",
+    "title": "Note on Doris's dash",
+    "author": "Gus Tremblay",
+    "kind": "note",
+    "location": "zamboni_bay",
+    "unlock": null,
+    "excerpt": "She won't start cold if Number 3 plug is fouled. Plugs are in the DORIS drawer, second from the top. Hand tight then a quarter. Do NOT cross-thread her, she remembers. Say good morning first. I mean it.",
+    "hooks": [
+      "M1 won't-start tutorial (job doris_plugs, mini game 4.8 slice)"
+    ]
   }
 ]
