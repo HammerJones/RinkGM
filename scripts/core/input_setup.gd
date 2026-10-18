@@ -47,12 +47,18 @@ func _ready() -> void:
 	_keys("sens_up", [KEY_BRACKETRIGHT])
 	_keys("free_mouse", [KEY_ESCAPE])
 
+	# career: fast-forward while your line is on the bench
+	_keys("fast_forward", [KEY_TAB])
+	_button("fast_forward", JOY_BUTTON_Y)
+
 	_keys("cycle_mode", [KEY_F1])
 	_button("cycle_mode", JOY_BUTTON_BACK)
 	_keys("camera", [KEY_C])
 	_button("camera", JOY_BUTTON_DPAD_UP)
 	_keys("reset", [KEY_R])
-	_button("reset", JOY_BUTTON_START)
+	# the Esc / Start menu (PauseMenu); Esc also frees the cursor (free_mouse)
+	_keys("pause_menu", [KEY_ESCAPE])
+	_button("pause_menu", JOY_BUTTON_START)
 	_keys("help", [KEY_H])
 	# developer overlay: ` (tilde key) or D-pad down (InputMap has no chords)
 	_keys("dev_menu", [KEY_QUOTELEFT])
