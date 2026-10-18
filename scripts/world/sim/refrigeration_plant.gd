@@ -12,8 +12,15 @@ extends RefCounted
 const COMPRESSOR_KW := 175.0  # the original Nordale RC-4
 const GLYCOL_TARGET := Vector2(30.0, 38.0)  # % by volume that runs well
 const LOOP_LITRES := 9000.0
+## Net oil pressure, psi above suction: 30 to 45 is healthy; the safety
+## switch trips below 10, and on a start the pump has to reach RESTART_PSI.
+const OIL_TRIP_PSI := 10.0
+const RESTART_PSI := 25.0
 
-var compressors: Array = []  # [{"model", "valves", "rings", "bearings", "seal": SimPart, "oil", "tripped", "out"}]
+## [{"model", "valves", "rings", "bearings", "seal", "filter": SimPart, "oil" (quality 0..1),
+##   "oil_level" (0..1 of the sight glass, half is right), "drink" (level lost per running
+##   hour), "drain_leak" (a loose drain plug, level per hour), "tripped", "trip_reason", "out"}]
+var compressors: Array = []
 var refrigerant := "ammonia"  # PlantCatalog.REFRIGERANTS
 var charge := 0.93            # refrigerant charge, 1 full; seals and old joints leak it
 var rental_kw := 0.0          # a rented portable chiller on the trailer outside
@@ -24,6 +31,7 @@ var glycol_litres := LOOP_LITRES
 var pump_bearing: SimPart
 var pump_seal: SimPart
 var header: SimPart           # leaks glycol as it ages
+var makeup_valve_open := true # the auto-fill tops the loop up with water, diluting it
 var supply_temp := -9.0       # glycol leaving the chiller, C
 var last_cooling_kw := 0.0
 var last_power_kw := 0.0
@@ -42,13 +50,56 @@ static func create_old() -> RefrigerationPlant:
 			"rings": SimPart.make("rings", "Piston rings", 20000.0, 520.0, 0.05, worn + 0.15),
 			"bearings": SimPart.make("bearings", "Main bearings", 30000.0, 880.0, 0.04, worn + 0.2),
 			"seal": SimPart.make("seal", "Shaft seal", 9000.0, 260.0, 0.05, worn),
-			"oil": 0.5, "tripped": false,
+			"filter": SimPart.make("oil_filter", "Oil filter cartridge", 1000.0, 38.0, 0.0, 0.8),
+			"oil": 0.5, "oil_level": 0.5, "drink": 0.0002, "drain_leak": 0.0,
+			"tripped": false, "trip_reason": "",
 		})
 	p.condenser_fan_belt = SimPart.make("fan_belt", "Condenser fan belt", 3000.0, 45.0, 0.05, 0.45)
 	p.pump_bearing = SimPart.make("pump_bearing", "Glycol pump bearing", 15000.0, 190.0, 0.05, 0.6)
 	p.pump_seal = SimPart.make("pump_seal", "Glycol pump mechanical seal", 12000.0, 150.0, 0.05, 0.55)
 	p.header = SimPart.make("header", "Supply and return header", 200000.0, 18000.0, 0.02, 0.5)
 	return p
+
+
+## Net oil pressure of compressor `i`, psi: the level in the sight glass (low
+## starves the pump, overfull foams), the oil itself, the filter and the
+## bearings. 30 to 45 is healthy.
+func net_oil_psi(i: int) -> float:
+	var c: Dictionary = compressors[i]
+	var level := float(c.get("oil_level", 0.5))
+	var lf := 1.0
+	if level < 0.25:
+		lf = clampf((level - 0.05) / 0.2, 0.0, 1.0)
+	elif level > 0.75:
+		lf = lerpf(1.0, 0.4, clampf((level - 0.75) / 0.15, 0.0, 1.0))
+	var filt: SimPart = c.get("filter")
+	var fc := filt.condition if filt else 1.0
+	var bearings: SimPart = c.bearings
+	return 45.0 * lf * (0.55 + 0.45 * float(c.oil)) * (0.5 + 0.5 * fc) * (0.55 + 0.45 * bearings.condition)
+
+
+## A compressor restarting (the night setback cycles them): the oil pump has
+## to build RESTART_PSI inside 30 seconds or the safety trips it. Returns true
+## if it tripped.
+func restart_check(i: int) -> bool:
+	var c: Dictionary = compressors[i]
+	if c.tripped or c.get("out", false):
+		return false
+	if net_oil_psi(i) < RESTART_PSI:
+		c.tripped = true
+		c.trip_reason = "low oil pressure"
+		return true
+	return false
+
+
+## Rough suction pressure, psig: higher when the plant can't keep up.
+func suction_psig() -> float:
+	return 21.0 + 3.0 * (1.0 - loop_factor()) + (supply_temp + 9.0) * 0.8
+
+
+## Rough discharge (head) pressure, psig: scale and a slipping belt push it up.
+func discharge_psig() -> float:
+	return 140.0 + 70.0 * condenser_scale + 20.0 * (1.0 - condenser_fan_belt.condition) + (60.0 if condenser_fan_belt.failed() else 0.0)
 
 
 ## How much a compressor can move right now, 0..1 of nominal.
@@ -114,11 +165,19 @@ func run(h: float, duty: float, rng: RandomNumberGenerator) -> float:
 		for k in ["valves", "rings", "bearings", "seal"]:
 			(c[k] as SimPart).run(h, stress)
 		c.oil = maxf(float(c.oil) - h * duty / 1500.0, 0.0)
+		c.oil_level = maxf(float(c.get("oil_level", 0.5)) - h * (float(c.get("drink", 0.0)) + float(c.get("drain_leak", 0.0))), 0.0)
+		var filt: SimPart = c.get("filter")
+		if filt:
+			filt.run(h, 1.0 + 2.0 * (1.0 - float(c.oil)))
 		var valves: SimPart = c.valves
 		var bearings: SimPart = c.bearings
 		var seal: SimPart = c.seal
 		if valves.failed() or bearings.failed() or (float(c.oil) < 0.05 and rng.randf() < 0.05 * h):
 			c.tripped = true
+			c.trip_reason = "valves" if valves.failed() else ("bearings" if bearings.failed() else "oil")
+		elif net_oil_psi(i) < OIL_TRIP_PSI:
+			c.tripped = true
+			c.trip_reason = "low oil pressure"
 		if seal.condition < 0.25:
 			c.oil = maxf(float(c.oil) - h * 0.002, 0.0)  # weeping seal loses oil
 			last_leak_kg += h * (0.25 - seal.condition) * 0.4
@@ -136,6 +195,8 @@ func run(h: float, duty: float, rng: RandomNumberGenerator) -> float:
 	# an old header weeps glycol; the pump seal drips when worn
 	var leak := (1.0 - header.condition) * 0.6 + (0.4 if pump_seal.condition < 0.2 else 0.0)
 	glycol_litres = maxf(glycol_litres - leak * h, 0.0)
+	if makeup_valve_open and glycol_litres < LOOP_LITRES - 20.0:
+		top_up(LOOP_LITRES - glycol_litres, 0.0)  # the hidden dilution
 	last_cooling_kw = capacity_kw() * duty
 	var own_kw := maxf(last_cooling_kw - rental_kw * duty * loop_factor(), 0.0)
 	var cop := 2.8 * (1.0 - 0.35 * condenser_scale) / head * 1.6 * efficiency() / 0.98
@@ -162,7 +223,12 @@ func install_compressor(i: int, model: String, quality := 1.0) -> void:
 	for k in ["valves", "rings", "bearings", "seal"]:
 		(c[k] as SimPart).replace(quality)
 	c.oil = 1.0
+	c.oil_level = 0.5
+	c.drain_leak = 0.0
+	c.drink = 0.0002
+	(c.filter as SimPart).replace(1.0)
 	c.tripped = false
+	c.trip_reason = ""
 	c.out = false
 
 
@@ -186,11 +252,12 @@ func to_dict() -> Dictionary:
 	var cs: Array = []
 	for c in compressors:
 		cs.append({"model": c.model, "out": c.get("out", false), "valves": c.valves.to_dict(), "rings": c.rings.to_dict(), "bearings": c.bearings.to_dict(),
-			"seal": c.seal.to_dict(), "oil": c.oil, "tripped": c.tripped})
+			"seal": c.seal.to_dict(), "oil": c.oil, "tripped": c.tripped, "filter": c.filter.to_dict(),
+			"oil_level": c.oil_level, "drink": c.drink, "drain_leak": c.drain_leak, "trip_reason": c.trip_reason})
 	return {"compressors": cs, "condenser_scale": condenser_scale, "fan_belt": condenser_fan_belt.to_dict(),
 		"glycol_pct": glycol_pct, "glycol_litres": glycol_litres, "pump_bearing": pump_bearing.to_dict(),
 		"pump_seal": pump_seal.to_dict(), "header": header.to_dict(), "refrigerant": refrigerant, "charge": charge,
-		"rental_kw": rental_kw}
+		"rental_kw": rental_kw, "makeup_valve_open": makeup_valve_open}
 
 
 func load_dict(d: Dictionary) -> void:
@@ -203,6 +270,10 @@ func load_dict(d: Dictionary) -> void:
 		c.tripped = bool(cs[i].get("tripped", false))
 		c.model = str(cs[i].get("model", c.model))
 		c.out = bool(cs[i].get("out", false))
+		(c.filter as SimPart).load_dict(cs[i].get("filter", {}))
+		for k in ["oil_level", "drink", "drain_leak"]:
+			c[k] = float(cs[i].get(k, c[k]))
+		c.trip_reason = str(cs[i].get("trip_reason", ""))
 	condenser_scale = float(d.get("condenser_scale", condenser_scale))
 	condenser_fan_belt.load_dict(d.get("fan_belt", {}))
 	glycol_pct = float(d.get("glycol_pct", glycol_pct))
@@ -213,3 +284,4 @@ func load_dict(d: Dictionary) -> void:
 	refrigerant = str(d.get("refrigerant", refrigerant))
 	charge = float(d.get("charge", charge))
 	rental_kw = float(d.get("rental_kw", rental_kw))
+	makeup_valve_open = bool(d.get("makeup_valve_open", makeup_valve_open))

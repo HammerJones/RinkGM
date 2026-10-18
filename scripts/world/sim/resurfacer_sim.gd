@@ -12,6 +12,9 @@ var parts := {}         # id -> SimPart
 var engine_oil := 0.6   # 1 fresh, 0 sludge
 var fuel := 0.7         # tank fraction
 var blade_height_mm := 1.0  # set when the blade is changed; 0.8-1.2 shaves cleanly
+var blade_level_mm := 0.0   # one end deeper than the other; within 0.1 is level
+var blade_bolts_ok := true  # a loose blade chatters (washboard)
+var choke_stuck := false    # "Unless it's the choke": stuck half closed, she won't fire
 
 
 static func create_doris() -> ResurfacerSim:
@@ -39,7 +42,7 @@ func part(id: String) -> SimPart:
 func fault() -> String:
 	if engine_oil < 0.03:
 		return "seized"
-	if part("spark_plugs").failed():
+	if part("spark_plugs").failed() or choke_stuck:
 		return "won't start"
 	if fuel <= 0.0:
 		return "out of gas"
@@ -48,33 +51,70 @@ func fault() -> String:
 	return ""
 
 
+## How well the blade cuts, 0..1: sharpness, height (1.0 mm target, 0.8 to
+## 1.2 cuts cleanly) and level.
+func cut_quality() -> float:
+	var height_ok := clampf(1.0 - maxf(absf(blade_height_mm - 1.0) - 0.2, 0.0) * 1.6, 0.25, 1.0)
+	var level_ok := clampf(1.0 - maxf(absf(blade_level_mm) - 0.1, 0.0) * 2.0, 0.4, 1.0)
+	return (0.4 + 0.6 * part("blade").condition) * height_ok * level_ok
+
+
+## Washboard from a blade set too deep, out of level or loose, 0..0.6.
+func chatter() -> float:
+	var c := maxf(blade_height_mm - 1.2, 0.0) * 0.8 + maxf(absf(blade_level_mm) - 0.1, 0.0) * 0.8
+	if not blade_bolts_ok:
+		c += 0.25
+	return clampf(c, 0.0, 0.6)
+
+
+func engine_factor() -> float:
+	return 0.7 + 0.3 * minf(part("spark_plugs").condition, 1.0 - 0.5 * (1.0 - part("air_filter").condition))
+
+
 ## Runs one resurface on `ice`. `skill` is the driver (the owner starts around
-## 0.6). Returns the quality 0..1, or -1 if Doris won't go.
-func resurface(ice: IceSlab, skill: float) -> float:
+## 0.6); `pattern` is the coverage per grid cell (the standard pattern when
+## empty). Returns the quality 0..1, or -1 if Doris won't go.
+func resurface(ice: IceSlab, skill: float, pattern: PackedFloat64Array = PackedFloat64Array()) -> float:
 	if fault() != "":
 		return -1.0
 	var hard := clampf((-ice.surface_temp - 3.0) / 4.0, 0.0, 1.5)
-	var blade := part("blade")
-	var height_ok := clampf(1.0 - absf(blade_height_mm - 1.0) * 2.0, 0.2, 1.0)
-	var cut := blade.condition * height_ok
+	var cut := cut_quality()
 	var condition := part("towel").condition * 0.6 + part("squeegee").condition * 0.4
-	var engine := 0.7 + 0.3 * minf(part("spark_plugs").condition, 1.0 - 0.5 * (1.0 - part("air_filter").condition))
+	var engine := engine_factor()
 	var q := clampf((0.45 * cut + 0.35 * condition + 0.2 * engine) * (0.6 + 0.4 * skill), 0.0, 1.0)
-	var shave := 0.5 * cut * engine
-	ice.resurface(q, shave, FLOOD_LITRES * (0.7 + 0.3 * condition))
+	# a sharp blade at 1.0 mm takes about 0.4 mm and the flood lays back about 0.3:
+	# a set too shallow (or a dull blade) lets the ice thicken, too deep thins it fast
+	var shave := blade_height_mm * (0.15 + 0.25 * part("blade").condition) * engine
+	ice.resurface(q, shave, FLOOD_LITRES * (0.7 + 0.3 * condition), pattern, chatter())
+	_wear(hard)
+	return q
+
+
+## A dry cut: blade down, no water, to take the sheet down. Returns the mm
+## taken off the centre, or -1 if Doris won't go.
+func dry_cut(ice: IceSlab, skill: float) -> float:
+	if fault() != "":
+		return -1.0
+	var shave := blade_height_mm * (0.4 + 0.6 * part("blade").condition) * engine_factor()
+	ice.dry_cut(shave, cut_quality() * (0.6 + 0.4 * skill), chatter())
+	_wear(clampf((-ice.surface_temp - 3.0) / 4.0, 0.0, 1.5))
+	return shave
+
+
+func _wear(hard: float) -> void:
 	for id in parts:
 		var stress := 1.0 + (hard * 0.8 if id == "blade" else 0.0)
 		(parts[id] as SimPart).run(RESURFACE_HOURS, stress)
 	engine_oil = maxf(engine_oil - RESURFACE_HOURS / 120.0, 0.0)
 	fuel = maxf(fuel - 0.045, 0.0)
-	return q
 
 
 func to_dict() -> Dictionary:
 	var ps := {}
 	for id in parts:
 		ps[id] = parts[id].to_dict()
-	return {"parts": ps, "engine_oil": engine_oil, "fuel": fuel, "blade_height_mm": blade_height_mm}
+	return {"parts": ps, "engine_oil": engine_oil, "fuel": fuel, "blade_height_mm": blade_height_mm,
+		"blade_level_mm": blade_level_mm, "blade_bolts_ok": blade_bolts_ok, "choke_stuck": choke_stuck}
 
 
 func load_dict(d: Dictionary) -> void:
@@ -85,3 +125,6 @@ func load_dict(d: Dictionary) -> void:
 	engine_oil = float(d.get("engine_oil", engine_oil))
 	fuel = float(d.get("fuel", fuel))
 	blade_height_mm = float(d.get("blade_height_mm", blade_height_mm))
+	blade_level_mm = float(d.get("blade_level_mm", blade_level_mm))
+	blade_bolts_ok = bool(d.get("blade_bolts_ok", blade_bolts_ok))
+	choke_stuck = bool(d.get("choke_stuck", choke_stuck))
