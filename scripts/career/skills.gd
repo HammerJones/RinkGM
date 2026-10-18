@@ -9,7 +9,7 @@ extends RefCounted
 ## hurt or tired player is slower on the ice with no extra plumbing.
 
 const SKATER_KEYS := [
-	"speed",           # top speed: 15 mph at 1, 25 mph at 100
+	"speed",           # top speed (PhysicsProfile: 12 mph at 1, 25 mph at 100)
 	"agility",         # turn rate, edge grip, balance while turning
 	"stick_handling",  # blade speed, how tightly the puck stays on the blade
 	"shot_accuracy",   # aim error

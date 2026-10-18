@@ -35,7 +35,7 @@ func _run() -> void:
 
 	# --- a broken stick loses the puck and can't touch it
 	await _settle()
-	var at := Vector2(-2.0, 4.0)
+	var at := Vector2(-4.0, 8.0)  # clear of every faceoff spot, so no teammate is standing there
 	s.place(at, Vector3(1, 0, 0))
 	game.puck.reset_at(Vector3(at.x + 0.8, 0, at.y))
 	game.puck.frozen = false

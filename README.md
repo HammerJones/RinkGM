@@ -90,11 +90,14 @@ assistance on top.
   the body inside a 220 degree arc, with a speed and acceleration set by stick
   handling. Both hands are on the stick in the front 90 degrees; beyond that
   it's one hand: more reach, but a weaker hold on the puck and weaker, wilder
-  shots. Pulling the stick back past 95 degrees winds up a shot. The puck
-  follows it on a spring, but the blade can only push the puck so hard (grip,
-  also from stick handling). Stickhandle faster than your rating, or cut harder
-  than you can hold (agility turns you faster, which is harder to hold), and
-  the puck slides off. Lifting your stick takes the blade off the puck for
+  shots. Pulling the stick back past 95 degrees winds up a shot. The puck is
+  a free physical object: the blade is a solid face that pushes it, traps or
+  deflects a loose puck, and cups a carried one against the face, but only so
+  hard (grip, also from stick handling). Stickhandling moves the puck with the
+  stick: to bring it back the other way the skater lifts the blade over the
+  puck and sets it down on the far side. Stickhandle faster than your rating,
+  or cut harder than you can hold (agility turns you faster, which is harder
+  to hold), and the puck slides off. Lifting your stick takes the blade off the puck for
   moves; on defense it lifts the carrier's stick if you're close, with odds
   from both players' ratings.
 - **Stick moves** (`scripts/game/move_physics.gd`): each learned move from the

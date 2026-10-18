@@ -425,7 +425,7 @@ func _physics_process(dt: float) -> void:
 	var sdt := dt / PUCK_SUBSTEPS
 	for i in PUCK_SUBSTEPS:
 		var prev := puck.position
-		StickPuck.step(self, puck, sdt)
+		StickPuck.step(self, puck, sdt, float(i + 1) / PUCK_SUBSTEPS)
 		puck.integrate(sdt)
 		_puck_body_collisions()
 		for g in goalies:

@@ -28,10 +28,12 @@ const ARC_HALF := deg_to_rad(110.0)        # the blade's 220 degree arc
 const TWO_HAND_HALF := PI / 4.0            # two hands in the front 90 degrees
 const WIND_ANGLE := deg_to_rad(115.0)      # stick further back than this winds up a shot
 const WIND_HOLD := 0.08                     # held back that long first, so a wide sweep isn't a wind-up
-const DEFAULT_BLADE := Vector2(0.95, 0.3)  # (forward, right) relative to the body
+const DEFAULT_BLADE := Vector2(1.2, 0.35)  # (forward, right) relative to the body: a full-size stick's ready stance
 const WIND_SPOT := Vector2(-0.15, 0.85)    # where a button wind-up draws the blade (forehand; y flips for the backhand)
 const SLAP_MIN := 0.18                     # a lifted wind-up shorter than this is a wrist shot
 const LIFT_HEIGHT := 0.22
+const CROSS_HEIGHT := 0.07                 # the blade's hop over the puck when stickhandling
+const CROSS_AWAY := 0.12                   # moving the blade this far away from the puck goes round it instead
 const STICK_LIFTED_TIME := 0.55
 const FLICK_WINDOW := 0.09   # a flick is measured over this much stick history
 const FLICK_TRAVEL := 0.9    # forward stick travel inside the window that counts as a flick
@@ -125,6 +127,14 @@ var stick_broken := false       ## playing without a stick until the bench hands
 var bench_wait := 0.0
 var lift_cd := 0.0
 var regrab_timer := 0.0         ## grace after a deke to set the blade back on the puck
+## Which face of the blade the puck is on (+1 forehand side, -1 backhand, 0
+## unknown); StickPuck keeps it up to date.
+var puck_side := 0.0
+var blade_from := Vector3.ZERO  ## the blade at the start of this frame (StickPuck sweeps it to blade_pos)
+var crossing := false           ## lifting the blade over the puck to the other side
+## How far the blade is turned from pointing straight out from the body
+## (radians, + toward the forehand). It turns to face a puck coming in.
+var blade_yaw := 0.0
 var puck_slip := 0.0            ## seconds the puck spent at the grip limit (for tuning)
 
 # shot wind-up: started by drawing the stick back or holding `shoot`
@@ -200,7 +210,11 @@ func place(p: Vector2, facing: Vector3) -> void:
 	heading = facing.normalized()
 	_set_blade(DEFAULT_BLADE)
 	blade_pos = _blade_world(blade_local)
+	blade_from = blade_pos
 	blade_vel = Vector3.ZERO
+	blade_yaw = 0.0
+	puck_side = 0.0
+	crossing = false
 	blade_lvel = Vector2.ZERO
 	stun_timer = 0.0
 	stick_lifted_timer = 0.0
@@ -254,7 +268,9 @@ func puck_anchor() -> Vector3:
 		return blade_pos + Vector3.UP * (blade_height + 0.03)
 	if winding and wind_slap:
 		return _blade_world(_anchor_local)
-	return Vector3(blade_pos.x, 0, blade_pos.z)
+	# against the face of the blade, on the side it's on (forehand if unknown)
+	var n: Vector2 = StickPuck.blade_at(self, 1.0)[2] * (puck_side if puck_side != 0.0 else 1.0)
+	return Vector3(blade_pos.x + n.x * StickPuck.gap(), 0, blade_pos.z + n.y * StickPuck.gap())
 
 
 func knock_down(impulse: Vector3) -> void:
@@ -400,9 +416,17 @@ func _loose_puck_reach(stick_target: Vector2, blend: float) -> Variant:
 			or winding or move_id != &"" or lifting or not blade_down() or not puck.can_be_touched_by(self):
 		return null
 	var sh := skill("stick_handling")
-	# where the puck will be by the time the blade gets there
-	var at := puck.position + (puck.vel - vel) * lerpf(0.0, 0.12, sh)
-	var d := at - position
+	# go to the near edge of the puck, not through it, so the blade arrives
+	# soft
+	var d := _puck_edge() - position
+	# a puck still coming (or being skated onto): get the blade into its path
+	# by the time it arrives
+	var rel_v := puck.vel - vel
+	rel_v.y = 0.0
+	var dist := Vector2(d.x, d.z).length()
+	var closing := -Vector2(d.x, d.z).normalized().dot(Vector2(rel_v.x, rel_v.z)) if dist > 0.01 else 0.0
+	if closing > 0.3 and dist > DEFAULT_BLADE.length():
+		d += rel_v * clampf((dist - DEFAULT_BLADE.length()) / closing, 0.0, lerpf(0.3, 0.6, sh))
 	var local := Vector2(d.dot(heading), d.dot(right_vec()))
 	var ang := atan2(local.y, local.x)
 	var reach := local.length()
@@ -414,6 +438,44 @@ func _loose_puck_reach(stick_target: Vector2, blend: float) -> Variant:
 	if ctrl.stick.length() > 0.2 and absf(wrapf(atan2(stick_target.y, stick_target.x) - ang, -PI, PI)) > deg_to_rad(60.0):
 		return null
 	return local
+
+
+## Turning the blade to receive: a loose puck coming in gets the face, not
+## the toe. 0 (blade straight out) otherwise.
+func _receive_yaw() -> float:
+	if puck == null or puck.controller != null or puck.frozen or puck.position.y > 0.3 or stun_timer > 0.0:
+		return 0.0
+	var u := Vector2(puck.vel.x - vel.x, puck.vel.z - vel.z)
+	var to := Vector2(blade_pos.x - puck.position.x, blade_pos.z - puck.position.z)
+	if u.length() < 2.0 or to.length() > 4.0 or u.dot(to) <= 0.0:
+		return 0.0
+	var radial := Vector2(blade_pos.x - position.x, blade_pos.z - position.z).normalized()
+	var face := Vector2(-radial.y, radial.x)
+	return clampf(wrapf(face.angle_to(-u), -PI / 2.0, PI / 2.0), -1.0, 1.0)
+
+
+## The side of the puck nearest the blade, where the blade's face touches it.
+func _puck_edge() -> Vector3:
+	var n: Vector2 = StickPuck.blade_at(self, 1.0)[2]
+	var pp := Vector2(puck.position.x, puck.position.z)
+	var side := signf((pp - Vector2(blade_pos.x, blade_pos.z)).dot(n))
+	var edge := pp - n * side * StickPuck.gap()
+	return Vector3(edge.x, 0, edge.y)
+
+
+## True when the stick is asking the blade to move away from the puck it's
+## carrying (sideways, across the face), which means going round it.
+func _wants_round(target: Vector2) -> bool:
+	if puck_side == 0.0:
+		return false
+	var n: Vector2 = StickPuck.blade_at(self, 1.0)[2]
+	var tw := _blade_world(target)
+	var away := (Vector2(tw.x, tw.z) - Vector2(blade_pos.x, blade_pos.z)).dot(n) * puck_side
+	if crossing:
+		return away < 0.0
+	# not while the puck is still running off the last push: catch it first
+	var running := Vector2(puck.vel.x - vel.x, puck.vel.z - vel.z).dot(n) * puck_side
+	return away < -CROSS_AWAY and running < 1.2
 
 
 ## Whether this skater has learned a move (Moves catalog id).
@@ -432,7 +494,11 @@ func _update_blade(dt: float, blend: float) -> void:
 	var target := DEFAULT_BLADE
 	var able := stun_timer <= 0.0
 	if able and ctrl.blade_target != null:
-		var d: Vector3 = ctrl.blade_target - position
+		var bt: Vector3 = ctrl.blade_target
+		if puck and puck.controller == null and Vector2(bt.x - puck.position.x, bt.z - puck.position.z).length() < 0.25:
+			# reaching for a loose puck: to its near edge, so the blade arrives soft
+			bt = _puck_edge()
+		var d: Vector3 = bt - position
 		target = Vector2(d.dot(heading), d.dot(right_vec()))
 	elif able and ctrl.stick.length() > 0.2:
 		var l := _stick_local(ctrl.stick)
@@ -442,6 +508,15 @@ func _update_blade(dt: float, blend: float) -> void:
 		var reach_for: Variant = _loose_puck_reach(target, blend)
 		if reach_for != null:
 			target = reach_for
+	# stickhandling: to move the puck back the other way you go round it,
+	# lifting the blade over and setting it down on the far side
+	crossing = able and has_puck() and move_id == &"" and not winding and _wants_round(target)
+	if crossing:
+		var n: Vector2 = StickPuck.blade_at(self, 1.0)[2]
+		var far := Vector2(puck.position.x, puck.position.z) + n * puck_side * (StickPuck.gap() + 0.03)
+		var d := Vector3(far.x, 0, far.y) - position
+		# lift first, then swing over
+		target = Vector2(d.dot(heading), d.dot(right_vec())) if blade_height > StickPuck.BLADE_CLEAR else blade_local
 	if winding and not _stick_wound:
 		target = Vector2(WIND_SPOT.x, WIND_SPOT.y * _wind_side)
 	var move_h := 0.0
@@ -487,8 +562,12 @@ func _update_blade(dt: float, blend: float) -> void:
 		h = move_h
 	elif lifting:
 		h = LIFT_HEIGHT
-	blade_height = lerpf(blade_height, h, minf(1.0, 25.0 * dt))
+	elif crossing:
+		h = CROSS_HEIGHT
+	blade_yaw = move_toward(blade_yaw, _receive_yaw(), lerpf(5.0, 10.0, skill("stick_handling")) * dt)
+	blade_height = lerpf(blade_height, h, minf(1.0, 30.0 * dt))
 	var prev := blade_pos
+	blade_from = prev
 	blade_pos = _blade_world(blade_local)
 	blade_vel = (blade_pos - prev) / dt
 

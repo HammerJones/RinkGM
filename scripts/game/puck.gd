@@ -7,7 +7,7 @@ extends Node3D
 signal goal_scored(net_side: int)
 signal post_hit
 
-const RADIUS := 0.06
+const RADIUS := 0.0381  # regulation: 3 in across, 1 in thick
 const GRAVITY := 9.8
 
 var vel := Vector3.ZERO
