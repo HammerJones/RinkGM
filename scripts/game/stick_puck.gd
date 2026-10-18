@@ -51,6 +51,8 @@ static func step(g: Node, puck: Puck, dt: float) -> void:
 			var n := d / dist
 			var vn := rel.dot(n)
 			if vn < 0.0:
+				# a hot puck blocked with the blade loads the stick
+				StickWear.stress(s, pow(vn / 40.0, 4.0), &"block")
 				puck.vel -= n * vn * 1.4
 				puck.vel *= 0.8
 				puck.last_touch = s
@@ -58,7 +60,7 @@ static func step(g: Node, puck: Puck, dt: float) -> void:
 
 
 static func _carry(carrier: Skater, puck: Puck, dt: float, blend: float) -> void:
-	if carrier.stun_timer > 0.0 or carrier.stick_lifted_timer > 0.0:
+	if carrier.stun_timer > 0.0 or carrier.stick_lifted_timer > 0.0 or carrier.stick_broken:
 		puck.controller = null
 		return
 	if MovePhysics.glued(carrier.move_id):
@@ -109,6 +111,10 @@ static func _poke(s: Skater, holder: Skater, puck: Puck, d: Vector3, dist: float
 	var needed := lerpf(2.8, 4.8, h_sh)
 	var steal_rate := lerpf(0.6, 2.2, s_sh) * lerpf(1.6, 0.45, h_sh)
 	if poke > needed or randf() < dt * steal_rate:
+		if poke > needed:
+			# stick on stick
+			StickWear.stress(s, 0.01 + poke * 0.0015, &"slash")
+			StickWear.stress(holder, 0.005 + poke * 0.001, &"slash")
 		puck.controller = null
 		var away := d.normalized() if dist > 0.001 else s.heading
 		puck.vel = away * 3.0 + s.blade_vel * 0.5

@@ -24,6 +24,7 @@ var di := 0
 var f_time := 0.0
 var d_time := 0.0
 var energy := {}  # player id -> stamina 0..1
+var sticks := {}  # player id -> stick health 0..1 (each player keeps their own stick)
 var hurt := {}  # player id -> true once injured in this game
 
 
@@ -114,8 +115,15 @@ func _is_on(pid: int, bodies: Array) -> bool:
 func _put(body: Skater, p: PlayerProfile) -> void:
 	if body.player:
 		energy[body.player.id] = body.stamina
+		# a broken stick stays in the barrel; they take a new one on the bench
+		sticks[body.player.id] = 1.0 if body.stick_broken else body.stick_health
 	body.apply_player(p)
 	body.stamina = energy.get(p.id, 1.0)
+	if body.stick_broken:
+		StickWear.fresh(body)
+		if body.game:
+			body.game.on_new_stick(body)
+	body.stick_health = sticks.get(p.id, 1.0)
 
 
 ## A player got hurt: a spare of the same group takes their spot, or the

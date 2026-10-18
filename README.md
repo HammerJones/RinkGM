@@ -124,6 +124,18 @@ assistance on top.
   forces passes and shoots from anywhere, and its goalie is slow and off the
   angle. Higher tiers hold support spots and gaps, move the puck early to the
   open man and work it in close before shooting.
+- **Sticks wear and break** (`scripts/game/stick_wear.gd`). Slapshots and
+  one-timers load a stick hardest; blocking a hot puck, hard pokes, stick lifts
+  and falls load it too. Each load wears it (`Skater.stick_health`) and may snap
+  it, far more often when it's worn and less with a tougher stick
+  (`stick_durability`). A stick that snaps on a shot sends the puck dribbling
+  off, the pieces fly onto the ice, and the skater can't touch the puck until
+  they stop at their bench door or a faceoff comes round. The AI heads to the
+  bench, unless it's a disciplined side with the puck in its own end, where it
+  stays to block. `Game.stick_broken(skater, stick_id, cause)` reports each
+  break. A standard new stick breaks about 2% of the time over 15 minutes on
+  the ice; `StickWear.durability_for(break_per_game)` turns a pro shop stick's
+  rate into its durability. `-- --test=sticks` checks it.
 
 `tools/physics_bench.sh` drives skaters through scripted tests headless (including
 the right-stick gestures: flick, pull back and push, lift for a slapshot) and

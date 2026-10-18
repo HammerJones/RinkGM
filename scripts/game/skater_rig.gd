@@ -195,6 +195,9 @@ func _on_goal(team: int, scorer: PlayerProfile, _assists: Array, s: Skater) -> v
 
 func update_skater(s: Skater, dt: float) -> void:
 	var T := AnimTuning.current()
+	# a broken stick is lying on the ice (StickDebris)
+	stick.visible = not s.stick_broken
+	blade.visible = not s.stick_broken
 	_time += dt
 	var speed := Vector2(s.vel.x, s.vel.z).length()
 	var k := clampf(speed / 9.0, 0.0, 1.0)

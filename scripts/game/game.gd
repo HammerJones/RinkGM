@@ -21,6 +21,12 @@ enum State { FACEOFF, PLAY, STOPPAGE, OVER }
 ## open-ice hit is 300-600); game mechanics rolls injuries from it.
 signal hit_landed(hitter: Skater, victim: Skater, impulse: float, knocked_down: bool)
 signal stick_lifted(by: Skater, victim: Skater)
+## A stick snapped (StickWear): `stick_id` is the shop item (&"" outside a
+## career game), `cause` &"slapshot", &"block", &"slash", &"lift" or &"check".
+## Each one, either team's, is a broken stick for the rink's barrel.
+signal stick_broken(s: Skater, stick_id: StringName, cause: StringName)
+## The bench handed a skater a new stick (at the door, or at a faceoff).
+signal stick_replaced(s: Skater)
 
 var rink: Rink
 var puck: Puck
@@ -73,7 +79,8 @@ var _default_ai := TierAI.for_tier(4)
 ## Shots and seconds of possession per team (the tier check prints them).
 var team_shots := [0, 0]
 var team_possession := [0.0, 0.0]
-var stats := {"shots": 0, "saves": 0, "goals": 0, "possessions": 0, "whistles": 0, "checks": 0, "hits": 0, "knockdowns": 0, "stick_lifts": 0}
+var _debris: Array[Node3D] = []
+var stats := {"shots": 0, "saves": 0, "goals": 0, "possessions": 0, "whistles": 0, "checks": 0, "hits": 0, "knockdowns": 0, "stick_lifts": 0, "sticks_broken": 0}
 
 
 func _ready() -> void:
@@ -161,6 +168,10 @@ func _ready() -> void:
 		var t: Node = load("res://tests/controls_test.gd").new()
 		t.set("game", self)
 		add_child(t)
+	if "--test=sticks" in OS.get_cmdline_user_args():
+		var st: Node = load("res://tests/stick_test.gd").new()
+		st.set("game", self)
+		add_child(st)
 
 
 ## `-- --screenshot=out.png --shot-after=6 [--iso]` saves a frame and quits
@@ -581,6 +592,28 @@ func _on_hit_landed(hitter: Skater, victim: Skater, impulse: float, knocked_down
 		_sync_human()
 
 
+## Where a team's bench hands over new sticks: the door at centre ice on the
+## -Z side (home bench on the -X half).
+func bench_spot(team: int) -> Vector2:
+	return Vector2(-7.0 if team == 0 else 7.0, -Rink.HALF_W + 0.8)
+
+
+func on_stick_broken(s: Skater, cause: StringName) -> void:
+	stats.sticks_broken += 1
+	if s.rig:
+		# the blade flies off and the shaft drops
+		var away := s.heading * 3.0 + Vector3(randf_range(-2, 2), 2.5, randf_range(-2, 2))
+		_debris.append(StickDebris.spawn(self, s.rig.blade, s.vel * 0.6 + away))
+		_debris.append(StickDebris.spawn(self, s.rig.stick, s.vel * 0.8 + Vector3(0, 1.0, 0)))
+	if s == human and not autoplay:
+		hud.show_message("STICK BROKEN\nget a new one at the bench", 2.2)
+	stick_broken.emit(s, s.stick_id, cause)
+
+
+func on_new_stick(s: Skater) -> void:
+	stick_replaced.emit(s)
+
+
 func _check_stall(dt: float) -> void:
 	if state != State.PLAY or puck.controller != null or puck.horizontal_speed() > 0.3:
 		_stall = 0.0
@@ -634,6 +667,9 @@ func _start_faceoff(spot: Vector2) -> void:
 	puck.reset_at(Vector3(spot.x, 1.0, spot.y))
 	puck.frozen = true
 	events.faceoff.emit(spot)
+	for d in _debris:
+		d.queue_free()
+	_debris.clear()
 	for team in 2:
 		var att := attack_side(team)
 		var list := team_skaters(team)
