@@ -194,9 +194,10 @@ func _show_log() -> void:
 	g.add_child(_cell("DAY", RinkOS.DIM))
 	for key in cols:
 		g.add_child(_cell(OfficeData.column_title(key).to_upper(), RinkOS.DIM))
-	var book := OfficeData.log_book(sim)
-	for e in book.slice(maxi(book.size() - 14, 0)):
-		g.add_child(_cell("%s %02d:%02d" % [RinkSim.DAY_NAMES[posmod(int(e.day), 7)].to_upper(), int(e.minute) / 60, int(e.minute) % 60], RinkOS.TEXT))
+	var book := OfficeData.log_book(sim).filter(func(e): return e.readings.has("ice_temp") or e.readings.has("oil_1"))
+	var recent: Array = book.slice(maxi(book.size() - 7, 0))
+	for e in recent:
+		g.add_child(_cell("%s %02d:%02d" % [OfficeData.day_name(sim, int(e.day)).to_upper(), int(e.minute) / 60, int(e.minute) % 60], RinkOS.TEXT))
 		for key in cols:
 			var r: Dictionary = e.readings.get(key, {})
 			if r.is_empty():
@@ -204,6 +205,33 @@ func _show_log() -> void:
 				continue
 			var shown := OfficeData.reading_text(OfficeData.reading_kind(key), r)
 			g.add_child(_cell(shown.text, _word_color(shown.text, shown.fuzzy)))
+	var ccols := OfficeData.compressor_columns(sim)
+	var rounds: Array = recent.filter(func(e): return e.readings.has("oil_1"))
+	if not rounds.is_empty() and not ccols.is_empty():
+		box.add_child(RinkOS.label(RinkOS.rule("compressors", 60), RinkOS.TERM_DIM))
+		var cg := GridContainer.new()
+		cg.columns = ccols.size() + 2
+		cg.add_theme_constant_override("h_separation", 24)
+		cg.add_theme_constant_override("v_separation", 2)
+		box.add_child(cg)
+		cg.add_child(_cell("DAY", RinkOS.DIM))
+		cg.add_child(_cell("#", RinkOS.DIM))
+		for key in ccols:
+			cg.add_child(_cell(OfficeData.column_title(key).to_upper(), RinkOS.DIM))
+		for e in rounds.slice(maxi(rounds.size() - 3, 0)):
+			for i in sim.plant.compressors.size():
+				cg.add_child(_cell("%s %02d:%02d" % [OfficeData.day_name(sim, int(e.day)).to_upper(), int(e.minute) / 60, int(e.minute) % 60], RinkOS.TEXT if i == 0 else RinkOS.DIM))
+				cg.add_child(_cell(str(i + 1), RinkOS.READOUT))
+				for key in ccols:
+					var r: Dictionary = e.readings.get("%s_%d" % [key, i + 1], {})
+					if r.is_empty():
+						cg.add_child(_cell("--", RinkOS.DIM))
+						continue
+					var shown := OfficeData.reading_text(OfficeData.reading_kind("%s_%d" % [key, i + 1]), r)
+					var col := _word_color(shown.text, shown.fuzzy)
+					if key == "status":
+						col = RinkOS.GOOD if shown.text == "running" else RinkOS.ALERT
+					cg.add_child(_cell(shown.text, col))
 	if book.is_empty():
 		box.add_child(RinkOS.label("Nothing written yet. Gus: \"Every morning. Oil first. Number 1 drinks.\"", RinkOS.TERM_DIM))
 	_row(box, 12).add_child(_btn("Take a plant round", func():
@@ -212,7 +240,9 @@ func _show_log() -> void:
 
 	var tools := _section(_body, "instruments", 140)
 	var lines := []
-	var buys := _row(null, 8)
+	var buys := HFlowContainer.new()
+	buys.add_theme_constant_override("h_separation", 8)
+	buys.add_theme_constant_override("v_separation", 8)
 	for kind in SimInstrument.CATALOG:
 		var tiers := SimInstrument.tiers(kind)
 		var have: int = sim.tools.get(kind, 0)
@@ -239,7 +269,7 @@ func _show_log() -> void:
 func _word_color(text: String, fuzzy: bool) -> Color:
 	if not fuzzy:
 		return RinkOS.READOUT
-	for w in ["black", "knocking", "slush", "rock hard", "way too thick", "paper thin", "never tested"]:
+	for w in ["black", "knocking", "slush", "rock hard", "way too thick", "paper thin", "never tested", "low", "empty"]:
 		if text.begins_with(w):
 			return RinkOS.ALERT
 	for w in ["clear", "sweet", "about right"]:
@@ -303,7 +333,7 @@ func _show_pl() -> void:
 	for e in sim.books:
 		if int(e.day) < start:
 			continue
-		g.add_child(_cell(RinkSim.DAY_NAMES[posmod(int(e.day), 7)].to_upper(), RinkOS.TEXT))
+		g.add_child(_cell(OfficeData.day_name(sim, int(e.day)).to_upper(), RinkOS.TEXT))
 		g.add_child(_cell("+$" + FootHud._money(e.revenue), RinkOS.GOOD))
 		g.add_child(_cell("-$" + FootHud._money(e.costs), RinkOS.ALERT))
 		g.add_child(_cell(FootHud._money(e.kwh), RinkOS.READOUT))

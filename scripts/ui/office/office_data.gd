@@ -67,12 +67,20 @@ static func block_of(minute: int) -> int:
 	return 3
 
 
-## {"day_name", "time", "block", "block_index", "hours_left", "hours_max"}.
+## {"day_name", "time", "block", "block_index", "hours_left", "hours_max",
+## "overtime_left", "week", "money"}. `hours_left` is straight time; once it
+## runs out the owner is into `overtime_left`.
 static func clock(sim: RinkSim) -> Dictionary:
 	var b := block_of(sim.minute)
-	return {"day_name": RinkSim.DAY_NAMES[sim.weekday()], "time": "%02d:%02d" % [sim.minute / 60, sim.minute % 60],
-		"block": BLOCKS[b][0], "block_index": b, "hours_left": sim.hours_left, "hours_max": RinkSim.OWNER_HOURS,
-		"week": week_number(sim), "money": sim.money}
+	var straight: float = sim.call("normal_hours_left") if sim.has_method("normal_hours_left") else sim.hours_left
+	return {"day_name": day_name(sim, sim.day), "time": "%02d:%02d" % [sim.minute / 60, sim.minute % 60],
+		"block": BLOCKS[b][0], "block_index": b, "hours_left": straight, "hours_max": RinkSim.OWNER_HOURS,
+		"overtime_left": maxf(sim.hours_left - straight, 0.0), "week": week_number(sim), "money": sim.money}
+
+
+## "Mon" for sim day `d`.
+static func day_name(sim: RinkSim, d: int) -> String:
+	return RinkSim.DAY_NAMES[sim.call("weekday_of", d) if sim.has_method("weekday_of") else posmod(d, 7)]
 
 
 ## Weeks run Monday to Sunday (M1's day 0 is a Monday).
@@ -283,12 +291,35 @@ static func log_book(sim: RinkSim) -> Array:
 
 
 ## Log book rows for a table: the readings in a fixed order with their text.
+## The ice and loop half of the log book (one row per round).
+const LOOP_COLUMNS := ["ice_temp", "ice_thickness", "brine_temp", "glycol_pct", "glycol_level", "suction_psig", "discharge_psig"]
+## The compressor half (one row per compressor per round); "_N" is the number.
+const COMPRESSOR_COLUMNS := ["status", "oil", "oil_level", "oil_psi", "compressor"]
+
+
+## The loop columns this sim's rounds actually record.
 static func log_columns(sim: RinkSim) -> Array:
-	var cols := ["ice_temp", "ice_thickness", "brine_temp", "glycol_pct"]
-	for i in sim.plant.compressors.size():
-		cols.append("oil_%d" % (i + 1))
-		cols.append("compressor_%d" % (i + 1))
-	return cols
+	return _recorded(sim, LOOP_COLUMNS.map(func(k): return k))
+
+
+## The compressor columns this sim's rounds record (as "status" etc; add "_N").
+static func compressor_columns(sim: RinkSim) -> Array:
+	var keys: Array = COMPRESSOR_COLUMNS.map(func(k): return k + "_1")
+	return _recorded(sim, keys).map(func(k): return k.trim_suffix("_1"))
+
+
+static func _recorded(sim: RinkSim, keys: Array) -> Array:
+	var book := log_book(sim)
+	if book.is_empty():
+		var probe := {}
+		for k in ["ice_temp", "ice_thickness", "brine_temp", "glycol_pct", "oil_1", "compressor_1"]:
+			probe[k] = true
+		return keys.filter(func(k): return probe.has(k))
+	return keys.filter(func(k):
+		for e in book:
+			if e.readings.has(k):
+				return true
+		return false)
 
 
 static func column_title(key: String) -> String:
@@ -297,9 +328,15 @@ static func column_title(key: String) -> String:
 		"ice_thickness": return "Depth"
 		"brine_temp": return "Brine"
 		"glycol_pct": return "Glycol"
-	if key.begins_with("oil_"):
-		return "Oil " + key.trim_prefix("oil_")
-	return "Comp " + key.trim_prefix("compressor_")
+		"glycol_level": return "Glycol tank"
+		"suction_psig": return "Suction"
+		"discharge_psig": return "Discharge"
+		"status": return "Panel"
+		"oil": return "Oil"
+		"oil_level": return "Oil level"
+		"oil_psi": return "Oil psi"
+		"compressor": return "Sound"
+	return key.replace("_", " ").capitalize()
 
 
 # ------------------------------------------------------------------ money
@@ -412,8 +449,26 @@ static func suggestions(sim: RinkSim) -> Array:
 ## Gus's sticky notes: [{"id", "text", "status", "done"}]. `status` is a short
 ## line in the player's own words of where it stands.
 static func goals(sim: RinkSim) -> Array:
-	if "goals" in sim:
-		return sim.get("goals")
+	var ours := _goal_status(sim)
+	if not "goals" in sim:
+		return ours
+	# The sim keeps score; the status line is still ours to word.
+	var status := {}
+	for g in ours:
+		status[g.id] = g.status
+	var out: Array = []
+	for g in sim.get("goals"):
+		var e: Dictionary = g.duplicate()
+		e.status = status.get(GOAL_ALIASES.get(g.id, g.id), "")
+		out.append(e)
+	return out
+
+
+## The sim's goal ids for the ones this file words.
+const GOAL_ALIASES := {"ice_under_40": "thin_ice", "minor_hockey_slot": "minor_hockey"}
+
+
+static func _goal_status(sim: RinkSim) -> Array:
 	var out: Array = []
 	var start := week_start(sim)
 	for g in M1_GOALS:

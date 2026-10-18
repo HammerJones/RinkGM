@@ -49,8 +49,16 @@ func show_sim(sim: RinkSim) -> void:
 	var frac: float = c.hours_left / c.hours_max
 	var col := RinkOS.GOOD if frac > 0.4 else (RinkOS.ACTION if frac > 0.15 else RinkOS.ALERT)
 	var money_col := RinkOS.READOUT if c.money >= 0.0 else RinkOS.ALERT
-	_hours.text = "HRS %s [%s]%4.1f[/color]  [%s]$%s[/color]" % [RinkOS.meter_bb(frac, col, 10), RinkOS.bb(RinkOS.READOUT),
-		c.hours_left, RinkOS.bb(money_col), _money(c.money)]
+	# Straight time first; once it's gone the meter reads the overtime left.
+	var label := "HRS"
+	var shown: float = c.hours_left
+	if c.hours_left <= 0.0 and c.get("overtime_left", 0.0) > 0.0:
+		label = "[%s]OT [/color]" % RinkOS.bb(RinkOS.ALERT)
+		shown = c.overtime_left
+		frac = shown / 4.0
+		col = RinkOS.ALERT
+	_hours.text = "%s %s [%s]%4.1f[/color]  [%s]$%s[/color]" % [label, RinkOS.meter_bb(frac, col, 10), RinkOS.bb(RinkOS.READOUT),
+		shown, RinkOS.bb(money_col), _money(c.money)]
 
 
 static func _money(v: float) -> String:
