@@ -30,6 +30,10 @@ static func think(s: Skater, g: Node, dt: float) -> void:
 		c.lift = s.ai_slap
 		c.tilt = s.ai_tilt
 		c.aim_point = s.ai_aim
+	elif s.winding:
+		# letting go of the button: the release still goes where it was aimed
+		c.tilt = s.ai_tilt
+		c.aim_point = s.ai_aim
 	var puck: Puck = g.puck
 	var owner := _believed_owner(s, g, puck.controller, ai, dt)
 	if s.ai_react > 0.0:
@@ -180,7 +184,7 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 				and (lane_open or randf() < lerpf(0.6, 0.04, sel)):
 			s.ai_aim = aim
 			s.ai_slap = d > 10.0 and randf() < 0.5
-			s.ai_tilt = 0.0 if randf() < 0.5 else randf_range(0.4, 1.0)
+			s.ai_tilt = 0.0 if randf() < 0.5 else _tilt_for(s, d, randf_range(0.5, 1.0))
 			s.ai_shoot_timer = 0.6 if s.ai_slap else randf_range(0.02, 0.35)
 			c.shoot = true
 			c.lift = s.ai_slap
@@ -257,11 +261,24 @@ static func _shootout_carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 		side = -signf(gk.pos2.y)
 	s.ai_aim = Vector3(goal.x, 0, side * (Rink.NET_HALF_W - 0.15))
 	s.ai_slap = false
-	s.ai_tilt = randf_range(0.6, 1.0)
+	s.ai_tilt = _tilt_for(s, me.distance_to(goal), randf_range(0.55, 1.0)) if randf() < 0.75 else 0.0
 	s.ai_shoot_timer = randf_range(0.08, 0.2) if deke else randf_range(0.15, 0.35)
 	c.shoot = true
 	c.tilt = s.ai_tilt
 	c.aim_point = s.ai_aim
+
+
+## How far to open the blade so a shot from `d` m crosses the goal line
+## about `height` m up: a shooter knows roughly how hard they shoot and lifts
+## it to match (the hands' wobble still moves it).
+static func _tilt_for(s: Skater, d: float, height: float) -> float:
+	var blade := s.profile.wrist_speed(0.3)
+	var skating := maxf(0.0, s.vel.dot(s.attack_goal() - s.position) / maxf(d, 0.1))
+	var t := d / (blade + skating)
+	# the lift comes from the blade alone; skating only adds speed along the ice
+	var rise := (height + 0.5 * Puck.GRAVITY * t * t) / t
+	var loft := rad_to_deg(asin(clampf(rise / blade, 0.0, 1.0)))
+	return clampf((loft - 4.0) / 12.0, 0.0, 1.0)
 
 
 ## Which post to shoot for: a disciplined shooter picks the side the goalie
