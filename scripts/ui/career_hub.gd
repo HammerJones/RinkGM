@@ -84,6 +84,12 @@ func _show_slots() -> void:
 		row.add_child(sum)
 		if slot == "demo_low" and _root.get_child_count() > 0:
 			b.grab_focus()
+	var practice := _section(_root, "PRACTICE", 60)
+	var prow := _row(practice)
+	prow.add_child(_button("Practice", CareerState.start_practice, false))
+	var pl := _label("Skate alone with a puck and the nets: no opponents, no clock, nothing recorded.")
+	pl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	prow.add_child(pl)
 
 
 func _open_slot(slot: String) -> void:
@@ -185,7 +191,9 @@ func _refresh() -> void:
 	_last_game(right)
 	_season_table(right)
 	_news(right)
-	_row(_root).add_child(_button("Main menu", func():
+	var bottom := _row(_root)
+	bottom.add_child(_button("Practice", CareerState.start_practice, false))
+	bottom.add_child(_button("Main menu", func():
 		CareerState.career = null
 		career = null
 		_show_slots(), false))

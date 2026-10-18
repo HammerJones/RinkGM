@@ -1,3 +1,5 @@
 controls
 devmenu
 sticks
+pausemenu
+practice

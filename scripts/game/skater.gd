@@ -390,12 +390,15 @@ func _stick_drawn() -> bool:
 
 
 ## Whether this skater has learned a move (Moves catalog id).
-## (mechanics hook) A career player's PlayerProfile.moves decides; outside
-## career games (exhibitions, tests) everyone knows everything.
+## (mechanics hook) A career player's PlayerProfile.moves decides, in career
+## games and in practice with a career loaded; otherwise (exhibitions, tests)
+## everyone knows everything.
 func knows(id: StringName) -> bool:
-	if player == null or game == null or not game.get("career_mode"):
+	if player == null or game == null:
 		return true
-	return player.knows_move(id)
+	if game.get("career_mode") or (game.get("practice") and game.get("user_profile") == player):
+		return player.knows_move(id)
+	return true
 
 
 func _update_blade(dt: float, blend: float) -> void:

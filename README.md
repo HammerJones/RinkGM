@@ -23,7 +23,7 @@ virtual right stick, so both devices drive the same stick model.
 | Skate | Left stick | WASD |
 | Dash (push-off burst) | L3 (click left stick) | Shift |
 | Hockey stop | R3 (click right stick) | Space |
-| Stick blade (220 degree arc, back past each hip) | Right stick | Mouse (cursor is captured; Esc frees it) |
+| Stick blade (220 degree arc, back past each hip) | Right stick | Mouse (cursor is captured; Esc opens the menu and frees it) |
 | Stickhandle | Right stick side to side | Mouse side to side |
 | Quick shot (instant) | Flick the right stick forward | Flick the mouse forward |
 | Wrist shot | Draw the stick back behind your forehand hip, then sweep it forward | Same with the mouse |
@@ -37,7 +37,8 @@ virtual right stick, so both devices drive the same stick model.
 | Mouse sensitivity | | [ and ] |
 | Physics mode (Sim / Hybrid / Arcade) | Back | F1 |
 | Camera (broadcast / isometric) | D-pad up | C |
-| Restart | Start | R |
+| Menu: pause, restart, controls, practice, quit (frees the cursor) | Start | Esc |
+| Restart (practice: reset the puck) | | R |
 | Show/hide controls | | H |
 | Developer menu | D-pad down | ` (tilde key) |
 
