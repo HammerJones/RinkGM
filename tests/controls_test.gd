@@ -124,11 +124,16 @@ func _run() -> void:
 	mate.place(Vector2(-4, 0.0), Vector3(-1, 0, 0))
 	mate.stun_timer = 0.0
 	_set_plan(func(f, t): f.pass_pressed = t > 0.1 and t < 0.11)
-	# whether it gets trapped is the receiver's skill (physics); here: it was sent to them
-	var got := await _until(func(): return game.puck.pass_target == mate, 0.5, [mate])
+	# whether it gets trapped is the receiver's skill (physics); here: it was sent to them.
+	# The receiver waits where it was put (its AI would skate off to get open).
+	var spot := mate.position
+	var waiting := func() -> void:
+		mate.position = spot
+		mate.vel = Vector3.ZERO
+	var got := await _until(func(): waiting.call(); return game.puck.pass_target == mate, 0.5, [mate])
 	print("pass sent to teammate: %s" % got)
 	_check(got, "pass button passes to the teammate")
-	got = await _until(func(): return game.puck.controller == mate, 1.5, [mate])
+	got = await _until(func(): waiting.call(); return game.puck.controller == mate, 1.5, [mate])
 	print("teammate caught it: %s" % got)
 	_check(got, "the pass connects")
 
