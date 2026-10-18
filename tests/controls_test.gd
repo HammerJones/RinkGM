@@ -75,6 +75,7 @@ func _run() -> void:
 	# --- learned shots and moves
 	await _moves()
 	await _stickhandling()
+	await _job_input()
 
 	# --- lift with the puck raises the blade
 	await _carry(Vector2(-10, 0))
@@ -293,6 +294,67 @@ func _freeze_others(keep: Array = []) -> void:
 			s.stun_timer = 1.0
 			s.position = Vector3(25 + s.number, 0, -10 - s.team * 5)
 			s.vel = Vector3.ZERO
+
+
+## The rink job input (JobInput): the real bindings, not the scripted hook.
+func _job_input() -> void:
+	var ji := JobInput.new()
+	add_child(ji)
+	var dt := 1.0 / 120.0
+	var tree := get_tree()
+	var wheel := func(down: bool):
+		var e := InputEventMouseButton.new()
+		e.button_index = MOUSE_BUTTON_WHEEL_DOWN if down else MOUSE_BUTTON_WHEEL_UP
+		e.pressed = true
+		Input.parse_input_event(e)
+	# grab held on a bench: two wheel notches down tighten 1/6 turn
+	Input.action_press("job_grab")
+	ji.poll(dt, JobInput.Context.BENCH)
+	wheel.call(true)
+	wheel.call(true)
+	await tree.physics_frame
+	var f := ji.poll(dt, JobInput.Context.BENCH)
+	_check(absf(f.turn - 2.0 * JobInput.TURN_STEP) < 0.0001, "wheel down while grabbing tightens a step a notch (%.3f)" % f.turn)
+	# circling the right stick clockwise once tightens one turn
+	var total := 0.0
+	for i in 121:
+		var a := -TAU * i / 120.0   # clockwise on screen
+		_press_vector(Vector2(cos(a), sin(a)), "stick_left", "stick_right", "stick_down", "stick_up")
+		total += ji.poll(dt, JobInput.Context.BENCH).turn
+	_check(absf(total - 1.0) < 0.02, "circling the right stick clockwise turns one turn (%.3f)" % total)
+	# without the grab the stick looks instead
+	Input.action_release("job_grab")
+	_press_vector(Vector2(1, 0), "stick_left", "stick_right", "stick_down", "stick_up")
+	f = ji.poll(dt, JobInput.Context.BENCH)
+	_check(f.turn == 0.0 and f.look.x > 0.0 and f.grab_released, "letting go of the grab turns the stick back into look")
+	_press_vector(Vector2.ZERO, "stick_left", "stick_right", "stick_down", "stick_up")
+	# Doris: brake and the levers, as real events so a lever is "just pressed"
+	var act := func(action: String, down: bool):
+		var e := InputEventAction.new()
+		e.action = action
+		e.pressed = down
+		e.strength = 1.0 if down else 0.0
+		Input.parse_input_event(e)
+	act.call("drive_blade", true)
+	act.call("drive_brake", true)
+	await tree.physics_frame
+	f = ji.poll(dt, JobInput.Context.DRIVE)
+	_check(f.brake > 0.9 and f.blade_lever_pressed and not f.water_lever_pressed, "driving reads the brake and blade lever (%s %s)" % [f.brake, f.blade_lever_pressed])
+	await tree.physics_frame
+	f = ji.poll(dt, JobInput.Context.DRIVE)
+	_check(f.brake > 0.9 and not f.blade_lever_pressed, "a lever press is one pull, not held")
+	act.call("drive_brake", false)
+	act.call("drive_blade", false)
+	await tree.physics_frame
+	ji.queue_free()
+
+
+func _press_vector(v: Vector2, left: String, right: String, down: String, up: String) -> void:
+	for pair in [[left, -v.x], [right, v.x], [down, -v.y], [up, v.y]]:
+		if pair[1] > 0.0:
+			Input.action_press(pair[0], pair[1])
+		else:
+			Input.action_release(pair[0])
 
 
 func _wait(seconds: float) -> void:

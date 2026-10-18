@@ -50,6 +50,24 @@ where the blade can reach. Device reading lives in `scripts/input/`
 Both hands stay on the stick in the front 90 degrees; past that the bottom
 hand lets go and the top hand reaches.
 
+Rink jobs (the M1 mini games) read `JobInput` instead, in three contexts:
+
+| Rink jobs | Gamepad | Keyboard + mouse |
+| --- | --- | --- |
+| Walk / run / look | Left stick / L3 / right stick | WASD / Shift / mouse |
+| Use a door or job spot | A | E |
+| Back off, put down | B | X |
+| Grab a tool or part (hold) | RT | Left mouse |
+| Turn it (while grabbing) | Circle the right stick, or LB / RB a step | Wheel, or drag sideways |
+| Pump (while grabbing) | Right stick up and down | Drag up and down |
+| Drive Doris: brake, blade lever, water lever | LT, LB, RB | Space, Q, F |
+
+The job scenes feed the frame to the verbs in `scripts/input/jobs/`:
+`Fastener` (run down, hand tight, torque or hand tight plus a part turn,
+cross-threading), `TorqueWrench` (the click), `HandPump` (oil by the stroke)
+and `InteractPicker` (what interact acts on). Each grades a step 0.7 to 1.0
+with flags, per RINK_SIM 4.1.
+
 #### Shots and stick moves
 
 Shots and dekes are patterns you trace with the right stick. The catalog is

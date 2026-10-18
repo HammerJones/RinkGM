@@ -10,7 +10,7 @@ extends Control
 ## mid-tier season straight away).
 ##
 ## `-- --career --autoplay` plays games hands-off (headless testing);
-## `-- --slot=demo_low|demo_mid|career` skips the slot screen;
+## `-- --slot=demo_low|demo_mid|career|owner` skips the slot screen;
 ## `-- --career-new` throws away that slot's save and starts over.
 
 var career: Career
@@ -108,7 +108,9 @@ func _show_new_career() -> void:
 	var slot := CareerState.slot
 	var demo := Career.DEMOS.has(slot)
 	_title("NEW " + Career.SLOTS[slot].label.to_upper())
-	if demo:
+	if slot == "owner":
+		_text("You just bought Millbrook Community Arena: an old ammonia plant, a resurfacer called Doris, and the Valley Beer League's late ice. You play in that league too. The rink's clock runs your calendar: your Beer League D game is Tuesday at 22:00 on your own ice.")
+	elif demo:
 		var t: int = Career.DEMOS[slot].tier
 		_text("%s You start as a regular in the %s. %s" % [Career.SLOTS[slot].desc, LeagueTiers.get_tier(t).name, LeagueTiers.get_tier(t).desc])
 	else:
@@ -131,7 +133,11 @@ func _show_new_career() -> void:
 		var fn := first.text.strip_edges()
 		var ln := last.text.strip_edges()
 		var ps: String = Career.USER_POSITIONS[pos.selected]
-		CareerState.career = Career.new_demo(slot, fn, ln, ps) if demo else Career.new_career(fn, ln, ps)
+		if slot == "owner":
+			CareerState.rink = RinkLink.new_owner(fn, ln, ps)
+			CareerState.career = CareerState.rink.career
+		else:
+			CareerState.career = Career.new_demo(slot, fn, ln, ps) if demo else Career.new_career(fn, ln, ps)
 		career = CareerState.career
 		career.save()
 		_refresh())
@@ -172,6 +178,9 @@ func _refresh() -> void:
 		_term(_c(RinkOS.ALERT, "> BENCHED: league dues unpaid. Your team plays without you."))
 	if u.fatigue > 0.3:
 		_term(_c(RinkOS.ACTION, "> TIRED %d%%: skating and hitting are down until you rest." % int(u.fatigue * 100)))
+	var rink := CareerState.rink
+	if rink:
+		_term("MILLBROOK  //  %s  //  CASH %s  //  OWNER FATIGUE %s" % [rink.sim.clock_text().to_upper(), _c(RinkOS.READOUT, "$%.0f" % rink.sim.money), _c(RinkOS.READOUT, "%d" % int(rink.fatigue()))])
 
 	var cols := HBoxContainer.new()
 	cols.add_theme_constant_override("separation", 24)
@@ -193,8 +202,11 @@ func _refresh() -> void:
 	_news(right)
 	var bottom := _row(_root)
 	bottom.add_child(_button("Practice", CareerState.start_practice, false))
+	if CareerState.has_office():
+		bottom.add_child(_button("Rink office", CareerState.open_office, false))
 	bottom.add_child(_button("Main menu", func():
 		CareerState.career = null
+		CareerState.rink = null
 		career = null
 		_show_slots(), false))
 
@@ -279,6 +291,20 @@ func _actions(parent: Control) -> void:
 		parent.add_child(next)
 		next.grab_focus()
 		return
+	var rink := CareerState.rink
+	if rink and not rink.game_due():
+		parent = _section(parent, "millbrook")
+		parent.add_child(_term_text("> NEXT GAME: %s 22:00 ON YOUR OWN ICE." % RinkSim.DAY_NAMES[RinkLink.GAME_WEEKDAY].to_upper()))
+		var row := _row(parent)
+		var go := _button("Run the rink to game night", _run_rink)
+		row.add_child(go)
+		if float(rink.sim.league.owed) > 0.0:
+			row.add_child(_button("Pay league dues ($%.0f)" % float(rink.sim.league.owed), func():
+				rink.sim.pay_dues()
+				career.save()
+				_refresh(), false))
+		go.grab_focus()
+		return
 	var g := career.next_user_game()
 	parent = _section(parent, "next_game")
 	if g.is_empty():
@@ -318,8 +344,15 @@ func _actions(parent: Control) -> void:
 	opts.add_child(plen)
 
 
+## Runs the owner's rink until the next game is due.
+func _run_rink() -> void:
+	CareerState.rink.advance_to_game()
+	career.save()
+	_refresh()
+
+
 func _sim_round() -> void:
-	CareerState.last_round = career.play_round()
+	CareerState.last_round = CareerState.play_round()
 	career.save()
 	_refresh()
 
@@ -384,6 +417,9 @@ func _autopilot() -> void:
 		career.start_next_season()
 		career.save()
 		_refresh()
+		return
+	if CareerState.rink and not CareerState.rink.game_due():
+		_run_rink()
 		return
 	var g := career.next_user_game()
 	if g.is_empty() or not career.user().dressed():
