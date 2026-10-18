@@ -33,7 +33,7 @@ virtual right stick, so both devices drive the same stick model.
 | Body check | B | F |
 | Mouse sensitivity | | [ and ] |
 | Physics mode (Sim / Hybrid / Arcade) | Back | F1 |
-| Camera (broadcast / isometric) | D-pad up | C |
+| Camera (down the ice / first person / broadcast / isometric) | D-pad up | C |
 | Restart | Start | R |
 | Show/hide controls | | H |
 | Developer menu | D-pad down | ` (tilde key) |

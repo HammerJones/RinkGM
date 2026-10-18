@@ -20,6 +20,8 @@ func _ready() -> void:
 			sk.skills.values[key] = 55.0
 		sk.skills.values["pass_quality"] = 85.0
 		sk.set_skills(sk.skills)   # the physics profile is built from them at setup
+	# the scripted stick is in screen space for the side-on view: right is +x
+	game.camera_rig.set_mode(CameraRig.Mode.BROADCAST)
 	game.controller.player_input.scripted = func(f, dt):
 		_t += dt
 		if _plan.is_valid():
