@@ -58,9 +58,11 @@ func apply(sk: Skills) -> void:
 	var hit := sk.n("hitting")
 	var tough := sk.n("toughness")
 
-	# absolute ceiling, dash included: 15 mph for a 1, 25 mph for a 100
-	max_speed = lerpf(15.0, 25.0, spd) * MPH
-	accel = lerpf(4.8, 9.0, 0.75 * spd + 0.25 * agi)
+	# absolute ceiling, dash included: 12 mph for a 1, 25 mph for a 100, rising
+	# faster at the top end, so a beer leaguer (~35) tops out near 15 mph and
+	# senior AAA (~55) near 18
+	max_speed = lerpf(12.0, 25.0, pow(spd, 1.35)) * MPH
+	accel = lerpf(4.0, 8.0, 0.75 * spd + 0.25 * agi)
 	turn_slow = lerpf(5.5, 9.5, agi)
 	turn_fast = lerpf(1.7, 3.3, agi)
 	edge_grip = lerpf(3.2, 7.5, agi)
@@ -76,7 +78,7 @@ func apply(sk: Skills) -> void:
 	blade_accel = lerpf(38.0, 135.0, sh)
 	puck_grip = 20.0 + 115.0 * pow(sh, 1.5)
 	trap_speed = lerpf(7.0, 13.0, 0.7 * pq + 0.3 * sh)
-	catch_radius = lerpf(0.24, 0.4, 0.6 * pq + 0.4 * sh)
+	catch_radius = lerpf(0.255, 0.41, 0.6 * pq + 0.4 * sh)
 
 	# ~60 mph slapshot for a 1, ~98 mph for a 100
 	shot_speed = lerpf(27.0, 44.0, pw)

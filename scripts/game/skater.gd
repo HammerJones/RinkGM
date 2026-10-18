@@ -391,6 +391,31 @@ func _stick_drawn() -> bool:
 	return absf(atan2(l.y, l.x)) > WIND_ANGLE
 
 
+## A loose puck within reach: the blade goes for it on its own, as a
+## player's would, when the right stick is left alone or already points
+## roughly that way. Better hands reach further for it and read where it's
+## sliding. Returns the blade target (body frame) or null.
+func _loose_puck_reach(stick_target: Vector2, blend: float) -> Variant:
+	if puck == null or puck.controller != null or puck.frozen or puck.position.y > 0.3 \
+			or winding or move_id != &"" or lifting or not blade_down() or not puck.can_be_touched_by(self):
+		return null
+	var sh := skill("stick_handling")
+	# where the puck will be by the time the blade gets there
+	var at := puck.position + (puck.vel - vel) * lerpf(0.0, 0.12, sh)
+	var d := at - position
+	var local := Vector2(d.dot(heading), d.dot(right_vec()))
+	var ang := atan2(local.y, local.x)
+	var reach := local.length()
+	if absf(ang) > ARC_HALF or reach > reach_limit(ang) + lerpf(0.05, 0.3, sh) * lerpf(0.6, 1.4, blend):
+		return null
+	# a puck sliding in too hot to handle isn't one you'd lunge at
+	if (puck.vel - vel).length() > profile.trap_speed * 1.8:
+		return null
+	if ctrl.stick.length() > 0.2 and absf(wrapf(atan2(stick_target.y, stick_target.x) - ang, -PI, PI)) > deg_to_rad(60.0):
+		return null
+	return local
+
+
 ## Whether this skater has learned a move (Moves catalog id).
 ## (mechanics hook) A career player's PlayerProfile.moves decides, in career
 ## games and in practice with a career loaded; otherwise (exhibitions, tests)
@@ -413,6 +438,10 @@ func _update_blade(dt: float, blend: float) -> void:
 		var l := _stick_local(ctrl.stick)
 		var mag := minf(l.length(), 1.0)
 		target = Vector2(cos(atan2(l.y, l.x)), sin(atan2(l.y, l.x))) * lerpf(REACH_MIN, REACH_MAX, mag)
+	if able:
+		var reach_for: Variant = _loose_puck_reach(target, blend)
+		if reach_for != null:
+			target = reach_for
 	if winding and not _stick_wound:
 		target = Vector2(WIND_SPOT.x, WIND_SPOT.y * _wind_side)
 	var move_h := 0.0

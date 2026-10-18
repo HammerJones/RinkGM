@@ -81,7 +81,8 @@ assistance on top.
 
 - **Skating** (`scripts/game/skater.gd`): you only push along your skates, so
   turning is carving, and turns get wider at speed. Top speed runs from
-  15 mph (speed 1) to 25 mph (speed 100), an absolute ceiling. A dash is a
+  12 mph (speed 1) to 25 mph (speed 100), an absolute ceiling, rising faster
+  at the top: about 15 mph in a beer league, 18 at senior AAA. A dash is a
   burst stride that gets you to top speed faster and costs stamina. The hockey stop scrapes speed off
   sideways; agility sets how fast you turn, how hard your edges grip, and how
   short you stop. Carving never adds speed past top speed.
