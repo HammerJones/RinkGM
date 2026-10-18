@@ -58,10 +58,33 @@ var _tick := 0.0
 var _fixture := {}
 
 
-static func instantiate_for(fixture: Dictionary) -> Venue:
+## `wings` adds the recreation centre (RecPlan) on the bench side: the
+## on-foot game wants it, a match doesn't (nobody can see it from the ice,
+## so it would only cost build time and memory).
+static func instantiate_for(fixture: Dictionary, wings := false) -> Venue:
 	var v: Venue = (load(SCENE) as PackedScene).instantiate()
+	if wings:
+		v.add_wings()
 	v.configure(fixture)
 	return v
+
+
+## Adds the recreation centre's rooms (before the venue enters the tree).
+func add_wings() -> void:
+	if has_node("RecSite"):
+		return
+	var site: VenueRoom = load("res://scripts/venue/rec/rec_site.gd").new()
+	site.name = "RecSite"
+	add_child(site)
+	for id in RecPlan.ROOMS:
+		var r: RecRoom = load("res://scripts/venue/rec/%s.gd" % RecPlan.ROOMS[id][1]).new()
+		r.plan_id = id
+		r.name = id.to_pascal_case()
+		add_child(r)
+
+
+func has_wings() -> bool:
+	return has_node("RecSite")
 
 
 ## Sets colours, name, tier and crowd from a match fixture (Career format).

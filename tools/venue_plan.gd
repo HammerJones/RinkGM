@@ -3,7 +3,7 @@ extends SceneTree
 ## building cut at a height (everything above the cut is behind the camera),
 ## plus a JSON list of the rooms and doors for labelling the plan. Needs a
 ## renderer (not --headless):
-##   godot --path . --script res://tools/venue_plan.gd -- --out=plan [--age=worn|repaired|renovated] [--cuts=2.6,8.5]
+##   godot --path . --script res://tools/venue_plan.gd -- --out=plan [--age=worn|repaired|renovated] [--cuts=2.6,8.5] [--wings]
 ## writes plan_<cut>.png per cut and plan.json. +X is right and the bench
 ## side (-Z) is at the top; one image pixel is PX metres.
 
@@ -15,8 +15,11 @@ var _age := -1
 var _cuts: Array[float] = [2.6, 8.5]
 var _venue: Venue
 var _cam: Camera3D
+var _wings := false
+var _z0 := -Venue.HALF_Z
 var _frame := 0
 var _shot := 0
+var _walls: MeshInstance3D
 
 
 func _initialize() -> void:
@@ -29,8 +32,12 @@ func _initialize() -> void:
 			_cuts.clear()
 			for v in a.trim_prefix("--cuts=").split_floats(","):
 				_cuts.append(v)
+		elif a == "--wings":
+			_wings = true
+	if _wings:
+		_z0 = RecPlan.Z_BACK
 	var w := Venue.HALF_X * 2.0 + MARGIN * 2.0
-	var h := Venue.HALF_Z * 2.0 + MARGIN * 2.0
+	var h := Venue.HALF_Z - _z0 + MARGIN * 2.0
 	DisplayServer.window_set_size(Vector2i(roundi(w / PX), roundi(h / PX)))
 	var world := Node3D.new()
 	root.add_child(world)
@@ -49,7 +56,7 @@ func _initialize() -> void:
 	sun.light_energy = 0.8
 	world.add_child(sun)
 	world.add_child(Rink.new())
-	_venue = Venue.instantiate_for({})
+	_venue = Venue.instantiate_for({}, _wings)
 	if _age >= 0:
 		for r in _venue.get_children():
 			if r is VenueRoom:
@@ -68,11 +75,44 @@ func _initialize() -> void:
 
 
 func _place_cam() -> void:
-	_cam.look_at_from_position(Vector3(0, _cuts[_shot], 0), Vector3.ZERO, Vector3(0, 0, -1))
+	var cz := (_z0 + Venue.HALF_Z) * 0.5
+	_cam.look_at_from_position(Vector3(0, _cuts[_shot], cz), Vector3(0, 0, cz), Vector3(0, 0, -1))
+
+
+## The camera sits inside any wall the cut crosses, so its faces are culled.
+## Draw each tall collider that crosses the cut as a dark fill just below it.
+func _draw_walls(cut: float) -> void:
+	if _walls:
+		_walls.free()
+	_walls = MeshInstance3D.new()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for cs in _venue.find_children("*", "CollisionShape3D", true, false):
+		var box := cs.shape as BoxShape3D
+		if box == null:
+			continue
+		var c: Vector3 = cs.global_position
+		var lo := c - box.size * 0.5
+		var hi := c + box.size * 0.5
+		if lo.y > cut - 0.2 or hi.y < cut or box.size.y < 2.8 or minf(box.size.x, box.size.z) > 0.6:
+			continue
+		var y := cut - 0.15
+		var q := [Vector3(lo.x, y, lo.z), Vector3(hi.x, y, lo.z), Vector3(hi.x, y, hi.z), Vector3(lo.x, y, hi.z)]
+		for i in [0, 1, 2, 0, 2, 3]:
+			st.add_vertex(q[i])
+	_walls.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color("2a2b30")
+	_walls.material_override = mat
+	_venue.get_parent().add_child(_walls)
 
 
 func _process(_delta: float) -> bool:
 	_frame += 1
+	if _frame == 6:
+		_draw_walls(_cuts[_shot])
 	if _frame < 12:
 		return false
 	var cut := _cuts[_shot]
@@ -96,7 +136,7 @@ func _write_json() -> void:
 		var b: AABB = r.bounds
 		rooms.append({
 			"id": r.room_id, "name": r.display_name, "age": VenueRoom.AGE_NAMES[r.age],
-			"x0": b.position.x, "z0": b.position.z, "x1": b.end.x, "z1": b.end.z,
+			"wing": r.wing, "x0": b.position.x, "z0": b.position.z, "x1": b.end.x, "z1": b.end.z,
 			"y0": b.position.y, "y1": b.end.y,
 		})
 	var doors := []
@@ -105,7 +145,7 @@ func _write_json() -> void:
 		doors.append({"label": d.label, "x": p.x, "y": p.y, "z": p.z, "w": d.width, "rot": d.global_rotation.y, "kind": VenueDoor.Kind.keys()[d.kind]})
 	var data := {
 		"metres_per_pixel": PX, "margin": MARGIN,
-		"half_x": Venue.HALF_X, "half_z": Venue.HALF_Z,
+		"half_x": Venue.HALF_X, "half_z": Venue.HALF_Z, "z_min": _z0,
 		"rink": {"half_l": Rink.HALF_L, "half_w": Rink.HALF_W, "corner_r": Rink.CORNER_R},
 		"cuts": _cuts, "rooms": rooms, "doors": doors,
 	}

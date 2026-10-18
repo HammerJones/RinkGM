@@ -91,6 +91,33 @@ openings, `stairs`, `glass`, `glow`, `sign`, `add_door`), branch on
 `kit.age` / `kit.by_age(worn, repaired, renovated)`, and add a node for it to
 `venue.tscn`.
 
+## The recreation centre wing
+
+The rink was once part of a community athletic centre, and the rest of that
+complex sits north of the arena (z -30 to -60). `RecPlan`
+(`scripts/venue/rec/rec_plan.gd`) is the floor plan: 18 rooms as rectangles
+and every door, opening and window as data. Each room is a `RecRoom` script
+in `scripts/venue/rec/` that reads its rectangle and builds walls, doors,
+lights and furniture in code, in all three ages.
+
+- Layout: the front lobby and desk at the west end (main entrance from the
+  parking lot), a long hall running east, with the pro shop, washrooms,
+  officials and first aid, storage, dressing rooms 3 to 6, the electrical and
+  boiler rooms on its south side, and the offices and meeting room, gym,
+  weight room, community hall and workshop with the loading bay on its north
+  side. A short link at x 40 joins the hall to the arena concourse. `RecSite`
+  lays the parking lot, sidewalks, light poles and the entrance canopy.
+- Matches leave the wing out (`Venue.instantiate_for(fixture)`); walking and
+  the tools build it (`instantiate_for(fixture, true)`, `has_wings()`), so the
+  match budget is unchanged.
+- Walls in the wing add occluders (`kit.occlude_walls`), and the project turns
+  occlusion culling on, so a walker draws the room they are in, not the wing.
+- `tools/tests/test_rec_centre.gd` checks the rooms, door sizes, budget
+  (1.4M triangles, 700 draws with the arena) and walks eight short routes.
+- `tools/venue_shots.gd -- --out=x --wings [--age=..] [--view=name:x,y,z,lx,ly,lz]`
+  renders eye-level views; `tools/venue_plan.gd --wings` renders the plan with
+  walls drawn where the cut crosses them.
+
 ## Built for exploring later
 
 - Human scale: doors 0.95–2.6 m wide and 2.2 m+ high (bench and box gates are

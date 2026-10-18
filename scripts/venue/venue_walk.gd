@@ -39,7 +39,7 @@ func _ready() -> void:
 	_sun.shadow_enabled = true
 	add_child(_sun)
 	add_child(Rink.new())
-	venue = Venue.instantiate_for(Career.exhibition(clampi(tier, 0, LeagueTiers.count() - 1)))
+	venue = Venue.instantiate_for(Career.exhibition(clampi(tier, 0, LeagueTiers.count() - 1)), true)
 	add_child(venue)
 	venue.apply_lighting(_env, _sun)
 	walker = VenueWalker.new()

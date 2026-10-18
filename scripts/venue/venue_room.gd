@@ -25,6 +25,9 @@ var bounds := AABB()
 ## Where a walker enters the room, in venue space.
 var spawn := Vector3.ZERO
 var doors: Array[VenueDoor] = []
+## "" for the arena itself; "rec" for the recreation centre wing, which is
+## only built when someone can walk to it (Venue.instantiate_for's `wings`).
+var wing := ""
 ## Set by the venue: colours of the home club, the rink name.
 var venue: Node3D
 

@@ -25,6 +25,11 @@ var _shapes: Array[AABB] = []
 var _signs: Array = []  # [VenueSign, Transform3D]
 var _extra: Array[Node3D] = []
 var _instances := {}  # ArrayMesh -> Array[Transform3D]
+## Walls built while this is on also become occluders (one ArrayOccluder3D
+## per room), so a walker in the recreation wing never draws the rooms
+## behind the walls around them. Needs occlusion culling in the project.
+var occlude_walls := false
+var _occluders: Array[AABB] = []
 
 
 func _init(seed_: int, age_: int) -> void:
@@ -168,10 +173,16 @@ func _wall(axis: int, at: float, s0: float, s1: float, y0: float, y1: float, t: 
 func _wall_piece(axis: int, at: float, s0: float, s1: float, y0: float, y1: float, t: float, col: Color, tile: float) -> void:
 	if s1 - s0 < 0.01 or y1 - y0 < 0.01:
 		return
-	if axis == 0:
-		aged_block(Vector3(s0, y0, at - t * 0.5), Vector3(s1, y1, at + t * 0.5), col, tile)
-	else:
-		aged_block(Vector3(at - t * 0.5, y0, s0), Vector3(at + t * 0.5, y1, s1), col, tile)
+	var a := Vector3(s0, y0, at - t * 0.5) if axis == 0 else Vector3(at - t * 0.5, y0, s0)
+	var b := Vector3(s1, y1, at + t * 0.5) if axis == 0 else Vector3(at + t * 0.5, y1, s1)
+	aged_block(a, b, col, tile)
+	if occlude_walls and s1 - s0 >= 1.0 and y1 - y0 >= 1.5:
+		occluder(a, b)
+
+
+## A box that hides what is behind it from the renderer (never drawn).
+func occluder(a: Vector3, b: Vector3) -> void:
+	_occluders.append(AABB(a.min(b), (a - b).abs()))
 
 
 ## A flight of steps rising along `dir` (unit X or Z, signed) from `start`
@@ -289,6 +300,21 @@ func commit(parent: Node3D) -> void:
 		mmi.multimesh = mm
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(mmi)
+	if not _occluders.is_empty():
+		var verts := PackedVector3Array()
+		var idx := PackedInt32Array()
+		for box in _occluders:
+			var base := verts.size()
+			for i in 8:
+				verts.append(box.position + box.size * Vector3(i & 1, (i >> 1) & 1, (i >> 2) & 1))
+			for q in [[0, 1, 3, 2], [4, 6, 7, 5], [0, 4, 5, 1], [2, 3, 7, 6], [0, 2, 6, 4], [1, 5, 7, 3]]:
+				idx.append_array([base + q[0], base + q[1], base + q[2], base + q[0], base + q[2], base + q[3]])
+		var occ := ArrayOccluder3D.new()
+		occ.set_arrays(verts, idx)
+		var oi := OccluderInstance3D.new()
+		oi.name = "Occluders"
+		oi.occluder = occ
+		parent.add_child(oi)
 	for pair in _signs:
 		var s: VenueSign = pair[0]
 		s.transform = pair[1]
