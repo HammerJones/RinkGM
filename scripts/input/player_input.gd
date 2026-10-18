@@ -43,6 +43,17 @@ var _capture := not ("--autoplay" in OS.get_cmdline_user_args()) and DisplayServ
 
 
 func _ready() -> void:
+	# a pause menu stops the game tree: this node then gets no input, so menu
+	# clicks don't recapture the cursor or move the virtual stick
+	process_mode = Node.PROCESS_MODE_PAUSABLE
+	capture_mouse()
+
+
+## Takes the cursor back for the virtual stick (the pause menu's Resume calls
+## this). The stick restarts from neutral so resuming doesn't flick a shot.
+func capture_mouse() -> void:
+	_vstick = Vector2.ZERO
+	_mouse_idle = 0.0
 	if _capture:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 

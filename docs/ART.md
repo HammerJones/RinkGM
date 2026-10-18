@@ -122,6 +122,10 @@ resurfacer): about 650-5,200 triangles at full detail. Pipe pieces are
 room for review (`--age=worn|repaired|renovated`), and the prop sheet renders
 one age in a labelled grid with `--age=<name> [--cols=N]`.
 
+## Puck
+
+`Models.puck()` is regulation size: 3 in across and 1 in thick (`Models.PUCK_DIAMETER` 0.0762 m, `PUCK_HEIGHT` 0.0254 m), built from half-inch voxels with the corners off so it reads round. Pivot at the centre of the bottom face. The puck's physics radius (`Puck.RADIUS`) belongs to Hockey physics and is separate from the mesh.
+
 ## Sticks
 
 The skater stick is two parts posed by `SkaterRig`: `Models.shaft()` and

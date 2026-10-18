@@ -19,6 +19,7 @@ func _ready() -> void:
 		for key in Skills.SKATER_KEYS:
 			sk.skills.values[key] = 55.0
 		sk.skills.values["pass_quality"] = 85.0
+		sk.set_skills(sk.skills)   # the physics profile is built from them at setup
 	game.controller.player_input.scripted = func(f, dt):
 		_t += dt
 		if _plan.is_valid():
@@ -145,6 +146,7 @@ func _moves() -> void:
 	# good hands: physics runs move paths under the skater's own limits, and a
 	# weak stickhandler is allowed to lose the puck on them
 	h.skills.values["stick_handling"] = 80.0
+	h.set_skills(h.skills)
 	# screen space: +x is forward, -y is the forehand (right), +y the backhand
 	var side := func(deg: float, r := 1.0) -> Vector2: return Vector2(cos(deg_to_rad(deg)), -sin(deg_to_rad(deg))) * r
 
