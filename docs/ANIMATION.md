@@ -49,6 +49,42 @@ slides, sets down on the far side and catches it on the other face; the
 wrists angle the blade (`SkaterRig.blade_turn`) so each push also steers the
 puck back to its spot out front. In games the puck is still Physics' to move.
 
+## On foot
+
+`PersonRig` (scripts/game/person_rig.gd) is the skater's body without the
+stick: the same parts, joints and two-bone IK, so a person is the same rig
+with or without skates. Owner, staff, coaches and public skaters all use it
+and differ only by palette. It only draws: a `VenueWalker` capsule is the
+simulated body, and `update_person(walker.velocity, dt)` poses the rig from
+it every frame.
+
+- **Walking and running.** Each foot stays planted while it carries weight
+  and slides back under the body at exactly the walker's speed, so stride
+  length always matches speed and feet never skate on the floor. The hips
+  drop as far as the legs need to reach both feet. A run has a flight phase
+  (`walk_duty_run` below 0.5). The body turns to face the way it walks.
+- **Poses.** Set `pose` to `SIT` (with `seat` at the seat's front edge;
+  the person sits facing away from it), `CROUCH` (a squat at a low panel)
+  or `KNEEL` (one knee down, for work low on Doris or a compressor).
+- **Reach and grab.** Put a world point in `reach[0]` (left) or `reach[1]`
+  (right) and that hand goes there. When it is out of arm's length, the
+  upper body bends and turns to bring it in (`reach_bend`). `look` turns the
+  head to a point.
+- **First person.** `FirstPersonArms` (scripts/game/first_person_arms.gd)
+  is a child of the first-person camera: slimmer copies of the same arms
+  that rest low in the view and reach to `reach` points with the same IK.
+  They draw on render layer `FirstPersonArms.VIEW_LAYER`. Call
+  `PersonRig.hide_from_view(layer)` and leave that layer out of the
+  first-person camera so the body's own head and arms don't block the view.
+
+The numbers live in AnimTuning's `walk`, `sit`, `crouch` and `reach` groups.
+The studio's "On foot" clips (walk, run, walk and turn, idle, sit, crouch,
+kneel, reach and grab, first-person arms) run on `AnimPerson`, which has a
+bench, a machine panel and a valve wheel to work at. `--test=anim` checks
+that planted feet don't slide, that a runner leaves the floor, that
+sitting lands on the seat, that a knee touches down, and that hands land on
+their targets and stay there.
+
 ## The studio
 
 `scenes/anim/anim_studio.tscn` puts one skater on a treadmill: the skater stays

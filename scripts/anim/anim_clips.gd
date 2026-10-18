@@ -59,6 +59,25 @@ const LIST := [
 		"note": "Gliding, stick out low, pumping the free fist."},
 	{"id": &"cel_knee_slide", "title": "Celebration: knee slide", "groups": ["celebrate"], "len": 3.2,
 		"note": "Drops to one knee and slides, pumping the fist."},
+	# on foot (PersonRig): "person" clips run on AnimPerson instead of the skater
+	{"id": &"walk", "title": "On foot: walk", "groups": ["walk"], "len": 4.0, "person": true,
+		"note": "A stroll at 1.4 m/s. Planted feet never slide on the floor."},
+	{"id": &"run", "title": "On foot: run", "groups": ["walk"], "len": 4.0, "person": true,
+		"note": "Running at 4 m/s, both feet off the floor between steps."},
+	{"id": &"walk_turn", "title": "On foot: walk and turn", "groups": ["walk"], "len": 6.0, "person": true,
+		"note": "Walks a curve, the body turning to face the way it goes."},
+	{"id": &"idle", "title": "On foot: idle", "groups": ["walk"], "len": 5.0, "person": true,
+		"note": "Standing, shifting weight, looking round the room."},
+	{"id": &"sit", "title": "On foot: sit", "groups": ["sit"], "len": 6.0, "person": true,
+		"note": "Sits on the bench behind, rests the hands on the knees, gets up."},
+	{"id": &"crouch_work", "title": "On foot: crouch at a machine", "groups": ["crouch", "reach"], "len": 5.0, "person": true, "cam": "rear_quarter",
+		"note": "Squats at a low panel and turns a valve with both hands."},
+	{"id": &"kneel_work", "title": "On foot: kneel at a machine", "groups": ["crouch", "reach"], "len": 5.0, "person": true, "cam": "rear_quarter",
+		"note": "Kneels on one knee and works a bolt low on the machine."},
+	{"id": &"reach_grab", "title": "On foot: reach and grab", "groups": ["reach"], "len": 6.0, "person": true,
+		"note": "Hands land on a high valve, a breaker, then a far low lever (the body bends for it)."},
+	{"id": &"first_person", "title": "On foot: first-person arms", "groups": ["reach"], "len": 6.0, "person": true,
+		"note": "The player's view: both hands take a valve wheel and turn it."},
 ]
 
 
@@ -328,3 +347,87 @@ static func _once(mem: Dictionary, key: String, cond: bool) -> bool:
 		mem[key] = true
 		return true
 	return false
+
+
+# ---------------------------------------------------------------- on foot
+
+## Poses the on-foot puppet for time `t` into the loop.
+static func run_person(id: StringName, q: AnimPerson, t: float, dt: float, mem: Dictionary) -> void:
+	q.clear_intent()
+	var r := q.rig
+	match id:
+		&"walk":
+			q.go = Vector3.FORWARD * VenueWalker.WALK
+		&"run":
+			q.go = Vector3.FORWARD * VenueWalker.RUN
+		&"walk_turn":
+			var a := 0.0 if t < 1.0 else (t - 1.0) * 0.7
+			q.go = Vector3.FORWARD.rotated(Vector3.UP, a) * VenueWalker.WALK
+		&"idle":
+			q.go = Vector3.ZERO
+			r.look = r.to_global(Vector3(sin(t * 0.9) * 2.0, 1.4 + sin(t * 0.5) * 0.3, -2.0)) if t > 0.8 else PersonRig.NONE
+		&"sit":
+			q.bench.visible = true
+			q.bench.global_position = r.to_global(Vector3(0.0, 0.225, 0.45))
+			q.bench.global_basis = r.global_basis
+			r.seat = r.to_global(Vector3(0.0, 0.45, 0.25))
+			r.pose = PersonRig.Pose.SIT if t > 0.6 and t < 4.6 else PersonRig.Pose.STAND
+		&"crouch_work":
+			_panel(q, Vector3(0.0, 0.45, -0.5))
+			r.pose = PersonRig.Pose.CROUCH if t > 0.4 and t < 4.4 else PersonRig.Pose.STAND
+			if t > 1.0 and t < 4.0:
+				# a valve wheel on the panel face, turned hand over hand
+				var c := Vector3(0.0, 0.42, -0.48)
+				var a := (t - 1.0) * 2.0
+				q.show_wheel(c, 0.09, -a)
+				r.reach[0] = r.to_global(c + Vector3(-cos(a), sin(a), 0.0) * 0.09)
+				r.reach[1] = r.to_global(c + Vector3(cos(a), -sin(a), 0.0) * 0.09)
+			r.look = r.to_global(Vector3(0.0, 0.42, -0.48)) if t > 0.6 and t < 4.2 else PersonRig.NONE
+		&"kneel_work":
+			_panel(q, Vector3(0.0, 0.45, -0.55))
+			r.pose = PersonRig.Pose.KNEEL if t > 0.4 and t < 4.4 else PersonRig.Pose.STAND
+			if t > 1.0 and t < 4.0:
+				# a ratchet on a low bolt: short pulls
+				var pull := absf(sin((t - 1.0) * 5.0)) * 0.06
+				r.reach[1] = r.to_global(Vector3(0.12 + pull, 0.22, -0.53))
+				r.reach[0] = r.to_global(Vector3(-0.1, 0.3, -0.53))
+			r.look = r.to_global(Vector3(0.05, 0.22, -0.53)) if t > 0.6 and t < 4.2 else PersonRig.NONE
+		&"reach_grab":
+			var target := PersonRig.NONE
+			var hand := 1
+			if t > 0.4 and t < 1.9:
+				target = Vector3(0.22, 1.75, -0.45)   # a valve overhead
+			elif t > 2.2 and t < 3.5:
+				target = Vector3(-0.3, 1.05, -0.4)    # a breaker at the hip
+				hand = 0
+			elif t > 3.8 and t < 5.5:
+				target = Vector3(0.25, 0.55, -0.85)   # a lever low and out of reach
+			if target != PersonRig.NONE:
+				r.reach[hand] = r.to_global(target)
+				r.look = r.reach[hand]
+			else:
+				r.look = PersonRig.NONE
+		&"first_person":
+			q.first_person = true
+			_panel(q, Vector3(0.0, 0.7, -0.66), 1.55)
+			var wheel := r.to_global(Vector3(0.0, 1.15, -0.62))
+			r.look = wheel
+			# a big handwheel turned in pulls: both hands grip at quarter to
+			# three, turn it a third of a turn, let go and grip again
+			var pulls := maxf(t - 1.6, 0.0) * 0.8
+			var turn := (floorf(pulls) + smoothstep(0.0, 0.7, fmod(pulls, 1.0))) * 1.0
+			q.show_wheel(Vector3(0.0, 1.15, -0.62), 0.17, -turn)
+			if t > 1.6 and t < 5.4 and fmod(pulls, 1.0) < 0.8:
+				var a := turn - floorf(pulls) - 0.5
+				var c := r.to_local(wheel)
+				q.arms.reach[0] = r.to_global(c + Vector3(-cos(a), sin(a), 0.0) * 0.17)
+				q.arms.reach[1] = r.to_global(c + Vector3(cos(a), -sin(a), 0.0) * 0.17)
+
+
+## Shows the machine panel standing on the floor with its front face
+## centred at `at` (body space), `tall` times its usual 0.9 m height.
+static func _panel(q: AnimPerson, at: Vector3, tall := 1.0) -> void:
+	q.panel.visible = true
+	q.panel.global_basis = q.rig.global_basis * Basis.from_scale(Vector3(1.0, tall, 1.0))
+	q.panel.global_position = q.rig.to_global(at + Vector3(0.0, 0.0, -0.25))
+

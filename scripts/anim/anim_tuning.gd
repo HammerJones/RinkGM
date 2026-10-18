@@ -242,3 +242,58 @@ func tunables() -> Array:
 @export_range(0.0, 0.6, 0.01) var celebrate_knee_drop := 0.38
 ## Upper-body lean back on the celebrations.
 @export_range(-0.5, 0.8, 0.01) var celebrate_lean_back := 0.25
+
+# ------------------------------------------------------------------- walk
+# People on foot (PersonRig). The feet stay planted on the floor while they
+# carry weight, so a stride's length always matches the walker's speed.
+## Steps per second at a stroll (VenueWalker.WALK, 1.4 m/s) ...
+@export_range(1.0, 3.0, 0.05) var walk_cadence := 1.8
+## ... and at a run (VenueWalker.RUN, 4 m/s).
+@export_range(1.5, 4.5, 0.05) var walk_cadence_run := 2.9
+## Share of each cycle a foot is on the floor walking (above 0.5: both feet
+## down for a moment) ...
+@export_range(0.5, 0.75, 0.01) var walk_duty := 0.62
+## ... and running (below 0.5: both feet off the floor for a moment).
+@export_range(0.2, 0.5, 0.01) var walk_duty_run := 0.36
+## How high the swinging foot lifts walking / running.
+@export_range(0.0, 0.2, 0.005) var walk_lift := 0.07
+@export_range(0.0, 0.4, 0.005) var walk_lift_run := 0.2
+## Hip rise and fall with each step.
+@export_range(0.0, 0.08, 0.002) var walk_bob := 0.025
+## Hips shift over the foot that carries the weight.
+@export_range(0.0, 0.1, 0.002) var walk_sway := 0.03
+## Hips turn with each stride (radians); the shoulders turn against them.
+@export_range(0.0, 0.4, 0.01) var walk_hip_turn := 0.12
+## How far the arms swing (radians, at a walk; more at a run).
+@export_range(0.0, 1.2, 0.01) var walk_arm_swing := 0.35
+## Forward lean of the upper body at a run.
+@export_range(0.0, 0.6, 0.01) var walk_run_lean := 0.2
+## Feet apart, side to side.
+@export_range(0.05, 0.3, 0.005) var walk_width := 0.11
+## How quickly the body turns to face the way it walks (per second).
+@export_range(1.0, 20.0, 0.5) var walk_turn := 8.0
+## Standing still: slow weight shift side to side.
+@export_range(0.0, 0.06, 0.002) var walk_idle_sway := 0.015
+
+# -------------------------------------------------------------------- sit
+## Upper-body lean back when sitting (radians).
+@export_range(-0.4, 0.6, 0.01) var sit_lean := 0.08
+## How far in front of the seat edge the feet rest.
+@export_range(0.1, 0.6, 0.01) var sit_feet := 0.38
+## How quickly a person sits down or gets up (per second).
+@export_range(1.0, 15.0, 0.5) var sit_speed := 5.0
+
+# ------------------------------------------------------------------ crouch
+## Hip height in a squat (metres off the floor).
+@export_range(0.2, 0.7, 0.01) var crouch_hips := 0.38
+## Hip height kneeling on one knee.
+@export_range(0.3, 0.8, 0.01) var crouch_kneel_hips := 0.5
+## Forward lean of the upper body crouched / kneeling (radians).
+@export_range(0.0, 1.2, 0.01) var crouch_lean := 0.45
+
+# ------------------------------------------------------------------ reach
+## How far the upper body bends and turns to bring a hand to a job part
+## (share of what's needed, 1 = all the way).
+@export_range(0.0, 1.0, 0.01) var reach_bend := 0.8
+## How quickly a hand moves onto (or off) its target (per second).
+@export_range(1.0, 30.0, 0.5) var reach_speed := 9.0
