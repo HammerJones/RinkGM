@@ -38,6 +38,11 @@ The walk-around playtest is also `scenes/venue/venue_walk.tscn`
 stick look, Shift/L3 run, E/A open a door, 1 2 3 or the D-pad set the age of
 the room you're standing in, F/Y fly.
 
+Floor plans: `tools/venue_plan.gd` renders straight-down views of the
+building cut at 2.6 m and 8.5 m, plus a JSON list of room bounds and doors.
+It needs a renderer, so run it under xvfb (lavapipe is fine):
+`godot --path . --script res://tools/venue_plan.gd -- --out=plan --age=repaired`.
+
 ## Layout (metres, rink centre is the origin, rink runs along X)
 
 - Building: x ±46, z ±30, roof at 16 m. Rubber floor at y = 0 around the ice.
