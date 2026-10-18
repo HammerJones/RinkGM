@@ -310,11 +310,23 @@ static func _heel_sweep(m: VoxelModel, p: Dictionary) -> Vector3:
 	return (Vector3(pos.x, pos.y, 0.5) - BLADE_PIVOT) * STICK_V
 
 
+## A regulation puck: 3 in across, 1 in thick (7.62 x 2.54 cm), in half-inch
+## voxels, rounded. Pivot at the centre of its bottom face.
+const PUCK_DIAMETER := 0.0762
+const PUCK_HEIGHT := 0.0254
+const _PUCK_V := 0.0127
+
+
 static func puck() -> VoxelModel:
-	var m := VoxelModel.new(0.05)
+	var m := VoxelModel.new(_PUCK_V)
 	m.jitter = 0.0
-	m.box(0, 0, 0, 3, 2, 3, PUCK)
-	return m.set_pivot(1.5, 0, 1.5)
+	for x in 6:
+		for z in 6:
+			if (x == 0 or x == 5) and (z == 0 or z == 5):
+				continue  # corners off: round enough at this size
+			for y in 2:
+				m.set_voxel(x, y, z, PUCK)
+	return m.set_pivot(3.0, 0, 3.0)
 
 
 ## Goal net, opening at z=0 facing -Z and depth going +Z. Pivot at the
