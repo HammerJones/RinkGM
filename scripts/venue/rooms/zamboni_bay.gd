@@ -72,9 +72,9 @@ func build(k: VenueKit) -> void:
 ## the bench, and the snow pit with Mount Doris out the back.
 func _m1(k: VenueKit) -> void:
 	add_spot(k, VenueSpot.Kind.JOB, "doris", Vector3(40.4, 1.5, 0.55), "Doris",
-		{"job": "engine_tune", "target": "doris_plugs", "note": "doris_dash", "needs": "spark_plugs", "scene": "res://scenes/world/jobs/doris_wont_start.tscn"}, 2.0)
+		{"job": "doris_plugs", "target": "doris_plugs", "readable": "note_doris_dash", "note": "doris_dash", "needs": "spark_plugs", "scene": "res://scenes/world/jobs/doris_plugs.tscn"}, 2.0)
 	add_spot(k, VenueSpot.Kind.JOB, "doris_blade", Vector3(41.9, 0.5, 0.0), "Doris's blade",
-		{"job": "blade_change", "target": "doris_blade", "scene": "res://scenes/world/jobs/blade_change.tscn"}, 1.6)
+		{"job": "blade_change", "target": "doris_blade", "scene": "res://scenes/world/jobs/doris_blade.tscn"}, 1.6)
 	# the parts cabinet: every drawer labelled DORIS
 	var steel: Color = k.by_age(Color("6f7378"), Color("8a8f94"), Color("50555c"))
 	k.aged_block(Vector3(38.5, 0, 4.3), Vector3(39.6, 1.3, 4.85), steel, 0.3)

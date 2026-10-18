@@ -11,7 +11,7 @@ extends SceneTree
 const SPOTS := [
 	"gus_envelope", "ice_lights", "dedication_plaque",
 	"office_phone", "office_desk", "power_bill", "corkboard", "ice_grid",
-	"door_of_notes", "gus_binder", "pamphlet_ammonia", "compressor_1", "compressor_2", "oil_drum", "glycol_thermometer", "log_book", "nordale_manual",
+	"door_of_notes", "screwdriver", "gus_binder", "pamphlet_ammonia", "compressor_1", "compressor_2", "oil_drum", "glycol_thermometer", "log_book", "nordale_manual",
 	"doris", "doris_blade", "plug_drawer", "zambelli_525_manual", "snow_pit",
 ]
 
@@ -83,7 +83,7 @@ func _run() -> void:
 	_expect(a.has("read") and not a.has("job"), "Doris without plugs: just the note on her dash")
 	story.use(_venue.spot("plug_drawer"))
 	a = story.use(_venue.spot("doris"))
-	_expect(a.has("job") and a.job.job == "engine_tune" and a.job.room == "zamboni_bay", "with the plugs, Doris opens her job (%s)" % a.get("job", {}))
+	_expect(a.has("job") and a.job.job == "doris_plugs" and a.job.room == "zamboni_bay", "with the plugs, Doris opens her job (%s)" % a.get("job", {}))
 	var r := story.finish_job(a.job, {"quality": 0.8})
 	_expect(r.get("ok", false), "the sim does the plug change (%s)" % r.get("text", ""))
 
@@ -92,6 +92,9 @@ func _run() -> void:
 	_expect(a.has("job") and a.job.args.get("compressor", -1) == 0 and a.job.room == "plant_room", "compressor No. 1 opens the oil service on compressor 0")
 	r = story.finish_job(a.job, {"quality": 0.9})
 	_expect(r.get("ok", false), "the sim does the oil service (%s)" % r.get("text", ""))
+	a = story.use(_venue.spot("glycol_thermometer"))
+	_expect(a.has("job") and a.job.job == "plant_round" and a.job.scene == "", "the glycol thermometers are the plant round, done on the spot (no scene)")
+	_expect(story.finish_job(a.job, {}).get("ok", false), "the sim does the plant round")
 	_expect(story.use(_venue.spot("log_book")).get("screen", "") == "log_book", "the log book asks for UI's log book screen")
 	_expect(story.use(_venue.spot("office_phone")).get("screen", "") == "phone", "the office phone asks for the phone screen")
 

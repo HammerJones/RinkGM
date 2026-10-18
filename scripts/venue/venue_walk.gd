@@ -261,23 +261,29 @@ func _show_read(t: Dictionary) -> void:
 	_open_panel(bb)
 
 
-## A job: World and assets' mini game when its scene exists, else the
-## quick way (the sim does the job at the owner's skill).
+## A job: World and assets' mini game when its scene exists (its root has
+## begin(ctx) and emits finished(result)), straight to the sim when it has no
+## scene (the plant round), else the quick way at the owner's skill.
 func _start_job(job: Dictionary) -> void:
 	job_started.emit(job)
 	var path: String = job.get("scene", "")
-	if path != "" and ResourceLoader.exists(path):
+	if path == "":
+		var done := story.finish_job(job, {})
+		_show_toast(str(done.get("text", "DONE.")).to_upper())
+		return
+	if ResourceLoader.exists(path):
 		_job_scene = load(path).instantiate()
-		if "context" in _job_scene:
-			_job_scene.context = {"sim": story.sim, "job": job.job, "target": job.target, "room": job.room, "args": job.args}
+		var ctx := {"sim": story.sim, "job": job.job, "target": job.target, "room": job.room, "args": job.args}
 		if _job_scene.has_signal("finished"):
 			_job_scene.finished.connect(_on_job_finished.bind(job))
 		add_child(_job_scene)
+		if _job_scene.has_method("begin"):
+			_job_scene.begin(ctx)
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		return
 	_panel_job = job
 	var bb := "[color=#%s]// %s[/color]\n\n" % [RinkOS.ACTION.to_html(false), str(job.job).replace("_", " ").to_upper()]
-	var note := story.text(job.get("note", "")) if job.get("note", "") != "" else {}
+	var note := story.spot_text(job)
 	if not note.is_empty():
 		bb += "%s\n\n" % note.text
 	bb += "[color=#%s]The mini game for this one isn't in yet.[/color]\n\n[color=#%s][E] DO IT THE QUICK WAY   [Q] LEAVE IT[/color]" % [RinkOS.DIM.to_html(false), RinkOS.ACTION.to_html(false)]

@@ -159,9 +159,10 @@ kinds:
   `data/world/readables.json`. Examples are Gus's envelope under the mat
   (it gives the keys), the door of notes, the binder, the power bill and the
   manuals.
-- **JOB** hands over to a World mini game: the compressors' oil, the oil
-  drum, the glycol thermometer, Doris (she needs the plugs from the parts
-  drawer first) and her blade.
+- **JOB** hands over to a World mini game: the compressors' oil, Doris's
+  plugs (she needs them from the parts drawer first) and her blade. The
+  glycol thermometers are the plant round, which has no scene and happens
+  on the spot.
 - **SCREEN** asks UI for a screen: the office phone, the desk, the corkboard
   (Gus's goals), the ice grid and the log book.
 - **SWITCH** works a building system: the lighting panel in the lobby turns
@@ -176,13 +177,20 @@ kinds:
   walk's sim: the ice grid, log book, corkboard (Gus's goals) and the desk
   (jobs). Q, Esc or B leaves it. The phone has no screen yet, so it shows a
   plain panel. `screen_requested(id, sim)` fires for every screen spot.
-- A job instances the `scene` path under `scenes/world/jobs/`
-  (`oil_service`, `oil_top_up`, `plant_round`, `doris_wont_start`,
-  `blade_change`). If the scene has a `context` property, it gets
-  `{sim, job, target, room, args}`. When its `finished(result)` signal fires,
-  `WalkStory.finish_job` runs `RinkSim.job` with the args merged with
-  `result`.
+- A job instances its scene under `scenes/world/jobs/`
+  (`compressor_oil_service`, `doris_plugs`, `doris_blade`; the contract is
+  World's). The walk calls the root's `begin(ctx)` with
+  `{sim, job, target, room, args}`. When its `finished(result)` signal
+  fires, `WalkStory.finish_job` runs the job with the args merged with
+  `result`, through `RinkLife.job` when the walk has one (`WalkStory.life`),
+  else `RinkSim.job`. Until the sim knows `doris_plugs`, `engine_tune` stands
+  in for it.
 - If the scene isn't built yet, the job offers the quick way instead.
+- Texts prefer World's readables (`note_door_oil`, `note_screwdriver`,
+  `note_doris_dash`) and fall back to `data/venue/notes.json`.
+- The breaker calls `sim.set_lights(on)`. Once the sim has `lights_warm` and
+  `snow_pit`, the lamps and the pit show those numbers; until then the
+  venue keeps its own.
 
 `tools/tests/test_first_hour.gd` plays the hour headless.
 `tools/venue_shots.gd --first-hour [--lights]` renders it.

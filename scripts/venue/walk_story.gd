@@ -9,7 +9,7 @@ extends RefCounted
 ##
 ## use(spot) returns what the walk scene should do, one of:
 ##   {"read": {title, author, text, noticed}}
-##   {"job": {job, args, target, scene, room, note?}}
+##   {"job": {job, args, target, scene, room, note, readable}}  (scene "" = instant)
 ##   {"screen": id}
 ##   {"toast": text}
 
@@ -21,9 +21,14 @@ const TIME_SCALE := 1.75 / 60.0
 const LOCKED := ["Front doors"]
 const NOTES_PATH := "res://data/venue/notes.json"
 const READABLES_PATH := "res://data/world/readables.json"
+## World's job ids the sim doesn't know yet, and the sim job that stands in.
+const STAND_INS := {"doris_plugs": "engine_tune"}
 
 var venue: Venue
 var sim: RinkSim
+## World's RinkLife when the walk has one: jobs go through it so side
+## quests hear about them.
+var life = null
 ## What the player has picked up or learned: "keys", "spark_plugs", "read:<id>".
 var flags := {}
 var _clock_acc := 0.0
@@ -60,8 +65,14 @@ func tick(dt: float) -> void:
 		_clock_acc -= RinkSim.STEP_MIN
 		sim.advance(RinkSim.STEP_MIN)
 		var bay = venue.rooms.get("zamboni_bay")
-		if bay and bay.has_method("tick_pit"):
+		if bay and "snow_pit" in sim:
+			bay.set_snow(sim.snow_pit)
+		elif bay and bay.has_method("tick_pit"):
 			bay.tick_pit(RinkSim.STEP_MIN)
+	# once the sim keeps the lamps' warm-up, the building shows its number
+	var lights = venue.rooms.get("lighting")
+	if lights and lights.lights_on and "lights_warm" in sim:
+		lights._set_power(maxf(float(sim.lights_warm), 0.02))
 
 
 func clock_text() -> String:
@@ -70,6 +81,15 @@ func clock_text() -> String:
 
 func door_locked(d: VenueDoor) -> bool:
 	return d.label in LOCKED and not flags.has("keys")
+
+
+## A spot's text: its readable (data/world), else its venue note, else {}.
+func spot_text(d: Dictionary, fallback := "") -> Dictionary:
+	for id in [d.get("readable", ""), d.get("note", ""), fallback]:
+		var t := text(id)
+		if not t.is_empty():
+			return t
+	return {}
 
 
 ## The text for a readable or note id, or {}.
@@ -88,7 +108,7 @@ func use(s: VenueSpot) -> Dictionary:
 	match s.kind:
 		VenueSpot.Kind.READ:
 			flags["read:" + s.id] = true
-			var t := text(d.get("readable", d.get("note", s.id)))
+			var t := spot_text(d, s.id)
 			if gives == "keys":
 				t["noticed"] = "You have the keys. Big one's the front."
 			elif gives == "spark_plugs":
@@ -97,19 +117,21 @@ func use(s: VenueSpot) -> Dictionary:
 		VenueSpot.Kind.JOB:
 			var need: String = d.get("needs", "")
 			if need != "" and not flags.has(need):
-				var t := text(d.get("note", ""))
+				var t := spot_text(d)
 				if not t.is_empty():
 					t["noticed"] = "She cranks but won't fire. You'll need new plugs."
 					return {"read": t}
 				return {"toast": "You need %s first." % need.replace("_", " ")}
 			var room := venue.room_at(s.global_position)
 			return {"job": {"job": d.get("job", ""), "args": d.get("args", {}), "target": d.get("target", s.id), "scene": d.get("scene", ""),
-				"room": room.room_id if room else "", "note": d.get("note", "")}}
+				"room": room.room_id if room else "", "note": d.get("note", ""), "readable": d.get("readable", "")}}
 		VenueSpot.Kind.SCREEN:
 			return {"screen": d.get("screen", s.id)}
 		VenueSpot.Kind.SWITCH:
 			if d.get("system", "") == "ice_lights":
 				venue.set_ice_lights(not venue.ice_lights_on())
+				if sim.has_method("set_lights"):
+					sim.set_lights(venue.ice_lights_on())
 				return {"toast": "ICE LIGHTS ON. THEY TAKE A FEW MINUTES." if venue.ice_lights_on() else "ICE LIGHTS OFF."}
 		VenueSpot.Kind.USE:
 			if s.id == "snow_pit":
@@ -132,7 +154,10 @@ func _snow_pit() -> Dictionary:
 func finish_job(job: Dictionary, result: Dictionary) -> Dictionary:
 	var args: Dictionary = job.get("args", {}).duplicate()
 	args.merge(result, true)
-	var r := sim.job(job.get("job", ""), args)
+	var id: String = job.get("job", "")
+	if not RinkSim.JOBS.has(id):
+		id = STAND_INS.get(id, id)
+	var r: Dictionary = life.job(id, args) if life else sim.job(id, args)
 	if r.get("ok", false) and job.get("target", "") == "doris_plugs":
 		flags["doris_running"] = true
 	return r
