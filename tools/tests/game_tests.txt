@@ -4,3 +4,4 @@ sticks
 pausemenu
 practice
 notes
+anim res://scenes/anim/anim_studio.tscn
