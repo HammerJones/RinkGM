@@ -1,0 +1,286 @@
+{
+ "id": "gord_santa",
+ "giver": "gordon_halvorsen",
+ "quest": "gord_santa",
+ "nodes": {
+  "offer": {
+   "say": "HO HO HO! BIG GORD WON'T LET YOU WALK! Sorry. Habit. Skate with Santa, second Saturday. Santa arrives on Doris, like always. This year I want the works: full tank, shiny ice, and the nose. The red nose. On Doris. Earl won't let me. You're the boss. Be the boss.",
+   "options": [
+    {
+     "text": "Full tank, fresh ice. The nose, I'll think about.",
+     "do": [
+      {
+       "quest_start": "gord_santa"
+      },
+      {
+       "rel": [
+        "gordon_halvorsen",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why does Santa ride a resurfacer?",
+     "to": "why"
+    },
+    {
+     "text": "Is this an advert, Gord?",
+     "to": "advert"
+    },
+    {
+     "text": "Earl's the boss of Doris. Not me.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Because in 1987 the reindeer didn't show! Okay, there were never reindeer. Gus said 'get on the Zambelli' and the kids lost their minds. Now it's tradition. Tradition, plus a little brand awareness.",
+   "options": [
+    {
+     "text": "Okay, Santa. Let's do it.",
+     "do": [
+      {
+       "quest_start": "gord_santa"
+      },
+      {
+       "rel": [
+        "gordon_halvorsen",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "advert": {
+   "say": "A tiny bit. The suit says 'Big Gord's' on the belt buckle. Small! Tasteful! Kids don't read belt buckles. Dads read belt buckles. Dads need trucks.",
+   "options": [
+    {
+     "text": "Fine. Tasteful buckle. Let's go.",
+     "do": [
+      {
+       "quest_start": "gord_santa"
+      },
+      {
+       "rel": [
+        "gordon_halvorsen",
+        2
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Earl's the boss of Doris. Ha! That's true. That's the truest thing anybody's said to me all year. Okay. No works. Still coming, though. Santa doesn't cancel.",
+   "do": [
+    {
+     "rel": [
+      "gordon_halvorsen",
+      -1
+     ]
+    },
+    {
+     "rel": [
+      "earl_bratt",
+      2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "WONDERFUL. I'll bring candy canes. And a few brochures. For the adults. Small brochures.",
+   "options": []
+  },
+  "progress": {
+   "say": "HO HO, how's it going?",
+   "options": [
+    {
+     "text": "Filling her tank.",
+     "if": [
+      {
+       "step": [
+        "gord_santa",
+        "fuel"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Fresh flood coming.",
+     "if": [
+      {
+       "step": [
+        "gord_santa",
+        "flood"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "About the nose.",
+     "if": [
+      {
+       "step": [
+        "gord_santa",
+        "nose"
+       ]
+      }
+     ],
+     "to": "p_nose"
+    },
+    {
+     "text": "All set for Saturday.",
+     "if": [
+      {
+       "step": [
+        "gord_santa",
+        "skate"
+       ]
+      }
+     ],
+     "to": "p_skate"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_nose": {
+   "say": "The nose! Yes or no? Be the boss!",
+   "options": [
+    {
+     "text": "The nose goes on. For one lap. Earl takes it off for the flood.",
+     "do": [
+      {
+       "set": "doris_red_nose"
+      },
+      {
+       "set": "doris_nose_decided"
+      },
+      {
+       "rel": [
+        "gordon_halvorsen",
+        4
+       ]
+      },
+      {
+       "rel": [
+        "earl_bratt",
+        -2
+       ]
+      }
+     ],
+     "to": "p_nose_on"
+    },
+    {
+     "text": "Antlers only. Earl's rule.",
+     "do": [
+      {
+       "set": "doris_antlers_only"
+      },
+      {
+       "set": "doris_nose_decided"
+      },
+      {
+       "rel": [
+        "earl_bratt",
+        4
+       ]
+      }
+     ],
+     "to": "p_nose_off"
+    },
+    {
+     "text": "You wear the nose, Gord.",
+     "do": [
+      {
+       "set": "gord_wears_nose"
+      },
+      {
+       "set": "doris_nose_decided"
+      },
+      {
+       "rel": [
+        "gordon_halvorsen",
+        2
+       ]
+      },
+      {
+       "rel": [
+        "earl_bratt",
+        2
+       ]
+      }
+     ],
+     "to": "p_nose_gord"
+    }
+   ]
+  },
+  "p_nose_on": {
+   "say": "YES. One lap. Earl will take it off before the flood and put it back after. He won't say anything. He'll do it very loudly.",
+   "options": []
+  },
+  "p_nose_off": {
+   "say": "Antlers only. Earl's rule. You know what, that's fair. She's a lady. A lady with antlers.",
+   "options": []
+  },
+  "p_nose_gord": {
+   "say": "ME? Wear the nose? Oh, that's GOOD. That's an advert. Big Gord, red nose. I'll put it on a billboard. Sorry, Maple Tire.",
+   "options": []
+  },
+  "p_skate": {
+   "say": "I've been practising my wave. It's a truck salesman's wave. It's very sincere.",
+   "options": []
+  },
+  "complete": {
+   "say": "HO HO HO! Two hundred kids! Santa fell off at the north end, but gently, and right on the dead board, so I stopped dead. Ronnie says that's the first time anyone's used the Millbrook bank on purpose since 1977. Here. For the jar.",
+   "options": [
+    {
+     "text": "Thanks, Gord. Same time next year?",
+     "do": [
+      {
+       "rel": [
+        "gordon_halvorsen",
+        2
+       ]
+      }
+     ],
+     "to": "c_next"
+    },
+    {
+     "text": "You fell off Doris?",
+     "to": "c_fell"
+    },
+    {
+     "text": "No brochures next year, though.",
+     "to": "c_brochures"
+    }
+   ]
+  },
+  "c_next": {
+   "say": "Santa never cancels! Big Gord won't let you... yeah, you know.",
+   "options": []
+  },
+  "c_fell": {
+   "say": "Gently! A gentle fall! The kids thought it was part of the show. Next year, it's part of the show.",
+   "options": []
+  },
+  "c_brochures": {
+   "say": "No brochures. Okay. Maybe a fridge magnet. A tiny fridge magnet.",
+   "options": []
+  },
+  "done": {
+   "say": "HO HO! Need a truck?",
+   "options": []
+  }
+ }
+}

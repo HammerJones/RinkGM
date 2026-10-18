@@ -1,0 +1,335 @@
+{
+ "id": "dwayne_seven_minutes",
+ "giver": "dwayne_kuzyk",
+ "quest": "dwayne_seven_minutes",
+ "nodes": {
+  "offer": {
+   "say": "Seven minutes, {owner}. Seven! I just found out. That clock's been fast since 1996. I've been showing up at the Hat Trick for the 10:45 pitcher at 10:38 for eighteen years. That's two hours a year, standing at a bar, waiting. Do you know what I could do with two hours?",
+   "options": [
+    {
+     "text": "I'll look into the clock.",
+     "do": [
+      {
+       "quest_start": "dwayne_seven_minutes"
+      },
+      {
+       "rel": [
+        "dwayne_kuzyk",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "What would you do with two hours?",
+     "to": "why"
+    },
+    {
+     "text": "It's fast so your league gets on the ice on time.",
+     "to": "purpose"
+    },
+    {
+     "text": "Honestly, Dwayne, it's seven minutes.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Wait at the bar for two more hours, probably. But on MY terms.",
+   "options": [
+    {
+     "text": "Fair. Let me look into it.",
+     "do": [
+      {
+       "quest_start": "dwayne_seven_minutes"
+      },
+      {
+       "rel": [
+        "dwayne_kuzyk",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "purpose": {
+   "say": "Oh, sure, for the hockey. We've been late for eleven games anyway. The clock didn't save us. The clock only works on people who care about the hockey. I care about the pitcher.",
+   "options": [
+    {
+     "text": "Okay. I'll see what can be done.",
+     "do": [
+      {
+       "quest_start": "dwayne_seven_minutes"
+      },
+      {
+       "rel": [
+        "dwayne_kuzyk",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "It's seven minutes a game. That's a whole period of beer league, if you add it up. I added it up. In the bar. While I was waiting.",
+   "do": [
+    {
+     "rel": [
+      "dwayne_kuzyk",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Thank you. The Ice Holes salute you. They're not here, they're at the bar, but they'd salute you.",
+   "options": []
+  },
+  "progress": {
+   "say": "Clock news?",
+   "options": [
+    {
+     "text": "Going to have a look at it.",
+     "if": [
+      {
+       "step": [
+        "dwayne_seven_minutes",
+        "look"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "I want to hear what Midge thinks.",
+     "if": [
+      {
+       "step": [
+        "dwayne_seven_minutes",
+        "midge"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "I've made a decision about the clock.",
+     "if": [
+      {
+       "step": [
+        "dwayne_seven_minutes",
+        "decide"
+       ]
+      }
+     ],
+     "to": "p_decide"
+    },
+    {
+     "text": "Done. Let's see what happens at 10:45.",
+     "if": [
+      {
+       "step": [
+        "dwayne_seven_minutes",
+        "game"
+       ]
+      }
+     ],
+     "to": "p_game"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_decide": {
+   "say": "Hit me.",
+   "options": [
+    {
+     "text": "I'm setting it right. True time from now on.",
+     "do": [
+      {
+       "set": "clock_set_right"
+      },
+      {
+       "set": "clock_decided"
+      },
+      {
+       "rel": [
+        "dwayne_kuzyk",
+        4
+       ]
+      },
+      {
+       "rel": [
+        "midge_kaminski",
+        -4
+       ]
+      },
+      {
+       "note": "The Moosebrew clock now shows the true time. Somewhere in Millbrook, someone is writing a letter."
+      }
+     ],
+     "to": "p_right"
+    },
+    {
+     "text": "It stays fast. It's a keepsake. But here's a watch from the lost and found, set to the real time.",
+     "do": [
+      {
+       "set": "clock_left_fast"
+      },
+      {
+       "set": "dwayne_watch"
+      },
+      {
+       "set": "clock_decided"
+      },
+      {
+       "rel": [
+        "midge_kaminski",
+        3
+       ]
+      },
+      {
+       "rel": [
+        "dwayne_kuzyk",
+        2
+       ]
+      }
+     ],
+     "to": "p_watch"
+    },
+    {
+     "text": "It stays fast. Leave a little earlier, Dwayne.",
+     "do": [
+      {
+       "set": "clock_left_fast"
+      },
+      {
+       "set": "clock_decided"
+      },
+      {
+       "rel": [
+        "midge_kaminski",
+        3
+       ]
+      },
+      {
+       "rel": [
+        "dwayne_kuzyk",
+        -2
+       ]
+      }
+     ],
+     "to": "p_leave"
+    }
+   ]
+  },
+  "p_right": {
+   "say": "TRUE TIME. You're a hero. Midge is going to write a column about you. It's going to be mean. It's going to be so well written.",
+   "options": []
+  },
+  "p_watch": {
+   "say": "A watch! Somebody lost a watch at the rink and now it's mine. It's got a Big Gord's Trucks logo on it. Big Gord won't let me walk. Big Gord will let me arrive on time.",
+   "options": []
+  },
+  "p_leave": {
+   "say": "Leave earlier. From a hockey game. On purpose. That's... that's actually allowed, isn't it.",
+   "options": []
+  },
+  "p_game": {
+   "say": "Ten forty-five. Pitcher time. For the first time in eighteen years I'm going to see it poured.",
+   "options": []
+  },
+  "complete": {
+   "say": "10:45 on the dot. The pitcher arrived as I arrived. It was like a dance. The whole team cried. Okay, Terry from the Plungers cried, he was there for his own reasons.",
+   "options": [
+    {
+     "text": "Worth it?",
+     "to": "c_worth"
+    },
+    {
+     "text": "Maybe come to more games now?",
+     "do": [
+      {
+       "rel": [
+        "dwayne_kuzyk",
+        1
+       ]
+      }
+     ],
+     "to": "c_games"
+    },
+    {
+     "text": "Enjoy the pitcher, Dwayne.",
+     "to": "c_enjoy"
+    }
+   ]
+  },
+  "c_worth": {
+   "say": "Depends what you did.",
+   "options": [
+    {
+     "text": "I set the clock right.",
+     "if": [
+      {
+       "flag": "clock_set_right"
+      }
+     ],
+     "to": "c_right"
+    },
+    {
+     "text": "The watch.",
+     "if": [
+      {
+       "flag": "dwayne_watch"
+      }
+     ],
+     "to": "c_watch"
+    },
+    {
+     "text": "I told you to leave early.",
+     "if": [
+      {
+       "flag": "clock_left_fast"
+      },
+      {
+       "not_flag": "dwayne_watch"
+      }
+     ],
+     "to": "c_leave"
+    }
+   ]
+  },
+  "c_right": {
+   "say": "Worth it. The Late Ice League was four minutes late on the ice, but we were always late on the ice. Now we're late on purpose.",
+   "options": []
+  },
+  "c_watch": {
+   "say": "Worth it. The clock's still fast, the town's still happy, and I've got a watch that says Big Gord on it. Everybody wins. Especially Big Gord.",
+   "options": []
+  },
+  "c_leave": {
+   "say": "I left after the second period. Nobody noticed. The team was down six. Honestly, the best night of my life.",
+   "options": []
+  },
+  "c_games": {
+   "say": "More games. Wow. Okay. Maybe one more. Don't tell the bar.",
+   "options": []
+  },
+  "c_enjoy": {
+   "say": "I always do. Now I enjoy it on time.",
+   "options": []
+  },
+  "done": {
+   "say": "10:45. A sacred hour.",
+   "options": []
+  }
+ }
+}

@@ -1,0 +1,326 @@
+{
+  "id": "june_penner",
+  "barks": {
+    "idle": [
+      "SKATE!",
+      "That's a three-eighths lag bolt holding that rail. I sold it to Gus in 1998."
+    ],
+    "good_ice": [
+      "Look at that sheet! SKATE!"
+    ],
+    "bad_ice": [
+      "Even Grandpa wouldn't shout on that ice. He would, actually."
+    ],
+    "goal": [
+      "SKATE! SKATE! YES!",
+      "That's how you do it! SKATE!"
+    ],
+    "cold": [
+      "Cold! Shout louder, you'll warm up. SKATE!"
+    ],
+    "greet_owner": [
+      "Hey! Need any bolts?",
+      "{owner}! SKATE! Sorry. Habit."
+    ],
+    "leaving_happy": [
+      "Hoarse! Good night!"
+    ],
+    "leaving_angry": [
+      "Somebody was in C-4-7. I'm going home."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "Power play! SKATE!",
+        "That's for you, Grandpa. SKATE!"
+      ],
+      "high_school": [
+        "Go Mallards! SKATE! They're kids, they need it louder."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_june_penner"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "penner_night_annual"
+        },
+        {
+          "rel_gte": [
+            "june_penner",
+            40
+          ]
+        }
+      ],
+      "node": "penner"
+    },
+    {
+      "if": [
+        {
+          "event_now": "senior_hockey"
+        }
+      ],
+      "node": "game"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "june_penner",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "June Penner, Penner Hardware! You're fixing the place up? Good! You'll need three-eighths lag bolts. SKATE!",
+      "do": [
+        {
+          "set": "met_june_penner"
+        }
+      ],
+      "options": [
+        {
+          "text": "Why did you shout 'skate'?",
+          "to": "grandpa"
+        },
+        {
+          "text": "I'll buy my screws from you.",
+          "do": [
+            {
+              "set": "june_screws"
+            },
+            {
+              "rel": [
+                "june_penner",
+                5
+              ]
+            }
+          ],
+          "to": "first_screws"
+        },
+        {
+          "text": "Is that your seat?",
+          "to": "seat"
+        }
+      ]
+    },
+    "first_screws": {
+      "say": "At cost! For the rink, always at cost. Grandpa would come back and haunt me otherwise.",
+      "options": [
+        {
+          "text": "Thanks, June.",
+          "to": "hub"
+        }
+      ]
+    },
+    "seat": {
+      "say": "C-4-7. Grandpa's. The plaque's on it. Sit there during a Kings game and I'll know. I always know.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Somebody sat in C-4-7 on Friday! And the HOME scoreboard's still dead. I shouted SKATE at nobody."
+      ],
+      "options": [
+        {
+          "text": "I'll put a sign on the seat.",
+          "do": [
+            {
+              "rel": [
+                "june_penner",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "game": {
+      "say": "Kings night! The power play's coming, I can feel it. SKATE!",
+      "options": [
+        {
+          "text": "SKATE!",
+          "do": [
+            {
+              "rel": [
+                "june_penner",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "penner": {
+      "say": "Harold Penner Night. I still can't talk about it without shouting. SKATE! See? Thank you.",
+      "options": [
+        {
+          "text": "He'd be proud.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! Need any bolts? SKATE!",
+        "Hey! I left a box of wood screws behind your office door. Don't thank me. Okay, thank me."
+      ],
+      "options": [
+        {
+          "text": "Thanks, June.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "June Penner! What do you need?",
+        "Hey! What size are we talking?",
+        "What's up? SKATE! Sorry. Habit."
+      ],
+      "options": [
+        {
+          "text": "How's the store?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love here?",
+          "to": "events"
+        },
+        {
+          "text": "Tell me about your grandpa.",
+          "to": "grandpa"
+        },
+        {
+          "text": "Big Gord's billboards...",
+          "to": "gord"
+        },
+        {
+          "text": "How's the rink looking?",
+          "to": "rink"
+        },
+        {
+          "text": "Bye, June.",
+          "to": "end"
+        }
+      ]
+    },
+    "grandpa": {
+      "say": "Mayor Harold Penner. Cut the ribbon in 1974 and shouted SKATE from C-4-7 for thirty years. Somebody has to keep shouting.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "job": {
+      "say": "If we don't have it, Harold will order it. Different Harold, my cousin. The store's full of Harolds.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "The Kings, the Mallards, the specials. Anywhere you're allowed to shout. People who don't shout are just sitting in a cold room.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gord": {
+      "say": "Big Gord puts his face on everything. My board ad is from 1974 and faded, and his is shiny. I'd repaint mine myself, at cost.",
+      "options": [
+        {
+          "text": "Go ahead, repaint it.",
+          "if": [
+            {
+              "not_flag": "june_repaint_ok"
+            }
+          ],
+          "do": [
+            {
+              "set": "june_repaint_ok"
+            },
+            {
+              "rel": [
+                "june_penner",
+                4
+              ]
+            },
+            {
+              "note": "June Penner is repainting the 1974 Penner Hardware board ad herself, at cost."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Let's leave the boards for now.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Better?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Better! Grandpa would've shouted twice. SKATE! SKATE!",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,615 @@
+{
+  "id": "dylan_pruitt",
+  "barks": {
+    "idle": [
+      "Is it busy? It's busy. Okay, it's not busy.",
+      "Lost and found has nine mittens. Nine! Who loses one mitten?",
+      "I could be flooding. Can I be flooding? No. Okay."
+    ],
+    "good_ice": [
+      "Boss, the ice is SO good. Like a mirror. A slippery mirror.",
+      "Earl's gonna say nothing, which means it's perfect."
+    ],
+    "bad_ice": [
+      "Ice is kind of crunchy today. Is that bad? That's bad.",
+      "Somebody's gonna eat it at the blue line."
+    ],
+    "wet_ice": [
+      "Still wet, still wet, don't go on, still wet."
+    ],
+    "goal": [
+      "YES! Did you see that? You saw that.",
+      "Top cheese!"
+    ],
+    "cold": [
+      "It's cold. Is it cold? It's cold."
+    ],
+    "hungry": [
+      "Is there a Puckhead slice left? There's always a slice left."
+    ],
+    "long_line": [
+      "Line's out the door at rental. I got this. Do I got this?"
+    ],
+    "bored": [
+      "I alphabetized the skates. By size. Which isn't alphabetical."
+    ],
+    "greet_owner": [
+      "Boss!",
+      "Hey boss! What's up? Nothing's on fire.",
+      "Boss. Good news. Nothing."
+    ],
+    "leaving_happy": [
+      "Best shift ever. Again."
+    ],
+    "leaving_angry": [
+      "Kind of a rough day, boss. Washroom 2 won."
+    ],
+    "event_specific": {
+      "pro_practice": [
+        "The Dukes! On our ice! Act normal. I'm acting normal."
+      ],
+      "learn_to_skate": [
+        "Go Maddie! Let go of the chair! Or don't! Both are fine!"
+      ],
+      "stick_and_puck": [
+        "Shinny! Can I? After my shift. Okay, during."
+      ],
+      "special": [
+        "Haunted dressing room's ready. It's me. I'm the haunting."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_dylan_pruitt"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "learn_to_skate"
+        }
+      ],
+      "node": "maddie"
+    },
+    {
+      "if": [
+        {
+          "event_now": "pro_practice"
+        }
+      ],
+      "node": "dukes"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            21.0,
+            24.0
+          ]
+        }
+      ],
+      "node": "closing"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "dylan_pruitt",
+            40
+          ]
+        }
+      ],
+      "node": "pal"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hey! You're the new owner, right? You're the new owner. I'm Dylan. I'm basically here anyway, so, do you need anybody?",
+      "do": [
+        {
+          "set": "met_dylan_pruitt"
+        }
+      ],
+      "options": [
+        {
+          "text": "Maybe. What can you do?",
+          "do": [
+            {
+              "rel": [
+                "dylan_pruitt",
+                3
+              ]
+            }
+          ],
+          "to": "first_can"
+        },
+        {
+          "text": "Shouldn't you be at school?",
+          "do": [
+            {
+              "rel": [
+                "dylan_pruitt",
+                -1
+              ]
+            }
+          ],
+          "to": "first_school"
+        },
+        {
+          "text": "Ask me again in a week or two.",
+          "do": [
+            {
+              "rel": [
+                "dylan_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "first_later"
+        }
+      ]
+    },
+    "first_can": {
+      "say": "Dressing rooms, washrooms, skate rental, the snowbank. Can I drive the girl? Doris, I mean. No. Not yet. But I'm ready.",
+      "options": [
+        {
+          "text": "We'll see.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_school": {
+      "say": "It's 3:40, boss. School ended at 3:30. I ran. Is running allowed in the lobby? It is now.",
+      "options": [
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_later": {
+      "say": "A week or two. Cool. Cool cool. I'll be here. I'm always here. I'm here right now.",
+      "options": [
+        {
+          "text": "I noticed.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Boss, people are kind of mad at the rental window. About the skates. And the line. And me, a bit."
+      ],
+      "options": [
+        {
+          "text": "What happened?",
+          "to": "grumpy2"
+        },
+        {
+          "text": "We'll fix it.",
+          "do": [
+            {
+              "rel": [
+                "dylan_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy2": {
+      "say": "Line was out the door and half the size nines are rusted. A kid cried. Okay, I also cried a little, in washroom 2, which is its own problem.",
+      "options": [
+        {
+          "text": "Rusty skates. Got it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "maddie": {
+      "say": "Watch the chair. Watch it. She's letting go. She's not letting go. She's going to, though. Right? Right.",
+      "options": [
+        {
+          "text": "She'll get there.",
+          "do": [
+            {
+              "rel": [
+                "dylan_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "maddie2"
+        },
+        {
+          "text": "Go cheer for her.",
+          "to": "end"
+        }
+      ]
+    },
+    "maddie2": {
+      "say": "Yeah. She falls like me, so she's got that going for her.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dukes": {
+      "say": "The Dukes, boss. Real pros. On our ice. I'm not going to ask for autographs. I asked for three.",
+      "options": [
+        {
+          "text": "Only three?",
+          "do": [
+            {
+              "rel": [
+                "dylan_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "closing": {
+      "say": "Last Puckhead slice. Want half? You want half. I'll get two forks. We don't have forks.",
+      "options": [
+        {
+          "text": "Half, thanks.",
+          "do": [
+            {
+              "rel": [
+                "dylan_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "closing2"
+        },
+        {
+          "text": "Go home, Dylan.",
+          "to": "end"
+        }
+      ]
+    },
+    "closing2": {
+      "say": "See, this is why this is the best job in the valley. Pizza and a Zambelli. Well. Pizza.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "pal": {
+      "say": [
+        "Boss! Guess what. No, guess. Okay, I'll tell you. Nothing. But it was fun.",
+        "Boss. I did both dressing rooms. Even the drain. Especially the drain."
+      ],
+      "options": [
+        {
+          "text": "Nice work.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Boss! What's up? Is it Doris? It's not Doris. What's up?",
+        "Hey boss. Need something? I can do it. Probably.",
+        "{weekday}, {time}. Busy? I'm busy. I can be not busy."
+      ],
+      "options": [
+        {
+          "text": "How's the job going?",
+          "to": "job"
+        },
+        {
+          "text": "What's your favourite thing on the ice?",
+          "to": "events"
+        },
+        {
+          "text": "You and Earl getting along?",
+          "to": "earl"
+        },
+        {
+          "text": "So. Josie.",
+          "if": [
+            {
+              "not_flag": "dylan_josie_nudge"
+            }
+          ],
+          "to": "josie"
+        },
+        {
+          "text": "Earl says twenty supervised floods.",
+          "if": [
+            {
+              "flag": "earl_dylan_twenty"
+            },
+            {
+              "not_flag": "dylan_told_twenty"
+            }
+          ],
+          "to": "twenty"
+        },
+        {
+          "text": "What do people say about the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Tell me about the cup in the snowbank.",
+          "if": [
+            {
+              "rel_gte": [
+                "dylan_pruitt",
+                40
+              ]
+            },
+            {
+              "not_flag": "dylan_cup_confessed"
+            }
+          ],
+          "to": "cup"
+        },
+        {
+          "text": "How's Maddie finding my practices?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach_maddie"
+        },
+        {
+          "text": "See you, Dylan.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Skate rental is a lot of feet, boss. So many feet. Washroom 2 is a nightmare. I've made peace with it. I haven't.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Stick and puck, obviously. The Dukes practicing. And the Halloween skate, because I run the haunted dressing room, which is me in a goalie mask.",
+      "options": [
+        {
+          "text": "Is it scary?",
+          "to": "events2"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events2": {
+      "say": "Is it scary? It's a little scary. Birdie Whitehorse cried, so I gave her the mask. Now she's the haunted dressing room.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "earl": {
+      "say": "Earl calls me 'the new kid'. I've been here four years. Is that a compliment? It's not. It might be.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "josie": {
+      "say": "Josie? What about Josie? Nothing about Josie. She laughs at my jokes, which, statistically, is something.",
+      "options": [
+        {
+          "text": "Ask her to the Christmas skate.",
+          "to": "josie_ask"
+        },
+        {
+          "text": "Leave it alone, then.",
+          "to": "hub"
+        }
+      ]
+    },
+    "josie_ask": {
+      "say": "The Christmas skate. With the lights. Okay. Okay. If this goes badly I'm moving to Harlow Falls.",
+      "do": [
+        {
+          "set": "dylan_josie_nudge"
+        },
+        {
+          "rel": [
+            "dylan_pruitt",
+            2
+          ]
+        }
+      ],
+      "options": [
+        {
+          "text": "It'll go fine.",
+          "to": "hub"
+        }
+      ]
+    },
+    "twenty": {
+      "say": "He said that? He SAID that? Twenty. I've done four. Boss. Boss. I'm going to do sixteen more.",
+      "do": [
+        {
+          "set": "dylan_told_twenty"
+        },
+        {
+          "rel": [
+            "dylan_pruitt",
+            4
+          ]
+        },
+        {
+          "rel": [
+            "earl_bratt",
+            -1
+          ]
+        }
+      ],
+      "options": [
+        {
+          "text": "Don't rush her.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Better than last month?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "And the washrooms?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Way better. Tommy said it's 'basically Duncannon'. It's not. But he said it.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "Washroom 2 has a door that locks now. I want to put up a plaque.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "cup": {
+      "say": "Okay. The Double-Double cup in the snowbank. That's mine. Grade 9. I wanted to see how long it would last. It's been three winters. It's kind of a landmark now.",
+      "options": [
+        {
+          "text": "Leave it. It's history.",
+          "do": [
+            {
+              "set": "dylan_cup_confessed"
+            },
+            {
+              "set": "snowbank_cup_stays"
+            },
+            {
+              "rel": [
+                "dylan_pruitt",
+                3
+              ]
+            }
+          ],
+          "to": "cup_keep"
+        },
+        {
+          "text": "Dylan. Pick it up.",
+          "do": [
+            {
+              "set": "dylan_cup_confessed"
+            },
+            {
+              "rel": [
+                "dylan_pruitt",
+                -1
+              ]
+            }
+          ],
+          "to": "cup_gone"
+        }
+      ]
+    },
+    "cup_keep": {
+      "say": "Really? Boss. That's the nicest thing anybody's ever said about my garbage.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "cup_gone": {
+      "say": "Yeah. Yeah, okay. End of an era. I'll say a few words.",
+      "do": [
+        {
+          "note": "Dylan Pruitt removed the Double-Double cup from the parking lot snowbank. He said a few words."
+        }
+      ],
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "coach_maddie": {
+      "say": "She says you said 'good'. Once. She's been saying it to the cat.",
+      "options": [
+        {
+          "text": "She earned it.",
+          "do": [
+            {
+              "rel": [
+                "dylan_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

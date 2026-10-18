@@ -1,0 +1,496 @@
+{
+  "id": "josee_thibodeau",
+  "barks": {
+    "idle": [
+      "One, two, three, and... one, two, three...",
+      "I have DIED. Again, please.",
+      "06:00 ice is the only real ice."
+    ],
+    "good_ice": [
+      "Fresh, flat and fair. Finally.",
+      "Clean takeoff. Clean landing. Possibly."
+    ],
+    "bad_ice": [
+      "There's a RUT. At my TAKEOFF. This is a tragedy in three acts.",
+      "Hockey people did this. I can feel it."
+    ],
+    "wet_ice": [
+      "Wet ice. My toe pick will betray me."
+    ],
+    "goal": [
+      "Please don't sound the horn during my run-through. Please."
+    ],
+    "cold": [
+      "Cold is fine. Cold ice is fast ice."
+    ],
+    "hungry": [
+      "After practice. I can't jump on fries."
+    ],
+    "long_line": [
+      "I'll count the program while I wait."
+    ],
+    "bored": [
+      "...two, three, and axel, and..."
+    ],
+    "greet_owner": [
+      "Hi. Did you see my double axel? No? Good. It was a disaster.",
+      "Morning. Is the ice fresh? Tell me it's fresh."
+    ],
+    "leaving_happy": [
+      "I landed it. With nobody watching. Typical."
+    ],
+    "leaving_angry": [
+      "The horn went off mid-program. My life is over."
+    ],
+    "event_specific": {
+      "figure_practice": [
+        "And the double axel... and I have DIED. Again.",
+        "Hélène nodded. She NODDED."
+      ],
+      "figure_show": [
+        "Don't look at me. Okay, look at me.",
+        "If I fall, it's art."
+      ],
+      "public_skate": [
+        "So many people going in circles. Badly. I love it."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_josee_thibodeau"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            5.5,
+            8.0
+          ]
+        }
+      ],
+      "node": "dawn"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_practice"
+        }
+      ],
+      "node": "fp_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "josee_thibodeau",
+            35
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Oh. Hi. Josée Thibodeau. Senior Bronze. The rut at the takeoff by the far circle? That's my whole life right now.",
+      "do": [
+        {
+          "set": "met_josee_thibodeau"
+        }
+      ],
+      "options": [
+        {
+          "text": "I'll get it fixed.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                4
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Nice to meet you, Josée.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Is it really that bad?",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                -1
+              ]
+            }
+          ],
+          "to": "first_bad"
+        }
+      ]
+    },
+    "first_bad": {
+      "say": "Is it that bad? It's a CANYON. I caught it and I flew and I landed like a sack of flour and Hélène said 'Again.' So yes.",
+      "options": [
+        {
+          "text": "Sorry. I'll talk to Earl.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry. Fresh, flat and fair. I promise.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Is this about the horn?",
+          "to": "horn"
+        }
+      ]
+    },
+    "dawn": {
+      "say": [
+        "06:00. Nobody's awake. Perfect. Watch the axel. No, don't. Yes, watch.",
+        "It's so quiet. This is the only time I land everything."
+      ],
+      "options": [
+        {
+          "text": "I'll watch.",
+          "to": "axel"
+        },
+        {
+          "text": "I'll leave you to the quiet.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "fp_now": {
+      "say": [
+        "One, two, three... sorry. Counting. What?",
+        "Hélène's watching. If I fall, pretend you didn't see."
+      ],
+      "options": [
+        {
+          "text": "Want me to watch your double axel?",
+          "to": "axel"
+        },
+        {
+          "text": "I'll let you concentrate.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "axel": {
+      "say": [
+        "I LANDED IT. Did you see? Write it down. Write the time.",
+        "And she rises... and she spins... and she falls. The crowd weeps. Again, please.",
+        "Half landed. Three-quarters. A historian would call it landed."
+      ],
+      "options": [
+        {
+          "text": "That was amazing.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Again!",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Hi! The ice was perfect this morning. I've decided you're good.",
+        "Hi {owner}. I fell eleven times today. Beautifully."
+      ],
+      "options": [
+        {
+          "text": "Beautifully is the main thing.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hi. One sec. ...two, three. Okay. Hi.",
+        "What? I'm listening. I'm also counting.",
+        "Hi. Please don't mention nerves."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's your test coming?",
+          "to": "test"
+        },
+        {
+          "text": "What music do you skate to?",
+          "to": "music"
+        },
+        {
+          "text": "Does the horn bother you?",
+          "to": "horn"
+        },
+        {
+          "text": "Your mum films a lot, huh?",
+          "to": "carol"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Bye, Josée.",
+          "to": "end"
+        }
+      ]
+    },
+    "test": {
+      "say": "Senior Bronze freeskate. Madame Lacombe judges. She brings her own blanket. I can land everything at 06:00 with nobody watching. With people watching, I become soup.",
+      "options": [
+        {
+          "text": "You don't have nerves. You have... energy.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Nerves are normal.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "music": {
+      "say": "A sea shanty played on a harpsichord. Nobody likes it. That's why it's mine. Hélène hates it. She nodded once, though.",
+      "options": [
+        {
+          "text": "Sounds amazing, honestly.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "horn": {
+      "say": "The horn went off in the middle of my run-through. During my FOOTWORK. I nearly left the sport. Forever. For ten minutes.",
+      "options": [
+        {
+          "text": "No horn tests during figure ice. Ever.",
+          "if": [
+            {
+              "not_flag": "no_horn_figure_ice"
+            }
+          ],
+          "do": [
+            {
+              "set": "no_horn_figure_ice"
+            },
+            {
+              "rel": [
+                "josee_thibodeau",
+                4
+              ]
+            },
+            {
+              "rel": [
+                "helene_arsenault",
+                1
+              ]
+            },
+            {
+              "note": "No horn tests during figure ice, by order of the owner."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Sorry, that's when we test it.",
+          "if": [
+            {
+              "not_flag": "no_horn_figure_ice"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "The horn's been quiet, right?",
+          "if": [
+            {
+              "flag": "no_horn_figure_ice"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "carol": {
+      "say": "She films everything. She knows my scores to two decimals, better than I do. I love her. Please take her phone.",
+      "options": [
+        {
+          "text": "I can't take her phone.",
+          "to": "hub"
+        },
+        {
+          "text": "I'll talk to her about Paolo's spot. Fewer cameras.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "I like it at 06:00. Empty. Earl's flood. Fresh, flat and fair. After that it's just a hockey rink with feelings.",
+      "options": [
+        {
+          "text": "The ice is better now, right?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "A hockey rink with feelings. Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "It's so much better. No rut at the takeoff. I fell anyway. But it was MY fault. That's progress.",
+      "options": [
+        {
+          "text": "Progress.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

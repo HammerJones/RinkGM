@@ -1,0 +1,205 @@
+{
+ "id": "rhonda_carnival_final",
+ "giver": "rhonda_pelkey",
+ "quest": "rhonda_carnival_final",
+ "nodes": {
+  "offer": {
+   "say": "Rhonda Pelkey. I stop things. Mostly balls, sometimes Kev. Carnival weekend is the broomball final and the ice has to be flat. Last year the corner by the visitors' gate ate a sneaker. Ate it. We heard it squeak.",
+   "options": [
+    {
+     "text": "Flat ice for the final. Done.",
+     "do": [
+      {
+       "quest_start": "rhonda_carnival_final"
+      },
+      {
+       "rel": [
+        "rhonda_pelkey",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "What's the boot?",
+     "to": "boot"
+    },
+    {
+     "text": "Does broomball really care about ice?",
+     "to": "care"
+    },
+    {
+     "text": "Carnival's already a lot. Can you play on whatever's there?",
+     "to": "decline"
+    }
+   ]
+  },
+  "boot": {
+   "say": "The Golden Boot. 2003. Somebody's dad's rubber boot and a can of gold paint. It's been on my porch three years because nobody beats us. My neighbour thinks I'm a fishing champion.",
+   "options": [
+    {
+     "text": "Let's give it a final worth winning.",
+     "do": [
+      {
+       "quest_start": "rhonda_carnival_final"
+      },
+      {
+       "rel": [
+        "rhonda_pelkey",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "care": {
+   "say": "Do sneakers care? Yes. Do knees care? Very much. Does the crowd care? There's a crowd, {owner}. Carnival night, people come. With lanterns.",
+   "options": [
+    {
+     "text": "Then the crowd gets good ice.",
+     "do": [
+      {
+       "quest_start": "rhonda_carnival_final"
+      },
+      {
+       "rel": [
+        "rhonda_pelkey",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Whatever's there ate a sneaker. But okay. We're broomball. We forgive.",
+   "do": [
+    {
+     "rel": [
+      "rhonda_pelkey",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Corners first. The visitors' gate corner. It sweats. Earl knows.",
+   "options": []
+  },
+  "progress": {
+   "say": "Carnival watch.",
+   "options": [
+    {
+     "text": "Edging the corners soon.",
+     "if": [
+      {
+       "step": [
+        "rhonda_carnival_final",
+        "edge"
+       ]
+      }
+     ],
+     "to": "p_edge"
+    },
+    {
+     "text": "Prelim night's coming.",
+     "if": [
+      {
+       "step": [
+        "rhonda_carnival_final",
+        "prelims"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Carnival's on its way.",
+     "if": [
+      {
+       "step": [
+        "rhonda_carnival_final",
+        "carnival"
+       ]
+      }
+     ],
+     "to": "p_carnival"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_edge": {
+   "say": "Earl says the edger starts on the third pull. I've seen it go to nine. I counted out loud. He didn't like that.",
+   "options": []
+  },
+  "p_carnival": {
+   "say": "The Molars are carving a molar. They carve a molar every year. It's a very good molar.",
+   "options": []
+  },
+  "complete": {
+   "say": "We LOST. In overtime! To the Smoke Eaters' wives' team! First time in three years! I've never been happier to lose anything. The Boot needs a new home, and it's not my porch. Where does it go?",
+   "options": [
+    {
+     "text": "The trophy case. Beside the pike.",
+     "do": [
+      {
+       "set": "golden_boot_in_case"
+      },
+      {
+       "rel": [
+        "rhonda_pelkey",
+        3
+       ]
+      }
+     ],
+     "to": "c_case"
+    },
+    {
+     "text": "With the winners, like a real trophy.",
+     "do": [
+      {
+       "set": "golden_boot_travels"
+      }
+     ],
+     "to": "c_winners"
+    },
+    {
+     "text": "Back on your porch. You'll win it back.",
+     "do": [
+      {
+       "rel": [
+        "rhonda_pelkey",
+        1
+       ]
+      }
+     ],
+     "to": "c_porch"
+    }
+   ]
+  },
+  "c_case": {
+   "say": "Beside the surprised pike! It looks surprised too. It's a boot, it doesn't have a face, but it looks surprised.",
+   "options": []
+  },
+  "c_winners": {
+   "say": "The Smoke Eaters' wives will put it in the fire hall. Good. Next year I'm going to the fire hall to get it back.",
+   "options": []
+  },
+  "c_porch": {
+   "say": "Ha! My neighbour will be so relieved. Fishing champion, back in business.",
+   "options": []
+  },
+  "done": {
+   "say": "Next carnival. I'm coming for that Boot.",
+   "options": []
+  }
+ }
+}

@@ -1,0 +1,7483 @@
+{
+ "version": 1,
+ "people": [
+  {
+   "id": "earl_bratt",
+   "name": "Earl Bratt",
+   "known_as": "Earl",
+   "age": 66,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A bungalow on Mill Road with a Zambelli weathervane",
+   "job": "Head icemaker (since 1983) and Doris's driver",
+   "role": "staff",
+   "archetype": "rink_staff",
+   "look": {
+    "build": "stocky",
+    "height": 0.98,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "b8b2a6",
+    "outfit": "coveralls",
+    "colors": [
+     "3c8d4e",
+     "f2f2e9"
+    ],
+    "accessory": "thermos"
+   },
+   "traits": {
+    "warmth": 0.35,
+    "chatter": 0.2,
+    "patience": 0.85,
+    "pride": 0.9,
+    "nerve": 0.8,
+    "humour": 0.55
+   },
+   "likes": [
+    "Doris",
+    "flood water at 55 degrees or better",
+    "CKVL on the bay radio",
+    "the Millbrook bank left exactly as it is",
+    "his tally wall (9,412 and counting)"
+   ],
+   "dislikes": [
+    "Flatleys and the men who sell them",
+    "anybody touching the tally wall",
+    "the new kid rushing Doris",
+    "cold water floods that skate like a bag of marbles"
+   ],
+   "voice": "Few words, all of them about ice. Calls Doris 'she' and the owner 'you'. Praise arrives as the absence of a complaint: 'You didn't kill her. Fine.'",
+   "interests": {
+    "beer_league": {
+     "watch": 0.8,
+     "play": 0.9
+    },
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "stick_and_puck": {
+     "watch": 0.7,
+     "play": 0.3
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.5
+    },
+    "minor_hockey": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 5.0,
+     "to": 6.0,
+     "place": "zamboni_bay",
+     "doing": "pre-figure flood"
+    },
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 21.0,
+     "to": 24.0,
+     "place": "zamboni_bay",
+     "doing": "work"
+    },
+    {
+     "days": [
+      6,
+      0
+     ],
+     "from": 7.0,
+     "to": 14.0,
+     "place": "zamboni_bay",
+     "doing": "work"
+    },
+    {
+     "days": [
+      1,
+      3,
+      5
+     ],
+     "from": 15.0,
+     "to": 18.0,
+     "place": "away",
+     "doing": "the Legion"
+    }
+   ],
+   "rel": {
+    "dylan_pruitt": 15,
+    "bev_kowalchuk": 45,
+    "old_pete_vachon": 60,
+    "gus_tremblay": 70,
+    "ronnie_haverstock": 55,
+    "helene_arsenault": 10,
+    "owner": -10
+   },
+   "dialogue": "earl_bratt",
+   "quests": [],
+   "bio": "Earl has driven Doris, the 1974 Zambelli Model 525, since 1983 and has the tally marks on the bay wall to prove it. He took his pension the day the town sold the rink and is sulking at the Legion; he comes back in month two if the ice stays over 45. He plays defence for the Flood Crew and uses the dead board better than anyone alive except Ronnie."
+  },
+  {
+   "id": "dylan_pruitt",
+   "name": "Dylan Pruitt",
+   "known_as": "Dylan",
+   "age": 17,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "His mum's place on Birch Street, though you would never know it",
+   "job": "Rink rat; Millbrook High grade 12; Mallards backup goalie",
+   "role": "staff",
+   "archetype": "rink_rat",
+   "look": {
+    "build": "slim",
+    "height": 1.02,
+    "skin": 1,
+    "hair": "toque_hair",
+    "hair_color": "5a3b22",
+    "outfit": "hoodie",
+    "colors": [
+     "2e7d4f",
+     "c9a227"
+    ],
+    "accessory": "skates_over_shoulder"
+   },
+   "traits": {
+    "warmth": 0.75,
+    "chatter": 0.8,
+    "patience": 0.2,
+    "pride": 0.45,
+    "nerve": 0.6,
+    "humour": 0.85
+   },
+   "likes": [
+    "driving Doris (supervised, for now)",
+    "Puckhead slices at closing",
+    "the Double-Double cup in the snowbank (he put it there)",
+    "being trusted with keys",
+    "his little sister letting go of the chair"
+   ],
+   "dislikes": [
+    "math homework",
+    "the STAFF ONLY sign that names him",
+    "washroom 2",
+    "Earl calling him 'the new kid'"
+   ],
+   "voice": "Fast, eager, over-explains. Calls the owner 'boss' and Doris 'the girl'. Asks a question and answers it himself before you can.",
+   "interests": {
+    "high_school": {
+     "watch": 0.4,
+     "play": 0.7
+    },
+    "pro_practice": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "stick_and_puck": {
+     "watch": 0.5,
+     "play": 0.8
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.4
+    },
+    "learn_to_skate": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.4
+    },
+    "minor_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      1,
+      3,
+      5
+     ],
+     "from": 16.0,
+     "to": 21.0,
+     "place": "skate_rental",
+     "doing": "work"
+    },
+    {
+     "days": [
+      0,
+      6
+     ],
+     "from": 9.0,
+     "to": 17.0,
+     "place": "zamboni_bay",
+     "doing": "work"
+    }
+   ],
+   "rel": {
+    "earl_bratt": 35,
+    "maddie_pruitt": 70,
+    "carla_pruitt": 55,
+    "tommy_bellweather": 40,
+    "bev_kowalchuk": 30,
+    "josie_bautista": 50,
+    "owner": 20
+   },
+   "dialogue": "dylan_pruitt",
+   "quests": [],
+   "bio": "Dylan wants to drive Doris more than he wants to graduate, and asks for a job in week two. He is fast and sloppy and gets good: dressing rooms, washrooms, skate rental, then edging, then, after twenty supervised floods, the real thing. He keeps the lost and found clipboard and, eventually, confesses about the cup in the snowbank.",
+   "family": [
+    "carla_pruitt",
+    "maddie_pruitt"
+   ]
+  },
+  {
+   "id": "marguerite_lindqvist",
+   "name": "Marguerite Lindqvist",
+   "known_as": "Marg",
+   "age": 66,
+   "pronouns": "she/her",
+   "town": "harlow_falls",
+   "home": "A tidy split-level in Harlow Falls, twelve minutes away, eleven in winter if she has to",
+   "job": "Plant operator (retired from the Harlow Falls plant)",
+   "role": "staff",
+   "archetype": "rink_staff",
+   "look": {
+    "build": "average",
+    "height": 0.97,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "c9c4bd",
+    "outfit": "coveralls",
+    "colors": [
+     "2b4f86",
+     "d62828"
+    ],
+    "accessory": "reading_glasses"
+   },
+   "traits": {
+    "warmth": 0.5,
+    "chatter": 0.3,
+    "patience": 0.75,
+    "pride": 0.7,
+    "nerve": 0.95,
+    "humour": 0.4
+   },
+   "likes": [
+    "a good log entry",
+    "refractometers",
+    "a boring inspection",
+    "matched pairs of B68 belts",
+    "the 05:00 plant round with nobody talking"
+   ],
+   "dislikes": [
+    "'about' as a reading",
+    "'fine' as a number",
+    "belts pried over the sheave",
+    "ammonia jokes",
+    "her son's penalty minutes"
+   ],
+   "voice": "Precise, numbers first. Corrects you mid-sentence and then makes you tea. Red pen voice: 'Fine is not a number.' Signs off M.L., even out loud.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "figure_show": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 5.0,
+     "to": 9.0,
+     "place": "plant_room",
+     "doing": "work"
+    },
+    {
+     "days": [
+      0,
+      6
+     ],
+     "from": 5.0,
+     "to": 6.0,
+     "place": "plant_room",
+     "doing": "rounds"
+    }
+   ],
+   "rel": {
+    "earl_bratt": 40,
+    "gus_tremblay": 25,
+    "cody_lindqvist": 80,
+    "andre_clarke": 50,
+    "owner": 0
+   },
+   "dialogue": "marguerite_lindqvist",
+   "quests": [],
+   "bio": "Marg ran the Harlow Falls plant for thirty years and retired into boredom, which did not suit her. She comes to Millbrook once the rink's reputation is Fair or the grumpy compressor trips, and she writes in the log in red pen when the owner's entries are wrong. Strict, kind under it, and the reason the ammonia inspector leaves happy.",
+   "family": [
+    "cody_lindqvist"
+   ]
+  },
+  {
+   "id": "bev_kowalchuk",
+   "name": "Beverly Kowalchuk",
+   "known_as": "Bev",
+   "age": 67,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "Above the pro shop on Main Street, with Toe Drag the cat",
+   "job": "Owner, Bev's Edge & Tape (since 1979)",
+   "role": "staff",
+   "archetype": "shopkeeper",
+   "look": {
+    "build": "stocky",
+    "height": 0.96,
+    "skin": 1,
+    "hair": "bun",
+    "hair_color": "8a8a8a",
+    "outfit": "shop_apron",
+    "colors": [
+     "2f5e8a",
+     "d9d4c7"
+    ],
+    "accessory": "reading_glasses"
+   },
+   "traits": {
+    "warmth": 0.6,
+    "chatter": 0.4,
+    "patience": 0.3,
+    "pride": 0.8,
+    "nerve": 0.7,
+    "humour": 0.9
+   },
+   "likes": [
+    "sharp edges",
+    "people who say thank you",
+    "the 1979 Kings",
+    "Old Bertha",
+    "a half-inch hollow, the way God and the 1979 manual intended"
+   ],
+   "dislikes": [
+    "composite sticks",
+    "being rushed",
+    "Warlock warranties",
+    "working Sundays"
+   ],
+   "voice": "Dry, short sentences, calls everyone 'champ'. Never raises her voice. Insults your edges, fixes them, undercharges, and tells you the truth about your ego for free.",
+   "interests": {
+    "figure_show": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "figure_practice": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.2,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.3
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 9.0,
+     "to": 18.0,
+     "place": "pro_shop",
+     "doing": "work"
+    },
+    {
+     "days": [
+      0
+     ],
+     "from": 10.0,
+     "to": 16.0,
+     "place": "away",
+     "doing": "church or the casino in Kessler"
+    }
+   ],
+   "rel": {
+    "earl_bratt": 40,
+    "old_pete_vachon": 85,
+    "tyler_kowalchuk": 60,
+    "ronnie_haverstock": 50,
+    "helene_arsenault": 45,
+    "agnes_mulroney": 40,
+    "paolo_marchetti": -5,
+    "owner": 0
+   },
+   "dialogue": "bev_kowalchuk",
+   "quests": [],
+   "bio": "Bev has sharpened every skate in Millbrook on Old Bertha since 1979 and machines her own spare parts because the maker went under in 1983. She is the girl in the red toque doing a sit spin in the lobby mural, and she denies it. Closed Sundays: church or the casino in Kessler, she won't say which.",
+   "family": [
+    "tyler_kowalchuk"
+   ]
+  },
+  {
+   "id": "tyler_kowalchuk",
+   "name": "Tyler Kowalchuk",
+   "known_as": "Tyler K",
+   "age": 17,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "His parents' place on Second Street, and Bev's shop on weekends",
+   "job": "Shop clerk on weekends; Millbrook High grade 11; amateur detective",
+   "role": "staff",
+   "archetype": "shopkeeper",
+   "look": {
+    "build": "slim",
+    "height": 1.05,
+    "skin": 1,
+    "hair": "curly",
+    "hair_color": "3b2a1e",
+    "outfit": "shop_apron",
+    "colors": [
+     "2f5e8a",
+     "f4f4f4"
+    ],
+    "accessory": "none"
+   },
+   "traits": {
+    "warmth": 0.55,
+    "chatter": 0.65,
+    "patience": 0.6,
+    "pride": 0.3,
+    "nerve": 0.4,
+    "humour": 0.7
+   },
+   "likes": [
+    "Toe Drag the cat",
+    "his detective notebook",
+    "the green balloon mystery",
+    "online stick reviews",
+    "being right about flex numbers"
+   ],
+   "dislikes": [
+    "being mistaken for Tyler Brandt",
+    "Bev's lectures, which he can recite",
+    "8 am classes"
+   ],
+   "voice": "Polite, a bit online, writes everything in a notebook and narrates clues. Says 'my great-aunt' instead of 'Bev' when he is in trouble.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "stick_and_puck": {
+     "watch": 0.2,
+     "play": 0.6
+    },
+    "high_school": {
+     "watch": 0.5,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      0,
+      6
+     ],
+     "from": 9.0,
+     "to": 18.0,
+     "place": "pro_shop",
+     "doing": "work"
+    }
+   ],
+   "rel": {
+    "bev_kowalchuk": 65,
+    "tyler_brandt": -15,
+    "dylan_pruitt": 30,
+    "owner": 5
+   },
+   "dialogue": "tyler_kowalchuk",
+   "quests": [],
+   "bio": "Bev's grand-nephew works the till on weekends once the counter is open more than twelve hours a week. He can do rentals and the counter but Bev will not let him near Old Bertha. He carries a detective's notebook and wants to know, more than anything, who ties the green balloon to the Mallards photo every 12 March.",
+   "family": [
+    "bev_kowalchuk"
+   ]
+  },
+  {
+   "id": "priya_sandhu",
+   "name": "Priya Sandhu",
+   "known_as": "Priya",
+   "age": 38,
+   "pronouns": "she/her",
+   "town": "harlow_falls",
+   "home": "A townhouse in Harlow Falls with two kids and a whiteboard calendar",
+   "job": "Booking coordinator, part-time",
+   "role": "staff",
+   "archetype": "rink_staff",
+   "look": {
+    "build": "average",
+    "height": 1.0,
+    "skin": 2,
+    "hair": "ponytail",
+    "hair_color": "1a1a1a",
+    "outfit": "staff_polo",
+    "colors": [
+     "3c8d4e",
+     "f2f2e9"
+    ],
+    "accessory": "headset"
+   },
+   "traits": {
+    "warmth": 0.65,
+    "chatter": 0.55,
+    "patience": 0.9,
+    "pride": 0.5,
+    "nerve": 0.85,
+    "humour": 0.6
+   },
+   "likes": [
+    "a full ice grid with no red in it",
+    "invoices paid on time (rare)",
+    "Bernie Ostrowski's excuses, as a genre",
+    "colour-coded sticky notes"
+   ],
+   "dislikes": [
+    "60-day late payers",
+    "double bookings",
+    "the office space heater on breaker 9"
+   ],
+   "voice": "Warm phone voice, iron underneath. Speaks in time slots: 'I can do you Tuesday at ten past ten, take it or leave it, love.'",
+   "interests": {
+    "tournament": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "from": 9.0,
+     "to": 13.0,
+     "place": "office",
+     "doing": "work"
+    },
+    {
+     "days": [
+      5
+     ],
+     "from": 9.0,
+     "to": 12.0,
+     "place": "office",
+     "doing": "work"
+    }
+   ],
+   "rel": {
+    "donna_pettigrew": 40,
+    "bernie_ostrowski": -10,
+    "dale_huffman": 30,
+    "tracy_haverstock": 40,
+    "owner": 10
+   },
+   "dialogue": "priya_sandhu",
+   "quests": [],
+   "bio": "Priya arrives once the rink has twenty contracts or a facility score of 35 and takes the phone off the owner's hands. She handles the grid's routine changes, the invoices and the late payers, and she has a separate voicemail greeting for the Mallards' coach. Her own kids play in Harlow Falls, which she mentions only when negotiating."
+  },
+  {
+   "id": "lorraine_duffy",
+   "name": "Lorraine Duffy",
+   "known_as": "Lorraine",
+   "age": 63,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "A bungalow behind Duffy Bros. Plumbing with a chest freezer full of chili",
+   "job": "Runs the Hot Stove snack bar (twenty-two years)",
+   "role": "staff",
+   "archetype": "canteen_worker",
+   "look": {
+    "build": "stocky",
+    "height": 0.95,
+    "skin": 0,
+    "hair": "curly",
+    "hair_color": "a0522d",
+    "outfit": "canteen_apron",
+    "colors": [
+     "e8452c",
+     "f2e6c8"
+    ],
+    "accessory": "coffee"
+   },
+   "traits": {
+    "warmth": 0.9,
+    "chatter": 0.85,
+    "patience": 0.65,
+    "pride": 0.55,
+    "nerve": 0.75,
+    "humour": 0.8
+   },
+   "likes": [
+    "Earl's gravy (she makes it, he takes the credit)",
+    "a long line that moves",
+    "tournament weekends",
+    "regulars who know their order",
+    "the Moosebrew clock running seven minutes fast"
+   ],
+   "dislikes": [
+    "fries during the anthem",
+    "the dent in the coffee machine moving",
+    "people who order 'just a water'",
+    "running out of hot chocolate at public skate"
+   ],
+   "voice": "Calls everyone 'hon', talks while she works and never stops working. Knows everybody's order and most of their business, and shares neither unless asked nicely.",
+   "interests": {
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "broomball": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "tournament": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.7,
+     "play": 0.3
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 15.0,
+     "to": 23.0,
+     "place": "canteen",
+     "doing": "work"
+    },
+    {
+     "days": [
+      0,
+      6
+     ],
+     "from": 8.0,
+     "to": 16.0,
+     "place": "canteen",
+     "doing": "work"
+    },
+    {
+     "days": [
+      5
+     ],
+     "from": 12.0,
+     "to": 16.0,
+     "place": "canteen",
+     "doing": "work"
+    }
+   ],
+   "rel": {
+    "terry_duffy": 80,
+    "earl_bratt": 30,
+    "josie_bautista": 60,
+    "gino_russo": 20,
+    "dwayne_kuzyk": 45,
+    "bob_ferreira": 35,
+    "owner": 10
+   },
+   "dialogue": "lorraine_duffy",
+   "quests": [],
+   "bio": "Lorraine has run the Hot Stove for twenty-two years, through four fryers and one coffee machine that only works if you hit it where the dent is. She makes Earl's gravy and lets him take the credit. She refuses to fix HOT CHOC LATE on the menu board because it is true at public skate, and tournament weekends are her Olympics. Terry Duffy of the Plungers is her nephew.",
+   "family": [
+    "terry_duffy"
+   ]
+  },
+  {
+   "id": "josie_bautista",
+   "name": "Josie Bautista",
+   "known_as": "Josie",
+   "age": 16,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "The Bautistas' duplex on Second Street",
+   "job": "Hot Stove counter after school; Mallards defence",
+   "role": "staff",
+   "archetype": "canteen_worker",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 2,
+    "hair": "ponytail",
+    "hair_color": "1a1a1a",
+    "outfit": "canteen_apron",
+    "colors": [
+     "2e7d4f",
+     "c9a227"
+    ],
+    "accessory": "none"
+   },
+   "traits": {
+    "warmth": 0.6,
+    "chatter": 0.45,
+    "patience": 0.5,
+    "pride": 0.75,
+    "nerve": 0.7,
+    "humour": 0.65
+   },
+   "likes": [
+    "the Mallards' girls getting real ice time",
+    "popcorn machine maintenance (it is satisfying)",
+    "her mum's progress at learn-to-skate",
+    "Shauna Reid, who she wants to be"
+   ],
+   "dislikes": [
+    "boys she checked yesterday calling her 'the canteen girl'",
+    "Dylan's jokes (she laughs anyway)",
+    "the fryer at 9 pm"
+   ],
+   "voice": "Deadpan, quick, a slight smile. Answers questions with questions. Fiercely proud of her family and will not say so.",
+   "interests": {
+    "high_school": {
+     "watch": 0.5,
+     "play": 0.9
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.4
+    },
+    "learn_to_skate": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "stick_and_puck": {
+     "watch": 0.2,
+     "play": 0.5
+    },
+    "broomball": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      1,
+      3,
+      5
+     ],
+     "from": 16.0,
+     "to": 21.0,
+     "place": "canteen",
+     "doing": "work"
+    },
+    {
+     "days": [
+      6
+     ],
+     "from": 12.0,
+     "to": 18.0,
+     "place": "canteen",
+     "doing": "work"
+    }
+   ],
+   "rel": {
+    "marisol_bautista": 80,
+    "dylan_pruitt": 35,
+    "lorraine_duffy": 55,
+    "shauna_reid": 45,
+    "noah_delisle": 40,
+    "owner": 5
+   },
+   "dialogue": "josie_bautista",
+   "quests": [],
+   "bio": "Josie works the Hot Stove counter three nights a week and plays defence for the Millbrook High Mallards, who are mostly boys and mostly scared of her. She is saving for a goalie camp she has not told her mother about. She watches her mum's learn-to-skate class from behind the popcorn machine.",
+   "family": [
+    "marisol_bautista"
+   ]
+  },
+  {
+   "id": "andre_clarke",
+   "name": "André Clarke",
+   "known_as": "André",
+   "age": 29,
+   "pronouns": "he/him",
+   "town": "kessler",
+   "home": "A rented apartment over the Kessler hardware store",
+   "job": "Maintenance tech (hired from the Kessler trades college)",
+   "role": "staff",
+   "archetype": "rink_staff",
+   "look": {
+    "build": "big",
+    "height": 1.08,
+    "skin": 3,
+    "hair": "buzz",
+    "hair_color": "1a1a1a",
+    "outfit": "coveralls",
+    "colors": [
+     "2b2b2b",
+     "f7c548"
+    ],
+    "accessory": "coffee"
+   },
+   "traits": {
+    "warmth": 0.7,
+    "chatter": 0.35,
+    "patience": 0.8,
+    "pride": 0.6,
+    "nerve": 0.9,
+    "humour": 0.5
+   },
+   "likes": [
+    "a labelled breaker panel",
+    "the edger starting on the first pull",
+    "cricket on the radio in summer, hockey in winter",
+    "Marg's red pen, honestly"
+   ],
+   "dislikes": [
+    "breaker 14 (until he learns)",
+    "'temporary' fixes from 1979",
+    "Gripley's tape used as a structural material"
+   ],
+   "voice": "Calm and unhurried. Talks to machines like a family doctor talks to patients: 'Okay. Let's see what she's telling us.' Names every tool.",
+   "interests": {
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "stick_and_puck": {
+     "watch": 0.2,
+     "play": 0.6
+    },
+    "broomball": {
+     "watch": 0.3,
+     "play": 0.4
+    },
+    "special": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 7.0,
+     "to": 11.0,
+     "place": "zamboni_bay",
+     "doing": "work"
+    },
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 11.0,
+     "to": 15.5,
+     "place": "lobby",
+     "doing": "work"
+    }
+   ],
+   "rel": {
+    "marguerite_lindqvist": 55,
+    "earl_bratt": 20,
+    "priya_sandhu": 30,
+    "owner": 10
+   },
+   "dialogue": "andre_clarke",
+   "quests": [],
+   "bio": "André grew up in Port Ainsley, trained in Kessler and arrives once the rink's reputation is Good. He does lights, plumbing, boards and glass, the edger and Doris's routine service, which Earl permits under supervision and with commentary. He is the first person to label breaker 14."
+  },
+  {
+   "id": "gus_tremblay",
+   "name": "Gus Tremblay",
+   "known_as": "Gus",
+   "age": 75,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A condo in Florida, and a corner of the plant room forever",
+   "job": "Retired arena manager (1977 to last spring)",
+   "role": "visitor",
+   "archetype": "retiree_regular",
+   "look": {
+    "build": "average",
+    "height": 0.95,
+    "skin": 0,
+    "hair": "bald",
+    "hair_color": "d8d8d8",
+    "outfit": "parka",
+    "colors": [
+     "c0272d",
+     "f2e6c8"
+    ],
+    "accessory": "coffee"
+   },
+   "traits": {
+    "warmth": 0.8,
+    "chatter": 0.5,
+    "patience": 0.7,
+    "pride": 0.65,
+    "nerve": 0.85,
+    "humour": 0.75
+   },
+   "likes": [
+    "a system",
+    "Mondays off (he never took one)",
+    "Doris's original keys",
+    "the 1998 Grizzly Gas calendar",
+    "seat B-1-1, which he never sat in"
+   ],
+   "dislikes": [
+    "anybody touching breaker 14",
+    "the town saying he left a mess",
+    "Florida ice, which is only in drinks"
+   ],
+   "voice": "A note-writer's voice: short imperatives, a joke at the end. Signs off 'G.' even out loud.",
+   "interests": {
+    "senior_hockey": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.9,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.5,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 0.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "Florida"
+    }
+   ],
+   "rel": {
+    "earl_bratt": 70,
+    "bev_kowalchuk": 60,
+    "old_pete_vachon": 65,
+    "marguerite_lindqvist": 20,
+    "owner": 25
+   },
+   "dialogue": "gus_tremblay",
+   "quests": [],
+   "bio": "Gus ran the Community Arena for forty-nine years and left a binder of notes taped to the plant room door. He writes a postcard a month from Florida. If the rink reaches Great, he comes back for the home opener, signs the guestbook and sits in B-1-1 for the first time."
+  },
+  {
+   "id": "ronnie_haverstock",
+   "name": "Ronnie \"The Milkman\" Haverstock",
+   "known_as": "Ronnie",
+   "age": 69,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A farmhouse on the edge of town with a dead spot in the barn boards, on purpose",
+   "job": "Retired GNHL centre (1979 to 1996); Thursday old-timers",
+   "role": "regular",
+   "archetype": "retiree_regular",
+   "look": {
+    "build": "slim",
+    "height": 1.03,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "b0b0b0",
+    "outfit": "team_jacket",
+    "colors": [
+     "2e7d4f",
+     "ffffff"
+    ],
+    "accessory": "stick"
+   },
+   "traits": {
+    "warmth": 0.8,
+    "chatter": 0.3,
+    "patience": 0.9,
+    "pride": 0.35,
+    "nerve": 0.86,
+    "humour": 0.6
+   },
+   "likes": [
+    "the dead spot behind the north net",
+    "beer leaguers who pass",
+    "milk, still",
+    "being called Ronnie, not Mr. Haverstock",
+    "the Cup Tree he planted in 1994"
+   ],
+   "dislikes": [
+    "speeches about him",
+    "anybody 'fixing' the north boards",
+    "his 1979 photo, which he says makes him look 'eager'"
+   ],
+   "voice": "Soft-spoken and modest; deflects every compliment to the other guy. Calls the owner 'the new owner' until he doesn't. Teaches by asking 'What did the puck do?'",
+   "interests": {
+    "beer_league": {
+     "watch": 0.5,
+     "play": 0.6
+    },
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "stick_and_puck": {
+     "watch": 0.8,
+     "play": 0.3
+    },
+    "pro_practice": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.8
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      4
+     ],
+     "from": 19.5,
+     "to": 22.0,
+     "place": "ice",
+     "doing": "old-timers' game"
+    },
+    {
+     "days": [
+      4
+     ],
+     "from": 22.0,
+     "to": 22.5,
+     "place": "canteen",
+     "doing": "a coffee after"
+    }
+   ],
+   "rel": {
+    "earl_bratt": 55,
+    "old_pete_vachon": 70,
+    "bev_kowalchuk": 50,
+    "tracy_haverstock": 85,
+    "kenny_szabo": 30,
+    "dale_huffman": 40,
+    "mason_saucier": 50,
+    "owner": 5
+   },
+   "dialogue": "ronnie_haverstock",
+   "quests": [],
+   "bio": "Ronnie drove the Millbrook Dairy truck until a snowbound Granite City scout watched him score five on the rink's crooked ice in 1979. Seventeen GNHL seasons, two Cups, and his number 14 hangs in the rafters. He still plays the Thursday old-timers' game and still passes off the same dead spot, which the rink has never fixed out of respect.",
+   "family": [
+    "tracy_haverstock"
+   ]
+  },
+  {
+   "id": "tracy_haverstock",
+   "name": "Tracy Haverstock",
+   "known_as": "Tracy",
+   "age": 42,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "Main Street, above the Millbrook Dairy shop",
+   "job": "Manager, Millbrook Dairy shop; organiser of the Haverstock Old-timers' Invitational",
+   "role": "regular",
+   "archetype": "volunteer",
+   "look": {
+    "build": "average",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "ponytail",
+    "hair_color": "a07040",
+    "outfit": "parka",
+    "colors": [
+     "2e7d4f",
+     "ffffff"
+    ],
+    "accessory": "clipboard"
+   },
+   "traits": {
+    "warmth": 0.7,
+    "chatter": 0.75,
+    "patience": 0.45,
+    "pride": 0.6,
+    "nerve": 0.65,
+    "humour": 0.72
+   },
+   "likes": [
+    "a beer garden licence that arrives on time",
+    "her dad saying yes to things",
+    "spreadsheets with colour",
+    "the Cup Tree at Christmas"
+   ],
+   "dislikes": [
+    "people asking her dad for autographs at the grocery store",
+    "late invoices",
+    "being 'Ronnie's daughter' in meetings"
+   ],
+   "voice": "Brisk and funny; handles everything. Speaks for her dad because he won't, then apologises to him for it.",
+   "interests": {
+    "special": {
+     "watch": 0.9,
+     "play": 1.0
+    },
+    "broomball": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.5
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 9.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "the Dairy shop"
+    }
+   ],
+   "rel": {
+    "ronnie_haverstock": 85,
+    "dale_huffman": 30,
+    "priya_sandhu": 40,
+    "lorraine_duffy": 35,
+    "owner": 5
+   },
+   "dialogue": "tracy_haverstock",
+   "quests": [],
+   "bio": "Ronnie will not ask anyone for anything, so his daughter books the Haverstock Old-timers' Invitational, finds the beer garden licence and argues the concessions split. Her partner plays broomball on Wednesdays, which is the only night she sits still. She runs the Dairy shop where the Cup sat on the counter in 1994.",
+   "family": [
+    "ronnie_haverstock"
+   ]
+  },
+  {
+   "id": "old_pete_vachon",
+   "name": "Pete Vachon",
+   "known_as": "Old Pete",
+   "age": 75,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A brick house on Rink Road with the 1979 photo in every room",
+   "job": "Lumber Kings equipment manager and club historian (since 1971)",
+   "role": "regular",
+   "archetype": "volunteer",
+   "look": {
+    "build": "slim",
+    "height": 0.92,
+    "skin": 0,
+    "hair": "bald",
+    "hair_color": "e0e0e0",
+    "outfit": "team_jacket",
+    "colors": [
+     "b22222",
+     "1b1b1b"
+    ],
+    "accessory": "clipboard"
+   },
+   "traits": {
+    "warmth": 0.75,
+    "chatter": 0.6,
+    "patience": 0.95,
+    "pride": 0.55,
+    "nerve": 0.7,
+    "humour": 0.65
+   },
+   "likes": [
+    "sharpening skates the night before a final",
+    "the Shed bell",
+    "pencil, never pen",
+    "the Valley Book of records",
+    "a kid who says thank you to the equipment manager"
+   ],
+   "dislikes": [
+    "loud skate guards",
+    "anybody calling the 1979 photo 'old'",
+    "Velcro"
+   ],
+   "voice": "A storyteller who starts every answer in 1971 and gets to the point eventually, and it is a good point. Writes everything in a small notebook.",
+   "interests": {
+    "senior_hockey": {
+     "watch": 1.0,
+     "play": 0.9
+    },
+    "stick_and_puck": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "pro_practice": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.4
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 17.0,
+     "to": 21.0,
+     "place": "dressing_room",
+     "doing": "work"
+    },
+    {
+     "days": [
+      6
+     ],
+     "from": 17.0,
+     "to": 22.5,
+     "place": "dressing_room",
+     "doing": "work"
+    }
+   ],
+   "rel": {
+    "doreen_vachon": 90,
+    "bev_kowalchuk": 85,
+    "ray_duchesne": 60,
+    "earl_bratt": 60,
+    "ronnie_haverstock": 70,
+    "kenny_szabo": 40,
+    "owner": 10
+   },
+   "dialogue": "old_pete_vachon",
+   "quests": [],
+   "bio": "Old Pete has sharpened every Lumber King's skates since 1971 and keeps the 1979 Cup photo in the sharpener's drawer. His notebook is the best character scouting in the valley, and his pencil records book is the only one anybody trusts. He rings the Shed bell after every home playoff win until he is hoarse.",
+   "family": [
+    "doreen_vachon"
+   ]
+  },
+  {
+   "id": "doreen_vachon",
+   "name": "Doreen Vachon",
+   "known_as": "Doreen",
+   "age": 73,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "The brick house on Rink Road, with a piano and a Casio",
+   "job": "Timekeeper (the Casio, Organ 2); piano teacher, Tuesdays upstairs",
+   "role": "regular",
+   "archetype": "volunteer",
+   "look": {
+    "build": "average",
+    "height": 0.93,
+    "skin": 0,
+    "hair": "curly",
+    "hair_color": "d0c8e0",
+    "outfit": "cardigan",
+    "colors": [
+     "6a8caf",
+     "f2e6c8"
+    ],
+    "accessory": "reading_glasses"
+   },
+   "traits": {
+    "warmth": 0.85,
+    "chatter": 0.7,
+    "patience": 0.6,
+    "pride": 0.75,
+    "nerve": 0.55,
+    "humour": 0.8
+   },
+   "likes": [
+    "Organ 2",
+    "the HOME flip chart",
+    "a ref who admits it",
+    "Auld Lang Syne at 00:30 on New Year's",
+    "her piano students' recitals"
+   ],
+   "dislikes": [
+    "missed calls (she plays the Kingsport dirge)",
+    "the 15 card, which tempts fate",
+    "people humming wrong notes in the lobby"
+   ],
+   "voice": "Sweet as pie and lethal. Speaks in musical cues: 'That was a dirge, dear. You earned it.'",
+   "interests": {
+    "beer_league": {
+     "watch": 0.6,
+     "play": 0.8
+    },
+    "senior_hockey": {
+     "watch": 0.8,
+     "play": 0.9
+    },
+    "figure_show": {
+     "watch": 0.8,
+     "play": 0.3
+    },
+    "public_skate": {
+     "watch": 0.6,
+     "play": 0.4
+    },
+    "special": {
+     "watch": 0.7,
+     "play": 0.9
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2
+     ],
+     "from": 15.0,
+     "to": 19.0,
+     "place": "community_room",
+     "doing": "piano lessons"
+    }
+   ],
+   "rel": {
+    "old_pete_vachon": 90,
+    "marcel_thibodeau": -5,
+    "helene_arsenault": 50,
+    "bev_kowalchuk": 55,
+    "irene_dubois": 45,
+    "owner": 10
+   },
+   "dialogue": "doreen_vachon",
+   "quests": [],
+   "bio": "Doreen runs the clock from the box between the penalty boxes and plays a Casio set to Organ 2: three songs and a passive-aggressive dirge for a missed call. Because the HOME scoreboard is dead, she hangs painted numbers off the box, and has never needed the 15. Tuesdays she teaches piano in the hall upstairs.",
+   "family": [
+    "old_pete_vachon"
+   ]
+  },
+  {
+   "id": "stan_szymanski",
+   "name": "Stan Szymanski",
+   "known_as": "Stan",
+   "age": 84,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "The same house since 1961, two blocks from the rink",
+   "job": "Retired mill millwright; the rafters end rail, every Lumber Kings game since 1974",
+   "role": "regular",
+   "archetype": "superfan",
+   "look": {
+    "build": "slim",
+    "height": 0.9,
+    "skin": 0,
+    "hair": "bald",
+    "hair_color": "f0f0f0",
+    "outfit": "parka",
+    "colors": [
+     "b22222",
+     "1b1b1b"
+    ],
+    "accessory": "scarf"
+   },
+   "traits": {
+    "warmth": 0.6,
+    "chatter": 0.15,
+    "patience": 0.8,
+    "pride": 0.85,
+    "nerve": 0.5,
+    "humour": 0.3
+   },
+   "likes": [
+    "his spot on the rail",
+    "a Lumber Kings goal",
+    "1979",
+    "people who leave him be",
+    "a coffee handed over without a word"
+   ],
+   "dislikes": [
+    "anybody standing in his spot",
+    "the wave",
+    "being written about in the Ledger (it was him)"
+   ],
+   "voice": "Hardly speaks. When he does, it is a single sentence about 1979 that lands like a hymn.",
+   "interests": {
+    "senior_hockey": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 21.5,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "old_pete_vachon": 70,
+    "ray_duchesne": 50,
+    "merv_tolliver": -20,
+    "june_penner": 45,
+    "owner": 0
+   },
+   "dialogue": "stan_szymanski",
+   "quests": [],
+   "bio": "Stan has stood at the same spot on the rafters end rail for every Lumber Kings home game since opening night in 1974; forty years of his elbows made the steel shiny. He is the old man the Ledger saw crying after a goal, and he would like that never mentioned again. If the Kings ever win another Aldous Cup, nobody knows what he will do."
+  },
+  {
+   "id": "midge_kaminski",
+   "name": "Midge Kaminski",
+   "known_as": "Midge",
+   "age": 64,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "A yellow house on Church Street with a typewriter she uses for drafts",
+   "job": "Columnist, Off the Boards, The Millbrook Clarion",
+   "role": "regular",
+   "archetype": "retiree_regular",
+   "look": {
+    "build": "average",
+    "height": 0.94,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "c07a4a",
+    "outfit": "cardigan",
+    "colors": [
+     "d98a1c",
+     "2b2b2b"
+    ],
+    "accessory": "camera"
+   },
+   "traits": {
+    "warmth": 0.95,
+    "chatter": 0.9,
+    "patience": 0.7,
+    "pride": 0.45,
+    "nerve": 0.6,
+    "humour": 0.85
+   },
+   "likes": [
+    "a keepsake left alone",
+    "letters to the editor (eleven, all about the clock)",
+    "Ronnie stories she hasn't heard yet",
+    "the bake sale page",
+    "the HOT CHOC LATE sign"
+   ],
+   "dislikes": [
+    "anybody touching the dead spot",
+    "Merv Tolliver's adjectives",
+    "renovations that come without a casserole"
+   ],
+   "voice": "Warm, wry newspaper-column cadence. Starts with 'A word, as a friend.' Always ends on a kicker.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "high_school": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "figure_show": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.7,
+     "play": 0.2
+    },
+    "minor_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 1.0,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 9.0,
+     "to": 14.0,
+     "place": "away",
+     "doing": "the Clarion office"
+    }
+   ],
+   "rel": {
+    "ronnie_haverstock": 60,
+    "merv_tolliver": -30,
+    "agnes_mulroney": 55,
+    "dale_huffman": 45,
+    "larry_piche": 50,
+    "owner": 15
+   },
+   "dialogue": "midge_kaminski",
+   "quests": [],
+   "bio": "Midge has written Off the Boards for the Clarion for forty years and ghost-wrote Ronnie's memoir, Off the Dead Spot. She is the town's conscience about keepsakes: renovate whatever you like, but leave the clock alone. She prints the beer league scores next to the church bake sale and considers that the correct order."
+  },
+  {
+   "id": "agnes_mulroney",
+   "name": "Agnes Mulroney",
+   "known_as": "Agnes",
+   "age": 77,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "The house with the painted mailbox on Pond Road",
+   "job": "Retired art teacher (31 years); Valley Rocks Bonspiel draw master",
+   "role": "regular",
+   "archetype": "retiree_regular",
+   "look": {
+    "build": "slim",
+    "height": 0.92,
+    "skin": 0,
+    "hair": "bun",
+    "hair_color": "e8e8e8",
+    "outfit": "cardigan",
+    "colors": [
+     "3fa7d6",
+     "f4f4f4"
+    ],
+    "accessory": "blanket"
+   },
+   "traits": {
+    "warmth": 0.78,
+    "chatter": 0.55,
+    "patience": 0.5,
+    "pride": 0.8,
+    "nerve": 0.74,
+    "humour": 0.7
+   },
+   "likes": [
+    "the mural, third leg and all",
+    "curlers who notice everything",
+    "level ice within three millimetres",
+    "a good sit spin",
+    "her draw board"
+   ],
+   "dislikes": [
+    "anybody 'correcting' the mural",
+    "a 4 mm dip under a house",
+    "a coat on Rascal's seat"
+   ],
+   "voice": "Schoolteacher precision with a twinkle. Grades things out of ten and gives reasons. Calls grown men by their first names as if they are still sixteen, because to her they are.",
+   "interests": {
+    "figure_show": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "figure_practice": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.8,
+     "play": 0.3
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.9
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      3
+     ],
+     "from": 10.0,
+     "to": 12.0,
+     "place": "community_room",
+     "doing": "seniors' art club"
+    }
+   ],
+   "rel": {
+    "bud_mulroney": 85,
+    "bev_kowalchuk": 40,
+    "dale_huffman": 35,
+    "midge_kaminski": 55,
+    "helene_arsenault": 60,
+    "owner": 10
+   },
+   "dialogue": "agnes_mulroney",
+   "quests": [],
+   "bio": "Agnes taught art at Millbrook High for thirty-one years and supervised the 1976 lobby mural, Winter on the Mill Pond. She knows which leg of the three-legged skater was Dale Huffman's and has promised not to say. Now she runs the draw at the Valley Rocks Bonspiel, where curlers notice everything and she notices more.",
+   "family": [
+    "bud_mulroney"
+   ]
+  },
+  {
+   "id": "bud_mulroney",
+   "name": "Bud Mulroney",
+   "known_as": "Bud",
+   "age": 79,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "The house with the painted mailbox on Pond Road",
+   "job": "Retired rural mail carrier; sells the 50/50",
+   "role": "regular",
+   "archetype": "volunteer",
+   "look": {
+    "build": "big",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "bald",
+    "hair_color": "dcdcdc",
+    "outfit": "parka",
+    "colors": [
+     "b22222",
+     "f2e6c8"
+    ],
+    "accessory": "sign"
+   },
+   "traits": {
+    "warmth": 0.95,
+    "chatter": 0.8,
+    "patience": 0.76,
+    "pride": 0.2,
+    "nerve": 0.62,
+    "humour": 0.9
+   },
+   "likes": [
+    "a 50/50 pot over $300",
+    "Rascal (he still talks about Rascal)",
+    "his wife's curling draws",
+    "public skate from the bench with a thermos"
+   ],
+   "dislikes": [
+    "people who say 'next time' to the 50/50",
+    "the drum that sticks",
+    "pigeons, except Linesman"
+   ],
+   "voice": "Huckster-gentle: 'Fifty-fifty, half for you, half for the kids, all for a good cause, dear.' Tells a dog story at any opening.",
+   "interests": {
+    "senior_hockey": {
+     "watch": 0.9,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.7,
+     "play": 0.8
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 7.0,
+     "to": 9.0,
+     "place": "away",
+     "doing": "coffee at the Legion"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 21.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "agnes_mulroney": 85,
+    "old_pete_vachon": 55,
+    "stan_szymanski": 40,
+    "lorraine_duffy": 40,
+    "owner": 15
+   },
+   "dialogue": "bud_mulroney",
+   "quests": [],
+   "bio": "Bud delivered the rural mail for thirty-eight years and now sells 50/50 tickets at every Lumber Kings game from a roll he keeps in his parka. Rascal, the dog who chased every puck in Millbrook and is remembered on seat A-9-3, was his. The booster club's 50/50 paid for a fridge, which Bud considers a triumph.",
+   "family": [
+    "agnes_mulroney"
+   ]
+  },
+  {
+   "id": "june_penner",
+   "name": "June Penner",
+   "known_as": "June",
+   "age": 48,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "Behind Penner Hardware, in her grandfather's house",
+   "job": "Owner, Penner Hardware ('If we don't have it, Harold will order it')",
+   "role": "regular",
+   "archetype": "superfan",
+   "look": {
+    "build": "stocky",
+    "height": 0.98,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "6b4f3a",
+    "outfit": "parka",
+    "colors": [
+     "b22222",
+     "1b1b1b"
+    ],
+    "accessory": "foam_finger"
+   },
+   "traits": {
+    "warmth": 0.7,
+    "chatter": 0.75,
+    "patience": 0.35,
+    "pride": 0.65,
+    "nerve": 0.45,
+    "humour": 0.76
+   },
+   "likes": [
+    "seat C-4-7 (her grandfather's)",
+    "shouting 'SKATE!' for him",
+    "the Lumber Kings' power play",
+    "selling the rink its own screws at cost",
+    "Harold Penner Night"
+   ],
+   "dislikes": [
+    "anybody in C-4-7",
+    "the dead HOME scoreboard",
+    "Big Gord's billboards",
+    "people who don't shout"
+   ],
+   "voice": "Loud and kind, a hardware woman who can tell you the bolt size of anything in the building. Shouts 'SKATE!' as punctuation.",
+   "interests": {
+    "senior_hockey": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "high_school": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.9,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 18.0,
+     "place": "away",
+     "doing": "Penner Hardware"
+    },
+    {
+     "days": [
+      6
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "Penner Hardware"
+    }
+   ],
+   "rel": {
+    "stan_szymanski": 45,
+    "ray_duchesne": 50,
+    "gordon_halvorsen": -20,
+    "andre_clarke": 35,
+    "owner": 20
+   },
+   "dialogue": "june_penner",
+   "quests": [],
+   "bio": "June's grandfather, Mayor Harold Penner, cut the ribbon in 1974 and sat in C-4-7 shouting 'SKATE!' for thirty years; the plaque is on the seat. June inherited the hardware store, the seat and the shout, and would like one night at the rink in his name. Penner Hardware has a board ad from 1974 and June would like it repainted, at cost, by herself."
+  },
+  {
+   "id": "dale_huffman",
+   "name": "Dale Huffman",
+   "known_as": "Dale",
+   "age": 66,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A bungalow full of binders, all labelled",
+   "job": "Commissioner, Valley Beer League (keeper of the binder)",
+   "role": "regular",
+   "archetype": "volunteer",
+   "look": {
+    "build": "average",
+    "height": 0.98,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "9a8f80",
+    "outfit": "team_jacket",
+    "colors": [
+     "0b2545",
+     "f2f2f2"
+    ],
+    "accessory": "clipboard"
+   },
+   "traits": {
+    "warmth": 0.66,
+    "chatter": 0.6,
+    "patience": 0.55,
+    "pride": 0.7,
+    "nerve": 0.5,
+    "humour": 0.45
+   },
+   "likes": [
+    "the binder",
+    "dues paid on time",
+    "an eleven-minute AGM",
+    "awards night",
+    "the idea of a Commissioner Emeritus mug"
+   ],
+   "dislikes": [
+    "losing the binder (unthinkable)",
+    "'I'll pay next week'",
+    "anybody asking which leg of the mural was his"
+   ],
+   "voice": "Procedural and fond. Cites bylaws by number, then softens: 'Bylaw 4.2. But I'll give you two weeks.'",
+   "interests": {
+    "beer_league": {
+     "watch": 1.0,
+     "play": 0.4
+    },
+    "tournament": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.3
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 21.5,
+     "to": 24.0,
+     "place": "stands",
+     "doing": "watching the late ice"
+    }
+   ],
+   "rel": {
+    "earl_bratt": 50,
+    "ronnie_haverstock": 40,
+    "colin_nolan": 55,
+    "dwayne_kuzyk": -10,
+    "agnes_mulroney": 35,
+    "owner": 0
+   },
+   "dialogue": "dale_huffman",
+   "quests": [],
+   "bio": "Dale has run the Valley Beer League out of one binder for longer than some of its players have been alive. Eight weeks into the season he calls the owner about dues: owner or not, everybody pays, because the $120 buys the refs, the pucks and the jerseys. He painted one leg of the three-legged skater in the lobby mural in 1976 and has never said which."
+  },
+  {
+   "id": "donna_pettigrew",
+   "name": "Donna Pettigrew",
+   "known_as": "Donna",
+   "age": 56,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "A farmhouse with a deep freeze of bake-sale squares",
+   "job": "President, Millbrook Minor Hockey Association",
+   "role": "regular",
+   "archetype": "volunteer",
+   "look": {
+    "build": "stocky",
+    "height": 0.97,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "7a5230",
+    "outfit": "coach_tracksuit",
+    "colors": [
+     "1c4e80",
+     "f2f2f2"
+    ],
+    "accessory": "clipboard"
+   },
+   "traits": {
+    "warmth": 0.56,
+    "chatter": 0.7,
+    "patience": 0.4,
+    "pride": 0.85,
+    "nerve": 0.9,
+    "humour": 0.5
+   },
+   "likes": [
+    "Saturday-morning ice at the capped rate",
+    "an AED on the wall",
+    "bake sales that net four figures",
+    "a volunteer schedule with no holes",
+    "kids who thank the Zambelli driver"
+   ],
+   "dislikes": [
+    "cancelled ice with no notice",
+    "ruts that could hurt a kid",
+    "Harlow Falls's 'Pathway to Excellence' poster",
+    "parents who coach from the glass"
+   ],
+   "voice": "Runs a meeting like an army with a bake sale. Clipped and commanding, with sudden warmth for any kid in range. Uses 'we' to mean 'you'.",
+   "interests": {
+    "minor_hockey": {
+     "watch": 1.0,
+     "play": 0.9
+    },
+    "tournament": {
+     "watch": 0.9,
+     "play": 1.0
+    },
+    "learn_to_skate": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.7,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      3
+     ],
+     "from": 16.5,
+     "to": 20.0,
+     "place": "glass",
+     "doing": "minor hockey"
+    },
+    {
+     "days": [
+      0,
+      6
+     ],
+     "from": 7.5,
+     "to": 12.0,
+     "place": "lobby",
+     "doing": "minor hockey"
+    }
+   ],
+   "rel": {
+    "rick_saucier": -25,
+    "carla_pruitt": 50,
+    "priya_sandhu": 40,
+    "helene_arsenault": 20,
+    "brody_sauve": 40,
+    "owner": 0
+   },
+   "dialogue": "donna_pettigrew",
+   "quests": [],
+   "bio": "Donna runs Millbrook Minor Hockey and moved half its ice to Harlow Falls last spring when the old rink stopped being safe. She is the rink's most important customer and the Community Ice Agreement gives her first refusal on prime ice. Her brother Lorne keeps the red phone in Duncannon; she calls him less than he would like."
+  },
+  {
+   "id": "ray_duchesne",
+   "name": "Ray Duchesne",
+   "known_as": "Ray",
+   "age": 66,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A two-storey on Elm Street with plaid curtains",
+   "job": "Board chair, Millbrook Lumber Kings (volunteer); retired pharmacist",
+   "role": "regular",
+   "archetype": "superfan",
+   "look": {
+    "build": "big",
+    "height": 1.02,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "cfcfcf",
+    "outfit": "suit",
+    "colors": [
+     "b22222",
+     "1b1b1b"
+    ],
+    "accessory": "programme"
+   },
+   "traits": {
+    "warmth": 0.76,
+    "chatter": 0.66,
+    "patience": 0.84,
+    "pride": 0.62,
+    "nerve": 0.4,
+    "humour": 0.56
+   },
+   "likes": [
+    "bake sales that save hockey clubs",
+    "the 1979 Aldous Cup",
+    "a full house",
+    "his From the Chair column in the programme",
+    "Old Pete's Corner"
+   ],
+   "dislikes": [
+    "the January probation deadline",
+    "Harlow Falls",
+    "board meetings past 9 pm"
+   ],
+   "voice": "Earnest and ceremonial, a toast for every occasion. 'Friends,' he begins, and you are in for a while.",
+   "interests": {
+    "senior_hockey": {
+     "watch": 1.0,
+     "play": 0.6
+    },
+    "minor_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 9.0,
+     "to": 12.0,
+     "place": "away",
+     "doing": "Lumber Kings paperwork at the kitchen table"
+    }
+   ],
+   "rel": {
+    "old_pete_vachon": 60,
+    "stan_kubiak": 45,
+    "june_penner": 50,
+    "stan_szymanski": 50,
+    "owner": 10
+   },
+   "dialogue": "ray_duchesne",
+   "quests": [],
+   "bio": "Ray has kept the Lumber Kings alive for twenty years on bake sales and stubbornness. At the start the club plays out an old lease on probation: if the ice reputation isn't 60 by January, they announce a move to Harlow Falls, and it is Ray who has to say it. On the GM path he is the man the owner replaces, and learns to be glad of it."
+  },
+  {
+   "id": "helene_arsenault",
+   "name": "Hélène Arsenault",
+   "known_as": "Hélène",
+   "age": 61,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "A narrow house by the church with a ballet barre in the kitchen",
+   "job": "Head coach, Millbrook Figure Skating Club",
+   "role": "regular",
+   "archetype": "coach",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "bun",
+    "hair_color": "2b2b2b",
+    "outfit": "figure_warmup",
+    "colors": [
+     "9fc5e8",
+     "1d2b4f"
+    ],
+    "accessory": "coffee"
+   },
+   "traits": {
+    "warmth": 0.4,
+    "chatter": 0.46,
+    "patience": 0.64,
+    "pride": 0.95,
+    "nerve": 0.8,
+    "humour": 0.35
+   },
+   "likes": [
+    "minus three and a half at the surface",
+    "a clean jump landing",
+    "06:00, which is sacred",
+    "the 50 Carnivals banner, ironed",
+    "a skater who does it again without being asked"
+   ],
+   "dislikes": [
+    "hockey ice at her session",
+    "a rut at a jump landing",
+    "being called Helen",
+    "parents filming from the ice door"
+   ],
+   "voice": "Precise, few words, devastating adjectives. A nod is a medal. Most sentences are one word long, and the word is 'Again.' Calls the owner's edges 'agricultural'.",
+   "interests": {
+    "figure_practice": {
+     "watch": 0.9,
+     "play": 1.0
+    },
+    "figure_show": {
+     "watch": 1.0,
+     "play": 1.0
+    },
+    "learn_to_skate": {
+     "watch": 0.7,
+     "play": 0.2
+    },
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.3
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 5.5,
+     "to": 8.5,
+     "place": "bench",
+     "doing": "coaching"
+    },
+    {
+     "days": [
+      6
+     ],
+     "from": 11.5,
+     "to": 14.5,
+     "place": "bench",
+     "doing": "coaching"
+    }
+   ],
+   "rel": {
+    "colette_beaulieu": 70,
+    "earl_bratt": 25,
+    "donna_pettigrew": -10,
+    "bev_kowalchuk": 45,
+    "yvette_lacombe": 55,
+    "josee_thibodeau": 60,
+    "owner": -5
+   },
+   "dialogue": "helene_arsenault",
+   "quests": [],
+   "bio": "Hélène came from Sainte-Odile to skate in the club's carnival as a girl and never left. She arrives at 06:00 for a trial session, feels the ice with a blade and frowns: 'It is like skating on a parking lot.' Hard to please, loyal once happy, and the only person who irons a banner."
+  },
+  {
+   "id": "kev_szabo",
+   "name": "Kev Szabo",
+   "known_as": "Kev",
+   "age": 58,
+   "pronouns": "he/him",
+   "town": "harlow_falls",
+   "home": "A bungalow with a broomball net on the garage",
+   "job": "President, Harlow Falls Broomball Club; drives a feed truck",
+   "role": "regular",
+   "archetype": "broomballer",
+   "look": {
+    "build": "big",
+    "height": 1.04,
+    "skin": 0,
+    "hair": "mullet",
+    "hair_color": "8a6a4a",
+    "outfit": "hoodie",
+    "colors": [
+     "f28c28",
+     "1b1b1b"
+    ],
+    "accessory": "helmet"
+   },
+   "traits": {
+    "warmth": 0.86,
+    "chatter": 0.85,
+    "patience": 0.6,
+    "pride": 0.4,
+    "nerve": 0.65,
+    "humour": 0.95
+   },
+   "likes": [
+    "cheap late ice",
+    "sneakers with grip",
+    "the Beer Cup",
+    "his nephew Kenny",
+    "a club that's loud"
+   ],
+   "dislikes": [
+    "skaters who sneer at broomball",
+    "being asked to keep it down",
+    "Bernie's radio voice at dinner"
+   ],
+   "voice": "Big laugh, big heart, louder than necessary. Sells broomball like a religion: 'It's hockey for people with dignity. Also without it.'",
+   "interests": {
+    "broomball": {
+     "watch": 0.9,
+     "play": 1.0
+    },
+    "special": {
+     "watch": 0.7,
+     "play": 0.6
+    },
+    "senior_hockey": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      3
+     ],
+     "from": 20.5,
+     "to": 23.0,
+     "place": "ice",
+     "doing": "broomball"
+    },
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 6.0,
+     "to": 15.0,
+     "place": "away",
+     "doing": "the feed route"
+    }
+   ],
+   "rel": {
+    "kenny_szabo": 80,
+    "bernie_szabo": 55,
+    "rhonda_pelkey": 70,
+    "dwayne_kuzyk": 50,
+    "earl_bratt": 15,
+    "owner": 15
+   },
+   "dialogue": "kev_szabo",
+   "quests": [],
+   "bio": "Kev runs the Harlow Falls Broomball Club, which rents Wednesday late ice and forgives anything except being called curling with a ball. Broomball shoes chew the ice less than skates, but the club is loud. He is Bernie's brother, Kenny's uncle and the valley's loudest laugh.",
+   "family": [
+    "bernie_szabo",
+    "kenny_szabo"
+   ]
+  },
+  {
+   "id": "bernie_szabo",
+   "name": "Bernie Szabo",
+   "known_as": "Bernie",
+   "age": 63,
+   "pronouns": "he/him",
+   "town": "kessler",
+   "home": "A Kessler side-split with three microphones in the basement",
+   "job": "Play-by-play, CKVL 1340 Valley Radio (since 1985)",
+   "role": "regular",
+   "archetype": "superfan",
+   "look": {
+    "build": "stocky",
+    "height": 0.97,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "5c4a3a",
+    "outfit": "suit",
+    "colors": [
+     "1d2b4f",
+     "e0a526"
+    ],
+    "accessory": "headset"
+   },
+   "traits": {
+    "warmth": 0.6,
+    "chatter": 1.0,
+    "patience": 0.5,
+    "pride": 0.75,
+    "nerve": 0.61,
+    "humour": 0.66
+   },
+   "likes": [
+    "a goal call that peaks on the second syllable",
+    "his Valley Hockey Almanac",
+    "his son Kenny's shifts (he calls them neutrally, badly)",
+    "the late scores at 23:30"
+   ],
+   "dislikes": [
+    "dead air",
+    "being asked how to pronounce Kessler",
+    "the press box heater",
+    "Merv Tolliver's columns about radio"
+   ],
+   "voice": "Broadcast baritone even when ordering fries. Narrates life in play-by-play and pronounces 'Kessler' three different ways in one breath.",
+   "interests": {
+    "senior_hockey": {
+     "watch": 1.0,
+     "play": 0.9
+    },
+    "beer_league": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.6
+    },
+    "tournament": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 6.0,
+     "to": 10.0,
+     "place": "away",
+     "doing": "CKVL morning show"
+    }
+   ],
+   "rel": {
+    "kenny_szabo": 85,
+    "kev_szabo": 55,
+    "hap_doyle": 30,
+    "merv_tolliver": -25,
+    "owner": 10
+   },
+   "dialogue": "bernie_szabo",
+   "quests": [],
+   "bio": "Bernie has called every Kessler home game since 1985 and the Lumber Kings' games too, and the rink's PA carries him on game nights. He keeps Szabo's Valley Hockey Almanac and can tell you the 1983 BL-D scoring leader without looking. When his son Kenny scores, he calls it like a stranger did it and his voice goes up half an octave.",
+   "family": [
+    "kev_szabo",
+    "kenny_szabo"
+   ]
+  },
+  {
+   "id": "kenny_szabo",
+   "name": "Kenny Szabo",
+   "known_as": "Kenny",
+   "age": 24,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A basement apartment in Millbrook with a heater that works",
+   "job": "Grinder winger; works the counter at Maple Tire & Muffler",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "big",
+    "height": 1.07,
+    "skin": 0,
+    "hair": "buzz",
+    "hair_color": "7a5a3a",
+    "outfit": "hoodie",
+    "colors": [
+     "d7261e",
+     "c0c4c8"
+    ],
+    "accessory": "stick"
+   },
+   "traits": {
+    "warmth": 0.95,
+    "chatter": 0.7,
+    "patience": 0.71,
+    "pride": 0.25,
+    "nerve": 0.55,
+    "humour": 0.8
+   },
+   "likes": [
+    "the dirty areas",
+    "carpools with the radio on",
+    "his uncle's broomball nights",
+    "postgame wings",
+    "being useful"
+   ],
+   "dislikes": [
+    "being 'Bernie's kid' on the radio",
+    "cut lists",
+    "slapshots from the blue line (Tyler)"
+   ],
+   "voice": "Big-hearted and self-deprecating: 'I'm not good, I'm just there.' Says 'buddy' a lot and means it every time.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.5,
+     "play": 1.0
+    },
+    "stick_and_puck": {
+     "watch": 0.4,
+     "play": 0.9
+    },
+    "senior_hockey": {
+     "watch": 0.8,
+     "play": 0.8
+    },
+    "broomball": {
+     "watch": 0.4,
+     "play": 0.7
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "Maple Tire & Muffler"
+    }
+   ],
+   "rel": {
+    "bernie_szabo": 75,
+    "kev_szabo": 80,
+    "tyler_brandt": 10,
+    "ronnie_haverstock": 50,
+    "hank_lavoie": 35,
+    "owner": 25
+   },
+   "dialogue": "kenny_szabo",
+   "quests": [],
+   "bio": "Kenny is a grinder who knows he is not quite good enough and plays like it is a privilege. On the Player path he is the owner's linemate and carpool, gets cut at Senior AAA camp the year the owner makes it, signs with the Lumber Kings anyway and becomes their captain. He is the one driving Doris the night the call comes.",
+   "family": [
+    "bernie_szabo",
+    "kev_szabo"
+   ]
+  },
+  {
+   "id": "bernie_ostrowski",
+   "name": "Bernie Ostrowski",
+   "known_as": "Coach Bernie",
+   "age": 57,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A ranch house with the 2009 banner photo as the screen saver",
+   "job": "Coach, Millbrook High Mallards; phys ed teacher",
+   "role": "regular",
+   "archetype": "coach",
+   "look": {
+    "build": "stocky",
+    "height": 0.99,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "4a4a4a",
+    "outfit": "coach_tracksuit",
+    "colors": [
+     "2e7d4f",
+     "c9a227"
+    ],
+    "accessory": "whistle"
+   },
+   "traits": {
+    "warmth": 0.65,
+    "chatter": 0.8,
+    "patience": 0.45,
+    "pride": 0.7,
+    "nerve": 0.5,
+    "humour": 0.6
+   },
+   "likes": [
+    "the 2009 valley high school title (mention it)",
+    "dead-time ice at a discount",
+    "a teenager who backchecks",
+    "paying invoices 'soon'"
+   ],
+   "dislikes": [
+    "invoices",
+    "Priya's voicemails",
+    "phones on the bench"
+   ],
+   "voice": "Gym-teacher bonhomie. Every story leads to 2009. Deflects any question about money with a pep talk.",
+   "interests": {
+    "high_school": {
+     "watch": 0.7,
+     "play": 1.0
+    },
+    "minor_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 15.0,
+     "place": "away",
+     "doing": "Millbrook High"
+    },
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 15.0,
+     "to": 17.0,
+     "place": "bench",
+     "doing": "Mallards practice"
+    }
+   ],
+   "rel": {
+    "priya_sandhu": -10,
+    "noah_delisle": 55,
+    "josie_bautista": 50,
+    "dylan_pruitt": 35,
+    "owner": 5
+   },
+   "dialogue": "bernie_ostrowski",
+   "quests": [],
+   "bio": "Coach Bernie's Mallards won the valley high school title in 2009, and the banner is the one he points at during every phone call about late payment. His team fills dead time on Tuesday and Thursday afternoons and pays sixty days late, cheerfully. He is not the other Bernie, the radio one, and gets his mail."
+  },
+  {
+   "id": "stan_kubiak",
+   "name": "Stan Kubiak",
+   "known_as": "Stan K",
+   "age": 58,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A rental on Pine Street, still in boxes after four years",
+   "job": "Head coach, Millbrook Lumber Kings",
+   "role": "regular",
+   "archetype": "coach",
+   "look": {
+    "build": "average",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "8a8a8a",
+    "outfit": "coach_tracksuit",
+    "colors": [
+     "b22222",
+     "1b1b1b"
+    ],
+    "accessory": "clipboard"
+   },
+   "traits": {
+    "warmth": 0.7,
+    "chatter": 0.3,
+    "patience": 0.75,
+    "pride": 0.4,
+    "nerve": 0.35,
+    "humour": 0.47
+   },
+   "likes": [
+    "a quiet bus",
+    "his wife's sandwiches",
+    "systems that worked in 1998",
+    "a player who listens"
+   ],
+   "dislikes": [
+    "Tollbridge",
+    "second intermissions",
+    "the probation deadline"
+   ],
+   "voice": "Tired, decent, kind. Long sighs, short sentences, one good joke a week, usually on Thursday.",
+   "interests": {
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 1.0
+    },
+    "minor_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "stick_and_puck": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 18.0,
+     "to": 21.0,
+     "place": "bench",
+     "doing": "Lumber Kings practice"
+    }
+   ],
+   "rel": {
+    "ray_duchesne": 45,
+    "old_pete_vachon": 50,
+    "kenny_szabo": 35,
+    "hap_doyle": 15,
+    "owner": 10
+   },
+   "dialogue": "stan_kubiak",
+   "quests": [],
+   "bio": "Stan is a decent man out of ideas. On the Coach path he walks out at the second intermission of a 6-1 loss to Tollbridge in Year 2 and hands the owner his whistle. He comes back later as a scout who wants to help, and is better at it."
+  },
+  {
+   "id": "gary_pruett",
+   "name": "Gary Pruett",
+   "known_as": "Gary",
+   "age": 43,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A split-level with a backyard rink he floods badly",
+   "job": "Manager, Valley Foods; captain of the Wobbly Pops",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "stocky",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "6a4a2a",
+    "outfit": "team_jacket",
+    "colors": [
+     "d98a1c",
+     "2b2b2b"
+    ],
+    "accessory": "stick"
+   },
+   "traits": {
+    "warmth": 0.85,
+    "chatter": 0.86,
+    "patience": 0.55,
+    "pride": 0.5,
+    "nerve": 0.4,
+    "humour": 0.9
+   },
+   "likes": [
+    "stopping, preferably in front of the bench",
+    "his son Owen's games",
+    "being the learn-to-skate pamphlet's success story",
+    "the idea of an award named after him"
+   ],
+   "dislikes": [
+    "being confused with the Pruitts ('It's -ett!')",
+    "backwards skating",
+    "nine-year-olds who are better than him"
+   ],
+   "voice": "Proud beginner energy; every sentence is an achievement. 'Did you see me stop? I stopped.'",
+   "interests": {
+    "beer_league": {
+     "watch": 0.4,
+     "play": 1.0
+    },
+    "minor_hockey": {
+     "watch": 0.9,
+     "play": 0.0
+    },
+    "tournament": {
+     "watch": 0.9,
+     "play": 0.0
+    },
+    "learn_to_skate": {
+     "watch": 0.8,
+     "play": 0.3
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.6
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "Valley Foods"
+    }
+   ],
+   "rel": {
+    "owen_pruett": 85,
+    "rick_saucier": 10,
+    "lyle_haverkamp": 30,
+    "carla_pruitt": 20,
+    "colette_beaulieu": 40,
+    "owner": 20
+   },
+   "dialogue": "gary_pruett",
+   "quests": [],
+   "bio": "Gary learned to skate the same winter his son did and refused to be outdone by a nine-year-old. He learned to stop last February and now does it at every opportunity, preferably in front of the bench. He captains the Wobbly Pops, dads with more spirit than edges.",
+   "family": [
+    "owen_pruett"
+   ]
+  },
+  {
+   "id": "lyle_haverkamp",
+   "name": "Dr. Lyle Haverkamp",
+   "known_as": "Dr. Haverkamp",
+   "age": 52,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A modern house with a molar-shaped mailbox",
+   "job": "Dentist, Haverkamp Family Dentistry; Millbrook Molars defence",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "slim",
+    "height": 1.05,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "9a7a5a",
+    "outfit": "team_jacket",
+    "colors": [
+     "f4f4f4",
+     "3fa7d6"
+    ],
+    "accessory": "glasses"
+   },
+   "traits": {
+    "warmth": 0.6,
+    "chatter": 0.9,
+    "patience": 0.52,
+    "pride": 0.8,
+    "nerve": 0.56,
+    "humour": 0.48
+   },
+   "likes": [
+    "mouthguards (on other people)",
+    "toothbrushes in the handshake line",
+    "the unpaid invoice for Rick Saucier's tooth",
+    "passing, because nobody wants to get hit in the hands"
+   ],
+   "dislikes": [
+    "wearing a mouthguard himself",
+    "sugar at the Hot Stove (he buys it anyway)",
+    "the Moose Knuckles"
+   ],
+   "voice": "Chirpy lecturer; turns every chat into a flossing reminder. Says 'Open wide!' as a greeting and 'Rinse!' as goodbye.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.3,
+     "play": 1.0
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "the dental office"
+    }
+   ],
+   "rel": {
+    "rick_saucier": -40,
+    "gary_pruett": 30,
+    "dwayne_kuzyk": -5,
+    "owner": 15
+   },
+   "dialogue": "lyle_haverkamp",
+   "quests": [],
+   "bio": "Dr. Haverkamp owns the Millbrook Molars: four dentists, a hygienist and two patients who could not say no. He lectures everyone about mouthguards and has never once worn one. He fixed Rick Saucier's tooth the morning after the Toothbrush Incident and sent the bill, and the Molars bring it to every game."
+  },
+  {
+   "id": "rick_saucier",
+   "name": "Rick \"Sauce\" Saucier",
+   "known_as": "Sauce",
+   "age": 49,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A house on Legion Road with the 1994 team photo in the front window",
+   "job": "Sells farm equipment; Moose Knuckles right wing; hockey dad",
+   "role": "regular",
+   "archetype": "coffee_coach",
+   "look": {
+    "build": "stocky",
+    "height": 1.01,
+    "skin": 0,
+    "hair": "mullet",
+    "hair_color": "5a3a1a",
+    "outfit": "team_jacket",
+    "colors": [
+     "7a4a26",
+     "f2d16b"
+    ],
+    "accessory": "coffee"
+   },
+   "traits": {
+    "warmth": 0.45,
+    "chatter": 0.95,
+    "patience": 0.15,
+    "pride": 0.94,
+    "nerve": 0.3,
+    "humour": 0.6
+   },
+   "likes": [
+    "1994",
+    "61 goals (ask him)",
+    "his son on the power play",
+    "the front row of the glass"
+   ],
+   "dislikes": [
+    "Dr. Haverkamp's invoice",
+    "toothbrushes",
+    "coaches who 'develop' instead of win",
+    "the second period"
+   ],
+   "voice": "Loud and nostalgic; sentences start in 1994. Tender for a second when he forgets to perform, then louder to cover it.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.3,
+     "play": 0.9
+    },
+    "minor_hockey": {
+     "watch": 1.0,
+     "play": 0.3
+    },
+    "tournament": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "the implement dealership"
+    }
+   ],
+   "rel": {
+    "mason_saucier": 75,
+    "lyle_haverkamp": -40,
+    "donna_pettigrew": -25,
+    "gary_pruett": 10,
+    "brody_sauve": -20,
+    "owner": 0
+   },
+   "dialogue": "rick_saucier",
+   "quests": [],
+   "bio": "Sauce scored 61 goals for the 1994 Millbrook Midget AA team and has told 61 stories about it since. He plays for the Moose Knuckles, the same team back together, and is gassed by the second period. From the glass at his son's games he yells everything he wishes someone had yelled for him, which is the problem.",
+   "family": [
+    "mason_saucier"
+   ]
+  },
+  {
+   "id": "dwayne_kuzyk",
+   "name": "Dwayne Kuzyk",
+   "known_as": "Dwayne",
+   "age": 38,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "An apartment above the Hat Trick Tavern, which is convenient",
+   "job": "Bartender, Hat Trick Tavern; social convenor, Ice Holes",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "big",
+    "height": 1.03,
+    "skin": 0,
+    "hair": "mullet",
+    "hair_color": "7a4a2a",
+    "outfit": "hoodie",
+    "colors": [
+     "a4161a",
+     "f2f2f2"
+    ],
+    "accessory": "toque"
+   },
+   "traits": {
+    "warmth": 0.9,
+    "chatter": 0.95,
+    "patience": 0.4,
+    "pride": 0.15,
+    "nerve": 0.7,
+    "humour": 0.98
+   },
+   "likes": [
+    "the 10:45 pitcher",
+    "broomball ('the postgame with a ball')",
+    "seat F-2-12",
+    "a team photo with everyone in it"
+   ],
+   "dislikes": [
+    "overtime",
+    "Dale's binder fines",
+    "games that start on time"
+   ],
+   "voice": "Party host; toasts everything and knows everyone's drink. Has missed eleven games and never a postgame.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.5,
+     "play": 0.8
+    },
+    "broomball": {
+     "watch": 0.6,
+     "play": 0.9
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.6
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 16.0,
+     "to": 21.5,
+     "place": "away",
+     "doing": "behind the bar at the Hat Trick"
+    }
+   ],
+   "rel": {
+    "dale_huffman": -10,
+    "kev_szabo": 50,
+    "lorraine_duffy": 45,
+    "rhonda_pelkey": 55,
+    "owner": 20
+   },
+   "dialogue": "dwayne_kuzyk",
+   "quests": [],
+   "bio": "The Ice Holes play for the postgame: the pitcher is pre-ordered for 10:45 and the hockey is in the way. Dwayne is their social convenor and the reason seat F-2-12 has a plaque. He plays broomball on Wednesdays because, he says, nobody has to pretend."
+  },
+  {
+   "id": "morley_gilchrist",
+   "name": "Morley Gilchrist III",
+   "known_as": "Morley",
+   "age": 47,
+   "pronouns": "he/him",
+   "town": "harlow_falls",
+   "home": "Above Gilchrist & Sons Funeral Home, which he would rather not discuss at dinner",
+   "job": "Funeral director; Pallbearers goalie",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "slim",
+    "height": 1.08,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "2b2b2b",
+    "outfit": "goalie_gear",
+    "colors": [
+     "1b1b1b",
+     "7b3fa0"
+    ],
+    "accessory": "none"
+   },
+   "traits": {
+    "warmth": 0.55,
+    "chatter": 0.1,
+    "patience": 0.97,
+    "pride": 0.35,
+    "nerve": 0.99,
+    "humour": 0.62
+   },
+   "likes": [
+    "punctuality",
+    "steady hands",
+    "a quiet dressing room",
+    "organ music, even Doreen's"
+   ],
+   "dislikes": [
+    "loud skate guards",
+    "being asked for a 'friends and family rate'",
+    "pizza delivered mid-game"
+   ],
+   "voice": "Soft, exact and sympathetic; speaks as if consoling you about the score. Nobody can tell if he is joking. He is.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.3,
+     "play": 1.0
+    },
+    "figure_show": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 9.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "the funeral home"
+    }
+   ],
+   "rel": {
+    "gino_russo": -10,
+    "colin_nolan": 25,
+    "shauna_reid": 30,
+    "doreen_vachon": 40,
+    "owner": 10
+   },
+   "dialogue": "morley_gilchrist",
+   "quests": [],
+   "bio": "The Pallbearers are quiet, punctual and unfailingly polite, and they arrive in the second hearse. Morley is the steadiest goalie in the valley, which he says comes with the job; nobody asks which part. He is the only beer leaguer who has ever complimented Doreen's dirge."
+  },
+  {
+   "id": "colin_nolan",
+   "name": "Colin Nolan",
+   "known_as": "Colin",
+   "age": 45,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A tidy townhouse with a label maker",
+   "job": "Branch manager, Frostbank Millbrook; coach of the Frozen Assets",
+   "role": "regular",
+   "archetype": "coach",
+   "look": {
+    "build": "average",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "6a5a4a",
+    "outfit": "suit",
+    "colors": [
+     "7fb3d5",
+     "0b2545"
+    ],
+    "accessory": "clipboard"
+   },
+   "traits": {
+    "warmth": 0.45,
+    "chatter": 0.6,
+    "patience": 0.7,
+    "pride": 0.75,
+    "nerve": 0.65,
+    "humour": 0.36
+   },
+   "likes": [
+    "the laminated line-change spreadsheet",
+    "a one-goal lead",
+    "late fees",
+    "'Banking With a Cool Head'"
+   ],
+   "dislikes": [
+    "missed shifts",
+    "overtime risk",
+    "Dwayne's postgame tab",
+    "being asked about the line of credit at parties"
+   ],
+   "voice": "Bank-manager calm. Frames hockey as risk and return: 'That shift was an unsecured loan.'",
+   "interests": {
+    "beer_league": {
+     "watch": 0.4,
+     "play": 1.0
+    },
+    "stick_and_puck": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 9.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "Frostbank"
+    }
+   ],
+   "rel": {
+    "dale_huffman": 55,
+    "dwayne_kuzyk": -15,
+    "morley_gilchrist": 25,
+    "owner": 5
+   },
+   "dialogue": "colin_nolan",
+   "quests": [],
+   "bio": "Colin coaches the Frozen Assets, a bench of tellers who protect a one-goal lead like an overdraft, and charges a late fee for missed shifts. He is the owner's first rival coach and later a friend who lends the spreadsheet template; it is very good. He also manages the branch that holds the rink's line of credit, which makes the handshake line complicated."
+  },
+  {
+   "id": "gino_russo",
+   "name": "Gino Russo Jr.",
+   "known_as": "Gino",
+   "age": 29,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "Behind Puckhead Pizza",
+   "job": "Night manager, Puckhead Pizza; Puckheads goalie",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "stocky",
+    "height": 1.0,
+    "skin": 1,
+    "hair": "curly",
+    "hair_color": "1a1a1a",
+    "outfit": "goalie_gear",
+    "colors": [
+     "c1272d",
+     "f7c548"
+    ],
+    "accessory": "helmet"
+   },
+   "traits": {
+    "warmth": 0.84,
+    "chatter": 0.8,
+    "patience": 0.25,
+    "pride": 0.45,
+    "nerve": 0.5,
+    "humour": 0.88
+   },
+   "likes": [
+    "his mask painted like a pepperoni puck",
+    "delivering to the rink between periods",
+    "a slice deal at the Hot Stove",
+    "his dad's dough recipe"
+   ],
+   "dislikes": [
+    "the league's letter about deliveries",
+    "the Pallbearers calling him 'pizza guy'",
+    "cold pizza (he is a professional)"
+   ],
+   "voice": "Fast, warm and salesy, always mid-delivery. Counts time in periods: 'Back in under two.'",
+   "interests": {
+    "beer_league": {
+     "watch": 0.2,
+     "play": 1.0
+    },
+    "senior_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.3
+    },
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 16.0,
+     "to": 21.5,
+     "place": "away",
+     "doing": "Puckhead Pizza"
+    }
+   ],
+   "rel": {
+    "lorraine_duffy": 20,
+    "morley_gilchrist": -10,
+    "dylan_pruitt": 40,
+    "owner": 15
+   },
+   "dialogue": "gino_russo",
+   "quests": [],
+   "bio": "The Puckheads are this season's expansion team: delivery drivers who signed up on a dare, half of them in borrowed skates. Gino plays goal in a pepperoni mask and has delivered to the rink between periods, which the league has asked him to stop. His pizza is on the Hot Stove menu 'when Gino's here'."
+  },
+  {
+   "id": "larry_piche",
+   "name": "Larry Piche",
+   "known_as": "Larry",
+   "age": 61,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A bungalow on the plough route, so he is first out",
+   "job": "Town snowplough driver; captain, Millbrook Mallards (beer league)",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "stocky",
+    "height": 0.98,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "b0a090",
+    "outfit": "team_jacket",
+    "colors": [
+     "2e7d4f",
+     "c9a227"
+    ],
+    "accessory": "reading_glasses"
+   },
+   "traits": {
+    "warmth": 0.9,
+    "chatter": 0.5,
+    "patience": 0.96,
+    "pride": 0.4,
+    "nerve": 0.75,
+    "humour": 0.55
+   },
+   "likes": [
+    "his neat handwriting",
+    "the 2005 photo in the lobby",
+    "writing to the Puckworth Cup trustees (twenty-one follow-ups)",
+    "a plough route done by 6 am",
+    "the Mallards' dinner off THE TABLE"
+   ],
+   "dislikes": [
+    "people who say the trustees will never reply",
+    "sidewalks salted badly",
+    "being rushed"
+   ],
+   "voice": "Polite, optimistic and formal, like a letter: 'Further to my previous remarks...' Takes no reply as encouragement.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.4,
+     "play": 1.0
+    },
+    "high_school": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.9,
+     "play": 0.8
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 4.0,
+     "to": 12.0,
+     "place": "away",
+     "doing": "the plough route"
+    }
+   ],
+   "rel": {
+    "dale_huffman": 45,
+    "midge_kaminski": 50,
+    "ronnie_haverstock": 45,
+    "old_pete_vachon": 50,
+    "owner": 15
+   },
+   "dialogue": "larry_piche",
+   "quests": [],
+   "bio": "During the 2005 lockout Larry wrote to the Puckworth Cup trustees in his neat hand and asked them to consider the Millbrook Mallards, and the Cup came to Millbrook for a night. He has sent a polite follow-up every March since and has never received a reply, which he considers encouraging. In Year 5, a reply arrives."
+  },
+  {
+   "id": "tyler_brandt",
+   "name": "Tyler Brandt",
+   "known_as": "Tyler",
+   "age": 26,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A condo in the new build by the highway, with his Junior B jersey framed",
+   "job": "Sells phones at the Harlow Falls mall; captain, Cold Ones",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "average",
+    "height": 1.06,
+    "skin": 0,
+    "hair": "buzz",
+    "hair_color": "c09050",
+    "outfit": "hockey_gear",
+    "colors": [
+     "1f4d2b",
+     "e0a526"
+    ],
+    "accessory": "stick"
+   },
+   "traits": {
+    "warmth": 0.4,
+    "chatter": 0.9,
+    "patience": 0.2,
+    "pride": 0.98,
+    "nerve": 0.6,
+    "humour": 0.52
+   },
+   "likes": [
+    "2017 (Junior B, half a season)",
+    "slapshots from the blue line",
+    "music on a speaker in warm-up",
+    "the Senior camp invite he is sure is coming"
+   ],
+   "dislikes": [
+    "being cut",
+    "Kenny's niceness (he finds it suspicious)",
+    "the other Tyler at Bev's"
+   ],
+   "voice": "Cocky and energetic, sentences full of 'when I was in Junior B'. Underneath, scared. Softens in the handshake line.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.2,
+     "play": 0.9
+    },
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 0.8
+    },
+    "stick_and_puck": {
+     "watch": 0.2,
+     "play": 0.8
+    },
+    "pro_practice": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      6
+     ],
+     "from": 10.0,
+     "to": 18.0,
+     "place": "away",
+     "doing": "the phone kiosk"
+    }
+   ],
+   "rel": {
+    "kenny_szabo": 10,
+    "tyler_kowalchuk": -15,
+    "hap_doyle": 20,
+    "nell_haraldsen": -10,
+    "owner": 0
+   },
+   "dialogue": "tyler_brandt",
+   "quests": [],
+   "bio": "Tyler played half a season of Junior B in 2017 and brings it up in every handshake line. He is sure he is one call from Senior, and gets the call first, makes the Kessler Millmen a year ahead of the owner, struggles and comes back down. A few seasons on he is humbler and genuinely useful, and the arc lands in a handshake."
+  },
+  {
+   "id": "gordon_halvorsen",
+   "name": "Gordon \"Big Gord\" Halvorsen",
+   "known_as": "Big Gord",
+   "age": 71,
+   "pronouns": "he/him",
+   "town": "kessler",
+   "home": "A ranch house behind the truck lot, with a billboard in the yard",
+   "job": "Owner, Big Gord's Trucks (since 1977); Big Gord's Haulers defence",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "big",
+    "height": 1.1,
+    "skin": 0,
+    "hair": "bald",
+    "hair_color": "c0c0c0",
+    "outfit": "parka",
+    "colors": [
+     "c0c4c8",
+     "d7261e"
+    ],
+    "accessory": "sign"
+   },
+   "traits": {
+    "warmth": 0.76,
+    "chatter": 0.97,
+    "patience": 0.1,
+    "pride": 0.9,
+    "nerve": 0.85,
+    "humour": 0.8
+   },
+   "likes": [
+    "every power play (he is on all of them)",
+    "being Santa at Skate with Santa",
+    "his bronze bust, the Gord",
+    "billboards",
+    "shouting from a truck bed"
+   ],
+   "dislikes": [
+    "Maple Tire & Muffler",
+    "the word 'retire'",
+    "walking (he won't let you)"
+   ],
+   "voice": "SHOUTS. Everything is an advert: 'BIG GORD WON'T LET YOU WALK!' Underneath, generous to a fault and a soft touch for kids.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.3,
+     "play": 1.0
+    },
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.9,
+     "play": 1.0
+    },
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.3
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 8.0,
+     "to": 18.0,
+     "place": "away",
+     "doing": "the lot"
+    }
+   ],
+   "rel": {
+    "june_penner": -10,
+    "earl_bratt": 40,
+    "dale_huffman": 30,
+    "owner": 20
+   },
+   "dialogue": "gordon_halvorsen",
+   "quests": [],
+   "bio": "Big Gord has sold trucks from the same lot outside Kessler since 1977 and stars in every advert, shouting from a truck bed. He owns the Haulers, picks the lines and insists on being on the ice for every power play. Every second Saturday of December he arrives on Doris as Santa, shouting 'Ho ho ho, Big Gord won't let you walk!' from the snow tank."
+  },
+  {
+   "id": "shauna_reid",
+   "name": "Shauna Reid",
+   "known_as": "Shauna",
+   "age": 34,
+   "pronouns": "she/her",
+   "town": "harlow_falls",
+   "home": "A basement suite near Harlow Falls General",
+   "job": "Night nurse; Night Owls centre",
+   "role": "regular",
+   "archetype": "shift_worker",
+   "look": {
+    "build": "slim",
+    "height": 1.02,
+    "skin": 3,
+    "hair": "ponytail",
+    "hair_color": "1a1a1a",
+    "outfit": "hockey_gear",
+    "colors": [
+     "f28db2",
+     "6f3b1f"
+    ],
+    "accessory": "coffee"
+   },
+   "traits": {
+    "warmth": 0.8,
+    "chatter": 0.55,
+    "patience": 0.35,
+    "pride": 0.6,
+    "nerve": 0.98,
+    "humour": 0.7
+   },
+   "likes": [
+    "11:15 pm ice",
+    "being the fastest skater in the division",
+    "day-old crullers for the refs",
+    "a code blue tempo"
+   ],
+   "dislikes": [
+    "slow line changes",
+    "people who say 'you must be tired'",
+    "the ref room smelling of brooms"
+   ],
+   "voice": "Fast, calm, triage tone; checks on you before you notice you are hurt. 'You're fine. Ice it. Next.'",
+   "interests": {
+    "beer_league": {
+     "watch": 0.2,
+     "play": 1.0
+    },
+    "stick_and_puck": {
+     "watch": 0.2,
+     "play": 0.7
+    },
+    "special": {
+     "watch": 0.4,
+     "play": 0.2
+    },
+    "high_school": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      3,
+      5
+     ],
+     "from": 19.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "night shift"
+    },
+    {
+     "days": [
+      2,
+      4,
+      6
+     ],
+     "from": 0.0,
+     "to": 7.0,
+     "place": "away",
+     "doing": "night shift"
+    }
+   ],
+   "rel": {
+    "marcel_thibodeau": 50,
+    "morley_gilchrist": 30,
+    "josie_bautista": 40,
+    "owner": 10
+   },
+   "dialogue": "shauna_reid",
+   "quests": [],
+   "bio": "The Night Owls are overnight bakers, two night nurses and a hospital porter, and at 11:15 pm they are wide awake when nobody else is. Shauna is the fastest skater in the division and plays every shift like a code blue. She brings day-old crullers for the refs, and every page of the incident book thanks her."
+  },
+  {
+   "id": "marion_fischer",
+   "name": "Marion Fischer",
+   "known_as": "Marion",
+   "age": 55,
+   "pronouns": "she/her",
+   "town": "kessler",
+   "home": "A Kessler house with more books than walls",
+   "job": "Head librarian, Kessler Public Library; Kessler Overdues defence",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "slim",
+    "height": 0.97,
+    "skin": 0,
+    "hair": "bun",
+    "hair_color": "7a6a5a",
+    "outfit": "cardigan",
+    "colors": [
+     "6a1b2a",
+     "e8dcc0"
+    ],
+    "accessory": "reading_glasses"
+   },
+   "traits": {
+    "warmth": 0.3,
+    "chatter": 0.18,
+    "patience": 0.66,
+    "pride": 0.88,
+    "nerve": 0.8,
+    "humour": 0.61
+   },
+   "likes": [
+    "fines collected",
+    "silence in the dressing room",
+    "a hit along the boards and a whispered 'shhh'",
+    "the penalty box library"
+   ],
+   "dislikes": [
+    "overdue books",
+    "loud skate guards",
+    "people who dog-ear the Dickens in the penalty box"
+   ],
+   "voice": "Whisper-quiet and pin-sharp. 'Shhh.' Then the hit.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.2,
+     "play": 1.0
+    },
+    "figure_show": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 9.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "the library"
+    }
+   ],
+   "rel": {
+    "shauna_reid": 30,
+    "lyle_haverkamp": 10,
+    "doreen_vachon": 35,
+    "moose_kowalczuk": 50,
+    "owner": 5
+   },
+   "dialogue": "marion_fischer",
+   "quests": [],
+   "bio": "The Kessler Overdues are librarians: polite off the ice and the dirtiest team in the valley on it. Marion has never issued a fine she did not collect, on or off the ice. She restocks the penalty box library on her own time and has opinions about the three copies of Moose Knows."
+  },
+  {
+   "id": "owen_pruett",
+   "name": "Owen Pruett",
+   "known_as": "Owen",
+   "age": 10,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "The split-level with the bad backyard rink",
+   "job": "Grade 5; U11 winger",
+   "role": "family",
+   "archetype": "minor_player",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "8a6a3a",
+    "outfit": "hockey_gear",
+    "colors": [
+     "d98a1c",
+     "2b2b2b"
+    ],
+    "accessory": "helmet"
+   },
+   "traits": {
+    "warmth": 0.7,
+    "chatter": 0.6,
+    "patience": 0.3,
+    "pride": 0.55,
+    "nerve": 0.45,
+    "humour": 0.75
+   },
+   "likes": [
+    "beating his dad at backwards crossovers",
+    "hockey cards",
+    "The Haverstock (hot chocolate with 14 marshmallows)",
+    "Tommy's pin trades"
+   ],
+   "dislikes": [
+    "his dad stopping in front of the bench",
+    "early Saturday practices",
+    "being called Gary's kid"
+   ],
+   "voice": "Kid bluntness, slightly embarrassed by his dad. Trades trivia like currency.",
+   "interests": {
+    "minor_hockey": {
+     "watch": 0.3,
+     "play": 1.0
+    },
+    "tournament": {
+     "watch": 0.4,
+     "play": 1.0
+    },
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.7
+    },
+    "stick_and_puck": {
+     "watch": 0.2,
+     "play": 0.6
+    },
+    "pro_practice": {
+     "watch": 0.6,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 21.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "gary_pruett": 70,
+    "tommy_bellweather": 55,
+    "mason_saucier": 40,
+    "maddie_pruitt": 30,
+    "owner": 10
+   },
+   "dialogue": "owen_pruett",
+   "quests": [],
+   "bio": "Owen learned to skate the same winter as his dad and passed him in a fortnight. He plays U11 and keeps his dad's stopping highlights to himself. He is no relation to the Pruitts and is tired of saying so.",
+   "family": [
+    "gary_pruett"
+   ]
+  },
+  {
+   "id": "mason_saucier",
+   "name": "Mason \"Little Sauce\" Saucier",
+   "known_as": "Little Sauce",
+   "age": 12,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "The house on Legion Road with the 1994 photo in the window",
+   "job": "Grade 7; U13 centre (the Sawdust)",
+   "role": "family",
+   "archetype": "minor_player",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "5a3a1a",
+    "outfit": "hockey_gear",
+    "colors": [
+     "7a4a26",
+     "f2d16b"
+    ],
+    "accessory": "helmet"
+   },
+   "traits": {
+    "warmth": 0.5,
+    "chatter": 0.25,
+    "patience": 0.6,
+    "pride": 0.42,
+    "nerve": 0.65,
+    "humour": 0.4
+   },
+   "likes": [
+    "skating alone at stick and puck",
+    "drawing in the back of his school planner",
+    "quiet stands",
+    "Ronnie's quiet advice",
+    "figure skaters' edges (a secret)"
+   ],
+   "dislikes": [
+    "hearing about 1994",
+    "the car ride home",
+    "being called Little Sauce"
+   ],
+   "voice": "Quiet and guarded, very funny when he forgets his dad is listening. Answers 'fine' until you ask about something that is not hockey.",
+   "interests": {
+    "minor_hockey": {
+     "watch": 0.2,
+     "play": 0.8
+    },
+    "tournament": {
+     "watch": 0.2,
+     "play": 0.8
+    },
+    "stick_and_puck": {
+     "watch": 0.1,
+     "play": 0.8
+    },
+    "figure_show": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 21.5,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "rick_saucier": 50,
+    "owen_pruett": 40,
+    "maddie_pruitt": 45,
+    "ronnie_haverstock": 60,
+    "owner": 10
+   },
+   "dialogue": "mason_saucier",
+   "quests": [],
+   "bio": "Little Sauce is better than anyone his age in Millbrook and has more pressure on him than anyone his age should. His arc is about whether he still likes hockey; the answer depends on ice time, rapport and how the coach handles his dad. If it goes badly he transfers to Harlow Falls, which is a soft loss and never a disaster.",
+   "family": [
+    "rick_saucier"
+   ]
+  },
+  {
+   "id": "maddie_pruitt",
+   "name": "Maddie Pruitt",
+   "known_as": "Maddie",
+   "age": 9,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "The Pruitt place on Birch Street",
+   "job": "Grade 4; learn-to-skate (holds the chair)",
+   "role": "family",
+   "archetype": "minor_player",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 1,
+    "hair": "ponytail",
+    "hair_color": "6a4a2a",
+    "outfit": "parka",
+    "colors": [
+     "c9a66b",
+     "1d2b4f"
+    ],
+    "accessory": "helmet"
+   },
+   "traits": {
+    "warmth": 0.8,
+    "chatter": 0.35,
+    "patience": 0.85,
+    "pride": 0.6,
+    "nerve": 0.15,
+    "humour": 0.45
+   },
+   "likes": [
+    "the chair (number 3, specifically)",
+    "her brother's keys jangling",
+    "Coach Colette's sticker chart",
+    "paper snowflakes",
+    "her great-grandmother's Honest Hockey skates"
+   ],
+   "dislikes": [
+    "letting go of the chair",
+    "the goal horn",
+    "big kids zooming at public skate",
+    "being told it's fine when it isn't"
+   ],
+   "voice": "Small and serious; asks 'why' about physics. Says 'I'm going to fall' and then, sometimes, doesn't.",
+   "interests": {
+    "learn_to_skate": {
+     "watch": 0.4,
+     "play": 0.9
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.7
+    },
+    "minor_hockey": {
+     "watch": 0.5,
+     "play": 0.4
+    },
+    "figure_show": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.4
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 20.5,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "dylan_pruitt": 85,
+    "carla_pruitt": 80,
+    "colette_beaulieu": 60,
+    "owen_pruett": 30,
+    "mason_saucier": 40,
+    "owner": 10
+   },
+   "dialogue": "maddie_pruitt",
+   "quests": [],
+   "bio": "Maddie is Dylan's little sister and the great-granddaughter of Dorothy Pruitt, who founded Honest Hockey. In week two of learn-to-skate she cannot stand; by Christmas she lets go of the chair at the Snowflake Showcase. On the Coach path she becomes the slowest skater on the U11s, the only one who listens, and in Year 3 the scorer of a tournament winner.",
+   "family": [
+    "dylan_pruitt",
+    "carla_pruitt"
+   ]
+  },
+  {
+   "id": "carla_pruitt",
+   "name": "Carla Pruitt",
+   "known_as": "Carla",
+   "age": 44,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "The Pruitt place on Birch Street",
+   "job": "Shift supervisor, Millbrook Dairy plant",
+   "role": "customer",
+   "archetype": "hockey_parent",
+   "look": {
+    "build": "average",
+    "height": 0.98,
+    "skin": 1,
+    "hair": "long",
+    "hair_color": "6a4a2a",
+    "outfit": "parka",
+    "colors": [
+     "c9a66b",
+     "1d2b4f"
+    ],
+    "accessory": "thermos"
+   },
+   "traits": {
+    "warmth": 0.74,
+    "chatter": 0.5,
+    "patience": 0.8,
+    "pride": 0.7,
+    "nerve": 0.44,
+    "humour": 0.65
+   },
+   "likes": [
+    "Maddie letting go of the chair",
+    "Dylan graduating (please)",
+    "her grandmother's Honest Hockey gear (it's fine)",
+    "the radiant heaters over the east benches"
+   ],
+   "dislikes": [
+    "being asked if she is related to Gary (no)",
+    "Dylan's report card arriving before Dylan",
+    "fancy gear prices"
+   ],
+   "voice": "Tired, dry and fiercely loving; practical sentences and a mother's sarcasm. 'It's fine. It'll do the job.'",
+   "interests": {
+    "learn_to_skate": {
+     "watch": 0.9,
+     "play": 0.0
+    },
+    "high_school": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.6,
+     "play": 0.2
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 6.0,
+     "to": 14.5,
+     "place": "away",
+     "doing": "the Dairy plant"
+    }
+   ],
+   "rel": {
+    "dylan_pruitt": 70,
+    "maddie_pruitt": 85,
+    "gary_pruett": 20,
+    "donna_pettigrew": 50,
+    "colette_beaulieu": 45,
+    "owner": 10
+   },
+   "dialogue": "carla_pruitt",
+   "quests": [],
+   "bio": "Carla is Dorothy Pruitt's granddaughter, which means she was raised on gear that says exactly what it is. She raises Dylan and Maddie on early shifts at the Dairy plant and bench coffee. She is the nervous parent at learn-to-skate, and the proudest one at the Snowflake Showcase.",
+   "family": [
+    "dylan_pruitt",
+    "maddie_pruitt"
+   ]
+  },
+  {
+   "id": "tommy_bellweather",
+   "name": "Tommy Bellweather",
+   "known_as": "Tommy",
+   "age": 11,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A semi on Rink Road, three doors from Old Pete",
+   "job": "Grade 6; rink rat; runs the crest-trading table like a bank",
+   "role": "family",
+   "archetype": "rink_rat",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 2,
+    "hair": "toque_hair",
+    "hair_color": "1a1a1a",
+    "outfit": "hoodie",
+    "colors": [
+     "c1272d",
+     "f7c548"
+    ],
+    "accessory": "skates_over_shoulder"
+   },
+   "traits": {
+    "warmth": 0.9,
+    "chatter": 0.92,
+    "patience": 0.12,
+    "pride": 0.3,
+    "nerve": 0.81,
+    "humour": 0.86
+   },
+   "likes": [
+    "tournament pins (he is one trade from the rarest in the valley)",
+    "autographs, especially Dukes",
+    "stick and puck at any hour",
+    "knowing where every lost puck went",
+    "Linesman the pigeon"
+   ],
+   "dislikes": [
+    "school, mainly the sitting",
+    "being sent home at 9",
+    "goalies who don't talk"
+   ],
+   "voice": "Breathless and businesslike, a fountain of facts and offers. Ends every sentence with 'right?' Quotes exchange rates in pins.",
+   "interests": {
+    "stick_and_puck": {
+     "watch": 0.3,
+     "play": 0.8
+    },
+    "pro_practice": {
+     "watch": 0.95,
+     "play": 0.0
+    },
+    "tournament": {
+     "watch": 0.9,
+     "play": 0.5
+    },
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.4,
+     "play": 0.7
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.6
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.4
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 15.5,
+     "to": 20.0,
+     "place": "lobby",
+     "doing": "hanging around"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 21.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "dylan_pruitt": 75,
+    "owen_pruett": 55,
+    "old_pete_vachon": 40,
+    "bob_ferreira": 35,
+    "barry_pomeroy": 50,
+    "owner": 20
+   },
+   "dialogue": "tommy_bellweather",
+   "quests": [],
+   "bio": "Tommy lives at the rink in every way except the sleeping. He runs the tournament crest-trading table like a bank and is one Millbrook host pin from the rarest pin in the valley, and when the Dukes practise he stands at the glass with a puck and a pen, aiming for twelve signatures. Dylan is his hero, which Dylan finds both flattering and a lot."
+  },
+  {
+   "id": "marisol_bautista",
+   "name": "Marisol Bautista",
+   "known_as": "Marisol",
+   "age": 42,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "The Bautistas' duplex on Second Street",
+   "job": "Personal support worker; adult learn-to-skate student",
+   "role": "customer",
+   "archetype": "learn_to_skate_adult",
+   "look": {
+    "build": "average",
+    "height": 0.95,
+    "skin": 2,
+    "hair": "bun",
+    "hair_color": "1a1a1a",
+    "outfit": "parka",
+    "colors": [
+     "e8452c",
+     "f2f2f2"
+    ],
+    "accessory": "helmet"
+   },
+   "traits": {
+    "warmth": 0.88,
+    "chatter": 0.6,
+    "patience": 0.76,
+    "pride": 0.7,
+    "nerve": 0.35,
+    "humour": 0.8
+   },
+   "likes": [
+    "the glide (she found it in week 3)",
+    "her kids watching her",
+    "the mitten tree",
+    "Colette's patience",
+    "hot chocolate with the missing letters"
+   ],
+   "dislikes": [
+    "falling in front of the Mallards",
+    "rental skate number 41",
+    "people who call her brave (she is just cold)"
+   ],
+   "voice": "Warm, teasing and determined. Switches to Tagalog when she nearly falls and laughs when she does.",
+   "interests": {
+    "learn_to_skate": {
+     "watch": 0.4,
+     "play": 1.0
+    },
+    "public_skate": {
+     "watch": 0.5,
+     "play": 0.8
+    },
+    "high_school": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "figure_show": {
+     "watch": 0.8,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 7.0,
+     "to": 15.0,
+     "place": "away",
+     "doing": "home care visits"
+    }
+   ],
+   "rel": {
+    "josie_bautista": 80,
+    "penny_marchetti": 65,
+    "walter_oduya": 40,
+    "lorraine_duffy": 45,
+    "colette_beaulieu": 50,
+    "owner": 10
+   },
+   "dialogue": "marisol_bautista",
+   "quests": [],
+   "bio": "Marisol grew up in Manila and never had the chance to skate, and decided at forty-two that her daughter should not be the only one in the family who can. She signs up for adult learn-to-skate on Monday nights and found the glide in week three. She watches every one of Josie's games with a thermos and her hands over her eyes.",
+   "family": [
+    "josie_bautista"
+   ]
+  },
+  {
+   "id": "colette_beaulieu",
+   "name": "Colette Beaulieu",
+   "known_as": "Colette",
+   "age": 26,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "The room above the bakery on Main Street",
+   "job": "Assistant coach, Millbrook Figure Skating Club; kids' learn-to-skate; substitute teacher",
+   "role": "regular",
+   "archetype": "coach",
+   "look": {
+    "build": "slim",
+    "height": 1.03,
+    "skin": 0,
+    "hair": "ponytail",
+    "hair_color": "8a5a2a",
+    "outfit": "figure_warmup",
+    "colors": [
+     "9fc5e8",
+     "f4f4f4"
+    ],
+    "accessory": "whistle"
+   },
+   "traits": {
+    "warmth": 0.92,
+    "chatter": 0.65,
+    "patience": 0.97,
+    "pride": 0.3,
+    "nerve": 0.7,
+    "humour": 0.75
+   },
+   "likes": [
+    "sticker charts",
+    "the moment someone lets go",
+    "the Snowflake Showcase",
+    "Hélène's rare 'good'",
+    "rental skates sharpened by Bev"
+   ],
+   "dislikes": [
+    "parents filming instead of holding",
+    "helmetless adults",
+    "the triple loop she never landed"
+   ],
+   "voice": "Bright and encouraging, real warmth under the coach-speak: 'Knees soft, eyes up, you've got this.' Switches to French with Hélène.",
+   "interests": {
+    "learn_to_skate": {
+     "watch": 0.5,
+     "play": 1.0
+    },
+    "figure_practice": {
+     "watch": 0.4,
+     "play": 0.9
+    },
+    "figure_show": {
+     "watch": 0.6,
+     "play": 0.9
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.7
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1
+     ],
+     "from": 18.5,
+     "to": 20.5,
+     "place": "ice",
+     "doing": "learn-to-skate"
+    },
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 5.5,
+     "to": 8.5,
+     "place": "ice",
+     "doing": "figure club"
+    },
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 9.0,
+     "to": 15.0,
+     "place": "away",
+     "doing": "substitute teaching"
+    }
+   ],
+   "rel": {
+    "helene_arsenault": 75,
+    "maddie_pruitt": 60,
+    "marisol_bautista": 50,
+    "penny_marchetti": 55,
+    "josee_thibodeau": 50,
+    "owner": 10
+   },
+   "dialogue": "colette_beaulieu",
+   "quests": [],
+   "bio": "Colette skated for Hélène from age six and never landed the triple loop, which she has made peace with most days. She teaches the kids' group at learn-to-skate while Penny Marchetti takes the adults, and runs the little ones' Snowflake Showcase. Every skater in the valley under twelve calls her Coach Colette."
+  },
+  {
+   "id": "josee_thibodeau",
+   "name": "Josée Thibodeau",
+   "known_as": "Josée",
+   "age": 14,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "The Thibodeau house on Church Street",
+   "job": "Grade 9; Senior Bronze skater testing her freeskate; the club's best jumper",
+   "role": "family",
+   "archetype": "figure_skater",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 1,
+    "hair": "bun",
+    "hair_color": "1a1a1a",
+    "outfit": "figure_warmup",
+    "colors": [
+     "6a8caf",
+     "f4f4f4"
+    ],
+    "accessory": "skates_over_shoulder"
+   },
+   "traits": {
+    "warmth": 0.5,
+    "chatter": 0.3,
+    "patience": 0.55,
+    "pride": 0.9,
+    "nerve": 0.2,
+    "humour": 0.4
+   },
+   "likes": [
+    "a clean double axel (rare)",
+    "06:00 ice before anyone is awake",
+    "skating to music nobody else likes",
+    "Hélène's nod"
+   ],
+   "dislikes": [
+    "hockey ruts at the takeoff",
+    "her mum filming",
+    "being told she has 'nerves'",
+    "the horn going off during her run-through"
+   ],
+   "voice": "Earnest and dramatic; counts under her breath, then narrates her own disasters like an opera. 'I have DIED. Again, please.'",
+   "interests": {
+    "figure_practice": {
+     "watch": 0.3,
+     "play": 0.9
+    },
+    "figure_show": {
+     "watch": 0.5,
+     "play": 0.9
+    },
+    "public_skate": {
+     "watch": 0.6,
+     "play": 0.3
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.4
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 21.5,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "carol_thibodeau": 60,
+    "marcel_thibodeau": 70,
+    "helene_arsenault": 70,
+    "noah_delisle": 50,
+    "lily_marchetti": 40,
+    "owner": 5
+   },
+   "dialogue": "josee_thibodeau",
+   "quests": [],
+   "bio": "Josée is the best jumper the club has had in a decade and is testing her Senior Bronze freeskate on Millbrook ice; she wants it fresh, flat and fair. She lands everything at 06:00 with nobody watching and narrates every fall like the end of an opera. A rut at the takeoff of her double axel is the fastest way to lose the figure club.",
+   "family": [
+    "carol_thibodeau",
+    "marcel_thibodeau"
+   ]
+  },
+  {
+   "id": "carol_thibodeau",
+   "name": "Carol Thibodeau",
+   "known_as": "Carol",
+   "age": 44,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "The Thibodeau house on Church Street",
+   "job": "Pharmacist, Millbrook Drugs; eight years on the six a.m. coffee bench",
+   "role": "customer",
+   "archetype": "figure_parent",
+   "look": {
+    "build": "slim",
+    "height": 0.98,
+    "skin": 1,
+    "hair": "short",
+    "hair_color": "1a1a1a",
+    "outfit": "parka",
+    "colors": [
+     "6a8caf",
+     "f2f2f2"
+    ],
+    "accessory": "coffee"
+   },
+   "traits": {
+    "warmth": 0.6,
+    "chatter": 0.55,
+    "patience": 0.45,
+    "pride": 0.8,
+    "nerve": 0.3,
+    "humour": 0.5
+   },
+   "likes": [
+    "06:00 coffee in a thermos",
+    "the club's competition calendar",
+    "Josée's scores, to two decimals",
+    "the warm corner of the east benches"
+   ],
+   "dislikes": [
+    "the coffee machine's NOT WORKING sign",
+    "ice that costs her daughter a jump",
+    "hockey parents in the lobby at 8",
+    "the cold"
+   ],
+   "voice": "Polite, precise, over-caffeinated. Asks about ice temperature as if it were a prescription.",
+   "interests": {
+    "figure_practice": {
+     "watch": 0.9,
+     "play": 0.0
+    },
+    "figure_show": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.1,
+     "play": 0.2
+    },
+    "special": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 9.0,
+     "to": 18.0,
+     "place": "away",
+     "doing": "the pharmacy"
+    }
+   ],
+   "rel": {
+    "josee_thibodeau": 80,
+    "marcel_thibodeau": 70,
+    "paolo_marchetti": -10,
+    "helene_arsenault": 50,
+    "owner": 0
+   },
+   "dialogue": "carol_thibodeau",
+   "quests": [],
+   "bio": "Carol has driven Josée to 06:00 ice three mornings a week for eight years and sits on the coffee bench with half the heaters working and no coffee until seven. She knows the club's competition calendar better than the club does. She and Paolo Marchetti have fought a silent war over the best filming spot on the glass since September.",
+   "family": [
+    "josee_thibodeau",
+    "marcel_thibodeau"
+   ]
+  },
+  {
+   "id": "lily_marchetti",
+   "name": "Lily Marchetti",
+   "known_as": "Lily",
+   "age": 8,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "Above Marchetti's Shoe Repair",
+   "job": "Grade 3; Star 2 skater; falls a lot, on purpose and otherwise",
+   "role": "family",
+   "archetype": "figure_skater",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "curly",
+    "hair_color": "3a2a1a",
+    "outfit": "figure_dress",
+    "colors": [
+     "f28db2",
+     "ffffff"
+    ],
+    "accessory": "none"
+   },
+   "traits": {
+    "warmth": 0.95,
+    "chatter": 0.9,
+    "patience": 0.2,
+    "pride": 0.35,
+    "nerve": 0.85,
+    "humour": 0.92
+   },
+   "likes": [
+    "sequins",
+    "spinning until dizzy",
+    "the Snowflake Showcase snowflakes",
+    "Linesman the pigeon",
+    "falling on purpose (it's funny)"
+   ],
+   "dislikes": [
+    "sitting still",
+    "her dad's camera",
+    "the word 'again'"
+   ],
+   "voice": "Giggly and unstoppable; narrates her own routines. 'And now the princess falls DOWN.'",
+   "interests": {
+    "figure_practice": {
+     "watch": 0.2,
+     "play": 0.8
+    },
+    "figure_show": {
+     "watch": 0.4,
+     "play": 1.0
+    },
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.8
+    },
+    "learn_to_skate": {
+     "watch": 0.3,
+     "play": 0.4
+    },
+    "special": {
+     "watch": 0.7,
+     "play": 0.6
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 20.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "paolo_marchetti": 70,
+    "penny_marchetti": 75,
+    "josee_thibodeau": 60,
+    "helene_arsenault": 40,
+    "maddie_pruitt": 50,
+    "owner": 15
+   },
+   "dialogue": "lily_marchetti",
+   "quests": [],
+   "bio": "Lily falls more than any skater in the club and enjoys it more than any skater in the club. She graduated from learn-to-skate a year ago and still drops in to show Maddie how to fall properly: knees bent, hands out, then laugh. Hélène says she has 'a gift for momentum'.",
+   "family": [
+    "paolo_marchetti",
+    "penny_marchetti"
+   ]
+  },
+  {
+   "id": "paolo_marchetti",
+   "name": "Paolo Marchetti",
+   "known_as": "Paolo",
+   "age": 39,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "Above Marchetti's Shoe Repair on Main Street",
+   "job": "Shoe repair (and skate-boot stretching, which annoys Bev)",
+   "role": "customer",
+   "archetype": "figure_parent",
+   "look": {
+    "build": "stocky",
+    "height": 0.97,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "2a2a2a",
+    "outfit": "parka",
+    "colors": [
+     "f28db2",
+     "2b2b2b"
+    ],
+    "accessory": "camera"
+   },
+   "traits": {
+    "warmth": 0.8,
+    "chatter": 0.88,
+    "patience": 0.4,
+    "pride": 0.65,
+    "nerve": 0.28,
+    "humour": 0.71
+   },
+   "likes": [
+    "filming every practice from three angles",
+    "Lily's spins",
+    "sequin repair",
+    "a music cue landing on time"
+   ],
+   "dislikes": [
+    "Carol Thibodeau's tripod spot",
+    "Bev's opinion of boot stretching",
+    "hockey dads",
+    "dim lights (bad for video)"
+   ],
+   "voice": "Excitable hand-talker who narrates his daughter like a broadcast. Bernie Szabo, but for figure skating.",
+   "interests": {
+    "figure_practice": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "figure_show": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.4
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 9.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "the shoe repair"
+    }
+   ],
+   "rel": {
+    "lily_marchetti": 85,
+    "penny_marchetti": 60,
+    "carol_thibodeau": -10,
+    "bev_kowalchuk": -5,
+    "doreen_vachon": 30,
+    "owner": 10
+   },
+   "dialogue": "paolo_marchetti",
+   "quests": [],
+   "bio": "Paolo films every one of Lily's practices from three angles and edits them with music on Sunday nights. He stretches skate boots in his shoe repair, which Bev regards as a hostile act. He is the loudest person at any figure event and the first to cry.",
+   "family": [
+    "lily_marchetti",
+    "penny_marchetti"
+   ]
+  },
+  {
+   "id": "noah_delisle",
+   "name": "Noah Delisle",
+   "known_as": "Noah",
+   "age": 16,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A farmhouse on the Kessler road",
+   "job": "Grade 11; Senior Bronze figure skater; Mallards fourth-line winger",
+   "role": "customer",
+   "archetype": "figure_skater",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "a07040",
+    "outfit": "figure_warmup",
+    "colors": [
+     "2e7d4f",
+     "f4f4f4"
+    ],
+    "accessory": "skates_over_shoulder"
+   },
+   "traits": {
+    "warmth": 0.72,
+    "chatter": 0.48,
+    "patience": 0.58,
+    "pride": 0.66,
+    "nerve": 0.85,
+    "humour": 0.78
+   },
+   "likes": [
+    "edges (he is the best skater on the Mallards and they know it)",
+    "his figure blades and his hockey blades",
+    "Doreen's Organ 2",
+    "being the only boy in the club, mostly"
+   ],
+   "dislikes": [
+    "jokes about figure skating (he has replies ready)",
+    "toe picks at hockey practice",
+    "having to choose"
+   ],
+   "voice": "Easygoing and unbothered; has heard every joke. Disarms with 'Can you do a spiral? No? Then hush.'",
+   "interests": {
+    "figure_practice": {
+     "watch": 0.3,
+     "play": 0.9
+    },
+    "figure_show": {
+     "watch": 0.4,
+     "play": 0.9
+    },
+    "high_school": {
+     "watch": 0.4,
+     "play": 0.8
+    },
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.5
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.3
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 22.5,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "josee_thibodeau": 50,
+    "helene_arsenault": 60,
+    "bernie_ostrowski": 45,
+    "josie_bautista": 50,
+    "owner": 10
+   },
+   "dialogue": "noah_delisle",
+   "quests": [],
+   "bio": "Noah started figure skating because his older sister did and kept going because he was good at it. He plays fourth-line wing for the Mallards and is the fastest skater on the team by a distance nobody likes to discuss. One day he will have to choose, and Hélène and Coach Bernie are both quietly campaigning."
+  },
+  {
+   "id": "yvette_lacombe",
+   "name": "Yvette Lacombe",
+   "known_as": "Madame Lacombe",
+   "age": 68,
+   "pronouns": "she/her",
+   "town": "sainte_odile",
+   "home": "A stone house in Sainte-Odile, two hours by the valley road",
+   "job": "Figure skating judge and test evaluator",
+   "role": "visitor",
+   "archetype": "official",
+   "look": {
+    "build": "slim",
+    "height": 0.96,
+    "skin": 0,
+    "hair": "bun",
+    "hair_color": "f0f0f0",
+    "outfit": "suit",
+    "colors": [
+     "1d2b4f",
+     "f4f4f4"
+    ],
+    "accessory": "blanket"
+   },
+   "traits": {
+    "warmth": 0.35,
+    "chatter": 0.25,
+    "patience": 0.9,
+    "pride": 0.76,
+    "nerve": 0.95,
+    "humour": 0.42
+   },
+   "likes": [
+    "a blanket in the judges' box",
+    "a rink at minus four",
+    "skaters who bow to the panel",
+    "Hélène's students (she will not say so)"
+   ],
+   "dislikes": [
+    "music that skips",
+    "cold judges' boxes",
+    "parents who argue scores in the parking lot"
+   ],
+   "voice": "Formal, exact and gently terrifying. Gives marks out loud for things that are not skating: 'The coffee, a 4.2.'",
+   "interests": {
+    "figure_show": {
+     "watch": 0.6,
+     "play": 1.0
+    },
+    "figure_practice": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 0.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "Sainte-Odile"
+    }
+   ],
+   "rel": {
+    "helene_arsenault": 55,
+    "carol_thibodeau": 0,
+    "paolo_marchetti": -5,
+    "owner": 0
+   },
+   "dialogue": "yvette_lacombe",
+   "quests": [],
+   "bio": "Madame Lacombe has judged figure skating tests across the north for forty years and drives two hours to Millbrook for test day with her own blanket. She coached Hélène's coach. A cold judges' box costs the rink more than any bad ice, because she remembers."
+  },
+  {
+   "id": "irene_dubois",
+   "name": "Irene Dubois",
+   "known_as": "Irene",
+   "age": 81,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "The seniors' apartments on Church Street",
+   "job": "Retired switchboard operator; every week at public skate since opening night, 1974",
+   "role": "regular",
+   "archetype": "retiree_regular",
+   "look": {
+    "build": "slim",
+    "height": 0.9,
+    "skin": 0,
+    "hair": "curly",
+    "hair_color": "f4f4f4",
+    "outfit": "cardigan",
+    "colors": [
+     "2b4f86",
+     "c9a227"
+    ],
+    "accessory": "scarf"
+   },
+   "traits": {
+    "warmth": 0.86,
+    "chatter": 0.72,
+    "patience": 0.92,
+    "pride": 0.5,
+    "nerve": 0.62,
+    "humour": 0.83
+   },
+   "likes": [
+    "public skate, every week since 2 November 1974",
+    "the Skaters' Waltz",
+    "skating Albert's laps as well as her own",
+    "the first lap on fresh ice",
+    "a hot chocolate at exactly 2:15"
+   ],
+   "dislikes": [
+    "kids on phones in the lane",
+    "slush",
+    "music too loud to count waltz time",
+    "cancellations"
+   ],
+   "voice": "Courtly and old-fashioned; takes your arm before you offer it. Tells you the temperature and how the ice compares to 1974.",
+   "interests": {
+    "public_skate": {
+     "watch": 0.5,
+     "play": 0.9
+    },
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "figure_show": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "figure_practice": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      5
+     ],
+     "from": 12.5,
+     "to": 13.0,
+     "place": "skate_rental",
+     "doing": "lacing up"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 20.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "doreen_vachon": 45,
+    "agnes_mulroney": 45,
+    "bev_kowalchuk": 40,
+    "jess_whitehorse": 40,
+    "owner": 15
+   },
+   "dialogue": "irene_dubois",
+   "quests": [],
+   "bio": "Irene has skated at Millbrook every week since opening night, 2 November 1974, first with her husband Albert and, since he died, doing his laps as well as hers. She arrives early enough to watch the end of figure practice and leaves exactly when the hot chocolate is gone. For her anniversary lap she would like the Skaters' Waltz, and Doreen's Casio knows it."
+  },
+  {
+   "id": "jess_whitehorse",
+   "name": "Jess Whitehorse",
+   "known_as": "Jess",
+   "age": 31,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "A rented farmhouse on the Port Ainsley road",
+   "job": "Veterinary technician, part-time",
+   "role": "customer",
+   "archetype": "hockey_parent",
+   "look": {
+    "build": "average",
+    "height": 1.0,
+    "skin": 2,
+    "hair": "long",
+    "hair_color": "1a1a1a",
+    "outfit": "parka",
+    "colors": [
+     "3fa7d6",
+     "f2d16b"
+    ],
+    "accessory": "thermos"
+   },
+   "traits": {
+    "warmth": 0.82,
+    "chatter": 0.4,
+    "patience": 0.95,
+    "pride": 0.45,
+    "nerve": 0.78,
+    "humour": 0.67
+   },
+   "likes": [
+    "Friday public skate when it is quiet",
+    "Birdie's first glide (any day now)",
+    "the pond at Port Ainsley in February",
+    "a dry bench for the snowsuit change"
+   ],
+   "dislikes": [
+    "teen boys racing through the toddler zone",
+    "the washroom with no changing table",
+    "wet ice that soaks a snowsuit"
+   ],
+   "voice": "Calm, funny, tired-mum honesty. Narrates to Birdie in the third person: 'Birdie is going to say hi. Birdie is not going to lick the glass.'",
+   "interests": {
+    "public_skate": {
+     "watch": 0.6,
+     "play": 0.9
+    },
+    "learn_to_skate": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "broomball": {
+     "watch": 0.2,
+     "play": 0.4
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.4
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2,
+      3,
+      4
+     ],
+     "from": 8.0,
+     "to": 14.0,
+     "place": "away",
+     "doing": "the vet clinic"
+    }
+   ],
+   "rel": {
+    "birdie_whitehorse": 95,
+    "irene_dubois": 40,
+    "colette_beaulieu": 35,
+    "lorraine_duffy": 30,
+    "owner": 10
+   },
+   "dialogue": "jess_whitehorse",
+   "quests": [],
+   "bio": "Jess grew up skating on the lake at Port Ainsley and wants Birdie to have the same winters. She comes to Friday public skate because it is the quietest, and stays because Irene waltzes with Birdie at two miles an hour. She would like a changing table in the washroom and will mention it.",
+   "family": [
+    "birdie_whitehorse"
+   ]
+  },
+  {
+   "id": "birdie_whitehorse",
+   "name": "Birdie Whitehorse",
+   "known_as": "Birdie",
+   "age": 3,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "The farmhouse on the Port Ainsley road",
+   "job": "Toddler; professional faller",
+   "role": "family",
+   "archetype": "minor_player",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 2,
+    "hair": "curly",
+    "hair_color": "1a1a1a",
+    "outfit": "parka",
+    "colors": [
+     "f2d16b",
+     "3fa7d6"
+    ],
+    "accessory": "toque"
+   },
+   "traits": {
+    "warmth": 0.97,
+    "chatter": 0.6,
+    "patience": 0.05,
+    "pride": 0.1,
+    "nerve": 0.9,
+    "humour": 0.94
+   },
+   "likes": [
+    "the Zambelli (she calls her 'DOWIS')",
+    "falling down on purpose",
+    "popcorn",
+    "Linesman the pigeon",
+    "the snowbank by the doors"
+   ],
+   "dislikes": [
+    "her snowsuit",
+    "being carried",
+    "the horn"
+   ],
+   "voice": "One word at a time, at full volume: 'DOWIS!' 'Again!' 'Bird!'",
+   "interests": {
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.8
+    },
+    "learn_to_skate": {
+     "watch": 0.2,
+     "play": 0.6
+    },
+    "special": {
+     "watch": 0.7,
+     "play": 0.3
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 12.5,
+     "to": 14.0,
+     "place": "away",
+     "doing": "nap"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 19.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "jess_whitehorse": 95,
+    "earl_bratt": 30,
+    "irene_dubois": 50,
+    "owner": 20
+   },
+   "dialogue": "birdie_whitehorse",
+   "quests": [],
+   "bio": "Birdie is three, wears a snowsuit she despises and loves Doris more than anyone in the building except Earl. She falls down every four seconds at public skate, on purpose about half the time. Earl pretends not to wave at her from the driver's seat.",
+   "family": [
+    "jess_whitehorse"
+   ]
+  },
+  {
+   "id": "hank_lavoie",
+   "name": "Hank Lavoie",
+   "known_as": "Hank",
+   "age": 47,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A trailer on the Kessler road with blackout curtains",
+   "job": "Paper machine tender, nights, Kessler Pulp & Paper",
+   "role": "regular",
+   "archetype": "shift_worker",
+   "look": {
+    "build": "big",
+    "height": 1.05,
+    "skin": 0,
+    "hair": "toque_hair",
+    "hair_color": "5a4a3a",
+    "outfit": "hoodie",
+    "colors": [
+     "3c3c3c",
+     "f28c28"
+    ],
+    "accessory": "stick"
+   },
+   "traits": {
+    "warmth": 0.58,
+    "chatter": 0.22,
+    "patience": 0.68,
+    "pride": 0.52,
+    "nerve": 0.92,
+    "humour": 0.48
+   },
+   "likes": [
+    "stick and puck at dawn, straight off the night shift",
+    "an empty rink",
+    "the hiss of the paper machine, oddly",
+    "the mill whistle",
+    "broomball nights, from the stands"
+   ],
+   "dislikes": [
+    "people who talk at stick and puck",
+    "rotating shifts",
+    "daylight after nights"
+   ],
+   "voice": "Laconic mill-worker humour; a single 'Yup' carries three paragraphs. Shoots pucks to get sleepy.",
+   "interests": {
+    "stick_and_puck": {
+     "watch": 0.4,
+     "play": 0.9
+    },
+    "broomball": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.3,
+     "play": 0.4
+    },
+    "special": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "from": 21.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "night shift"
+    },
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 0.0,
+     "to": 5.0,
+     "place": "away",
+     "doing": "night shift"
+    },
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 7.0,
+     "to": 14.0,
+     "place": "away",
+     "doing": "sleep"
+    }
+   ],
+   "rel": {
+    "kenny_szabo": 35,
+    "earl_bratt": 30,
+    "tommy_bellweather": 25,
+    "walter_oduya": 30,
+    "owner": 10
+   },
+   "dialogue": "hank_lavoie",
+   "quests": [],
+   "bio": "Hank runs a paper machine on nights at Kessler Pulp & Paper, comes off at five and wants an hour of stick and puck before he sleeps. He skates in silence, shoots a hundred pucks and goes home with the sun coming up. On Wednesdays he sits in the stands for broomball and laughs once, loudly, at something nobody else saw."
+  },
+  {
+   "id": "marcel_thibodeau",
+   "name": "Marcel Thibodeau",
+   "known_as": "Marcel",
+   "age": 56,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "The Thibodeau house on Church Street, with a striped mailbox",
+   "job": "Referee, Valley Beer League and NSHA (thirty seasons); Kessler Public Works",
+   "role": "regular",
+   "archetype": "official",
+   "look": {
+    "build": "stocky",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "bald",
+    "hair_color": "c8c8c8",
+    "outfit": "ref_stripes",
+    "colors": [
+     "f4f4f4",
+     "1b1b1b"
+    ],
+    "accessory": "whistle"
+   },
+   "traits": {
+    "warmth": 0.52,
+    "chatter": 0.42,
+    "patience": 0.88,
+    "pride": 0.82,
+    "nerve": 0.96,
+    "humour": 0.57
+   },
+   "likes": [
+    "Shauna's crullers",
+    "a second coat hook",
+    "a game nobody remembers the ref of",
+    "Rule 6.2, which he knows better than the Sin Bin Brewers"
+   ],
+   "dislikes": [
+    "Doreen's dirge",
+    "the ref room smelling of brooms",
+    "parents behind the glass",
+    "being called 'Stripes'"
+   ],
+   "voice": "Unflappable and dry, a man who has heard it all and noted it in the incident book. 'Noted.'",
+   "interests": {
+    "beer_league": {
+     "watch": 0.2,
+     "play": 0.9
+    },
+    "senior_hockey": {
+     "watch": 0.3,
+     "play": 0.9
+    },
+    "minor_hockey": {
+     "watch": 0.2,
+     "play": 0.5
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 7.0,
+     "to": 15.0,
+     "place": "away",
+     "doing": "Kessler Public Works"
+    }
+   ],
+   "rel": {
+    "doreen_vachon": -5,
+    "shauna_reid": 55,
+    "rick_saucier": -20,
+    "nell_haraldsen": 60,
+    "brody_sauve": 45,
+    "carol_thibodeau": 70,
+    "josee_thibodeau": 85,
+    "owner": 0
+   },
+   "dialogue": "marcel_thibodeau",
+   "quests": [],
+   "bio": "Marcel has refereed thirty seasons of valley hockey and written most of the incident book. He is Josée's dad and Carol's husband, and the only person in the family who thinks a 6 am alarm is a reasonable time to be at a rink. He watches his daughter's test from the lobby because he cannot bear it.",
+   "family": [
+    "carol_thibodeau",
+    "josee_thibodeau"
+   ]
+  },
+  {
+   "id": "nell_haraldsen",
+   "name": "Nell Haraldsen",
+   "known_as": "Nell",
+   "age": 35,
+   "pronouns": "she/her",
+   "town": "harlow_falls",
+   "home": "A Harlow Falls apartment with three whistles on the key rack",
+   "job": "Referee, Valley Beer League (four nights a week); NSHA linesperson on Saturdays",
+   "role": "regular",
+   "archetype": "official",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 1,
+    "hair": "ponytail",
+    "hair_color": "1a1a1a",
+    "outfit": "ref_stripes",
+    "colors": [
+     "f4f4f4",
+     "1b1b1b"
+    ],
+    "accessory": "whistle"
+   },
+   "traits": {
+    "warmth": 0.68,
+    "chatter": 0.53,
+    "patience": 0.62,
+    "pride": 0.87,
+    "nerve": 0.82,
+    "humour": 0.59
+   },
+   "likes": [
+    "a second coat hook in the ref room",
+    "a clean offside call",
+    "Shauna's crullers",
+    "figure shows on her nights off",
+    "a game nobody remembers the ref of"
+   ],
+   "dislikes": [
+    "being called 'the girl ref'",
+    "the roof drip on the home blue line",
+    "the ref room smelling of brooms"
+   ],
+   "voice": "Sharp, warm and organised; explains offside to anyone, unprompted, with diagrams on napkins. Asks politely, twice, then writes it in the book.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.2,
+     "play": 0.9
+    },
+    "senior_hockey": {
+     "watch": 0.4,
+     "play": 0.9
+    },
+    "figure_show": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "pro_practice": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.2,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 16.0,
+     "place": "away",
+     "doing": "the Lakesider's office (ads)"
+    }
+   ],
+   "rel": {
+    "marcel_thibodeau": 60,
+    "tyler_brandt": -10,
+    "shauna_reid": 40,
+    "annette_rourke": 40,
+    "owner": 5
+   },
+   "dialogue": "nell_haraldsen",
+   "quests": [],
+   "bio": "Nell referees the Valley Beer League four nights a week and works the lines in the NSHA on Saturdays, and intends to be the first woman to referee in the ILHL. The ref room is a former broom closet with one coat hook for three officials, and the incident book has asked politely for a second in her handwriting. On her nights off she watches figure shows, for the edges."
+  },
+  {
+   "id": "brody_sauve",
+   "name": "Brody Sauvé",
+   "known_as": "Brody",
+   "age": 15,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "His parents' house behind the curling club",
+   "job": "Grade 10; minor hockey referee (Level 1)",
+   "role": "regular",
+   "archetype": "official",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "c0a080",
+    "outfit": "ref_stripes",
+    "colors": [
+     "f4f4f4",
+     "1b1b1b"
+    ],
+    "accessory": "whistle"
+   },
+   "traits": {
+    "warmth": 0.6,
+    "chatter": 0.3,
+    "patience": 0.75,
+    "pride": 0.36,
+    "nerve": 0.25,
+    "humour": 0.55
+   },
+   "likes": [
+    "$25 a game",
+    "U9 games where nobody yells",
+    "his whistle with no tooth marks (yet)",
+    "Marcel's advice"
+   ],
+   "dislikes": [
+    "Rick Saucier",
+    "being fifteen and right",
+    "the cold in the ref room"
+   ],
+   "voice": "Nervous, earnest rule-quoter; his voice cracks on the big calls. Tougher than he looks.",
+   "interests": {
+    "minor_hockey": {
+     "watch": 0.2,
+     "play": 0.9
+    },
+    "tournament": {
+     "watch": 0.3,
+     "play": 0.8
+    },
+    "high_school": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 22.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "rel": {
+    "marcel_thibodeau": 50,
+    "rick_saucier": -30,
+    "donna_pettigrew": 40,
+    "owen_pruett": 20,
+    "owner": 5
+   },
+   "dialogue": "brody_sauve",
+   "quests": [],
+   "bio": "Brody refs minor hockey on weekends for $25 a game and the experience. He is fifteen, polite, right about the rules and yelled at by grown men who are wrong about them. Marcel has told him the yelling gets quieter; Marcel is lying, kindly."
+  },
+  {
+   "id": "moose_kowalczuk",
+   "name": "Moose Kowalczuk",
+   "known_as": "Moose",
+   "age": 72,
+   "pronouns": "he/him",
+   "town": "kingsport",
+   "home": "A house in Kingsport full of paperbacks and loud plaid",
+   "job": "Host, Moose on the Loose (Saturday Night Hockey); summer hockey school",
+   "role": "visitor",
+   "archetype": "coach",
+   "look": {
+    "build": "big",
+    "height": 1.12,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "d0d0d0",
+    "outfit": "suit",
+    "colors": [
+     "c1272d",
+     "1b1b1b"
+    ],
+    "accessory": "reading_glasses"
+   },
+   "traits": {
+    "warmth": 0.98,
+    "chatter": 0.75,
+    "patience": 0.85,
+    "pride": 0.3,
+    "nerve": 0.93,
+    "humour": 0.88
+   },
+   "likes": [
+    "the penalty box library",
+    "mystery novels (the butler didn't do it)",
+    "retirement ceremonies (he cries)",
+    "kids at hockey school",
+    "'Moose knows'"
+   ],
+   "dislikes": [
+    "hits from behind",
+    "spoilers",
+    "being thanked for the fights"
+   ],
+   "voice": "Gentle giant, soft-spoken and bookish, with television warmth. Ends advice with 'Moose knows.'",
+   "interests": {
+    "minor_hockey": {
+     "watch": 0.5,
+     "play": 0.8
+    },
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.8
+    },
+    "pro_practice": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 0.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "Kingsport"
+    }
+   ],
+   "rel": {
+    "ronnie_haverstock": 60,
+    "bev_kowalchuk": 40,
+    "old_pete_vachon": 45,
+    "marion_fischer": 30,
+    "owner": 10
+   },
+   "dialogue": "moose_kowalczuk",
+   "quests": [],
+   "bio": "Moose holds the all-time penalty minutes record, by a distance the league calls 'an era', and never hit anyone from behind. In 1984 he served 17 minutes in the Millbrook penalty box at an exhibition and left a paperback, which started the penalty box library. He runs a summer hockey school that could rent Millbrook ice, if the ice is in by August."
+  },
+  {
+   "id": "barry_pomeroy",
+   "name": "Barry \"Suitcase\" Pomeroy",
+   "known_as": "Suitcase",
+   "age": 61,
+   "pronouns": "he/him",
+   "town": "duncannon",
+   "home": "A Duncannon house with a packed suitcase by the door, still",
+   "job": "Retired GNHL defenceman; Duncannon Dukes community ambassador",
+   "role": "visitor",
+   "archetype": "retiree_regular",
+   "look": {
+    "build": "average",
+    "height": 1.04,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "a0a0a0",
+    "outfit": "team_jacket",
+    "colors": [
+     "4b2a7b",
+     "e3b23c"
+    ],
+    "accessory": "skates_over_shoulder"
+   },
+   "traits": {
+    "warmth": 0.96,
+    "chatter": 0.86,
+    "patience": 0.72,
+    "pride": 0.12,
+    "nerve": 0.66,
+    "humour": 0.93
+   },
+   "likes": [
+    "being welcome",
+    "standing ovations on arrival and departure",
+    "luggage tags",
+    "old-timers' hockey",
+    "bringing a suitcase to the rink, just in case"
+   ],
+   "dislikes": [
+    "trade deadlines",
+    "airports at 6 am",
+    "unpacking"
+   ],
+   "voice": "Cheerful, self-deprecating journeyman. Every story ends with him being traded: 'And then I was in Fairhaven.'",
+   "interests": {
+    "pro_practice": {
+     "watch": 0.6,
+     "play": 0.8
+    },
+    "special": {
+     "watch": 0.9,
+     "play": 0.9
+    },
+    "beer_league": {
+     "watch": 0.3,
+     "play": 0.4
+    },
+    "minor_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 0.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "Duncannon"
+    }
+   ],
+   "rel": {
+    "ronnie_haverstock": 65,
+    "annette_rourke": 55,
+    "moose_kowalczuk": 60,
+    "owner": 15
+   },
+   "dialogue": "barry_pomeroy",
+   "quests": [],
+   "bio": "Suitcase played for nine GNHL clubs and was sent down to the Duncannon Dukes seven times; the Duncannon fans gave him a standing ovation every time he arrived and every time he left. He won his only Cup in his final game. Now he skates with the Dukes at practice as their ambassador and visits the Haverstock Old-timers' the year the owner turns 30."
+  },
+  {
+   "id": "donnie_delorme",
+   "name": "Donnie Delorme",
+   "known_as": "Donnie",
+   "age": 56,
+   "pronouns": "he/him",
+   "town": "harlow_falls",
+   "home": "Above Delorme's Bakery, Harlow Falls",
+   "job": "Baker (the better twin)",
+   "role": "visitor",
+   "archetype": "shopkeeper",
+   "look": {
+    "build": "stocky",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "6a5040",
+    "outfit": "canteen_apron",
+    "colors": [
+     "f4f4f4",
+     "c9a66b"
+    ],
+    "accessory": "none"
+   },
+   "traits": {
+    "warmth": 0.66,
+    "chatter": 0.05,
+    "patience": 0.86,
+    "pride": 0.16,
+    "nerve": 0.94,
+    "humour": 0.7
+   },
+   "likes": [
+    "crullers at 4 am",
+    "nobody recognising him",
+    "beer league hockey from the back row",
+    "a well-run power play, from a distance"
+   ],
+   "dislikes": [
+    "cameras",
+    "being asked about 1996",
+    "his twin's teeth",
+    "the word 'asterisk'"
+   ],
+   "voice": "Says almost nothing; communicates in baked goods. A cake that says 'NO' is a complete sentence.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "stick_and_puck": {
+     "watch": 0.1,
+     "play": 0.6
+    },
+    "special": {
+     "watch": 0.4,
+     "play": 0.3
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 3.5,
+     "to": 13.0,
+     "place": "away",
+     "doing": "the bakery"
+    }
+   ],
+   "rel": {
+    "shauna_reid": 40,
+    "ronnie_haverstock": 50,
+    "kenny_szabo": 20,
+    "owner": 0
+   },
+   "dialogue": "donnie_delorme",
+   "quests": [],
+   "bio": "In 1996 Donnie played eleven GNHL games in place of his twin Ricky and played better; he was caught signing an autograph with his own name. Three teams offered him contracts and he went back to his bakery. He sits in the back row at beer league games, and sometimes, at dawn stick and puck, does something with a puck that makes Hank Lavoie stop shooting."
+  },
+  {
+   "id": "hap_doyle",
+   "name": "Hap Doyle",
+   "known_as": "Hap",
+   "age": 71,
+   "pronouns": "he/him",
+   "town": "kessler",
+   "home": "A Kessler farmhouse within earshot of the mill whistle",
+   "job": "Head coach, Kessler Millmen (since 1988)",
+   "role": "visitor",
+   "archetype": "coach",
+   "look": {
+    "build": "stocky",
+    "height": 0.99,
+    "skin": 0,
+    "hair": "buzz",
+    "hair_color": "e0e0e0",
+    "outfit": "coach_tracksuit",
+    "colors": [
+     "143d29",
+     "f0e6d0"
+    ],
+    "accessory": "clipboard"
+   },
+   "traits": {
+    "warmth": 0.22,
+    "chatter": 0.12,
+    "patience": 0.64,
+    "pride": 0.97,
+    "nerve": 0.91,
+    "humour": 0.18
+   },
+   "likes": [
+    "his practice plans (DO NOT REMOVE FROM KESSLER)",
+    "eleven Aldous Cups",
+    "players who don't talk",
+    "the Barn",
+    "'We'll see.'"
+   ],
+   "dislikes": [
+    "Millbrook ice",
+    "smiling (he denies 1996)",
+    "trades",
+    "Port Ainsley fish"
+   ],
+   "voice": "Monosyllabic. 'We'll see.' Silence is his paragraph.",
+   "interests": {
+    "senior_hockey": {
+     "watch": 0.4,
+     "play": 1.0
+    },
+    "stick_and_puck": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.2,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 0.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "Kessler"
+    }
+   ],
+   "rel": {
+    "tyler_brandt": 15,
+    "stan_kubiak": 20,
+    "bernie_szabo": 30,
+    "owner": -10
+   },
+   "dialogue": "hap_doyle",
+   "quests": [],
+   "bio": "Hap has coached the Kessler Millmen since 1988 and smiled once, in 1996; the photo hangs in the Barn with a card that says HE DENIES IT. He comes to Millbrook with the Millmen and leaves his practice plans in the visitors' room more often than a careful man should. His arc ends, on any path, with the second smile in recorded history."
+  },
+  {
+   "id": "annette_rourke",
+   "name": "Annette Rourke",
+   "known_as": "Coach Rourke",
+   "age": 45,
+   "pronouns": "she/her",
+   "town": "duncannon",
+   "home": "A Duncannon condo with a freezer full of ice cups",
+   "job": "Head coach, Duncannon Dukes (CHA)",
+   "role": "visitor",
+   "archetype": "coach",
+   "look": {
+    "build": "average",
+    "height": 1.02,
+    "skin": 0,
+    "hair": "ponytail",
+    "hair_color": "4a3a2a",
+    "outfit": "coach_tracksuit",
+    "colors": [
+     "4b2a7b",
+     "e3b23c"
+    ],
+    "accessory": "coffee"
+   },
+   "traits": {
+    "warmth": 0.44,
+    "chatter": 0.28,
+    "patience": 0.53,
+    "pride": 0.84,
+    "nerve": 0.97,
+    "humour": 0.34
+   },
+   "likes": [
+    "a player who is the same every night",
+    "ice measured, not described",
+    "a cup of ice to chew",
+    "10 am practice ice when the Frostbank Centre has a concert"
+   ],
+   "dislikes": [
+    "'highlight' players",
+    "late floods",
+    "the word 'vibes'"
+   ],
+   "voice": "Fair, cold and fast; short declaratives. 'I don't need you to be good. I need you to be the same every night.'",
+   "interests": {
+    "pro_practice": {
+     "watch": 0.3,
+     "play": 1.0
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.2,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 0.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "Duncannon"
+    }
+   ],
+   "rel": {
+    "barry_pomeroy": 55,
+    "hap_doyle": 30,
+    "nell_haraldsen": 30,
+    "owner": 0
+   },
+   "dialogue": "annette_rourke",
+   "quests": [],
+   "bio": "Annette played defence in the CHA and now coaches the Dukes, chewing ice from a cup behind the bench. She books Millbrook practice ice on Mondays and Wednesdays when the Frostbank Centre has concerts, and only if the ice is 85 or better. She measures it herself."
+  },
+  {
+   "id": "merv_tolliver",
+   "name": "Merv Tolliver",
+   "known_as": "Merv",
+   "age": 60,
+   "pronouns": "he/him",
+   "town": "duncannon",
+   "home": "A Duncannon apartment with a typewriter he is rude to",
+   "job": "Columnist, The Last Word, The Duncannon Daily Ledger",
+   "role": "visitor",
+   "archetype": "scout",
+   "look": {
+    "build": "slim",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "bald",
+    "hair_color": "9a9a9a",
+    "outfit": "suit",
+    "colors": [
+     "3a3a3a",
+     "8a8a8a"
+    ],
+    "accessory": "clipboard"
+   },
+   "traits": {
+    "warmth": 0.15,
+    "chatter": 0.7,
+    "patience": 0.3,
+    "pride": 0.9,
+    "nerve": 0.55,
+    "humour": 0.82
+   },
+   "likes": [
+    "complaining in print",
+    "good ice (annoyingly)",
+    "a crowd that knows every player's mother",
+    "one and a half stars"
+   ],
+   "dislikes": [
+    "the Frostbank Centre's video board",
+    "parking lots with ambitions",
+    "being moved by things",
+    "coffee that is hot (suspicious)"
+   ],
+   "voice": "Acid, elegant and secretly sentimental. Speaks in column ledes: 'I drove forty minutes so you don't have to.'",
+   "interests": {
+    "senior_hockey": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "figure_show": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 0.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "Duncannon"
+    }
+   ],
+   "rel": {
+    "midge_kaminski": -30,
+    "stan_szymanski": 20,
+    "bernie_szabo": -25,
+    "owner": -5
+   },
+   "dialogue": "merv_tolliver",
+   "quests": [],
+   "bio": "Merv writes The Last Word for the valley's only daily and hates everything, which is how you know you have arrived. He drives to Millbrook once the Lumber Kings host a game the Ledger covers and reviews the rink in stars. His review reruns with new text as the rooms are renovated, and he always comes back."
+  },
+  {
+   "id": "cody_lindqvist",
+   "name": "Cody Lindqvist",
+   "known_as": "Cody",
+   "age": 36,
+   "pronouns": "he/him",
+   "town": "harlow_falls",
+   "home": "An apartment over the Sin Bin Brewpub, Harlow Falls",
+   "job": "Brewmaster, Sin Bin Brewpub; Sin Bin Brewers defence",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "big",
+    "height": 1.06,
+    "skin": 0,
+    "hair": "long",
+    "hair_color": "c08a4a",
+    "outfit": "team_jacket",
+    "colors": [
+     "7a3e1d",
+     "f0e0c0"
+    ],
+    "accessory": "none"
+   },
+   "traits": {
+    "warmth": 0.62,
+    "chatter": 0.84,
+    "patience": 0.33,
+    "pride": 0.77,
+    "nerve": 0.58,
+    "humour": 0.73
+   },
+   "likes": [
+    "beers named after penalties (he has earned all of them)",
+    "Rule 6.2",
+    "explaining Rule 6.2 to referees",
+    "his mum's red pen, secretly"
+   ],
+   "dislikes": [
+    "referees who don't know Rule 6.2",
+    "his mum reading the penalty sheet",
+    "lagers"
+   ],
+   "voice": "Rules-lawyer charm; quotes the rulebook with a brewer's patience and a defenceman's timing. 'Technically...'",
+   "interests": {
+    "beer_league": {
+     "watch": 0.3,
+     "play": 1.0
+    },
+    "senior_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.4
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 10.0,
+     "to": 19.0,
+     "place": "away",
+     "doing": "the brewpub"
+    }
+   ],
+   "rel": {
+    "marguerite_lindqvist": 75,
+    "marcel_thibodeau": -15,
+    "dwayne_kuzyk": 40,
+    "owner": 10
+   },
+   "dialogue": "cody_lindqvist",
+   "quests": [],
+   "bio": "Cody leads the C Division in penalty minutes, almost all of them for explaining the rulebook to referees. He is usually right and gets two minutes anyway, for the tone. His mother, Marg, reads the penalty sheet every week and annotates it in red.",
+   "family": [
+    "marguerite_lindqvist"
+   ]
+  },
+  {
+   "id": "penny_marchetti",
+   "name": "Penny Marchetti",
+   "known_as": "Penny",
+   "age": 31,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "A flat over the bakery on Main Street, next door to Colette",
+   "job": "Gym teacher, Millbrook Elementary; adult learn-to-skate instructor",
+   "role": "regular",
+   "archetype": "coach",
+   "look": {
+    "build": "average",
+    "height": 1.01,
+    "skin": 0,
+    "hair": "ponytail",
+    "hair_color": "3a2a1a",
+    "outfit": "coach_tracksuit",
+    "colors": [
+     "e8452c",
+     "f2f2f2"
+    ],
+    "accessory": "whistle"
+   },
+   "traits": {
+    "warmth": 0.9,
+    "chatter": 0.77,
+    "patience": 0.94,
+    "pride": 0.33,
+    "nerve": 0.73,
+    "humour": 0.81
+   },
+   "likes": [
+    "a beginner's first glide",
+    "skate aids made from broken sticks",
+    "writing very good cards",
+    "her niece Lily's falls",
+    "a gym class that ends with nobody crying"
+   ],
+   "dislikes": [
+    "more beginners than boards",
+    "helmetless adults",
+    "her brother's camera at her classes"
+   ],
+   "voice": "Cheerful and practical, a gym teacher's voice that carries without shouting. 'Right! Hands on knees, eyes up, and we march like penguins.'",
+   "interests": {
+    "learn_to_skate": {
+     "watch": 0.5,
+     "play": 1.0
+    },
+    "public_skate": {
+     "watch": 0.4,
+     "play": 0.7
+    },
+    "figure_show": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.4
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 15.5,
+     "place": "away",
+     "doing": "Millbrook Elementary"
+    },
+    {
+     "days": [
+      1
+     ],
+     "from": 18.5,
+     "to": 20.5,
+     "place": "ice",
+     "doing": "adult learn-to-skate"
+    }
+   ],
+   "rel": {
+    "paolo_marchetti": 60,
+    "lily_marchetti": 75,
+    "colette_beaulieu": 55,
+    "walter_oduya": 50,
+    "marisol_bautista": 65,
+    "lorne_pettipiece": 30,
+    "owner": 10
+   },
+   "dialogue": "penny_marchetti",
+   "quests": [],
+   "bio": "Penny teaches gym at Millbrook Elementary and the adult learn-to-skate on Monday nights, where there are more beginners than boards. She wants skate aids for grown-ups and thinks the broken-stick barrel and Lorne Pettipiece could make them. She is Paolo's younger sister and Lily's favourite person on the ice.",
+   "family": [
+    "paolo_marchetti",
+    "lily_marchetti"
+   ]
+  },
+  {
+   "id": "walter_oduya",
+   "name": "Walter Oduya",
+   "known_as": "Walter",
+   "age": 62,
+   "pronouns": "he/him",
+   "town": "kessler",
+   "home": "A brick house in Kessler with his granddaughter's drawings on the fridge",
+   "job": "Retired electrician, Kessler Pulp & Paper; adult learn-to-skate student",
+   "role": "customer",
+   "archetype": "learn_to_skate_adult",
+   "look": {
+    "build": "big",
+    "height": 1.04,
+    "skin": 3,
+    "hair": "short",
+    "hair_color": "b0b0b0",
+    "outfit": "parka",
+    "colors": [
+     "143d29",
+     "f0e6d0"
+    ],
+    "accessory": "helmet"
+   },
+   "traits": {
+    "warmth": 0.78,
+    "chatter": 0.48,
+    "patience": 0.86,
+    "pride": 0.66,
+    "nerve": 0.22,
+    "humour": 0.64
+   },
+   "likes": [
+    "his granddaughter Zuri",
+    "a properly grounded outlet",
+    "the boards, for now",
+    "Penny's penguin march",
+    "one lap, someday soon"
+   ],
+   "dislikes": [
+    "Zuri thinking grandpas can't skate",
+    "exposed wiring in the lobby",
+    "rental skate number 41"
+   ],
+   "voice": "Gentle, methodical, an electrician's patience. Treats every fall like a fault to trace: 'Right. Left foot. That's where the trouble is.'",
+   "interests": {
+    "learn_to_skate": {
+     "watch": 0.3,
+     "play": 0.9
+    },
+    "public_skate": {
+     "watch": 0.5,
+     "play": 0.6
+    },
+    "senior_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 9.0,
+     "to": 12.0,
+     "place": "away",
+     "doing": "minding Zuri"
+    }
+   ],
+   "rel": {
+    "penny_marchetti": 55,
+    "marisol_bautista": 40,
+    "hank_lavoie": 30,
+    "andre_clarke": 35,
+    "owner": 5
+   },
+   "dialogue": "walter_oduya",
+   "quests": [],
+   "bio": "Walter wired half of Kessler Pulp & Paper over thirty-five years and has never once been on skates. His granddaughter Zuri, six, skates like a sparrow, and he would like to do one lap with her at public skate before she decides grandpas can't. He comes to Monday learn-to-skate in a helmet and takes notes."
+  },
+  {
+   "id": "devon_marsh",
+   "name": "Devon Marsh",
+   "known_as": "Devon",
+   "age": 29,
+   "pronouns": "he/him",
+   "town": "harlow_falls",
+   "home": "An apartment in Harlow Falls with two pairs of skates by the door",
+   "job": "Line cook, the Slapshot Saloon",
+   "role": "customer",
+   "archetype": "date_night",
+   "look": {
+    "build": "slim",
+    "height": 1.04,
+    "skin": 2,
+    "hair": "short",
+    "hair_color": "1a1a1a",
+    "outfit": "casual",
+    "colors": [
+     "0e6b6b",
+     "f2f2f2"
+    ],
+    "accessory": "scarf"
+   },
+   "traits": {
+    "warmth": 0.88,
+    "chatter": 0.69,
+    "patience": 0.57,
+    "pride": 0.47,
+    "nerve": 0.32,
+    "humour": 0.79
+   },
+   "likes": [
+    "Ama",
+    "Saturday public skate, where they met",
+    "their song",
+    "a dimmer switch, in theory",
+    "checking his coat pocket"
+   ],
+   "dislikes": [
+    "the moment the music stops",
+    "breaker 14",
+    "falling while holding hands"
+   ],
+   "voice": "Earnest and nervous; rehearsed lines that go charmingly wrong. Checks his coat pocket every ninety seconds.",
+   "interests": {
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.8
+    },
+    "beer_league": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.8
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 15.0,
+     "to": 23.0,
+     "place": "away",
+     "doing": "the Slapshot Saloon kitchen"
+    }
+   ],
+   "rel": {
+    "doreen_vachon": 30,
+    "dylan_pruitt": 25,
+    "irene_dubois": 30,
+    "owner": 5
+   },
+   "dialogue": "devon_marsh",
+   "quests": [],
+   "bio": "Devon met Ama at Saturday public skate, when she skated into him and apologised to the boards. He wants to propose to her there, during their song, with the lights down, and needs a plan, a song and a dimmer. He has told everyone except Ama."
+  },
+  {
+   "id": "rhonda_pelkey",
+   "name": "Rhonda Pelkey",
+   "known_as": "Rhonda",
+   "age": 39,
+   "pronouns": "she/her",
+   "town": "harlow_falls",
+   "home": "A Harlow Falls duplex with a gold rubber boot on the porch",
+   "job": "Hydro dispatcher; Harlow Falls Broomball Club goalie",
+   "role": "regular",
+   "archetype": "broomballer",
+   "look": {
+    "build": "stocky",
+    "height": 0.99,
+    "skin": 0,
+    "hair": "ponytail",
+    "hair_color": "8a2a1a",
+    "outfit": "hoodie",
+    "colors": [
+     "f28c28",
+     "1b1b1b"
+    ],
+    "accessory": "helmet"
+   },
+   "traits": {
+    "warmth": 0.67,
+    "chatter": 0.92,
+    "patience": 0.19,
+    "pride": 0.74,
+    "nerve": 0.88,
+    "humour": 0.9
+   },
+   "likes": [
+    "broomball",
+    "the Golden Boot (a rubber boot painted gold)",
+    "the Winter Carnival final",
+    "trash talk with hockey players",
+    "grip tape on sneakers"
+   ],
+   "dislikes": [
+    "skaters who call it 'curling with a ball'",
+    "a flood right before broomball",
+    "the Golden Boot living on her porch"
+   ],
+   "voice": "Loud, quick and very funny, a dispatcher's calm in the crease. Has a nickname for everyone within one meeting.",
+   "interests": {
+    "broomball": {
+     "watch": 0.5,
+     "play": 0.95
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.8
+    },
+    "beer_league": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 7.0,
+     "to": 15.5,
+     "place": "away",
+     "doing": "hydro dispatch"
+    }
+   ],
+   "rel": {
+    "kev_szabo": 70,
+    "dwayne_kuzyk": 55,
+    "earl_bratt": -10,
+    "hank_lavoie": 25,
+    "owner": 10
+   },
+   "dialogue": "rhonda_pelkey",
+   "quests": [],
+   "bio": "Rhonda keeps goal for the Harlow Falls Broomball Club and keeps the Golden Boot, the Winter Carnival trophy, on her porch, because nobody has given it a better home. She would like ice for the Carnival final that won't eat sneakers. She and Earl disagree about when the flood should happen, every Wednesday."
+  },
+  {
+   "id": "lisa_cormier",
+   "name": "Lisa Cormier",
+   "known_as": "Lisa",
+   "age": 36,
+   "pronouns": "she/her",
+   "town": "millbrook",
+   "home": "A bungalow on Birch Street with a muffin tin always in use",
+   "job": "Dental hygienist; U7 novice team manager",
+   "role": "customer",
+   "archetype": "hockey_parent",
+   "look": {
+    "build": "average",
+    "height": 0.99,
+    "skin": 0,
+    "hair": "ponytail",
+    "hair_color": "a07040",
+    "outfit": "parka",
+    "colors": [
+     "1c4e80",
+     "f2f2f2"
+    ],
+    "accessory": "clipboard"
+   },
+   "traits": {
+    "warmth": 0.81,
+    "chatter": 0.83,
+    "patience": 0.42,
+    "pride": 0.61,
+    "nerve": 0.37,
+    "humour": 0.69
+   },
+   "likes": [
+    "a warm room for five-year-olds",
+    "blueberry muffins (panic-baked)",
+    "tiny skates done up tight",
+    "the U7 jamboree",
+    "public skate with the whole team"
+   ],
+   "dislikes": [
+    "the visitors' room at 8 am in January",
+    "frozen fingers on tiny laces",
+    "parents who leave before the skates are off"
+   ],
+   "voice": "Cheerful and frazzled, talks in lists, offers you a muffin as punctuation.",
+   "interests": {
+    "minor_hockey": {
+     "watch": 0.95,
+     "play": 0.3
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.7
+    },
+    "learn_to_skate": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "tournament": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.3
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "from": 8.0,
+     "to": 16.0,
+     "place": "away",
+     "doing": "Haverkamp Family Dentistry"
+    }
+   ],
+   "rel": {
+    "donna_pettigrew": 55,
+    "lyle_haverkamp": 30,
+    "colette_beaulieu": 40,
+    "owner": 10
+   },
+   "dialogue": "lisa_cormier",
+   "quests": [],
+   "bio": "Lisa manages the U7 novice team: fifteen five-year-olds, thirty mittens and one visitors' room at eight on Saturdays where nobody can do up skates with frozen fingers. She panic-bakes blueberry muffins before every game. She works for Dr. Haverkamp and is the only person who has ever made him wear a mouthguard, once."
+  },
+  {
+   "id": "desmond_faulk",
+   "name": "Desmond Faulk",
+   "known_as": "Mr. Faulk",
+   "age": 48,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A house on Elm Street with a sousaphone in the hall",
+   "job": "Music teacher, Millbrook High; leads the pep band",
+   "role": "regular",
+   "archetype": "superfan",
+   "look": {
+    "build": "big",
+    "height": 1.05,
+    "skin": 3,
+    "hair": "short",
+    "hair_color": "2a2a2a",
+    "outfit": "school_jacket",
+    "colors": [
+     "2e7d4f",
+     "c9a227"
+    ],
+    "accessory": "programme"
+   },
+   "traits": {
+    "warmth": 0.86,
+    "chatter": 0.79,
+    "patience": 0.63,
+    "pride": 0.71,
+    "nerve": 0.58,
+    "humour": 0.84
+   },
+   "likes": [
+    "the 1971 sousaphone",
+    "Section See (no letter)",
+    "a pep band that plays in tune, roughly",
+    "Doreen's Organ 2, as a colleague",
+    "the Mallards scoring on a downbeat"
+   ],
+   "dislikes": [
+    "being told to keep it down",
+    "the school's instrument budget",
+    "a goal during a key change"
+   ],
+   "voice": "Jovial and musical, hums the fight song between sentences; conducts with whatever he is holding.",
+   "interests": {
+    "high_school": {
+     "watch": 0.9,
+     "play": 0.6
+    },
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "figure_show": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 16.0,
+     "place": "away",
+     "doing": "Millbrook High"
+    }
+   ],
+   "rel": {
+    "bernie_ostrowski": 55,
+    "doreen_vachon": 45,
+    "josie_bautista": 30,
+    "noah_delisle": 40,
+    "owner": 10
+   },
+   "dialogue": "desmond_faulk",
+   "quests": [],
+   "bio": "Desmond teaches music at Millbrook High and leads the pep band and its 1971 sousaphone. He would like the band to play Mallards games from Section C, which has no letter and which everybody calls Section See. He and Doreen have a professional rivalry conducted entirely in key changes."
+  },
+  {
+   "id": "bob_ferreira",
+   "name": "Bob Ferreira",
+   "known_as": "Bob",
+   "age": 63,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "A tidy house by the old station with a timetable on the fridge",
+   "job": "Retired freight dispatcher (Carrick Junction); chair, Valley Peewee Tournament committee",
+   "role": "regular",
+   "archetype": "volunteer",
+   "look": {
+    "build": "stocky",
+    "height": 0.97,
+    "skin": 1,
+    "hair": "bald",
+    "hair_color": "c8c8c8",
+    "outfit": "team_jacket",
+    "colors": [
+     "1c4e80",
+     "f2f2f2"
+    ],
+    "accessory": "clipboard"
+   },
+   "traits": {
+    "warmth": 0.64,
+    "chatter": 0.68,
+    "patience": 0.72,
+    "pride": 0.79,
+    "nerve": 0.83,
+    "humour": 0.5
+   },
+   "likes": [
+    "a timetable",
+    "a game every seventy-five minutes with a flood between",
+    "running on time, for once",
+    "the crest-trading table",
+    "a fresh pencil"
+   ],
+   "dislikes": [
+    "overtime",
+    "a late flood",
+    "the word 'roughly'"
+   ],
+   "voice": "Railway precision, kindly delivered; speaks in departure times. 'Game four departs at 10:45. Not 10:46.'",
+   "interests": {
+    "tournament": {
+     "watch": 0.95,
+     "play": 0.9
+    },
+    "minor_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.4
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 7.0,
+     "to": 9.0,
+     "place": "away",
+     "doing": "coffee at the Legion"
+    }
+   ],
+   "rel": {
+    "donna_pettigrew": 55,
+    "larry_piche": 45,
+    "tommy_bellweather": 35,
+    "lorraine_duffy": 40,
+    "owner": 5
+   },
+   "dialogue": "bob_ferreira",
+   "quests": [],
+   "bio": "Bob dispatched freight out of Carrick Junction for thirty-four years and retired to Millbrook to be near his grandkids. He chairs the Valley Peewee Tournament committee, which runs a game every seventy-five minutes with a flood between, and would like it to run on time for once in its life. He has a pocket watch and uses it."
+  },
+  {
+   "id": "rejean_paquette",
+   "name": "Réjean Paquette",
+   "known_as": "Réjean",
+   "age": 58,
+   "pronouns": "he/him",
+   "town": "duncannon",
+   "home": "A Duncannon semi with an infrared gun on the dashboard of every car he has owned",
+   "job": "Equipment manager, Duncannon Dukes (twenty-six years)",
+   "role": "visitor",
+   "archetype": "rink_staff",
+   "look": {
+    "build": "average",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "9a9a9a",
+    "outfit": "team_jacket",
+    "colors": [
+     "4b2a7b",
+     "e3b23c"
+    ],
+    "accessory": "clipboard"
+   },
+   "traits": {
+    "warmth": 0.43,
+    "chatter": 0.36,
+    "patience": 0.69,
+    "pride": 0.93,
+    "nerve": 0.87,
+    "humour": 0.41
+   },
+   "likes": [
+    "his own infrared gun",
+    "numbers that agree with the log",
+    "a dry skate room",
+    "Old Pete's sharpening, which he will not admit"
+   ],
+   "dislikes": [
+    "ice described rather than measured",
+    "a log with gaps",
+    "anybody touching his gun"
+   ],
+   "voice": "A professional frown; speaks in temperatures. 'Minus five point two. You said minus five. You were close.'",
+   "interests": {
+    "pro_practice": {
+     "watch": 0.4,
+     "play": 0.9
+    },
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.2,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 0.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "Duncannon"
+    }
+   ],
+   "rel": {
+    "annette_rourke": 60,
+    "barry_pomeroy": 50,
+    "old_pete_vachon": 35,
+    "marguerite_lindqvist": 40,
+    "owner": 0
+   },
+   "dialogue": "rejean_paquette",
+   "quests": [],
+   "bio": "Réjean has kept the Dukes' equipment for twenty-six years and trusts only his own infrared gun. When the Dukes practise at Millbrook he walks the ice before they skate and compares his numbers with the log, and with yours. He and Old Pete have never been in the same room without discussing hollows."
+  },
+  {
+   "id": "terry_duffy",
+   "name": "Terry Duffy",
+   "known_as": "Terry",
+   "age": 44,
+   "pronouns": "he/him",
+   "town": "millbrook",
+   "home": "Above Duffy Bros. Plumbing & Heating",
+   "job": "Plumber, Duffy Bros. Plumbing & Heating; Plungers centre",
+   "role": "regular",
+   "archetype": "beer_leaguer",
+   "look": {
+    "build": "stocky",
+    "height": 1.0,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "6a4a2a",
+    "outfit": "team_jacket",
+    "colors": [
+     "d7263d",
+     "2b6cb0"
+    ],
+    "accessory": "none"
+   },
+   "traits": {
+    "warmth": 0.73,
+    "chatter": 0.56,
+    "patience": 0.48,
+    "pride": 0.44,
+    "nerve": 0.69,
+    "humour": 0.76
+   },
+   "likes": [
+    "a well-organised team",
+    "his pager (he says he hates it)",
+    "the hot-and-cold split jersey",
+    "his aunt Lorraine's chili"
+   ],
+   "dislikes": [
+    "his pager going off on a breakaway",
+    "washroom 2",
+    "people who say 'number two business' like they thought of it"
+   ],
+   "voice": "Matter-of-fact tradesman humour; every problem is a clog with a cause.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.3,
+     "play": 1.0
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 7.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "on call"
+    }
+   ],
+   "rel": {
+    "lorraine_duffy": 80,
+    "earl_bratt": 30,
+    "andre_clarke": 40,
+    "owner": 15
+   },
+   "dialogue": "terry_duffy",
+   "quests": [],
+   "bio": "Terry centres the Plungers, the best-organised team in C until someone gets an emergency call mid-game. He still carries a pager, and it goes off about once a game, usually on a breakaway; the refs rule it a line change. Washroom 2 is, professionally, his favourite and least favourite room in the building.",
+   "family": [
+    "lorraine_duffy"
+   ]
+  },
+  {
+   "id": "lorne_pettipiece",
+   "name": "Lorne Pettipiece",
+   "known_as": "Lorne",
+   "age": 70,
+   "pronouns": "he/him",
+   "town": "harlow_falls",
+   "home": "A workshop with a house attached, outside Harlow Falls",
+   "job": "Woodworker, Pettipiece Woodworks",
+   "role": "visitor",
+   "archetype": "shopkeeper",
+   "look": {
+    "build": "slim",
+    "height": 0.98,
+    "skin": 0,
+    "hair": "short",
+    "hair_color": "d0c8b0",
+    "outfit": "coveralls",
+    "colors": [
+     "8a6a3a",
+     "f2e6c8"
+    ],
+    "accessory": "reading_glasses"
+   },
+   "traits": {
+    "warmth": 0.71,
+    "chatter": 0.27,
+    "patience": 0.91,
+    "pride": 0.51,
+    "nerve": 0.79,
+    "humour": 0.6
+   },
+   "likes": [
+    "broken wooden sticks",
+    "a bench made of forty-one Warlocks",
+    "a good dovetail",
+    "Bev's barrel"
+   ],
+   "dislikes": [
+    "composite sticks (they don't plane)",
+    "glue that's in a hurry",
+    "people who sit on his benches before they're dry"
+   ],
+   "voice": "Unhurried, sawdust-dry humour; measures twice and talks once.",
+   "interests": {
+    "beer_league": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "the workshop"
+    }
+   ],
+   "rel": {
+    "bev_kowalchuk": 60,
+    "penny_marchetti": 30,
+    "stan_szymanski": 25,
+    "owner": 5
+   },
+   "dialogue": "lorne_pettipiece",
+   "quests": [],
+   "bio": "Lorne buys broken sticks from Bev's barrel, three dollars for wood and a dollar for composite, and turns them into coat racks, benches and the odd Adirondack chair. The Warlock bench by the front doors is his, built from forty-one broken Warlocks. Bev says it is sturdier than they ever were as sticks."
+  }
+ ]
+}

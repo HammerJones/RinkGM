@@ -1,0 +1,321 @@
+{
+  "id": "bernie_szabo",
+  "barks": {
+    "idle": [
+      "And he reaches for the fries, folks, a veteran move.",
+      "Kessler. KESS-ler. Kess-LER."
+    ],
+    "good_ice": [
+      "A fast sheet tonight, folks. Fast sheet."
+    ],
+    "bad_ice": [
+      "The puck is bouncing like a rumour, folks."
+    ],
+    "goal": [
+      "He shoots, he SCO-ores!",
+      "Go-AL! Second syllable, folks!"
+    ],
+    "cold": [
+      "And it's a frigid night in the press box. The heater has retired."
+    ],
+    "hungry": [
+      "Fries, folks. A large. Bold call."
+    ],
+    "greet_owner": [
+      "And here comes the owner!",
+      "A familiar face, folks!"
+    ],
+    "leaving_happy": [
+      "That's the game, folks. Drive safe."
+    ],
+    "leaving_angry": [
+      "A long night in Millbrook, folks. A long night."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "The Kings in white, the visitors in... other colours. Neutral. I'm neutral.",
+        "Szabo to the corner, he comes out with it! ...Nice play, number 22."
+      ],
+      "beer_league": [
+        "Calling the beer league for practice. Don't tell CKVL."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_bernie_szabo"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "senior_hockey"
+        }
+      ],
+      "node": "booth"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "bernie_szabo",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "And here comes the new owner, in from the lobby, a strong first step! Bernie Szabo, CKVL 1340 Valley Radio. A pleasure.",
+      "do": [
+        {
+          "set": "met_bernie_szabo"
+        }
+      ],
+      "options": [
+        {
+          "text": "Are you narrating me?",
+          "to": "first_narr"
+        },
+        {
+          "text": "Big fan of the broadcast.",
+          "do": [
+            {
+              "rel": [
+                "bernie_szabo",
+                5
+              ]
+            }
+          ],
+          "to": "first_fan"
+        },
+        {
+          "text": "How do you say Kessler?",
+          "do": [
+            {
+              "rel": [
+                "bernie_szabo",
+                -3
+              ]
+            }
+          ],
+          "to": "kessler"
+        }
+      ]
+    },
+    "first_narr": {
+      "say": "Can't help it, folks. The owner asks a question, and the crowd goes mild.",
+      "options": [
+        {
+          "text": "Ha.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_fan": {
+      "say": "A fan! Of the broadcast! Somebody write that down. That's the sound of me blushing, folks.",
+      "options": [
+        {
+          "text": "Thanks, Bernie.",
+          "to": "hub"
+        }
+      ]
+    },
+    "kessler": {
+      "say": "Kessler. KESS-ler. Kess-LER. Depends on the score.",
+      "options": [
+        {
+          "text": "Got it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "And it's a long night in the press box, folks: the heater's dead, the ice is slow, and the owner looks... oh. Hello."
+      ],
+      "options": [
+        {
+          "text": "I'll see about the heater.",
+          "do": [
+            {
+              "rel": [
+                "bernie_szabo",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "booth": {
+      "say": "Can't talk long, it's game night! The Kings in white, Kessler in shame. That's not neutral. Strike that.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "And the owner arrives! The crowd rises! Well, Stan nods.",
+        "Here's a familiar face, folks. Big welcome."
+      ],
+      "options": [
+        {
+          "text": "Hi, Bernie.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Bernie Szabo, live from the lobby. What's the call?",
+        "He steps in, he looks around, he asks... go ahead.",
+        "CKVL 1340. Talk to me."
+      ],
+      "options": [
+        {
+          "text": "How's the broadcast?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love calling?",
+          "to": "events"
+        },
+        {
+          "text": "How's Kenny's game?",
+          "to": "kenny"
+        },
+        {
+          "text": "Seen the Ledger lately?",
+          "to": "merv"
+        },
+        {
+          "text": "How does the rink sound on air?",
+          "to": "rink"
+        },
+        {
+          "text": "Bernie, sign off for real.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Since 1985. Every Kessler home game, and the Kings too. Two microphones on the road, three in the basement. My wife says that's a problem.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Senior hockey, folks. A goal call that peaks on the second syllable. Go-AL. Not Gooo-al. The second syllable.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "kenny": {
+      "say": "Szabo, number 22, to the corner, he comes out with it! ...That's my son. I call him like a stranger. My voice goes up. I can't stop it.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "merv": {
+      "say": "Merv Tolliver wrote that radio is 'television for people who've given up'. I've given up on Merv.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Sounds faster on air?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Want a new press box heater?",
+          "if": [
+            {
+              "not_flag": "bernie_heater"
+            }
+          ],
+          "to": "heater"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Faster ice, faster calls! I've had to speed up my 'he shoots'. I'm sixty-three, folks. This is cardio.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "heater": {
+      "say": "A heater? For the press box? Folks, I'm getting emotional, and that's bad for the voice.",
+      "do": [
+        {
+          "set": "bernie_heater"
+        },
+        {
+          "rel": [
+            "bernie_szabo",
+            5
+          ]
+        },
+        {
+          "note": "You promised Bernie Szabo a new press box heater."
+        }
+      ],
+      "options": [
+        {
+          "text": "I'll put it on the list.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

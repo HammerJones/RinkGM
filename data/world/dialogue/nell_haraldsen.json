@@ -1,0 +1,417 @@
+{
+  "id": "nell_haraldsen",
+  "barks": {
+    "idle": [
+      "Offside is simple. Give me a napkin.",
+      "First woman in the ILHL. Write it down. I have."
+    ],
+    "good_ice": [
+      "Clean ice, clean calls. I love this job."
+    ],
+    "bad_ice": [
+      "The roof drip on the home blue line. Again.",
+      "If the puck hops over a stick, that's the ice, not me."
+    ],
+    "wet_ice": [
+      "Delay. Wet ice. I'm writing the time down to the minute."
+    ],
+    "cold": [
+      "My coat's on the floor. It's colder down there."
+    ],
+    "hungry": [
+      "Did Shauna bring crullers? Asking for three officials."
+    ],
+    "long_line": [
+      "I'll be on the ice in four minutes. The line is not my problem."
+    ],
+    "bored": [
+      "I could explain offside to someone. Anyone."
+    ],
+    "goal": [
+      "Good goal. Onside by a skate lace. I checked."
+    ],
+    "greet_owner": [
+      "Hey! I asked politely, once. This is the second time.",
+      "Owner. Good evening. The book misses you."
+    ],
+    "leaving_happy": [
+      "Three games, zero complaints, and a hook. Good night."
+    ],
+    "leaving_angry": [
+      "Asked politely twice. It's in the book now."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "That's offside. Here, napkin.",
+        "No, I am not the girl ref. I am the ref."
+      ],
+      "figure_show": [
+        "Look at those edges. That's who I watch for."
+      ],
+      "pro_practice": [
+        "Dukes practice. I'm watching how they line up on the draws. For science."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_nell_haraldsen"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "ref_room_hooks"
+        },
+        {
+          "not_flag": "nell_hooks_thanked"
+        }
+      ],
+      "node": "hooks_done"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "game_night"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Nell Haraldsen. I ref the beer league four nights a week and work the lines on Saturdays. You're the owner? Great. I have a list. It's polite.",
+      "do": [
+        {
+          "set": "met_nell_haraldsen"
+        }
+      ],
+      "options": [
+        {
+          "text": "I'd love to see the list.",
+          "do": [
+            {
+              "rel": [
+                "nell_haraldsen",
+                4
+              ]
+            }
+          ],
+          "to": "first_list"
+        },
+        {
+          "text": "Oh, you're the girl ref.",
+          "do": [
+            {
+              "rel": [
+                "nell_haraldsen",
+                -4
+              ]
+            }
+          ],
+          "to": "first_girl"
+        },
+        {
+          "text": "Nice to meet you, Nell.",
+          "do": [
+            {
+              "rel": [
+                "nell_haraldsen",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_list": {
+      "say": "Item one: a second coat hook. Item two: see item one. There are three officials and one hook. The incident book has asked, in my handwriting.",
+      "options": [
+        {
+          "text": "I'll look into it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_girl": {
+      "say": "I'm the ref. You'll know the difference when you get two minutes for asking. (She smiles. It's not a warm one yet.)",
+      "options": [
+        {
+          "text": "Sorry. The ref.",
+          "do": [
+            {
+              "rel": [
+                "nell_haraldsen",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Nell. I'll fix it.",
+          "do": [
+            {
+              "rel": [
+                "nell_haraldsen",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hooks_done": {
+      "say": "Two hooks! Two! My coat has never been this dry. I've written you a line in the book. It's a nice one.",
+      "options": [
+        {
+          "text": "You're welcome, Nell.",
+          "do": [
+            {
+              "set": "nell_hooks_thanked"
+            },
+            {
+              "rel": [
+                "nell_haraldsen",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "game_night": {
+      "say": [
+        "Twenty minutes to puck drop. I've got time for one question or one offside diagram.",
+        "Evening. Is the drip fixed? No? Noted."
+      ],
+      "options": [
+        {
+          "text": "Good luck tonight.",
+          "to": "end"
+        },
+        {
+          "text": "One question.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hi! What's up?",
+        "Nell Haraldsen. Go ahead.",
+        "Got a napkin? No? Never mind. What is it?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What's your plan, long term?",
+          "to": "job"
+        },
+        {
+          "text": "What do you like to watch on your nights off?",
+          "to": "events"
+        },
+        {
+          "text": "How do you get on with Marcel?",
+          "to": "gossip"
+        },
+        {
+          "text": "How's the rink for refs?",
+          "to": "rink"
+        },
+        {
+          "text": "Can you explain offside to me?",
+          "if": [
+            {
+              "not_flag": "nell_napkin"
+            }
+          ],
+          "to": "offside"
+        },
+        {
+          "text": "Will you be reffing my games?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "path_player"
+        },
+        {
+          "text": "Good luck out there.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "First woman to referee in the ILHL. I'm on the list. I sell ads at the Lakesider during the day so I can afford whistles. I own three.",
+      "options": [
+        {
+          "text": "You'll get there.",
+          "do": [
+            {
+              "rel": [
+                "nell_haraldsen",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Figure shows. For the edges. Those skaters do things with an edge that would make a winger cry. And Dukes practice, for how the pros line up on a draw.",
+      "options": [
+        {
+          "text": "Edges. I like that.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Marcel is the best ref in the valley and the dryest man alive. And Coach Rourke from the Dukes doesn't yell. She just looks. It's worse. I love it.",
+      "options": [
+        {
+          "text": "Good people.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The ref room is a broom closet with one hook for three officials, and there's a roof drip on the home blue line that I can call like a penalty.",
+      "options": [
+        {
+          "text": "It's better now, isn't it?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'm working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "Hooks, a chair, a heater. I could cry. I won't. Refs don't cry. We note.",
+      "options": [
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "offside": {
+      "say": "(She grabs a napkin and draws a blue line, a puck and three stick figures.) The puck crosses first. Skates follow. That's it. That's the whole game.",
+      "options": [
+        {
+          "text": "That actually makes sense.",
+          "do": [
+            {
+              "set": "nell_napkin"
+            },
+            {
+              "rel": [
+                "nell_haraldsen",
+                3
+              ]
+            },
+            {
+              "item": [
+                "offside_napkin",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I still don't get it.",
+          "to": "offside_again"
+        }
+      ]
+    },
+    "offside_again": {
+      "say": "(She draws a second napkin, with arrows. Then a third.) Okay. Keep this one. Study it. There will be a quiz.",
+      "options": [
+        {
+          "text": "Thanks, Nell.",
+          "do": [
+            {
+              "set": "nell_napkin"
+            },
+            {
+              "rel": [
+                "nell_haraldsen",
+                2
+              ]
+            },
+            {
+              "item": [
+                "offside_napkin",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "path_player": {
+      "say": "Tuesdays and Thursdays, C division. I won't go easy on you because you own the building. I'll go easy on you because you're slow.",
+      "options": [
+        {
+          "text": "Harsh. Fair.",
+          "do": [
+            {
+              "rel": [
+                "nell_haraldsen",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Good night! Hooks, owner. Hooks.",
+        "See you at puck drop."
+      ],
+      "options": []
+    }
+  }
+}

@@ -1,0 +1,269 @@
+{
+ "id": "bev_eight_dollars",
+ "giver": "bev_kowalchuk",
+ "quest": "bev_eight_dollars",
+ "nodes": {
+  "offer": {
+   "say": "You saw it. Good. Eight dollars.",
+   "options": [
+    {
+     "text": "What's it for?",
+     "to": "why"
+    },
+    {
+     "text": "Here's eight dollars.",
+     "do": [
+      {
+       "quest_start": "bev_eight_dollars"
+      },
+      {
+       "money": -8
+      },
+      {
+       "set": "bev_paid_eight"
+      },
+      {
+       "rel": [
+        "bev_kowalchuk",
+        3
+       ]
+      }
+     ],
+     "to": "paid"
+    },
+    {
+     "text": "I'll pay you in sharpenings. Wait.",
+     "to": "cheek"
+    },
+    {
+     "text": "Not today, Bev.",
+     "to": "decline"
+    }
+   ]
+  },
+  "decline": {
+   "say": "The chalkboard can wait. Chalk is patient. I'm not.",
+   "do": [
+    {
+     "rel": [
+      "bev_kowalchuk",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "why": {
+   "say": "Your first day. You walked past my shop, looked in, waved, and didn't come in. That's eight dollars. The price of a sharpening you should have had.",
+   "options": [
+    {
+     "text": "That's fair. Here's eight dollars.",
+     "do": [
+      {
+       "quest_start": "bev_eight_dollars"
+      },
+      {
+       "money": -8
+      },
+      {
+       "set": "bev_paid_eight"
+      },
+      {
+       "rel": [
+        "bev_kowalchuk",
+        4
+       ]
+      }
+     ],
+     "to": "paid"
+    },
+    {
+     "text": "That's not a real debt, Bev.",
+     "do": [
+      {
+       "rel": [
+        "bev_kowalchuk",
+        -2
+       ]
+      }
+     ],
+     "to": "notreal"
+    }
+   ]
+  },
+  "notreal": {
+   "say": "It's on the chalkboard. The chalkboard is real. Pay up when you're ready, champ.",
+   "options": [
+    {
+     "text": "Fine. Eight dollars.",
+     "do": [
+      {
+       "quest_start": "bev_eight_dollars"
+      },
+      {
+       "money": -8
+      },
+      {
+       "set": "bev_paid_eight"
+      },
+      {
+       "rel": [
+        "bev_kowalchuk",
+        2
+       ]
+      }
+     ],
+     "to": "paid"
+    },
+    {
+     "text": "Later.",
+     "do": [
+      {
+       "quest_start": "bev_eight_dollars"
+      }
+     ],
+     "to": "end"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "I'm the one who sharpens. You're the one who owes. That's the whole economy of this town.",
+   "options": [
+    {
+     "text": "Fine. Eight dollars.",
+     "do": [
+      {
+       "quest_start": "bev_eight_dollars"
+      },
+      {
+       "money": -8
+      },
+      {
+       "set": "bev_paid_eight"
+      },
+      {
+       "rel": [
+        "bev_kowalchuk",
+        3
+       ]
+      }
+     ],
+     "to": "paid"
+    }
+   ]
+  },
+  "paid": {
+   "say": "Good. Now. See that empty frame by the till? Beside my first dollar from '79? The town sold you that building for one dollar. That dollar's in Gus's cash box. I'd like it. As a souvenir.",
+   "options": [
+    {
+     "text": "I'll find it.",
+     "to": "end"
+    },
+    {
+     "text": "Why that dollar?",
+     "to": "paid_why"
+    }
+   ]
+  },
+  "paid_why": {
+   "say": "Because I took the first dollar in this shop the year the Kings won the Cup. And the town took the last dollar for the arena the year it gave up. I'd like them side by side. Bookends, champ.",
+   "options": []
+  },
+  "progress": {
+   "say": "Well?",
+   "options": [
+    {
+     "text": "About the eight dollars. Here.",
+     "if": [
+      {
+       "step": [
+        "bev_eight_dollars",
+        "pay"
+       ]
+      }
+     ],
+     "do": [
+      {
+       "money": -8
+      },
+      {
+       "set": "bev_paid_eight"
+      },
+      {
+       "rel": [
+        "bev_kowalchuk",
+        2
+       ]
+      }
+     ],
+     "to": "p_pay"
+    },
+    {
+     "text": "Looking for the dollar.",
+     "if": [
+      {
+       "step": [
+        "bev_eight_dollars",
+        "dollar"
+       ]
+      }
+     ],
+     "to": "p_dollar"
+    },
+    {
+     "text": "Just saying hello.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_pay": {
+   "say": "Good. The frame by the till. The dollar the town sold for. Gus's cash box. Go on.",
+   "options": []
+  },
+  "p_dollar": {
+   "say": "The combination's written underneath and it's wrong. Gus thought that was security. Try the year the building opened.",
+   "options": []
+  },
+  "complete": {
+   "say": "That's the one. SOLD, in pencil. That's the town's handwriting. Huh. Give it here. There. Bookends.",
+   "options": [
+    {
+     "text": "I saw the chalkboard changed.",
+     "do": [
+      {
+       "rel": [
+        "bev_kowalchuk",
+        2
+       ]
+      }
+     ],
+     "to": "c_heart"
+    },
+    {
+     "text": "They look good together.",
+     "to": "c_good"
+    },
+    {
+     "text": "Do I still owe you anything?",
+     "to": "c_owe"
+    }
+   ]
+  },
+  "c_heart": {
+   "say": "Chalk smudges. Means nothing. Means you paid. Mind your business, champ.",
+   "options": []
+  },
+  "c_good": {
+   "say": "They do. Two dollars. Forty-seven years. Worth more than the building, some days.",
+   "options": []
+  },
+  "c_owe": {
+   "say": "A sharpening a week until you stop looking like an amateur. On your own dime. The heart doesn't cover that.",
+   "options": []
+  },
+  "done": {
+   "say": "Bookends, champ.",
+   "options": []
+  }
+ }
+}

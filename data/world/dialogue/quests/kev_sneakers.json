@@ -1,0 +1,189 @@
+{
+ "id": "kev_sneakers",
+ "giver": "kev_szabo",
+ "quest": "kev_sneakers",
+ "nodes": {
+  "offer": {
+   "say": "Kev Szabo, broomball, Harlow Falls! Look, we love your ice. We're loud, we're cheap, we're in sneakers, and we walk straight in from the lot like animals. Earl gave me a look last week. Earl's look has weather in it. How do we fix this?",
+   "options": [
+    {
+     "text": "Boot mats and a clean corridor. I'll sort it.",
+     "do": [
+      {
+       "quest_start": "kev_sneakers"
+      },
+      {
+       "rel": [
+        "kev_szabo",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why not change shoes at the door?",
+     "to": "why"
+    },
+    {
+     "text": "Are you related to Bernie and Kenny?",
+     "to": "family"
+    },
+    {
+     "text": "Honestly, it's fine. Earl looks at everyone like that.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Broomball shoes ARE the shoes. They're special. They have grip. They also have most of the parking lot in them. It's a whole culture, {owner}.",
+   "options": [
+    {
+     "text": "Then we'll catch it at the door. Leave it with me.",
+     "do": [
+      {
+       "quest_start": "kev_sneakers"
+      },
+      {
+       "rel": [
+        "kev_szabo",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "family": {
+   "say": "Bernie's my brother, Kenny's my nephew. Bernie calls hockey, I play broomball, Kenny plays hockey like broomball. We're a sporting family. Mostly loud.",
+   "options": [
+    {
+     "text": "Ha. Let's fix your slush problem.",
+     "do": [
+      {
+       "quest_start": "kev_sneakers"
+      },
+      {
+       "rel": [
+        "kev_szabo",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "That's very kind. Earl's look says otherwise. I'll bring him a coffee.",
+   "do": [
+    {
+     "rel": [
+      "kev_szabo",
+      1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Legend. I'll tell the club to stomp. We're good at stomping. It's half of broomball.",
+   "options": []
+  },
+  "progress": {
+   "say": "Slush report!",
+   "options": [
+    {
+     "text": "Cleaning crew's coming.",
+     "if": [
+      {
+       "step": [
+        "kev_sneakers",
+        "clean"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Mats are down. Next couple of Wednesdays will tell.",
+     "if": [
+      {
+       "step": [
+        "kev_sneakers",
+        "nights"
+       ]
+      }
+     ],
+     "to": "p_nights"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_nights": {
+   "say": "Last week we stomped so hard the Pallbearers next door thought it was applause. They were very touched.",
+   "options": []
+  },
+  "complete": {
+   "say": "Two Wednesdays, no slush. Earl looked at me and the weather was partly cloudy. That's huge. The club wants you to have this. Every member signed it. Some of them twice, they were excited.",
+   "options": [
+    {
+     "text": "I'll hang it in the lobby.",
+     "do": [
+      {
+       "set": "signed_broom_lobby"
+      }
+     ],
+     "to": "c_lobby"
+    },
+    {
+     "text": "Let Earl decide where it goes.",
+     "do": [
+      {
+       "set": "signed_broom_ref_room"
+      },
+      {
+       "rel": [
+        "earl_bratt",
+        2
+       ]
+      }
+     ],
+     "to": "c_earl"
+    },
+    {
+     "text": "Can I come play sometime?",
+     "do": [
+      {
+       "rel": [
+        "kev_szabo",
+        3
+       ]
+      }
+     ],
+     "to": "c_play"
+    }
+   ]
+  },
+  "c_lobby": {
+   "say": "Next to the Lumber Kings photos. Broomball, finally, on the wall. My mother will drive up from Harlow Falls to see it.",
+   "options": []
+  },
+  "c_earl": {
+   "say": "He put it in the ref room. He said it smells of brooms in there anyway, so it's home. The refs wrote a thank-you in their book.",
+   "options": []
+  },
+  "c_play": {
+   "say": "Wednesday, nine o'clock, bring sneakers. Not those ones, they've got the lot in them.",
+   "options": []
+  },
+  "done": {
+   "say": "Stomp, stomp, broomball!",
+   "options": []
+  }
+ }
+}

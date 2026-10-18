@@ -1,0 +1,202 @@
+{
+ "id": "tommy_crest_trade",
+ "giver": "tommy_bellweather",
+ "quest": "tommy_crest_trade",
+ "nodes": {
+  "offer": {
+   "say": "Okay. Don't freak out. There's a girl from Port Ainsley with a 1988 Millbrook Peewee B pin. 1988! Same as the pennant! She'll trade it for one thing. This year's host pin. You have a host pin. I know you have a host pin. Bob gave it to you. Everybody knows.",
+   "options": [
+    {
+     "text": "You can have it. Make the trade.",
+     "do": [
+      {
+       "quest_start": "tommy_crest_trade"
+      },
+      {
+       "rel": [
+        "tommy_bellweather",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "What's so special about 1988?",
+     "to": "why"
+    },
+    {
+     "text": "What's in it for me?",
+     "to": "cheek"
+    },
+    {
+     "text": "I'm keeping the host pin, Tommy.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "They won the valley! Peewee B! The pennant's in the trophy case, bottom shelf, by the pike. There were only forty pins made. Only six left in the world. Probably. I made that number up. But it's rare.",
+   "options": [
+    {
+     "text": "Okay. Go get it.",
+     "do": [
+      {
+       "quest_start": "tommy_crest_trade"
+      },
+      {
+       "rel": [
+        "tommy_bellweather",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "The satisfaction of a good trade. And my respect. My respect is worth a lot. It's worth at least a Kessler Atom A.",
+   "options": [
+    {
+     "text": "Deal. Your respect and a trade.",
+     "do": [
+      {
+       "quest_start": "tommy_crest_trade"
+      },
+      {
+       "rel": [
+        "tommy_bellweather",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "That's fair. It's a good pin. I'd keep it too. I'm not crying, it's the rink air.",
+   "do": [
+    {
+     "rel": [
+      "tommy_bellweather",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "YES. Okay. Bring it to the table. Don't wear it in, it devalues it.",
+   "options": []
+  },
+  "progress": {
+   "say": "Pin status?",
+   "options": [
+    {
+     "text": "Coming to look at the table.",
+     "if": [
+      {
+       "step": [
+        "tommy_crest_trade",
+        "table"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "I'll bring the host pin.",
+     "if": [
+      {
+       "step": [
+        "tommy_crest_trade",
+        "pin"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "You've got the pin. When's the trade?",
+     "if": [
+      {
+       "step": [
+        "tommy_crest_trade",
+        "trade"
+       ]
+      }
+     ],
+     "to": "p_trade"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_trade": {
+   "say": "Next tournament. She's coming back with her team. Her team's terrible, but her pins are amazing.",
+   "options": []
+  },
+  "complete": {
+   "say": "I got it. 1988 Peewee B. It's real. It's got the old crest with the moose that looks like a dog. And I thought about it a lot and I think it should be yours. Not mine. The rink's.",
+   "options": [
+    {
+     "text": "Then it goes in the trophy case, next to the pennant.",
+     "do": [
+      {
+       "set": "peewee_pin_in_case"
+      },
+      {
+       "rel": [
+        "tommy_bellweather",
+        3
+       ]
+      }
+     ],
+     "to": "c_case"
+    },
+    {
+     "text": "You keep it, Tommy. You earned it.",
+     "do": [
+      {
+       "item": [
+        "peewee_b_1988_pin",
+        -1
+       ]
+      },
+      {
+       "rel": [
+        "tommy_bellweather",
+        5
+       ]
+      }
+     ],
+     "to": "c_keep"
+    },
+    {
+     "text": "Does the moose really look like a dog?",
+     "to": "c_moose"
+    }
+   ]
+  },
+  "c_case": {
+   "say": "Next to the pennant! With a label! Can the label say 'traded by Tommy B.'? Small. In the corner.",
+   "options": []
+  },
+  "c_keep": {
+   "say": "Really? Really really? I'm going to wear it. No. I'm going to frame it. No. Both.",
+   "options": []
+  },
+  "c_moose": {
+   "say": "It's a dog. Everyone knows it's a dog. The artist's dog, probably. They never fixed it. It's better as a dog.",
+   "options": []
+  },
+  "done": {
+   "say": "Next tournament I'm going for the Kessler 1979. Nobody's ever seen one.",
+   "options": []
+  }
+ }
+}

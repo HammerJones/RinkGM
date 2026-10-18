@@ -1,0 +1,461 @@
+{
+  "id": "ray_duchesne",
+  "barks": {
+    "idle": [
+      "Friends, if I may... no, later.",
+      "Bake sale Saturday. Squares, mostly. Hope, also."
+    ],
+    "good_ice": [
+      "Look at that sheet. I could weep. I won't. I might."
+    ],
+    "bad_ice": [
+      "January is coming, friends. January is coming."
+    ],
+    "goal": [
+      "Friends! FRIENDS!",
+      "That's a Lumber Kings goal, that is."
+    ],
+    "cold": [
+      "Cold stands, warm hearts. I'll use that in the programme."
+    ],
+    "greet_owner": [
+      "Friends. Friend.",
+      "Ah! Just the person."
+    ],
+    "leaving_happy": [
+      "A fine night for the club. A fine night."
+    ],
+    "leaving_angry": [
+      "I'll need to write a very diplomatic column."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "Full house! Or a house. A house, at least.",
+        "Ring the bell, Pete!"
+      ],
+      "special": [
+        "A toast! Brief, I promise. It won't be brief."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_ray_duchesne"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "ice_gte": 60
+        },
+        {
+          "day_gte": 60
+        },
+        {
+          "not_flag": "ray_probation_lifted"
+        }
+      ],
+      "node": "probation_good"
+    },
+    {
+      "if": [
+        {
+          "event_now": "senior_hockey"
+        }
+      ],
+      "node": "gamenight"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "ray_duchesne",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Friends. Well, friend, singular. Ray Duchesne, Lumber Kings board. On behalf of the club, the boosters and the bake sale committee, welcome.",
+      "do": [
+        {
+          "set": "met_ray_duchesne"
+        }
+      ],
+      "options": [
+        {
+          "text": "Thank you, Ray. Glad to have the Kings.",
+          "do": [
+            {
+              "rel": [
+                "ray_duchesne",
+                4
+              ]
+            }
+          ],
+          "to": "first_glad"
+        },
+        {
+          "text": "How long is this going to take?",
+          "do": [
+            {
+              "rel": [
+                "ray_duchesne",
+                -3
+              ]
+            }
+          ],
+          "to": "first_short"
+        },
+        {
+          "text": "What's the club's situation?",
+          "to": "probation"
+        }
+      ]
+    },
+    "first_glad": {
+      "say": "Glad. Good word. I'll use it in my column.",
+      "options": [
+        {
+          "text": "Please do.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_short": {
+      "say": "I'll do the short version. That was it.",
+      "options": [
+        {
+          "text": "Sorry, Ray.",
+          "to": "hub"
+        }
+      ]
+    },
+    "probation": {
+      "say": "We're on probation, frankly. If the ice isn't at 60 by January, I have to announce a move to Harlow Falls. I'd rather eat my programme.",
+      "options": [
+        {
+          "text": "We'll get there.",
+          "do": [
+            {
+              "set": "ray_promised_60"
+            },
+            {
+              "rel": [
+                "ray_duchesne",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "No promises.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Friends... friend. The visiting bench complained about the ice. Kessler complained. Kessler. I'll never hear the end of it."
+      ],
+      "options": [
+        {
+          "text": "I'll fix it before January.",
+          "do": [
+            {
+              "rel": [
+                "ray_duchesne",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "probation_good": {
+      "say": "The ice is at 60. I checked twice, and Pete checked it in pencil. I don't have to make the announcement. I made a different one, to my wife.",
+      "do": [
+        {
+          "set": "ray_probation_lifted"
+        },
+        {
+          "rel": [
+            "ray_duchesne",
+            6
+          ]
+        },
+        {
+          "note": "Ray Duchesne: the Lumber Kings are staying in Millbrook."
+        }
+      ],
+      "options": [
+        {
+          "text": "Congratulations, Ray.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gamenight": {
+      "say": "Friends! A full house, or a house. A house at least. Have you seen Stan at the rail?",
+      "options": [
+        {
+          "text": "Say a few words?",
+          "to": "toast"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "toast": {
+      "say": "Friends. To the ice, to the bench, and to the bell. Short, as promised.",
+      "options": [
+        {
+          "text": "Hear, hear.",
+          "do": [
+            {
+              "rel": [
+                "ray_duchesne",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Friends. Friend. You know what I mean.",
+        "{owner}! Squares from the boosters. Take two, it's tradition."
+      ],
+      "options": [
+        {
+          "text": "Hi, Ray.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Friends, what can I do for you?",
+        "{owner}. A word? Several, probably.",
+        "Ah. Just the person."
+      ],
+      "options": [
+        {
+          "text": "How are the Kings doing?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love about game nights?",
+          "to": "events"
+        },
+        {
+          "text": "Tell me about Old Pete.",
+          "to": "pete"
+        },
+        {
+          "text": "And Stan, at the rail?",
+          "to": "stan"
+        },
+        {
+          "text": "Is the rink good enough for the Kings?",
+          "to": "rink"
+        },
+        {
+          "text": "Is there room on the Kings for me?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "player"
+        },
+        {
+          "text": "About the bench job...",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "Ray, about running the club...",
+          "if": [
+            {
+              "path": "gm"
+            },
+            {
+              "not_flag": "ray_letting_go"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "Goodbye, Ray.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Twenty years of bake sales. We've raised a bus, two sets of jerseys and a settlement. Don't ask about the settlement.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "The anthem. Stan's elbows on the rail. Bud's 50/50 call. Then the puck drops and I forget I'm the chair.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "pete": {
+      "say": "Pete was here in 1971. He'll tell you. I'd put his name on the dressing room if he'd let me. He won't.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "stan": {
+      "say": "Stan's been at that rail since 1974. If we ever win another Aldous Cup, I've asked the paramedics to stand near him.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Over 60 yet?",
+          "if": [
+            {
+              "ice_gte": 60
+            }
+          ],
+          "to": "rink_60"
+        },
+        {
+          "text": "What do the Kings need?",
+          "to": "rink_need"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_60": {
+      "say": "Yes. Yes it is. I may cry. Ignore me.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_need": {
+      "say": "Sixty by January. A beer garden licence. A HOME scoreboard. In that order, but quickly.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "player": {
+      "say": "Not yet. But I'm watching your shifts. Keep that up in the beer league, and one day the phone will ring. It'll be me.",
+      "options": [
+        {
+          "text": "I'll keep it up.",
+          "do": [
+            {
+              "rel": [
+                "ray_duchesne",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "Stan Kubiak is a decent man out of ideas. If he ever hands you his whistle, take it. Gently.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "Friends... friend. I've run this club on squares for twenty years. Somebody should run it on purpose. I think it's you.",
+      "options": [
+        {
+          "text": "I'll take care of it, Ray.",
+          "do": [
+            {
+              "set": "ray_letting_go"
+            },
+            {
+              "rel": [
+                "ray_duchesne",
+                4
+              ]
+            }
+          ],
+          "to": "gm2"
+        },
+        {
+          "text": "Not yet, Ray.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gm2": {
+      "say": "Then I'll write my last From the Chair. I'll keep it short. It won't be short.",
+      "options": [
+        {
+          "text": "Take all the space you need.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

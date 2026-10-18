@@ -1,0 +1,481 @@
+{
+  "id": "gordon_halvorsen",
+  "barks": {
+    "idle": [
+      "BIG GORD WON'T LET YOU WALK!",
+      "SINCE 1977! SAME LOT! SAME GORD!",
+      "Every power play, {owner}! EVERY ONE!"
+    ],
+    "good_ice": [
+      "NOW THAT'S ICE! SMOOTH AS A NEW HALF-TON!"
+    ],
+    "bad_ice": [
+      "THIS ICE NEEDS NEW SHOCKS! COME SEE BIG GORD!"
+    ],
+    "wet_ice": [
+      "WET ICE! LIKE A CAR WASH! BIG GORD HAS FREE CAR WASHES!"
+    ],
+    "goal": [
+      "GOAL! BIG GORD SAYS GOAL!",
+      "THAT'S A BIG GORD BEAUTY!"
+    ],
+    "cold": [
+      "COLD? BIG GORD'S GOT HEATED SEATS!"
+    ],
+    "hungry": [
+      "FRIES! FOR EVERYONE! ON BIG GORD!"
+    ],
+    "long_line": [
+      "BIG GORD DOESN'T WAIT! ...BIG GORD WILL WAIT. FOR THE KIDS."
+    ],
+    "bored": [
+      "PUT ME ON THE POWER PLAY!"
+    ],
+    "greet_owner": [
+      "{owner}! BIG GORD WON'T LET YOU WALK!",
+      "THERE'S MY FAVOURITE RINK OWNER! COME HERE!"
+    ],
+    "leaving_happy": [
+      "BIG NIGHT! BIG GORD NIGHT!"
+    ],
+    "leaving_angry": [
+      "BIG GORD IS DISAPPOINTED! BIG GORD WILL STILL SEE YOU NEXT WEEK!"
+    ],
+    "event_specific": {
+      "beer_league": [
+        "POWER PLAY! WHERE'S MY STICK!",
+        "HAULERS! WHOEVER'S ON THE LOT THIS WEEK, LET'S GO!"
+      ],
+      "special": [
+        "BIG CROWD! BIG GORD! BIG DEALS!",
+        "THE KIDS ARE HERE! WHERE'S MY CANDY CANES?"
+      ],
+      "senior_hockey": [
+        "GO KINGS! BIG GORD BELIEVES!"
+      ],
+      "public_skate": [
+        "HO HO... NOT YET. DECEMBER. BIG GORD IS PATIENT."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_gordon_halvorsen"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "bl_now"
+    },
+    {
+      "if": [
+        {
+          "event_now": "public_skate"
+        }
+      ],
+      "node": "ps_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "gordon_halvorsen",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "BIG GORD HALVORSEN! BIG GORD'S TRUCKS, KESSLER, SINCE 1977! BIG GORD WON'T LET YOU WALK! ...Nice to meet you, kid. Welcome to the valley.",
+      "do": [
+        {
+          "set": "met_gordon_halvorsen"
+        }
+      ],
+      "options": [
+        {
+          "text": "Nice to meet you, Big Gord!",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Do you ever not shout?",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                1
+              ]
+            }
+          ],
+          "to": "first_quiet"
+        }
+      ]
+    },
+    "first_quiet": {
+      "say": "...Once. In 1985. At my daughter's recital. The quiet part. Then I shouted at the end. She still talks about it. BIG GORD LOVES RECITALS!",
+      "options": [
+        {
+          "text": "That's lovely, Gord.",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll fix it, Gord. Big Gord deserves better.",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Have you tried shouting at it?",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bl_now": {
+      "say": [
+        "HAULERS TONIGHT! I PICKED THE LINES! I'M ON ALL OF THEM!",
+        "POWER PLAY? BIG GORD'S THERE!"
+      ],
+      "options": [
+        {
+          "text": "Save some ice time for the others, Gord.",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Go get 'em, Gord!",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "ps_now": {
+      "say": [
+        "Look at the kids skating. BIG GORD LOVES KIDS. Shh. Don't tell the dealers.",
+        "Candy canes in this pocket. For December. And also now."
+      ],
+      "options": [
+        {
+          "text": "Hand a few out, Gord.",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                2
+              ]
+            },
+            {
+              "mood": 0.03
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Save them for Santa.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "THERE'S MY BUDDY! BIG GORD'S FAVOURITE RINK OWNER! COME HERE!",
+        "{owner}! BIG GORD SAVED YOU A CANDY CANE! It's from last year. Still good."
+      ],
+      "options": [
+        {
+          "text": "Hey, Gord!",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "WHAT CAN BIG GORD DO FOR YOU?",
+        "{owner}! BIG GORD'S LISTENING! LOUDLY!",
+        "HEY! YOU! THE OWNER! HOW ARE YA?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the truck lot?",
+          "to": "job"
+        },
+        {
+          "text": "Put the rink on one of your billboards?",
+          "if": [
+            {
+              "not_flag": "gord_billboard_decided"
+            }
+          ],
+          "to": "billboard"
+        },
+        {
+          "text": "What's with you and June Penner?",
+          "to": "june"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Would the lot hire from our jobs board?",
+          "if": [
+            {
+              "path": "gm"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "See you, Gord.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "SAME LOT SINCE 1977! I sold Earl his first truck! He still drives it! He says it's the only thing I ever sold that worked! HA! THAT'S A COMPLIMENT FROM EARL!",
+      "options": [
+        {
+          "text": "That really is, from Earl.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "billboard": {
+      "say": "YOUR RINK? ON A BIG GORD BILLBOARD? HIGHWAY 9! A HUNDRED BUCKS, HALF PRICE, FOR THE RINK! YOUR FACE NEXT TO MY FACE!",
+      "options": [
+        {
+          "text": "Deal. A hundred bucks.",
+          "do": [
+            {
+              "money": -100
+            },
+            {
+              "rep": 2
+            },
+            {
+              "set": "gord_billboard_rink"
+            },
+            {
+              "set": "gord_billboard_decided"
+            },
+            {
+              "rel": [
+                "gordon_halvorsen",
+                5
+              ]
+            },
+            {
+              "rel": [
+                "june_penner",
+                -3
+              ]
+            },
+            {
+              "note": "The rink is on a Big Gord billboard on Highway 9."
+            }
+          ],
+          "to": "billboard_yes"
+        },
+        {
+          "text": "No thanks, Gord. June would kill me.",
+          "do": [
+            {
+              "set": "gord_billboard_decided"
+            },
+            {
+              "rel": [
+                "gordon_halvorsen",
+                -1
+              ]
+            },
+            {
+              "rel": [
+                "june_penner",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "billboard_yes": {
+      "say": "BIG GORD AND THE RINK! IT'S GOING UP TUESDAY! I'M GOING TO POINT AT YOU IN IT!",
+      "options": [
+        {
+          "text": "I'd expect nothing less.",
+          "to": "hub"
+        }
+      ]
+    },
+    "june": {
+      "say": "June thinks billboards ruin the view. I think billboards ARE the view! We've been at it since 1996. The Billboard War. She's a good woman. WRONG, BUT GOOD!",
+      "options": [
+        {
+          "text": "Maybe tone it down near her store?",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                -1
+              ]
+            },
+            {
+              "rel": [
+                "june_penner",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Long may it rage.",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "GREAT RINK! NEEDS A BILLBOARD! NEEDS A BIGGER SNOW TANK! FOR SANTA! Big Gord rides in on Doris every December, you know!",
+      "options": [
+        {
+          "text": "And the ice now? It's better!",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "Doris's snow tank is all yours in December.",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "SMOOTH AS A NEW TRANSMISSION! BIG GORD APPROVES!",
+      "options": [
+        {
+          "text": "High praise.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "BIG GORD ALWAYS NEEDS GOOD PEOPLE! Detailers, lot kids, a guy to hold the balloon! Send your skaters to the lot! They'll want a bobblehead night, though. I want a bobblehead night.",
+      "options": [
+        {
+          "text": "I'll think about the bobblehead.",
+          "do": [
+            {
+              "rel": [
+                "gordon_halvorsen",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

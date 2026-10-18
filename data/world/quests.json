@@ -1,0 +1,4493 @@
+{
+ "version": 1,
+ "quests": [
+  {
+   "id": "helene_minus_three",
+   "title": "Minus Three and a Half",
+   "giver": "helene_arsenault",
+   "kind": "side",
+   "event": "figure_practice",
+   "prompt": "Hélène, you're frowning at the ice again.",
+   "summary": "Hélène wants figure ice at six in the morning: soft enough to bite, firm enough to land, three mornings running.",
+   "start": [
+    {
+     "contract": "figure_club"
+    },
+    {
+     "day_gte": 10
+    }
+   ],
+   "steps": [
+    {
+     "id": "warm",
+     "text": "Warm the surface for the figure club: a figure ice rating of 70 at one of their sessions.",
+     "goal": {
+      "type": "rating_gte",
+      "use": "figure",
+      "value": 70
+     }
+    },
+    {
+     "id": "hold",
+     "text": "Hold it: three figure club mornings rated 65 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "figure_practice",
+      "count": 3,
+      "min_rating": 65
+     }
+    },
+    {
+     "id": "edge",
+     "text": "Edge the boards so the corners are true for the footwork pass.",
+     "goal": {
+      "type": "job_done",
+      "job": "edge_ice",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Tell Hélène the ice is hers.",
+     "goal": {
+      "type": "talk",
+      "to": "helene_arsenault"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "helene_arsenault",
+      15
+     ]
+    },
+    {
+     "set": "helene_nods"
+    },
+    {
+     "item": [
+      "carnival_pin_1975",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Plant setpoint and the figure temperature window (RINK_SIM 3.2), ice rating per use, edging mini game 4.10, figure_club loyalty."
+  },
+  {
+   "id": "josee_test_day",
+   "title": "Test Day",
+   "giver": "josee_thibodeau",
+   "kind": "side",
+   "event": "figure_show",
+   "prompt": "You look like you're about to skate a program, Josée.",
+   "summary": "Josée is taking her senior bronze freeskate test on Millbrook ice and wants it fresh, flat and fair.",
+   "start": [
+    {
+     "contract": "figure_club"
+    },
+    {
+     "day_gte": 20
+    }
+   ],
+   "steps": [
+    {
+     "id": "flood",
+     "text": "Give the ice a fresh flood right before test day.",
+     "goal": {
+      "type": "job_done",
+      "job": "resurface",
+      "count": 1
+     }
+    },
+    {
+     "id": "test",
+     "text": "Hold the test day on ice rated 70 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "figure_show",
+      "count": 1,
+      "min_rating": 70
+     }
+    },
+    {
+     "id": "return",
+     "text": "Find Josée afterwards.",
+     "goal": {
+      "type": "talk",
+      "to": "josee_thibodeau"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "josee_thibodeau",
+      15
+     ]
+    },
+    {
+     "rel": [
+      "carol_thibodeau",
+      8
+     ]
+    },
+    {
+     "set": "josee_passed_bronze"
+    },
+    {
+     "item": [
+      "josee_test_sheet",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 21,
+    "effects": [
+     {
+      "rel": [
+       "josee_thibodeau",
+       -4
+      ]
+     },
+     {
+      "note": "Josée tested on tired ice. She passed anyway, and noticed."
+     }
+    ]
+   },
+   "hooks": "Resurface job, figure_show events and their rating, Carol's mood through the family link, notice board decor."
+  },
+  {
+   "id": "helene_fifty_carnivals",
+   "title": "Fifty Carnivals",
+   "giver": "helene_arsenault",
+   "kind": "chain",
+   "after": "helene_minus_three",
+   "event": "figure_show",
+   "prompt": "Hélène, the spring show. What do you need?",
+   "summary": "The spring ice show needs Gus's old coloured lamp gels, a building fit to hang them in, and ice worthy of fifty-one carnivals.",
+   "start": [
+    {
+     "rel_gte": [
+      "helene_arsenault",
+      25
+     ]
+    },
+    {
+     "day_gte": 150
+    }
+   ],
+   "steps": [
+    {
+     "id": "gels",
+     "text": "Find the box of carnival gels Gus kept in the Mezzanine Hall cupboard.",
+     "goal": {
+      "type": "visit",
+      "place": "community_room"
+     },
+     "on_done": [
+      {
+       "item": [
+        "carnival_gels",
+        1
+       ]
+      },
+      {
+       "note": "A shoebox labelled CARNIVAL (HÉLÈNE'S, DO NOT LEND TO KESSLER). Pink, blue, amber and one green nobody likes."
+      }
+     ]
+    },
+    {
+     "id": "lights",
+     "text": "Bring the building up to a facility score of 40 so the lamps and their clamps are safe to dress.",
+     "goal": {
+      "type": "rooms_gte",
+      "value": 40
+     }
+    },
+    {
+     "id": "show",
+     "text": "Hold the spring ice show on ice rated 75 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "figure_show",
+      "count": 1,
+      "min_rating": 75
+     }
+    },
+    {
+     "id": "return",
+     "text": "Find Hélène after the last bow.",
+     "goal": {
+      "type": "talk",
+      "to": "helene_arsenault"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "helene_arsenault",
+      20
+     ]
+    },
+    {
+     "set": "ice_show_annual"
+    },
+    {
+     "item": [
+      "carnival_gels",
+      -1
+     ]
+    },
+    {
+     "money": 200
+    },
+    {
+     "rep": 2
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Facility score, figure_show events, lighting decor (DECOR 5.5 coloured gels), the 50 Carnivals banner, a box-office share."
+  },
+  {
+   "id": "carol_coffee_bench",
+   "title": "The Coffee Bench",
+   "giver": "carol_thibodeau",
+   "kind": "side",
+   "event": "figure_practice",
+   "prompt": "Carol, you've got your coat on over your coat.",
+   "summary": "The figure parents sit in the stands at six in the morning with half the heaters working and no coffee until seven.",
+   "start": [
+    {
+     "contract": "figure_club"
+    },
+    {
+     "day_gte": 5
+    }
+   ],
+   "steps": [
+    {
+     "id": "heat",
+     "text": "Get the stands and the heaters into shape: a facility score of 30.",
+     "goal": {
+      "type": "rooms_gte",
+      "value": 30
+     }
+    },
+    {
+     "id": "coffee",
+     "text": "Ask Lorraine at the Hot Stove about opening at a quarter to six on figure mornings.",
+     "goal": {
+      "type": "talk",
+      "to": "lorraine_duffy"
+     },
+     "on_done": [
+      {
+       "set": "canteen_figure_mornings"
+      },
+      {
+       "note": "Lorraine: 'Quarter to six. Fine. But the fryer stays off until eleven. I'm not a monster, I'm a canteen.'"
+      }
+     ]
+    },
+    {
+     "id": "mornings",
+     "text": "Run two figure mornings with the heaters on and the coffee on.",
+     "goal": {
+      "type": "event_held",
+      "event": "figure_practice",
+      "count": 2
+     }
+    },
+    {
+     "id": "return",
+     "text": "Check on Carol and the coffee bench.",
+     "goal": {
+      "type": "talk",
+      "to": "carol_thibodeau"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "carol_thibodeau",
+      12
+     ]
+    },
+    {
+     "rel": [
+      "lorraine_duffy",
+      5
+     ]
+    },
+    {
+     "item": [
+      "bench_thermos",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Facility score (stands heaters, RINK_SIM 3.5), the canteen schedule, figure parents' attendance and mood."
+  },
+  {
+   "id": "irene_opening_night",
+   "title": "Since Opening Night",
+   "giver": "irene_dubois",
+   "kind": "side",
+   "event": "public_skate",
+   "prompt": "Mrs Dubois, you look like you've got a story.",
+   "summary": "Irene has skated at Millbrook every week since opening night, 2 November 1974, and would like the Skaters' Waltz for her anniversary lap.",
+   "start": [
+    {
+     "day_gte": 14
+    }
+   ],
+   "steps": [
+    {
+     "id": "doreen",
+     "text": "Ask Doreen Vachon if her Casio knows the Skaters' Waltz.",
+     "goal": {
+      "type": "talk",
+      "to": "doreen_vachon"
+     },
+     "on_done": [
+      {
+       "note": "Doreen: 'Organ 2 knows everything. Organ 2 has been waiting fifty years for somebody to ask nicely.'"
+      }
+     ]
+    },
+    {
+     "id": "ice",
+     "text": "Give public skate good ice: a public rating of 60 or better.",
+     "goal": {
+      "type": "rating_gte",
+      "use": "public",
+      "value": 60
+     }
+    },
+    {
+     "id": "lap",
+     "text": "Be there when Irene skates her anniversary lap at public skate.",
+     "goal": {
+      "type": "attend",
+      "person": "irene_dubois",
+      "event": "public_skate"
+     }
+    },
+    {
+     "id": "return",
+     "text": "Have a word with Irene on the bench.",
+     "goal": {
+      "type": "talk",
+      "to": "irene_dubois"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "irene_dubois",
+      15
+     ]
+    },
+    {
+     "rel": [
+      "doreen_vachon",
+      5
+     ]
+    },
+    {
+     "item": [
+      "opening_night_ticket",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Public skate rating and attendance, Doreen's music at public skate, the trophy case empty hook, notice board, Gus's binder.",
+   "theme": "trophy_case"
+  },
+  {
+   "id": "devon_one_song",
+   "title": "One Song, Lights Down",
+   "giver": "devon_marsh",
+   "kind": "side",
+   "event": "public_skate",
+   "prompt": "Devon, you've checked your coat pocket nine times.",
+   "summary": "Devon wants to propose to Ama at Saturday public skate, during their song, with the lights down. He needs a plan, a song and a dimmer.",
+   "start": [
+    {
+     "day_gte": 21
+    }
+   ],
+   "steps": [
+    {
+     "id": "song",
+     "text": "Ask Doreen to play their song on the Casio.",
+     "goal": {
+      "type": "talk",
+      "to": "doreen_vachon"
+     },
+     "on_done": [
+      {
+       "note": "Doreen: 'Their song is a pop song. Organ 2 will make it a hymn. That's my price.'"
+      }
+     ]
+    },
+    {
+     "id": "lights",
+     "text": "Ask Dylan to work the house lights at the panel.",
+     "goal": {
+      "type": "talk",
+      "to": "dylan_pruitt"
+     },
+     "on_done": [
+      {
+       "note": "Dylan: 'Half the lamps down for one song. Not breaker 14. I KNOW, okay. I know.'"
+      }
+     ]
+    },
+    {
+     "id": "plan",
+     "text": "Help Devon choose where on the ice he kneels.",
+     "goal": {
+      "type": "flag",
+      "flag": "devon_plan_set"
+     }
+    },
+    {
+     "id": "night",
+     "text": "Run Saturday public skate on ice rated 55 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "public_skate",
+      "count": 1,
+      "min_rating": 55
+     }
+    },
+    {
+     "id": "return",
+     "text": "Find Devon. Hopefully he's engaged.",
+     "goal": {
+      "type": "talk",
+      "to": "devon_marsh"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "devon_marsh",
+      15
+     ]
+    },
+    {
+     "rel": [
+      "dylan_pruitt",
+      3
+     ]
+    },
+    {
+     "set": "devon_and_ama_engaged"
+    },
+    {
+     "note": "A new line in the lobby guestbook: 'She said yes during the slowest song ever played on a Casio. Thank you Millbrook. D & A.'"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Public skate events, house lights (lighting room), Doreen's music, the guestbook, the Millbrook bank and Doris as places with meaning."
+  },
+  {
+   "id": "dylan_mitten_tree",
+   "title": "The Mitten Tree",
+   "giver": "dylan_pruitt",
+   "kind": "side",
+   "event": "special",
+   "prompt": "Dylan, why are you holding fourteen single socks?",
+   "summary": "Dylan wants the mitten tree up in the lobby for the Christmas skate: every unclaimed mitten from the lost and found, on a real fir.",
+   "start": [
+    {
+     "day_gte": 80
+    }
+   ],
+   "steps": [
+    {
+     "id": "sort",
+     "text": "Sort the lost and found crate at the rental window.",
+     "goal": {
+      "type": "visit",
+      "place": "skate_rental"
+     },
+     "on_done": [
+      {
+       "item": [
+        "lost_mitten",
+        9
+       ]
+      },
+      {
+       "note": "Nine mittens, no two matching. One red CMC with a woollen cuff, of course. Fourteen socks, which are not mittens, whatever Dylan says."
+      }
+     ]
+    },
+    {
+     "id": "clean",
+     "text": "Clean the building so the tree has somewhere to stand that isn't sticky.",
+     "goal": {
+      "type": "job_done",
+      "job": "clean_building",
+      "count": 1
+     }
+    },
+    {
+     "id": "skate",
+     "text": "Hold the Christmas skate with the mitten tree up.",
+     "goal": {
+      "type": "event_held",
+      "event": "special",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Tell Dylan the tree was a hit.",
+     "goal": {
+      "type": "talk",
+      "to": "dylan_pruitt"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "dylan_pruitt",
+      12
+     ]
+    },
+    {
+     "item": [
+      "lost_mitten",
+      -9
+     ]
+    },
+    {
+     "set": "mitten_tree_up"
+    },
+    {
+     "note": "The mittens go to Millbrook Elementary in January. Somebody always finds their own."
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Lost and found (readables lost_and_found), cleaning job, the Christmas special event, seasonal decor (DECOR 5.2).",
+   "theme": "lost_and_found"
+  },
+  {
+   "id": "walter_first_lap",
+   "title": "Walter's First Lap",
+   "giver": "walter_oduya",
+   "kind": "side",
+   "event": "learn_to_skate",
+   "prompt": "Walter, you're holding the boards like they owe you money.",
+   "summary": "Walter is sixty-two, has never skated, and wants to do one lap with his granddaughter at public skate before she decides grandpas can't.",
+   "start": [
+    {
+     "contract": "learn_to_skate"
+    }
+   ],
+   "steps": [
+    {
+     "id": "skates",
+     "text": "Ask Bev to put a proper edge on the rental skates.",
+     "goal": {
+      "type": "talk",
+      "to": "bev_kowalchuk"
+     },
+     "on_done": [
+      {
+       "note": "Bev: 'Rentals are done Mondays. For a man learning at sixty-two I'll do them Sunday. I don't work Sundays. Don't tell anyone.'"
+      }
+     ]
+    },
+    {
+     "id": "lessons",
+     "text": "Run three adult learn-to-skate lessons on ice rated 50 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "learn_to_skate",
+      "count": 3,
+      "min_rating": 50
+     }
+    },
+    {
+     "id": "lap",
+     "text": "Be at public skate when Walter brings Zuri.",
+     "goal": {
+      "type": "attend",
+      "person": "walter_oduya",
+      "event": "public_skate"
+     }
+    },
+    {
+     "id": "return",
+     "text": "Find Walter after his lap.",
+     "goal": {
+      "type": "talk",
+      "to": "walter_oduya"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "walter_oduya",
+      15
+     ]
+    },
+    {
+     "rel": [
+      "bev_kowalchuk",
+      3
+     ]
+    },
+    {
+     "item": [
+      "zuri_drawing",
+      1
+     ]
+    },
+    {
+     "set": "walter_electrician_friend"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "learn_to_skate contract, rental skate sharpening (PROSHOP), public skate attendance, a crayon drawing for the office corkboard."
+  },
+  {
+   "id": "penny_skate_aids",
+   "title": "Not Enough to Hold On To",
+   "giver": "penny_marchetti",
+   "kind": "side",
+   "event": "learn_to_skate",
+   "prompt": "Penny, the grown-ups are clinging to the boards again.",
+   "summary": "Adult learn-to-skate has more beginners than boards. Penny wants skate aids for grown-ups, made from the broken-stick barrel.",
+   "start": [
+    {
+     "contract": "learn_to_skate"
+    },
+    {
+     "day_gte": 14
+    }
+   ],
+   "steps": [
+    {
+     "id": "chairs",
+     "text": "Borrow the seven orange stacking chairs from the Mezzanine Hall for the first night.",
+     "goal": {
+      "type": "visit",
+      "place": "community_room"
+     },
+     "on_done": [
+      {
+       "note": "Seven orange chairs among a hundred and thirteen mint green ones. Stamped MILLBROOK P&R 1974. Nobody knows why they're orange. They are very good for holding on to."
+      }
+     ]
+    },
+    {
+     "id": "barrel",
+     "text": "Ask Lorne Pettipiece if he'll build skate aids from the broken-stick barrel.",
+     "goal": {
+      "type": "talk",
+      "to": "lorne_pettipiece"
+     },
+     "on_done": [
+      {
+       "item": [
+        "stick_skate_aid",
+        6
+       ]
+      },
+      {
+       "note": "Lorne: 'Forty-one Warlocks made Bev a bench. Six skate aids out of Honests is a Tuesday. They'll outlive the sticks.'"
+      }
+     ]
+    },
+    {
+     "id": "lesson",
+     "text": "Run an adult lesson with the new skate aids on ice rated 45 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "learn_to_skate",
+      "count": 1,
+      "min_rating": 45
+     }
+    },
+    {
+     "id": "return",
+     "text": "Tell Penny how it went.",
+     "goal": {
+      "type": "talk",
+      "to": "penny_marchetti"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "penny_marchetti",
+      12
+     ]
+    },
+    {
+     "rel": [
+      "lorne_pettipiece",
+      6
+     ]
+    },
+    {
+     "item": [
+      "stick_skate_aid",
+      -6
+     ]
+    },
+    {
+     "set": "skate_aids_on_ice"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "learn_to_skate contract, the broken-stick barrel and Lorne (PROSHOP), the orange chairs (DECOR 1.15), rink equipment flag."
+  },
+  {
+   "id": "hank_dawn_ice",
+   "title": "The Night Shift Hour",
+   "giver": "hank_lavoie",
+   "kind": "side",
+   "event": "stick_and_puck",
+   "prompt": "Hank, you're here at six in the morning in full gear.",
+   "summary": "Hank comes off the night shift at the paper mill at five and wants an hour of stick and puck before he sleeps.",
+   "start": [
+    {
+     "day_gte": 7
+    }
+   ],
+   "steps": [
+    {
+     "id": "flood",
+     "text": "Lay a fresh sheet before a dawn session.",
+     "goal": {
+      "type": "job_done",
+      "job": "resurface",
+      "count": 1
+     }
+    },
+    {
+     "id": "dawn",
+     "text": "Run two early stick and puck sessions.",
+     "goal": {
+      "type": "event_held",
+      "event": "stick_and_puck",
+      "count": 2
+     }
+    },
+    {
+     "id": "return",
+     "text": "See how Hank's hands are doing.",
+     "goal": {
+      "type": "talk",
+      "to": "hank_lavoie"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "hank_lavoie",
+      12
+     ]
+    },
+    {
+     "set": "stick_and_puck_dawn"
+    },
+    {
+     "money": 40
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "stick_and_puck sessions in dead time (RINK_SIM 5.1), the resurface job, the shift_worker schedule."
+  },
+  {
+   "id": "kenny_backhand",
+   "title": "Pylons and Patience",
+   "giver": "kenny_szabo",
+   "kind": "side",
+   "event": "stick_and_puck",
+   "prompt": "Kenny, are those pylons or are you stealing traffic cones?",
+   "summary": "Kenny's backhand is, in his own words, a rumour. He wants stick and puck ice, the old pylon bag, and someone to watch.",
+   "start": [
+    {
+     "day_gte": 14
+    },
+    {
+     "rel_gte": [
+      "kenny_szabo",
+      10
+     ]
+    }
+   ],
+   "steps": [
+    {
+     "id": "pylons",
+     "text": "Find the pylon bag. Doris's drawers would be a good start.",
+     "goal": {
+      "type": "visit",
+      "place": "zamboni_bay"
+     },
+     "on_done": [
+      {
+       "note": "The pylons were in the drawer labelled DORIS (MISC). Earl says they're Doris's pylons. Doris has never used a pylon."
+      }
+     ]
+    },
+    {
+     "id": "session",
+     "text": "Run a stick and puck session on ice rated 55 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "stick_and_puck",
+      "count": 1,
+      "min_rating": 55
+     }
+    },
+    {
+     "id": "kenny",
+     "text": "Be there when Kenny works on his backhand.",
+     "goal": {
+      "type": "attend",
+      "person": "kenny_szabo",
+      "event": "stick_and_puck"
+     }
+    },
+    {
+     "id": "return",
+     "text": "Tell Kenny what you saw.",
+     "goal": {
+      "type": "talk",
+      "to": "kenny_szabo"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "kenny_szabo",
+      12
+     ]
+    },
+    {
+     "item": [
+      "kennys_pylon",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "stick_and_puck sessions, the resurfacer bay drawers (DECOR 1.14), Kenny's relationship (shared cast, all paths)."
+  },
+  {
+   "id": "kev_sneakers",
+   "title": "Sneakers on the Ice",
+   "giver": "kev_szabo",
+   "kind": "side",
+   "event": "broomball",
+   "prompt": "Kev, why is there a trail of slush from the parking lot to centre ice?",
+   "summary": "The broomball club tracks the parking lot onto the ice every Wednesday. Kev would like a solution that isn't 'stop being broomball'.",
+   "start": [
+    {
+     "contract": "broomball"
+    }
+   ],
+   "steps": [
+    {
+     "id": "clean",
+     "text": "Clean the building so the lobby and corridor aren't a slush river.",
+     "goal": {
+      "type": "job_done",
+      "job": "clean_building",
+      "count": 1
+     }
+    },
+    {
+     "id": "nights",
+     "text": "Run two broomball nights and see if the boot mats hold.",
+     "goal": {
+      "type": "event_held",
+      "event": "broomball",
+      "count": 2,
+      "min_rating": 40
+     }
+    },
+    {
+     "id": "return",
+     "text": "Report back to Kev.",
+     "goal": {
+      "type": "talk",
+      "to": "kev_szabo"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "kev_szabo",
+      12
+     ]
+    },
+    {
+     "item": [
+      "signed_broom",
+      1
+     ]
+    },
+    {
+     "set": "broomball_boot_mats"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "broomball contract (forgives anything), the cleaning job, ice rating at public use, a keepsake broom."
+  },
+  {
+   "id": "rhonda_carnival_final",
+   "title": "The Carnival Final",
+   "giver": "rhonda_pelkey",
+   "kind": "side",
+   "event": "broomball",
+   "prompt": "Rhonda, is that a rubber boot painted gold?",
+   "summary": "The Winter Carnival broomball tournament needs ice that won't eat sneakers, and the trophy needs a home that isn't Rhonda's porch.",
+   "start": [
+    {
+     "contract": "broomball"
+    },
+    {
+     "day_gte": 120
+    }
+   ],
+   "steps": [
+    {
+     "id": "edge",
+     "text": "Edge the boards before carnival weekend so the corners don't catch a broom.",
+     "goal": {
+      "type": "job_done",
+      "job": "edge_ice",
+      "count": 1
+     }
+    },
+    {
+     "id": "prelims",
+     "text": "Run a broomball night on ice rated 45 or better as the carnival prelim.",
+     "goal": {
+      "type": "event_held",
+      "event": "broomball",
+      "count": 1,
+      "min_rating": 45
+     }
+    },
+    {
+     "id": "carnival",
+     "text": "Hold the Winter Carnival.",
+     "goal": {
+      "type": "event_held",
+      "event": "special",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Find Rhonda after the final.",
+     "goal": {
+      "type": "talk",
+      "to": "rhonda_pelkey"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "rhonda_pelkey",
+      15
+     ]
+    },
+    {
+     "rel": [
+      "kev_szabo",
+      5
+     ]
+    },
+    {
+     "item": [
+      "golden_boot",
+      1
+     ]
+    },
+    {
+     "set": "carnival_broomball_annual"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Edging mini game, broomball and the Winter Carnival special (DECOR 5.5), the trophy case.",
+   "theme": "trophy_case"
+  },
+  {
+   "id": "donna_bake_sale",
+   "title": "The AED and the Bake Sale",
+   "giver": "donna_pettigrew",
+   "kind": "side",
+   "event": "minor_hockey",
+   "prompt": "Donna, you have a clipboard and that look.",
+   "summary": "Minor hockey won't put kids on ice without a first aid kit and a defibrillator in the lobby. Donna has a plan, and the plan is squares.",
+   "start": [
+    {
+     "day_gte": 10
+    }
+   ],
+   "steps": [
+    {
+     "id": "hall",
+     "text": "Set up the bake sale tables in the Mezzanine Hall.",
+     "goal": {
+      "type": "visit",
+      "place": "community_room"
+     },
+     "on_done": [
+      {
+       "note": "Three tables, one of them THE TABLE. Donna has labelled every tray. The Nanaimo bars have a security detail."
+      }
+     ]
+    },
+    {
+     "id": "games",
+     "text": "Run two minor hockey sessions so the sale has customers.",
+     "goal": {
+      "type": "event_held",
+      "event": "minor_hockey",
+      "count": 2
+     }
+    },
+    {
+     "id": "rooms",
+     "text": "Get the building to a facility score of 25: both dressing rooms usable, the lobby fit for an AED cabinet.",
+     "goal": {
+      "type": "rooms_gte",
+      "value": 25
+     }
+    },
+    {
+     "id": "return",
+     "text": "Tell Donna the AED is on the wall.",
+     "goal": {
+      "type": "talk",
+      "to": "donna_pettigrew"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "donna_pettigrew",
+      15
+     ]
+    },
+    {
+     "set": "aed_in_lobby"
+    },
+    {
+     "item": [
+      "bake_sale_tin",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "minor_hockey contract requirements (RINK_SIM 5.3), facility score, the community room, insurance inspection (first aid and AED)."
+  },
+  {
+   "id": "lisa_warm_room",
+   "title": "Saturday, Eight A.M.",
+   "giver": "lisa_cormier",
+   "kind": "side",
+   "event": "minor_hockey",
+   "prompt": "Lisa, that's a lot of tiny hockey bags.",
+   "summary": "The novice team gets the visitors' room at eight on Saturdays, and five-year-olds can't do up skates with frozen fingers.",
+   "start": [
+    {
+     "contract": "minor_hockey"
+    }
+   ],
+   "steps": [
+    {
+     "id": "room",
+     "text": "Have a look at the visitors' dressing room before the novices arrive.",
+     "goal": {
+      "type": "visit",
+      "place": "dressing_room"
+     },
+     "on_done": [
+      {
+       "note": "STAND HERE, IT'S WARMER. The arrow points at one floor tile by the drain. Twelve five-year-olds will not fit on one tile."
+      }
+     ]
+    },
+    {
+     "id": "rooms",
+     "text": "Fix the building up to a facility score of 30, starting with the visitors' hot water.",
+     "goal": {
+      "type": "rooms_gte",
+      "value": 30
+     }
+    },
+    {
+     "id": "saturdays",
+     "text": "Run two Saturday minor hockey sessions on ice rated 50 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "minor_hockey",
+      "count": 2,
+      "min_rating": 50
+     }
+    },
+    {
+     "id": "return",
+     "text": "Ask Lisa how the novices are doing.",
+     "goal": {
+      "type": "talk",
+      "to": "lisa_cormier"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "lisa_cormier",
+      12
+     ]
+    },
+    {
+     "rel": [
+      "donna_pettigrew",
+      4
+     ]
+    },
+    {
+     "set": "novice_room_warm"
+    },
+    {
+     "item": [
+      "novice_team_photo",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Facility score (dressing rooms, boiler), minor hockey Saturdays, the visitors' room decor (warm tile, graffiti), the minor hockey photo wall."
+  },
+  {
+   "id": "haverkamp_toothbrush",
+   "title": "The Toothbrush Incident",
+   "giver": "lyle_haverkamp",
+   "kind": "side",
+   "event": "beer_league",
+   "prompt": "Dr Haverkamp, is that a toothbrush in your glove?",
+   "summary": "Rick Saucier lost a tooth to a Molars stick in 2024 and never paid the bill. Dr Haverkamp would like closure, or at least a mouthguard.",
+   "start": [
+    {
+     "day_gte": 10
+    }
+   ],
+   "steps": [
+    {
+     "id": "rick",
+     "text": "Hear Rick 'Sauce' Saucier's side of the story.",
+     "goal": {
+      "type": "talk",
+      "to": "rick_saucier"
+     },
+     "on_done": [
+      {
+       "note": "Sauce: 'Sixty-one goals in 1994 and he wants a hundred and eighty bucks for a tooth. That was a 1994 tooth. It had history.'"
+      }
+     ]
+    },
+    {
+     "id": "settle",
+     "text": "Find a settlement both men can live with.",
+     "goal": {
+      "type": "flag",
+      "flag": "toothbrush_settled"
+     }
+    },
+    {
+     "id": "game",
+     "text": "Run the next Molars and Moose Knuckles game.",
+     "goal": {
+      "type": "event_held",
+      "event": "beer_league",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "See how the handshake line went.",
+     "goal": {
+      "type": "talk",
+      "to": "lyle_haverkamp"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "lyle_haverkamp",
+      10
+     ]
+    },
+    {
+     "rel": [
+      "rick_saucier",
+      10
+     ]
+    },
+    {
+     "item": [
+      "framed_toothbrush",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Beer league rivalry (TEAMS.md Toothbrush Incident), the Moose Knuckles and Molars, the visitors' room graffiti wall, small money."
+  },
+  {
+   "id": "dale_bylaw_fourteen",
+   "title": "Bylaw Fourteen",
+   "giver": "dale_huffman",
+   "kind": "side",
+   "event": "beer_league",
+   "prompt": "Dale, why is the binder open to a blank page?",
+   "summary": "Page fourteen of the Valley Beer League binder is missing, and the Last Call Cup playoffs need it.",
+   "start": [
+    {
+     "day_gte": 21
+    },
+    {
+     "rel_gte": [
+      "dale_huffman",
+      10
+     ]
+    }
+   ],
+   "steps": [
+    {
+     "id": "office",
+     "text": "Search Gus's office filing cabinet. Lift the drawer as you pull.",
+     "goal": {
+      "type": "visit",
+      "place": "office"
+     },
+     "on_done": [
+      {
+       "note": "Not in the cabinet. On the 1998 calendar, March, in Gus's pencil: DALE'S PAGE IS WITH THE GLYCOL. G."
+      }
+     ]
+    },
+    {
+     "id": "plant",
+     "text": "Check the glycol tab of Gus's binder on the plant room door.",
+     "goal": {
+      "type": "visit",
+      "place": "plant_room"
+     },
+     "on_done": [
+      {
+       "item": [
+        "bylaw_fourteen_page",
+        1
+       ]
+      },
+      {
+       "note": "Between the hydrometer chart and a coffee ring: Bylaw 14, Ties in the Final. Gus used it as a bookmark in 2019."
+      }
+     ]
+    },
+    {
+     "id": "return",
+     "text": "Bring Dale his page.",
+     "goal": {
+      "type": "talk",
+      "to": "dale_huffman"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "dale_huffman",
+      15
+     ]
+    },
+    {
+     "item": [
+      "bylaw_fourteen_page",
+      -1
+     ]
+    },
+    {
+     "set": "bylaw_fourteen_restored"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Office and plant room as places, Gus's binder and the 1998 calendar (readables), the VBL binder, the vbl_d relationship.",
+   "theme": "gus_binder"
+  },
+  {
+   "id": "nell_one_hook",
+   "title": "One Hook for Three Refs",
+   "giver": "nell_haraldsen",
+   "kind": "side",
+   "event": "beer_league",
+   "prompt": "Nell, is your coat on the floor again?",
+   "summary": "The ref room is a former broom closet with one coat hook for three officials. The incident book has asked politely for a second.",
+   "start": [
+    {
+     "day_gte": 7
+    }
+   ],
+   "steps": [
+    {
+     "id": "earl",
+     "text": "Ask Earl if there are spare hooks in Doris's drawers.",
+     "goal": {
+      "type": "talk",
+      "to": "earl_bratt"
+     },
+     "on_done": [
+      {
+       "item": [
+        "coat_hook",
+        2
+       ]
+      },
+      {
+       "note": "Earl: 'Hooks. DORIS (MISC). Not DORIS (DON'T). Never DORIS (DON'T).'"
+      }
+     ]
+    },
+    {
+     "id": "mount",
+     "text": "Put the hooks up in the ref room, off the corridor between the dressing rooms.",
+     "goal": {
+      "type": "visit",
+      "place": "dressing_room"
+     },
+     "on_done": [
+      {
+       "item": [
+        "coat_hook",
+        -2
+       ]
+      },
+      {
+       "set": "ref_room_hooks"
+      }
+     ]
+    },
+    {
+     "id": "game",
+     "text": "Run a beer league game so the officials can try them out.",
+     "goal": {
+      "type": "event_held",
+      "event": "beer_league",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Ask Nell how the hooks are holding up.",
+     "goal": {
+      "type": "talk",
+      "to": "nell_haraldsen"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "nell_haraldsen",
+      10
+     ]
+    },
+    {
+     "note": "Referees' incident book, new entry: 'Hooks installed. Two. Officials grateful. Coats dry. Next, if anybody is reading this, a chair?'"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "The ref room (DECOR 1.8, ref_incident_book), Doris's parts drawers, beer league officials' goodwill.",
+   "theme": "renovation"
+  },
+  {
+   "id": "nell_ref_room",
+   "title": "A Chair, a Mirror, a Heater",
+   "giver": "nell_haraldsen",
+   "kind": "chain",
+   "after": "nell_one_hook",
+   "event": "beer_league",
+   "prompt": "Nell, about that chair...",
+   "summary": "Gus fixed the ref room one thing a month: hook, chair, mirror, heater. The hook is done. The rest is a promise.",
+   "start": [
+    {
+     "day_gte": 30
+    }
+   ],
+   "steps": [
+    {
+     "id": "chair",
+     "text": "Ask Lorne Pettipiece for a chair built from the broken-stick barrel.",
+     "goal": {
+      "type": "talk",
+      "to": "lorne_pettipiece"
+     },
+     "on_done": [
+      {
+       "item": [
+        "stick_chair",
+        1
+       ]
+      },
+      {
+       "note": "Lorne: 'Kodiak shafts for the legs, a Shorewood seat. It'll take a two-hundred-pound linesman and his opinions.'"
+      }
+     ]
+    },
+    {
+     "id": "mirror",
+     "text": "Choose a mirror for the ref room.",
+     "goal": {
+      "type": "flag",
+      "flag": "ref_mirror_chosen"
+     }
+    },
+    {
+     "id": "rooms",
+     "text": "Bring the building up to a facility score of 40, so the ref room gets a heater circuit that isn't breaker 9.",
+     "goal": {
+      "type": "rooms_gte",
+      "value": 40
+     }
+    },
+    {
+     "id": "games",
+     "text": "Run three beer league games on ice rated 55 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "beer_league",
+      "count": 3,
+      "min_rating": 55
+     }
+    },
+    {
+     "id": "return",
+     "text": "Hand the ref room over to Nell.",
+     "goal": {
+      "type": "talk",
+      "to": "nell_haraldsen"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "nell_haraldsen",
+      15
+     ]
+    },
+    {
+     "item": [
+      "stick_chair",
+      -1
+     ]
+    },
+    {
+     "set": "ref_room_kitted"
+    },
+    {
+     "rep": 1
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Ref room upgrades (DECOR 1.8), the stick barrel and Lorne, the valley mirror keepsake (DECOR 1.5), facility score, officials' ice reports.",
+   "theme": "renovation"
+  },
+  {
+   "id": "dwayne_seven_minutes",
+   "title": "Seven Minutes Fast",
+   "giver": "dwayne_kuzyk",
+   "kind": "side",
+   "event": "beer_league",
+   "prompt": "Dwayne, you're staring at the canteen clock like it insulted your mother.",
+   "summary": "The Moosebrew clock runs seven minutes fast so the Late Ice League gets on the ice on time. Dwayne keeps arriving at the 10:45 pitcher seven minutes early.",
+   "start": [
+    {
+     "day_gte": 14
+    }
+   ],
+   "steps": [
+    {
+     "id": "look",
+     "text": "Look at the Moosebrew clock above the Hot Stove.",
+     "goal": {
+      "type": "visit",
+      "place": "canteen"
+     },
+     "on_done": [
+      {
+       "note": "Round, a moose with crossed-stick antlers, seven minutes fast since 1996. Under it, in Gus's marker on the wall: ON PURPOSE."
+      }
+     ]
+    },
+    {
+     "id": "midge",
+     "text": "Ask Midge Kaminski at the Clarion what the town thinks.",
+     "goal": {
+      "type": "talk",
+      "to": "midge_kaminski"
+     },
+     "on_done": [
+      {
+       "note": "Midge: 'Eleven letters to the editor the week I wrote about that clock. Eleven. One was from the clock, I'm fairly sure.'"
+      }
+     ]
+    },
+    {
+     "id": "decide",
+     "text": "Decide what to do about the clock.",
+     "goal": {
+      "type": "flag",
+      "flag": "clock_decided"
+     }
+    },
+    {
+     "id": "game",
+     "text": "Run a late beer league game and watch what happens at 10:45.",
+     "goal": {
+      "type": "event_held",
+      "event": "beer_league",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Check in with Dwayne after the pitcher.",
+     "goal": {
+      "type": "talk",
+      "to": "dwayne_kuzyk"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "dwayne_kuzyk",
+      8
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "The Moosebrew clock keepsake (DECOR 2: setting it right costs a little Community reputation and nudges the Late Ice schedule), the Clarion, beer league late ice.",
+   "theme": "canteen"
+  },
+  {
+   "id": "pete_shed_bell",
+   "title": "The Shed Bell",
+   "giver": "old_pete_vachon",
+   "kind": "side",
+   "event": "senior_hockey",
+   "prompt": "Pete, the bell sounded funny after the last win.",
+   "summary": "The Shed bell has rung for every Lumber Kings home win since 1952. Its clapper is held on with a twist tie, which Old Pete denies.",
+   "start": [
+    {
+     "day_gte": 20
+    },
+    {
+     "rel_gte": [
+      "old_pete_vachon",
+      10
+     ]
+    }
+   ],
+   "steps": [
+    {
+     "id": "case",
+     "text": "Look at the Shed bell in the bottom of the trophy case.",
+     "goal": {
+      "type": "visit",
+      "place": "lobby"
+     },
+     "on_done": [
+      {
+       "item": [
+        "shed_bell_clapper",
+        1
+       ]
+      },
+      {
+       "note": "The clapper hangs on a bent pin and a bread-bag twist tie. You lift it out and it comes away in your hand. Pete looks at the ceiling."
+      }
+     ]
+    },
+    {
+     "id": "bev",
+     "text": "Take the clapper to Bev, who machines her own parts for Old Bertha.",
+     "goal": {
+      "type": "talk",
+      "to": "bev_kowalchuk"
+     },
+     "on_done": [
+      {
+       "item": [
+        "shed_bell_clapper",
+        -1
+       ]
+      },
+      {
+       "note": "Bev: 'I built Bertha a whole carriage in 1984. A pin is a coffee break. Tell Pete I want the twist tie. For the wall.'"
+      }
+     ]
+    },
+    {
+     "id": "win",
+     "text": "Run a Lumber Kings home game on ice rated 60 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "senior_hockey",
+      "count": 1,
+      "min_rating": 60
+     }
+    },
+    {
+     "id": "return",
+     "text": "Find Old Pete with the bell.",
+     "goal": {
+      "type": "talk",
+      "to": "old_pete_vachon"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "old_pete_vachon",
+      12
+     ]
+    },
+    {
+     "rel": [
+      "bev_kowalchuk",
+      4
+     ]
+    },
+    {
+     "set": "shed_bell_fixed"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "The trophy case (DECOR 1.2), Bev and Old Bertha (PROSHOP), Lumber Kings home games, the Shed bell tradition.",
+   "theme": "trophy_case"
+  },
+  {
+   "id": "stan_rafters_stool",
+   "title": "The Rafters End",
+   "giver": "stan_szymanski",
+   "kind": "side",
+   "event": "senior_hockey",
+   "prompt": "Stan, you've been shifting your weight all period.",
+   "summary": "Stan has stood at the same spot on the rafters end rail for every Lumber Kings game since 1974. His knees have opinions now. He will not sit. He might lean.",
+   "start": [
+    {
+     "day_gte": 14
+    }
+   ],
+   "steps": [
+    {
+     "id": "lorne",
+     "text": "Ask Lorne Pettipiece for a leaning stool built to Stan's height, from barrel sticks.",
+     "goal": {
+      "type": "talk",
+      "to": "lorne_pettipiece"
+     },
+     "on_done": [
+      {
+       "item": [
+        "stick_stool",
+        1
+       ]
+      },
+      {
+       "note": "Lorne: 'Shorewood shafts. Tall. For leaning, not sitting. I know the type. My dad was the type.'"
+      }
+     ]
+    },
+    {
+     "id": "game",
+     "text": "Run a Lumber Kings home game.",
+     "goal": {
+      "type": "event_held",
+      "event": "senior_hockey",
+      "count": 1
+     }
+    },
+    {
+     "id": "stan",
+     "text": "Be there when Stan finds the stool at his spot on the rail.",
+     "goal": {
+      "type": "attend",
+      "person": "stan_szymanski",
+      "event": "senior_hockey"
+     }
+    },
+    {
+     "id": "return",
+     "text": "Ask Stan how it was.",
+     "goal": {
+      "type": "talk",
+      "to": "stan_szymanski"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "stan_szymanski",
+      15
+     ]
+    },
+    {
+     "rel": [
+      "lorne_pettipiece",
+      4
+     ]
+    },
+    {
+     "item": [
+      "stick_stool",
+      -1
+     ]
+    },
+    {
+     "set": "stan_stool_at_rail"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "The rafters end rail (DECOR 1.10, ledger_last_word), the stick barrel and Lorne, Lumber Kings attendance, a keepsake that keeps a superfan coming."
+  },
+  {
+   "id": "doreen_organ_two",
+   "title": "Organ 2",
+   "giver": "doreen_vachon",
+   "kind": "side",
+   "event": "senior_hockey",
+   "prompt": "Doreen, the organ went flat in the third period.",
+   "summary": "Doreen's Casio keyboard runs on batteries since the adapter died, and every third period the Kingsport dirge slows down like it's melting.",
+   "start": [
+    {
+     "day_gte": 10
+    }
+   ],
+   "steps": [
+    {
+     "id": "shop",
+     "text": "Check Bev's drawer of orphaned power adapters.",
+     "goal": {
+      "type": "visit",
+      "place": "pro_shop"
+     },
+     "on_done": [
+      {
+       "item": [
+        "casio_adapter",
+        1
+       ]
+      },
+      {
+       "note": "A drawer labelled ADAPTERS (NOT MINE). Thirty-one of them. The twenty-ninth fits. Bev: 'Take it. It's been not mine since 1993.'"
+      }
+     ]
+    },
+    {
+     "id": "box",
+     "text": "Plug the Casio in at the timekeeper's box between the penalty boxes.",
+     "goal": {
+      "type": "visit",
+      "place": "penalty_box"
+     },
+     "on_done": [
+      {
+       "item": [
+        "casio_adapter",
+        -1
+       ]
+      },
+      {
+       "set": "casio_plugged_in"
+      }
+     ]
+    },
+    {
+     "id": "game",
+     "text": "Run a Lumber Kings game with Organ 2 at full power.",
+     "goal": {
+      "type": "event_held",
+      "event": "senior_hockey",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Ask Doreen how it sounded.",
+     "goal": {
+      "type": "talk",
+      "to": "doreen_vachon"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "doreen_vachon",
+      12
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "The timekeeper's box (DECOR 1.9), Bev's shop, game-night atmosphere, Doreen's music at other events."
+  },
+  {
+   "id": "ostrowski_sixty_days",
+   "title": "Sixty Days Late",
+   "giver": "bernie_ostrowski",
+   "kind": "side",
+   "event": "high_school",
+   "prompt": "Coach Ostrowski, about the invoice...",
+   "summary": "The Millbrook High Mallards pay for ice sixty days late, as tradition. Coach Ostrowski would like to pay in something other than money.",
+   "start": [
+    {
+     "contract": "high_school"
+    }
+   ],
+   "steps": [
+    {
+     "id": "practices",
+     "text": "Run two Mallards practices.",
+     "goal": {
+      "type": "event_held",
+      "event": "high_school",
+      "count": 2
+     }
+    },
+    {
+     "id": "terms",
+     "text": "Settle the payment terms with Coach Ostrowski.",
+     "goal": {
+      "type": "flag",
+      "flag": "ostrowski_terms_set"
+     }
+    },
+    {
+     "id": "game",
+     "text": "Run the next Mallards home game.",
+     "goal": {
+      "type": "event_held",
+      "event": "high_school",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Close the books with Coach Ostrowski.",
+     "goal": {
+      "type": "talk",
+      "to": "bernie_ostrowski"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "bernie_ostrowski",
+      10
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "high_school contract (pays 60 days late, RINK_SIM 5.3), the EARN IT bench paint (DECOR 1.9), the shop class and the stick barrel (PROSHOP), money."
+  },
+  {
+   "id": "faulk_section_see",
+   "title": "Section See",
+   "giver": "desmond_faulk",
+   "kind": "side",
+   "event": "high_school",
+   "prompt": "Mr Faulk, why is there a sousaphone in my lobby?",
+   "summary": "The Millbrook High pep band wants to play Mallards games from Section C, which has no letter and which everybody calls Section See.",
+   "start": [
+    {
+     "contract": "high_school"
+    },
+    {
+     "day_gte": 14
+    }
+   ],
+   "steps": [
+    {
+     "id": "stands",
+     "text": "Look at Section C in the west stands.",
+     "goal": {
+      "type": "visit",
+      "place": "stands"
+     },
+     "on_done": [
+      {
+       "note": "No letter at the end of the row. A space where the C was, a ghost of cream paint. Somebody has written SEE in pencil, very small."
+      }
+     ]
+    },
+    {
+     "id": "rooms",
+     "text": "Get the stands fixed up to a facility score of 30, so the band has seats that aren't roped off.",
+     "goal": {
+      "type": "rooms_gte",
+      "value": 30
+     }
+    },
+    {
+     "id": "letter",
+     "text": "Decide what goes on the end of Section C.",
+     "goal": {
+      "type": "flag",
+      "flag": "section_c_decided"
+     }
+    },
+    {
+     "id": "game",
+     "text": "Run a Mallards home game with the band in the stands.",
+     "goal": {
+      "type": "event_held",
+      "event": "high_school",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Ask Mr Faulk how the band sounded.",
+     "goal": {
+      "type": "talk",
+      "to": "desmond_faulk"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "desmond_faulk",
+      12
+     ]
+    },
+    {
+     "set": "pep_band_plays"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Stands (DECOR 1.10, Section See), facility score, high school game atmosphere, a small decor choice."
+  },
+  {
+   "id": "ferreira_seventy_five",
+   "title": "Games Every Seventy-Five Minutes",
+   "giver": "bob_ferreira",
+   "kind": "side",
+   "event": "tournament",
+   "prompt": "Bob, you're holding that schedule like a train timetable.",
+   "summary": "The Valley Peewee Tournament runs a game every seventy-five minutes with a flood between each. Bob would like it to run on time for once in its life.",
+   "start": [
+    {
+     "contract": "tournament"
+    }
+   ],
+   "steps": [
+    {
+     "id": "prep",
+     "text": "Prepare the ice: edge the boards before tournament weekend.",
+     "goal": {
+      "type": "job_done",
+      "job": "edge_ice",
+      "count": 1
+     }
+    },
+    {
+     "id": "floods",
+     "text": "Flood between games: eight resurfaces over the weekend.",
+     "goal": {
+      "type": "job_done",
+      "job": "resurface",
+      "count": 8
+     }
+    },
+    {
+     "id": "weekend",
+     "text": "Finish the tournament weekend on ice rated 60 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "tournament",
+      "count": 1,
+      "min_rating": 60
+     }
+    },
+    {
+     "id": "return",
+     "text": "Find Bob at the schedule board.",
+     "goal": {
+      "type": "talk",
+      "to": "bob_ferreira"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "bob_ferreira",
+      12
+     ]
+    },
+    {
+     "money": 250
+    },
+    {
+     "item": [
+      "tournament_crest_pin",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Tournament contract and live schedule (RINK_SIM 5.7), edging and resurfacing jobs, the lobby schedule board and crest table (DECOR 5.3)."
+  },
+  {
+   "id": "larry_timekeepers",
+   "title": "The Mallards Keep Time",
+   "giver": "larry_piche",
+   "kind": "side",
+   "event": "tournament",
+   "prompt": "Larry, are those eleven matching pencils?",
+   "summary": "The Millbrook Mallards have volunteered as tournament timekeepers. Larry would like them trained, and the clock to work on both sides.",
+   "start": [
+    {
+     "contract": "tournament"
+    }
+   ],
+   "steps": [
+    {
+     "id": "doreen",
+     "text": "Ask Doreen to train the Mallards on the clock.",
+     "goal": {
+      "type": "talk",
+      "to": "doreen_vachon"
+     },
+     "on_done": [
+      {
+       "note": "Doreen: 'Start on the drop. Stop on the whistle. Never on the shout. Larry wrote it on an index card. Neatly.'"
+      }
+     ]
+    },
+    {
+     "id": "rooms",
+     "text": "Bring the building up to a facility score of 35, so the timekeeper's box isn't the coldest seat in town.",
+     "goal": {
+      "type": "rooms_gte",
+      "value": 35
+     }
+    },
+    {
+     "id": "weekend",
+     "text": "Run a tournament weekend with the Mallards on the clock.",
+     "goal": {
+      "type": "event_held",
+      "event": "tournament",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Thank Larry and the Mallards.",
+     "goal": {
+      "type": "talk",
+      "to": "larry_piche"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "larry_piche",
+      12
+     ]
+    },
+    {
+     "rel": [
+      "doreen_vachon",
+      3
+     ]
+    },
+    {
+     "set": "mallards_timekeepers"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Tournament volunteers, the timekeeper's box and Doreen (DECOR 1.9), the Mallards (TEAMS, mallards_letters), facility score."
+  },
+  {
+   "id": "tommy_crest_trade",
+   "title": "The Crest-Trading Table",
+   "giver": "tommy_bellweather",
+   "kind": "chain",
+   "after": "ferreira_seventy_five",
+   "event": "tournament",
+   "prompt": "Tommy, why are you wearing forty pins?",
+   "summary": "Tommy trades tournament pins at the lobby table and is one trade away from the rarest pin in the valley. He needs a Millbrook host pin to make it.",
+   "start": [
+    {
+     "contract": "tournament"
+    }
+   ],
+   "steps": [
+    {
+     "id": "table",
+     "text": "Visit the crest-trading table in the lobby.",
+     "goal": {
+      "type": "visit",
+      "place": "lobby"
+     },
+     "on_done": [
+      {
+       "note": "A folding table, two shoeboxes, forty children and the solemnity of a stock exchange."
+      }
+     ]
+    },
+    {
+     "id": "pin",
+     "text": "Bring Tommy a Millbrook host pin.",
+     "goal": {
+      "type": "item",
+      "id": "tournament_crest_pin",
+      "count": 1
+     },
+     "on_done": [
+      {
+       "item": [
+        "tournament_crest_pin",
+        -1
+       ]
+      }
+     ]
+    },
+    {
+     "id": "trade",
+     "text": "Let the trade happen at the next tournament.",
+     "goal": {
+      "type": "event_held",
+      "event": "tournament",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "See what Tommy traded for.",
+     "goal": {
+      "type": "talk",
+      "to": "tommy_bellweather"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "tommy_bellweather",
+      10
+     ]
+    },
+    {
+     "item": [
+      "peewee_b_1988_pin",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "The tournament crest table (DECOR 5.3), the item from Games Every Seventy-Five Minutes, the trophy case and the 1988 pennant.",
+   "theme": "trophy_case"
+  },
+  {
+   "id": "rejean_ir_gun",
+   "title": "His Own Thermometer",
+   "giver": "rejean_paquette",
+   "kind": "side",
+   "event": "pro_practice",
+   "prompt": "Monsieur Paquette, you're pointing a thermometer at my ice.",
+   "summary": "The Dukes' equipment manager measures the ice himself with an infrared gun. He'd like the numbers to agree with yours, and with the log.",
+   "start": [
+    {
+     "contract": "dukes_practice"
+    }
+   ],
+   "steps": [
+    {
+     "id": "rating",
+     "text": "Get a hockey ice rating of 85 at a session.",
+     "goal": {
+      "type": "rating_gte",
+      "use": "hockey",
+      "value": 85
+     }
+    },
+    {
+     "id": "practices",
+     "text": "Hold two Dukes practices on ice rated 85 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "pro_practice",
+      "count": 2,
+      "min_rating": 85
+     }
+    },
+    {
+     "id": "log",
+     "text": "Keep the plant log honest: five plant rounds written down.",
+     "goal": {
+      "type": "job_done",
+      "job": "plant_round",
+      "count": 5
+     }
+    },
+    {
+     "id": "return",
+     "text": "Show Réjean the log.",
+     "goal": {
+      "type": "talk",
+      "to": "rejean_paquette"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "rejean_paquette",
+      15
+     ]
+    },
+    {
+     "rep": 2
+    },
+    {
+     "set": "dukes_trust_ice"
+    },
+    {
+     "item": [
+      "dukes_practice_puck",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "dukes_practice contract (RINK_SIM 5.3: the GNHL and pros measure everything), plant rounds and the log, ice rating for hockey, reputation."
+  },
+  {
+   "id": "tommy_twelve_signatures",
+   "title": "Twelve Signatures",
+   "giver": "tommy_bellweather",
+   "kind": "side",
+   "event": "pro_practice",
+   "prompt": "Tommy, that puck has nothing on it yet.",
+   "summary": "When the Dukes practise at Millbrook, Tommy wants to stand at the glass with a puck and a pen. He's aiming for twelve signatures.",
+   "start": [
+    {
+     "contract": "dukes_practice"
+    }
+   ],
+   "steps": [
+    {
+     "id": "glass",
+     "text": "Let Tommy stand at the glass during a Dukes practice.",
+     "goal": {
+      "type": "attend",
+      "person": "tommy_bellweather",
+      "event": "pro_practice"
+     }
+    },
+    {
+     "id": "rejean",
+     "text": "Ask Réjean Paquette if the players would sign after practice.",
+     "goal": {
+      "type": "talk",
+      "to": "rejean_paquette"
+     },
+     "on_done": [
+      {
+       "item": [
+        "signed_dukes_puck",
+        1
+       ]
+      },
+      {
+       "note": "Réjean: 'Twelve on one puck? They will have to sign small. I will ask the goalies first. Goalies write small. It is their whole personality.'"
+      }
+     ]
+    },
+    {
+     "id": "return",
+     "text": "Give Tommy the puck.",
+     "goal": {
+      "type": "talk",
+      "to": "tommy_bellweather"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "tommy_bellweather",
+      12
+     ]
+    },
+    {
+     "rel": [
+      "rejean_paquette",
+      3
+     ]
+    },
+    {
+     "item": [
+      "signed_dukes_puck",
+      -1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Pro practice attendance (autograph hunters), Réjean as a go-between, a gift you choose how to give."
+  },
+  {
+   "id": "earl_doris_day",
+   "title": "Doris Day",
+   "giver": "earl_bratt",
+   "kind": "side",
+   "event": "special",
+   "prompt": "Earl, why is there a calendar in the bay with a circle on it?",
+   "summary": "Doris came off the truck from Port Lucerne in the autumn of 1974. Earl would like the day marked. Properly. Without fuss. With a little fuss.",
+   "start": [
+    {
+     "rel_gte": [
+      "earl_bratt",
+      20
+     ]
+    },
+    {
+     "day_gte": 40
+    }
+   ],
+   "steps": [
+    {
+     "id": "tune",
+     "text": "Give Doris a full tune-up: plugs, filter, oil.",
+     "goal": {
+      "type": "job_done",
+      "job": "engine_tune",
+      "count": 1
+     }
+    },
+    {
+     "id": "towel",
+     "text": "Fit her a new towel.",
+     "goal": {
+      "type": "job_done",
+      "job": "towel_change",
+      "count": 1
+     }
+    },
+    {
+     "id": "cake",
+     "text": "Ask Lorraine at the Hot Stove about a cake.",
+     "goal": {
+      "type": "talk",
+      "to": "lorraine_duffy"
+     },
+     "on_done": [
+      {
+       "note": "Lorraine: 'A cake shaped like a snow tank. Cream and blue, like her. Mostly icing. Don't let Earl see it till Saturday.'"
+      }
+     ]
+    },
+    {
+     "id": "day",
+     "text": "Hold Doris Day: a public skate where everyone watches her flood.",
+     "goal": {
+      "type": "event_held",
+      "event": "special",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Find Earl in the bay.",
+     "goal": {
+      "type": "talk",
+      "to": "earl_bratt"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "earl_bratt",
+      20
+     ]
+    },
+    {
+     "rel": [
+      "lorraine_duffy",
+      4
+     ]
+    },
+    {
+     "set": "doris_day_annual"
+    },
+    {
+     "item": [
+      "doris_day_ribbon",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Doris (RINK_SIM 3.3): tune-up and towel mini games 4.8 and 4.9, the special event Doris Day, Earl's tally wall (DECOR 1.14), the canteen.",
+   "theme": "doris"
+  },
+  {
+   "id": "gord_santa",
+   "title": "Big Gord Won't Let You Walk",
+   "giver": "gordon_halvorsen",
+   "kind": "side",
+   "event": "special",
+   "prompt": "Gord, are you trying on a Santa suit in my lobby?",
+   "summary": "Big Gord is Santa at Skate with Santa, every year, on Doris's snow tank. This year he wants the full treatment, and Earl has opinions about the nose.",
+   "start": [
+    {
+     "day_gte": 85
+    }
+   ],
+   "steps": [
+    {
+     "id": "fuel",
+     "text": "Fill Doris's tank so Santa doesn't run out of gas mid-lap.",
+     "goal": {
+      "type": "job_done",
+      "job": "refuel_doris",
+      "count": 1
+     }
+    },
+    {
+     "id": "flood",
+     "text": "Lay a fresh flood for Santa's arrival.",
+     "goal": {
+      "type": "job_done",
+      "job": "resurface",
+      "count": 1
+     }
+    },
+    {
+     "id": "nose",
+     "text": "Settle the red nose question.",
+     "goal": {
+      "type": "flag",
+      "flag": "doris_nose_decided"
+     }
+    },
+    {
+     "id": "skate",
+     "text": "Hold Skate with Santa.",
+     "goal": {
+      "type": "event_held",
+      "event": "special",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Find Big Gord, if he's out of the suit.",
+     "goal": {
+      "type": "talk",
+      "to": "gordon_halvorsen"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "gordon_halvorsen",
+      10
+     ]
+    },
+    {
+     "money": 100
+    },
+    {
+     "note": "Big Gord drops a hundred dollars in the DORIS RETIREMENT FUND jar. Earl says she isn't retiring. Gord says it's 'a down payment on her next life'."
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Skate with Santa (DECOR 5.2), Doris refuel and resurface jobs, Doris's antlers and the red nose, the tip jar, Big Gord's Trucks.",
+   "theme": "doris"
+  },
+  {
+   "id": "tyler_green_balloon",
+   "title": "One Green Balloon",
+   "giver": "tyler_kowalchuk",
+   "kind": "side",
+   "event": "special",
+   "prompt": "Tyler, why are you staking out the Mallards photo?",
+   "summary": "Every 12 March a single green balloon appears on the 2005 Mallards photo, put there by nobody in particular. Tyler wants to know who.",
+   "start": [
+    {
+     "day_gte": 150
+    }
+   ],
+   "steps": [
+    {
+     "id": "lobby",
+     "text": "Look at the balloon on the Mallards photo in the lobby.",
+     "goal": {
+      "type": "visit",
+      "place": "lobby"
+     },
+     "on_done": [
+      {
+       "note": "One green balloon on a white ribbon, tied with a figure-eight knot. A good knot. A rope man's knot, or a towel man's."
+      }
+     ]
+    },
+    {
+     "id": "larry",
+     "text": "Ask Larry Piche if it was him.",
+     "goal": {
+      "type": "talk",
+      "to": "larry_piche"
+     },
+     "on_done": [
+      {
+       "note": "Larry: 'Not me. I'd have used a ribbon in Mallards green, and a card. Tidier. But whoever it is, thank them for me.'"
+      }
+     ]
+    },
+    {
+     "id": "bev",
+     "text": "Ask Bev if she knows anything.",
+     "goal": {
+      "type": "talk",
+      "to": "bev_kowalchuk"
+     },
+     "on_done": [
+      {
+       "note": "Bev: 'Not me, champ. Ask yourself who's here before anybody, every day, and ties things in figure eights.'"
+      }
+     ]
+    },
+    {
+     "id": "bay",
+     "text": "Check the resurfacer bay.",
+     "goal": {
+      "type": "visit",
+      "place": "zamboni_bay"
+     },
+     "on_done": [
+      {
+       "set": "balloon_clue_found"
+      },
+      {
+       "note": "On the shelf beside Frank Zambelli's candle: a bag of green balloons, one missing, and a roll of white ribbon. The same knot on the towel hook."
+      }
+     ]
+    },
+    {
+     "id": "return",
+     "text": "Tell Tyler what you found. Or don't.",
+     "goal": {
+      "type": "talk",
+      "to": "tyler_kowalchuk"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "tyler_kowalchuk",
+      8
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "The Mallards' anniversary on 12 March (DECOR 5.6), the Mallards photo keepsake, Earl's bay, a secret you can keep."
+  },
+  {
+   "id": "june_memorial_game",
+   "title": "Harold Penner Night",
+   "giver": "june_penner",
+   "kind": "side",
+   "event": "special",
+   "prompt": "June, you've been standing by seat C-4-7 a while.",
+   "summary": "Mayor Harold Penner cut the ribbon in 1974 and shouted SKATE! from seat C-4-7 for thirty years. His granddaughter June would like one night in his name.",
+   "start": [
+    {
+     "day_gte": 30
+    }
+   ],
+   "steps": [
+    {
+     "id": "ray",
+     "text": "Ask Ray Duchesne if the Lumber Kings will play a memorial night.",
+     "goal": {
+      "type": "talk",
+      "to": "ray_duchesne"
+     },
+     "on_done": [
+      {
+       "note": "Ray: 'Harold's night? He cut the ribbon. Of course. The boys will wear the 1974 socks. They smell like 1974. That's commitment.'"
+      }
+     ]
+    },
+    {
+     "id": "seat",
+     "text": "Polish the plaque on seat C-4-7.",
+     "goal": {
+      "type": "visit",
+      "place": "stands"
+     },
+     "on_done": [
+      {
+       "note": "'Harold Penner sat here and shouted SKATE! for thirty years.' The brass is green. It comes up gold under your sleeve."
+      }
+     ]
+    },
+    {
+     "id": "night",
+     "text": "Hold Harold Penner Night on ice rated 60 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "special",
+      "count": 1,
+      "min_rating": 60
+     }
+    },
+    {
+     "id": "return",
+     "text": "Find June after the game.",
+     "goal": {
+      "type": "talk",
+      "to": "june_penner"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "june_penner",
+      12
+     ]
+    },
+    {
+     "rel": [
+      "ray_duchesne",
+      5
+     ]
+    },
+    {
+     "item": [
+      "penner_seat_cushion",
+      1
+     ]
+    },
+    {
+     "set": "penner_night_annual"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "A memorial special event, the seat plaques (DECOR 1.10), the dedication plaque, Penner Hardware as a sponsor, the Lumber Kings.",
+   "theme": "renovation"
+  },
+  {
+   "id": "bev_whetstone",
+   "title": "The Whetstone",
+   "giver": "bev_kowalchuk",
+   "kind": "side",
+   "event": "rink_life",
+   "prompt": "Bev, you're sharpening with the wrong stone. I can tell by your face.",
+   "summary": "Bev's grandfather's whetstone is somewhere in the plant room. Gus borrowed it in 1979.",
+   "start": [
+    {
+     "rel_gte": [
+      "bev_kowalchuk",
+      20
+     ]
+    },
+    {
+     "day_gte": 7
+    }
+   ],
+   "steps": [
+    {
+     "id": "find",
+     "text": "Look for the whetstone in the plant room.",
+     "goal": {
+      "type": "visit",
+      "place": "plant_room"
+     },
+     "on_done": [
+      {
+       "item": [
+        "kowalchuk_whetstone",
+        1
+       ]
+      },
+      {
+       "note": "Behind the board of eleven thermometers, on a nail: a grey stone in a leather sleeve stamped K. Under it, in Gus's capitals: BEV'S GRANDFATHER'S. SHE KNOWS I HAVE IT. SHE PRETENDS SHE DOESN'T."
+      }
+     ]
+    },
+    {
+     "id": "return",
+     "text": "Bring it back to Bev.",
+     "goal": {
+      "type": "talk",
+      "to": "bev_kowalchuk"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "bev_kowalchuk",
+      15
+     ]
+    },
+    {
+     "item": [
+      "kowalchuk_whetstone",
+      -1
+     ]
+    },
+    {
+     "item": [
+      "free_sharpening",
+      5
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Bev's shop and Old Bertha (PROSHOP), the plant room thermometer board (DECOR 1.13), free sharpenings for the owner.",
+   "theme": "plant_room"
+  },
+  {
+   "id": "bev_eight_dollars",
+   "title": "Eight Dollars",
+   "giver": "bev_kowalchuk",
+   "kind": "side",
+   "event": "rink_life",
+   "prompt": "Bev, I saw the chalkboard.",
+   "summary": "Bev's chalkboard says the new arena owner owes her $8. She also has an empty frame by the till waiting for a very particular dollar.",
+   "start": [
+    {
+     "day_gte": 3
+    }
+   ],
+   "steps": [
+    {
+     "id": "pay",
+     "text": "Pay Bev the eight dollars.",
+     "goal": {
+      "type": "flag",
+      "flag": "bev_paid_eight"
+     }
+    },
+    {
+     "id": "dollar",
+     "text": "Find the dollar the arena sold for, in the office cash box.",
+     "goal": {
+      "type": "visit",
+      "place": "office"
+     },
+     "on_done": [
+      {
+       "item": [
+        "arena_dollar",
+        1
+       ]
+      },
+      {
+       "note": "The combination on the bottom of the cash box, in Gus's hand, is not the combination. You try 1974. It is. Inside: the town's dollar, folded once, with SOLD written on it in pencil."
+      }
+     ]
+    },
+    {
+     "id": "return",
+     "text": "Give Bev the dollar.",
+     "goal": {
+      "type": "talk",
+      "to": "bev_kowalchuk"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "bev_kowalchuk",
+      20
+     ]
+    },
+    {
+     "item": [
+      "arena_dollar",
+      -1
+     ]
+    },
+    {
+     "set": "bev_chalkboard_heart"
+    },
+    {
+     "set": "bev_dollar_framed"
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Bev's chalkboard (readables bev_chalkboard), the framed first dollar (DECOR 1.16), the office cash box, small money.",
+   "theme": "pro_shop"
+  },
+  {
+   "id": "lorraine_coffee_machine",
+   "title": "Hit It Where the Dent Is",
+   "giver": "lorraine_duffy",
+   "kind": "side",
+   "event": "rink_life",
+   "prompt": "Lorraine, the flip sign still says NOT WORKING.",
+   "summary": "The Hot Stove's coffee machine works if you hit it where the dent is. Lately it doesn't. The town considers this the most urgent repair in the building.",
+   "start": [
+    {
+     "day_gte": 2
+    }
+   ],
+   "steps": [
+    {
+     "id": "dent",
+     "text": "Try the dent.",
+     "goal": {
+      "type": "visit",
+      "place": "canteen"
+     },
+     "on_done": [
+      {
+       "note": "You hit it where the dent is. It gurgles. It produces a single drop. Somewhere in the stands a man sighs. The flip sign stays on NOT WORKING."
+      }
+     ]
+    },
+    {
+     "id": "terry",
+     "text": "Ask Terry Duffy of the Plungers to look at it, between pager calls.",
+     "goal": {
+      "type": "talk",
+      "to": "terry_duffy"
+     },
+     "on_done": [
+      {
+       "set": "coffee_machine_fixed"
+      },
+      {
+       "note": "Terry: 'Scaled element and a cracked hose. Twenty minutes.' His pager went off. He came back. Forty minutes. COFFEE MACHINE IS: WORKING."
+      }
+     ]
+    },
+    {
+     "id": "clean",
+     "text": "Clean the building so the counter matches the coffee.",
+     "goal": {
+      "type": "job_done",
+      "job": "clean_building",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "Have a coffee with Lorraine.",
+     "goal": {
+      "type": "talk",
+      "to": "lorraine_duffy"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "lorraine_duffy",
+      12
+     ]
+    },
+    {
+     "rel": [
+      "terry_duffy",
+      6
+     ]
+    },
+    {
+     "note": "The Millbrook Clarion, page one, above the fold: 'COFFEE MACHINE IS: WORKING.' Below the fold: the Lumber Kings."
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "The Hot Stove (DECOR 1.3: the dented machine and the flip sign), concessions, the cleaning job, the Clarion.",
+   "theme": "canteen"
+  },
+  {
+   "id": "lorraine_hot_choc_late",
+   "title": "Hot Choc Late",
+   "giver": "lorraine_duffy",
+   "kind": "chain",
+   "after": "lorraine_coffee_machine",
+   "event": "rink_life",
+   "prompt": "Lorraine, the menu board's still missing two letters.",
+   "summary": "The felt menu board reads HOT CHOC LATE because two letters fell off years ago. Nobody fixes it, because it's true at public skate.",
+   "start": [
+    {
+     "day_gte": 10
+    }
+   ],
+   "steps": [
+    {
+     "id": "letters",
+     "text": "Ask Bev if she still has the felt letters from her old shop sign.",
+     "goal": {
+      "type": "talk",
+      "to": "bev_kowalchuk"
+     },
+     "on_done": [
+      {
+       "item": [
+        "felt_letters",
+        1
+       ]
+      },
+      {
+       "note": "Bev: 'A tin of felt letters from 1979. Lots of E's. One O. Nobody ever needs the O. Take the tin, champ.'"
+      }
+     ]
+    },
+    {
+     "id": "decide",
+     "text": "Decide what the menu board says.",
+     "goal": {
+      "type": "flag",
+      "flag": "menu_decided"
+     }
+    },
+    {
+     "id": "skate",
+     "text": "Run a public skate and see who orders what.",
+     "goal": {
+      "type": "event_held",
+      "event": "public_skate",
+      "count": 1
+     }
+    },
+    {
+     "id": "return",
+     "text": "See how the menu went over.",
+     "goal": {
+      "type": "talk",
+      "to": "lorraine_duffy"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "lorraine_duffy",
+      8
+     ]
+    },
+    {
+     "item": [
+      "felt_letters",
+      -1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "The Hot Stove menu board (DECOR 1.3, exact text), Bev's shop, public skate concessions, a small keepsake-style choice.",
+   "theme": "canteen"
+  },
+  {
+   "id": "marg_forty_one_days",
+   "title": "Forty-One Days",
+   "giver": "marguerite_lindqvist",
+   "kind": "side",
+   "event": "rink_life",
+   "prompt": "Marg, you're staring at the days-since sign again.",
+   "summary": "The plant room sign reads DAYS SINCE No. 1 TRIPPED, and the record painted underneath is 41, from 1996. Marg would like a new number to paint.",
+   "start": [
+    {
+     "rel_gte": [
+      "marguerite_lindqvist",
+      10
+     ]
+    },
+    {
+     "day_gte": 30
+    }
+   ],
+   "steps": [
+    {
+     "id": "rounds_a",
+     "text": "Keep the plant log: twenty morning rounds, written in pencil, no gaps.",
+     "goal": {
+      "type": "job_done",
+      "job": "plant_round",
+      "count": 20
+     }
+    },
+    {
+     "id": "oil",
+     "text": "Change No. 1's oil. Half the sight glass, not full.",
+     "goal": {
+      "type": "job_done",
+      "job": "compressor_oil_change",
+      "count": 1
+     }
+    },
+    {
+     "id": "descale",
+     "text": "Descale the condenser so No. 1 isn't fighting the roof.",
+     "goal": {
+      "type": "job_done",
+      "job": "descale_condenser",
+      "count": 1
+     }
+    },
+    {
+     "id": "rounds_b",
+     "text": "Twenty more rounds. The last stretch is where Gus lost it in 1997.",
+     "goal": {
+      "type": "job_done",
+      "job": "plant_round",
+      "count": 20
+     }
+    },
+    {
+     "id": "return",
+     "text": "Bring Marg the log.",
+     "goal": {
+      "type": "talk",
+      "to": "marguerite_lindqvist"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "marguerite_lindqvist",
+      18
+     ]
+    },
+    {
+     "set": "no1_record_run"
+    },
+    {
+     "rep": 1
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Plant rounds and the log (RINK_SIM 3.1), oil and descale mini games 4.2 and 4.6, the days-since sign keepsake (DECOR 1.13), Marg's red pen (marg_red_pen).",
+   "theme": "plant_room"
+  },
+  {
+   "id": "dylan_binder_ghost",
+   "title": "The Ghost in the Binder",
+   "giver": "dylan_pruitt",
+   "kind": "side",
+   "event": "rink_life",
+   "prompt": "Dylan, why are you whispering in the plant room?",
+   "summary": "New notes in Gus's handwriting keep appearing on the plant room binder. Gus is in Florida. Dylan thinks the binder is haunted.",
+   "start": [
+    {
+     "day_gte": 21
+    }
+   ],
+   "steps": [
+    {
+     "id": "binder",
+     "text": "Look at the binder on the plant room door.",
+     "goal": {
+      "type": "visit",
+      "place": "plant_room"
+     },
+     "on_done": [
+      {
+       "note": "A new sticky note, Gus's capitals, the marker still wet: DYLAN. THE SQUEEGEE. G. Gus has been in Florida since spring."
+      }
+     ]
+    },
+    {
+     "id": "rounds",
+     "text": "Do the next three morning rounds and watch for new notes.",
+     "goal": {
+      "type": "job_done",
+      "job": "plant_round",
+      "count": 3
+     },
+     "on_done": [
+      {
+       "note": "Another one: WHOEVER LEFT THE BAY LIGHT ON. G. Also wet. Also impossible."
+      }
+     ]
+    },
+    {
+     "id": "bay",
+     "text": "Look around the resurfacer bay.",
+     "goal": {
+      "type": "visit",
+      "place": "zamboni_bay"
+     },
+     "on_done": [
+      {
+       "set": "binder_ghost_clue"
+      },
+      {
+       "note": "Behind the drawer marked DORIS (DON'T): a pad of yellow sticky notes and a black marker, the cap chewed flat."
+      }
+     ]
+    },
+    {
+     "id": "earl",
+     "text": "Ask Earl about the marker.",
+     "goal": {
+      "type": "talk",
+      "to": "earl_bratt"
+     },
+     "on_done": [
+      {
+       "note": "Earl: 'Gus left me his capitals. Forty years of watching him write. Easier than saying it myself. You'd listen to Gus.'"
+      }
+     ]
+    },
+    {
+     "id": "return",
+     "text": "Tell Dylan something.",
+     "goal": {
+      "type": "talk",
+      "to": "dylan_pruitt"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "dylan_pruitt",
+      8
+     ]
+    },
+    {
+     "rel": [
+      "earl_bratt",
+      10
+     ]
+    },
+    {
+     "item": [
+      "earl_sticky_note",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Gus's binder (readables gus_binder), plant rounds, the resurfacer bay drawers, Earl and Dylan's relationship, a keepsake note.",
+   "theme": "gus_binder"
+  },
+  {
+   "id": "gary_most_improved",
+   "title": "Most Improved, 1991",
+   "giver": "gary_pruett",
+   "kind": "side",
+   "event": "learn_to_skate",
+   "prompt": "Gary, you're stopping in front of the lost and found on purpose.",
+   "summary": "A small trophy, MOST IMPROVED 1991, has sat unclaimed in the lost and found for thirty-five years. Gary, who learned to stop last February and has an award named after him, wants to know whose it is.",
+   "start": [
+    {
+     "day_gte": 14
+    }
+   ],
+   "steps": [
+    {
+     "id": "trophy",
+     "text": "Find the trophy in the lost and found crate at the rental window.",
+     "goal": {
+      "type": "visit",
+      "place": "skate_rental"
+     },
+     "on_done": [
+      {
+       "item": [
+        "most_improved_1991",
+        1
+       ]
+      },
+      {
+       "note": "Small, plastic gold, a skater on top with one arm missing. MOST IMPROVED 1991. ADULT LEARN TO SKATE. No name."
+      }
+     ]
+    },
+    {
+     "id": "midge",
+     "text": "Ask Midge Kaminski to check the Clarion archive for 1991.",
+     "goal": {
+      "type": "talk",
+      "to": "midge_kaminski"
+     },
+     "on_done": [
+      {
+       "note": "Midge: 'March 1991, page 6. Adult Learn to Skate graduates. Most Improved: Mrs D. Vachon, 40, who could not stand in January.'"
+      }
+     ]
+    },
+    {
+     "id": "doreen",
+     "text": "Ask Doreen Vachon about 1991.",
+     "goal": {
+      "type": "talk",
+      "to": "doreen_vachon"
+     },
+     "on_done": [
+      {
+       "note": "Doreen: 'I left it in the lost and found on purpose, dear. In 1991. I was embarrassed. Forty years old and a trophy for standing up. I'm not embarrassed any more. Give it to the boy.'"
+      }
+     ]
+    },
+    {
+     "id": "return",
+     "text": "Tell Gary whose it is.",
+     "goal": {
+      "type": "talk",
+      "to": "gary_pruett"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "gary_pruett",
+      10
+     ]
+    },
+    {
+     "rel": [
+      "doreen_vachon",
+      6
+     ]
+    },
+    {
+     "item": [
+      "most_improved_1991",
+      -1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "Lost and found (readables: the Most Improved 1991 mini mystery), the Clarion archive, adult learn-to-skate history, the trophy case.",
+   "theme": "lost_and_found"
+  },
+  {
+   "id": "agnes_three_legs",
+   "title": "Whose Leg Is It?",
+   "giver": "agnes_mulroney",
+   "kind": "side",
+   "event": "rink_life",
+   "prompt": "Mrs Mulroney, the conservator's letter came.",
+   "summary": "The lobby mural's restorer wants to know whether to correct the three-legged skater. Agnes, who taught the class that painted it, wants to know whose legs they are first.",
+   "start": [
+    {
+     "day_gte": 30
+    }
+   ],
+   "steps": [
+    {
+     "id": "rooms",
+     "text": "Get the building far enough along for the conservator to start: a facility score of 40.",
+     "goal": {
+      "type": "rooms_gte",
+      "value": 40
+     }
+    },
+    {
+     "id": "dale",
+     "text": "Ask Dale Huffman which leg was his.",
+     "goal": {
+      "type": "talk",
+      "to": "dale_huffman"
+     },
+     "on_done": [
+      {
+       "note": "Dale: 'I've never said. It's a bylaw of the heart. Ask the girl in the red toque. She was holding the other brush.'"
+      }
+     ]
+    },
+    {
+     "id": "bev",
+     "text": "Ask Bev about the girl in the red toque.",
+     "goal": {
+      "type": "talk",
+      "to": "bev_kowalchuk"
+     },
+     "on_done": [
+      {
+       "note": "Bev: 'The left one's Dale's. He painted it backwards. The right one's mine. That's not me in the toque, champ. Fine. It's me. Don't tell Agnes I said so.'"
+      }
+     ]
+    },
+    {
+     "id": "decide",
+     "text": "Decide what the conservator does with the third leg.",
+     "goal": {
+      "type": "flag",
+      "flag": "mural_decided"
+     }
+    },
+    {
+     "id": "return",
+     "text": "Give Agnes the answer.",
+     "goal": {
+      "type": "talk",
+      "to": "agnes_mulroney"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "agnes_mulroney",
+      12
+     ]
+    },
+    {
+     "rel": [
+      "dale_huffman",
+      3
+     ]
+    },
+    {
+     "rel": [
+      "bev_kowalchuk",
+      3
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "The mural Winter on the Mill Pond (DECOR 1.2: the three legs and Gus's Florida, keepsake rules), lobby renovation, a keepsake choice.",
+   "theme": "renovation"
+  },
+  {
+   "id": "midge_last_brass_strip",
+   "title": "The Last Brass Strip",
+   "giver": "midge_kaminski",
+   "kind": "side",
+   "event": "rink_life",
+   "prompt": "Midge, you're reading the dedication plaque again.",
+   "summary": "Below WE'RE TRYING on the dedication plaque is a gap the exact size of one more brass strip, left on purpose for whoever fixes the roof properly.",
+   "start": [
+    {
+     "day_gte": 60
+    }
+   ],
+   "steps": [
+    {
+     "id": "plaque",
+     "text": "Read the dedication plaque between the front doors.",
+     "goal": {
+      "type": "visit",
+      "place": "lobby"
+     },
+     "on_done": [
+      {
+       "note": "ROOF REPAIRED 1991, 1998, 2004, 2011, 2017. WE'RE TRYING. And under it, a clean rectangle of bronze the size of one more strip."
+      }
+     ]
+    },
+    {
+     "id": "roof",
+     "text": "Renovate the roof properly: membrane and insulation, the March drip gone.",
+     "goal": {
+      "type": "flag",
+      "flag": "roof_renovated"
+     }
+    },
+    {
+     "id": "june",
+     "text": "Ask June Penner to engrave the strip at Penner Hardware.",
+     "goal": {
+      "type": "talk",
+      "to": "june_penner"
+     },
+     "on_done": [
+      {
+       "item": [
+        "roof_brass_strip",
+        1
+       ]
+      },
+      {
+       "note": "June: 'Grandpa engraved the first strip in 1991 on that same machine. It still works if you talk to it.'"
+      }
+     ]
+    },
+    {
+     "id": "screw",
+     "text": "Screw the strip into the gap on the plaque.",
+     "goal": {
+      "type": "visit",
+      "place": "lobby"
+     },
+     "on_done": [
+      {
+       "item": [
+        "roof_brass_strip",
+        -1
+       ]
+      },
+      {
+       "set": "plaque_strip_added"
+      }
+     ]
+    },
+    {
+     "id": "return",
+     "text": "Tell Midge it's up.",
+     "goal": {
+      "type": "talk",
+      "to": "midge_kaminski"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "midge_kaminski",
+      12
+     ]
+    },
+    {
+     "rel": [
+      "june_penner",
+      4
+     ]
+    },
+    {
+     "note": "The Millbrook Clarion, Off the Boards: 'The Strip.' Midge Kaminski's column runs to two pages. The letters page is empty that week for the first time since 1998."
+    }
+   ],
+   "fail": {
+    "after_days": 0
+   },
+   "hooks": "The dedication plaque keepsake (readables dedication_plaque, DECOR 2), the roof renovation (RINK_SIM 5.8), Penner Hardware, the Clarion. Needs the renovation system to set roof_renovated.",
+   "theme": "renovation"
+  }
+ ],
+ "favours": [
+  {
+   "id": "fav_earlier_ice",
+   "title": "Earlier Ice for {known_as}",
+   "giver": "archetype:hockey_parent",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} wants Saturday's minor hockey practice to run on time so the family can make a tournament in Kessler.",
+   "ask": "Any chance Saturday practice starts on time? Exactly on time? We've got a game in Kessler at noon and the Kessler road is the Kessler road, {owner}.",
+   "thanks": "On the dot. We made Kessler with time for a coffee. You don't know what that means to a hockey family. It means everything.",
+   "start": [
+    {
+     "contract": "minor_hockey"
+    }
+   ],
+   "steps": [
+    {
+     "id": "practice",
+     "text": "Run a minor hockey session on decent ice, on time.",
+     "goal": {
+      "type": "event_held",
+      "event": "minor_hockey",
+      "count": 1,
+      "min_rating": 50
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    },
+    {
+     "mood": 0.05
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Minor hockey schedule reliability; the schedule pressure source (PATHS 1.3)."
+  },
+  {
+   "id": "fav_fresh_flood_test",
+   "title": "A Fresh Flood for {known_as}'s Kid",
+   "giver": "archetype:figure_parent",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name}'s child has a figure test and needs a flood right before.",
+   "ask": "My daughter has her test on Saturday. Could the ice be flooded right before? Not an hour before. Right before. She says she can feel an hour.",
+   "thanks": "Fresh as snow. She passed, and she says it was the ice. I say it was her. We're both right.",
+   "start": [
+    {
+     "contract": "figure_club"
+    }
+   ],
+   "steps": [
+    {
+     "id": "flood",
+     "text": "Flood right before the test.",
+     "goal": {
+      "type": "job_done",
+      "job": "resurface",
+      "count": 1
+     }
+    },
+    {
+     "id": "test",
+     "text": "Hold the test session on ice rated 65 or better.",
+     "goal": {
+      "type": "event_held",
+      "event": "figure_show",
+      "count": 1,
+      "min_rating": 65
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      5
+     ]
+    },
+    {
+     "mood": 0.05
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Resurface job, figure_show rating, figure parents' loyalty."
+  },
+  {
+   "id": "fav_lights_one_song",
+   "title": "Lights Down for {known_as}",
+   "giver": "archetype:date_night",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} would like the lights down for one slow song at public skate.",
+   "ask": "Could you dim the lights for one slow song at public skate? We're celebrating. Don't ask what. Fine. It's our third date. Third dates are big.",
+   "thanks": "One song, lights low, and nobody fell. Well, we fell. On purpose. Thank you.",
+   "start": [],
+   "steps": [
+    {
+     "id": "skate",
+     "text": "Run a public skate on good ice and dim the lamps for one song.",
+     "goal": {
+      "type": "event_held",
+      "event": "public_skate",
+      "count": 1,
+      "min_rating": 50
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      5
+     ]
+    },
+    {
+     "mood": 0.06
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Public skate atmosphere, house lights, date_night attendance."
+  },
+  {
+   "id": "fav_hold_my_hand",
+   "title": "One Lap with {known_as}",
+   "giver": "archetype:learn_to_skate_adult",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} would like the owner to hold their hand for one lap at learn-to-skate.",
+   "ask": "This is embarrassing. Would you hold my hand for one lap? Just one. The instructor's busy with Gary Pruett's cousin, and he's a lot.",
+   "thanks": "One whole lap. I didn't fall. You were very brave about my grip. Sorry about your fingers.",
+   "start": [
+    {
+     "contract": "learn_to_skate"
+    }
+   ],
+   "steps": [
+    {
+     "id": "ice",
+     "text": "Get your skates on and meet them on the ice.",
+     "goal": {
+      "type": "visit",
+      "place": "ice"
+     }
+    },
+    {
+     "id": "lesson",
+     "text": "Skate the lap during a learn-to-skate session.",
+     "goal": {
+      "type": "event_held",
+      "event": "learn_to_skate",
+      "count": 1
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      6
+     ]
+    },
+    {
+     "mood": 0.06
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Learn-to-skate, the owner on the ice, the adult beginners' confidence."
+  },
+  {
+   "id": "fav_ride_on_doris",
+   "title": "{known_as} Rides Doris",
+   "giver": "archetype:rink_rat",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} wants to ride along on one flood.",
+   "ask": "Can I ride on Doris? One flood. I'll sit so still. I'll sit stiller than anybody's ever sat. Earl says ask you. Earl said it like he wanted you to say no. Say yes.",
+   "thanks": "I RODE DORIS. She pulled left when the tank got heavy, just like Earl said. I'm never washing this hat.",
+   "start": [
+    {
+     "rel_gte": [
+      "self",
+      15
+     ]
+    }
+   ],
+   "steps": [
+    {
+     "id": "flood",
+     "text": "Do a flood with them riding along.",
+     "goal": {
+      "type": "job_done",
+      "job": "resurface",
+      "count": 1
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      6
+     ]
+    },
+    {
+     "rel": [
+      "earl_bratt",
+      -1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Doris and the resurface job, rink rats, Earl's protectiveness."
+  },
+  {
+   "id": "fav_lost_mitten",
+   "title": "{known_as}'s Mitten",
+   "giver": "archetype:retiree_regular",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} has lost a mitten, probably in the lost and found.",
+   "ask": "I've lost a mitten, dear. Left one. Brown, with a cuff. My sister knitted it in 1988. It'll be in your crate with all the others, poor things.",
+   "thanks": "That's it! That's the one. Oh, you're a good egg. My sister would have liked you. She liked very few people.",
+   "start": [],
+   "steps": [
+    {
+     "id": "crate",
+     "text": "Check the lost and found crate at the rental window.",
+     "goal": {
+      "type": "visit",
+      "place": "skate_rental"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    },
+    {
+     "note": "A left mitten, home again."
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Lost and found, regulars' goodwill."
+  },
+  {
+   "id": "fav_wrong_bag",
+   "title": "The Wrong Bag",
+   "giver": "archetype:beer_leaguer",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} took the wrong hockey bag home on Thursday.",
+   "ask": "So I took the wrong bag home Thursday. Same colour, same tape. Different jock. Mine's still here somewhere. Could you look in the dressing room? I can't, the other guy's there and it's awkward.",
+   "thanks": "That's my bag. That's my smell. Thanks. I'll get the other guy's back to him. Probably by Thursday.",
+   "start": [
+    {
+     "event_now": "beer_league"
+    }
+   ],
+   "steps": [
+    {
+     "id": "room",
+     "text": "Look in the dressing rooms for the right bag.",
+     "goal": {
+      "type": "visit",
+      "place": "dressing_room"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      3
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Dressing rooms, the notice board's 'wrong bag' line."
+  },
+  {
+   "id": "fav_fresh_sheet",
+   "title": "A Clean Sheet for {known_as}",
+   "giver": "archetype:stick_and_puck_regular",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} would like a fresh sheet before stick and puck.",
+   "ask": "Any chance of a flood before stick and puck? The beer league chewed it up last night. It's like stickhandling on a gravel road.",
+   "thanks": "Glass. Pure glass. I did forty minutes of toe drags and nobody watched. Perfect.",
+   "start": [],
+   "steps": [
+    {
+     "id": "flood",
+     "text": "Flood before stick and puck.",
+     "goal": {
+      "type": "job_done",
+      "job": "resurface",
+      "count": 1
+     }
+    },
+    {
+     "id": "session",
+     "text": "Run the stick and puck session.",
+     "goal": {
+      "type": "event_held",
+      "event": "stick_and_puck",
+      "count": 1
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    },
+    {
+     "mood": 0.04
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Resurface job, stick and puck in dead time."
+  },
+  {
+   "id": "fav_salt_the_lot",
+   "title": "Salt the Lot",
+   "giver": "archetype:broomballer",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} says the parking lot is icier than the rink.",
+   "ask": "Your parking lot is a better skating rink than your skating rink. Not the good kind. We're in sneakers. Could somebody salt it before Wednesday?",
+   "thanks": "Walked from the car to the door without falling once. A broomball first. We celebrated by falling on the ice instead.",
+   "start": [
+    {
+     "contract": "broomball"
+    }
+   ],
+   "steps": [
+    {
+     "id": "lot",
+     "text": "Check the parking lot.",
+     "goal": {
+      "type": "visit",
+      "place": "parking"
+     }
+    },
+    {
+     "id": "clean",
+     "text": "Clean up and salt the walkways.",
+     "goal": {
+      "type": "job_done",
+      "job": "clean_building",
+      "count": 1
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Parking lot, cleaning job, broomball goodwill."
+  },
+  {
+   "id": "fav_section_heat",
+   "title": "Heat for Section B",
+   "giver": "archetype:superfan",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} says the heater over their seats is out for the Lumber Kings game.",
+   "ask": "The heater over B row four's been dead since the opener. Forty years I've sat there for the Kings. I can take a loss. I can't take a loss and frostbite.",
+   "thanks": "Toasty. We lost, but toasty. That's the best kind of loss.",
+   "start": [],
+   "steps": [
+    {
+     "id": "stands",
+     "text": "Check the heater over their seats.",
+     "goal": {
+      "type": "visit",
+      "place": "stands"
+     }
+    },
+    {
+     "id": "game",
+     "text": "Run the next Lumber Kings home game.",
+     "goal": {
+      "type": "event_held",
+      "event": "senior_hockey",
+      "count": 1
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    },
+    {
+     "mood": 0.05
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Stands heaters (DECOR 1.10), senior hockey attendance."
+  },
+  {
+   "id": "fav_glass_spot",
+   "title": "A Spot at the Glass",
+   "giver": "archetype:autograph_hunter",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} wants to stand at the glass during pro practice.",
+   "ask": "When the Dukes practise, can I stand at the glass by the bench? I won't bang on it. I've got a pen and a puck and a plan.",
+   "thanks": "Three signatures and a stick tap! A STICK TAP. Through the glass. I felt it in my teeth.",
+   "start": [
+    {
+     "contract": "dukes_practice"
+    }
+   ],
+   "steps": [
+    {
+     "id": "practice",
+     "text": "Let them watch a Dukes practice from the glass.",
+     "goal": {
+      "type": "event_held",
+      "event": "pro_practice",
+      "count": 1
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      5
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Pro practice, autograph hunters, the glass as a place."
+  },
+  {
+   "id": "fav_coffee_to_the_glass",
+   "title": "Coffee for the Coach in the Stands",
+   "giver": "archetype:coffee_coach",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} won't leave the glass during the game and would like a coffee brought over.",
+   "ask": "Bring me a coffee to the glass? Double-double. If I leave, the coach'll play my kid on the fourth line. He'll do that anyway. But I'll know.",
+   "thanks": "Hot. Sweet. He played my kid on the fourth line. I didn't yell. Much. The coffee helped.",
+   "start": [
+    {
+     "event_now": "minor_hockey"
+    }
+   ],
+   "steps": [
+    {
+     "id": "canteen",
+     "text": "Grab a coffee from the Hot Stove.",
+     "goal": {
+      "type": "visit",
+      "place": "canteen"
+     }
+    },
+    {
+     "id": "glass",
+     "text": "Bring it to the glass.",
+     "goal": {
+      "type": "visit",
+      "place": "glass"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      3
+     ]
+    },
+    {
+     "mood": 0.03
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "The canteen, the glass, coffee coaches (PEOPLE 5)."
+  },
+  {
+   "id": "fav_warm_seat",
+   "title": "A Warm Seat for {known_as}",
+   "giver": "archetype:grandparent",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} wants a seat near a working heater for a grandchild's game.",
+   "ask": "A seat under a heater for my grandson's game? These knees came to watch, not to suffer. And if you could point me at the one that works, I'd be grateful.",
+   "thanks": "Warm knees, and he scored. Well, he was on the ice when someone scored. Close enough.",
+   "start": [
+    {
+     "contract": "minor_hockey"
+    }
+   ],
+   "steps": [
+    {
+     "id": "stands",
+     "text": "Find a seat under a working heater.",
+     "goal": {
+      "type": "visit",
+      "place": "stands"
+     }
+    },
+    {
+     "id": "game",
+     "text": "Run the minor hockey game.",
+     "goal": {
+      "type": "event_held",
+      "event": "minor_hockey",
+      "count": 1,
+      "min_rating": 45
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    },
+    {
+     "mood": 0.05
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Stands, minor hockey family attendance."
+  },
+  {
+   "id": "fav_shift_coffee",
+   "title": "Coffee at Shift Change",
+   "giver": "archetype:shift_worker",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} comes off a shift at the mill and wants the canteen open early.",
+   "ask": "I'm off the night shift at six. Any chance the Hot Stove's got coffee on before the doors open? Just a pot. I'll pay double. I'll pay in coins, but double.",
+   "thanks": "Coffee at six. You're doing the Lord's work. Or the mill's. Same thing in this valley.",
+   "start": [],
+   "steps": [
+    {
+     "id": "canteen",
+     "text": "Get a pot on at the Hot Stove early.",
+     "goal": {
+      "type": "visit",
+      "place": "canteen"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    },
+    {
+     "money": 4
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Canteen hours, shift workers at odd hours."
+  },
+  {
+   "id": "fav_playlist",
+   "title": "Something From This Century",
+   "giver": "archetype:teen",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} would like public skate to play something newer than the Casio's repertoire.",
+   "ask": "Can public skate play something from this century? Doreen's organ is great. It's very great. It's so great. Please.",
+   "thanks": "They played my song. Doreen played it on Organ 2. It was terrible. It was the best thing I've ever heard.",
+   "start": [],
+   "steps": [
+    {
+     "id": "skate",
+     "text": "Run a public skate with a request or two.",
+     "goal": {
+      "type": "event_held",
+      "event": "public_skate",
+      "count": 1
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    },
+    {
+     "rel": [
+      "doreen_vachon",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Public skate music, teens at the rink, Doreen."
+  },
+  {
+   "id": "fav_jump_landing",
+   "title": "The East Circle",
+   "giver": "archetype:figure_skater",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} says there's a rut where they land their jumps.",
+   "ask": "There's a rut on the east circle, right where I land my loop. I've fallen on it four times. I'm not blaming the rut. I'm blaming the rut a little.",
+   "thanks": "Landed it! Clean! No rut! I'm telling Hélène. She'll nod. That's a lot, from her.",
+   "start": [
+    {
+     "contract": "figure_club"
+    }
+   ],
+   "steps": [
+    {
+     "id": "flood",
+     "text": "Flood the rut out.",
+     "goal": {
+      "type": "job_done",
+      "job": "resurface",
+      "count": 1
+     }
+    },
+    {
+     "id": "ice",
+     "text": "Get figure ice rated 65 or better.",
+     "goal": {
+      "type": "rating_gte",
+      "use": "figure",
+      "value": 65
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      5
+     ]
+    },
+    {
+     "rel": [
+      "helene_arsenault",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Ice ratings for figure use, resurface job, the figure club's 'never forgives a rut at a jump landing'."
+  },
+  {
+   "id": "fav_other_glove",
+   "title": "The Lucky Glove",
+   "giver": "archetype:minor_player",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} can't find their other glove, the lucky one with the hole.",
+   "ask": "I can't find my other glove. The one with the hole. It's my lucky hole. Mom says it's not lucky, it's a hole. She's wrong.",
+   "thanks": "MY HOLE. I mean my glove. Thank you. We're going to win now. Probably.",
+   "start": [
+    {
+     "contract": "minor_hockey"
+    }
+   ],
+   "steps": [
+    {
+     "id": "room",
+     "text": "Look for the glove in the dressing rooms.",
+     "goal": {
+      "type": "visit",
+      "place": "dressing_room"
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Dressing rooms, minor players, lost and found flavour."
+  },
+  {
+   "id": "fav_fifty_fifty",
+   "title": "A Table for the 50/50",
+   "giver": "archetype:volunteer",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} needs a table in the lobby to sell 50/50 tickets on game night.",
+   "ask": "Could I have a table in the lobby for the 50/50 on game night? Not THE TABLE, I'm not a monster. Any table. The drum's heavy.",
+   "thanks": "Four hundred and twelve dollars in the drum, and a man from Kessler won it. We'll never hear the end of it. Thank you.",
+   "start": [],
+   "steps": [
+    {
+     "id": "lobby",
+     "text": "Set up a table in the lobby.",
+     "goal": {
+      "type": "visit",
+      "place": "lobby"
+     }
+    },
+    {
+     "id": "game",
+     "text": "Run the game night.",
+     "goal": {
+      "type": "event_held",
+      "event": "senior_hockey",
+      "count": 1
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    },
+    {
+     "money": 20
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Lobby, game nights, the 50/50 drum (DECOR 1.15)."
+  },
+  {
+   "id": "fav_ref_water",
+   "title": "Water for the Officials",
+   "giver": "archetype:official",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} would like water bottles for the officials before a game.",
+   "ask": "Any chance of a few bottles of water for the officials? The tap in the ref room runs brown for a minute, then it runs beige. Beige isn't a colour you drink.",
+   "thanks": "Clear water. I could see through it. The incident book will hear about this, in a good way.",
+   "start": [],
+   "steps": [
+    {
+     "id": "canteen",
+     "text": "Grab some water from the Hot Stove.",
+     "goal": {
+      "type": "visit",
+      "place": "canteen"
+     }
+    },
+    {
+     "id": "game",
+     "text": "Run the game.",
+     "goal": {
+      "type": "event_held",
+      "event": "beer_league",
+      "count": 1
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    },
+    {
+     "rel": [
+      "nell_haraldsen",
+      1
+     ]
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Officials' goodwill, the ref room tap, the incident book."
+  },
+  {
+   "id": "fav_quiet_seat",
+   "title": "A Quiet Seat",
+   "giver": "archetype:scout",
+   "kind": "favour",
+   "repeatable": true,
+   "cooldown_days": 14,
+   "summary": "{name} would like a quiet seat away from the rafters end, and a line sheet.",
+   "ask": "A quiet seat, away from the rafters end, and a line sheet if anyone has one. I'm not here. You didn't see me. Nice ice, by the way. I didn't say that either.",
+   "thanks": "Good seat. Good sheet. I saw what I came to see. I can't tell you what it was. Thank you.",
+   "start": [],
+   "steps": [
+    {
+     "id": "stands",
+     "text": "Find a quiet seat in the stands.",
+     "goal": {
+      "type": "visit",
+      "place": "stands"
+     }
+    },
+    {
+     "id": "game",
+     "text": "Run the game they came to watch.",
+     "goal": {
+      "type": "event_held",
+      "event": "senior_hockey",
+      "count": 1
+     }
+    }
+   ],
+   "reward": [
+    {
+     "rel": [
+      "self",
+      4
+     ]
+    },
+    {
+     "rep": 0.5
+    }
+   ],
+   "fail": {
+    "after_days": 7
+   },
+   "hooks": "Scouts at senior games, the stands, a hint of the hockey career."
+  }
+ ]
+}
