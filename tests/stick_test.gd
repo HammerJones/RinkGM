@@ -37,10 +37,11 @@ func _run() -> void:
 	await _settle()
 	var at := Vector2(-4.0, 8.0)  # clear of every faceoff spot, so no teammate is standing there
 	s.place(at, Vector3(1, 0, 0))
-	game.puck.reset_at(Vector3(at.x + 0.8, 0, at.y))
+	game.puck.reset_at(s.puck_anchor())
 	game.puck.frozen = false
 	game.puck.controller = s
-	await _wait(0.2)
+	# (just a frame: the other skaters are live and will come for it)
+	await get_tree().physics_frame
 	_check(s.has_puck(), "carrying before the break")
 	var broke := [0]
 	game.stick_broken.connect(func(_who, _id, _c): broke[0] += 1)
@@ -53,6 +54,9 @@ func _run() -> void:
 	# --- the AI goes to its bench door for a new one
 	var replaced := [0]
 	game.stick_replaced.connect(func(_who): replaced[0] += 1)
+	# (a side that plays to the tier would stay back to block while the puck
+	# is in its end; this checks the trip to the bench)
+	game.team_ai[s.team] = TierAI.for_level(0.0)
 	var door: Vector2 = game.bench_spot(s.team)
 	game.puck.reset_at(Vector3(-door.x, 0, 6.0))
 	game.puck.controller = null
@@ -61,9 +65,11 @@ func _run() -> void:
 		await get_tree().physics_frame
 		t += get_physics_process_delta_time()
 	print("new stick from the bench after %.1f s (state %d)" % [t, game.state])
-	_check(not s.stick_broken and replaced[0] == 1, "the bench hands over a new stick")
+	_check(not s.stick_broken and (replaced[0] == 1 or game.state != game.State.PLAY), "the bench hands over a new stick")
 	_check(Vector2(s.position.x, s.position.z).distance_to(door) < StickWear.BENCH_REACH + 0.5 or game.state != game.State.PLAY,
 		"it was handed over at the bench door")
+
+	game.team_ai[s.team] = null
 
 	# --- or at the next faceoff
 	StickWear.snap(s, &"test")

@@ -136,6 +136,7 @@ var crossing := false           ## lifting the blade over the puck to the other 
 ## How far the blade is turned from pointing straight out from the body
 ## (radians, + toward the forehand). It turns to face a puck coming in.
 var blade_yaw := 0.0
+var _blade_heading := Vector3.ZERO  ## heading when the blade last moved
 var puck_slip := 0.0            ## seconds the puck spent at the grip limit (for tuning)
 
 # shot wind-up: started by drawing the stick back or holding `shoot`
@@ -214,6 +215,7 @@ func place(p: Vector2, facing: Vector3) -> void:
 	blade_from = blade_pos
 	blade_vel = Vector3.ZERO
 	blade_yaw = 0.0
+	_blade_heading = heading
 	puck_side = 0.0
 	crossing = false
 	blade_lvel = Vector2.ZERO
@@ -492,6 +494,12 @@ func knows(id: StringName) -> bool:
 
 
 func _update_blade(dt: float, blend: float) -> void:
+	if has_puck() and blade_down() and move_id == &"" and _blade_heading != Vector3.ZERO:
+		# carrying through a turn, the hands hold the blade with the puck and
+		# bring it round after the body rather than whipping it into the puck
+		var local_turn := Vector2(_blade_heading.dot(heading), _blade_heading.dot(right_vec())).angle()
+		blade_ang = clampf(blade_ang + local_turn, -ARC_HALF, ARC_HALF)
+	_blade_heading = heading
 	var target := DEFAULT_BLADE
 	var able := stun_timer <= 0.0
 	if able and ctrl.blade_target != null:
