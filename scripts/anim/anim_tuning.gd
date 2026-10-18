@@ -98,10 +98,6 @@ func tunables() -> Array:
 @export_range(0.8, 3.0, 0.05) var stick_thickness := 1.9
 ## Blade length, times the model's 30 cm.
 @export_range(0.7, 2.0, 0.05) var stick_blade_length := 1.3
-## The lie: the fixed angle the shaft rises at when the blade is flat on
-## the ice (degrees). The blade is rigid to the shaft, so it tips onto its
-## heel or toe when the hands are higher or lower than this.
-@export_range(30.0, 65.0, 0.5) var stick_lie := 47.0
 ## Blade height, times the model's 7 cm.
 @export_range(0.7, 2.5, 0.05) var stick_blade_height := 1.6
 
@@ -116,11 +112,18 @@ func tunables() -> Array:
 ## Lowest the top hand goes, above the hips.
 @export_range(-0.2, 0.6, 0.01) var grip_top_low := 0.05
 ## Highest the top hand goes, above the hips (about chest height).
-@export_range(0.1, 0.9, 0.01) var grip_top_high := 0.45
+@export_range(0.1, 0.9, 0.01) var grip_top_high := 0.55
+## How much the top hand goes to the height that lays the blade flat on
+## the ice (1) rather than grip_top_height (0), inside the hips-to-chest
+## band. Off the flat height the rigid blade tips onto its heel or toe.
+@export_range(0.0, 1.0, 0.01) var grip_top_flat := 0.85
 ## How far in front of the body the top hand sits.
 @export_range(0.0, 0.6, 0.01) var grip_top_fwd := 0.3
 ## How far the top hand drifts towards the blade's side.
 @export_range(0.0, 0.6, 0.01) var grip_top_follow := 0.2
+## How far the top hand sways sideways with the blade (times the blade's
+## sideways offset), keeping the shaft pointing out at the puck.
+@export_range(0.0, 1.0, 0.01) var grip_top_sway := 0.25
 ## Bottom hand, metres below the knob, while carrying and stickhandling.
 @export_range(0.2, 1.2, 0.01) var grip_bottom := 0.45
 ## Bottom hand on a wrist shot or backhand wind-up (lower = more power).
@@ -129,6 +132,15 @@ func tunables() -> Array:
 @export_range(0.2, 1.2, 0.01) var grip_bottom_slap := 0.8
 ## How quickly the bottom hand slides to its new spot.
 @export_range(1.0, 30.0, 0.5) var grip_slide_speed := 10.0
+## Arm length (shoulder to the middle of the glove), times the model's
+## 0.49 m. The voxel arms are short for a 2 m skater, so both hands
+## can't reach a full-size stick without stretching them.
+@export_range(1.0, 1.8, 0.01) var grip_arm_length := 1.5
+## Two hands on: the shoulders turn towards the stick (radians) so the
+## bottom shoulder comes forward to the shaft ...
+@export_range(0.0, 1.0, 0.01) var grip_shoulder_turn := 0.4
+## ... and dip on the bottom-hand side (radians).
+@export_range(0.0, 0.6, 0.01) var grip_shoulder_dip := 0.15
 ## Share of the arm's length the hands can use before letting go.
 @export_range(0.7, 1.0, 0.01) var grip_reach := 0.97
 

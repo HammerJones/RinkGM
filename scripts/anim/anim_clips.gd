@@ -13,8 +13,8 @@ const WIND_REACH := 0.86      # ... and reach (m)
 const LIST := [
 	{"id": &"neutral", "title": "Ready stance", "groups": ["stance", "grip", "blade", "stick"], "len": 4.0,
 		"note": "Standing still, knees bent, blade on the ice."},
-	{"id": &"stickhandle", "title": "Stickhandling", "groups": ["grip", "stick"], "len": 4.0,
-		"note": "Two hands, quick forehand-backhand moves in front of the body."},
+	{"id": &"stickhandle", "title": "Stickhandling", "groups": ["grip", "stick"], "len": 6.0,
+		"note": "A loose, physical puck: the blade pushes it across, lifts over it, sets down on the far side and pushes it back."},
 	{"id": &"wide_reach", "title": "Wide reach", "groups": ["grip"], "len": 4.0,
 		"note": "Past the front 90 degrees the bottom hand lets go; the top hand keeps the knob and swings the stick on a straight arm."},
 	{"id": &"poke_check", "title": "Poke check", "groups": ["grip"], "len": 3.0,
@@ -77,16 +77,14 @@ static func run(id: StringName, p: AnimPuppet, t: float, dt: float, mem: Diction
 		&"neutral":
 			pass
 		&"stickhandle":
-			p.holding = t > 0.2
-			p.blade_deg = sin(t * TAU * 1.6) * 35.0
-			p.blade_m = 0.8
+			_stickhandle(p, dt, mem)
 		&"wide_reach":
 			p.blade_deg = sin(t * TAU * 0.25) * 95.0
-			p.blade_m = 1.0 + 0.4 * absf(sin(t * TAU * 0.25))
+			p.blade_m = 1.2 + 0.3 * absf(sin(t * TAU * 0.25))
 		&"poke_check":
 			var jab := smoothstep(0.8, 1.0, t) * (1.0 - smoothstep(1.5, 1.9, t))
 			p.blade_deg = 5.0
-			p.blade_m = lerpf(0.9, 1.8, jab)
+			p.blade_m = lerpf(1.2, 1.9, jab)
 		&"stride_easy":
 			_skate(p, 4.0)
 		&"stride_full":
@@ -219,13 +217,98 @@ static func _skate(p: AnimPuppet, speed: float) -> void:
 	p.push = true
 
 
+## Stickhandling a loose puck. The blade only moves the puck by touching it
+## (AnimPuppet rolls it): it catches the puck on one face, pushes it across,
+## then lifts, passes over it while it slides, sets down on the far side and
+## catches it again with the other face.
+const HANDLE_OUT := 1.3       # how far out front the puck is worked (m)
+const HANDLE_WIDE := 0.16     # how far either side the puck travels (m)
+const HANDLE_SPEED := 0.75     # how fast the blade pushes the puck (m/s)
+const HANDLE_ACCEL := 14.0    # how hard it gets there (m/s^2)
+const HANDLE_LIFT := 0.06     # blade height going over the puck, above its top (m)
+
+static func _stickhandle(p: AnimPuppet, dt: float, mem: Dictionary) -> void:
+	var fwd := p.heading
+	var right := p.right_vec()
+	var gap := p.blade_gap()
+	if not mem.has("side"):
+		p.free_puck = true
+		p.puck.position = fwd * HANDLE_OUT
+		p.puck.vel = Vector3.ZERO
+		mem.side = 1.0          # pushing the puck towards +right; blade on its left
+		mem.over = false
+		mem.bl = -gap - 0.06
+		mem.bf = HANDLE_OUT
+		mem.vb = 0.0
+	var pf := p.puck.position.dot(fwd)
+	var pl := p.puck.position.dot(right)
+	var s: float = mem.side
+	var bl: float = mem.bl
+	var vb: float = mem.vb
+	var h := 0.0
+	if not mem.over:
+		var sep := (pl - bl) * s                   # puck ahead of the blade
+		var vp := p.puck.vel.dot(right) * s        # puck speed in the push direction
+		if sep > gap + 0.015 and not mem.has("pushing"):
+			# not touching yet: give with an incoming puck to catch it softly,
+			# or go and meet one that has stopped
+			# hold still for an incoming puck (the blade's give is the soft
+			# bounce), go and meet one that has stopped
+			var meet := s * minf(0.8, (sep - gap) * 8.0) if vp > -0.2 else 0.0
+			vb = move_toward(vb, meet, HANDLE_ACCEL * dt)
+		else:
+			# push: speed up towards the far side with the puck in front, and
+			# let it go once up to speed
+			mem.pushing = true
+			vb = move_toward(vb, s * HANDLE_SPEED, HANDLE_ACCEL * dt)
+			if absf(vb - s * HANDLE_SPEED) < 0.01:
+				mem.over = true
+				mem.erase("pushing")
+	else:
+		# over the top: lift, pass over the sliding puck, set down beyond it
+		# where it will arrive, and wait to catch it
+		# land at the far side, or just beyond the puck if it is already past
+		var vp := maxf(p.puck.vel.dot(right) * s, 0.0)
+		var land := s * maxf(HANDLE_WIDE + gap, pl * s + gap + 0.08)
+		var past := (bl - pl) * s > gap + 0.03
+		var top := SkaterRig.puck_size.y
+		h = top + HANDLE_LIFT if not past else 0.0
+		var clear := p.blade_height > top + 0.01 or past
+		var aim := land if clear else bl
+		var want := clampf((aim - bl) * 18.0, -3.2, 3.2)
+		vb = move_toward(vb, want if clear else s * HANDLE_SPEED * 0.7, 40.0 * dt)
+		if past and p.blade_height < 0.03:
+			mem.over = false
+			mem.side = -s
+	bl += vb * dt
+	mem.bl = bl
+	mem.vb = vb
+	# the blade's middle follows the puck forward and back, and the wrists
+	# angle the face so each push also steers the puck back towards its spot
+	# out front (pushing a little back when it has run out too far)
+	mem.bf = lerpf(mem.bf, pf, 1.0 - exp(-8.0 * dt))
+	var face_s: float = -s if mem.over else s       # the face that meets the puck next
+	var toe: Vector3 = p.rig.faller.global_basis * p.rig.toe_base
+	var normal := Vector3(toe.z, 0.0, -toe.x) * face_s   # perpendicular to the toe, pointing the push way
+	if normal.dot(right * face_s) < 0.0:
+		normal = -normal
+	var fwd_now := asin(clampf(normal.normalized().dot(fwd), -1.0, 1.0))
+	var fwd_want := clampf((HANDLE_OUT - pf) * 1.5, -0.35, 0.35)
+	var turn := clampf(face_s * (fwd_want - fwd_now), -0.35, 0.35)
+	p.rig.blade_turn = lerpf(p.rig.blade_turn, turn, 1.0 - exp(-12.0 * dt))
+	var b := Vector2(mem.bf, bl)
+	p.blade_deg = rad_to_deg(atan2(b.y, b.x))
+	p.blade_m = b.length()
+	p.blade_h = h
+
+
 ## Puck on the blade with a little stickhandling until the move starts.
 static func _carry(p: AnimPuppet, t: float, mem: Dictionary) -> void:
 	if _once(mem, "puck", true):
 		p.holding = true
 	if p.holding:
-		p.blade_deg = 15.0 + sin(t * TAU * 1.4) * 12.0
-		p.blade_m = 0.9
+		p.blade_deg = 12.0 + sin(t * TAU * 1.4) * 10.0
+		p.blade_m = AnimPuppet.READY_BLADE.length()
 
 
 ## The blade out front after the release.

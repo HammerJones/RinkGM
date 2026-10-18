@@ -18,15 +18,17 @@ const V := Models.V
 const HIP_Y := 12 * V
 const STICK_LEN := 23.5 * V   # goalie stick
 const SHAFT_LEN := Models.SHAFT_VOX * Models.STICK_V   # model size; AnimTuning stick_* scale it
-const BLADE_HEEL := Vector3(-7.5 * Models.STICK_V, 4.5 * Models.STICK_V, 0)  # in blade space
 const THIGH := 6.0 * V
 const SHIN := 6.5 * V           # knee to the bottom of the blade
 const UPPER_ARM := 4.0 * V
 const FOREARM := 3.5 * V        # elbow to the middle of the glove
 const LEG_X := 2.0 * V
+const SHOULDER_REACH := 0.08    # how far a shoulder can roll forward to reach
 const CHECK_TIME := 0.35        # Skater sets check_timer to this when a check starts
 ## Goal celebrations, picked per scorer.
 const CELEBRATIONS: Array[StringName] = [&"arms_up", &"fist_pump", &"knee_slide"]
+## The puck model's radius and height, so the blade meets it at its edge.
+static var puck_size := _puck_size()
 
 var goalie := false
 var faller: Node3D        # tips the whole skater, stick included, in a fall
@@ -46,6 +48,7 @@ var thighs: Array[VoxelPart] = []
 var shins: Array[VoxelPart] = []
 var uppers: Array[VoxelPart] = []
 var forearms: Array[VoxelPart] = []
+var _shoulders: Array[Vector3] = []   # shoulder joints at rest (torso space)
 
 var _cycle := 0.0
 var _amp := 0.0
@@ -83,6 +86,14 @@ var _bottom_off := false          # the bottom hand couldn't reach the shaft las
 var _shaft_base: Mesh             # stick meshes at model size, rescaled by AnimTuning
 var _blade_base: Mesh
 var _stick_size := Vector4.ZERO
+## Draw the blade beside a carried puck, its face against it, instead of
+## through it. The studio turns this off when the puck is loose and physical.
+var cup_puck := true
+var _cup := 0.0                   # -1 backhand face on the puck .. +1 forehand
+## Wrist roll: turns the blade's toe (radians, + to the left) away from the
+## line of the stick, the way a player angles the blade to steer the puck.
+var blade_turn := 0.0
+var toe_base := Vector3.FORWARD   # the toe's heading before blade_turn (faller space)
 
 
 func build(pal: Dictionary, is_goalie: bool) -> void:
@@ -129,6 +140,7 @@ func build(pal: Dictionary, is_goalie: bool) -> void:
 			up.position = Vector3(sd * arm_x, arm_y, 0)
 			torso.add_child(up)
 			uppers.append(up)
+			_shoulders.append(up.position)
 			var fa := VoxelPart.make(Models.forearm(pal))
 			torso.add_child(fa)
 			forearms.append(fa)
@@ -295,10 +307,13 @@ func update_skater(s: Skater, dt: float) -> void:
 	lean_x -= T.check_lean * _check
 	lean_x = lerpf(lean_x, T.celebrate_lean_back, _cel)
 	var turn_y := _twist - _stick_yaw * T.shot_shoulder_turn + fol * T.shot_follow_turn * _follow_side
+	# both hands on the stick: the bottom shoulder comes round and down to it
+	var two := (1.0 - (0.0 if _follow > 0.0 else s.one_hand())) * (1.0 - _cel) * (1.0 - _fall)
+	turn_y += T.grip_shoulder_turn * two
 	turn_y = lerpf(turn_y, -T.check_shoulder, _check)
 	torso.rotation.x = lerpf(torso.rotation.x, lean_x, smooth)
 	torso.rotation.y = lerpf(torso.rotation.y, lerpf(turn_y, 0.0, _cel), smooth)
-	torso.rotation.z = lerpf(torso.rotation.z, _shift * 1.2, smooth)
+	torso.rotation.z = lerpf(torso.rotation.z, _shift * 1.2 - T.grip_shoulder_dip * two, smooth)
 	head.rotation = Vector3(-(torso.rotation.x + hips.rotation.x) * T.stance_head_level, -(torso.rotation.y + hips.rotation.y) * 0.7, -torso.rotation.z * 0.8)
 	body.rotation = Vector3(0.0, _brake, _lean + _brake * T.stop_tilt)
 	# leaning in a turn or a stop tips the body over its skates: lift it so
@@ -322,6 +337,12 @@ func update_skater(s: Skater, dt: float) -> void:
 	var center := Vector3(flat.x, s.blade_height + fol * T.shot_follow_height * _follow_h, flat.z)
 	var bottom := lerpf(T.grip_bottom, T.grip_bottom_slap if s.wind_slap else T.grip_bottom_shot, w)
 	_bottom_d = lerpf(_bottom_d, bottom, 1.0 - exp(-T.grip_slide_speed * dt))
+	# a carried puck sits against the blade's face, forehand unless the blade
+	# is out on the backhand side
+	var cup := 0.0
+	if cup_puck and s.has_puck():
+		cup = 1.0 if blade_ang > -0.35 else -1.0
+	_cup = lerpf(_cup, cup, 1.0 - exp(-12.0 * dt))
 	_pose_stick(center, flat, s.ctrl.tilt, _bottom_d)
 	_pose_actions(T)
 
@@ -396,22 +417,31 @@ func _pose_stick(center: Vector3, flat: Vector3, tilt: float, bottom: float) -> 
 	var hip_y := HIP_Y - _crouch
 	var want := Vector3(T.grip_top_side, hip_y + T.grip_top_height + center.y * 0.5, -T.grip_top_fwd)
 	want += Vector3(dir.x, 0, dir.z) * T.grip_top_follow
+	want.x += center.x * T.grip_top_sway
 	# a check pulls the hands in to the chest
-	want = want.lerp(Vector3(-0.05, hip_y + T.grip_top_height + 0.15, -0.15), _check * T.check_tuck)
-	want.y = clampf(want.y, hip_y + T.grip_top_low, hip_y + T.grip_top_high)
-	var reach := Vector3(center.x - want.x, 0, center.z - want.z)
-	var toe := reach.normalized() if reach.length() > 0.05 else dir
-	# the stick is one rigid piece: the knob goes as near the top hand's spot
-	# as the stick (blade middle to knob) and the top arm allow, and the blade
-	# keeps its fixed lie to the shaft, so it tips up on its heel or toe when
-	# the hands are higher or lower than a flat lie
 	var ref := _stick_ref(T)
 	var r_bb: Basis = ref.bb
 	var r_sb: Basis = ref.sb
 	var r_heel: Vector3 = ref.heel
 	var r_knob: Vector3 = ref.knob
-	var arm := (UPPER_ARM + FOREARM) * T.grip_reach
-	var knob := _knob(center, want, r_knob.length(), faller.to_local(uppers[0].global_position), arm)
+	# the hand goes mostly to the height that lays the blade flat
+	want.y = lerpf(want.y, center.y + r_knob.y, T.grip_top_flat)
+	want = want.lerp(Vector3(-0.05, hip_y + T.grip_top_height + 0.15, -0.15), _check * T.check_tuck)
+	want.y = clampf(want.y, hip_y + T.grip_top_low, hip_y + T.grip_top_high)
+	var reach := Vector3(center.x - want.x, 0, center.z - want.z)
+	var toe := reach.normalized() if reach.length() > 0.05 else dir
+	toe_base = toe
+	toe = toe.rotated(Vector3.UP, blade_turn)
+	# the puck's spot is `center`; the blade sits beside it, face on (a right
+	# shot's forehand faces left of the toe)
+	var fore := Vector3(toe.z, 0, -toe.x)
+	center -= fore * _cup * (puck_size.x + 0.5 * Models.STICK_V * T.stick_thickness)
+	# the stick is one rigid piece: the knob goes as near the top hand's spot
+	# as the stick (blade middle to knob) and the top arm allow, and the blade
+	# keeps its fixed lie to the shaft, so it tips up on its heel or toe when
+	# the hands are higher or lower than a flat lie
+	var arm := (UPPER_ARM + FOREARM) * T.grip_arm_length * T.grip_reach + SHOULDER_REACH
+	var knob := _knob(center, want, r_knob.length(), _shoulder(0), arm)
 	var u := (knob - center).normalized()
 	# keep the blade upright (no roll), its face square to the toe's heading
 	var face := Vector3.UP.cross(toe)
@@ -434,9 +464,9 @@ func _pose_stick(center: Vector3, flat: Vector3, tilt: float, bottom: float) -> 
 	var length := SHAFT_LEN * T.stick_length
 	_grip_top = knob - y * 0.04
 	_pose_arm(0, faller.to_global(_grip_top))
-	var along := _slide(knob, -y, bottom, length, faller.to_local(uppers[1].global_position), arm)
+	var along := _slide(knob, -y, bottom, length, _shoulder(1), arm)
 	_bottom_off = along < 0.0
-	var on := knob - y * maxf(along, 0.2)
+	var on := knob - y * maxf(along, 0.12)
 	var rest := Vector3(0.32, hip_y + 0.25, -0.05 + sin(_cycle * TAU) * T.stride_arm_swing * _amp)
 	_grip_bottom = on.lerp(rest, _one_hand)
 	_pose_arm(1, faller.to_global(_grip_bottom))
@@ -450,7 +480,7 @@ func _pose_stick(center: Vector3, flat: Vector3, tilt: float, bottom: float) -> 
 static func _stick_ref(T: AnimTuning) -> Dictionary:
 	var bb := Basis(Vector3.RIGHT, Vector3.UP, Vector3.UP.cross(Vector3.RIGHT))
 	var heel := bb * _blade_heel(T)
-	var lie := deg_to_rad(T.stick_lie)
+	var lie := _lie(T)
 	var y := Vector3(-cos(lie), sin(lie), 0)
 	var x := (Vector3.RIGHT - y * Vector3.RIGHT.dot(y)).normalized()
 	var sb := Basis(x, y, x.cross(y))
@@ -497,14 +527,23 @@ static func _slide(knob: Vector3, down: Vector3, want: float, length: float, sh:
 	if perp > arm * arm:
 		return -1.0
 	var h := sqrt(arm * arm - perp)
-	var lo := maxf(0.2, t0 - h)
+	var lo := maxf(0.12, t0 - h)
 	var hi := minf(length - 0.15, t0 + h)
 	return -1.0 if lo > hi else clampf(want, lo, hi)
 
 
-## The blade's heel (where the shaft joins) in blade space, at the tuned size.
+## The blade's heel (the top of the hosel, where the shaft joins) in blade
+## space, at the tuned size.
 static func _blade_heel(T: AnimTuning) -> Vector3:
-	return BLADE_HEEL * Vector3(T.stick_blade_length, T.stick_blade_height, T.stick_thickness)
+	return Models.blade_heel * Vector3(T.stick_blade_length, T.stick_blade_height, T.stick_thickness)
+
+
+## The shaft's lie off the ice: the blade model's hosel angle, as stretched by
+## the tuned blade length and height, so the shaft carries straight on out of
+## the hosel's curve.
+static func _lie(T: AnimTuning) -> float:
+	var a := deg_to_rad(Models.BLADE_LIE_DEG)
+	return atan2(sin(a) * T.stick_blade_height, cos(a) * T.stick_blade_length)
 
 
 ## Rebuilds the shaft and blade meshes when the tuned stick size changes.
@@ -584,15 +623,33 @@ func _stick_in_hand(T: AnimTuning, hand: Vector3, dir: Vector3) -> Array:
 	return [Transform3D(rot * ref.sb, rot * ref.heel + off), Transform3D(rot * ref.bb, off)]
 
 
+static func _puck_size() -> Vector2:
+	var box := Models.puck().build_mesh().get_aabb()
+	return Vector2(maxf(box.size.x, box.size.z) * 0.5, box.size.y)
+
+
+## A shoulder joint at rest, in faller space.
+func _shoulder(i: int) -> Vector3:
+	return faller.to_local(torso.to_global(_shoulders[i]))
+
+
 ## Two-bone IK for one arm: the elbow bends out to the side and back.
 func _pose_arm(i: int, target_global: Vector3) -> void:
 	var sd := -1.0 if i == 0 else 1.0
-	var root := uppers[i].position
 	var target := torso.to_local(target_global)
-	var elbow := _two_bone(root, target, UPPER_ARM, FOREARM, Vector3(sd, -0.4, 0.7))
-	var hand := root + (target - root).limit_length(UPPER_ARM + FOREARM - 0.002) if root.distance_to(target) > UPPER_ARM + FOREARM else target
-	uppers[i].transform = Transform3D(_basis_along(root - elbow, 0.0), root)
-	forearms[i].transform = Transform3D(_basis_along(elbow - hand, 0.0), elbow)
+	var k := AnimTuning.current().grip_arm_length
+	var l1 := UPPER_ARM * k
+	var l2 := FOREARM * k
+	# the shoulder rolls forward a little for a hand at full stretch
+	var root := _shoulders[i]
+	var over := root.distance_to(target) - (l1 + l2)
+	if over > 0.0:
+		root += (target - root).normalized() * minf(over, SHOULDER_REACH)
+	var elbow := _two_bone(root, target, l1, l2, Vector3(sd, -0.4, 0.7))
+	var hand := root + (target - root).limit_length(l1 + l2 - 0.002) if root.distance_to(target) > l1 + l2 else target
+	var stretch := Basis.from_scale(Vector3(1.0, k, 1.0))
+	uppers[i].transform = Transform3D(_basis_along(root - elbow, 0.0) * stretch, root)
+	forearms[i].transform = Transform3D(_basis_along(elbow - hand, 0.0) * stretch, elbow)
 
 
 ## Middle joint of a two-bone chain from `root` towards `target`, bending

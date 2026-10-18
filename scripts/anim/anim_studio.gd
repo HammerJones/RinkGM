@@ -424,7 +424,7 @@ func _place_cam(c: Camera3D, view: String) -> void:
 
 
 func _fly_puck(dt: float) -> void:
-	if puppet.holding:
+	if puppet.holding or puppet.free_puck:
 		puck.visible = true
 		_puck_air = 0.0
 		return
@@ -473,6 +473,7 @@ func _finish_reel() -> void:
 			&"check": "check", &"fall_back": "fall", &"fall_forward": "fall",
 			&"cel_arms_up": "celebrate", &"cel_fist_pump": "celebrate", &"cel_knee_slide": "celebrate",
 			&"hockey_stop": "brake", &"cross_left": "cross", &"cross_right": "cross",
+			&"stickhandle": "handled",
 		}
 		for id in expect:
 			if not _test_log.get(id, {}).has(expect[id]):
@@ -509,6 +510,20 @@ func _test_frame(id: StringName) -> void:
 		seen["cross"] = true
 	if puppet.position != Vector3.ZERO:
 		_fail("%s: the skater left the treadmill" % id)
+	# the two-handed clips keep the bottom hand on the shaft
+	if id in [&"neutral", &"stickhandle", &"glide", &"stride_easy"] and r._bottom_off:
+		_fail("%s: the bottom hand can't reach the stick" % id)
+	if puppet.free_puck:
+		# the loose puck goes from face to face (the blade lifting over it)
+		# and stays within the stick's reach
+		var side: float = seen.get("side", 0.0)
+		if puppet._puck_side != 0.0 and puppet._puck_side != side:
+			seen["side"] = puppet._puck_side
+			seen["flips"] = seen.get("flips", 0) + 1
+			if seen.flips >= 4:
+				seen["handled"] = true
+		if Vector2(puck.position.x, puck.position.z).length() > 2.0:
+			_fail("%s: the puck got away" % id)
 	for part in [r.hips, r.torso, r.head, r.stick, r.blade] + Array(r.thighs) + Array(r.shins) + Array(r.uppers) + Array(r.forearms):
 		var gt: Transform3D = part.global_transform
 		if not (gt.origin.is_finite() and gt.basis.x.is_finite() and gt.basis.y.is_finite()):

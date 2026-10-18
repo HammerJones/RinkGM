@@ -20,6 +20,30 @@ reach and lets go if the shaft is out of reach or the blade is past the
 front 90 degrees. The stick's size is tuned with the `stick_*` values (the
 voxel players are blocky, so the stick is thicker than a real one).
 
+The stick is one rigid piece: the blade model's heel curves up into a hosel
+at a fixed lie (World's `Models.blade`), the shaft carries straight on from
+it, and the blade never re-levels itself, so it tips onto its heel or toe
+when the hands are higher or lower than a flat lie. The top hand mostly goes
+to the height that lays the blade flat (`grip_top_flat`), sways with the
+blade (`grip_top_sway`), and with both hands on, the shoulders turn and dip
+towards the stick (`grip_shoulder_*`). The voxel arms are short for a 2 m
+skater, so `grip_arm_length` stretches them to a real proportion; that and
+a blade about 1.2 m out (`AnimPuppet.READY_BLADE`) are what let the bottom
+hand reach the shaft.
+
+A carried puck is drawn against the blade's face (forehand, or backhand
+when the blade is out on that side) rather than through its middle.
+
+## Stickhandling
+
+The studio's stickhandling clip uses a loose, physical puck: AnimPuppet
+slides it on the ice and bounces it off the drawn blade (substepped, so a
+quick blade can't pass through it), and the blade never carries it. The
+clip catches the puck on one face, pushes it across, lifts over it while it
+slides, sets down on the far side and catches it on the other face; the
+wrists angle the blade (`SkaterRig.blade_turn`) so each push also steers the
+puck back to its spot out front. In games the puck is still Physics' to move.
+
 ## The studio
 
 `scenes/anim/anim_studio.tscn` puts one skater on a treadmill: the skater stays
