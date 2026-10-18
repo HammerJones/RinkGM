@@ -31,8 +31,13 @@ skater, so `grip_arm_length` stretches them to a real proportion; that and
 a blade about 1.2 m out (`AnimPuppet.READY_BLADE`) are what let the bottom
 hand reach the shaft.
 
-A carried puck is drawn against the blade's face (forehand, or backhand
-when the blade is out on that side) rather than through its middle.
+The drawn blade sits exactly on the simulated one (`Skater.blade_pos` and
+`blade_height`) every frame; only the body and arms are smoothed. The
+exceptions: the blade rises with a shot's follow-through after the puck has
+gone, and until Physics' physical puck reaches this branch a carried puck
+(still placed at `blade_pos`) gets the blade drawn beside it, face on, rather
+than through it. Once Skater has `blade_yaw`, the blade is drawn along
+Physics' own contact axis and that offset is off.
 
 ## Stickhandling
 

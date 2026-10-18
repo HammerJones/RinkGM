@@ -80,7 +80,6 @@ var _cel := 0.0
 var _hooked := false
 var _grip_top := Vector3.ZERO     # faller space, set by _pose_stick
 var _grip_bottom := Vector3.ZERO
-var _loose := 0.0                 # how free the blade is to wander (no puck, no shot)
 var _bottom_d := 0.45            # bottom hand, metres below the knob
 var _bottom_off := false          # the bottom hand couldn't reach the shaft last frame
 var _shaft_base: Mesh             # stick meshes at model size, rescaled by AnimTuning
@@ -290,16 +289,6 @@ func update_skater(s: Skater, dt: float) -> void:
 	# for the backhand, square up again on the follow-through
 	var heel := to_local(s.blade_pos)
 	var flat := Vector3(heel.x, 0, heel.z)
-	# a free stick never sits still: it slides forward and back on the ice
-	# with each stride and drifts a little when gliding or standing. Only for
-	# show, so it stays off while the blade is on the puck or winding up.
-	var loose := 0.0 if (s.has_puck() or s.winding or s.move_id != &"") else 1.0
-	_loose = lerpf(_loose, loose * (1.0 - _cel) * (1.0 - _fall), 1.0 - exp(-4.0 * dt))
-	var drift := sin(_time * 0.9) * 0.6 + sin(_time * 2.3 + 1.0) * 0.4
-	var blade_slide := sin(_cycle * TAU + 0.6) * T.blade_stride_slide * _amp + drift * T.blade_drift * (1.0 - stride_w * 0.5)
-	var side := sin(_time * 1.4 + 2.0) * T.blade_drift_side
-	var fwd_dir := Vector3(0, 0, -1)
-	flat += (fwd_dir * blade_slide + Vector3(side, 0, 0)) * _loose
 	var blade_ang := atan2(flat.x, -flat.z) if flat.length() > 0.05 else 0.0
 	_stick_yaw = lerpf(_stick_yaw, blade_ang, 1.0 - exp(-10.0 * dt))
 	_follow = maxf(0.0, _follow - dt * T.shot_follow_fade)

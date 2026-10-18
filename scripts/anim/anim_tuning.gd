@@ -144,16 +144,6 @@ func tunables() -> Array:
 ## Share of the arm's length the hands can use before letting go.
 @export_range(0.7, 1.0, 0.01) var grip_reach := 0.97
 
-# ------------------------------------------------------------------ blade
-# A free stick (no puck, no shot) slides about on the ice instead of sitting
-# still. Only the drawing moves; the game's blade stays where it was.
-## How far the blade slides forward and back with each stride.
-@export_range(0.0, 0.4, 0.005) var blade_stride_slide := 0.14
-## Slow forward/back drift when gliding or standing.
-@export_range(0.0, 0.3, 0.005) var blade_drift := 0.08
-## Slow side-to-side drift.
-@export_range(0.0, 0.3, 0.005) var blade_drift_side := 0.05
-
 # ------------------------------------------------------------------- dash
 ## Stride length multiplier during a dash.
 @export_range(1.0, 2.0, 0.01) var dash_amp := 1.25
