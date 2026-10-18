@@ -603,7 +603,7 @@ Every item in the catalogue has its own line in `desc`.
 - First visit: "You must be the new one. Sit. Give me those skates. No, I'm not asking."
 - On Uncle Ray's stick: "Is that Ray's stick? Eighty-five flex and a banana. Ray had forearms like a bridge and the aim of a sprinkler. Let me fix it before you hurt someone."
 - Deep hollow: "Three-eighths. You'll turn on a dime and give change. You'll also be slower in a straight line than my sister, and she's got a hip."
-- Flat hollow: "A full inch. You'll glide like a Zamboni going downhill. Don't try to stop."
+- Flat hollow: "A full inch. You'll glide like a Zambelli going downhill. Don't try to stop."
 - Standard: "Half inch. The way God and the 1979 instruction manual intended."
 - Dull skates: "These aren't edges, they're suggestions."
 - Composite curve job: "I'll heat it. I don't promise it. Composites remember what they were. Like my ex-husband."

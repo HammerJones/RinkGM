@@ -94,6 +94,91 @@ func _append_oriented(b: VoxelMeshBuilder, xf: Transform3D) -> void:
 		b.add_box(xf * Transform3D(t.basis * voxel_size, (t.origin - pivot) * voxel_size), o[1])
 
 
+## Solid boxes that follow the model's shape, for collision: the voxels are
+## binned into `cell`-voxel cubes, then neighbouring solid cells merge into as
+## few boxes as possible (along x, then z, then up through y). Off-grid voxels
+## count by their bounds. Returned in metres, relative to the pivot, like the
+## mesh. A bigger `cell` gives fewer, looser boxes.
+func collision_boxes(cell := 2) -> Array[AABB]:
+	var solid := {}  # Vector3i cell -> true
+	for p in voxels:
+		solid[Vector3i(floori(p.x / float(cell)), floori(p.y / float(cell)), floori(p.z / float(cell)))] = true
+	for o in oriented:
+		var t: Transform3D = o[0]
+		var bb := t * AABB(Vector3(-0.5, -0.5, -0.5), Vector3.ONE)
+		var lo := Vector3i((bb.position / cell).floor())
+		var hi := Vector3i((bb.end / cell).ceil())
+		for x in range(lo.x, hi.x):
+			for y in range(lo.y, hi.y):
+				for z in range(lo.z, hi.z):
+					solid[Vector3i(x, y, z)] = true
+	if solid.is_empty():
+		return []
+	# one layer at a time: greedy rectangles in x then z
+	var layers := {}  # y -> Array of [x0, z0, x1, z1] (cells, end exclusive)
+	var ys := {}
+	for c in solid:
+		ys[c.y] = true
+	for y in ys:
+		var taken := {}
+		var rects: Array = []
+		var cells: Array = []
+		for c in solid:
+			if c.y == y:
+				cells.append(c)
+		cells.sort_custom(func(a, b): return a.z < b.z or (a.z == b.z and a.x < b.x))
+		for c in cells:
+			if taken.has(c):
+				continue
+			var x1: int = c.x + 1
+			while solid.has(Vector3i(x1, y, c.z)) and not taken.has(Vector3i(x1, y, c.z)):
+				x1 += 1
+			var z1: int = c.z + 1
+			while true:
+				var row_ok := true
+				for x in range(c.x, x1):
+					var q := Vector3i(x, y, z1)
+					if not solid.has(q) or taken.has(q):
+						row_ok = false
+						break
+				if not row_ok:
+					break
+				z1 += 1
+			for x in range(c.x, x1):
+				for z in range(c.z, z1):
+					taken[Vector3i(x, y, z)] = true
+			rects.append([c.x, c.z, x1, z1])
+		layers[y] = rects
+	# stack identical rectangles up through the layers
+	var out: Array[AABB] = []
+	var sorted_ys := ys.keys()
+	sorted_ys.sort()
+	var open := {}  # rect key -> [y0, rect]
+	var prev_y := -999999
+	for y in sorted_ys:
+		var next_open := {}
+		for r in layers[y]:
+			var key := "%d,%d,%d,%d" % r
+			if open.has(key) and prev_y == y - 1:
+				next_open[key] = open[key]
+				open.erase(key)
+			else:
+				next_open[key] = [y, r]
+		for key in open:
+			out.append(_cell_box(open[key][1], open[key][0], prev_y + 1, cell))
+		open = next_open
+		prev_y = y
+	for key in open:
+		out.append(_cell_box(open[key][1], open[key][0], prev_y + 1, cell))
+	return out
+
+
+func _cell_box(r: Array, y0: int, y1: int, cell: int) -> AABB:
+	var lo := Vector3(r[0], y0, r[1]) * cell
+	var hi := Vector3(r[2], y1, r[3]) * cell
+	return AABB((lo - pivot) * voxel_size, (hi - lo) * voxel_size)
+
+
 ## A lighter mesh for distance and big repeats: no per-voxel speckle, and
 ## neighbouring faces of the same colour merge into one quad (greedy meshing).
 ## `quantize` > 0 snaps colours to that many steps per channel first, so faded

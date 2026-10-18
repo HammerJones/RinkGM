@@ -172,6 +172,14 @@ func _check_thickness() -> void:
 	t3.thickness_mm = 40.0
 	t2.run(1.0, 0.0, 0.0, 20.0)
 	t3.run(1.0, 0.0, 0.0, 20.0)
+	var hard := IceSlab.new()
+	hard.thickness_mm = 28.0
+	hard.surface_temp = -6.5
+	var soft := IceSlab.new()
+	soft.thickness_mm = 48.0
+	soft.surface_temp = -3.5
+	if hard.hardness() <= soft.hardness() + 0.3:
+		_fail("cold thin ice should play much harder (%.2f vs %.2f)" % [hard.hardness(), soft.hardness()])
 	if t2.smoothness >= t3.smoothness:
 		_fail("thin ice should gouge faster")
 	# a fresh flood: hockey minds the wet, the figure club barely does

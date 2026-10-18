@@ -122,6 +122,10 @@ resurfacer): about 650-5,200 triangles at full detail. Pipe pieces are
 room for review (`--age=worn|repaired|renovated`), and the prop sheet renders
 one age in a labelled grid with `--age=<name> [--cols=N]`.
 
+## Collision
+
+Every kit piece has collision that follows its shape: `Props.collision_boxes(id, age)` returns boxes in the mesh's space (a bench's seat, back and legs, not one block around it), and `Props.add_collision(body, id, age, xf)` adds them as `BoxShape3D`s to any `CollisionObject3D`. They come from `VoxelModel.collision_boxes(cell)`, which bins the voxels into `cell`-voxel cubes (2 by default, about 13 cm) and merges them greedily; most props need 5 to 70 boxes. Any `VoxelModel` can do the same, e.g. `Models.net().collision_boxes(1)` for the goal. `test_props.gd` checks every voxel is covered and nothing reaches past the mesh. Which physics layer they go on is the caller's call (the venue uses layer 2; the hockey sim is its own).
+
 ## Puck
 
 `Models.puck()` is regulation size: 3 in across and 1 in thick (`Models.PUCK_DIAMETER` 0.0762 m, `PUCK_HEIGHT` 0.0254 m), built from half-inch voxels with the corners off so it reads round. Pivot at the centre of the bottom face. The puck's physics radius (`Puck.RADIUS`) belongs to Hockey physics and is separate from the mesh.
