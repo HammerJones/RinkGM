@@ -89,6 +89,16 @@ func resurface(quality: float, shave_mm: float, flood_litres: float) -> void:
 	flood_heat_mj = pending_heat_mj
 
 
+## How hard and fast the surface plays, 0 soft and grippy to 1 hard, fast and
+## skiddy: colder and thinner is harder, a wet flood softens it. This is the one
+## value Hockey physics reads (PhysicsProfile maps it to puck friction, skid
+## and skate grip).
+func hardness() -> float:
+	var cold := clampf((-surface_temp - 2.0) / 6.0, 0.0, 1.0)      # -2 C soft, -8 C rock hard
+	var thin := clampf((50.0 - thickness_mm) / 25.0, 0.0, 1.0)      # 50 mm soft, 25 mm hard
+	return clampf((0.7 * cold + 0.3 * thin) * (1.0 - 0.5 * wetness()), 0.0, 1.0)
+
+
 ## How good the ice is for `use`, 0..100. This is what organisations judge.
 func rating(use: String) -> float:
 	var target: float = TARGET_TEMP.get(use, -5.0)
