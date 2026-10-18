@@ -61,6 +61,23 @@ func bench_spot(_team: int) -> Vector2:
 	return Vector2(0, -12.0)
 
 
+var time := 0.0
+var _goalie_ai: TierAI
+var _saved := 0
+
+
+func ai_for(_team: int) -> TierAI:
+	return _goalie_ai
+
+
+func on_save(_g: Goalie, _frozen: bool) -> void:
+	_saved += 1
+
+
+func nearest_opponent_distance_to(_team: int, _p: Vector2) -> float:
+	return 99.0
+
+
 # ---------------------------------------------------------------- harness
 
 func _ready() -> void:
@@ -76,7 +93,7 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--only="):
 			only = Array(arg.trim_prefix("--only=").split(","))
-	for sec in ["gestures", "skating", "stop", "turn", "carry", "stickhandle", "moves", "shots", "passes", "pickup", "hits"]:
+	for sec in ["gestures", "skating", "stop", "turn", "carry", "stickhandle", "moves", "shots", "passes", "pickup", "hits", "goalie"]:
 		if only.is_empty() or sec in only:
 			call("_bench_" + sec)
 	var text := "\n".join(_out)
@@ -614,3 +631,93 @@ func _bench_hits() -> void:
 			cells.append("%.2f" % (impulse / Skater.MASS / vp.balance))
 		_line("| %d | %s | %s | %s |" % [h, cells[0], cells[1], cells[2]])
 
+
+
+## One shooter against one goalie: the shooter winds up (the goalie reads it)
+## and shoots at a corner from `spot`; returns the share that go in.
+func _goalie_trials(skill: float, level: float, spot: Vector2, n: int) -> float:
+	_clear()
+	_goalie_ai = TierAI.for_level(level)
+	var g := Goalie.new()
+	add_child(g)
+	g.game = self
+	g.team = 1
+	g.side = 1
+	g.skill = skill
+	var s := _skater(_stats({"shot_power": 75, "shot_accuracy": 75, "shot_release": 75}))
+	var goals := 0
+	for i in n:
+		time = i * 1.37
+		g.reset()
+		var dir := Vector3(Rink.GOAL_X - spot.x, 0, -spot.y).normalized()
+		s.place(spot, dir)
+		s.ctrl.reset()
+		var corner := i % 4
+		s.ctrl.aim_point = Vector3(Rink.GOAL_X, 0, 0.8 * (1.0 if corner % 2 == 0 else -1.0))
+		s._clock = i * 0.731
+		s.ctrl.tilt = _tilt_for(s, 0.95) if corner < 2 else 0.0
+		_give_puck(s)
+		puck.position.y = 0.0
+		# the goalie settles on the angle, then sees the wind-up
+		for k in 120:
+			g.physics_update(DT)
+		s.winding = true
+		for k in 48:
+			time += DT
+			g.physics_update(DT)
+		s.winding = false
+		s.shoot(0.4, false)
+		for k in 120:
+			time += DT
+			g.physics_update(DT)
+			var sdt := DT / SUBSTEPS
+			for j in SUBSTEPS:
+				var prev := puck.position
+				puck.integrate(sdt)
+				g.check_save(puck, prev)
+			if puck.in_net_side != 0:
+				goals += 1
+				break
+			if puck.frozen or puck.vel.x < 0.0:
+				break
+	g.queue_free()
+	remove_child(g)
+	return goals / float(n)
+
+
+## The blade tilt that puts this shot (same hands, same moment) under the
+## bar at about `height` m on the goal line, as a shooter picking a top
+## corner would.
+func _tilt_for(s: Skater, height: float) -> float:
+	var best := 0.0
+	var best_err := INF
+	for k in 11:
+		var tilt := k / 10.0
+		s.ctrl.tilt = tilt
+		_give_puck(s)
+		puck.position.y = 0.0
+		s.shoot(0.4, false)
+		s.stick_health = 1.0
+		var v := puck.vel
+		var tt := (Rink.GOAL_X - puck.position.x) / v.x
+		var y := puck.position.y + v.y * tt - 0.5 * Puck.GRAVITY * tt * tt
+		if absf(y - height) < best_err:
+			best_err = absf(y - height)
+			best = tilt
+	return best
+
+
+func _bench_goalie() -> void:
+	_line("")
+	_line("## A lone shooter against the goalie")
+	_line("")
+	_line("Share of shots that go in. The shooter (shot ratings 75) winds up for 0.4 s, which the goalie reads, then shoots at a corner (high, tilted to cross the goal line 0.95 m up, and low, glove and blocker side, in turn). Goalie skill 0..1 with its tier's reaction and positioning (level 0 Beer League, 3 the default).")
+	_line("")
+	_line("| goalie | slot 6 m | slot 10 m | 30 degrees, 8 m | point, 18 m |")
+	_line("|---|---|---|---|---|")
+	var spots := [Vector2(Rink.GOAL_X - 6.0, 0), Vector2(Rink.GOAL_X - 10.0, 0), Vector2(Rink.GOAL_X - 6.9, 4.0), Vector2(Rink.GOAL_X - 18.0, 6.0)]
+	for gs in [[0.4, 0.0], [0.68, 3.0], [0.9, 4.0]]:
+		var cells := []
+		for sp in spots:
+			cells.append("%d%%" % int(_goalie_trials(gs[0], gs[1], sp, 40) * 100.0))
+		_line("| skill %.2f, level %d | %s |" % [gs[0], int(gs[1]), " | ".join(cells)])

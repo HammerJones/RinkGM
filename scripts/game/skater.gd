@@ -832,15 +832,37 @@ func shoot(held: float, slap: bool, incoming := 0.0, style := {}) -> void:
 	# opened by the tilt (a flat face still lifts a wrister a touch)
 	var e := lerpf(0.35, 0.6, flex)
 	var shake := hand_shake()
-	var face := dir.rotated(Vector3.UP, shake.x * err)
 	var loft := deg_to_rad(style.get("loft_deg", lerpf(4.0, 16.0, ctrl.tilt))) + shake.y * err * 0.5
-	var n := (face * cos(loft) + Vector3.UP * sin(loft)).normalized()
-	# the blade comes through at the speed the body can swing it, on top of
-	# the skater's own skating speed
-	var swing := Vector3(vel.x, 0, vel.z) + n * (spd / StickPuck.strike_gain(e))
-	StickPuck.strike(self, puck, swing, n, e)
+	var face := _aim_face(dir, loft, spd, e).rotated(Vector3.UP, shake.x * err)
+	var n := _face_normal(face, loft)
+	StickPuck.strike(self, puck, _swing(n, spd, e), n, e)
 	puck.pass_target = null
 	game.on_shot(self, slap)
+
+
+## The blade comes through at the speed the body can swing it, on top of
+## the skater's own skating speed.
+func _swing(n: Vector3, spd: float, e: float) -> Vector3:
+	return Vector3(vel.x, 0, vel.z) + n * (spd / StickPuck.strike_gain(e))
+
+
+static func _face_normal(face: Vector3, loft: float) -> Vector3:
+	return (face * cos(loft) + Vector3.UP * sin(loft)).normalized()
+
+
+## The puck leaves with what it already had (the skater's speed, the drag
+## of the wind-up) on top of what the blade gives it, so a shooter turns the
+## face off the aim to cancel that: returns the face direction that sends
+## this strike along `dir`, found by trying it.
+func _aim_face(dir: Vector3, loft: float, spd: float, e: float) -> Vector3:
+	var face := dir
+	var share := Contact.share_of(Contact.PUCK_MASS, Contact.BLADE_MASS)
+	for k in 3:
+		var n := _face_normal(face, loft)
+		var out := Contact.bounce(puck.vel, n, _swing(n, spd, e), e, StickPuck.TAPE_GRIP, share)
+		var off := Vector2(out.x, out.z).angle_to(Vector2(dir.x, dir.z))
+		face = face.rotated(Vector3.UP, -off)
+	return face
 
 
 ## Passing: a gentler sweep of the blade through the puck toward the aim,

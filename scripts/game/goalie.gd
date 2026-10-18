@@ -10,7 +10,7 @@ extends Node3D
 
 const MASS := 90.0
 const ARM := 0.75           # m, how far a hand reaches from its shoulder
-const HAND_SPEED := 4.5     # m/s, the hands' top speed (scaled by skill)
+const HAND_SPEED := 4.0     # m/s, the hands' top speed (scaled by skill)
 const GLOVE_R := 0.13
 ## restitution off each part: pads are lively, the chest soaks it up
 const E_PAD := 0.4
@@ -20,6 +20,10 @@ const E_STICK := 0.3
 const E_GLOVE := 0.1
 const MU := 0.3
 const CLOSE := 3.5          # m: a puck this close in front, the goalie drops to block
+const SET := 0.85           # reaction time factor for a shot the goalie saw being wound up
+## How fast a hand gets going (m/s², scaled by skill): a glove can't jump
+## to full speed, so a shot just past the hand beats it.
+const HAND_ACCEL := 25.0
 
 var game: Node
 var team := 0
@@ -39,7 +43,6 @@ var _glove_v := Vector3.ZERO
 var _blocker_v := Vector3.ZERO
 var _tracking := false
 var _alert := false
-var _was_alert := false
 var _reaction := 0.0
 var _cover := 0.0
 var _last_dt := 1.0 / 120.0
@@ -98,7 +101,8 @@ func physics_update(dt: float) -> void:
 	var out := Vector2(-side, 0)
 	var rel := p2 - nc
 
-	# positioning: on the line between net and puck, deeper when the puck is far.
+	# positioning: on the line between net and puck, out at the top of the
+	# crease to cut down the angle, backing in when the puck is in tight.
 	# A goalie with poor positioning (TierAI) drifts off the angle, comes out
 	# less and moves across slower.
 	var ai: TierAI = game.ai_for(team)
@@ -108,23 +112,23 @@ func physics_update(dt: float) -> void:
 		desired = nc + out * 0.35 + Vector2(0, clampf(rel.y, -0.7, 0.7))
 	else:
 		var dir := rel.normalized().rotated(sin(game.time * 0.9 + side) * lerpf(0.35, 0.0, gp))
-		desired = nc + dir * clampf(rel.length() * lerpf(0.04, 0.07, gp), 0.35, lerpf(0.7, 1.1, gp))
+		desired = nc + dir * clampf(rel.length() * 0.15, 0.35, lerpf(0.6, 1.1, gp))
 	_skate(desired, lerpf(2.5, 4.0, skill) * lerpf(0.75, 1.1, gp), lerpf(9.0, 16.0, skill) * lerpf(0.8, 1.1, gp), dt)
 	var look := p2 - pos2
 	if look.length() > 0.3 and look.dot(out) > -0.2:
 		facing = facing.lerp(look.normalized(), 1.0 - exp(-lerpf(5.0, 12.0, gp) * dt)).normalized()
 
-	# shot reading: where and how high it will cross, once the goalie has
-	# seen it (reaction time from skill and the tier's goaltending)
+	# shot reading: where and how high it will cross. A goalie can only start
+	# moving to the puck once it has seen it leave the blade: the reaction
+	# time (skill and the tier's goaltending) runs from the release. Reading
+	# a shooter's wind-up gets the goalie set and squared up, which takes a
+	# little off that time, but never tells it where the shot is going.
 	var pv := Vector2(puck.vel.x, puck.vel.z)
 	var incoming := puck.controller == null and not puck.frozen and puck.in_net_side == 0 \
 		and pv.length() > 6.0 and pv.dot(nc - p2) > 0.0 and rel.dot(out) > 0.0
-	# a shooter winding up in front: the goalie is set before the release
 	var shooter := puck.controller
 	var reading := shooter != null and shooter.team != team and shooter.winding and rel.dot(out) > 0.0 and rel.length() < 18.0
-	if reading and not _alert:
-		_reaction = lerpf(0.26, 0.12, skill) * ai.goalie_reaction
-	_alert = reading or incoming
+	_alert = reading or (_alert and incoming)
 	var tracked := false
 	if incoming:
 		var dist := (p2 - pos2).dot(facing) - 0.2
@@ -132,15 +136,14 @@ func physics_update(dt: float) -> void:
 		if closing > 1.0 and dist > 0.0 and dist / closing < 1.0:
 			var t := dist / closing
 			tracked = true
-			if not _tracking and not _was_alert:
-				_reaction = lerpf(0.26, 0.12, skill) * ai.goalie_reaction
+			if not _tracking:
+				_reaction = lerpf(0.3, 0.17, skill) * ai.goalie_reaction * (SET if _alert else 1.0)
 			var hit := p2 + pv * t
 			var hy := maxf(0.0, puck.position.y + puck.vel.y * t - 0.5 * Puck.GRAVITY * t * t)
 			reach_target = Vector2(clampf((hit - pos2).dot(right2()), -1.2, 1.2), clampf(hy, 0.0, 1.5))
 			if _reaction <= 0.0 and hy < 0.5 and absf(reach_target.x) < 1.2:
 				butterfly_timer = 0.9
 	_tracking = tracked
-	_was_alert = _alert
 	if not _tracking:
 		reach_target = Vector2(0, 0.8)
 	# in tight, get down and take away the bottom of the net
@@ -148,7 +151,7 @@ func physics_update(dt: float) -> void:
 		butterfly_timer = maxf(butterfly_timer, 0.3)
 	_reaction -= dt
 	butterfly_timer = maxf(0.0, butterfly_timer - dt)
-	var drop := lerpf(5.0, 9.0, skill) * lerpf(0.6, 1.1, gp)
+	var drop := lerpf(3.0, 5.0, skill) * lerpf(0.7, 1.1, gp)  # 0.2-0.4 s to get all the way down
 	butterfly = move_toward(butterfly, 1.0 if butterfly_timer > 0.0 else 0.0, (drop if butterfly_timer > 0.0 else 2.5) * dt)
 	_move_hands(dt, lerpf(0.65, 1.1, gp))
 
@@ -190,14 +193,21 @@ func _move_hands(dt: float, sharp: float) -> void:
 			gt = _arm_limit(t, Vector3(-0.22, 1.2, 0.0))
 		else:
 			bt = _arm_limit(t, Vector3(0.22, 1.2, 0.0))
-	var g0 := glove
-	var b0 := blocker
-	glove = glove.move_toward(gt, spd * dt)
-	blocker = blocker.move_toward(bt, spd * dt)
-	_glove_v = (glove - g0) / dt
-	_blocker_v = (blocker - b0) / dt
+	var acc := HAND_ACCEL * lerpf(0.75, 1.25, skill) * sharp
+	_glove_v = _hand_v(glove, gt, _glove_v, spd, acc, dt)
+	_blocker_v = _hand_v(blocker, bt, _blocker_v, spd, acc, dt)
+	glove += _glove_v * dt
+	blocker += _blocker_v * dt
 	var hand := glove if reach_target.x < 0.0 else blocker
 	reach = Vector2(hand.x, hand.y)
+
+
+## A hand's new velocity toward `to`: accelerating at `acc` up to `spd`,
+## braking in time to stop there.
+static func _hand_v(at: Vector3, to: Vector3, v: Vector3, spd: float, acc: float, dt: float) -> Vector3:
+	var d := to - at
+	var want := d.normalized() * minf(spd, sqrt(2.0 * acc * d.length())) if d.length() > 0.001 else Vector3.ZERO
+	return v.move_toward(want, acc * dt)
 
 
 static func _arm_limit(t: Vector3, shoulder: Vector3) -> Vector3:
