@@ -234,7 +234,7 @@
   {
     "id": "ledger_last_word",
     "title": "The Last Word: \"A Night in Millbrook\"",
-    "author": "Conrad Mayhew, The Duncannon Daily Ledger",
+    "author": "Merv Tolliver, The Duncannon Daily Ledger",
     "kind": "newspaper",
     "location": "community_hall",
     "unlock": "Once the Lumber Kings host a Senior AAA game the Ledger covers (Senior AAA tier)",
@@ -466,7 +466,7 @@
     "kind": "graffiti",
     "location": "locker_home",
     "unlock": null,
-    "excerpt": "Carved into the bench under stall 14: R.H. WAS HERE 1978 (and under it, smaller: NO HE WASN'T, HE WAS BEER LEAGUE, WRONG ROOM). On the ceiling tile above the door, in marker: 1979 ALDOUS CUP, WE ALL SIGNED, DON'T PAINT IT, GUS. Gus didn't. Scratched into the paint by the showers: THE HOT TAP IS A LIE. Below the clock: LEAVE IT BETTER THAN YOU FOUND IT (stencilled, official), and below that, not official: OR AT LEAST LEAVE. On the door of the sharpening closet, a tally of Lumber Kings wins over Kessler since 1974 in pencil, with the losses on the other side of the door, where you can't see them when you walk out. The loss side is longer.",
+    "excerpt": "Carved into the bench under stall 14: R.H. WAS HERE 1978 (and under it, smaller: NO HE WASN'T, HE WAS VISITORS THAT NIGHT). On the ceiling tile above the door, in marker: 1979 ALDOUS CUP, WE ALL SIGNED, DON'T PAINT IT, GUS. Gus didn't. Scratched into the paint by the showers: THE HOT TAP IS A LIE. Below the clock: LEAVE IT BETTER THAN YOU FOUND IT (stencilled, official), and below that, not official: OR AT LEAST LEAVE. On the door of the sharpening closet, a tally of Lumber Kings wins over Kessler since 1974 in pencil, with the losses on the other side of the door, where you can't see them when you walk out. The loss side is longer.",
     "hooks": [
       "Room history and in-jokes; the 1979 ceiling tile is a keepsake",
       "Hints: the home room shower is cold (boiler / dressing room repair)",
@@ -526,7 +526,7 @@
     "hooks": [
       "Central lore keepsake: the 2005 letter beside the Cup photo",
       "Each March a new follow-up is added to the binder",
-      "Late-game payoff: a reply arrives if the rink hosts the GNHL camp"
+      "Year 5 payoff: the trustees reply (PATHS.md w_trustees_reply)"
     ]
   },
   {
