@@ -18,6 +18,11 @@ func plate_color() -> Color:
 	return VenueSign.AMBER
 
 
+## At the till and at the sharpening bench.
+func places() -> Dictionary:
+	return {"pro_shop": [Vector3(-26.0, 0, -34.4), Vector3(-25.7, 0, -31.6)]}
+
+
 func furnish(k: VenueKit) -> void:
 	var wood: Color = k.by_age(Color("6b4f33"), Color("7a5c3c"), Color("2a2e36"))
 	var steel := Color("8f9498")

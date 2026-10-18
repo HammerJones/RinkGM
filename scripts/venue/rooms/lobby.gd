@@ -19,6 +19,16 @@ func _ready() -> void:
 	spawn = Vector3(X0 + 1.5, 0, 0)
 
 
+## The snack bar line (front first), the skate window and the front doors
+## (outside, then just inside).
+func places() -> Dictionary:
+	var line: Array[Vector3] = []
+	for i in 5:
+		line.append(Vector3(-39.5, 0, -10.2 + i * 0.8))
+	return {"canteen": line, "skate_rental": [Vector3(X0 + 3.5, 0, -10.0)],
+		"entrance": [Vector3(X0 - 1.4, 0, 0.4), Vector3(X0 + 1.5, 0, 0.4)]}
+
+
 func build(k: VenueKit) -> void:
 	var t := Venue.WALL_T
 	var brick: Color = k.by_age(Color("8e5a45"), Color("9c6650"), Wear.STEEL)

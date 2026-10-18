@@ -279,6 +279,34 @@ func all_spots() -> Array[VenueSpot]:
 	return out
 
 
+## Room ids whose spawn is a place of that name (Venue.places()).
+const PLACE_ROOMS := {"lobby": "lobby", "office": "office", "plant_room": "plant_room", "zamboni_bay": "zamboni_bay",
+	"benches": "bench"}
+
+
+## Where people go, for World's RinkPeople: {key: Array[Vector3]} in venue
+## space. Keys: canteen (the line, front first), washroom, glass, pro_shop,
+## skate_rental, bench, entrance, lobby, office, plant_room, zamboni_bay,
+## dressing_room, penalty_box. Washroom and pro shop are in the rec wing, so a
+## match venue without it has none.
+func places() -> Dictionary:
+	var out := {}
+	for r in _room_nodes():
+		if PLACE_ROOMS.has(r.room_id):
+			_add_places(out, PLACE_ROOMS[r.room_id], [r.spawn])
+		var p: Dictionary = r.places()
+		for key in p:
+			_add_places(out, key, p[key])
+	return out
+
+
+func _add_places(out: Dictionary, key: String, pts: Array) -> void:
+	if not out.has(key):
+		out[key] = [] as Array[Vector3]
+	for v in pts:
+		out[key].append(v)
+
+
 func spot(id: String) -> VenueSpot:
 	for s in all_spots():
 		if s.id == id:

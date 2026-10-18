@@ -18,6 +18,11 @@ func paint(k: VenueKit) -> Color:
 	return k.by_age(Color("a9b8ae"), Color("cfd8d2"), Color("f0f2f2"))
 
 
+## Just inside each door.
+func places() -> Dictionary:
+	return {"washroom": [Vector3(-18.5, 0, -38.6), Vector3(-14.5, 0, -38.6)]}
+
+
 func furnish(k: VenueKit) -> void:
 	partition(k, "z", SPLIT, z0, z1, paint(k))
 	for half in [[x0, SPLIT, true], [SPLIT, x1, false]]:
