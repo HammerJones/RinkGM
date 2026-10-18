@@ -100,6 +100,39 @@ static func _build(id: String, age: int) -> VoxelModel:
 const _MERGED := ["resurfacer"]
 
 
+## Collision boxes that follow a prop's shape (a bench's seat and back, not
+## one box around the whole bench), in the mesh's space. Cached per
+## (id, age). See VoxelModel.collision_boxes().
+static func collision_boxes(id: String, age: int) -> Array[AABB]:
+	var key := "col/%s/%d" % [id, age]
+	if not _cache.has(key):
+		var m := model(id, age)
+		var boxes: Array[AABB] = []
+		if m:
+			boxes = m.collision_boxes(_COLLISION_CELL.get(id, 2))
+		_cache[key] = boxes
+	return _cache[key]
+
+
+## Coarser collision for big props whose detail doesn't matter to a body.
+const _COLLISION_CELL := {"resurfacer": 4, "condenser": 4, "scoreboard": 4, "compressor_co2": 3}
+
+
+## Adds a prop's collision boxes to `body` (any CollisionObject3D), placed by
+## `xf` in the body's space. Returns the shapes added.
+static func add_collision(body: CollisionObject3D, id: String, age: int, xf := Transform3D.IDENTITY) -> Array[CollisionShape3D]:
+	var added: Array[CollisionShape3D] = []
+	for b in collision_boxes(id, age):
+		var cs := CollisionShape3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = b.size
+		cs.shape = shape
+		cs.transform = xf * Transform3D(Basis.IDENTITY, b.get_center())
+		body.add_child(cs)
+		added.append(cs)
+	return added
+
+
 ## One mesh per (id, age, lod), built on first use. Many seats share one mesh.
 ## lod 0 is full detail; lod 1 drops the speckle and merges flat faces, for
 ## big repeats (stands of seats) and distance.
