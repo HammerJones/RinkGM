@@ -94,6 +94,7 @@ var _cup := 0.0                   # -1 backhand face on the puck .. +1 forehand
 ## line of the stick, the way a player angles the blade to steer the puck.
 var blade_turn := 0.0
 var toe_base := Vector3.FORWARD   # the toe's heading before blade_turn (faller space)
+var _toe_physics := Vector3.ZERO  # the blade's axis as Physics simulates it (faller space), if it does
 
 
 func build(pal: Dictionary, is_goalie: bool) -> void:
@@ -340,7 +341,18 @@ func update_skater(s: Skater, dt: float) -> void:
 	# a carried puck sits against the blade's face, forehand unless the blade
 	# is out on the backhand side
 	var cup := 0.0
-	if cup_puck and s.has_puck():
+	# where Physics simulates the blade against a real puck (Skater.blade_yaw,
+	# StickPuck), draw the blade along the very axis it collides with; the puck
+	# is already beside the face, so no cupping offset
+	var yaw = s.get("blade_yaw")
+	_toe_physics = Vector3.ZERO
+	if yaw != null:
+		var d := Vector2(s.blade_pos.x - s.global_position.x, s.blade_pos.z - s.global_position.z)
+		if d.length() > 0.05:
+			var ax := d.normalized().rotated(yaw)
+			_toe_physics = (faller.global_basis.inverse() * Vector3(ax.x, 0.0, ax.y))
+			_toe_physics = Vector3(_toe_physics.x, 0.0, _toe_physics.z).normalized()
+	elif cup_puck and s.has_puck():
 		cup = 1.0 if blade_ang > -0.35 else -1.0
 	_cup = lerpf(_cup, cup, 1.0 - exp(-12.0 * dt))
 	_pose_stick(center, flat, s.ctrl.tilt, _bottom_d)
@@ -430,6 +442,8 @@ func _pose_stick(center: Vector3, flat: Vector3, tilt: float, bottom: float) -> 
 	want.y = clampf(want.y, hip_y + T.grip_top_low, hip_y + T.grip_top_high)
 	var reach := Vector3(center.x - want.x, 0, center.z - want.z)
 	var toe := reach.normalized() if reach.length() > 0.05 else dir
+	if _toe_physics != Vector3.ZERO:
+		toe = _toe_physics
 	toe_base = toe
 	toe = toe.rotated(Vector3.UP, blade_turn)
 	# the puck's spot is `center`; the blade sits beside it, face on (a right
