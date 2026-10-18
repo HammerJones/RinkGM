@@ -92,11 +92,43 @@ static func _seek(s: Skater, ai: TierAI, target: Vector2, arrive: float, sprint_
 		s.ctrl.move = Vector2.ZERO
 		return
 	s.ctrl.move = d / dist * clampf(dist / arrive, 0.0, 1.0) * effort
+	s.ctrl.move = _avoid(s, s.ctrl.move)
 	# dash to close long gaps when the skates already point the right way
 	s.ctrl.dash = dist > sprint_dist and s.heading.dot(Vector3(d.x, 0, d.y) / dist) > 0.9 \
 		and randf() < lerpf(0.01, 0.09, ai.dash_use)
 	var sp := _v2(s.vel)
 	s.ctrl.stop = dist < 2.0 and sp.length() > 4.5 and sp.dot(d) < 0.0
+
+
+## Nobody skates head-on into another body at full speed unless they mean
+## to hit it: steer round anyone on a collision course in the next 0.7
+## s, more sharply the sooner it would happen (a skater lining up a
+## check keeps going at the one they're checking).
+static func _avoid(s: Skater, move: Vector2) -> Vector2:
+	var me := _v2(s.position)
+	var mv := _v2(s.vel)
+	var out := move
+	for o: Skater in s.game.skaters:
+		if o == s or o.stun_timer > 0.0:
+			continue
+		if s.ctrl.check and o.team != s.team:
+			continue
+		var r := _v2(o.position) - me
+		var dist := r.length()
+		if dist > 8.0 or dist < 0.01:
+			continue
+		var closing := (mv - _v2(o.vel)).dot(r / dist)
+		if closing < 1.5:
+			continue
+		var t := (dist - Skater.RADIUS * 2.0) / closing
+		if t > 0.7:
+			continue
+		var away := Vector2(-r.y, r.x) / dist
+		if away.dot(move) < 0.0:
+			away = -away
+		var w := clampf(1.0 - t / 0.7, 0.0, 1.0)
+		out = out.lerp(away * maxf(move.length(), 0.6) - r / dist * 0.4 * w, w)
+	return out
 
 
 ## Rank of `s` among its teammates by distance to `p` (0 = closest).

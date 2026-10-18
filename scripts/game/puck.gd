@@ -6,6 +6,8 @@ extends Node3D
 
 signal goal_scored(net_side: int)
 signal post_hit
+## Over the glass and into the building: play is dead (Mechanics whistles).
+signal left_rink(at: Vector3)
 
 const RADIUS := 0.0381  # regulation: 3 in across, 1 in thick
 const GRAVITY := 9.8
@@ -14,9 +16,8 @@ var vel := Vector3.ZERO
 var controller: Skater = null
 var last_touch: Skater = null
 var pass_target: Skater = null
-## The passer's touch: added to the intended receiver's trap speed.
-var pass_touch := 0.0
 var frozen := false
+var out_of_play := false  ## over the glass: the building's colliders take over from the boards
 var in_net_side := 0
 var _ignore: Skater = null
 var _ignore_timer := 0.0
@@ -33,10 +34,10 @@ func reset_at(p: Vector3) -> void:
 	vel = Vector3.ZERO
 	controller = null
 	pass_target = null
-	pass_touch = 0.0
 	last_touch = null
 	in_net_side = 0
 	frozen = false
+	out_of_play = false
 	_ignore = null
 
 
@@ -67,8 +68,11 @@ func integrate(dt: float) -> void:
 	if frozen:
 		return
 	var prev := position
-	if position.y > 0.001 or vel.y > 0.0:
+	if out_of_play or position.y > 0.001 or vel.y > 0.0:
 		vel.y -= GRAVITY * dt
+	if out_of_play:
+		_fly_in_building(dt)
+		return
 	position += vel * dt
 	if position.y < 0.0:
 		position.y = 0.0
@@ -85,11 +89,29 @@ func integrate(dt: float) -> void:
 			var ns := maxf(0.0, s - (0.12 + 0.035 * s) * dt)
 			vel.x *= ns / s
 			vel.z *= ns / s
+	if VenuePhysics.clears_glass(position, RADIUS):
+		# over the glass: the boards don't stop it any more
+		out_of_play = true
+		controller = null
+		left_rink.emit(position)
+		return
 	_collide_boards()
 	if in_net_side != 0:
 		_hold_in_net()
 	else:
 		_collide_nets(prev)
+
+
+## Out of the rink: flying through the stands, bouncing off seats, rails,
+## fans and walls until it settles (VenuePhysics owns the building's shapes).
+func _fly_in_building(dt: float) -> void:
+	var space := get_world_3d().direct_space_state if is_inside_tree() else null
+	var c := VenuePhysics.contact(space, position, vel, RADIUS, dt)
+	if c.is_empty():
+		position += vel * dt
+		return
+	position = c.point
+	vel = VenuePhysics.bounce(vel, c)
 
 
 func _collide_boards() -> void:
