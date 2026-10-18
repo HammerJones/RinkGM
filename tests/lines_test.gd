@@ -54,6 +54,12 @@ func _on_change(team: int, _on_ice: Array) -> void:
 
 func _run() -> void:
 	var n: int = game.settings.skaters_on_ice
+	var dressed := {}  # the opening lines (an injury can bring a spare in late)
+	for team in 2:
+		for l in game.benches[team].f_lines + game.benches[team].d_pairs:
+			for p in l:
+				if p:
+					dressed[p.id] = true
 	for team in 2:
 		_check(game.team_skaters(team).size() == n, "team %d starts with %d on the ice" % [team, n])
 		_before[team] = game.team_skaters(team)
@@ -82,9 +88,10 @@ func _run() -> void:
 		var b: Bench = game.benches[team]
 		for l in b.f_lines + b.d_pairs:
 			for p in l:
-				if p and game.box.lines.get(p.id, {}).get("toi", 0.0) < 5.0:
+				if p and dressed.has(p.id) and not b.hurt.has(p.id) and game.box.lines.get(p.id, {}).get("toi", 0.0) < 5.0:
 					toi_ok = false
-	_check(toi_ok, "every line and pair got ice time")
+					print("  little ice time: team %d %s %s %.1f s (shift F %.0f s, D %.0f s)" % [team, p.position, p.short_name(), game.box.lines.get(p.id, {}).get("toi", 0.0), game.settings.shift_length("F"), game.settings.shift_length("D")])
+	_check(toi_ok, "every line and pair got ice time (injuries aside)")
 	# a stoppage swaps the called line before the faceoff. Wait for any
 	# change in progress to finish first: a skater still out from a half-done
 	# change can be the next line's player too and rightly stays on.
