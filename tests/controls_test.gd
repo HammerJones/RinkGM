@@ -112,7 +112,7 @@ func _run() -> void:
 	var lifts := 0
 	for trial in 20:
 		var before: int = game.stats.stick_lifts
-		await _lift_trial()
+		await _lift_trial(trial / 19.0)
 		if game.stats.stick_lifts > before:
 			lifts += 1
 	print("stick lift: %d of 20 lifted the carrier's stick" % lifts)
@@ -250,10 +250,14 @@ func _carry(p: Vector2, with_puck := true) -> void:
 	_t = 0.0
 
 
-func _lift_trial() -> void:
+## The lift is a strength contest with leverage: getting under their shaft
+## near the blade (`along` 1) beats them, near their hands (0) doesn't. Each
+## trial gets under a different point of the carrier's stick.
+func _lift_trial(along: float) -> void:
 	await _carry(Vector2(-15, 0), false)
 	var opp: Skater = game.team_skaters(1)[0]
-	opp.place(Vector2(-13.6, 0.4), Vector3(-1, 0, 0))
+	var at := lerpf(0.1, 0.9, along)
+	opp.place(Vector2(-13.8 + at * Skater.DEFAULT_BLADE.length(), 0.35 + at * Skater.DEFAULT_BLADE.y), Vector3(-1, 0, 0))
 	opp.stun_timer = 0.0
 	game.puck.reset_at(opp.puck_anchor())
 	game.puck.controller = opp

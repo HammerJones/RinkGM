@@ -38,6 +38,9 @@ signal stick_broken(s: Skater, stick_id: StringName, cause: StringName)
 ## The bench handed a skater a new stick (at the door, or at a faceoff).
 signal stick_replaced(s: Skater)
 
+
+const BRACED := 2.0  # balance multiplier for a skater who sees the hit coming
+
 var rink: Rink
 var venue: Venue
 var puck: Puck
@@ -138,6 +141,7 @@ func _ready() -> void:
 	puck = Puck.new()
 	add_child(puck)
 	puck.goal_scored.connect(_on_goal)
+	puck.left_rink.connect(_on_puck_out)
 	# the building around the ice (scenes/venue); `-- --no-venue` leaves it out
 	if not "--no-venue" in OS.get_cmdline_user_args():
 		venue = Venue.instantiate_for(fixture)
@@ -451,7 +455,6 @@ func _physics_process(dt: float) -> void:
 	for i in PUCK_SUBSTEPS:
 		var prev := puck.position
 		StickPuck.step(self, puck, sdt, float(i + 1) / PUCK_SUBSTEPS)
-		_check_out_of_play(sdt)
 		puck.integrate(sdt)
 		_puck_body_collisions()
 		for g in goalies:
@@ -542,6 +545,23 @@ func on_shot(s: Skater, slap: bool) -> void:
 	events.shot.emit(s.team, s.player, slap)
 
 
+## Over the glass: whistle, and face off in the zone it left from.
+## The puck cleared the glass (Puck.left_rink): whistle, and face off at the
+## nearest dot in the zone where it was last played. In a shootout the
+## attempt is over; in practice the puck comes back.
+func _on_puck_out(_at: Vector3) -> void:
+	if state != State.PLAY:
+		return
+	if practice:
+		_practice_reset = 1.0
+		return
+	if _so:
+		_so.on_puck_out()
+		return
+	hud.show_message("OUT OF PLAY", 1.2)
+	_whistle(nearest_dot(_last_played), "out_of_play")
+
+
 func on_save(g: Goalie, frozen: bool) -> void:
 	if state != State.PLAY:
 		return
@@ -603,7 +623,7 @@ func _collide_bodies() -> void:
 			var closing := (a.vel - b.vel).dot(nrm)
 			if closing <= 0.0:
 				continue
-			var imp := (1.0 + 0.25) * closing * 0.5
+			var imp := (1.0 + Contact.BODY_E) * closing * 0.5  # equal masses: half the closing speed each
 			a.vel -= nrm * imp
 			b.vel += nrm * imp
 			if a.team != b.team and closing > 3.0:
@@ -618,34 +638,51 @@ func _collide_bodies() -> void:
 		for s in skaters:
 			var d := Vector2(s.position.x - g.pos2.x, s.position.z - g.pos2.y)
 			var r := Skater.RADIUS + 0.45
-			if d.length() < r and d.length() > 0.0001:
-				var p := g.pos2 + d.normalized() * r
-				s.position = Vector3(p.x, 0, p.y)
-				var n3 := Vector3(d.x, 0, d.y).normalized()
-				var vn := s.vel.dot(n3)
-				if vn < 0.0:
-					s.vel -= n3 * vn
+			var dist := d.length()
+			if dist >= r or dist < 0.0001:
+				continue
+			# two bodies with mass: they share the overlap and the impulse
+			var n2 := d / dist
+			var ws := Goalie.MASS / (Goalie.MASS + Skater.MASS)
+			var p := (r - dist) * n2
+			s.position += Vector3(p.x, 0, p.y) * ws
+			g.pos2 -= p * (1.0 - ws)
+			var closing := (Vector2(s.vel.x, s.vel.z) - g.vel2).dot(-n2)
+			if closing > 0.0:
+				var j := (1.0 + 0.2) * closing * Contact.reduced_mass(Skater.MASS, Goalie.MASS)
+				s.vel += Vector3(n2.x, 0, n2.y) * j / Skater.MASS
+				g.push(-n2 * j)
 
 
-## Opponents colliding: the impulse grows with closing speed and the hitter's
-## rating (more with a shoulder check). It knocks the victim down if it beats
-## their balance (toughness, less while carving hard or stopping), and a
-## lighter hit can still jar the puck loose.
+## Opponents colliding. The bump itself (the collision impulse along the
+## line between them, from closing speed and their masses) was applied by
+## _collide_bodies; a shoulder check adds the hitter's leg drive through the
+## contact. The victim goes down if the jolt beats their balance (toughness,
+## less while carving hard, stopping or dashing). A carrier who stays up keeps
+## the puck only as far as their blade still holds it: their body has moved
+## and the blade with it.
 func _body_hit(hitter: Skater, victim: Skater, nrm: Vector3, closing: float) -> void:
 	if victim.stun_timer > 0.0:
 		return
-	# a shoulder check carries the hitter's weight; incidental bumps don't
-	var impulse := closing * Skater.MASS * 0.5 * hitter.profile.hit_power
-	impulse *= 1.4 if hitter.check_timer > 0.0 else 0.3
-	var balance := victim.profile.balance * victim.stability()
-	var down := impulse > balance
+	var impulse := (1.0 + Contact.BODY_E) * closing * Contact.reduced_mass(Skater.MASS, Skater.MASS)
+	if hitter.check_timer > 0.0:
+		var drive := hitter.profile.leg_drive * Contact.CHECK_TIME
+		victim.vel += nrm * drive / Skater.MASS
+		hitter.vel -= nrm * drive / Skater.MASS * 0.5  # (braced: the legs take the rest)
+		impulse += drive
+	var down := impulse / Skater.MASS > victim.profile.balance * victim.stability() * _braced(victim, hitter)
 	stats.hits += 1
 	if down:
 		stats.knockdowns += 1
-		victim.knock_down(nrm * closing * 0.6)
-	elif victim.has_puck() and impulse > balance * 0.6 and randf() < (impulse / balance - 0.6) * 1.5:
-		puck.release(victim, victim.vel + nrm * 2.0)
+		victim.knock_down()
 	hit_landed.emit(hitter, victim, impulse, down)
+
+
+## A skater who sees the hit coming sets their feet and takes far more of
+## it; one hit from the side or behind takes it as it comes.
+func _braced(victim: Skater, hitter: Skater) -> float:
+	var to := Vector3(hitter.position.x - victim.position.x, 0, hitter.position.z - victim.position.z)
+	return BRACED if to.length() > 0.01 and victim.heading.dot(to.normalized()) > -0.2 else 1.0
 
 
 func on_stick_lift(by: Skater, victim: Skater) -> void:
@@ -712,17 +749,6 @@ func _check_stall(dt: float) -> void:
 	_stall += dt
 	if _stall > 8.0:
 		_whistle(nearest_dot(Vector2(puck.position.x, puck.position.z)), "stall")
-
-
-## A puck about to go over the glass this step (VenuePhysics.clears_glass)
-## is out of play: whistle, and face off at the nearest dot in the zone where
-## it was last played.
-func _check_out_of_play(dt: float) -> void:
-	if state != State.PLAY or practice or _so or puck.frozen:
-		return
-	if VenuePhysics.clears_glass(puck.position + puck.vel * dt, Puck.RADIUS):
-		hud.show_message("OUT OF PLAY", 1.2)
-		_whistle(nearest_dot(_last_played), "out_of_play")
 
 
 ## The faceoff dot nearest `p` in its zone: an end-zone dot past the blue

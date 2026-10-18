@@ -82,6 +82,11 @@ func on_save() -> void:
 		_result(false)
 
 
+func on_puck_out() -> void:
+	if phase == Phase.LIVE:
+		_result(false)
+
+
 func winner() -> int:
 	if made[0] != made[1]:
 		return 0 if made[0] > made[1] else 1

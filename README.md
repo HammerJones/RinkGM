@@ -76,15 +76,22 @@ moves a player has learned is up to progression (`Skater.knows`).
 Each skater has `Skills` (`scripts/career/skills.gd`, ratings 1 to 100: speed, agility, stick handling,
 shot accuracy, shot power, shot release, pass quality, hitting, toughness).
 `PhysicsProfile` turns those ratings into physical numbers, so every
-rating-to-physics curve is in one file. Everything is simulated, and
-`Tuning.blend` (0 = SIM, 0.5 = HYBRID, 1 = ARCADE, cycled with F1) adds
-assistance on top.
+rating-to-physics curve is in one file. Everything in play is a simulated
+object: every contact (blade on puck, puck on pads, body on body) is an
+impulse worked out from the two objects' velocities, with restitution and
+friction (`scripts/game/contact.gd`). Ratings shape what a body can do
+(how fast it swings, how soft its hands are, how hard it drives its legs),
+never the outcome of a contact. Nothing in play is rolled. `Tuning.blend`
+(0 = SIM, the default, 0.5 = HYBRID, 1 = ARCADE, cycled with F1) adds
+skating and stick-control assistance on top; it never changes contacts.
 
 - **Skating** (`scripts/game/skater.gd`): you only push along your skates, so
   turning is carving, and turns get wider at speed. Top speed runs from
-  12 mph (speed 1) to 25 mph (speed 100), an absolute ceiling, rising faster
-  at the top: about 15 mph in a beer league, 18 at senior AAA. A dash is a
-  burst stride that gets you to top speed faster and costs stamina. The hockey stop scrapes speed off
+  12 mph (speed 1) to 25 mph (speed 100), where the strides fade out against
+  drag (25 mph is the hard ceiling for anyone), rising faster at the top:
+  about 15 mph in a beer league, 18 at senior AAA. A dash is a few hard
+  strides, a push over 0.2 s, that gets you to top speed faster and costs
+  stamina. The hockey stop scrapes speed off
   sideways; agility sets how fast you turn, how hard your edges grip, and how
   short you stop. Carving never adds speed past top speed.
 - **Stick and puck** (`scripts/game/stick_puck.gd`): the blade swings around
@@ -92,38 +99,56 @@ assistance on top.
   handling. Both hands are on the stick in the front 90 degrees; beyond that
   it's one hand: more reach, but a weaker hold on the puck and weaker, wilder
   shots. Pulling the stick back past 95 degrees winds up a shot. The puck is
-  a free physical object: the blade is a solid face that pushes it, traps or
-  deflects a loose puck, and cups a carried one against the face, but only so
-  hard (grip, also from stick handling). Stickhandling moves the puck with the
+  a free physical object: the blade is a solid face that pushes it, and a
+  loose puck bounces off it. A receiver's soft hands give with the puck (low
+  restitution from pass quality and stick handling), so a good receiver
+  soaks a pass up and a poor one bobbles it; it's theirs once it sits on the
+  face. The curve of the blade cups a carried puck, only as hard as the
+  hands can hold it (grip, from stick handling). Stickhandling moves the puck with the
   stick: to bring it back the other way the skater lifts the blade over the
   puck and sets it down on the far side. Stickhandle faster than your rating,
   or cut harder than you can hold (agility turns you faster, which is harder
   to hold), and the puck slides off. Lifting your stick takes the blade off the puck for
-  moves; on defense it lifts the carrier's stick if you're close, with odds
-  from both players' ratings.
+  moves; on defense, with your blade under the carrier's shaft, it's a
+  strength contest: your lift with the leverage of where you got under it
+  (near their blade, easy; near their hands, hopeless) against how hard they
+  bear down.
 - **Stick moves** (`scripts/game/move_physics.gd`): each learned move from the
   catalog (Shots and stick moves above) runs as a blade path around the body,
   from wherever the blade is, under the skater's own blade limits, so weak
   hands run it slower and can lose the puck. Move shots (snapshot, backhand
   snap, toe drag shot) have their own power, accuracy and loft; the lacrosse
   carries the puck up on the blade until it's thrown.
-- **Shooting**: one wind-up model for all shots. A shot with no wind-up comes
-  off instantly but weak and wild; shot release sets how good that instant
-  shot is and how fast you reach full power. Shot power sets the top speed
-  (a full slapshot is about 60 mph at 1, 98 mph at 100), shot accuracy the aim
-  error. Skating fast or carving hard costs accuracy. Tilting the blade raises
-  the shot. Arcade adds aim assist toward the inside of the posts.
-- **Passing**: pass quality sets pass accuracy, how soft a pass arrives for its
-  intended target, and how fast a puck you can trap. At 100 the target almost
-  always gets clean control.
+- **Shooting**: a shot is the blade swung through the puck
+  (`StickPuck.strike`): the puck comes off a heavy, springy blade moving at
+  the swing speed plus the skater's own skating speed, so a one-timer keeps
+  some of the pass's speed and a shot on the move carries the skater's. The
+  wind-up loads the shaft's flex. Shot release sets how good a no-wind-up
+  shot is and how fast you reach full power; shot power sets the swing (a full
+  slapshot is about 60 mph at 1, 98 mph at 100). Where the face points is the
+  aim, give or take how steady the hands are (`Skater.hand_shake`, a smooth
+  tremor scaled by shot accuracy, skating speed and carving); tilt opens the
+  face and raises the shot.
+- **Passing**: the same strike, a gentler sweep at the receiver's blade led by
+  where they're skating. Who to pass to is the player's or AI's call (the
+  AI's choice, or whoever is nearest where you push the stick). Pass quality
+  sets how steady the sweep is and how soft your own hands receive.
 - **Hits**: `Game.hit_landed(hitter, victim, impulse, knocked_down)` fires on
-  every contact between opponents. Impulse comes from closing speed and the
-  hitter's rating, much more for a shoulder check. It knocks the victim down if
-  it beats their balance (toughness, lowered while they carve hard, stop or
-  dash), and a smaller hit can still jar the puck loose.
-- **Goalies** (`scripts/game/goalie.gd`) play the angle, read the shot after a
-  reaction delay, reach toward where the puck will cross, drop to the butterfly
-  for low shots, and either hold the puck (whistle) or give up a rebound.
+  every contact between opponents. The bump is a collision of two 85 kg
+  bodies from their closing speed; a shoulder check adds the hitter's leg
+  drive (hitting). The victim goes down if the jolt beats their balance
+  (toughness, lower while carving hard, stopping or dashing, much higher if
+  they saw it coming). A carrier who stays up keeps the puck only if their
+  blade still holds it. The AI steers round head-on collisions it doesn't
+  mean.
+- **Goalies** (`scripts/game/goalie.gd`) are bodies with mass that skate the
+  crease (they can be bumped) to play the angle, read the shooter's wind-up
+  and the shot after a reaction time, drop to the butterfly for low shots and
+  in tight, and reach with the glove or blocker. Saves are collisions with
+  pads, body, blocker, stick and glove, each as lively as the real thing; the
+  glove holds a puck it can squeeze (whistle) and everything else is a
+  rebound off whatever it hit. Over the glass, the puck flies into the
+  building (`Puck.left_rink`, whistle).
 - **On-ice AI** (`scripts/game/skater_ai.gd`, the goalie) plays to the league
   tier, not just the ratings: each team reads a `TierAI` (`game.ai_for`). A beer
   league reacts late to turnovers, sends two or three skaters after the puck,

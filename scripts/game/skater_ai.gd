@@ -38,7 +38,7 @@ static func think(s: Skater, g: Node, dt: float) -> void:
 		c.blade_target = was_blade
 		return
 	if owner == s and g.shootout:
-		_shootout_carry(s, g, ai)
+		_shootout_carry(s, g, ai, dt)
 	elif owner == s:
 		_carry(s, g, ai, dt)
 	elif owner != null and owner.team == s.team:
@@ -98,11 +98,43 @@ static func _seek(s: Skater, ai: TierAI, target: Vector2, arrive: float, sprint_
 		s.ctrl.move = Vector2.ZERO
 		return
 	s.ctrl.move = d / dist * clampf(dist / arrive, 0.0, 1.0) * effort
+	s.ctrl.move = _avoid(s, s.ctrl.move)
 	# dash to close long gaps when the skates already point the right way
 	s.ctrl.dash = dist > sprint_dist and s.heading.dot(Vector3(d.x, 0, d.y) / dist) > 0.9 \
 		and randf() < lerpf(0.01, 0.09, ai.dash_use)
 	var sp := _v2(s.vel)
 	s.ctrl.stop = dist < 2.0 and sp.length() > 4.5 and sp.dot(d) < 0.0
+
+
+## Nobody skates head-on into another body at full speed unless they mean
+## to hit it: steer round anyone on a collision course in the next 0.7
+## s, more sharply the sooner it would happen (a skater lining up a
+## check keeps going at the one they're checking).
+static func _avoid(s: Skater, move: Vector2) -> Vector2:
+	var me := _v2(s.position)
+	var mv := _v2(s.vel)
+	var out := move
+	for o: Skater in s.game.skaters:
+		if o == s or o.stun_timer > 0.0:
+			continue
+		if s.ctrl.check and o.team != s.team:
+			continue
+		var r := _v2(o.position) - me
+		var dist := r.length()
+		if dist > 8.0 or dist < 0.01:
+			continue
+		var closing := (mv - _v2(o.vel)).dot(r / dist)
+		if closing < 1.5:
+			continue
+		var t := (dist - Skater.RADIUS * 2.0) / closing
+		if t > 0.7:
+			continue
+		var away := Vector2(-r.y, r.x) / dist
+		if away.dot(move) < 0.0:
+			away = -away
+		var w := clampf(1.0 - t / 0.7, 0.0, 1.0)
+		out = out.lerp(away * maxf(move.length(), 0.6) - r / dist * 0.4 * w, w)
+	return out
 
 
 ## Rank of `s` among its teammates by distance to `p` (0 = closest).
@@ -176,38 +208,60 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 	c.blade_target = _carry_blade(s, g, ai)
 
 
-## Shootout, alone with the goalie: come in wide on one side at speed, cut
-## across the slot and pick a corner, the far post or the side the goalie
-## has left open. A better shot-picker comes in closer before letting go.
-static func _shootout_carry(s: Skater, g: Node, ai: TierAI) -> void:
+## Shootout, alone with the goalie. A shooter comes in wide on their lane
+## and lets a high shot go for the far side; a deker (every third shooter)
+## comes in close, cuts hard across the crease to pull the goalie over and
+## shoots for the side they've left. A better shot-picker reads the goalie.
+static func _shootout_carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 	var c := s.ctrl
 	var att: int = g.attack_side(s.team)
 	var me := _v2(s.position)
 	var goal := Vector2(att * Rink.GOAL_X, 0)
 	var ahead := (goal.x - me.x) * att
-	# each shooter has their own lane and release distance
 	var lane := 1.6 if s.number % 2 == 0 else -1.6
-	var release := lerpf(9.5, 6.0, ai.shot_selection) + fmod(s.number * 0.73, 1.0)
+	var deke := s.number % 3 == 0
+	var gk: Goalie = null
+	for o: Goalie in g.goalies:
+		if o.team != s.team:
+			gk = o
 	c.blade_target = s.position + s.heading * Skater.DEFAULT_BLADE.x + s.right_vec() * 0.3
-	if ahead > release:
-		var aim_lane := lane if ahead > release + 6.0 else lane * 0.4
-		_seek(s, ai, Vector2(goal.x - att * (release - 1.0), aim_lane), 1.0, 30.0)
+	s.ai_decide -= dt
+	if s.ai_shoot_timer > 0.0 or s.ai_decide > 0.0:
+		# shot away (or the button just let go): follow it in
+		_seek(s, ai, goal, 1.0, 30.0)
 		return
-	if s.ai_shoot_timer > 0.0:
+	var ready := false
+	if deke:
+		# in to the top of the crease on the lane, then across it
+		if ahead > 4.0:
+			_seek(s, ai, Vector2(goal.x - att * 3.5, lane), 1.0, 30.0)
+			return
+		_seek(s, ai, Vector2(goal.x - att * 1.6, -lane * 0.9), 0.6, 30.0)
+		var gap := absf(me.y - gk.pos2.y) if gk else 1.0
+		ready = gap > 0.7 or ahead < 1.8
+	else:
+		var release := lerpf(11.0, 8.0, ai.shot_selection) + fmod(s.number * 0.73, 1.0)
+		if ahead > release:
+			var aim_lane := lane if ahead > release + 6.0 else lane * 0.5
+			_seek(s, ai, Vector2(goal.x - att * (release - 1.0), aim_lane), 1.0, 30.0)
+			return
+		_seek(s, ai, goal, 1.0, 30.0)
+		ready = true
+	if not ready:
 		return
+	# one shot, then let go of the button (a re-press the next frame would
+	# start a new wind-up instead of releasing)
+	s.ai_decide = 1.0
 	var side := -signf(me.y) if absf(me.y) > 0.3 else (1.0 if randf() < 0.5 else -1.0)
-	if randf() < ai.shot_selection:
-		for gk: Goalie in g.goalies:
-			if gk.team != s.team and absf(gk.pos2.y) > 0.1:
-				side = -signf(gk.pos2.y)
+	if gk and absf(gk.pos2.y) > 0.1 and (deke or randf() < ai.shot_selection):
+		side = -signf(gk.pos2.y)
 	s.ai_aim = Vector3(goal.x, 0, side * (Rink.NET_HALF_W - 0.15))
 	s.ai_slap = false
-	s.ai_tilt = randf_range(0.3, 0.9)
-	s.ai_shoot_timer = randf_range(0.15, 0.35)
+	s.ai_tilt = randf_range(0.6, 1.0)
+	s.ai_shoot_timer = randf_range(0.08, 0.2) if deke else randf_range(0.15, 0.35)
 	c.shoot = true
 	c.tilt = s.ai_tilt
 	c.aim_point = s.ai_aim
-	_seek(s, ai, goal, 1.0, 30.0)
 
 
 ## Which post to shoot for: a disciplined shooter picks the side the goalie

@@ -473,6 +473,7 @@ func _shots(st: Skills, held: float, slap: bool, n: int, kind := &"wrist_shot") 
 		_give_puck(s)
 		puck.position.y = 0.0
 		s.shot_kind = kind
+		s._clock = i * 0.731  # a different moment of the hands' tremor each time
 		s.shoot(held, slap)
 		var v := puck.vel
 		var from := puck.position
@@ -515,11 +516,11 @@ func _bench_passes() -> void:
 	_line("")
 	_line("## Passes to a standing teammate")
 	_line("")
-	_line("Share of passes the receiver traps cleanly. Passer and receiver have the same pass quality.")
+	_line("Share of passes the receiver traps cleanly (under control within 0.3 s of touching the blade). Passer and receiver have the same pass quality.")
 	_line("")
 	_line("| pass quality | 8 m | 15 m | 22 m |")
 	_line("|---|---|---|---|")
-	for r in RATINGS:
+	for r in [1, 25, 40, 60, 80, 100]:
 		var cells := []
 		for dist in [8.0, 15.0, 22.0]:
 			var ok := 0
@@ -536,12 +537,19 @@ func _bench_passes() -> void:
 				a.ctrl.reset()
 				a.ctrl.pass_pressed = true
 				a.ctrl.pass_hint = b
+				a._clock = i * 0.731  # a different moment of the hands' tremor each time
+				b._clock = i * 0.913
 				_step()
+				# clean: under control within 0.3 s of first touching the blade,
+				# not bobbled and chased down
 				var t := 0.0
-				while t < 3.0 and not b.has_puck():
+				var touched := -1.0
+				while t < 3.0 and not b.has_puck() and (touched < 0.0 or t - touched < 0.3):
 					_step()
 					t += DT
-				if b.has_puck():
+					if touched < 0.0 and puck.last_touch == b:
+						touched = t
+				if b.has_puck() and t - touched <= 0.3:
 					ok += 1
 			cells.append("%d%%" % int(ok * 100.0 / n))
 		_line("| %d | %s | %s | %s |" % [r, cells[0], cells[1], cells[2]])
@@ -593,7 +601,7 @@ func _bench_hits() -> void:
 	_line("")
 	_line("## Body checks (shoulder check, 6 m/s closing speed, victim skating straight)")
 	_line("")
-	_line("Impulse / victim's balance. Above 1.0 knocks them down; 0.6 to 1.0 can jar the puck loose.")
+	_line("The victim's jolt (speed change from the collision plus the hitter's leg drive) over their balance. Above 1.0 knocks them down.")
 	_line("")
 	_line("| hitting \\ toughness | 1 | 50 | 100 |")
 	_line("|---|---|---|---|")
@@ -602,7 +610,7 @@ func _bench_hits() -> void:
 		var cells := []
 		for tg in [1, 50, 100]:
 			var vp := PhysicsProfile.from_skills(_stats({"toughness": tg}))
-			var impulse := 6.0 * Skater.MASS * 0.5 * hp.hit_power * 1.4
-			cells.append("%.2f" % (impulse / vp.balance))
+			var impulse: float = (1.0 + Contact.BODY_E) * 6.0 * Contact.reduced_mass(Skater.MASS, Skater.MASS) + hp.leg_drive * Contact.CHECK_TIME
+			cells.append("%.2f" % (impulse / Skater.MASS / vp.balance))
 		_line("| %d | %s | %s | %s |" % [h, cells[0], cells[1], cells[2]])
 

@@ -16,7 +16,7 @@ extends RefCounted
 ##
 ## A `shot` fires at `release` seconds into the path, as strong as a wrist
 ## shot of `wind`, times `power`, with `error` times its aim error and a
-## target height at the net in `loft`.
+## face angle in `loft_deg`.
 ## `glue` keeps the puck on the blade for the whole move (it can't be carried
 ## up in the air by friction alone). `cradle` holds the end of the path until
 ## the stick is pushed forward to throw it (`wind` sets the throw like a wrist
@@ -28,13 +28,13 @@ const MOVES := {
 	&"snap_shot": {
 		"needs_puck": true,
 		"path": [[0.08, -5.0, 1.35, 0.0]],
-		"shot": {"release": 0.06, "wind": 0.35, "power": 1.0, "error": 1.0, "loft": [0.3, 0.7]},
+		"shot": {"release": 0.06, "wind": 0.35, "power": 1.0, "error": 1.0, "loft_deg": 8.0},
 	},
 	# the same off the backhand: weaker and wilder, but it gets up
 	&"backhand_shot": {
 		"needs_puck": true,
 		"path": [[0.1, 10.0, 1.3, 0.0]],
-		"shot": {"release": 0.08, "wind": 0.4, "power": 0.72, "error": 1.4, "loft": [0.6, 1.0]},
+		"shot": {"release": 0.08, "wind": 0.4, "power": 0.72, "error": 1.4, "loft_deg": 11.0},
 	},
 	# forehand to backhand and back, puck on the blade the whole way
 	&"quick_deke": {
@@ -52,7 +52,7 @@ const MOVES := {
 		"needs_puck": true,
 		"path": [[0.06, 8.0, 1.4, 0.2], [0.13, 12.0, 1.35, 0.2], [0.17, 8.0, 1.35, 0.0], [0.38, -30.0, 0.85, 0.0],
 			[0.5, 0.0, 1.3, 0.0]],
-		"shot": {"release": 0.47, "wind": 0.25, "power": 0.9, "error": 1.2, "loft": [0.2, 0.6]},
+		"shot": {"release": 0.47, "wind": 0.25, "power": 0.9, "error": 1.2, "loft_deg": 7.0},
 	},
 	# scoop it onto the blade round the front and carry it up behind the
 	# forehand hip
@@ -68,10 +68,10 @@ const MOVES := {
 ## catalog ids), applied on top of the wind-up:
 ##   wind      the shot is as strong as a wrist shot of this wind-up, however long it was held
 ##   aim_wind  ... and as accurate as one of this wind-up
-##   power, error  multipliers;  loft  [min, max] target height at the net (m)
+##   power, error  multipliers;  loft_deg  how far the face is opened (degrees above flat)
 const SHOTS := {
 	&"backhand": {"power": 0.8, "error": 1.3},
-	&"lacrosse": {"wind": 0.4, "power": 0.9, "error": 1.25, "loft": [0.75, 1.05]},
+	&"lacrosse": {"wind": 0.4, "power": 0.9, "error": 1.25, "loft_deg": 13.0},
 }
 
 
