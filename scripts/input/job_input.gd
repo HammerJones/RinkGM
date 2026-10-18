@@ -87,7 +87,9 @@ func poll(dt: float, context: Context) -> Frame:
 		scripted.call(f, dt, context)
 		_finish(f)
 		return f
-	var pad := InputSetup.device == InputSetup.Device.PAD
+	# looked up at runtime: `--script` tests have no autoloads
+	var setup := get_node_or_null(^"/root/InputSetup")
+	var pad: bool = setup != null and setup.get("device") == 1   # InputSetup.Device.PAD
 	f.move = Input.get_vector("move_left", "move_right", "move_down", "move_up", 0.15)
 	f.run = Input.is_action_pressed("job_run")
 	f.interact_pressed = Input.is_action_just_pressed("job_interact")

@@ -18,6 +18,7 @@ func _run() -> void:
 	_torque_wrench()
 	_pump()
 	_picker()
+	_input_layer()
 	if failures:
 		printerr("test_job_input: %d failure(s)" % failures)
 	else:
@@ -160,6 +161,21 @@ func _picker() -> void:
 	_check(InteractPicker.use(door) and door.is_open, "interact toggles a door open")
 	_check(InteractPicker.prompt_for(door) == "Close", "then Close")
 	root.queue_free()
+
+
+## JobInput runs without the autoloads (job scene tests load it under --script).
+func _input_layer() -> void:
+	var ji := JobInput.new()
+	get_root().add_child(ji)
+	ji.scripted = func(f, _dt, ctx):
+		f.grab = 1.0
+		f.turn = 0.25 if ctx == JobInput.Context.BENCH else 0.0
+	var f := ji.poll(1.0 / 120.0, JobInput.Context.BENCH)
+	_check(f.grab_pressed and f.turn == 0.25, "a scripted frame comes through poll")
+	ji.scripted = Callable()
+	f = ji.poll(1.0 / 120.0, JobInput.Context.FOOT)
+	_check(f.grab_released and f.turn == 0.0, "the devices poll without the autoloads")
+	ji.queue_free()
 
 
 func _check(ok: bool, what: String) -> void:
