@@ -13,19 +13,25 @@ extends RefCounted
 ##   {"screen": id}
 ##   {"toast": text}
 
-const START_DAY := 1        # RinkSim day 1 is a Monday
-const START_MINUTE := 5 * 60
+const START_MINUTE := RinkSim.WAKE_MIN  # 05:00 on the M1 sim's day 0, a Monday
 ## Sim minutes per real second while walking: the first hour of play covers
 ## 05:00 to about 06:45, as in the 1.6 table.
 const TIME_SCALE := 1.75 / 60.0
 const LOCKED := ["Front doors"]
 const NOTES_PATH := "res://data/venue/notes.json"
 const READABLES_PATH := "res://data/world/readables.json"
-## World's job ids the sim doesn't know yet, and the sim job that stands in.
-const STAND_INS := {"doris_plugs": "engine_tune"}
 
 var venue: Venue
 var sim: RinkSim
+## The owner career's rink when the walk runs inside one (CareerState.rink):
+## its sim, and its clock, which stops for the owner's Tuesday game.
+var rink: RinkLink
+## The first hour's set-up (dark lot, locked doors) applies: a fresh sim, or
+## a career on its first morning.
+var first_hour := true
+## Set when the career's clock stopped for the owner's game: the walk sends
+## the player back to the hub to play it.
+var game_due := false
 ## World's RinkLife when the walk has one: jobs go through it so side
 ## quests hear about them.
 var life = null
@@ -35,15 +41,35 @@ var _clock_acc := 0.0
 var _texts := {}
 
 
-static func start(venue_: Venue, sim_: RinkSim = null) -> WalkStory:
+## The walk's story. With no sim given it uses the owner career's rink when
+## there is one (its day and minute are the career's save, so they stay), else
+## a fresh M1 sim (05:00 on the first Monday, Doris won't start).
+static func start(venue_: Venue, sim_: RinkSim = null, rink_: RinkLink = null) -> WalkStory:
 	var w := WalkStory.new()
 	w.venue = venue_
-	w.sim = sim_ if sim_ else RinkSim.create()
-	w.sim.day = START_DAY
-	w.sim.minute = START_MINUTE
+	if sim_ == null and rink_ == null:
+		# looked up at runtime so --script tests without the autoloads compile
+		var cs: Node = (Engine.get_main_loop() as SceneTree).root.get_node_or_null("CareerState")
+		rink_ = cs.rink if cs else null
+	w.rink = rink_
+	w.sim = rink_.sim if rink_ else (sim_ if sim_ else RinkSim.create_m1())
+	w.first_hour = w.sim.day == 0 and w.sim.minute <= START_MINUTE
+	if not w.first_hour:
+		w.flags["keys"] = true
 	w._load_texts()
-	venue_.set_ice_lights(false)
+	w._show_sim()
 	return w
+
+
+## The building as the sim has it: the ice lights' switch and the snow pit.
+## (The lamps' warm-up glow stays the venue's, a few seconds long, since the
+## sim warms them in quarter-hour steps.)
+func _show_sim() -> void:
+	if venue.ice_lights_on() != sim.lights_on:
+		venue.set_ice_lights(sim.lights_on)
+	var bay = venue.rooms.get("zamboni_bay")
+	if bay:
+		bay.set_snow(sim.snow_pit)
 
 
 func _load_texts() -> void:
@@ -57,22 +83,21 @@ func _load_texts() -> void:
 				_texts[r.id] = r
 
 
-## Real seconds walked: moves the sim clock on in its 15-minute steps and
-## melts the snow pit while its heater runs.
+## Real seconds walked: moves the sim clock on in its 15-minute steps (the
+## career's clock when there is one, stopping for the owner's game).
 func tick(dt: float) -> void:
+	if game_due:
+		return
 	_clock_acc += dt * TIME_SCALE
 	while _clock_acc >= RinkSim.STEP_MIN:
 		_clock_acc -= RinkSim.STEP_MIN
-		sim.advance(RinkSim.STEP_MIN)
-		var bay = venue.rooms.get("zamboni_bay")
-		if bay and "snow_pit" in sim:
-			bay.set_snow(sim.snow_pit)
-		elif bay and bay.has_method("tick_pit"):
-			bay.tick_pit(RinkSim.STEP_MIN)
-	# once the sim keeps the lamps' warm-up, the building shows its number
-	var lights = venue.rooms.get("lighting")
-	if lights and lights.lights_on and "lights_warm" in sim:
-		lights._set_power(maxf(float(sim.lights_warm), 0.02))
+		if rink:
+			game_due = rink.advance(RinkSim.STEP_MIN)
+		else:
+			sim.advance(RinkSim.STEP_MIN)
+		_show_sim()
+		if game_due:
+			return
 
 
 func clock_text() -> String:
@@ -129,24 +154,11 @@ func use(s: VenueSpot) -> Dictionary:
 			return {"screen": d.get("screen", s.id)}
 		VenueSpot.Kind.SWITCH:
 			if d.get("system", "") == "ice_lights":
-				venue.set_ice_lights(not venue.ice_lights_on())
-				if sim.has_method("set_lights"):
-					sim.set_lights(venue.ice_lights_on())
+				sim.set_lights(not sim.lights_on)
+				_show_sim()
 				return {"toast": "ICE LIGHTS ON. THEY TAKE A FEW MINUTES." if venue.ice_lights_on() else "ICE LIGHTS OFF."}
-		VenueSpot.Kind.USE:
-			if s.id == "snow_pit":
-				return _snow_pit()
 	return {"toast": s.label}
 
-
-func _snow_pit() -> Dictionary:
-	var bay = venue.rooms.get("zamboni_bay")
-	if bay == null:
-		return {}
-	if not bay.pit_heater:
-		bay.pit_heater = true
-		return {"toast": "PIT HEATER RESET. IT HUMS, THEN CLICKS ON. %d%% FULL." % roundi(bay.snow * 100.0)}
-	return {"toast": "THE PIT IS %d%% FULL AND MELTING." % roundi(bay.snow * 100.0)}
 
 
 ## A mini game (or the quick way, when its scene isn't built yet) finished
@@ -155,9 +167,8 @@ func finish_job(job: Dictionary, result: Dictionary) -> Dictionary:
 	var args: Dictionary = job.get("args", {}).duplicate()
 	args.merge(result, true)
 	var id: String = job.get("job", "")
-	if not RinkSim.JOBS.has(id):
-		id = STAND_INS.get(id, id)
 	var r: Dictionary = life.job(id, args) if life else sim.job(id, args)
+	_show_sim()
 	if r.get("ok", false) and job.get("target", "") == "doris_plugs":
 		flags["doris_running"] = true
 	return r

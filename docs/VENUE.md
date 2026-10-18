@@ -146,7 +146,7 @@ runs that flow with a stand-in integrator.
 
 ## The first hour (RINK_SIM M1)
 
-`--venue-walk` now starts the first hour at Millbrook (RINK_SIM.md 1.6):
+`--venue-walk` starts the first hour at Millbrook (RINK_SIM.md 1.6):
 05:00 on Monday in the dark lot, with the front doors locked and the ice
 lights off. `--free-walk` gives the old walk from the lobby.
 
@@ -167,8 +167,8 @@ kinds:
   (Gus's goals), the ice grid and the log book.
 - **SWITCH** works a building system: the lighting panel in the lobby turns
   the ice lights on, and the metal halides take about 40 s to warm up.
-- **USE** covers the rest by id: the snow pit. Its heater melts a full pit
-  in 120 sim minutes, and the pile out back is Mount Doris.
+- **USE** covers anything else by id (nothing yet). The snow pit is a JOB,
+  the sim's `dump_snow`, and the pile out back is Mount Doris.
 
 `WalkStory` decides what using a spot does and keeps the RinkSim clock
 (about 1.75 sim minutes per real second). The walk scene does what it says:
@@ -183,14 +183,22 @@ kinds:
   `{sim, job, target, room, args}`. When its `finished(result)` signal
   fires, `WalkStory.finish_job` runs the job with the args merged with
   `result`, through `RinkLife.job` when the walk has one (`WalkStory.life`),
-  else `RinkSim.job`. Until the sim knows `doris_plugs`, `engine_tune` stands
-  in for it.
+  else `RinkSim.job`.
 - If the scene isn't built yet, the job offers the quick way instead.
 - Texts prefer World's readables (`note_door_oil`, `note_screwdriver`,
   `note_doris_dash`) and fall back to `data/venue/notes.json`.
-- The breaker calls `sim.set_lights(on)`. Once the sim has `lights_warm` and
-  `snow_pit`, the lamps and the pit show those numbers; until then the
-  venue keeps its own.
+- The sim owns the building's state. The breaker calls `sim.set_lights(on)`,
+  the lamps follow `sim.lights_on`, and the pit heap follows `sim.snow_pit`.
+  The lamps' glow still warms up over the venue's 40 s, because the sim
+  warms them in quarter-hour steps.
+
+Inside an owner career (`CareerState.rink`), the walk uses the career's sim
+and clock (`RinkLink.advance`) and leaves its day and minute alone. The
+first hour's set-up applies only on the career's first morning. Any other
+time, the walk starts in the office with the doors unlocked. The office desk
+saves and goes back to the rink office. When the clock stops for the
+owner's game, the walk saves and sends the player to the hub. Without a
+career, the walk runs a fresh M1 sim (`RinkSim.create_m1`).
 
 `tools/tests/test_first_hour.gd` plays the hour headless.
 `tools/venue_shots.gd --first-hour [--lights]` renders it.

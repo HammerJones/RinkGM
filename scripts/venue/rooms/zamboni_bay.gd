@@ -11,11 +11,10 @@ const H := 5.0
 ## The snow-melt pit under its grate, in venue space.
 const PIT := Rect2(42.8, -4.6, 2.5, 2.2)
 
-## Snow in the melt pit, 0 (empty) to 1 (heaped over the grate). Doris adds
-## a load per flood; the pit heater melts it down the drain when it's on.
+## Snow in the melt pit, 0 (empty) to 1 (heaped over the grate), as the
+## walk shows RinkSim.snow_pit: Doris adds a load per flood, the tired heater
+## melts a little, and the dump_snow job hoses it down the drain.
 var snow := 0.6
-## The melt pit heater. Worn, its breaker trips and the snow piles up.
-var pit_heater := false
 var _heap: MeshInstance3D
 
 
@@ -95,9 +94,8 @@ func _m1(k: VenueKit) -> void:
 	k.add(_heap)
 	set_snow(snow)
 	k.block(Vector3(X1 - 0.12, 1.3, -2.2), Vector3(X1 - 0.02, 1.6, -1.9), Color("7d8288"), 0.2, 0.02, false)
-	add_spot(k, VenueSpot.Kind.USE, "snow_pit", Vector3(PIT.get_center().x, 0.4, PIT.get_center().y), "Snow pit", {"note": "snow_pit"}, 2.0)
-	if k.age == Age.WORN:
-		pit_heater = false
+	add_spot(k, VenueSpot.Kind.JOB, "snow_pit", Vector3(PIT.get_center().x, 0.4, PIT.get_center().y), "Hose down the snow pit",
+		{"job": "dump_snow", "target": "snow_pit", "note": "snow_pit"}, 2.0)
 	# Mount Doris, out the back by the garage door, behind a snow fence
 	var xo := Venue.HALF_X + 0.6
 	for i in 4:
@@ -117,9 +115,3 @@ func set_snow(level: float) -> void:
 	if _heap and is_instance_valid(_heap):
 		_heap.visible = snow > 0.02
 		_heap.scale = Vector3(PIT.size.x * (0.6 + 0.4 * snow), 0.05 + 0.9 * snow, PIT.size.y * (0.6 + 0.4 * snow))
-
-
-## Melts snow while the pit heater runs: about a full pit in two hours.
-func tick_pit(sim_minutes: float) -> void:
-	if pit_heater and snow > 0.0:
-		set_snow(snow - sim_minutes / 120.0)

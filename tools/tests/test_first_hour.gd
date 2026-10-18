@@ -4,7 +4,8 @@ extends SceneTree
 ## locked until the envelope under the mat gives the keys, the walker gets
 ## from the dark lot into the lobby, the ice lights come on from the panel and
 ## warm up, Doris needs the plugs from her drawer before her job opens, jobs
-## hand over to the sim, and the snow pit melts once its heater is reset.
+## hand over to the sim, the snow pit is the sim's, and inside an owner
+## career the walk runs on the career's clock.
 ##
 ##   godot --headless --path . --script tools/tests/test_first_hour.gd
 
@@ -99,14 +100,29 @@ func _run() -> void:
 	_expect(story.use(_venue.spot("log_book")).get("screen", "") == "log_book", "the log book asks for UI's log book screen")
 	_expect(story.use(_venue.spot("office_phone")).get("screen", "") == "phone", "the office phone asks for the phone screen")
 
-	# the snow pit
+	# the snow pit: hosing it down is the sim's dump_snow job
 	var bay = _venue.rooms["zamboni_bay"]
-	var snow0: float = bay.snow
-	story.use(_venue.spot("snow_pit"))
-	_expect(bay.pit_heater, "resetting the pit heater")
+	story.sim.snow_pit = 0.8
+	story.tick(0.0)
+	a = story.use(_venue.spot("snow_pit"))
+	_expect(a.has("job") and a.job.job == "dump_snow", "the snow pit opens the dump_snow job")
+	r = story.finish_job(a.job, {})
+	_expect(r.get("ok", false) and bay.snow < 0.05, "hosed down, the pit shows empty (%.2f, %s)" % [bay.snow, r.get("text", "")])
 	story.tick(60.0 / (WalkStory.TIME_SCALE))  # an hour of sim time
-	_expect(bay.snow < snow0, "the pit melts down (%.2f -> %.2f)" % [snow0, bay.snow])
 	_expect(story.sim.minute > WalkStory.START_MINUTE, "the clock moved on (%s)" % story.clock_text())
+
+	# inside an owner career: the career's sim and clock, the first hour only on its first morning
+	var link := RinkLink.new_owner("Test", "Owner", "C", 7)
+	var cs := WalkStory.start(_venue, null, link)
+	_expect(cs.sim == link.sim and cs.first_hour and cs.clock_text() == "MON 05:00", "a new owner career walks its own first hour (%s)" % cs.clock_text())
+	link.sim.minute = 14 * 60
+	cs = WalkStory.start(_venue, null, link)
+	_expect(not cs.first_hour and not cs.door_locked(front), "later in the career the doors are open (%s)" % cs.clock_text())
+	link.advance_to_game()
+	link.sim.minute -= 15
+	cs = WalkStory.start(_venue, null, link)
+	cs.tick(2.0 * RinkSim.STEP_MIN / WalkStory.TIME_SCALE)
+	_expect(cs.game_due, "the career clock stops for the owner's game (%s)" % cs.clock_text())
 	print("\n%s (%d failure%s)" % ["FAILED" if failures else "OK", failures, "" if failures == 1 else "s"])
 	quit(1 if failures else 0)
 

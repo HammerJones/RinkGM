@@ -4,6 +4,10 @@ extends Node3D
 ## lot, keys under the mat, the ice lights on a panel inside the doors, Gus's
 ## notes, the office and the jobs in the plant room and the bay. `--free-walk`
 ## is the old playtest instead: lights on, start in the lobby, nothing locked.
+## Inside an owner career (CareerState.rink) the walk runs on the career's
+## sim and clock: the first hour only on its first morning, else from the
+## office. The office desk goes back to the rink office, and the owner's game
+## sends the player back to the hub.
 ##
 ##   godot --path . res://scenes/venue/venue_walk.tscn [-- --tier=3 --free-walk]
 ##   (or `-- --venue-walk` on the normal game)
@@ -40,6 +44,7 @@ var _panel_text: RichTextLabel
 var _panel_job := {}
 var _job_scene: Node
 var _office: CanvasLayer
+var _leaving := false
 var _sun: DirectionalLight3D
 var _env: Environment
 
@@ -74,8 +79,15 @@ func _ready() -> void:
 		walker.global_position = venue.rooms["lobby"].spawn
 	else:
 		story = WalkStory.start(venue)
-		_env.background_color = Color("070a12")  # before dawn
-		walker.global_position = Vector3(-51.0, 0.05, 0.4)
+		var m := story.sim.minute
+		if m < 7 * 60 or m >= 19 * 60:
+			_env.background_color = Color("070a12")  # night outside
+		if story.first_hour:
+			walker.global_position = Vector3(-51.0, 0.05, 0.4)
+		else:
+			# in the office, by the door, facing the desk
+			walker.global_position = Vector3(-42.4, venue.rooms["office"].spawn.y + 0.05, -7.0)
+			_yaw = 0.0
 	cam = Camera3D.new()
 	cam.fov = 70.0
 	cam.near = 0.05
@@ -149,6 +161,10 @@ func _busy() -> bool:
 func _process(dt: float) -> void:
 	if story and not _busy():
 		story.tick(dt)
+		if story.game_due and not _leaving:
+			_leaving = true
+			_show_toast("GAME NIGHT. YOUR TEAM'S IN THE ROOM. BACK TO THE HUB.")
+			get_tree().create_timer(2.5).timeout.connect(_leave_to.bind("hub"))
 	_toast_t -= dt
 	_toast.visible = _toast_t > 0.0
 	if _busy():
@@ -313,6 +329,9 @@ func _show_screen(id: String) -> void:
 	if story == null:
 		return
 	var sim := story.sim
+	if id == "desk" and story.rink:
+		_leave_to("office")
+		return
 	if OFFICE_TABS.has(id) and ResourceLoader.exists(OFFICE_SCENE):
 		var office: Node = load(OFFICE_SCENE).instantiate()
 		_office = CanvasLayer.new()
@@ -345,6 +364,22 @@ func _show_screen(id: String) -> void:
 		_:
 			lines = ["// " + id.to_upper()]
 	_open_panel("\n".join(lines) + "\n\n[color=#%s][E] CLOSE[/color]" % RinkOS.DIM.to_html(false))
+
+
+## Out of the walk in an owner career, with the career saved: to the rink
+## office or the hub.
+func _leave_to(where: String) -> void:
+	_leaving = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	var cs: Node = get_node_or_null("/root/CareerState")
+	if cs == null:
+		return
+	if cs.career:
+		cs.career.save()
+	if where == "office":
+		cs.open_office()
+	else:
+		cs.back_to_hub()
 
 
 func _toggle_fly() -> void:

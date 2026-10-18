@@ -18,7 +18,7 @@ extends Node3D
 ##           ice_grid, pnl), opened by UI's screens.
 ##   SWITCH  {"system": "arena_lights"} a building system the walker turns
 ##           on or off.
-##   USE     anything else, handled by id (the snow pit).
+##   USE     anything else, handled by id.
 
 enum Kind { READ, JOB, SCREEN, SWITCH, USE }
 
