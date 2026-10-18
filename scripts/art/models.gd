@@ -42,6 +42,22 @@ static func palette(team: int) -> Dictionary:
 	}
 
 
+## A full palette from two club colours (career teams).
+static func team_palette(team_name: String, primary: Color, secondary: Color) -> Dictionary:
+	var dark := primary.darkened(0.25)
+	var trim := Color("19191c") if secondary.get_luminance() > 0.5 else Color("ece7dc")
+	return {
+		"name": team_name, "ui": primary.lightened(0.15),
+		"jersey": primary, "jersey_dark": dark,
+		"stripe": secondary, "stripe2": trim,
+		"crest": secondary, "crest_inner": trim,
+		"pants": primary.darkened(0.6), "helmet": primary.darkened(0.45),
+		"sock": primary, "sock_stripe": secondary, "sock_stripe2": trim,
+		"shaft": Color("1b1b1e"), "band": primary, "band2": secondary,
+		"pad": Color("ece6da"), "pad_band": primary, "glove": primary.darkened(0.5),
+	}
+
+
 ## Leg from hip joint (pivot) down to the skate blade. Goalies get pads.
 static func leg(p: Dictionary, goalie: bool) -> VoxelModel:
 	var m := VoxelModel.new(V)
@@ -242,30 +258,75 @@ static func shaft(p: Dictionary) -> VoxelModel:
 
 ## Blade lying along +X from heel to toe, +Z is the forehand face; the toe
 ## curves towards the forehand. Pivot is the middle of the blade on the ice,
-## where the puck sits.
+## where the puck sits. The heel is a smooth curve up into a hosel at the
+## stick's lie (an obtuse heel, about 133°), and the shaft starts where the
+## hosel ends (`blade_heel`).
+const BLADE_LIE_DEG := 47.0  # hosel angle off the ice
+const BLADE_PIVOT := Vector3(8.5, 0, 0.5)
+static var blade_heel := _heel_sweep(null, {})  # shaft joint, metres from the blade pivot
+
+
 static func blade(p: Dictionary) -> VoxelModel:
 	var m := VoxelModel.new(STICK_V)
 	m.jitter = 0.03
 	var length := 17
-	for x in length:
+	for x in range(3, length):
 		var bend := 0 if x < 10 else (1 if x < 14 else 2)
 		var h := 4 if x < length - 2 else (3 if x == length - 2 else 2)
 		for y in h:
 			var c: Color = p.shaft
-			if x >= 2 and x < length - 1:
+			if x < length - 1:
 				c = TAPE if (x + y) % 2 == 0 else TAPE_DARK
 			m.set_voxel(x, y, bend, c)
-	# heel rises into the hosel
-	m.box(0, 4, 0, 2, 2, 1, p.shaft)
-	m.set_pivot(8.5, 0, 0.5)
+	_heel_sweep(m, p)
+	m.set_pivot(BLADE_PIVOT.x, BLADE_PIVOT.y, BLADE_PIVOT.z)
 	return m
 
 
+## Sweeps the heel from the blade's back end round a curve and up the hosel,
+## tapering from the blade's 4 x 1 section to the shaft's 2 x 2. Adds the
+## pieces to `m` when given; returns the hosel's top in metres from the pivot.
+static func _heel_sweep(m: VoxelModel, p: Dictionary) -> Vector3:
+	const STEP := 0.25
+	const RADIUS := 3.0
+	const HOSEL := 4.5
+	var lie := deg_to_rad(BLADE_LIE_DEG)
+	var arc := RADIUS * lie
+	var total := 0.75 + arc + HOSEL
+	var pos := Vector2(2.75, 2.0)  # mid-height, just behind the blade's grid voxels
+	var s := 0.0
+	while s <= total:
+		var turn := clampf((s - 0.75) / arc, 0.0, 1.0) * lie
+		var dir := Vector2(-cos(turn), sin(turn))
+		var k := clampf(s / total, 0.0, 1.0)
+		if m:
+			var h := lerpf(4.0, 2.0, k)
+			var t := lerpf(1.0, 2.0, k)
+			var tangent := Vector3(dir.x, dir.y, 0)
+			var basis := Basis(tangent, Vector3.BACK.cross(tangent), Vector3.BACK)
+			m.add_oriented(Vector3(pos.x, pos.y, 0.5), basis, Vector3(STEP * 2.0, h, t), p.shaft)
+		pos += dir * STEP
+		s += STEP
+	return (Vector3(pos.x, pos.y, 0.5) - BLADE_PIVOT) * STICK_V
+
+
+## A regulation puck: 3 in across, 1 in thick (7.62 x 2.54 cm), in half-inch
+## voxels, rounded. Pivot at the centre of its bottom face.
+const PUCK_DIAMETER := 0.0762
+const PUCK_HEIGHT := 0.0254
+const _PUCK_V := 0.0127
+
+
 static func puck() -> VoxelModel:
-	var m := VoxelModel.new(0.05)
+	var m := VoxelModel.new(_PUCK_V)
 	m.jitter = 0.0
-	m.box(0, 0, 0, 3, 2, 3, PUCK)
-	return m.set_pivot(1.5, 0, 1.5)
+	for x in 6:
+		for z in 6:
+			if (x == 0 or x == 5) and (z == 0 or z == 5):
+				continue  # corners off: round enough at this size
+			for y in 2:
+				m.set_voxel(x, y, z, PUCK)
+	return m.set_pivot(3.0, 0, 3.0)
 
 
 ## Goal net, opening at z=0 facing -Z and depth going +Z. Pivot at the

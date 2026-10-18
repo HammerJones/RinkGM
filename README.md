@@ -2,10 +2,13 @@
 
 Experimenting with a hockey game/rink management sim.
 
+Working on RinkGM? Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (who owns
+what, shared interfaces, the CI gate) and [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## Playable demo (Godot 4.3+)
 
-Open the folder in Godot 4.3 or newer and press Play. It's a 3-on-3 game with
-goalies on an NHL-size rink, five-minute clock, in the voxel style of the
+Open the folder in Godot 4.3 or newer and press Play. It's a 5-on-5 game with
+goalies on an NHL-size rink, three 5-minute periods with rotating lines, in the voxel style of the
 reference renders in `art/reference/`. You play the red team; the yellow ring
 marks the skater you control.
 
@@ -20,7 +23,7 @@ virtual right stick, so both devices drive the same stick model.
 | Skate | Left stick | WASD |
 | Dash (push-off burst) | L3 (click left stick) | Shift |
 | Hockey stop | R3 (click right stick) | Space |
-| Stick blade (220 degree arc, back past each hip) | Right stick | Mouse (cursor is captured; Esc frees it) |
+| Stick blade (220 degree arc, back past each hip) | Right stick | Mouse (cursor is captured; Esc opens the menu and frees it) |
 | Stickhandle | Right stick side to side | Mouse side to side |
 | Quick shot (instant) | Flick the right stick forward | Flick the mouse forward |
 | Wrist shot | Draw the stick back behind your forehand hip, then sweep it forward | Same with the mouse |
@@ -33,10 +36,12 @@ virtual right stick, so both devices drive the same stick model.
 | Body check | B | F |
 | Mouse sensitivity | | [ and ] |
 | Physics mode (Sim / Hybrid / Arcade) | Back | F1 |
-| Camera (broadcast / isometric) | D-pad up | C |
-| Restart | Start | R |
+| Camera (down the ice / first person / broadcast / isometric) | D-pad up | C |
+| Menu: pause, restart, controls, practice, quit (frees the cursor) | Start | Esc |
+| Restart (practice: reset the puck) | | R |
 | Show/hide controls | | H |
 | Developer menu | D-pad down | ` (tilde key) |
+| Playtest note (screenshot + note) | | N |
 
 "Forward" and "behind" are relative to the way your skater faces; the stick
 itself is camera-relative, like the left stick. A faint arc on the ice shows
@@ -178,6 +183,46 @@ art/reference/           the reference renders
 tools/bench/             headless physics bench (tools/physics_bench.sh)
 ```
 
+### Career mode and game mechanics
+
+Run with `-- --career` (or open `scenes/career_hub.tscn`) to start a career.
+You create one skater (C, LW, RW or D) in the beginner beer league and play
+that one player: no switching, and when your line is on the bench you watch
+(hold Tab / Y to fast-forward). Exhibition games (the default `main.tscn`) use
+the same rules with you on the centre's body, always on the ice.
+
+- **Ratings** (`scripts/career/skills.gd`): speed, agility, stick handling,
+  shot accuracy, shot power, shot release, passing, hitting and toughness, each
+  1-100, plus injury/fatigue modifiers. `Skills` is the single store: the
+  physics' `PhysicsProfile` turns it into metres and seconds, and everything
+  else reads `Skater.skill(key)` (0..1).
+- **Injuries** (`injury.gd`): hard hits roll for an injury (harder hits,
+  tired players and low toughness raise the odds). Severity runs day-to-day,
+  minor, moderate, major; each hits the skills tied to the body part while it
+  heals, and some majors leave a permanent loss.
+- **Progression** (`progression.gd`): game XP goes to the skills you used
+  (shots train shooting, hits train hitting, ice time trains skating), plus
+  practice with a chosen training focus. Growth slows near your potential and
+  with age; from 30 the physical skills decline, and missed games add rust.
+- **Seasons** (`season.gd`, `league_tiers.gd`): 12-16 game double round-robin
+  by tier, 2 points a win and 1 for an OT/shootout loss, then a top-4 playoff
+  bracket (single games in the beer leagues, series higher up). Games you
+  don't play are quick-simmed from team strength (`quick_sim.gd`).
+- **Games** (`game_settings.gd`, `scripts/game/bench.gd`): always 3 periods,
+  period length adjustable in the hub (2-20 min). Three forward lines and two
+  defence pairs change on shift clocks; regular-season ties get sudden-death OT
+  then a shootout, playoff OT runs until someone scores.
+- **The ladder**: Beer League D, C, A, Senior AAA, Semi-Pro, Minor League Pro.
+  After each season scouts weigh your rating and production; invitations lead
+  to tryout camps. Fall too far below your level and you get released down a tier.
+- The career keeps a calendar `day` and saves to `user://career.json`, so
+  open-world rink time can hang off the same clock later.
+
+`godot --headless --path . --script tools/tests/test_career.gd -- --seasons=10`
+quick-sims a whole career and checks schedules, standings and save/load.
+`godot --headless --path . --fixed-fps 120 -- --career --career-new --autoplay --period=1 --seasons=1`
+plays a full season of live engine games with the AI driving you.
+
 ### Command-line helpers
 
 Arguments after `--` are read by the game:
@@ -185,7 +230,9 @@ Arguments after `--` are read by the game:
 - `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
 - `--demo=controls` plays a captioned showcase of every move (`tests/controls_demo.gd`). Record it with `godot --path . --write-movie demo.avi --fixed-fps 30 --resolution 1280x720 -- --demo=controls`.
 - `--demo=skating` and `--demo=moves` are close-up reels of the skating animation and of the stick arc and every shot and stick move, with the right stick's path drawn on a pad.
-- `--autoplay` lets the AI drive your skater too (prints stats on exit).
+- `--autoplay` lets the AI drive your skater too (prints stats and a box score on exit).
+- `--period=N` plays N-minute periods (exhibition default is 5).
+- `--career` opens the career hub (pick a save: Career, Demo: low tier, Demo: mid tier); `--slot=career|demo_low|demo_mid` skips the picker and `--career-new` discards that slot's save.
 - `--mode=sim|hybrid|arcade` picks the physics mode at startup.
 - `--ai-levels=0.5,3` sets how organised each team plays (TierAI level, 0 = Beer League D to 5 = Minor League Pro).
 - `--seed=N` replays the same game every run.
@@ -194,11 +241,13 @@ Arguments after `--` are read by the game:
 For example, to simulate a full game headless in a few seconds:
 
 ```
-godot --headless --path . --fixed-fps 120 --quit-after 36000 -- --autoplay --mode=hybrid
+godot --headless --path . --fixed-fps 120 --quit-after 36000 -- --autoplay --mode=hybrid --period=1
 ```
 
 `tools/check.sh` re-imports the project and runs it headless to surface script errors.
 `tools/physics_bench.sh [out.md]` prints the physics bench.
+`tools/ci.sh` is the full gate CI runs on every PR: import, a headless autoplay
+game and the `tools/tests/` scripts.
 `tools/tier_ai_check.sh` plays `GAMES` (default 24; fewer is too noisy at 5-on-5) autoplay games of a Beer League D
 side against a Senior AAA side, swapping ends, and fails unless the higher tier
 outscores and outwins the lower one. Each game has a fixed seed, so the result

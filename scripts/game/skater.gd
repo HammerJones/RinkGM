@@ -26,7 +26,8 @@ const REACH_MAX := 1.5                     # two hands on the stick
 const REACH_ONE_HAND := 1.8                # one hand, arm out
 const ARC_HALF := deg_to_rad(110.0)        # the blade's 220 degree arc
 const TWO_HAND_HALF := PI / 4.0            # two hands in the front 90 degrees
-const WIND_ANGLE := deg_to_rad(95.0)       # stick further back than this winds up a shot
+const WIND_ANGLE := deg_to_rad(115.0)      # stick further back than this winds up a shot
+const WIND_HOLD := 0.08                     # held back that long first, so a wide sweep isn't a wind-up
 const DEFAULT_BLADE := Vector2(1.2, 0.35)  # (forward, right) relative to the body: a full-size stick's ready stance
 const WIND_SPOT := Vector2(-0.15, 0.85)    # where a button wind-up draws the blade (forehand; y flips for the backhand)
 const SLAP_MIN := 0.18                     # a lifted wind-up shorter than this is a wrist shot
@@ -81,6 +82,7 @@ var ctrl := Controls.new()
 ## Ratings (career/skills.gd, 1..100). Injuries and fatigue arrive as
 ## Skills.modifiers, so the profile is re-derived every frame.
 var skills: Skills
+var player: PlayerProfile  # career player on this body right now, or null
 var profile := PhysicsProfile.new()
 
 var vel := Vector3.ZERO
@@ -158,6 +160,7 @@ var _prev_lift := false
 var _stick_wound := false
 var _wind_grace := 0.0
 var _stick_hist: Array[Vector3] = []  # (x, z, age) of recent right-stick input, for flicks
+var _drawn_time := 0.0
 var _anchor_local := DEFAULT_BLADE
 var _spray: CPUParticles3D
 
@@ -185,6 +188,13 @@ func setup(g: Node, t: int, idx: int, pal: Dictionary, sk: Skills = null) -> voi
 func set_skills(sk: Skills) -> void:
 	skills = sk
 	profile.apply(skills)
+
+
+## Puts a career player on this body (line changes swap who is out there).
+func apply_player(p: PlayerProfile) -> void:
+	player = p
+	number = p.number
+	set_skills(p.skills)
 
 
 ## A rating as 0..1 (canonical Skills keys only).
@@ -470,9 +480,15 @@ func _wants_round(target: Vector2) -> bool:
 	return away < -CROSS_AWAY and running < 1.2
 
 
-## Whether this skater has learned a move (Moves catalog id). Progression
-## decides; until it does, everyone knows everything.
-func knows(_id: StringName) -> bool:
+## Whether this skater has learned a move (Moves catalog id).
+## (mechanics hook) A career player's PlayerProfile.moves decides, in career
+## games and in practice with a career loaded; otherwise (exhibitions, tests)
+## everyone knows everything.
+func knows(id: StringName) -> bool:
+	if player == null or game == null:
+		return true
+	if game.get("career_mode") or (game.get("practice") and game.get("user_profile") == player):
+		return player.knows_move(id)
 	return true
 
 
@@ -654,7 +670,9 @@ func _handle_shot_input(dt: float, able: bool) -> void:
 		shot_kind = &"quick_shot"
 		_fire()
 		return
-	var drawn := _stick_drawn()
+	var back := _stick_drawn()
+	_drawn_time = _drawn_time + dt if back else 0.0
+	var drawn := back and _drawn_time >= WIND_HOLD
 	var held := ctrl.shoot
 	# with LT held the slapshot starts as soon as the stick heads back on the
 	# forehand, so the lifted blade doesn't leave the puck behind
@@ -679,7 +697,7 @@ func _handle_shot_input(dt: float, able: bool) -> void:
 		return
 	wind_time += dt
 	if _stick_wound:
-		if drawn:
+		if back:
 			_wind_grace = 0.0
 			return
 		var l := _stick_local(ctrl.stick)
@@ -693,8 +711,8 @@ func _handle_shot_input(dt: float, able: bool) -> void:
 		_fire()
 
 
-## A quick forward flick of the right stick, with no wind-up, fires the
-## instant shot (weak and wild until shot release improves).
+## A quick forward flick of the right stick from neutral, with no wind-up,
+## fires the instant shot (weak and wild until shot release improves).
 func _flicked(dt: float) -> bool:
 	for i in _stick_hist.size():
 		_stick_hist[i].z += dt
@@ -702,6 +720,9 @@ func _flicked(dt: float) -> bool:
 	while _stick_hist.size() > 2 and _stick_hist[1].z >= FLICK_WINDOW:
 		_stick_hist.pop_front()
 	if winding or ctrl.stick.length() < 0.8 or not has_puck():
+		return false
+	# from (near) neutral: a sweep round the rim of the stick is stickhandling
+	if Vector2(_stick_hist[0].x, _stick_hist[0].y).length() > 0.4:
 		return false
 	var l := _stick_local(ctrl.stick)
 	if l.x < 0.5:

@@ -38,7 +38,7 @@ func _ready() -> void:
 		for key in Skills.SKATER_KEYS:
 			sk.skills.values[key] = 55.0
 	game.hud.toggle_help()
-	game.camera_rig.toggle()  # isometric
+	game.camera_rig.set_mode(CameraRig.Mode.ISOMETRIC)
 	game.camera_rig.zoom = _zoom
 	game.controller.player_input.scripted = func(f, dt):
 		_t += dt
