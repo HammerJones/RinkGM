@@ -172,8 +172,10 @@ kinds:
 `WalkStory` decides what using a spot does and keeps the RinkSim clock
 (about 1.75 sim minutes per real second). The walk scene does what it says:
 
-- `screen_requested(id, sim)` is the signal UI listens to. Until a screen
-  exists, a placeholder panel shows instead.
+- Screen spots open UI's rink office (`scenes/ui/rink_office.tscn`) on the
+  walk's sim: the ice grid, log book, corkboard (Gus's goals) and the desk
+  (jobs). Q, Esc or B leaves it. The phone has no screen yet, so it shows a
+  plain panel. `screen_requested(id, sim)` fires for every screen spot.
 - A job instances the `scene` path under `scenes/world/jobs/`
   (`oil_service`, `oil_top_up`, `plant_round`, `doris_wont_start`,
   `blade_change`). If the scene has a `context` property, it gets

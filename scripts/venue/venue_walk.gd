@@ -16,9 +16,13 @@ extends Node3D
 ## UI's office screens and anything else listening: the player asked for
 ## screen `id` (log_book, phone, goals, ice_grid, desk) with the sim.
 signal screen_requested(id: String, sim: RinkSim)
+
 ## A job spot was used: `job` is WalkStory's job dictionary.
 signal job_started(job: Dictionary)
 
+const OFFICE_SCENE := "res://scenes/ui/rink_office.tscn"
+## Screen spot -> UI rink office tab.
+const OFFICE_TABS := {"ice_grid": "grid", "log_book": "log", "goals": "board", "desk": "jobs"}
 const JOBS_DIR := "res://scenes/world/jobs/"
 
 var venue: Venue
@@ -35,6 +39,7 @@ var _panel: PanelContainer
 var _panel_text: RichTextLabel
 var _panel_job := {}
 var _job_scene: Node
+var _office: CanvasLayer
 var _sun: DirectionalLight3D
 var _env: Environment
 
@@ -138,7 +143,7 @@ func _unhandled_input(e: InputEvent) -> void:
 
 
 func _busy() -> bool:
-	return _panel.visible or _job_scene != null
+	return _panel.visible or _job_scene != null or _office != null
 
 
 func _process(dt: float) -> void:
@@ -201,7 +206,7 @@ func _use() -> void:
 		else:
 			_close_panel()
 		return
-	if _job_scene:
+	if _job_scene or _office:
 		return
 	var s := _looked_at()
 	if s:
@@ -239,6 +244,10 @@ func _open_panel(bb: String) -> void:
 func _close_panel() -> void:
 	_panel.visible = false
 	_panel_job = {}
+	if _office:
+		_office.queue_free()
+		_office = null
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _show_read(t: Dictionary) -> void:
@@ -290,12 +299,24 @@ func _on_job_finished(result: Dictionary, job: Dictionary) -> void:
 	_show_toast(str(r.get("text", "")).to_upper())
 
 
-## Office screens belong to UI; until they land, a plain readout of the sim.
+## Office screens belong to UI: the spots UI's rink office covers open it on
+## that tab with the walk's sim (Q / Esc / B to leave); the rest get a plain
+## readout of the sim.
 func _show_screen(id: String) -> void:
 	screen_requested.emit(id, story.sim if story else null)
 	if story == null:
 		return
 	var sim := story.sim
+	if OFFICE_TABS.has(id) and ResourceLoader.exists(OFFICE_SCENE):
+		var office: Node = load(OFFICE_SCENE).instantiate()
+		_office = CanvasLayer.new()
+		_office.layer = 10
+		_office.add_child(office)
+		add_child(_office)
+		office.sim = sim
+		office.open(OFFICE_TABS[id])
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		return
 	var lines := []
 	match id:
 		"desk":
