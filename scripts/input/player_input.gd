@@ -29,8 +29,9 @@ var mouse_sensitivity := 0.006
 ## (per second). 0 keeps it wherever you left it, like a real stick held still.
 var mouse_recenter := 1.2
 ## LMB has no analog travel, so the tilt eases in while it's held: a tap
-## gives a little lift, a hold gives full tilt.
-var kbm_tilt_ramp := 0.25
+## gives a little lift, a hold gives full tilt. Kept short so tilt moves
+## (toe drag, lacrosse: tilt > 0.5) answer within a few frames.
+var kbm_tilt_ramp := 0.1
 
 var frame := Frame.new()
 ## Tests can drive the human instead of the devices: Callable(frame, dt)
@@ -107,6 +108,6 @@ func poll(dt: float) -> Frame:
 			_vstick = _vstick.move_toward(Vector2.ZERO, mouse_recenter * dt)
 		f.stick = _vstick
 		var held := Input.is_action_pressed("tilt")
-		_kbm_tilt = move_toward(_kbm_tilt, 1.0 if held else 0.0, dt / kbm_tilt_ramp if held else dt * 8.0)
+		_kbm_tilt = move_toward(_kbm_tilt, 1.0 if held else 0.0, dt / kbm_tilt_ramp if held else dt / kbm_tilt_ramp)
 		f.tilt = _kbm_tilt
 	return f
