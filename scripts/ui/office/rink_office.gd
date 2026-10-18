@@ -103,6 +103,11 @@ func _next_block() -> void:
 	_refresh()
 
 
+func _walk() -> void:
+	CareerState.career.save()
+	CareerState.open_walk()
+
+
 func _leave() -> void:
 	if rink:
 		CareerState.career.save()
@@ -133,6 +138,7 @@ func _refresh() -> void:
 			sim.pay_dues()
 			_refresh(), false))
 	if rink:
+		_actions.add_child(_btn("Walk the rink", _walk, false))
 		_actions.add_child(_btn("Hub", _leave, false))
 	for c in _body.get_children():
 		c.queue_free()

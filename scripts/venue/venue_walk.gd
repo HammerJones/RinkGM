@@ -10,6 +10,7 @@ extends Node3D
 ##
 ## WASD / left stick walk, mouse / right stick look, Shift / L3 run,
 ## E / A read, use or work on what you're looking at (or a door),
+## O the office (in an owner career),
 ## Esc / B close a panel, 1 2 3 / D-pad set this room's age,
 ## F / Y fly, Tab frees the mouse.
 
@@ -73,9 +74,12 @@ func _ready() -> void:
 	if free:
 		walker.global_position = venue.rooms["lobby"].spawn
 	else:
-		story = WalkStory.start(venue)
-		_env.background_color = Color("070a12")  # before dawn
-		walker.global_position = Vector3(-51.0, 0.05, 0.4)
+		story = WalkStory.start(venue, null, CareerState.rink)
+		if story.first_hour():
+			_env.background_color = Color("070a12")  # before dawn
+			walker.global_position = Vector3(-51.0, 0.05, 0.4)
+		else:
+			walker.global_position = venue.rooms["lobby"].spawn
 	cam = Camera3D.new()
 	cam.fov = 70.0
 	cam.near = 0.05
@@ -126,6 +130,9 @@ func _unhandled_input(e: InputEvent) -> void:
 		match e.keycode:
 			KEY_TAB: Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 			KEY_ESCAPE: _close_panel()
+			KEY_O:
+				if story and story.link and not _busy():
+					_to_career(CareerState.open_office)
 			KEY_E: _use()
 			KEY_Q: _close_panel()
 			KEY_F: _toggle_fly()
@@ -149,6 +156,9 @@ func _busy() -> bool:
 func _process(dt: float) -> void:
 	if story and not _busy():
 		story.tick(dt)
+		if story.game_due:
+			_to_career(CareerState.back_to_hub)
+			return
 	_toast_t -= dt
 	_toast.visible = _toast_t > 0.0
 	if _busy():
@@ -191,6 +201,8 @@ func _hud_lines() -> Array:
 		var d := walker.nearest_door(venue)
 		if d:
 			hint = "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
+	if story and story.link:
+		head += "   [O] OFFICE"
 	return [head, where, hint]
 
 
@@ -312,6 +324,9 @@ func _show_screen(id: String) -> void:
 	screen_requested.emit(id, story.sim if story else null)
 	if story == null:
 		return
+	if story.link and ResourceLoader.exists(OFFICE_SCENE):
+		_to_career(CareerState.open_office)  # an owner career's office is its own scene
+		return
 	var sim := story.sim
 	if OFFICE_TABS.has(id) and ResourceLoader.exists(OFFICE_SCENE):
 		var office: Node = load(OFFICE_SCENE).instantiate()
@@ -345,6 +360,14 @@ func _show_screen(id: String) -> void:
 		_:
 			lines = ["// " + id.to_upper()]
 	_open_panel("\n".join(lines) + "\n\n[color=#%s][E] CLOSE[/color]" % RinkOS.DIM.to_html(false))
+
+
+## Leaves the walk inside an owner career: saves (the walk's flags too) and
+## goes to `where` (the office, or the hub for game night).
+func _to_career(where: Callable) -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	CareerState.career.save()
+	where.call()
 
 
 func _toggle_fly() -> void:

@@ -31,19 +31,38 @@ var sim: RinkSim
 var life = null
 ## What the player has picked up or learned: "keys", "spark_plugs", "read:<id>".
 var flags := {}
+## The owner career's rink when the walk runs inside one (CareerState.rink):
+## the clock moves through it so the career's calendar follows, and the walk
+## stops for the owner's Tuesday game. `flags` are saved with the career.
+var link: RinkLink
+## Set when the clock reaches the owner's game: the walk scene sends them to it.
+var game_due := false
 var _clock_acc := 0.0
 var _texts := {}
 
 
-static func start(venue_: Venue, sim_: RinkSim = null) -> WalkStory:
+static func start(venue_: Venue, sim_: RinkSim = null, link_: RinkLink = null) -> WalkStory:
 	var w := WalkStory.new()
 	w.venue = venue_
-	w.sim = sim_ if sim_ else RinkSim.create()
-	w.sim.day = START_DAY
-	w.sim.minute = START_MINUTE
+	w.link = link_
+	if link_:
+		# the career's rink keeps its own clock; the walk picks up where it is
+		w.sim = link_.sim
+		if not link_.career.world.has("walk"):
+			link_.career.world["walk"] = {}
+		w.flags = link_.career.world.walk
+	else:
+		w.sim = sim_ if sim_ else RinkSim.create()
+		w.sim.day = START_DAY
+		w.sim.minute = START_MINUTE
 	w._load_texts()
-	venue_.set_ice_lights(false)
+	venue_.set_ice_lights(w.link != null and w.sim.lights_on)
 	return w
+
+
+## True until the keys are found: the walk starts in the dark parking lot.
+func first_hour() -> bool:
+	return not flags.has("keys")
 
 
 func _load_texts() -> void:
@@ -63,7 +82,12 @@ func tick(dt: float) -> void:
 	_clock_acc += dt * TIME_SCALE
 	while _clock_acc >= RinkSim.STEP_MIN:
 		_clock_acc -= RinkSim.STEP_MIN
-		sim.advance(RinkSim.STEP_MIN)
+		if link:
+			if link.advance(RinkSim.STEP_MIN):
+				game_due = true
+				return
+		else:
+			sim.advance(RinkSim.STEP_MIN)
 		var bay = venue.rooms.get("zamboni_bay")
 		if bay and "snow_pit" in sim:
 			bay.set_snow(sim.snow_pit)

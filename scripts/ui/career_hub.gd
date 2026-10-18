@@ -136,6 +136,10 @@ func _show_new_career() -> void:
 		if slot == "owner":
 			CareerState.rink = RinkLink.new_owner(fn, ln, ps)
 			CareerState.career = CareerState.rink.career
+			CareerState.career.save()
+			if not _auto:
+				CareerState.open_walk()  # the week starts at 05:00 in the parking lot
+				return
 		else:
 			CareerState.career = Career.new_demo(slot, fn, ln, ps) if demo else Career.new_career(fn, ln, ps)
 		career = CareerState.career
@@ -295,10 +299,12 @@ func _actions(parent: Control) -> void:
 	if rink and not rink.game_due():
 		parent = _section(parent, "millbrook")
 		parent.add_child(_term_text("> NEXT GAME: %s 22:00 ON YOUR OWN ICE." % RinkSim.DAY_NAMES[RinkLink.GAME_WEEKDAY].to_upper()))
-		parent.add_child(_term_text("> RUN THE RINK FROM THE OFFICE. IT SENDS YOU BACK HERE AT GAME TIME."))
+		parent.add_child(_term_text("> RUN THE RINK FROM THE OFFICE OR ON FOOT. EITHER SENDS YOU BACK HERE AT GAME TIME."))
 		var go := _button("Rink office", CareerState.open_office)
 		go.disabled = not CareerState.has_office()
-		_row(parent).add_child(go)
+		var row := _row(parent)
+		row.add_child(go)
+		row.add_child(_button("Walk the rink", CareerState.open_walk, false))
 		go.grab_focus()
 		return
 	var g := career.next_user_game()
