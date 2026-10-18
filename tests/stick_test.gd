@@ -65,7 +65,9 @@ func _run() -> void:
 		await get_tree().physics_frame
 		t += get_physics_process_delta_time()
 	print("new stick from the bench after %.1f s (state %d)" % [t, game.state])
-	_check(not s.stick_broken and (replaced[0] == 1 or game.state != game.State.PLAY), "the bench hands over a new stick")
+	# a whistle mid-trip (a goal, the puck out of play) ends the trip: the
+	# faceoff below hands the stick over instead
+	_check(game.state != game.State.PLAY or (not s.stick_broken and replaced[0] == 1), "the bench hands over a new stick")
 	_check(Vector2(s.position.x, s.position.z).distance_to(door) < StickWear.BENCH_REACH + 0.5 or game.state != game.State.PLAY,
 		"it was handed over at the bench door")
 
