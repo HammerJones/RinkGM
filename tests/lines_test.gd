@@ -3,8 +3,9 @@ extends Node
 ## body; the ones on the bench stand behind the boards; on the fly a called
 ## skater skates to the bench's far gate and leaves, and the fresh one steps
 ## out of the centre-ice gate; at a stoppage the lines swap before the
-## faceoff; all three forward lines and both defence pairs see the ice. Also: a puck over the
-## glass is whistled dead, with the faceoff in the zone it was last played.
+## faceoff; all three forward lines and both defence pairs see the ice.
+## Also: a puck over the glass is whistled dead, with the faceoff in the
+## zone it was last played.
 ## Run: godot --headless --path . --fixed-fps 120 -- --test=lines
 
 var game: Node
