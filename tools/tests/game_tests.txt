@@ -3,6 +3,7 @@ devmenu
 sticks
 pausemenu
 practice
+nets
 lines
 shootout
 notes

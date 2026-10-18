@@ -225,6 +225,10 @@ func _ready() -> void:
 		var so: Node = load("res://tests/shootout_test.gd").new()
 		so.set("game", self)
 		add_child(so)
+	if "--test=nets" in args:
+		var nt: Node = load("res://tests/nets_test.gd").new()
+		nt.set("game", self)
+		add_child(nt)
 	if "--test=practice" in args:
 		var pt: Node = load("res://tests/practice_test.gd").new()
 		pt.set("game", self)
