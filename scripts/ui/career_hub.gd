@@ -202,6 +202,8 @@ func _refresh() -> void:
 	_news(right)
 	var bottom := _row(_root)
 	bottom.add_child(_button("Practice", CareerState.start_practice, false))
+	if CareerState.has_office():
+		bottom.add_child(_button("Rink office", CareerState.open_office, false))
 	bottom.add_child(_button("Main menu", func():
 		CareerState.career = null
 		CareerState.rink = null

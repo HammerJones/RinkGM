@@ -4,6 +4,7 @@ extends Node
 
 const HUB_SCENE := "res://scenes/career_hub.tscn"
 const RINK_SCENE := "res://scenes/main.tscn"
+const OFFICE_SCENE := "res://scenes/ui/rink_office.tscn"
 
 var career: Career
 ## The owner's rink running alongside the career (the "owner" slot), or null.
@@ -84,6 +85,15 @@ func finish_match(result: Dictionary) -> void:
 ## Plays the career's current round, through the rink when one runs.
 func play_round(result: Dictionary = {}) -> Dictionary:
 	return rink.play_round(result) if rink else career.play_round(result)
+
+
+## The owner's rink office (UI's office screens), for a career with a rink.
+func open_office() -> void:
+	get_tree().change_scene_to_file(OFFICE_SCENE)
+
+
+func has_office() -> bool:
+	return rink != null and ResourceLoader.exists(OFFICE_SCENE)
 
 
 func back_to_hub() -> void:
