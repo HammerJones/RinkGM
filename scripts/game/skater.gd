@@ -26,7 +26,8 @@ const REACH_MAX := 1.5                     # two hands on the stick
 const REACH_ONE_HAND := 1.8                # one hand, arm out
 const ARC_HALF := deg_to_rad(110.0)        # the blade's 220 degree arc
 const TWO_HAND_HALF := PI / 4.0            # two hands in the front 90 degrees
-const WIND_ANGLE := deg_to_rad(95.0)       # stick further back than this winds up a shot
+const WIND_ANGLE := deg_to_rad(115.0)      # stick further back than this winds up a shot
+const WIND_HOLD := 0.08                     # held back that long first, so a wide sweep isn't a wind-up
 const DEFAULT_BLADE := Vector2(0.95, 0.3)  # (forward, right) relative to the body
 const WIND_SPOT := Vector2(-0.15, 0.85)    # where a button wind-up draws the blade (forehand; y flips for the backhand)
 const SLAP_MIN := 0.18                     # a lifted wind-up shorter than this is a wrist shot
@@ -148,6 +149,7 @@ var _prev_lift := false
 var _stick_wound := false
 var _wind_grace := 0.0
 var _stick_hist: Array[Vector3] = []  # (x, z, age) of recent right-stick input, for flicks
+var _drawn_time := 0.0
 var _anchor_local := DEFAULT_BLADE
 var _spray: CPUParticles3D
 
@@ -389,6 +391,31 @@ func _stick_drawn() -> bool:
 	return absf(atan2(l.y, l.x)) > WIND_ANGLE
 
 
+## A loose puck within reach: the blade goes for it on its own, as a
+## player's would, when the right stick is left alone or already points
+## roughly that way. Better hands reach further for it and read where it's
+## sliding. Returns the blade target (body frame) or null.
+func _loose_puck_reach(stick_target: Vector2, blend: float) -> Variant:
+	if puck == null or puck.controller != null or puck.frozen or puck.position.y > 0.3 \
+			or winding or move_id != &"" or lifting or not blade_down() or not puck.can_be_touched_by(self):
+		return null
+	var sh := skill("stick_handling")
+	# where the puck will be by the time the blade gets there
+	var at := puck.position + (puck.vel - vel) * lerpf(0.0, 0.12, sh)
+	var d := at - position
+	var local := Vector2(d.dot(heading), d.dot(right_vec()))
+	var ang := atan2(local.y, local.x)
+	var reach := local.length()
+	if absf(ang) > ARC_HALF or reach > reach_limit(ang) + lerpf(0.05, 0.3, sh) * lerpf(0.6, 1.4, blend):
+		return null
+	# a puck sliding in too hot to handle isn't one you'd lunge at
+	if (puck.vel - vel).length() > profile.trap_speed * 1.8:
+		return null
+	if ctrl.stick.length() > 0.2 and absf(wrapf(atan2(stick_target.y, stick_target.x) - ang, -PI, PI)) > deg_to_rad(60.0):
+		return null
+	return local
+
+
 ## Whether this skater has learned a move (Moves catalog id).
 ## (mechanics hook) A career player's PlayerProfile.moves decides, in career
 ## games and in practice with a career loaded; otherwise (exhibitions, tests)
@@ -411,6 +438,10 @@ func _update_blade(dt: float, blend: float) -> void:
 		var l := _stick_local(ctrl.stick)
 		var mag := minf(l.length(), 1.0)
 		target = Vector2(cos(atan2(l.y, l.x)), sin(atan2(l.y, l.x))) * lerpf(REACH_MIN, REACH_MAX, mag)
+	if able:
+		var reach_for: Variant = _loose_puck_reach(target, blend)
+		if reach_for != null:
+			target = reach_for
 	if winding and not _stick_wound:
 		target = Vector2(WIND_SPOT.x, WIND_SPOT.y * _wind_side)
 	var move_h := 0.0
@@ -552,7 +583,9 @@ func _handle_shot_input(dt: float, able: bool) -> void:
 		shot_kind = &"quick_shot"
 		_fire()
 		return
-	var drawn := _stick_drawn()
+	var back := _stick_drawn()
+	_drawn_time = _drawn_time + dt if back else 0.0
+	var drawn := back and _drawn_time >= WIND_HOLD
 	var held := ctrl.shoot
 	# with LT held the slapshot starts as soon as the stick heads back on the
 	# forehand, so the lifted blade doesn't leave the puck behind
@@ -577,7 +610,7 @@ func _handle_shot_input(dt: float, able: bool) -> void:
 		return
 	wind_time += dt
 	if _stick_wound:
-		if drawn:
+		if back:
 			_wind_grace = 0.0
 			return
 		var l := _stick_local(ctrl.stick)
@@ -591,8 +624,8 @@ func _handle_shot_input(dt: float, able: bool) -> void:
 		_fire()
 
 
-## A quick forward flick of the right stick, with no wind-up, fires the
-## instant shot (weak and wild until shot release improves).
+## A quick forward flick of the right stick from neutral, with no wind-up,
+## fires the instant shot (weak and wild until shot release improves).
 func _flicked(dt: float) -> bool:
 	for i in _stick_hist.size():
 		_stick_hist[i].z += dt
@@ -600,6 +633,9 @@ func _flicked(dt: float) -> bool:
 	while _stick_hist.size() > 2 and _stick_hist[1].z >= FLICK_WINDOW:
 		_stick_hist.pop_front()
 	if winding or ctrl.stick.length() < 0.8 or not has_puck():
+		return false
+	# from (near) neutral: a sweep round the rim of the stick is stickhandling
+	if Vector2(_stick_hist[0].x, _stick_hist[0].y).length() > 0.4:
 		return false
 	var l := _stick_local(ctrl.stick)
 	if l.x < 0.5:

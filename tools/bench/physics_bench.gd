@@ -49,6 +49,18 @@ func on_stick_lift(_by: Skater, _victim: Skater) -> void:
 	pass
 
 
+func on_stick_broken(_s: Skater, _cause: StringName) -> void:
+	pass
+
+
+func on_new_stick(_s: Skater) -> void:
+	pass
+
+
+func bench_spot(_team: int) -> Vector2:
+	return Vector2(0, -12.0)
+
+
 # ---------------------------------------------------------------- harness
 
 func _ready() -> void:
@@ -68,6 +80,7 @@ func _ready() -> void:
 	_bench_moves()
 	_bench_shots()
 	_bench_passes()
+	_bench_pickup()
 	_bench_hits()
 	var text := "\n".join(_out)
 	print(text)
@@ -534,6 +547,48 @@ func _bench_passes() -> void:
 					ok += 1
 			cells.append("%d%%" % int(ok * 100.0 / n))
 		_line("| %d | %s | %s | %s |" % [r, cells[0], cells[1], cells[2]])
+
+
+## A loose puck with the right stick left alone, as a player skating onto it
+## would: `side` m to the right of the skating line (- = left), either lying
+## 4 m ahead while skating at half speed, or sliding in at `incoming` m/s
+## toward a skater standing still. Returns the share picked up within 1.5 s.
+func _pickup_rate(sh: int, side: float, incoming: float) -> float:
+	var ok := 0
+	var n := 40
+	for i in n:
+		_clear()
+		var s := _skater(_stats({"stick_handling": sh}))
+		var off := side + randf_range(-0.1, 0.1)
+		if incoming > 0.0:
+			puck.reset_at(Vector3(9.0, 0, off))
+			puck.vel = Vector3(-incoming, 0, 0)
+		else:
+			s.vel = Vector3(s.profile.max_speed * 0.5, 0, 0)
+			puck.reset_at(Vector3(4.0, 0, off))
+			puck.vel = Vector3(randf_range(-1.0, 1.0), 0, randf_range(-1.0, 1.0))
+		var t := 0.0
+		while t < 1.5 and not s.has_puck():
+			s.ctrl.reset()
+			s.ctrl.move = Vector2(0.5, 0) if incoming <= 0.0 else Vector2.ZERO
+			_step()
+			t += DT
+		if s.has_puck():
+			ok += 1
+	return float(ok) / n
+
+
+func _bench_pickup() -> void:
+	_line("")
+	_line("## Loose puck pickup, right stick left alone")
+	_line("")
+	_line("Share picked up within 1.5 s. Skating onto a puck lying 4 m ahead at half speed, or standing while it slides in. Offsets are from the skating line, + = forehand side.")
+	_line("")
+	_line("| stick handling | skate onto, +0.3 m | skate onto, +0.9 m | skate onto, -0.6 m | slides in 8 m/s, +0.5 m | slides in 13 m/s, +0.5 m |")
+	_line("|---|---|---|---|---|---|")
+	for r in RATINGS:
+		_line("| %d | %d%% | %d%% | %d%% | %d%% | %d%% |" % [r, int(100 * _pickup_rate(r, 0.3, 0.0)), int(100 * _pickup_rate(r, 0.9, 0.0)),
+			int(100 * _pickup_rate(r, -0.6, 0.0)), int(100 * _pickup_rate(r, 0.5, 8.0)), int(100 * _pickup_rate(r, 0.5, 13.0))])
 
 
 func _bench_hits() -> void:

@@ -213,7 +213,7 @@ func _handle_capture_args() -> void:
 		elif arg.begins_with("--shot-after="):
 			after = arg.trim_prefix("--shot-after=").to_float()
 		elif arg == "--iso":
-			camera_rig.toggle()
+			camera_rig.set_mode(CameraRig.Mode.ISOMETRIC)
 		elif arg.begins_with("--focus="):
 			var xz := arg.trim_prefix("--focus=").split_floats(",")
 			_focus_override = Vector3(xz[0], 0, xz[1])
