@@ -202,7 +202,7 @@ func _refresh() -> void:
 	_news(right)
 	var bottom := _row(_root)
 	bottom.add_child(_button("Practice", CareerState.start_practice, false))
-	if CareerState.has_office():
+	if CareerState.has_office() and CareerState.rink.game_due():
 		bottom.add_child(_button("Rink office", CareerState.open_office, false))
 	bottom.add_child(_button("Main menu", func():
 		CareerState.career = null
@@ -295,14 +295,10 @@ func _actions(parent: Control) -> void:
 	if rink and not rink.game_due():
 		parent = _section(parent, "millbrook")
 		parent.add_child(_term_text("> NEXT GAME: %s 22:00 ON YOUR OWN ICE." % RinkSim.DAY_NAMES[RinkLink.GAME_WEEKDAY].to_upper()))
-		var row := _row(parent)
-		var go := _button("Run the rink to game night", _run_rink)
-		row.add_child(go)
-		if float(rink.sim.league.owed) > 0.0:
-			row.add_child(_button("Pay league dues ($%.0f)" % float(rink.sim.league.owed), func():
-				rink.sim.pay_dues()
-				career.save()
-				_refresh(), false))
+		parent.add_child(_term_text("> RUN THE RINK FROM THE OFFICE. IT SENDS YOU BACK HERE AT GAME TIME."))
+		var go := _button("Rink office", CareerState.open_office)
+		go.disabled = not CareerState.has_office()
+		_row(parent).add_child(go)
 		go.grab_focus()
 		return
 	var g := career.next_user_game()
@@ -344,7 +340,8 @@ func _actions(parent: Control) -> void:
 	opts.add_child(plen)
 
 
-## Runs the owner's rink until the next game is due.
+## Runs the owner's rink until the next game is due (autopilot only; a player
+## runs the rink from the office).
 func _run_rink() -> void:
 	CareerState.rink.advance_to_game()
 	career.save()
