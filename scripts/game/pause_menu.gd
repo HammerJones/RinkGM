@@ -131,6 +131,7 @@ func _leave(action: Callable) -> void:
 	_set_visible(false)
 	get_tree().paused = false
 	action.call()
+	_recapture()
 
 
 func _quit_game() -> void:
@@ -144,9 +145,16 @@ func _game() -> Node:
 	return s if s != null and "practice" in s and s.has_method("restart") else null
 
 
+## Back to the match: recapture the cursor and re-centre the mouse stick,
+## so resuming can't flick a shot (PlayerInput.capture_mouse; a no-op headless).
 func _recapture() -> void:
 	var g := _game()
-	if g and not g.autoplay and DisplayServer.get_name() != "headless":
+	if g == null or g.autoplay:
+		return
+	var pi: Node = g.controller.get("player_input") if g.controller else null
+	if pi and pi.has_method("capture_mouse"):
+		pi.capture_mouse()
+	elif DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
