@@ -47,6 +47,15 @@ const UNITS := {"ice_temp": "C", "ice_thickness": "mm", "glycol_pct": "%", "brin
 
 # ------------------------------------------------------------------ clock
 
+## Minutes from `minute` to the start of the next block.
+static func minutes_to_next_block(minute: int) -> int:
+	var t := posmod(minute - 5 * 60, 24 * 60)  # minutes since 05:00
+	for b in [120, 720, 1200, 1440]:
+		if b > t:
+			return b - t
+	return 24 * 60
+
+
 static func block_of(minute: int) -> int:
 	var h := posmod(minute, 24 * 60) / 60.0
 	if h < 5.0:
@@ -126,7 +135,9 @@ static func offer_slots(sim: RinkSim, weekday: int) -> Array:
 ## flood, except while they're playing their own Beer League game.
 static func flood_crew(sim: RinkSim, weekday: int, hour: float) -> String:
 	if sim.has_method("flood_crew"):
-		return sim.call("flood_crew", weekday, hour)
+		# World's flood_crew takes a day index: this weekday in the current week.
+		var day := week_start(sim) + posmod(weekday - 1, 7)
+		return sim.call("flood_crew", day, int(round(hour * 60.0)))
 	for b in bookings(sim, weekday):
 		if b.org == "vbl_d" and hour > b.start and hour < b.start + b.hours:
 			return ""

@@ -3,10 +3,12 @@ extends Control
 ## P&L, the job queue and Gus's corkboard, as RINK-OS screens (see
 ## assets/ui/STYLE.md). Reads the sim only through OfficeData.
 ##
-## Uses the career's rink sim when there is one (CareerState.career.world
-## .rink_sim), otherwise a demo sim at the start of M1 played to Wednesday
-## afternoon.
+## Uses the career's rink when there is one (CareerState.rink, a RinkLink:
+## time goes through it so the career's calendar keeps up, and it stops for
+## the owner's own Beer League game), otherwise a demo sim at the start of M1
+## played to Wednesday afternoon.
 ## `-- --tab=grid|log|pl|jobs|board` opens a screen;
+## `-- --owner` starts a fresh owner career (unsaved) when none is running;
 ## `-- --screenshot=out.png` saves a frame and quits.
 
 const TABS := [["grid", "Ice grid"], ["log", "Log book"], ["pl", "P&L"], ["jobs", "Jobs"], ["board", "Corkboard"]]
@@ -15,9 +17,11 @@ const CORK := Color("4a3424")   ## the corkboard
 const INK := Color("2a1d08")    ## Gus's pencil
 
 var sim: RinkSim
+var rink: RinkLink  ## null in the standalone demo
 var tab := "grid"
 var _hud: FootHud
 var _tabs: HBoxContainer
+var _actions: HBoxContainer
 var _title: Label
 var _body: VBoxContainer
 
@@ -53,9 +57,15 @@ func _ready() -> void:
 	top.add_child(left)
 	_title = RinkOS.label("", RinkOS.TITLE)
 	left.add_child(_title)
+	var bar := HBoxContainer.new()
+	bar.add_theme_constant_override("separation", 32)
+	left.add_child(bar)
 	_tabs = HBoxContainer.new()
 	_tabs.add_theme_constant_override("separation", 8)
-	left.add_child(_tabs)
+	bar.add_child(_tabs)
+	_actions = HBoxContainer.new()
+	_actions.add_theme_constant_override("separation", 8)
+	bar.add_child(_actions)
 	_hud = FootHud.new()
 	top.add_child(_hud)
 
@@ -73,15 +83,30 @@ func _ready() -> void:
 
 
 func _find_sim() -> RinkSim:
-	var tree := Engine.get_main_loop() as SceneTree
-	var cs := tree.root.get_node_or_null("CareerState") if tree else null
-	if cs and cs.get("career") != null:
-		var w = cs.career.get("world")
-		if w is Dictionary and w.get("rink_sim") is RinkSim:
-			return w.rink_sim
-		if w is Object and w.get("rink_sim") is RinkSim:
-			return w.rink_sim
-	return OfficeData.demo_sim()
+	if CareerState.rink == null and "--owner" in OS.get_cmdline_user_args():
+		CareerState.rink = RinkLink.new_owner("Test", "Owner", "C", 7)
+		CareerState.career = CareerState.rink.career
+	rink = CareerState.rink
+	return rink.sim if rink else OfficeData.demo_sim()
+
+
+## Runs the clock to the start of the next block (stopping for the owner's
+## game, which sends them back to the hub to play it).
+func _next_block() -> void:
+	var m := OfficeData.minutes_to_next_block(sim.minute)
+	if rink:
+		if rink.advance(m):
+			_leave()
+			return
+	else:
+		sim.advance(m)
+	_refresh()
+
+
+func _leave() -> void:
+	if rink:
+		CareerState.career.save()
+		CareerState.back_to_hub()
 
 
 func open(t: String) -> void:
@@ -97,6 +122,18 @@ func _refresh() -> void:
 		var b := RinkOS.button(t[1], t[0] == tab)
 		b.pressed.connect(open.bind(t[0]))
 		_tabs.add_child(b)
+	for c in _actions.get_children():
+		c.queue_free()
+	if rink and rink.game_due():
+		_actions.add_child(_btn("To the game", _leave))
+	else:
+		_actions.add_child(_btn("Next block", _next_block, false))
+	if float(sim.league.owed) > 0.0:
+		_actions.add_child(_btn("Pay dues $%d" % int(sim.league.owed), func():
+			sim.pay_dues()
+			_refresh(), false))
+	if rink:
+		_actions.add_child(_btn("Hub", _leave, false))
 	for c in _body.get_children():
 		c.queue_free()
 	match tab:

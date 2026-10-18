@@ -57,6 +57,8 @@ func _init() -> void:
 	# Clock and blocks.
 	fails += _check(OfficeData.block_of(5 * 60 + 30) == 0 and OfficeData.block_of(12 * 60) == 1
 		and OfficeData.block_of(23 * 60) == 2 and OfficeData.block_of(30) == 2 and OfficeData.block_of(3 * 60) == 3, "blocks")
+	fails += _check(OfficeData.minutes_to_next_block(5 * 60) == 120 and OfficeData.minutes_to_next_block(14 * 60) == 180
+		and OfficeData.minutes_to_next_block(23 * 60) == 120 and OfficeData.minutes_to_next_block(3 * 60) == 120, "next block")
 	if fails == 0:
 		print("office data test: all passed")
 	quit(1 if fails > 0 else 0)
