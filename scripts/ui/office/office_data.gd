@@ -42,7 +42,8 @@ const WORDS := {
 	"brine_temp": [[-99.0, "very cold"], [-11.0, "cold"], [-7.5, "cool"], [-5.0, "warm"]],
 }
 const UNITS := {"ice_temp": "C", "ice_thickness": "mm", "glycol_pct": "%", "brine_temp": "C",
-	"compressor_health": "", "oil_quality": ""}
+	"compressor_health": "", "oil_quality": "", "suction_psig": "psi", "discharge_psig": "psi", "oil_psi": "psi",
+	"glycol_level": "L"}
 
 
 # ------------------------------------------------------------------ clock
@@ -74,14 +75,14 @@ static func clock(sim: RinkSim) -> Dictionary:
 		"week": week_number(sim), "money": sim.money}
 
 
-## Weeks run Monday to Sunday; sim day 1 is the first Monday.
+## Weeks run Monday to Sunday (M1's day 0 is a Monday).
 static func week_start(sim: RinkSim, day := -1) -> int:
 	var d := sim.day if day < 0 else day
-	return d - posmod(d - 1, 7)
+	return d - posmod(sim.weekday_of(d) - 1, 7)
 
 
 static func week_number(sim: RinkSim) -> int:
-	return 1 + maxi(week_start(sim) - 1, 0) / 7
+	return 1 + sim.week_of(sim.day) - sim.week_of(0)
 
 
 # ------------------------------------------------------------------ ice grid
@@ -213,6 +214,9 @@ static func grid_summary(sim: RinkSim) -> Dictionary:
 ## starting tool the text is words; with a bought tool it's a number and its
 ## error ("-4.6 C +/-0.5").
 static func reading_text(kind: String, r: Dictionary) -> Dictionary:
+	if not SimInstrument.CATALOG.has(kind):
+		# not an instrument (the panel lights): the text is what you see
+		return {"text": str(r.text), "fuzzy": false, "instrument": r.get("instrument", "")}
 	var tier := _tier_of(kind, r)
 	var text: String = r.text
 	var fuzzy := tier == 0
@@ -227,6 +231,10 @@ static func reading_text(kind: String, r: Dictionary) -> Dictionary:
 					text = w[1]
 			if not words.is_empty() and kind != "glycol_pct":
 				text += "?"
+			elif words.is_empty():
+				# a needle you squint at: a round number, not a reading
+				var unit: String = UNITS.get(kind, "")
+				text = "about %d%s" % [roundi(float(r.value)), (" " + unit) if unit != "" else ""]
 	else:
 		var unit: String = UNITS.get(kind, "")
 		text = "%.1f%s +/-%s" % [float(r.value), (" " + unit) if unit != "" else "", str(r.sigma)]
@@ -243,6 +251,12 @@ static func _tier_of(kind: String, r: Dictionary) -> int:
 
 ## The kind of instrument a readings() key uses ("oil_1" -> "oil_quality").
 static func reading_kind(key: String) -> String:
+	if key.begins_with("oil_level_"):
+		return "oil_level"
+	if key.begins_with("oil_psi_"):
+		return "oil_psi"
+	if key.begins_with("status_"):
+		return "status"
 	if key.begins_with("oil_"):
 		return "oil_quality"
 	if key.begins_with("compressor_"):
@@ -253,11 +267,11 @@ static func reading_kind(key: String) -> String:
 ## Takes a plant round and writes it in the log book. Returns the job result.
 static func plant_round(sim: RinkSim) -> Dictionary:
 	var r := sim.job("plant_round")
-	if r.ok:
+	if r.ok and not "log_book" in sim:
+		# World's RinkSim writes its own log book; older sims get one here
 		var book := log_book(sim)
 		book.append({"day": sim.day, "minute": sim.minute, "readings": r.readings})
-		if not "log_book" in sim:
-			sim.set_meta("log_book", book)
+		sim.set_meta("log_book", book)
 	return r
 
 
@@ -442,11 +456,9 @@ static func goals(sim: RinkSim) -> Array:
 ## `weekday` and `minute`, with a plant round each morning and Doris
 ## flooding before every booking. For screens and screenshots.
 static func demo_sim(weekday := 3, minute := 14 * 60, seed_ := 7) -> RinkSim:
-	var sim := RinkSim.create(seed_)
-	sim.auto_resurface = true
-	sim.day = 1
+	var sim := RinkSim.create_m1(seed_)
 	sim.minute = 5 * 60
-	var target_day := 1 + posmod(weekday - 1, 7)
+	var target_day := sim.day + posmod(weekday - sim.weekday(), 7)
 	while sim.day < target_day or (sim.day == target_day and sim.minute < minute):
 		if sim.minute == 5 * 60 + 15:
 			plant_round(sim)
