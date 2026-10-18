@@ -151,7 +151,7 @@ func physics_update(dt: float) -> void:
 		butterfly_timer = maxf(butterfly_timer, 0.3)
 	_reaction -= dt
 	butterfly_timer = maxf(0.0, butterfly_timer - dt)
-	var drop := lerpf(3.0, 5.0, skill) * lerpf(0.7, 1.1, gp)  # 0.2-0.4 s to get all the way down
+	var drop := lerpf(4.0, 6.5, skill) * lerpf(0.7, 1.1, gp)  # 0.15-0.35 s to get all the way down
 	butterfly = move_toward(butterfly, 1.0 if butterfly_timer > 0.0 else 0.0, (drop if butterfly_timer > 0.0 else 2.5) * dt)
 	_move_hands(dt, lerpf(0.65, 1.1, gp))
 
