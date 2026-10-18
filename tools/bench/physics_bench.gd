@@ -71,17 +71,14 @@ func _ready() -> void:
 	_line("# RinkGM physics bench")
 	_line("")
 	_line("Mode HYBRID unless noted. Ratings not named in a table are 50. 1 m/s = 2.24 mph.")
-	_bench_gestures()
-	_bench_skating()
-	_bench_stop()
-	_bench_turn()
-	_bench_carry()
-	_bench_stickhandle()
-	_bench_moves()
-	_bench_shots()
-	_bench_passes()
-	_bench_pickup()
-	_bench_hits()
+	# `-- --only=carry,pickup` runs just those sections
+	var only := []
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--only="):
+			only = Array(arg.trim_prefix("--only=").split(","))
+	for sec in ["gestures", "skating", "stop", "turn", "carry", "stickhandle", "moves", "shots", "passes", "pickup", "hits"]:
+		if only.is_empty() or sec in only:
+			call("_bench_" + sec)
 	var text := "\n".join(_out)
 	print(text)
 	for arg in OS.get_cmdline_user_args():
@@ -125,7 +122,7 @@ func _step() -> void:
 		s.physics_update(DT)
 	var sdt := DT / SUBSTEPS
 	for i in SUBSTEPS:
-		StickPuck.step(self, puck, sdt)
+		StickPuck.step(self, puck, sdt, float(i + 1) / SUBSTEPS)
 		puck.integrate(sdt)
 
 
@@ -135,6 +132,7 @@ func _recentre(s: Skater) -> void:
 		var shift := Vector3(s.position.x, 0, s.position.z)
 		s.position -= shift
 		s.blade_pos -= shift
+		s.blade_from -= shift
 		if puck.controller == s:
 			puck.position -= shift
 
@@ -607,3 +605,4 @@ func _bench_hits() -> void:
 			var impulse := 6.0 * Skater.MASS * 0.5 * hp.hit_power * 1.4
 			cells.append("%.2f" % (impulse / vp.balance))
 		_line("| %d | %s | %s | %s |" % [h, cells[0], cells[1], cells[2]])
+

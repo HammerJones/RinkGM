@@ -168,7 +168,7 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 		target += (me - _v2(opp.position)).normalized() * 3.0
 	_seek(s, ai, target, 1.0, 20.0)
 	var wobble := 0.25 + 0.25 * sin(g.time * 5.0 + s.number)
-	c.blade_target = s.position + s.heading * 0.95 + s.right_vec() * wobble
+	c.blade_target = s.position + s.heading * Skater.DEFAULT_BLADE.x + s.right_vec() * wobble
 
 
 ## Which post to shoot for: a disciplined shooter picks the side the goalie
