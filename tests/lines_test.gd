@@ -85,8 +85,15 @@ func _run() -> void:
 				if p and game.box.lines.get(p.id, {}).get("toi", 0.0) < 5.0:
 					toi_ok = false
 	_check(toi_ok, "every line and pair got ice time")
-	# a stoppage swaps the called line before the faceoff
+	# a stoppage swaps the called line before the faceoff. Wait for any
+	# change in progress to finish first: a skater still out from a half-done
+	# change can be the next line's player too and rightly stays on.
 	var b0: Bench = game.benches[0]
+	var settle := 0.0
+	while settle < 30.0 and not _settled(b0):
+		await _wait(0.1)
+		settle += 0.1
+	_check(_settled(b0), "line changes finish (%.1f s)" % settle)
 	b0.f_time = 999.0
 	b0.d_time = 999.0
 	var was: Array = game.team_skaters(0).duplicate()
@@ -111,3 +118,12 @@ func _run() -> void:
 	await _wait(0.2)
 	_check(game.state == game.State.STOPPAGE, "a puck over the glass is whistled dead")
 	_check(game._pending_faceoff == Vector2(Rink.DOT_X, Rink.DOT_Z), "faceoff at the dot where it was last played (%s)" % str(game._pending_faceoff))
+
+
+## Every slot holds the bench's player and nobody is heading off.
+func _settled(b: Bench) -> bool:
+	var on: Array = game.team_skaters(b.team)
+	for i in on.size():
+		if on[i].player != b.profile_for(i) or on[i].changing:
+			return false
+	return true
