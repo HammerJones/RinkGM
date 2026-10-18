@@ -1,0 +1,212 @@
+{
+ "id": "kenny_backhand",
+ "giver": "kenny_szabo",
+ "quest": "kenny_backhand",
+ "nodes": {
+  "offer": {
+   "say": "Okay, honest question, and you can be honest. Is my backhand a backhand, or is it more of a rumour? Dad called it 'a rumour' on CKVL once. On air. During a Lumber Kings broadcast. I wasn't even playing.",
+   "options": [
+    {
+     "text": "It's a rumour. Let's make it a fact.",
+     "do": [
+      {
+       "quest_start": "kenny_backhand"
+      },
+      {
+       "rel": [
+        "kenny_szabo",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "What do you need?",
+     "to": "why"
+    },
+    {
+     "text": "It's more of a legend. Nobody's seen it.",
+     "do": [
+      {
+       "rel": [
+        "kenny_szabo",
+        2
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "I'm swamped this week, Kenny.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Stick and puck. The pylons. Somebody to watch and tell me if I'm doing the thing where my top hand goes to sleep. I can't watch myself. I tried with my phone. I filmed the ceiling for an hour.",
+   "options": [
+    {
+     "text": "I'll watch. Let's go.",
+     "do": [
+      {
+       "quest_start": "kenny_backhand"
+      },
+      {
+       "rel": [
+        "kenny_szabo",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "A legend! Okay, that's better than a rumour. That's an upgrade. Will you help me make it real though?",
+   "options": [
+    {
+     "text": "Yes. Get your gear.",
+     "do": [
+      {
+       "quest_start": "kenny_backhand"
+      },
+      {
+       "rel": [
+        "kenny_szabo",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "No, totally, you've got a whole building. I'll just backhand the wall at home. Mom loves that.",
+   "do": [
+    {
+     "rel": [
+      "kenny_szabo",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "You're the best. Okay. Pylons. Dad says they're in the rink somewhere, which is not helpful, Dad.",
+   "options": []
+  },
+  "progress": {
+   "say": "Backhand watch, day whatever.",
+   "options": [
+    {
+     "text": "Still hunting for the pylons.",
+     "if": [
+      {
+       "step": [
+        "kenny_backhand",
+        "pylons"
+       ]
+      }
+     ],
+     "to": "p_pylons"
+    },
+    {
+     "text": "Pylons found. Ice next.",
+     "if": [
+      {
+       "step": [
+        "kenny_backhand",
+        "session"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "I'll be watching next session.",
+     "if": [
+      {
+       "step": [
+        "kenny_backhand",
+        "kenny"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_pylons": {
+   "say": "Earl says check with Doris. I don't know what that means. I'm scared to ask what that means.",
+   "options": []
+  },
+  "complete": {
+   "say": "So? Be honest. Was it a backhand?",
+   "options": [
+    {
+     "text": "It was a backhand. A real one.",
+     "do": [
+      {
+       "rel": [
+        "kenny_szabo",
+        3
+       ]
+      }
+     ],
+     "to": "c_real"
+    },
+    {
+     "text": "Your top hand fell asleep twice. But the third one was beautiful.",
+     "do": [
+      {
+       "rel": [
+        "kenny_szabo",
+        4
+       ]
+      },
+      {
+       "set": "kenny_backhand_coached"
+      }
+     ],
+     "to": "c_honest"
+    },
+    {
+     "text": "It's a rumour with potential.",
+     "do": [
+      {
+       "rel": [
+        "kenny_szabo",
+        1
+       ]
+      }
+     ],
+     "to": "c_rumour"
+    }
+   ]
+  },
+  "c_real": {
+   "say": "YES. I'm telling Dad. He'll say 'we'll see' on air. He got that off Hap Doyle. Here, have a pylon. I wrote my name on it. Well, Dad did. He has nicer writing.",
+   "options": []
+  },
+  "c_honest": {
+   "say": "The third one! I felt the third one. Okay. Top hand awake. I'm writing it on my tape. Here, take a pylon. KENNY'S, DO NOT BORROW. Except you. You can borrow.",
+   "options": []
+  },
+  "c_rumour": {
+   "say": "Potential. I'll take potential. Potential's how I got through high school. Here, a pylon, for your trouble.",
+   "options": []
+  },
+  "done": {
+   "say": "Top hand awake. Top hand awake. Top hand awake.",
+   "options": []
+  }
+ }
+}

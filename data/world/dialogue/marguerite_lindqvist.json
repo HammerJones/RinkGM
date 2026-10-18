@@ -1,0 +1,351 @@
+{
+  "id": "marguerite_lindqvist",
+  "barks": {
+    "idle": [
+      "Fine is not a number.",
+      "Suction 2.1. Discharge 9.4. Writing it down.",
+      "M.L."
+    ],
+    "good_ice": [
+      "Brine steady. Surface even. Boring. Good."
+    ],
+    "bad_ice": [
+      "Somebody wrote 'about' in my log.",
+      "That's what an unlogged trip looks like."
+    ],
+    "cold": [
+      "Brine at minus nine. Correct."
+    ],
+    "bored": [
+      "A boring plant room is a safe plant room."
+    ],
+    "greet_owner": [
+      "{owner}. Numbers first.",
+      "Good morning. Your log has errors. Tea?"
+    ],
+    "leaving_happy": [
+      "Clean round. Signed. M.L."
+    ],
+    "leaving_angry": [
+      "I've written it in red. You'll see."
+    ],
+    "event_specific": {
+      "figure_show": [
+        "Precise people on precise ice. I approve."
+      ],
+      "beer_league": [
+        "Fourteen minutes for Cody. Fourteen. In red."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_marguerite_lindqvist"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            5.0,
+            7.0
+          ]
+        }
+      ],
+      "node": "rounds"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "marguerite_lindqvist",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Marguerite Lindqvist. Plant. You've been writing 'about minus seven' in the log. About is not a reading.",
+      "do": [
+        {
+          "set": "met_marguerite_lindqvist"
+        }
+      ],
+      "options": [
+        {
+          "text": "Sorry. What should I write?",
+          "do": [
+            {
+              "rel": [
+                "marguerite_lindqvist",
+                4
+              ]
+            }
+          ],
+          "to": "first_teach"
+        },
+        {
+          "text": "It's fine, roughly.",
+          "do": [
+            {
+              "rel": [
+                "marguerite_lindqvist",
+                -4
+              ]
+            }
+          ],
+          "to": "first_fine"
+        },
+        {
+          "text": "Tea?",
+          "do": [
+            {
+              "rel": [
+                "marguerite_lindqvist",
+                2
+              ]
+            }
+          ],
+          "to": "first_tea"
+        }
+      ]
+    },
+    "first_teach": {
+      "say": "Brine out, brine return, suction, discharge, oil. Numbers. To one decimal. M.L.",
+      "options": [
+        {
+          "text": "One decimal.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_fine": {
+      "say": "Fine is not a number. Neither is roughly. Sit. I'll make tea and you'll learn.",
+      "options": [
+        {
+          "text": "Yes, Marg.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_tea": {
+      "say": "I make the tea. Milk, no sugar. Then the log. M.L.",
+      "options": [
+        {
+          "text": "Then the log.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Number 1 tripped twice. Nobody logged it. A trip unlogged is a trip repeated."
+      ],
+      "options": [
+        {
+          "text": "I'll log everything.",
+          "do": [
+            {
+              "rel": [
+                "marguerite_lindqvist",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rounds": {
+      "say": "05:00. No talking. Read the gauges with me. ... Good. Now write it down properly.",
+      "do": [
+        {
+          "note": "You did the 05:00 plant round with Marg. She corrected two entries in red."
+        }
+      ],
+      "options": [
+        {
+          "text": "(Write it down properly.)",
+          "do": [
+            {
+              "rel": [
+                "marguerite_lindqvist",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Tea's on. Your log was adequate yesterday. That is a compliment.",
+        "{owner}. Suction 2.1. Good morning."
+      ],
+      "options": [
+        {
+          "text": "Morning, Marg.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Yes. Numbers first, then questions.",
+        "M.L. here. What do you need?",
+        "Speak. The compressor is listening."
+      ],
+      "options": [
+        {
+          "text": "How's the plant?",
+          "to": "job"
+        },
+        {
+          "text": "Do you ever watch the games?",
+          "to": "events"
+        },
+        {
+          "text": "How's Cody?",
+          "to": "cody"
+        },
+        {
+          "text": "What do you make of Earl?",
+          "to": "earl"
+        },
+        {
+          "text": "How's the rink, by your numbers?",
+          "to": "rink"
+        },
+        {
+          "text": "Thanks, Marg.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Two Nordale RC-4s from 1974. Number 1 is grumpy. I am not. We understand each other.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "The figure show. Precise people on precise ice. And the beer league, for Cody's penalty minutes, which I mark in red.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "cody": {
+      "say": "Cody plays for the Sin Bin Brewers. The name is accurate. Fourteen minutes last week. Fourteen.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "earl": {
+      "say": "Earl floods by feel. I log by number. Between us, the ice is correct.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Better numbers lately?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Any advice for the ammonia inspection?",
+          "if": [
+            {
+              "not_flag": "marg_no_jokes"
+            }
+          ],
+          "to": "inspection"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Brine steady, ice even, no trips in a week. Boring. Boring is the goal.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "inspection": {
+      "say": "When the inspector comes, say nothing clever. No ammonia jokes. Show him the log.",
+      "options": [
+        {
+          "text": "No jokes. Promise.",
+          "do": [
+            {
+              "set": "marg_no_jokes"
+            },
+            {
+              "rel": [
+                "marguerite_lindqvist",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Not even one?",
+          "do": [
+            {
+              "rel": [
+                "marguerite_lindqvist",
+                -3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

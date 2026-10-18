@@ -40,15 +40,51 @@ const CATALOG := {
 			"bands": [[-1.0, "black"], [0.3, "dark"], [0.6, "amber"], [0.85, "clear"]]},
 		{"id": "oil_analysis", "name": "Oil lab analysis", "sigma": 0.03, "price": 60},
 	],
+	"oil_level": [
+		{"id": "sight_glass_level", "name": "Sight glass", "sigma": 0.06, "price": 0,
+			"bands": [[-1.0, "empty"], [0.12, "low"], [0.35, "about half"], [0.65, "high"], [0.85, "full"]]},
+	],
+	"oil_psi": [
+		{"id": "dial", "name": "Oil pressure dial", "sigma": 4.0, "price": 0},
+		{"id": "test_gauge", "name": "Calibrated test gauge", "sigma": 1.0, "price": 140},
+	],
+	"suction_psig": [
+		{"id": "dial", "name": "Suction dial gauge", "sigma": 5.0, "price": 0},
+		{"id": "test_gauge", "name": "Calibrated test gauge", "sigma": 1.0, "price": 140},
+	],
+	"discharge_psig": [
+		{"id": "dial", "name": "Discharge dial gauge", "sigma": 5.0, "price": 0},
+		{"id": "test_gauge", "name": "Calibrated test gauge", "sigma": 1.0, "price": 140},
+	],
+	"glycol_level": [
+		{"id": "tank_glass", "name": "Expansion tank sight glass", "sigma": 150.0, "price": 0,
+			"bands": [[-99999.0, "low"], [8600.0, "about half"], [8950.0, "full"]]},
+	],
+	"smoothness": [
+		{"id": "walk", "name": "Walk it and look", "sigma": 0.08, "price": 0,
+			"bands": [[-1.0, "chewed up at the dots"], [0.55, "a bit rough"], [0.75, "smooth"], [0.9, "like glass"]]},
+	],
 }
+
+
+## Finds the reading and tier an instrument id belongs to: {"reading", "tier"},
+## or {} if no such instrument ("ir_gun", "refractometer").
+static func find(id: String) -> Dictionary:
+	for reading in CATALOG:
+		var t: Array = CATALOG[reading]
+		for i in t.size():
+			if t[i].id == id:
+				return {"reading": reading, "tier": i}
+	return {}
 
 
 ## Reads `true_value` with the given tier of instrument for `reading`.
 ## Returns {"value": float, "text": String, "sigma": float}.
-static func read(reading: String, tier: int, true_value: float, rng: RandomNumberGenerator) -> Dictionary:
+## `sigma_mult` widens the error (a tired owner misreads the gauge).
+static func read(reading: String, tier: int, true_value: float, rng: RandomNumberGenerator, sigma_mult := 1.0) -> Dictionary:
 	var tiers: Array = CATALOG[reading]
 	var inst: Dictionary = tiers[clampi(tier, 0, tiers.size() - 1)]
-	var sigma: float = inst.sigma
+	var sigma: float = float(inst.sigma) * sigma_mult
 	var v := true_value + rng.randfn(0.0, sigma)
 	var text := "%.1f" % v
 	if inst.has("bands"):

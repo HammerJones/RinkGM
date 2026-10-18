@@ -1,0 +1,616 @@
+{
+ "version": 1,
+ "kinds": {
+  "beer_league": {
+   "label": "Valley Beer League",
+   "use": "hockey",
+   "pull": 0.3,
+   "spectator_cap": 0.1,
+   "participants": [
+    20,
+    36
+   ],
+   "ages": [
+    19,
+    75
+   ],
+   "needs_family_kid": false
+  },
+  "minor_hockey": {
+   "label": "Millbrook Minor Hockey",
+   "use": "hockey",
+   "pull": 0.5,
+   "spectator_cap": 0.25,
+   "participants": [
+    12,
+    36
+   ],
+   "ages": [
+    5,
+    17
+   ],
+   "needs_family_kid": true
+  },
+  "high_school": {
+   "label": "Millbrook High Mallards",
+   "use": "hockey",
+   "pull": 0.45,
+   "spectator_cap": 0.3,
+   "participants": [
+    16,
+    40
+   ],
+   "ages": [
+    13,
+    19
+   ],
+   "needs_family_kid": false
+  },
+  "senior_hockey": {
+   "label": "Lumber Kings, Senior AAA",
+   "use": "hockey",
+   "pull": 0.8,
+   "spectator_cap": 1.0,
+   "participants": [
+    36,
+    44
+   ],
+   "ages": [
+    18,
+    45
+   ],
+   "needs_family_kid": false
+  },
+  "pro_practice": {
+   "label": "Duncannon Dukes practice",
+   "use": "hockey",
+   "pull": 0.5,
+   "spectator_cap": 0.15,
+   "participants": [
+    20,
+    30
+   ],
+   "ages": [
+    19,
+    40
+   ],
+   "needs_family_kid": false
+  },
+  "tournament": {
+   "label": "Valley Peewee Tournament",
+   "use": "hockey",
+   "pull": 0.85,
+   "spectator_cap": 0.8,
+   "participants": [
+    24,
+    40
+   ],
+   "ages": [
+    10,
+    13
+   ],
+   "needs_family_kid": true
+  },
+  "figure_practice": {
+   "label": "Figure club ice",
+   "use": "figure",
+   "pull": 0.3,
+   "spectator_cap": 0.08,
+   "participants": [
+    6,
+    20
+   ],
+   "ages": [
+    6,
+    20
+   ],
+   "needs_family_kid": true
+  },
+  "figure_show": {
+   "label": "Figure show or test day",
+   "use": "figure",
+   "pull": 0.7,
+   "spectator_cap": 0.6,
+   "participants": [
+    10,
+    60
+   ],
+   "ages": [
+    5,
+    20
+   ],
+   "needs_family_kid": false
+  },
+  "public_skate": {
+   "label": "Public skate",
+   "use": "public",
+   "pull": 0.6,
+   "spectator_cap": 0.15,
+   "participants": [
+    10,
+    120
+   ],
+   "ages": [
+    2,
+    90
+   ],
+   "needs_family_kid": false
+  },
+  "learn_to_skate": {
+   "label": "Learn to skate",
+   "use": "public",
+   "pull": 0.4,
+   "spectator_cap": 0.08,
+   "participants": [
+    6,
+    24
+   ],
+   "ages": [
+    3,
+    80
+   ],
+   "needs_family_kid": false
+  },
+  "stick_and_puck": {
+   "label": "Stick and puck",
+   "use": "hockey",
+   "pull": 0.25,
+   "spectator_cap": 0.02,
+   "participants": [
+    4,
+    20
+   ],
+   "ages": [
+    10,
+    70
+   ],
+   "needs_family_kid": false
+  },
+  "broomball": {
+   "label": "Harlow Falls Broomball Club",
+   "use": "public",
+   "pull": 0.35,
+   "spectator_cap": 0.1,
+   "participants": [
+    12,
+    24
+   ],
+   "ages": [
+    18,
+    65
+   ],
+   "needs_family_kid": false
+  },
+  "special": {
+   "label": "Special event",
+   "use": "public",
+   "pull": 0.9,
+   "spectator_cap": 1.0,
+   "participants": [
+    0,
+    200
+   ],
+   "ages": [
+    2,
+    90
+   ],
+   "needs_family_kid": false
+  }
+ },
+ "contracts": {
+  "vbl_d": "beer_league",
+  "public_skate": "public_skate",
+  "learn_to_skate": "learn_to_skate",
+  "broomball": "broomball",
+  "minor_hockey": "minor_hockey",
+  "figure_club": "figure_practice",
+  "high_school": "high_school",
+  "vbl_a": "beer_league",
+  "lumber_kings": "senior_hockey",
+  "tournament": "tournament",
+  "dukes_practice": "pro_practice"
+ },
+ "contracts_proposed": {
+  "haverstock_oldtimers": "special",
+  "hockey_school": "minor_hockey",
+  "curling_bonspiel": "special",
+  "gnhl_camp": "pro_practice",
+  "tv_event": "senior_hockey"
+ },
+ "specials": [
+  {
+   "id": "home_opener",
+   "name": "Lumber Kings Home Opener",
+   "kind": "senior_hockey",
+   "rule": "second Friday of October",
+   "hours": [
+    19.0,
+    22.5
+   ],
+   "pull": 1.0,
+   "host": "ray_duchesne",
+   "blurb": "Buffalo-plaid bunting on the rafters rail, a plaid scarf on Doris's mirror and the ceremonial puck drop by Ronnie Haverstock, who is always asked and always says yes. Old Pete polishes the Shed bell in the lobby where people can see. The marquee says BEAT THE MILL.",
+   "goes_well": [
+    "the HOME scoreboard works (or Doreen's flip chart is up)",
+    "Ronnie drops the puck",
+    "the coffee machine flips to WORKING",
+    "a clean intermission flood under eight minutes"
+   ],
+   "goes_badly": [
+    "the roof drips on the home blue line",
+    "the beer licence isn't sorted",
+    "Kessler wins 5-3 again, like 1974"
+   ],
+   "draws": [
+    "senior_hockey"
+   ]
+  },
+  {
+   "id": "halloween_skate",
+   "name": "Halloween Public Skate",
+   "kind": "public_skate",
+   "day_of_year": 304,
+   "hours": [
+    17.0,
+    20.0
+   ],
+   "pull": 0.75,
+   "host": "dylan_pruitt",
+   "blurb": "Pumpkins on the boards, costumes on the ice and Doris in a sheet as a ghost (Earl: 'Fine. Once.'). Dylan runs a haunted dressing room that is mostly him in a goalie mask saying 'boo'.",
+   "goes_well": [
+    "dry ice in the rental line, not on the rink",
+    "candy at the skate rental window",
+    "Doris's ghost sheet stays on through the flood"
+   ],
+   "goes_badly": [
+    "slush and capes do not mix",
+    "the haunted dressing room makes Birdie cry",
+    "somebody's inflatable costume meets a skate blade"
+   ]
+  },
+  {
+   "id": "doris_day",
+   "name": "Doris Day",
+   "kind": "special",
+   "day_of_year": 306,
+   "hours": [
+    12.0,
+    16.0
+   ],
+   "pull": 0.6,
+   "host": "earl_bratt",
+   "blurb": "The rink and Doris both opened on Saturday 2 November 1974, so every 2 November the town wishes Doris a happy birthday. Earl allows a cake in the bay (not on her), kids sign a card taped to the snow tank, and Doris does a slow lap with her headlamps on while Doreen plays Happy Birthday in Organ 2.",
+   "goes_well": [
+    "Doris starts first pull",
+    "Earl adds a tally mark with the whole town watching",
+    "the cake has her original cream and blue"
+   ],
+   "goes_badly": [
+    "Doris won't start (it's the plugs)",
+    "somebody mentions a Flatley",
+    "the cake ends up on the ice"
+   ]
+  },
+  {
+   "id": "peewee_tournament",
+   "name": "Valley Peewee Tournament",
+   "kind": "tournament",
+   "rule": "third weekend of November (and one weekend a month in winter)",
+   "hours": [
+    7.0,
+    21.0
+   ],
+   "pull": 0.95,
+   "host": "bob_ferreira",
+   "blurb": "Teams from five towns, games every 75 minutes with a flood, hockey bags lining the corridor like sandbags and a schedule board on an easel that the owner updates live as the day runs late. The Hot Stove serves the Legion's tournament chili, Tommy Bellweather runs the crest-trading table like a bank, and Bob Ferreira, who chairs the committee, would like it to run on time for once in its life.",
+   "goes_well": [
+    "the schedule runs within 30 minutes",
+    "the fries never run out",
+    "four usable dressing rooms",
+    "a Millbrook kid scores the winner on home ice"
+   ],
+   "goes_badly": [
+    "one long overtime pushes every game late",
+    "the fryer dies at 11 am",
+    "a rut at the blue line catches a Peewee's edge"
+   ]
+  },
+  {
+   "id": "skate_with_santa",
+   "name": "Skate with Santa",
+   "kind": "public_skate",
+   "rule": "second Saturday of December",
+   "hours": [
+    13.0,
+    16.0
+   ],
+   "pull": 0.9,
+   "host": "gordon_halvorsen",
+   "blurb": "Santa arrives on Doris, as every year, and Santa is Big Gord, shouting 'Ho ho ho, Big Gord won't let you walk!' from the snow tank. Earl drives. Doris wears felt antlers but not the red nose; if somebody adds the nose, Earl takes it off before every flood and puts it back after.",
+   "goes_well": [
+    "the mitten tree in the lobby is full",
+    "Millbrook Elementary's paper snowflakes are on the glass",
+    "Santa does not fall (2011)"
+   ],
+   "goes_badly": [
+    "Santa falls (2011; it still got a 10)",
+    "the hot chocolate runs out",
+    "the red nose incident escalates"
+   ]
+  },
+  {
+   "id": "snowflake_showcase",
+   "name": "The Snowflake Showcase",
+   "kind": "figure_show",
+   "rule": "third Saturday of December",
+   "hours": [
+    14.0,
+    16.0
+   ],
+   "pull": 0.8,
+   "host": "colette_beaulieu",
+   "blurb": "The learn-to-skate kids and the figure club skate for their families under paper snowflakes hung from the rafters on fishing line. It is the night Maddie Pruitt lets go of the chair, if the season has gone right. Every parent has a phone up; Colette asks them to also hold a hand.",
+   "goes_well": [
+    "minus three and a half at the surface",
+    "the music doesn't skip",
+    "every small skater gets a snowflake medal",
+    "Maddie lets go"
+   ],
+   "goes_badly": [
+    "hockey ruts left from the afternoon",
+    "a cold stands and a broken heater",
+    "the sound system plays the Kingsport dirge by mistake"
+   ]
+  },
+  {
+   "id": "haverstock_oldtimers",
+   "name": "Haverstock Old-timers' Invitational",
+   "kind": "special",
+   "rule": "third weekend of January",
+   "hours": [
+    9.0,
+    22.0
+   ],
+   "pull": 0.85,
+   "host": "ronnie_haverstock",
+   "blurb": "One weekend in January, eighteen hours of old-timers' hockey, a beer garden in the hall and old team photos brought down from the walls and set on easels round the room with the 1994 Cup photo in the middle. Ronnie's daughter Tracy runs it; Ronnie is embarrassed by all of it. Barry Pomeroy turns up with a suitcase.",
+   "goes_well": [
+    "a beer garden licence in hand",
+    "the dead spot behind the north net left alone",
+    "Ronnie scores off the bank and pretends it was luck"
+   ],
+   "goes_badly": [
+    "no licence, dry hall",
+    "somebody has 'fixed' the north boards",
+    "ambulance on standby, used"
+   ],
+   "draws": [
+    "beer_league",
+    "senior_hockey"
+   ]
+  },
+  {
+   "id": "hockey_day_in_millbrook",
+   "name": "Hockey Day in Millbrook",
+   "kind": "special",
+   "rule": "last Saturday of January",
+   "hours": [
+    7.0,
+    23.0
+   ],
+   "pull": 0.95,
+   "host": "donna_pettigrew",
+   "blurb": "One day, every level: Tiny Tykes at 7, minor hockey all morning, the Mallards at noon, the figure club's exhibition between periods, the Flood Crew against the Molars at 4 and the Lumber Kings at 7, with Bernie Szabo calling all of it on CKVL from a card table at the glass.",
+   "goes_well": [
+    "every slot runs on time",
+    "Bernie's card table has a heater",
+    "the Lumber Kings win in front of the whole town"
+   ],
+   "goes_badly": [
+    "the plant trips at noon",
+    "the ice wears out by the Kings game",
+    "the canteen's out of everything by 3"
+   ],
+   "draws": [
+    "minor_hockey",
+    "high_school",
+    "beer_league",
+    "senior_hockey"
+   ]
+  },
+  {
+   "id": "winter_carnival",
+   "name": "Millbrook Winter Carnival",
+   "kind": "special",
+   "rule": "first weekend of February",
+   "hours": [
+    10.0,
+    23.0
+   ],
+   "pull": 0.9,
+   "host": "midge_kaminski",
+   "blurb": "The town fair: an ice sculpture contest in the lot (the Flood Crew carves a Doris, the Molars carve a molar), King of Mount Doris for the kids, lanterns across the lot, a hot chocolate stand outside, a figure club exhibition under the coloured gels and, on Saturday night, the broomball final. The Clarion prints the sculpture results on page one.",
+   "goes_well": [
+    "a cold, clear weekend so the sculptures last",
+    "the figure exhibition on figure ice",
+    "the broomball final on ice that won't eat sneakers"
+   ],
+   "goes_badly": [
+    "a February thaw melts the Doris sculpture",
+    "the plant struggles with the doors open all day",
+    "the Hot Stove runs out of hot chocolate by noon"
+   ],
+   "draws": [
+    "figure_show",
+    "broomball",
+    "public_skate"
+   ]
+  },
+  {
+   "id": "broomball_beer_cup",
+   "name": "The Broomball Beer Cup (Carnival Final)",
+   "kind": "broomball",
+   "rule": "first Saturday of February (Carnival night)",
+   "hours": [
+    21.0,
+    24.0
+   ],
+   "pull": 0.7,
+   "host": "rhonda_pelkey",
+   "blurb": "The Carnival's Saturday night broomball final: the Harlow Falls Broomball Club and anyone with sneakers and a grudge, with the beer garden open in the hall. The trophy is the Golden Boot, a rubber boot painted gold, which lives on Rhonda Pelkey's porch because nobody has given it a better home.",
+   "goes_well": [
+    "the boards edged and the flood done an hour before, not a minute before",
+    "nachos at the Hot Stove",
+    "the Golden Boot gets a place in the trophy case"
+   ],
+   "goes_badly": [
+    "the ice is wet and nobody can stand",
+    "a hockey team books over it",
+    "the noise complaint from Church Street"
+   ]
+  },
+  {
+   "id": "valentines_skate",
+   "name": "Valentine's Couples Skate",
+   "kind": "public_skate",
+   "day_of_year": 45,
+   "hours": [
+    19.0,
+    21.0
+   ],
+   "pull": 0.7,
+   "host": "doreen_vachon",
+   "blurb": "The lights go down, Doreen plays love songs on the Casio in Organ 2 and couples go round holding hands, or holding each other up. The Hot Stove sells The Haverstock in pairs. Every year somebody proposes; this year Devon Marsh has been checking his coat pocket since January.",
+   "goes_well": [
+    "the lights dim and the ice is smooth",
+    "Doreen takes requests",
+    "Devon doesn't fall at the key moment"
+   ],
+   "goes_badly": [
+    "slush ruins the romance",
+    "the heater is broken in the stands",
+    "Devon falls at the key moment (still a yes)"
+   ]
+  },
+  {
+   "id": "penner_night",
+   "name": "Harold Penner Night",
+   "kind": "special",
+   "rule": "first Saturday of March",
+   "hours": [
+    19.0,
+    22.0
+   ],
+   "pull": 0.8,
+   "host": "june_penner",
+   "blurb": "A Lumber Kings home game in the name of Mayor Harold Penner, who cut the ribbon in 1974 and shouted 'SKATE!' from seat C-4-7 for thirty years. The Kings wear the 1974 socks, which smell like 1974. His granddaughter June sits in his seat and leads the whole building in the shout every time someone stops moving.",
+   "goes_well": [
+    "seat C-4-7 is cleaned and the plaque polished",
+    "the whole building shouts SKATE together",
+    "the Kings win in the 1974 socks"
+   ],
+   "goes_badly": [
+    "somebody sits in C-4-7",
+    "the HOME scoreboard is still dead for the man who opened the rink",
+    "ice under 60 on his night"
+   ],
+   "draws": [
+    "senior_hockey"
+   ]
+  },
+  {
+   "id": "figure_test_day",
+   "name": "Figure Club Test Day",
+   "kind": "figure_show",
+   "rule": "second Sunday of March",
+   "hours": [
+    8.0,
+    15.0
+   ],
+   "pull": 0.4,
+   "host": "helene_arsenault",
+   "blurb": "Madame Lacombe drives two hours from Sainte-Odile with her own blanket to evaluate the club's skaters on skills, dances and free skate; this year Josée Thibodeau tests her Senior Bronze freeskate and wants the ice fresh, flat and fair. Parents whisper in the stands, skaters wait in the lobby in warm-ups and the judges' box is either warm or a disaster.",
+   "goes_well": [
+    "a heater in the judges' box",
+    "minus four at the surface and no ruts",
+    "silence during the tests",
+    "coffee for the panel"
+   ],
+   "goes_badly": [
+    "a cold judges' box (she remembers)",
+    "the goal horn goes off by accident",
+    "a stick and puck group booked into the lobby"
+   ]
+  },
+  {
+   "id": "lts_graduation",
+   "name": "Learn-to-Skate Graduation",
+   "kind": "learn_to_skate",
+   "rule": "last Monday of March",
+   "hours": [
+    18.5,
+    20.0
+   ],
+   "pull": 0.55,
+   "host": "penny_marchetti",
+   "blurb": "Week ten of the adult and kids' learn-to-skate: everyone skates one lap without the boards, demonstrates a stop (any stop) and gets a certificate in one of Penny's very good cards, signed by Penny, Colette and, if she can be talked into it, Bev. Gary Pruett comes back to stop in front of the bench, as an alumnus.",
+   "goes_well": [
+    "rental skates sharpened that week",
+    "families in the stands",
+    "Walter and Marisol both let go of the boards"
+   ],
+   "goes_badly": [
+    "blunt rentals (number 41)",
+    "a hockey session overruns into it",
+    "nobody can stop and the boards take a beating"
+   ]
+  },
+  {
+   "id": "spring_ice_show",
+   "name": "The Spring Carnival (the ice show)",
+   "kind": "figure_show",
+   "rule": "second Saturday of April",
+   "hours": [
+    14.0,
+    16.5
+   ],
+   "pull": 0.8,
+   "host": "helene_arsenault",
+   "blurb": "The Millbrook Figure Skating Club's annual carnival, its fifty-first, before the ice comes out: Gus's coloured gels on the lamps (pink, blue, amber and one green nobody likes), the 50 Carnivals banner lowered to just above the ice, themed numbers, the little ones in costumes made by their parents and a finale where every skater, coach and willing hockey player does one lap together. Earl does the last flood of the season straight after, and the town watches that too.",
+   "goes_well": [
+    "the gels found and the lamps safe to dress",
+    "ice rated 75 or better",
+    "Josée lands the double axel",
+    "Earl's last flood gets applause"
+   ],
+   "goes_badly": [
+    "the roof drips on the finale (it is March weather)",
+    "the ice is soft by the second act",
+    "the plant is shut early to save power"
+   ]
+  },
+  {
+   "id": "skate_a_thon",
+   "name": "Doris's Retirement Fund Skate-a-thon",
+   "kind": "public_skate",
+   "rule": "last Saturday of April",
+   "hours": [
+    9.0,
+    21.0
+   ],
+   "pull": 0.6,
+   "host": "dylan_pruitt",
+   "blurb": "Twelve hours of pledged laps for the pickle jar labelled DORIS RETIREMENT FUND, which Earl says is pointless because she is not retiring. Dylan counts the laps, Irene skates the most, and Earl refuses to attend, then turns up at 6 pm and drives the last flood.",
+   "goes_well": [
+    "the ice holds up for twelve hours",
+    "the pickle jar passes $1,000",
+    "Earl turns up"
+   ],
+   "goes_badly": [
+    "the ice is slush by 3 pm",
+    "nobody brings pledge sheets",
+    "Earl hears the word 'retirement' once too often"
+   ]
+  }
+ ]
+}

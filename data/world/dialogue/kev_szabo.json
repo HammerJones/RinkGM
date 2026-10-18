@@ -1,0 +1,335 @@
+{
+  "id": "kev_szabo",
+  "barks": {
+    "idle": [
+      "HA!",
+      "Broomball. It's the future. Also the past."
+    ],
+    "good_ice": [
+      "Grippy! Sneakers love it!"
+    ],
+    "bad_ice": [
+      "Even sneakers have standards, buddy. Low ones."
+    ],
+    "goal": [
+      "HAAA! Did you see that? Nobody saw that. I saw that."
+    ],
+    "cold": [
+      "Cold? Run around more. That's broomball."
+    ],
+    "greet_owner": [
+      "HA! The owner!",
+      "Hey buddy!"
+    ],
+    "leaving_happy": [
+      "Great night! Loud night! Same thing!"
+    ],
+    "leaving_angry": [
+      "Ice was soup, buddy. We'll be back. We're always back."
+    ],
+    "event_specific": {
+      "broomball": [
+        "Wednesday! The holy night!",
+        "Rhonda! Rhonda's a wall!"
+      ],
+      "senior_hockey": [
+        "Fine sport. Needs more falling down."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_kev_szabo"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "broomball"
+        }
+      ],
+      "node": "broom"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "kev_szabo",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "HA! The owner! Kev Szabo, Harlow Falls Broomball. Broomball is hockey for people with dignity. Also without it.",
+      "do": [
+        {
+          "set": "met_kev_szabo"
+        }
+      ],
+      "options": [
+        {
+          "text": "Ha! Welcome, Kev.",
+          "do": [
+            {
+              "rel": [
+                "kev_szabo",
+                4
+              ]
+            }
+          ],
+          "to": "first_ha"
+        },
+        {
+          "text": "Isn't it just curling with a ball?",
+          "do": [
+            {
+              "rel": [
+                "kev_szabo",
+                -8
+              ]
+            }
+          ],
+          "to": "first_curling"
+        },
+        {
+          "text": "How loud is the club?",
+          "to": "first_loud"
+        }
+      ]
+    },
+    "first_ha": {
+      "say": "See, you get it! Wednesday late ice. Bring sneakers. Bring a helmet. Bring a sense of humour.",
+      "options": [
+        {
+          "text": "Will do.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_curling": {
+      "say": "Oh. Oh no. That's the one thing. We forgive everything except that. I'll forgive you too. Eventually.",
+      "options": [
+        {
+          "text": "Sorry, Kev.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_loud": {
+      "say": "Loud enough that Earl floods angrier after us. We take that as a review.",
+      "options": [
+        {
+          "text": "Ha.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Ice was slush, buddy. Even sneakers have standards. Low standards. But standards."
+      ],
+      "options": [
+        {
+          "text": "I'll fix it for Wednesday.",
+          "do": [
+            {
+              "rel": [
+                "kev_szabo",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "broom": {
+      "say": "Wednesday! The holy night! Rhonda's in net and the Golden Boot is on her porch, where it belongs.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "HA! There they are!",
+        "Owner! My favourite owner! You're my only owner."
+      ],
+      "options": [
+        {
+          "text": "Hey, Kev.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "HA! What's up?",
+        "Kev here! Loud and proud. What do you need?",
+        "Hey buddy! Did I tell you broomball's the future? It is."
+      ],
+      "options": [
+        {
+          "text": "Sell me on broomball.",
+          "to": "events"
+        },
+        {
+          "text": "How's the feed route?",
+          "to": "job"
+        },
+        {
+          "text": "How's Kenny?",
+          "to": "kenny"
+        },
+        {
+          "text": "And Bernie?",
+          "to": "bernie"
+        },
+        {
+          "text": "Is the ice okay for you?",
+          "to": "rink"
+        },
+        {
+          "text": "Could you keep it down a bit on Wednesdays?",
+          "if": [
+            {
+              "not_flag": "kev_asked_quiet"
+            }
+          ],
+          "to": "quiet"
+        },
+        {
+          "text": "See you, Kev.",
+          "to": "end"
+        }
+      ]
+    },
+    "events": {
+      "say": "No skates, no edges, just sneakers and courage. Everybody falls. Everybody laughs. It's church with brooms.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "job": {
+      "say": "Feed truck, six to three. Cows don't care about broomball. I've tried.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "kenny": {
+      "say": "My nephew. Best kid in the valley. Plays like it's a privilege. It isn't, it's beer league. But he's right.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bernie": {
+      "say": "My brother does play-by-play at dinner. 'Kev reaches for the potatoes, he's got a step on everybody.' Every night.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Better for sneakers now?",
+          "if": [
+            {
+              "ice_gte": 55
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Grippy, buddy. I stayed up a whole shift. That's a club record.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "quiet": {
+      "say": "Keep it... down?",
+      "options": [
+        {
+          "text": "Never mind. Be loud.",
+          "do": [
+            {
+              "rel": [
+                "kev_szabo",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Yes, please.",
+          "do": [
+            {
+              "set": "kev_asked_quiet"
+            },
+            {
+              "rel": [
+                "kev_szabo",
+                -4
+              ]
+            }
+          ],
+          "to": "quiet2"
+        }
+      ]
+    },
+    "quiet2": {
+      "say": "Okay. Okay. Indoor voices. HA. Sorry. That one got out.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

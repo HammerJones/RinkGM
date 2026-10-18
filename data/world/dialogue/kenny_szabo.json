@@ -1,0 +1,532 @@
+{
+  "id": "kenny_szabo",
+  "barks": {
+    "idle": [
+      "I'm not good, I'm just there.",
+      "Anybody need a net moved? I'm a guy who moves nets."
+    ],
+    "good_ice": [
+      "Buddy, this ice! I only fell once!"
+    ],
+    "bad_ice": [
+      "Bit of a swamp, buddy. I'll still play. I'd play on a parking lot."
+    ],
+    "goal": [
+      "Buddy! BUDDY!",
+      "Who passed? I passed! Did I pass?"
+    ],
+    "cold": [
+      "Cold one. Good for the wings after."
+    ],
+    "hungry": [
+      "Wings. Postgame wings. Pregame wings? No. Yes?"
+    ],
+    "bored": [
+      "I'd do a lap if they'd let me."
+    ],
+    "greet_owner": [
+      "Hey buddy!",
+      "Buddy! There they are.",
+      "Oh hey, buddy."
+    ],
+    "leaving_happy": [
+      "Great skate, buddy. Wings!"
+    ],
+    "leaving_angry": [
+      "Rough one, buddy. Ice was kind of mean tonight."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Dirty areas, here I come.",
+        "Somebody's gotta go in the corner. It's me."
+      ],
+      "stick_and_puck": [
+        "Backhand practice. My backhand is a rumour."
+      ],
+      "broomball": [
+        "Uncle Kev's night! Sneakers on!"
+      ],
+      "senior_hockey": [
+        "Look at those guys. Imagine. No. Don't imagine."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_kenny_szabo"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "game"
+    },
+    {
+      "if": [
+        {
+          "event_now": "broomball"
+        }
+      ],
+      "node": "broom"
+    },
+    {
+      "if": [
+        {
+          "event_now": "stick_and_puck"
+        }
+      ],
+      "node": "snp"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "kenny_szabo",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hey buddy! You're the owner? Kenny. Szabo. Yeah, that Szabo, the radio one's my dad. I'm not good, I'm just there.",
+      "do": [
+        {
+          "set": "met_kenny_szabo"
+        }
+      ],
+      "options": [
+        {
+          "text": "Nice to meet you, Kenny.",
+          "do": [
+            {
+              "rel": [
+                "kenny_szabo",
+                3
+              ]
+            }
+          ],
+          "to": "first_nice"
+        },
+        {
+          "text": "Bernie Szabo's kid?",
+          "do": [
+            {
+              "rel": [
+                "kenny_szabo",
+                -3
+              ]
+            }
+          ],
+          "to": "first_bernie"
+        },
+        {
+          "text": "Want to play on my line?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "kenny_szabo",
+                5
+              ]
+            }
+          ],
+          "to": "first_line"
+        }
+      ]
+    },
+    "first_nice": {
+      "say": "Likewise, buddy. If you ever need a guy to move a net, I'm a guy.",
+      "options": [
+        {
+          "text": "Good to know.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_bernie": {
+      "say": "Ha. Yeah. Everybody says it like that. On the radio he calls me 'Szabo, number 22', like we've never met.",
+      "options": [
+        {
+          "text": "Sorry, Kenny.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_line": {
+      "say": "Your line? Buddy. Yes. I'll go in the corners. You do the, you know, the scoring.",
+      "options": [
+        {
+          "text": "Deal.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Not gonna lie, buddy, the ice was kind of a swamp Tuesday. I still played. I'd play on a parking lot."
+      ],
+      "options": [
+        {
+          "text": "I'll get it fixed.",
+          "do": [
+            {
+              "rel": [
+                "kenny_szabo",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "game": {
+      "say": "Game night, buddy! Dirty areas, here I come. Somebody's gotta go in there.",
+      "options": [
+        {
+          "text": "Go get 'em.",
+          "do": [
+            {
+              "rel": [
+                "kenny_szabo",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Wings after?",
+          "to": "wings"
+        }
+      ]
+    },
+    "wings": {
+      "say": "Wings after. Always. I'm buying. No, I'm buying. I'll fight you.",
+      "options": [
+        {
+          "text": "You're on.",
+          "do": [
+            {
+              "rel": [
+                "kenny_szabo",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "broom": {
+      "say": "Uncle Kev's night! Broomball's hockey for people with dignity. Also without it. That's his line, I just steal it.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "snp": {
+      "say": "Stick and puck. Just me, the pylons and my backhand, which is a rumour.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Buddy! There they are. You know what I mean.",
+        "Hey buddy. Ice is {ice_word}. I'm happy anyway."
+      ],
+      "options": [
+        {
+          "text": "Hey, Kenny.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Hey buddy, what's up?",
+        "Buddy! Need a hand with anything?",
+        "Oh hey. Kenny reporting. What's going on?"
+      ],
+      "options": [
+        {
+          "text": "How's work at Maple Tire?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love playing?",
+          "to": "events"
+        },
+        {
+          "text": "How's your dad?",
+          "to": "bernie"
+        },
+        {
+          "text": "You talk about Ronnie a lot.",
+          "to": "ronnie"
+        },
+        {
+          "text": "What's Tyler Brandt like?",
+          "to": "tyler"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Carpool to Harlow Falls?",
+          "if": [
+            {
+              "path": "player"
+            },
+            {
+              "not_flag": "kenny_carpool"
+            }
+          ],
+          "to": "carpool"
+        },
+        {
+          "text": "You'd run through a wall for this team, wouldn't you?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "I can't pay you much, Kenny.",
+          "if": [
+            {
+              "path": "gm"
+            },
+            {
+              "not_flag": "kenny_signed_cheap"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "See you, Kenny.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Mufflers, mostly. And people who say their car is 'making a noise'. Buddy, all cars make a noise.",
+      "options": [
+        {
+          "text": "Maple Tire. That's our scoreboard.",
+          "to": "job2"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "job2": {
+      "say": "Ha, yeah! The HOME half's been dead since 2003. Nobody at the shop will talk about it. 'We fix what winter breaks.' Not that.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Beer league. Stick and puck. Broomball with Uncle Kev. Senior hockey, if I ever... no. I'm not good enough. I'm just there.",
+      "options": [
+        {
+          "text": "You might be better than you think.",
+          "do": [
+            {
+              "rel": [
+                "kenny_szabo",
+                2
+              ]
+            }
+          ],
+          "to": "events2"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events2": {
+      "say": "Ha. That's what Ronnie says. Then he asks me what the puck did. I never know what the puck did.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bernie": {
+      "say": "Dad's great. He calls my goals like a stranger scored them. His voice goes up, though. I hear it.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "ronnie": {
+      "say": "Ronnie told me to keep my feet moving. Changed my life. I try to pay him back in wings. He won't let me.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "tyler": {
+      "say": "Tyler's all right. He shoots from the blue line at practice. At me. I'm on his team.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Better than it was?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "And the dressing rooms?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Way better, buddy. I fell less. Still fell. But less.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "The heater in room 2 works now. I sat by it twenty minutes. Best twenty minutes of my week.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "carpool": {
+      "say": "My car or yours? Yours. Mine's at work, which is ironic. Hit the heater on the left side, it works.",
+      "do": [
+        {
+          "set": "kenny_carpool"
+        },
+        {
+          "rel": [
+            "kenny_szabo",
+            2
+          ]
+        },
+        {
+          "note": "Kenny Szabo is your carpool to Harlow Falls."
+        }
+      ],
+      "options": [
+        {
+          "text": "Deal.",
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "Coach, I'd run through a wall. I have run through a wall. The Kessler one. It's fine now.",
+      "options": [
+        {
+          "text": "Please don't.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "Buddy, I'd play for wings. Don't tell my agent. I don't have an agent.",
+      "options": [
+        {
+          "text": "Then sign here.",
+          "do": [
+            {
+              "set": "kenny_signed_cheap"
+            },
+            {
+              "rel": [
+                "kenny_szabo",
+                5
+              ]
+            },
+            {
+              "note": "Kenny Szabo signed for next to nothing and a standing wing order."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Let me think about it.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

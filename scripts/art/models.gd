@@ -83,13 +83,27 @@ static func leg(p: Dictionary, goalie: bool) -> VoxelModel:
 	return m
 
 
+## Body proportions (agreed with Animations, 2026-10-18), in voxels: a
+## 1.85 m adult is 28 V on skates and 27 V in shoes. Limbs hang down their
+## local -Y from the joint pivot, as SkaterRig expects.
+const THIGH_V := 6.5
+const SHIN_V := 6.0
+const SKATE_V := 1.5
+const SHOE_V := 0.5
+const UPPER_ARM_V := 5.0
+const FOREARM_V := 5.5     # forearm plus hand
+const SHOULDERS_V := 11.0
+const HIP_SKATE_V := THIGH_V + SHIN_V + SKATE_V   # 14
+const HIP_SHOE_V := THIGH_V + SHIN_V + SHOE_V     # 13
+
+
 ## Skater thigh: pants leg and the top of the sock, hip joint to knee.
 static func thigh(p: Dictionary) -> VoxelModel:
 	var m := VoxelModel.new(V)
 	m.box(0, 0, 0, 3, 2, 4, p.sock)
 	m.box(0, 1, 0, 3, 1, 4, p.sock_stripe2)
-	m.box(0, 2, 0, 3, 4, 4, p.pants)
-	m.set_pivot(1.5, 6, 2)
+	m.box(0, 2, 0, 3, 5, 4, p.pants)
+	m.set_pivot(1.5, THIGH_V, 2)
 	return m
 
 
@@ -98,28 +112,40 @@ static func shin(p: Dictionary) -> VoxelModel:
 	var m := VoxelModel.new(V)
 	m.box(1, 0, -2, 1, 1, 6, STEEL)
 	m.box(0, 1, -2, 3, 2, 5, BOOT)
-	m.box(0, 3, 0, 3, 3, 4, p.sock)
-	m.box(0, 4, 0, 3, 1, 4, p.sock_stripe)
-	m.box(0, 6, 0, 3, 1, 4, p.sock_stripe)  # knee
-	m.set_pivot(1.5, 6.5, 2)
+	m.box(0, 3, 0, 3, 5, 4, p.sock)
+	m.box(0, 5, 0, 3, 1, 4, p.sock_stripe)
+	m.box(0, 7, 0, 3, 1, 4, p.sock_stripe)  # knee
+	m.set_pivot(1.5, SHIN_V + SKATE_V, 2)
+	return m
+
+
+## The same shin in shoes, for people on foot: knee pivot, 6 V + a 0.5 V
+## sole. `p.trousers` and `p.shoe` colour it when given.
+static func shin_shoe(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	var shoe: Color = p.get("shoe", BOOT)
+	var leg: Color = p.get("trousers", p.pants)
+	m.box(0, 0, -2, 3, 1, 5, shoe)
+	m.box(0, 1, 0, 3, 6, 3, leg)
+	m.set_pivot(1.5, SHIN_V + SHOE_V, 1.5)
 	return m
 
 
 ## Skater upper arm (shoulder to elbow) and forearm with glove (elbow to hand).
 static func upper_arm(p: Dictionary) -> VoxelModel:
 	var m := VoxelModel.new(V)
-	m.box(0, 0, 0, 3, 4, 3, p.jersey)
+	m.box(0, 0, 0, 3, 5, 3, p.jersey)
 	m.box(0, 0, 0, 3, 1, 3, p.stripe)
-	m.set_pivot(1.5, 4, 1.5)
+	m.set_pivot(1.5, UPPER_ARM_V, 1.5)
 	return m
 
 
 static func forearm(p: Dictionary) -> VoxelModel:
 	var m := VoxelModel.new(V)
-	m.box(0, 3, 0, 3, 2, 3, p.jersey_dark)
+	m.box(0, 3, 0, 3, 3, 3, p.jersey_dark)
 	m.box(0, 0, 0, 3, 3, 3, GLOVE)
 	m.box(0, 3, 0, 3, 1, 3, p.jersey_dark.darkened(0.4))  # cuff
-	m.set_pivot(1.5, 5, 1.5)
+	m.set_pivot(1.5, FOREARM_V, 1.5)
 	return m
 
 
@@ -152,14 +178,14 @@ static func torso(p: Dictionary, goalie: bool) -> VoxelModel:
 		m.box(5, 4, 5, 2, 3, 1, p.crest)
 		m.set_pivot(6, 0, 3)
 	else:
-		m.box(1, 0, 0, 8, 7, 5, p.jersey)
-		m.box(0, 7, 0, 10, 2, 5, p.jersey)
-		m.box(1, 1, 0, 8, 2, 5, p.stripe)
-		m.box(0, 8, 0, 10, 1, 5, p.jersey_dark)
-		m.box(3, 3, 0, 4, 4, 1, p.crest)
-		m.box(4, 4, 0, 2, 2, 1, p.crest_inner)
-		m.box(4, 3, 4, 2, 3, 1, p.crest)
-		m.set_pivot(5, 0, 2.5)
+		m.box(1, 0, 0, 9, 7, 5, p.jersey)
+		m.box(0, 7, 0, 11, 2, 5, p.jersey)
+		m.box(1, 1, 0, 9, 2, 5, p.stripe)
+		m.box(0, 8, 0, 11, 1, 5, p.jersey_dark)
+		m.box(3, 3, 0, 5, 4, 1, p.crest)
+		m.box(4, 4, 0, 3, 2, 1, p.crest_inner)
+		m.box(4, 3, 4, 3, 3, 1, p.crest)
+		m.set_pivot(SHOULDERS_V * 0.5, 0, 2.5)
 	return m
 
 

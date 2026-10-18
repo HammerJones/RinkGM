@@ -1,0 +1,294 @@
+{
+  "id": "tyler_kowalchuk",
+  "barks": {
+    "idle": [
+      "Clue: nobody buys white tape. Why? Investigating.",
+      "Toe Drag is asleep on the receipts. Again."
+    ],
+    "good_ice": [
+      "Evidence suggests: good ice. Fewer people at the sharpening counter."
+    ],
+    "bad_ice": [
+      "Three complaints about ruts before noon. Writing that down."
+    ],
+    "goal": [
+      "Noted. Time of goal: now."
+    ],
+    "bored": [
+      "Researching flex numbers. It's work. It's basically work."
+    ],
+    "greet_owner": [
+      "Oh, hi!",
+      "Hi. Tyler K. Not the other one."
+    ],
+    "leaving_happy": [
+      "Good shift. Solved nothing. Learned a lot."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "Stat check: the Kings are 4 and 1 at home when Pete polishes the bell."
+      ],
+      "beer_league": [
+        "Tyler Brandt broke another stick. That's eleven. I keep a spreadsheet."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_tyler_kowalchuk"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "tyler_kowalchuk",
+            30
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Oh, hi. Tyler. Tyler Kowalchuk, not Tyler Brandt. Writing that down for you. Kowalchuk, with a K-O-W.",
+      "do": [
+        {
+          "set": "met_tyler_kowalchuk"
+        }
+      ],
+      "options": [
+        {
+          "text": "Got it. Nice to meet you, Tyler K.",
+          "do": [
+            {
+              "rel": [
+                "tyler_kowalchuk",
+                4
+              ]
+            }
+          ],
+          "to": "first_k"
+        },
+        {
+          "text": "The hockey guy?",
+          "do": [
+            {
+              "rel": [
+                "tyler_kowalchuk",
+                -4
+              ]
+            }
+          ],
+          "to": "first_brandt"
+        },
+        {
+          "text": "What's in the notebook?",
+          "to": "notebook"
+        }
+      ]
+    },
+    "first_k": {
+      "say": "Tyler K. That's what everyone calls me. Noted that you noted it.",
+      "options": [
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_brandt": {
+      "say": "No. That's the other one. He has a slapshot and no inside voice. I have a notebook.",
+      "options": [
+        {
+          "text": "Sorry.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Clue: three customers mentioned the ice this morning. None of them nicely."
+      ],
+      "options": [
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Detective's log, {weekday}: the owner arrives. Hi.",
+        "Oh good, it's you. I need a witness for something. Never mind, it was the cat."
+      ],
+      "options": [
+        {
+          "text": "Hi, Tyler.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Hi! Laces are on aisle one. There is one aisle.",
+        "Tyler K, at your service. Also my great-aunt's.",
+        "Hi! I'm not on my phone. I'm researching flex numbers."
+      ],
+      "options": [
+        {
+          "text": "How's the shop?",
+          "to": "job"
+        },
+        {
+          "text": "What's in the notebook?",
+          "to": "notebook"
+        },
+        {
+          "text": "What do you like watching?",
+          "to": "events"
+        },
+        {
+          "text": "How's working for Bev?",
+          "to": "bev"
+        },
+        {
+          "text": "What do people say about the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Were you just touching Old Bertha?",
+          "if": [
+            {
+              "not_flag": "tyler_bertha_secret"
+            },
+            {
+              "not_flag": "tyler_bertha_told"
+            }
+          ],
+          "to": "bertha"
+        },
+        {
+          "text": "See you, Tyler.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Counter, rentals, the cat. Toe Drag is technically staff. She sleeps on the receipts.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "notebook": {
+      "say": "Clues. Like who ties a green balloon to the 2005 Mallards photo every 12 March. Nobody knows. Yet.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Senior hockey, for the stats. Beer league, for the chaos. I keep a spreadsheet of who breaks the most sticks. It's mostly Tyler Brandt.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bev": {
+      "say": "My great-aunt is amazing. I can recite her lectures. 'Composites remember what they were.' I've heard that one forty times.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Any clues the ice is better?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Evidence: fewer people at the sharpening counter on Mondays. Conclusion: better ice. Case closed.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bertha": {
+      "say": "No! I was dusting near her. Please don't tell my great-aunt.",
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "do": [
+            {
+              "set": "tyler_bertha_secret"
+            },
+            {
+              "rel": [
+                "tyler_kowalchuk",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Bev should know.",
+          "do": [
+            {
+              "set": "tyler_bertha_told"
+            },
+            {
+              "rel": [
+                "tyler_kowalchuk",
+                -4
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

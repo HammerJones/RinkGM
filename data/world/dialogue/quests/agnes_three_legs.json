@@ -1,0 +1,299 @@
+{
+ "id": "agnes_three_legs",
+ "giver": "agnes_mulroney",
+ "quest": "agnes_three_legs",
+ "nodes": {
+  "offer": {
+   "say": "The conservator wants to 'correct the anatomy'. Fifty years I've let that skater have three legs, {owner}. Before anybody corrects anything, I'd like to know whose legs they are. I never found out. A teacher should know.",
+   "options": [
+    {
+     "text": "I'll find out whose legs they are.",
+     "do": [
+      {
+       "quest_start": "agnes_three_legs"
+      },
+      {
+       "rel": [
+        "agnes_mulroney",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "You really never knew?",
+     "to": "why"
+    },
+    {
+     "text": "Three legs is more stable. It's practically a tripod.",
+     "do": [
+      {
+       "rel": [
+        "agnes_mulroney",
+        2
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "Let the conservator decide.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "I knew one was Dale Huffman. He was a careful boy. Careful boys paint legs backwards. The other student, I turned my back for one minute. Curlers never turn their backs. I wasn't a curler yet.",
+   "options": [
+    {
+     "text": "Then I'll find the other painter.",
+     "do": [
+      {
+       "quest_start": "agnes_three_legs"
+      },
+      {
+       "rel": [
+        "agnes_mulroney",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "Ha. A tripod. Rascal the dog thought so. He used to sit under it. Will you ask around?",
+   "options": [
+    {
+     "text": "I'll ask.",
+     "do": [
+      {
+       "quest_start": "agnes_three_legs"
+      },
+      {
+       "rel": [
+        "agnes_mulroney",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "A conservator from Wendover deciding about a Millbrook leg. Very well. I'll write him a letter. It will be firm.",
+   "do": [
+    {
+     "rel": [
+      "agnes_mulroney",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Start with Dale. He'll say nothing. Watch his left hand while he says it.",
+   "options": []
+  },
+  "progress": {
+   "say": "The legs.",
+   "options": [
+    {
+     "text": "Waiting on the lobby work.",
+     "if": [
+      {
+       "step": [
+        "agnes_three_legs",
+        "rooms"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Asking Dale.",
+     "if": [
+      {
+       "step": [
+        "agnes_three_legs",
+        "dale"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Dale sent me to the girl in the red toque.",
+     "if": [
+      {
+       "step": [
+        "agnes_three_legs",
+        "bev"
+       ]
+      }
+     ],
+     "to": "p_bev"
+    },
+    {
+     "text": "I know whose legs. Now, what do we do?",
+     "if": [
+      {
+       "step": [
+        "agnes_three_legs",
+        "decide"
+       ]
+      }
+     ],
+     "to": "p_decide"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_bev": {
+   "say": "The red toque. The sit spin. The only figure with sharp skates. Oh, of course. Of course it was.",
+   "options": []
+  },
+  "p_decide": {
+   "say": "Tell the conservator what, then?",
+   "options": [
+    {
+     "text": "Keep all three legs. Keep the stain. Clean it, change nothing.",
+     "do": [
+      {
+       "set": "mural_kept_whole"
+      },
+      {
+       "set": "mural_decided"
+      },
+      {
+       "rel": [
+        "agnes_mulroney",
+        4
+       ]
+      }
+     ],
+     "to": "p_keep"
+    },
+    {
+     "text": "Keep the three legs. Remove Gus's Florida stain.",
+     "do": [
+      {
+       "set": "mural_stain_removed"
+      },
+      {
+       "set": "mural_decided"
+      },
+      {
+       "rel": [
+        "agnes_mulroney",
+        -1
+       ]
+      }
+     ],
+     "to": "p_stain"
+    },
+    {
+     "text": "Correct the leg. It's a mistake.",
+     "do": [
+      {
+       "set": "mural_leg_corrected"
+      },
+      {
+       "set": "mural_decided"
+      },
+      {
+       "rel": [
+        "agnes_mulroney",
+        -4
+       ]
+      },
+      {
+       "rel": [
+        "dale_huffman",
+        -3
+       ]
+      },
+      {
+       "rel": [
+        "bev_kowalchuk",
+        -3
+       ]
+      }
+     ],
+     "to": "p_fix"
+    }
+   ]
+  },
+  "p_keep": {
+   "say": "Change nothing. Good. Art isn't what you meant. It's what happened.",
+   "options": []
+  },
+  "p_stain": {
+   "say": "The stain's Gus's Florida. Gus moved there. Hm. Your building. The town will write letters.",
+   "options": []
+  },
+  "p_fix": {
+   "say": "Correct it. Well. Then it will be a correct painting of nobody. I'll tell Dale and Bev. Gently. They'll be very quiet about it, which is worse.",
+   "options": []
+  },
+  "complete": {
+   "say": "Dale's on the left, painted backwards. Beverly Kowalchuk on the right. And she painted herself in the red toque doing a sit spin, and gave herself the only sharp skates on the pond. Fifty years. Thank you. A teacher should know.",
+   "options": [
+    {
+     "text": "Will you tell them you know?",
+     "to": "c_tell"
+    },
+    {
+     "text": "Bev says it isn't her in the toque.",
+     "do": [
+      {
+       "rel": [
+        "agnes_mulroney",
+        1
+       ]
+      }
+     ],
+     "to": "c_toque"
+    },
+    {
+     "text": "Can I see your draw board at the bonspiel?",
+     "do": [
+      {
+       "set": "agnes_bonspiel_invite"
+      },
+      {
+       "rel": [
+        "agnes_mulroney",
+        2
+       ]
+      }
+     ],
+     "to": "c_curl"
+    }
+   ]
+  },
+  "c_tell": {
+   "say": "I'll tell them at the Legion. I'll say 'nice leg' to each of them, and nothing else. Curlers are patient.",
+   "options": []
+  },
+  "c_toque": {
+   "say": "Of course she does. She also says she can't sing. She sang the anthem at the 1979 final. Look at the programme.",
+   "options": []
+  },
+  "c_curl": {
+   "say": "March. Bring a sweater. Don't touch the board. Curlers notice everything, {owner}. Everything.",
+   "options": []
+  },
+  "done": {
+   "say": "Three legs. Change nothing.",
+   "options": []
+  }
+ }
+}

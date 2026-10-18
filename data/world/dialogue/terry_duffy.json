@@ -1,0 +1,363 @@
+{
+  "id": "terry_duffy",
+  "barks": {
+    "idle": [
+      "Every problem's a clog with a cause.",
+      "(His pager beeps. He sighs.)"
+    ],
+    "good_ice": [
+      "Ice is flowing nicely. Professionally speaking."
+    ],
+    "bad_ice": [
+      "That ice has a blockage somewhere. I can feel it."
+    ],
+    "wet_ice": [
+      "Water where it shouldn't be. Story of my life."
+    ],
+    "cold": [
+      "Cold? I spent this morning under a house in Kessler. This is a spa."
+    ],
+    "hungry": [
+      "Aunt Lorraine's chili. That's the plan."
+    ],
+    "long_line": [
+      "Long line for washroom 2. Of course."
+    ],
+    "bored": [
+      "Bored is good. Bored means nothing's leaking."
+    ],
+    "goal": [
+      "Goal! Before the pager, for once!"
+    ],
+    "greet_owner": [
+      "Hey, boss. Washroom 2 holding up?",
+      "Hey! How's the plumbing? Don't answer, I'll hear it."
+    ],
+    "leaving_happy": [
+      "Pager didn't go off once. Miracle."
+    ],
+    "leaving_angry": [
+      "I'll be back. I've got to be. Washroom 2 needs me."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Breakaway! Don't you dare, pager. DON'T YOU DARE.",
+        "Line change! Emergency call! Line change!"
+      ],
+      "senior_hockey": [
+        "Lumber Kings and chili. Best night of the week."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_terry_duffy"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "terry_wc2_fixed"
+        },
+        {
+          "not_flag": "terry_wc2_thanked"
+        }
+      ],
+      "node": "wc2_fixed"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "game"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Terry Duffy. Duffy Bros. Plumbing and Heating, and centre for the Plungers. Lorraine at the Hot Stove's my aunt. (His pager goes off.) Sorry. That'll be Kessler.",
+      "do": [
+        {
+          "set": "met_terry_duffy"
+        }
+      ],
+      "options": [
+        {
+          "text": "You still carry a pager?",
+          "do": [
+            {
+              "rel": [
+                "terry_duffy",
+                2
+              ]
+            }
+          ],
+          "to": "first_pager"
+        },
+        {
+          "text": "Number one in the number two business, right?",
+          "do": [
+            {
+              "rel": [
+                "terry_duffy",
+                -2
+              ]
+            }
+          ],
+          "to": "first_slogan"
+        },
+        {
+          "text": "Good to meet you, Terry.",
+          "do": [
+            {
+              "rel": [
+                "terry_duffy",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_pager": {
+      "say": "Cell service under a house is terrible. The pager always gets through. Usually on a breakaway. The refs rule it a line change.",
+      "options": [
+        {
+          "text": "Ha!",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_slogan": {
+      "say": "Everyone says that like they thought of it. My dad thought of it. In 1979. He's still proud.",
+      "options": [
+        {
+          "text": "Sorry.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "Sorry, Terry. I'll fix it.",
+          "do": [
+            {
+              "rel": [
+                "terry_duffy",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "game": {
+      "say": [
+        "Plungers tonight. Best-organised team in C. Until the pager.",
+        "Taped my stick, checked my pager, checked the drains. Ready."
+      ],
+      "options": [
+        {
+          "text": "Good luck, Terry.",
+          "to": "end"
+        },
+        {
+          "text": "Quick word?",
+          "to": "hub"
+        }
+      ]
+    },
+    "wc2_fixed": {
+      "say": "Washroom 2's running like a dream. I stopped in to check. Twice. Professional pride.",
+      "options": [
+        {
+          "text": "Thanks, Terry.",
+          "do": [
+            {
+              "set": "terry_wc2_thanked"
+            },
+            {
+              "rel": [
+                "terry_duffy",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What's up, boss?",
+        "Yeah? (He glances at the pager.) Go ahead.",
+        "Hey. Talk fast, the pager's warming up."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the plumbing business?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love about beer league?",
+          "to": "events"
+        },
+        {
+          "text": "How's your aunt Lorraine?",
+          "to": "gossip"
+        },
+        {
+          "text": "What do you think of the building?",
+          "to": "rink"
+        },
+        {
+          "text": "Could you look at washroom 2?",
+          "if": [
+            {
+              "not_flag": "terry_wc2_fixed"
+            }
+          ],
+          "to": "wc2"
+        },
+        {
+          "text": "See you, Terry.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Every problem's a clog with a cause. Find the cause, clear the clog. Works on pipes. Works on people, too, mostly.",
+      "options": [
+        {
+          "text": "Wise.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Beer league with the Plungers, the hot-and-cold jerseys, like the taps. Lumber Kings with chili. And a game where the pager stays quiet. Haven't had one yet.",
+      "options": [
+        {
+          "text": "Here's hoping.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Aunt Lorraine's run the Hot Stove for twenty-two years. Her chili's the reason I'm a centre and not a goalie. Goalies can't eat between periods.",
+      "options": [
+        {
+          "text": "Sounds delicious.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Pipes older than me, a boiler with opinions, and washroom 2. Professionally, washroom 2 is my favourite and least favourite room in the building.",
+      "options": [
+        {
+          "text": "It's better now, though?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll get to it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "New fixtures, hot water in the visitors' room and the boiler stopped arguing. I'd say it's sound. Coming from me, that's a love letter.",
+      "options": [
+        {
+          "text": "I'll take it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "wc2": {
+      "say": "Washroom 2. Yeah. It's a cracked flange and a vent stack somebody stuffed a toque in. Forty bucks, family rate. Lorraine would kill me if I charged you more.",
+      "options": [
+        {
+          "text": "Deal. Forty bucks.",
+          "do": [
+            {
+              "money": -40
+            },
+            {
+              "set": "terry_wc2_fixed"
+            },
+            {
+              "rel": [
+                "terry_duffy",
+                3
+              ]
+            },
+            {
+              "note": "Terry Duffy fixed washroom 2: a cracked flange and a toque in the vent stack. $40, family rate."
+            }
+          ],
+          "to": "wc2_yes"
+        },
+        {
+          "text": "Maybe next month.",
+          "to": "hub"
+        }
+      ]
+    },
+    "wc2_yes": {
+      "say": "Give me twenty minutes. (His pager goes off.) Forty minutes. (He comes back with a very old toque.) Found your problem.",
+      "options": [
+        {
+          "text": "Whose toque is that?",
+          "to": "wc2_toque"
+        },
+        {
+          "text": "Thanks, Terry.",
+          "to": "hub"
+        }
+      ]
+    },
+    "wc2_toque": {
+      "say": "Says L. KINGS 1979 on it. I'm putting it in the lost and found. It's been lost long enough.",
+      "options": [
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "See you, boss. (Pager.) And there it goes.",
+        "Later. Keep the drains clear."
+      ],
+      "options": []
+    }
+  }
+}

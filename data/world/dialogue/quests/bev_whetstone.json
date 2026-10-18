@@ -1,0 +1,166 @@
+{
+ "id": "bev_whetstone",
+ "giver": "bev_kowalchuk",
+ "quest": "bev_whetstone",
+ "nodes": {
+  "offer": {
+   "say": "Don't look at me like that, champ. I'm using a hardware store stone. It's fine. It's not fine. My grandfather's stone's in your plant room. Gus borrowed it in 1979 for the ice scraper. Forty-seven years. I never asked for it back. That's how you win with Gus. You don't ask.",
+   "options": [
+    {
+     "text": "I'll find it.",
+     "do": [
+      {
+       "quest_start": "bev_whetstone"
+      },
+      {
+       "rel": [
+        "bev_kowalchuk",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why didn't you just ask him?",
+     "to": "why"
+    },
+    {
+     "text": "Forty-seven years is a long time to make a point.",
+     "do": [
+      {
+       "rel": [
+        "bev_kowalchuk",
+        1
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "The plant room's a mess. Maybe later.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Because then he'd have won. We had a thing. I won't explain it. It involved a sit spin and a ribbon in 1976. Find the stone.",
+   "options": [
+    {
+     "text": "Finding the stone.",
+     "do": [
+      {
+       "quest_start": "bev_whetstone"
+      },
+      {
+       "rel": [
+        "bev_kowalchuk",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "It's the only way to make a point in this town. Fast points don't stick.",
+   "options": [
+    {
+     "text": "Fair. I'll find it.",
+     "do": [
+      {
+       "quest_start": "bev_whetstone"
+      },
+      {
+       "rel": [
+        "bev_kowalchuk",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Later's fine. The stone's patient. So am I. That's a lie, I'm not patient. But the stone is.",
+   "do": [
+    {
+     "rel": [
+      "bev_kowalchuk",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Grey. Leather sleeve. A K on it. If it's got a chip on one end, that's from my grandfather throwing it at a Kessler man in 1931.",
+   "options": []
+  },
+  "progress": {
+   "say": "Well?",
+   "options": [
+    {
+     "text": "Still looking.",
+     "to": "p_find"
+    },
+    {
+     "text": "Just saying hello.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_find": {
+   "say": "Gus hid things where he'd see them every day. He liked looking at things he'd won.",
+   "options": []
+  },
+  "complete": {
+   "say": "That's it. Chip on the end. Kessler man. Huh. He kept it on a nail where he'd see it every morning. Of course he did. Here. Five sharpenings, on the house. Don't tell anyone, they'll all want one.",
+   "options": [
+    {
+     "text": "What was the thing about the sit spin?",
+     "do": [
+      {
+       "rel": [
+        "bev_kowalchuk",
+        2
+       ]
+      }
+     ],
+     "to": "c_spin"
+    },
+    {
+     "text": "Hang it by Old Bertha, where people can see it.",
+     "do": [
+      {
+       "set": "whetstone_by_bertha"
+      }
+     ],
+     "to": "c_hang"
+    },
+    {
+     "text": "Thanks, Bev.",
+     "to": "c_thanks"
+    }
+   ]
+  },
+  "c_spin": {
+   "say": "1976. Mill pond. Gus bet me a dollar I couldn't hold a sit spin for ten seconds. I held it for eleven. He paid me with a promise. The stone was his way of keeping it. That's all you're getting, champ.",
+   "options": []
+  },
+  "c_hang": {
+   "say": "By Bertha. Fine. The two oldest things in the shop, side by side. Three, if you count me. Don't count me.",
+   "options": []
+  },
+  "c_thanks": {
+   "say": "Don't thank me. Thank my grandfather's aim.",
+   "options": []
+  },
+  "done": {
+   "say": "Stone's home. Edges are better. You can tell, can't you.",
+   "options": []
+  }
+ }
+}

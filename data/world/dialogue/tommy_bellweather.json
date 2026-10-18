@@ -1,0 +1,572 @@
+{
+  "id": "tommy_bellweather",
+  "barks": {
+    "idle": [
+      "There are 41 lost pucks in this building. I know where 38 are, right?",
+      "Linesman the pigeon is on the third rafter today. That's lucky, right?",
+      "One Kessler pin is three Millbrook pins. That's the rate today, right?"
+    ],
+    "good_ice": [
+      "Ice is glass today. Glass! Pucks go zing, right?",
+      "This is Dukes ice. Like, actually Dukes ice."
+    ],
+    "bad_ice": [
+      "The ice is chewed. Pucks bounce. That's how they get lost, right?",
+      "Earl is going to be so mad about this ice."
+    ],
+    "wet_ice": [
+      "Wet ice. My pucks are going to stop dead. Plop."
+    ],
+    "goal": [
+      "GOAL! I know where that puck's going after, right?",
+      "Whoa! Did you see that? Top corner!"
+    ],
+    "cold": [
+      "My hands are cold but my trading hand is fine."
+    ],
+    "hungry": [
+      "Fries are four dollars. That's like one and a half pins, right?"
+    ],
+    "long_line": [
+      "I could run this line better. I run a whole table."
+    ],
+    "bored": [
+      "Want to see my pin binder? It's alphabetical AND by year."
+    ],
+    "greet_owner": [
+      "{owner}! Can I have a job? No? Can I drive Doris? No? Okay. Hi!",
+      "Hey {owner}! Big news! Okay, medium news."
+    ],
+    "leaving_happy": [
+      "Best day. Three trades and two signatures!"
+    ],
+    "leaving_angry": [
+      "They sent me home at nine. NINE. Right in the middle of everything."
+    ],
+    "event_specific": {
+      "pro_practice": [
+        "The Dukes are HERE. Pen. Puck. Go. Right?",
+        "If they use the back door again I'm going to cry."
+      ],
+      "tournament": [
+        "Table's open! Kessler pins, three for one! Port Ainsley pins, ask me!",
+        "Tournament day is my Christmas, right?"
+      ],
+      "stick_and_puck": [
+        "Ping! Did you hear that? Crossbar!",
+        "Stick and puck is the best because nobody tells you what to do, right?"
+      ],
+      "senior_hockey": [
+        "Lumber Kings! I've got every program since I was six."
+      ],
+      "minor_hockey": [
+        "Owen's playing. He owes me a pin. It's a long story."
+      ],
+      "special": [
+        "So many people. So many pins. So many pockets."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_tommy_bellweather"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            20.5,
+            21.5
+          ]
+        }
+      ],
+      "node": "bedtime"
+    },
+    {
+      "if": [
+        {
+          "event_now": "pro_practice"
+        }
+      ],
+      "node": "dukes_now"
+    },
+    {
+      "if": [
+        {
+          "event_now": "tournament"
+        }
+      ],
+      "node": "tourney_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "tommy_bellweather",
+            45
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "You're the owner! I'm Tommy. Tommy Bellweather. I live three doors from Old Pete. I run the crest table. Can I have a job? I'd be really good, right?",
+      "do": [
+        {
+          "set": "met_tommy_bellweather"
+        }
+      ],
+      "options": [
+        {
+          "text": "What kind of job?",
+          "to": "job_ask"
+        },
+        {
+          "text": "You're eleven, Tommy.",
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                -1
+              ]
+            }
+          ],
+          "to": "first_eleven"
+        },
+        {
+          "text": "Nice to meet you, Tommy.",
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_eleven": {
+      "say": "Eleven and three quarters. Dylan's seventeen and he basically lives here. That's only five and a quarter years. That's nothing, right?",
+      "options": [
+        {
+          "text": "Okay, what kind of job?",
+          "to": "job_ask"
+        }
+      ]
+    },
+    "job_ask": {
+      "say": "Puck finder. I know where 38 of the 41 lost pucks are. Under the bench, behind the Zamboni door, one in the ceiling. Don't ask about the ceiling.",
+      "options": [
+        {
+          "text": "You're hired. Junior Puck Finder. Unpaid.",
+          "if": [
+            {
+              "not_flag": "tommy_puck_finder"
+            }
+          ],
+          "do": [
+            {
+              "set": "tommy_puck_finder"
+            },
+            {
+              "rel": [
+                "tommy_bellweather",
+                6
+              ]
+            },
+            {
+              "note": "Tommy Bellweather is the rink's Junior Puck Finder. Unpaid."
+            }
+          ],
+          "to": "job_yes"
+        },
+        {
+          "text": "Maybe when you're older.",
+          "if": [
+            {
+              "not_flag": "tommy_puck_finder"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "How's the Junior Puck Finder business?",
+          "if": [
+            {
+              "flag": "tommy_puck_finder"
+            }
+          ],
+          "to": "job_yes"
+        }
+      ]
+    },
+    "job_yes": {
+      "say": "YES. Okay. Okay. I'm going to need a title on a card. And a clipboard. Here, three pucks from under the visitors' bench. That's day one, right?",
+      "options": [
+        {
+          "text": "Excellent work.",
+          "if": [
+            {
+              "not_flag": "tommy_pucks_returned"
+            }
+          ],
+          "do": [
+            {
+              "item": [
+                "lost_puck",
+                3
+              ]
+            },
+            {
+              "set": "tommy_pucks_returned"
+            },
+            {
+              "rel": [
+                "tommy_bellweather",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Keep it up.",
+          "if": [
+            {
+              "flag": "tommy_pucks_returned"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "That's not right. I'll fix it, Tommy.",
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Want a Haverstock? On me.",
+          "do": [
+            {
+              "money": -3
+            },
+            {
+              "rel": [
+                "tommy_bellweather",
+                3
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bedtime": {
+      "say": "Is it nine? It's not nine. My watch says it's not nine. My mum's watch is wrong, right?",
+      "options": [
+        {
+          "text": "It's nearly nine, Tommy. Home.",
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                -1
+              ]
+            },
+            {
+              "rel": [
+                "old_pete_vachon",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Ten more minutes, then I'm walking you to Old Pete's corner.",
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "dukes_now": {
+      "say": [
+        "The Dukes are here. Signature count: nine. I need twelve. Twelve, right?",
+        "If they go out the back door I'll know. I always know."
+      ],
+      "options": [
+        {
+          "text": "I'll ask them to stop at the glass.",
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Good luck, Tommy.",
+          "to": "end"
+        }
+      ]
+    },
+    "tourney_now": {
+      "say": [
+        "Table's open! Kessler pins, three for one! Port Ainsley, ask me!",
+        "I just traded a Carrick Junction for a Sainte-Odile and a gum. Good trade, right?"
+      ],
+      "options": [
+        {
+          "text": "What's the best pin you've got?",
+          "to": "pins"
+        },
+        {
+          "text": "Keep it fair, Tommy.",
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "pins": {
+      "say": "A 1997 Harlow Falls with the waterfall upside down. Misprint. Super rare. I'm one host pin away from the rarest one in the valley, right?",
+      "options": [
+        {
+          "text": "Tell me more about that.",
+          "to": "hub"
+        },
+        {
+          "text": "You're a born banker.",
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! My favourite owner. You're the only owner I know but still!",
+        "Hey {owner}! I saved you a seat by the glass. It's a puck. On a seat."
+      ],
+      "options": [
+        {
+          "text": "Hey Tommy.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What's up? I'm on a break. From the table. It's unpaid, the break, right?",
+        "Hi! Ask me anything. I know everything about here. Almost.",
+        "Psst. {owner}. Want to know a secret about the vending machine?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "Can you find me a puck?",
+          "to": "job_ask"
+        },
+        {
+          "text": "Can I hear the vending machine secret?",
+          "to": "vend"
+        },
+        {
+          "text": "Who's your hero around here?",
+          "to": "dylan"
+        },
+        {
+          "text": "What's on that you like best?",
+          "to": "events"
+        },
+        {
+          "text": "Is the rink better these days?",
+          "to": "rink"
+        },
+        {
+          "text": "Can I drive Doris? Just asking.",
+          "to": "doris"
+        },
+        {
+          "text": "Gotta go, Tommy.",
+          "to": "end"
+        }
+      ]
+    },
+    "vend": {
+      "say": "If you hit it on the left side twice, the B4 chips drop. It's not stealing if the machine decides, right?",
+      "options": [
+        {
+          "text": "Don't tell anyone else that.",
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "That's stealing, Tommy.",
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "dylan": {
+      "say": "Dylan. Obviously. He drives... okay, he doesn't drive Doris yet. But he will. He let me sit in her once. Don't tell Earl. Old Pete's number two. Suitcase is number three. He signed my puck with all nine of his logos, right?",
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Dukes practice. Then tournaments. Then stick and puck at any hour. I like stick and puck because nobody tells me to go home. Until nine. Forty-one crossbars this season. Same as the lost pucks. That's a sign, right?",
+      "options": [
+        {
+          "text": "Definitely a sign.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The pucks are easier to find when the lights work. That's my review.",
+      "options": [
+        {
+          "text": "And the ice is better now?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "We fixed up the lobby. Like it?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Lights are on the list.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Way better. The Dukes said 'not bad' and Réjean pointed his gun at it and nodded. He nodded, {owner}!",
+      "options": [
+        {
+          "text": "A nod from Réjean. Wow.",
+          "to": "hub"
+        }
+      ]
+    },
+    "doris": {
+      "say": "Ha! No. Nobody drives Doris except Earl. You know that, right? You're the owner and you don't know that?",
+      "options": [
+        {
+          "text": "I was testing you.",
+          "do": [
+            {
+              "rel": [
+                "tommy_bellweather",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

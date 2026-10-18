@@ -1,0 +1,471 @@
+{
+  "id": "larry_piche",
+  "barks": {
+    "idle": [
+      "Further to my previous remarks, it is a lovely evening.",
+      "Route done by six, as is proper.",
+      "I posted my letter. The trustees are busy people."
+    ],
+    "good_ice": [
+      "A most agreeable surface. My compliments to Earl."
+    ],
+    "bad_ice": [
+      "I note, with respect, a certain roughness to the ice."
+    ],
+    "wet_ice": [
+      "The ice appears damp. I raise it only as an observation."
+    ],
+    "goal": [
+      "Splendid. Most splendid.",
+      "Well done, sir or madam."
+    ],
+    "cold": [
+      "Bracing. I plough in colder."
+    ],
+    "hungry": [
+      "The Mallards dine at THE TABLE tonight."
+    ],
+    "long_line": [
+      "No hurry. Patience is a virtue I practise annually."
+    ],
+    "bored": [
+      "I shall draft a paragraph or two while we wait."
+    ],
+    "greet_owner": [
+      "Good evening, {owner}. I trust you are well.",
+      "Further to our last conversation, hello."
+    ],
+    "leaving_happy": [
+      "A fine evening. I shall mention it in March."
+    ],
+    "leaving_angry": [
+      "Regrettable. I shall say no more. Except this, briefly."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Mallards, gentlemen. Let us skate as we write: neatly.",
+        "Opponents are merely friends we have not yet thanked."
+      ],
+      "special": [
+        "An occasion! The Mallards will of course volunteer.",
+        "I do love an occasion."
+      ],
+      "high_school": [
+        "The young Mallards. Our namesakes. Admirable."
+      ],
+      "senior_hockey": [
+        "Go Lumber Kings, if I may say so."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_larry_piche"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            5.5,
+            7.5
+          ]
+        }
+      ],
+      "node": "dawn"
+    },
+    {
+      "if": [
+        {
+          "day_gte": 1460
+        },
+        {
+          "not_flag": "larry_reply_told"
+        }
+      ],
+      "node": "reply"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "bl_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "larry_piche",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Good evening. Larry Piche, captain of the Millbrook Mallards, and the town's snowplough. Further to nothing at all, it is a pleasure.",
+      "do": [
+        {
+          "set": "met_larry_piche"
+        }
+      ],
+      "options": [
+        {
+          "text": "The Mallards from the Puckworth Cup photo?",
+          "do": [
+            {
+              "rel": [
+                "larry_piche",
+                4
+              ]
+            }
+          ],
+          "to": "letter"
+        },
+        {
+          "text": "The pleasure's mine, Larry.",
+          "do": [
+            {
+              "rel": [
+                "larry_piche",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll put it right, Larry. You have my word.",
+          "do": [
+            {
+              "rel": [
+                "larry_piche",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Please put it in writing.",
+          "do": [
+            {
+              "rel": [
+                "larry_piche",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "dawn": {
+      "say": [
+        "Route's done. Six o'clock. The rink lot was a pleasure to clear.",
+        "Good morning. I did the rink lot twice. Once for snow, once for love."
+      ],
+      "options": [
+        {
+          "text": "Thank you, Larry. Coffee?",
+          "do": [
+            {
+              "money": -2
+            },
+            {
+              "rel": [
+                "larry_piche",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "You're up early.",
+          "to": "hub"
+        }
+      ]
+    },
+    "reply": {
+      "say": "{owner}. I have... received a reply. From the trustees. A card. They have invited the Mallards to carry the Cup at the Kingsport home opener. I have read it forty times.",
+      "options": [
+        {
+          "text": "Larry! Twenty-one years of letters!",
+          "do": [
+            {
+              "set": "larry_reply_told"
+            },
+            {
+              "rel": [
+                "larry_piche",
+                6
+              ]
+            },
+            {
+              "note": "The Puckworth Cup trustees wrote back to Larry Piche."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I knew they'd write.",
+          "do": [
+            {
+              "set": "larry_reply_told"
+            },
+            {
+              "rel": [
+                "larry_piche",
+                5
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bl_now": {
+      "say": [
+        "Mallards tonight. We play as we write. Neatly.",
+        "Gentlemen, a fine game to whoever wins."
+      ],
+      "options": [
+        {
+          "text": "Good luck, Captain.",
+          "do": [
+            {
+              "rel": [
+                "larry_piche",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}. Further to our friendship, which I value, good evening.",
+        "A pleasure, as ever. I mentioned you in a draft. Favourably."
+      ],
+      "options": [
+        {
+          "text": "Good evening, Larry.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "How may I assist you?",
+        "Further to my previous remarks: hello.",
+        "A pleasure, as always, {owner}."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the plough route?",
+          "to": "job"
+        },
+        {
+          "text": "Tell me about the letter.",
+          "to": "letter"
+        },
+        {
+          "text": "How's this year's letter coming?",
+          "to": "march"
+        },
+        {
+          "text": "You know Dale and Midge well?",
+          "to": "gossip"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Good night, Larry.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "I am first out when it snows. Every sidewalk salted evenly, not like some. A route done by six is a town that can get to work. And to the rink.",
+      "options": [
+        {
+          "text": "The town owes you, Larry.",
+          "do": [
+            {
+              "rel": [
+                "larry_piche",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "letter": {
+      "say": "2005. The lockout. No Cup. I wrote, in my neatest hand, and asked the trustees to consider the Mallards. And one night the Cup came to Millbrook. Four hundred people queued in the cold.",
+      "options": [
+        {
+          "text": "And you've written every year since?",
+          "to": "letter2"
+        }
+      ]
+    },
+    "letter2": {
+      "say": "Twenty-one polite follow-ups. No reply. I find it encouraging. A no would have been a reply.",
+      "options": [
+        {
+          "text": "That's the most optimistic thing I've ever heard.",
+          "do": [
+            {
+              "rel": [
+                "larry_piche",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "march": {
+      "say": "I am drafting. Would you care to add a line? A postscript from the rink would lend it weight.",
+      "options": [
+        {
+          "text": "Add: 'The ice at Millbrook is waiting.'",
+          "if": [
+            {
+              "not_flag": "larry_ps_owner"
+            }
+          ],
+          "do": [
+            {
+              "set": "larry_ps_owner"
+            },
+            {
+              "rel": [
+                "larry_piche",
+                4
+              ]
+            },
+            {
+              "note": "Larry Piche added a postscript from the owner to his March letter."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Better to keep it in your own words.",
+          "if": [
+            {
+              "not_flag": "larry_ps_owner"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "larry_piche",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Did my postscript make it in?",
+          "if": [
+            {
+              "flag": "larry_ps_owner"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "larry_piche",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Dale keeps our league honest and our dues current. Midge prints my letter every March in the Clarion. Between them, I am a man of record.",
+      "options": [
+        {
+          "text": "A man of record. I like that.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The 2005 photo hangs in the lobby. I am third from the left. The players have aged. The handwriting has not.",
+      "options": [
+        {
+          "text": "The ice is better these days, isn't it?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "We'll keep it hanging.",
+          "do": [
+            {
+              "rel": [
+                "larry_piche",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "It is a surface the trustees would be proud of. I may mention it. I shall certainly mention it.",
+      "options": [
+        {
+          "text": "Please do.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

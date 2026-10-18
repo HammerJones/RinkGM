@@ -1,0 +1,409 @@
+{
+  "id": "gus_tremblay",
+  "barks": {
+    "idle": [
+      "(Postcard) Ice is only in drinks here. G.",
+      "(Postcard) Read the binder in order. G."
+    ],
+    "good_ice": [
+      "(Postcard) Heard the ice is good. Knew it. G."
+    ],
+    "bad_ice": [
+      "(Postcard) Thicker isn't better. Earl's wrong. Tell him I said so. G."
+    ],
+    "cold": [
+      "(Postcard) Cold up there? Lucky. G."
+    ],
+    "greet_owner": [
+      "(Phone) It's Gus.",
+      "(Phone) Gus here. Don't touch breaker 14."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "(Phone, crowd noise) Bernie says it's 2-1. Is it 2-1?",
+        "(Phone) I've got the Kings on the stream. Badly."
+      ],
+      "special": [
+        "(Postcard) Big night? Ring the bell for me. G."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_gus_tremblay"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "event_now": "senior_hockey"
+        },
+        {
+          "ice_gte": 80
+        },
+        {
+          "not_flag": "gus_visited"
+        }
+      ],
+      "node": "visit"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "gus_tremblay",
+            50
+          ]
+        }
+      ],
+      "node": "warm"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "(The phone rings at 06:12.) Is this the new owner? Gus Tremblay. Ran the place forty-nine years. Find the envelope? Don't touch breaker 14. G.",
+      "do": [
+        {
+          "set": "met_gus_tremblay"
+        }
+      ],
+      "options": [
+        {
+          "text": "I found it. Thank you, Gus.",
+          "do": [
+            {
+              "rel": [
+                "gus_tremblay",
+                4
+              ]
+            }
+          ],
+          "to": "first_thanks"
+        },
+        {
+          "text": "What's on breaker 14?",
+          "to": "breaker"
+        },
+        {
+          "text": "The town says you left a mess.",
+          "do": [
+            {
+              "rel": [
+                "gus_tremblay",
+                -6
+              ]
+            }
+          ],
+          "to": "first_mess"
+        }
+      ]
+    },
+    "first_thanks": {
+      "say": "Binder's on the plant room door. Read it in order. Some of it's wrong on purpose. It'll make sense.",
+      "options": [
+        {
+          "text": "Got it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_mess": {
+      "say": "I left a system. A system looks like a mess to people who don't have one.",
+      "options": [
+        {
+          "text": "Sorry, Gus.",
+          "do": [
+            {
+              "rel": [
+                "gus_tremblay",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Okay.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "(Phone) Bev called me. Bev doesn't call. She says the ice is chewing up her customers. What's going on up there?"
+      ],
+      "options": [
+        {
+          "text": "I'll fix it.",
+          "to": "grumpy2"
+        },
+        {
+          "text": "Bev exaggerates.",
+          "do": [
+            {
+              "rel": [
+                "gus_tremblay",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy2": {
+      "say": "Edge it, shave it, flood it hot, let it sit. That's the whole job. The rest is coffee. G.",
+      "options": [
+        {
+          "text": "Thanks, Gus.",
+          "to": "hub"
+        }
+      ]
+    },
+    "warm": {
+      "say": [
+        "(Phone) {owner}! Bev wrote me a postcard about you. Bev doesn't write postcards.",
+        "(Phone) It's Gus. Just calling. Don't tell Earl I just call."
+      ],
+      "options": [
+        {
+          "text": "Good to hear you, Gus.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "(Phone, a seagull in the background) {owner}? It's Gus. What do you need. G.",
+        "(Phone) It's eighty-six degrees and the ice is in my drink. Talk to me.",
+        "(Phone) Gus. Keep it short, Lou's waiting at the pool."
+      ],
+      "options": [
+        {
+          "text": "How's Florida?",
+          "to": "florida"
+        },
+        {
+          "text": "About your binder...",
+          "to": "binder"
+        },
+        {
+          "text": "Breaker 14. What is it, really?",
+          "to": "breaker"
+        },
+        {
+          "text": "How's Earl, really?",
+          "to": "earl"
+        },
+        {
+          "text": "The ice is better. Want to hear?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "proud"
+        },
+        {
+          "text": "Will you come back for the home opener?",
+          "to": "visit_ask"
+        },
+        {
+          "text": "Your note mentions the 1979 Kings' budget.",
+          "if": [
+            {
+              "path": "gm"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "Talk soon, Gus.",
+          "to": "end"
+        }
+      ]
+    },
+    "florida": {
+      "say": "Sun, a pool, and a man named Lou who thinks curling is a sport. I check the Kings scores at 23:30 on Bernie's stream.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "binder": {
+      "say": "Every note is a lesson. Some are jokes. The jokes are lessons too.",
+      "options": [
+        {
+          "text": "Somebody's adding new notes in your handwriting.",
+          "if": [
+            {
+              "quest": [
+                "dylan_binder_ghost",
+                "active"
+              ]
+            }
+          ],
+          "to": "ghost"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "ghost": {
+      "say": "Not me. I'm in Florida. Ask a man who writes like me because he learned from me. G.",
+      "options": [
+        {
+          "text": "Earl?",
+          "do": [
+            {
+              "rel": [
+                "gus_tremblay",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "breaker": {
+      "say": "Breaker 14 is breaker 14. You'll know when you need to know. Don't touch it. G.",
+      "options": [
+        {
+          "text": "Gus.",
+          "if": [
+            {
+              "not_flag": "gus_breaker_hint"
+            }
+          ],
+          "to": "breaker2"
+        },
+        {
+          "text": "Okay.",
+          "to": "hub"
+        }
+      ]
+    },
+    "breaker2": {
+      "say": "Fine. The lobby freezer, the marquee and something I never found. Forty-nine years. Leave it be.",
+      "do": [
+        {
+          "set": "gus_breaker_hint"
+        }
+      ],
+      "options": [
+        {
+          "text": "Leaving it be.",
+          "to": "hub"
+        }
+      ]
+    },
+    "earl": {
+      "say": "Best icemaker in the province, and he'll tell you he's retired. Feed him gravy. Let him be right about thickness. He isn't.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "proud": {
+      "say": "Is it? Over 60? (A long pause.) Best thing I've heard since the Kings in '79. Thank you.",
+      "options": [
+        {
+          "text": "Thank you, Gus.",
+          "do": [
+            {
+              "rel": [
+                "gus_tremblay",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "visit_ask": {
+      "say": "If the place is Great, I'll come. I'll sit in B-1-1. Never sat in it. I was always in the plant room.",
+      "options": [
+        {
+          "text": "I'll hold the seat.",
+          "do": [
+            {
+              "rel": [
+                "gus_tremblay",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "visit": {
+      "say": "(In person, in seat B-1-1, in a Florida shirt.) First time I've ever sat here. It's a terrible seat. I love it.",
+      "options": [
+        {
+          "text": "Welcome home, Gus.",
+          "do": [
+            {
+              "rel": [
+                "gus_tremblay",
+                10
+              ]
+            },
+            {
+              "set": "gus_visited"
+            }
+          ],
+          "to": "visit2"
+        }
+      ]
+    },
+    "visit2": {
+      "say": "Signed your guestbook. Wrote 'Don't touch breaker 14.' Somebody had to. G.",
+      "do": [
+        {
+          "note": "Gus Tremblay sat in seat B-1-1 for the first time and signed the guestbook."
+        }
+      ],
+      "options": [
+        {
+          "text": "Enjoy the game.",
+          "to": "end"
+        }
+      ]
+    },
+    "gm": {
+      "say": "The '79 budget. We spent it all on sticks and a bus, and we borrowed the Shed bell. Spend on ice and the rest follows. G.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

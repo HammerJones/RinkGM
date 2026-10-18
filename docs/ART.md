@@ -72,7 +72,7 @@ stay in `Models.palette()`.
 `player_bench` (a 2 m section), `penalty_box`, `glass_frame` + `glass_pane`
 (one 1.83 m panel on top of the boards), `concession_counter` and
 `scoreboard`, each at all three ages. Next: skate-sharpening bench, rubber
-flooring, crowd figures and staff.
+flooring. Crowd figures and staff are `PeopleArt` (below).
 
 Glass panes are drawn with `Props.glass_material(age)` (see-through; old glass
 is yellowed and cloudier). The scoreboard leaves its displays dark:
@@ -121,6 +121,100 @@ resurfacer): about 650-5,200 triangles at full detail. Pipe pieces are
 400-920. `art/tools/plant_room_preview.gd` lays them out as Millbrook's plant
 room for review (`--age=worn|repaired|renovated`), and the prop sheet renders
 one age in a labelled grid with `--age=<name> [--cols=N]`.
+
+## People (`scripts/art/people.gd`)
+
+Everyone in the building (fans, parents, staff, refs, skaters, kids and
+grandparents; `docs/world/PEOPLE.md`) is a `PeopleArt` body: greedy-merged
+voxel boxes on the character grid (`Models.V`), posed per vertex by one
+shared shader so hundreds of agents cost no CPU per frame. Pivot on the floor
+between the feet, front faces -Z, +X is the person's right.
+
+**Proportions.** The adult body is the contract shared with `SkaterRig`
+(constants in `PeopleArt`, in V): shoe 0.5, skate 1.5; shin 6 (`KNEE` 6.5),
+thigh 6.5 (`HIP` 13), torso to `NECK` 21, `SHOULDER` joint 20.5, upper arm
+5 (`ELBOW` 15.5), forearm and hand 5.5, head 5, `HEIGHT` 27 in shoes and 28
+on skates, `SHOULDER_W` 11 for the average build. Limbs hang down their
+local -Y from the joint.
+
+| Band | Age | Height (V, in shoes) | Notes |
+| --- | --- | --- | --- |
+| toddler | under 5 | 15.5 | shin 2.5, thigh 2.5, torso 4, arms 2 + 2.5; waddles |
+| child | 5-11 | 20 | shin 4, thigh 4, torso 5.5, arms 3 + 3.5 |
+| teen | 12-17 | 25 | shin 5.5, thigh 6, torso 7, arms 4.5 + 5 |
+| adult | 18-69 | 27 | the contract above |
+| elder | 70+ | adult mesh | the shader stoops them and slows the walk; 3% shorter |
+
+Every band keeps the 5 V head, which is what makes kids read as kids. Within
+a band the shader scales by growth (a 5- and an 11-year-old share a mesh; a
+6-year-old ends up about 0.62 of adult eye height) and by the look's
+`height`. Builds: adult slim, average, stocky, big (torso 6/7/8/9 V wide;
+big adds a belly); children and teens collapse to slim and stocky, toddlers
+to one.
+
+**Shapes vs colours.** `shape_key(look, age)` is the geometry only (band,
+build, outfit, hair shape, accessory, skates); colours, skin, height and pose
+are per instance. A whole person is `"<body>|<head>|<item>"`; for crowds,
+`layer_keys()` gives the three layers (body: band, build, outfit, skates;
+head: band, hair, hat, glasses; item: band, width, bulk, held or worn thing),
+each its own MultiMesh with the same transforms and custom data. 500 random
+looks make about 450 whole-person keys but only about 215 layer meshes
+(about 115 bodies, 57 heads, 42 items). Hair under a hat collapses to what shows, kids'
+builds collapse, and skates live in the instance data (a skating body hangs
+its blades 1 V below the pivot and the shader lifts it), so heads and items
+fit walkers and skaters alike.
+
+**Vertex layout.** `COLOR`: the fixed colour (slot 0) or a shade multiplier
+for the slot. `UV.x`: colour slot (0 fixed, 1 skin, 2 primary, 3 secondary,
+4 hair, 5 accent/trousers). `UV.y`: part (0 torso, 1 head, 2/3 left/right
+thigh, 4/5 left/right shin and foot, 6/7 upper arms, 8/9 forearms and
+hands, 10 held item on the right hand, 11 the CARRY box, 12 the QUEUE phone).
+`UV2`: hip joint height and thigh length (m). `CUSTOM0` (RGBA float): the
+part's joint (hip, shoulder or neck) and the upper limb length; the knee or
+elbow is the joint minus that length straight down.
+
+**Instance data** (`instance_data(look, pose, phase, age, moving, speed)`,
+four integers under 2048 so they survive half floats): `r` pose << 7 |
+moving << 6 | phase (64 steps); `g` skates << 10 | primary << 4 | scale
+step (0.70 + 0.04 n); `b` secondary << 5 | hair colour << 1 | elder;
+`a` accent << 5 | skin << 3 | run << 2 | seed. Colours are quantized to
+`PeopleArt.PALETTE` (64 clothing colours: ART.md's palettes, team colours,
+everyday clothes), `HAIR_COLORS` (16) and `SKINS` (4), all sRGB, and the
+shader varies each person's cloth tone a few percent.
+
+**Poses** (`PeopleArt.Pose`): STAND 0, WALK 1, SIT 2, SKATE 3,
+SKATE_WOBBLY 4, SPIN 5, CHEER 6, CLAP 7, TALK 8, WAVE 9, QUEUE 10 (phone),
+CARRY 11 (box), WORK 12 (= SWEEP), FALL 13, SIT_CLAP 14, SIT_CHEER 15. The
+first 14 match `NpcBrain.Pose`. `moving` puts walking legs under STAND,
+CLAP, TALK, WAVE, QUEUE and CARRY. Everyone breathes, shifts their weight and
+looks around. For WALK and SKATE `phase` *is* the gait cycle: advance it by
+`walk_phase_rate(speed, look, age)` or `skate_phase_rate(speed)` cycles a
+second. The walk is a duty-factor cycle with IK legs, so a planted foot
+slides back at the walk speed; its numbers (`walk_cadence`, `walk_duty`,
+`walk_lift`, `walk_bob`, `walk_arm_swing`, `walk_width`, their `_run`
+versions, `crouch_hips` for WORK, `sit_lean`) come from `AnimTuning.current()`
+when it has them, the same values `SkaterRig` uses. SIT lowers the hips onto
+a seat `SEAT_H` (0.455 m, the arena seat) above the pivot; shins reach the
+floor if they can and kids' feet dangle and swing. `seat_offset(look, age)`
+puts the pivot on the floor under the seat point, so a sitter can stand up
+and cheer without moving.
+
+**Budgets.** Ordinary adults are 350-450 triangles (a parka and a coffee:
+382); the worst case (big build, curly hair, a sign) is 642, under the 900
+budget; kids 530-570. One material for everyone (`PeopleArt.material()`).
+Draw a single person as a MultiMesh of one (`PeopleArt.multimesh(key, 1)`).
+
+**Adding an outfit:** add it to `OUTFITS` and `_ACCENT_DEFAULT`, give its
+regions slots in `_style()` (shirt, sleeves, hands, legs, shoes), paint its
+details in `_dress_torso()` and `_dress_limbs()` (`paint_front` follows a
+belly), add it to `SKATE_OUTFITS` if it lives on the ice, and if it bulks the
+body out give it a `_bulk()` class. Check it on the people sheet.
+
+**Review sheets:** `art/tools/people_sheet.gd` (`--sheet=people|poses`)
+renders every band, build, outfit, accessory, a seated row on worn arena
+seats and the skaters; `art/tools/m1_cast_sheet.gd` renders the M1 cast.
+`tools/tests/test_people_art.gd` checks budgets, pivots, key counts, the
+instance data and the shader.
 
 ## Collision
 

@@ -1,0 +1,362 @@
+{
+  "id": "devon_marsh",
+  "barks": {
+    "idle": [
+      "(He checks his coat pocket.) Still there. Good. Good.",
+      "Ama. A-ma. Okay. I can say her name. That's a start."
+    ],
+    "good_ice": [
+      "Good ice. Nobody falls. Unless they want to. I don't want to. Not yet."
+    ],
+    "bad_ice": [
+      "If I kneel on that I'm going to slide into the boards. Romantically, maybe."
+    ],
+    "wet_ice": [
+      "You can't kneel on wet ice. My knees will be wet. In the photos."
+    ],
+    "cold": [
+      "My hands are cold. My hands are always cold. Nerves."
+    ],
+    "hungry": [
+      "I cook all week. I'm not hungry. I'm never hungry. I'm nervous."
+    ],
+    "long_line": [
+      "A line. More time to rehearse."
+    ],
+    "bored": [
+      "(He checks his coat pocket.)"
+    ],
+    "goal": [
+      "Nice!"
+    ],
+    "greet_owner": [
+      "Hey! Hi. It's still in my pocket.",
+      "Oh, hey. Don't tell Ama anything."
+    ],
+    "leaving_happy": [
+      "Great skate. Not tonight. But soon."
+    ],
+    "leaving_angry": [
+      "Maybe I'll propose at the Slapshot instead. No. No. Here."
+    ],
+    "event_specific": {
+      "public_skate": [
+        "That's our song. No, it isn't. Okay.",
+        "(He checks his pocket. Twice.)"
+      ],
+      "special": [
+        "Couples skate! Is this the night? It's not the night."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_devon_marsh"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "devon_and_ama_engaged"
+        }
+      ],
+      "node": "engaged"
+    },
+    {
+      "if": [
+        {
+          "event_now": "public_skate"
+        }
+      ],
+      "node": "skate"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hi! Devon. Devon Marsh. I cook at the Slapshot. I met my girlfriend here, at Saturday public skate. She skated into me and apologised to the boards. (He checks his coat pocket.)",
+      "do": [
+        {
+          "set": "met_devon_marsh"
+        }
+      ],
+      "options": [
+        {
+          "text": "What's in the pocket?",
+          "do": [
+            {
+              "rel": [
+                "devon_marsh",
+                2
+              ]
+            }
+          ],
+          "to": "first_pocket"
+        },
+        {
+          "text": "That's a sweet story.",
+          "do": [
+            {
+              "rel": [
+                "devon_marsh",
+                3
+              ]
+            }
+          ],
+          "to": "first_sweet"
+        }
+      ]
+    },
+    "first_pocket": {
+      "say": "Nothing! A ring. Nothing. Don't tell Ama. I've told everyone except Ama. You're number forty-one.",
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_sweet": {
+      "say": "Right? She said 'sorry' to the boards, then to me, then to the boards again. I've been in love since the second sorry.",
+      "options": [
+        {
+          "text": "Lovely.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Devon. That's not the night you wanted.",
+          "do": [
+            {
+              "rel": [
+                "devon_marsh",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll make it right for the big night.",
+          "to": "hub"
+        }
+      ]
+    },
+    "skate": {
+      "say": [
+        "(He's holding Ama's hand and checking his pocket with the other.) Not now. Not now. Hi.",
+        "Is this our song? It's not our song. Okay."
+      ],
+      "options": [
+        {
+          "text": "Go on, enjoy it.",
+          "to": "end"
+        },
+        {
+          "text": "Got a second?",
+          "to": "hub"
+        }
+      ]
+    },
+    "engaged": {
+      "say": "She said YES! During the slowest song ever played on a Casio! I fell over after. She fell over too. We're getting married!",
+      "options": [
+        {
+          "text": "Congratulations, Devon!",
+          "do": [
+            {
+              "rel": [
+                "devon_marsh",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hi. (Pocket.) Hi.",
+        "Hey! What's up? (Pocket.)",
+        "Yes? Sorry. Hi. (Pocket.)"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's work at the Slapshot?",
+          "to": "job"
+        },
+        {
+          "text": "Tell me about Ama.",
+          "to": "ama"
+        },
+        {
+          "text": "Want to practise what you'll say?",
+          "to": "rehearse"
+        },
+        {
+          "text": "Who's helping with the big night?",
+          "to": "gossip"
+        },
+        {
+          "text": "What's the rink like for a date?",
+          "to": "rink"
+        },
+        {
+          "text": "Good luck, Devon.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Line cook. Wings, mostly. I can do forty wings at once without looking. I can't say four words to Ama without looking at my shoes.",
+      "options": [
+        {
+          "text": "You'll get there.",
+          "to": "hub"
+        }
+      ]
+    },
+    "ama": {
+      "say": "She laughs at the falls. Mine and hers. She skates like she's late for something wonderful. And she always says sorry to things that can't hear.",
+      "options": [
+        {
+          "text": "She sounds perfect.",
+          "do": [
+            {
+              "rel": [
+                "devon_marsh",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rehearse": {
+      "say": "Okay. Okay. (He kneels.) Ama, from the moment you hit the boards, I knew... no. From the moment you hit me... no. Hit is bad. Is hit bad?",
+      "options": [
+        {
+          "text": "Keep it simple. Just say what you feel.",
+          "do": [
+            {
+              "rel": [
+                "devon_marsh",
+                3
+              ]
+            },
+            {
+              "set": "devon_simple_line"
+            }
+          ],
+          "to": "rehearse_simple"
+        },
+        {
+          "text": "Hit is a little bad.",
+          "do": [
+            {
+              "rel": [
+                "devon_marsh",
+                1
+              ]
+            }
+          ],
+          "to": "rehearse_hit"
+        },
+        {
+          "text": "Maybe write a script.",
+          "do": [
+            {
+              "rel": [
+                "devon_marsh",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rehearse_simple": {
+      "say": "Simple. Okay. 'Ama. Will you.' And then the rest. (He stands up. He looks taller.) Yeah. Yeah, I can do that.",
+      "options": [
+        {
+          "text": "You've got this.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rehearse_hit": {
+      "say": "'From the moment you collided with me.' Better? It's worse. It sounds like an insurance claim.",
+      "options": [
+        {
+          "text": "Simpler, maybe.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Doreen's going to play our song on the Casio, if I ask nicely. And Dylan can do the lights, as long as I don't go near breaker 14. Everyone says that. What's on breaker 14?",
+      "options": [
+        {
+          "text": "Nobody knows.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "It's where we met. It's perfect. Okay, the lights are either on or off. A dimmer would be perfect. Romantic lighting.",
+      "options": [
+        {
+          "text": "It's looking nicer lately.",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll see what I can do.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "It's beautiful. It was always beautiful to me, but now it's beautiful to Ama's mum, too. That matters.",
+      "options": [
+        {
+          "text": "It does.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Bye! (Pocket.) Bye.",
+        "Don't tell Ama!"
+      ],
+      "options": []
+    }
+  }
+}

@@ -1,0 +1,270 @@
+{
+ "id": "faulk_section_see",
+ "giver": "desmond_faulk",
+ "quest": "faulk_section_see",
+ "nodes": {
+  "offer": {
+   "say": "Desmond Faulk, music, Millbrook High. Eleven students, one sousaphone from 1971, and a dream. The dream is Section See. A pep band. In Section See. You see it? They see it. Everyone will see it. I'm sorry. I'm not sorry.",
+   "options": [
+    {
+     "text": "A band in Section See. I'm in.",
+     "do": [
+      {
+       "quest_start": "faulk_section_see"
+      },
+      {
+       "rel": [
+        "desmond_faulk",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why do they want to play at hockey?",
+     "to": "why"
+    },
+    {
+     "text": "Does the sousaphone fit in the seats?",
+     "to": "sousa"
+    },
+    {
+     "text": "A band at hockey sounds loud.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Because nobody comes to the spring concert, but six hundred people come to a Lumber Kings game, and a hundred and fifty come to a Mallards game, and a hundred and fifty is the most people my kids have ever played for. They practise harder for the hundred and fifty.",
+   "options": [
+    {
+     "text": "Then they'll have their hundred and fifty.",
+     "do": [
+      {
+       "quest_start": "faulk_section_see"
+      },
+      {
+       "rel": [
+        "desmond_faulk",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "sousa": {
+   "say": "Not in the roped-off ones. The broken seats in Section C are roped off with what I think is a Lumber Kings scarf. The sousaphone needs two seats and a prayer.",
+   "options": [
+    {
+     "text": "I'll get the seats fixed.",
+     "do": [
+      {
+       "quest_start": "faulk_section_see"
+      },
+      {
+       "rel": [
+        "desmond_faulk",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "It is loud. That's the point of a pep band. But I understand. We'll keep playing to the empty auditorium. The auditorium is very supportive.",
+   "do": [
+    {
+     "rel": [
+      "desmond_faulk",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Wonderful. The students have already written a fight song. It rhymes 'Mallards' with 'collards'. I'm workshopping it.",
+   "options": []
+  },
+  "progress": {
+   "say": "Section See status?",
+   "options": [
+    {
+     "text": "Going to look at the section.",
+     "if": [
+      {
+       "step": [
+        "faulk_section_see",
+        "stands"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Seats are getting fixed.",
+     "if": [
+      {
+       "step": [
+        "faulk_section_see",
+        "rooms"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Seats are done. About the letter.",
+     "if": [
+      {
+       "step": [
+        "faulk_section_see",
+        "letter"
+       ]
+      }
+     ],
+     "to": "p_letter"
+    },
+    {
+     "text": "All set. Next home game.",
+     "if": [
+      {
+       "step": [
+        "faulk_section_see",
+        "game"
+       ]
+      }
+     ],
+     "to": "p_game"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_letter": {
+   "say": "The letter! Yes. What goes on the end of the row?",
+   "options": [
+    {
+     "text": "Paint the C back on. Proper and tidy.",
+     "do": [
+      {
+       "set": "section_c_painted"
+      },
+      {
+       "set": "section_c_decided"
+      }
+     ],
+     "to": "p_c"
+    },
+    {
+     "text": "Leave the gap. Everybody knows it's Section See.",
+     "do": [
+      {
+       "set": "section_c_gap_kept"
+      },
+      {
+       "set": "section_c_decided"
+      },
+      {
+       "rel": [
+        "desmond_faulk",
+        1
+       ]
+      }
+     ],
+     "to": "p_gap"
+    },
+    {
+     "text": "Paint SEE. Lean into it.",
+     "do": [
+      {
+       "set": "section_see_painted"
+      },
+      {
+       "set": "section_c_decided"
+      },
+      {
+       "rel": [
+        "desmond_faulk",
+        3
+       ]
+      }
+     ],
+     "to": "p_see"
+    }
+   ]
+  },
+  "p_c": {
+   "say": "A C. Tidy. Correct. The students will be disappointed. Correct things disappoint teenagers.",
+   "options": []
+  },
+  "p_gap": {
+   "say": "The gap. The gap is a tradition. Traditions are just gaps people love.",
+   "options": []
+  },
+  "p_see": {
+   "say": "SEE! On the row! The students are going to lose their minds. I'm going to lose my mind. I'm going to write a march called Section See.",
+   "options": []
+  },
+  "p_game": {
+   "say": "The fight song is finalised. Mallards rhymes with 'ballads' now. Better. Not good. Better.",
+   "options": []
+  },
+  "complete": {
+   "say": "A hundred and sixty-two people. The kids counted. They played the fight song after every Mallards goal and twice after the other team's by mistake. The sousaphone survived. I may not have.",
+   "options": [
+    {
+     "text": "They were great. Come every home game.",
+     "do": [
+      {
+       "rel": [
+        "desmond_faulk",
+        3
+       ]
+      },
+      {
+       "set": "pep_band_every_game"
+      }
+     ],
+     "to": "c_every"
+    },
+    {
+     "text": "Maybe a little quieter during the anthem.",
+     "to": "c_quiet"
+    },
+    {
+     "text": "Can they play a Lumber Kings game?",
+     "do": [
+      {
+       "set": "pep_band_kings_lead"
+      }
+     ],
+     "to": "c_kings"
+    }
+   ]
+  },
+  "c_every": {
+   "say": "Every home game. They'll be insufferable. I'll be insufferable. Thank you.",
+   "options": []
+  },
+  "c_quiet": {
+   "say": "The fryer's louder during the anthem. The sign says so. But yes. Quieter. We'll hum.",
+   "options": []
+  },
+  "c_kings": {
+   "say": "Six hundred people. With Doreen's organ. I'd have to call Doreen. I'm frightened of Doreen. I'll call her.",
+   "options": []
+  },
+  "done": {
+   "say": "Section See, home of the band.",
+   "options": []
+  }
+ }
+}

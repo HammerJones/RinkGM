@@ -1,0 +1,346 @@
+{
+  "id": "bud_mulroney",
+  "barks": {
+    "idle": [
+      "Fifty-fifty! Half for you, half for the kids!",
+      "Did I ever tell you about Rascal?"
+    ],
+    "good_ice": [
+      "Lovely ice, dear. Rascal would've chased a puck clean across it."
+    ],
+    "bad_ice": [
+      "Bumpy tonight. Hard to sell luck to cold people."
+    ],
+    "goal": [
+      "Goal! Tickets! Strike while they're happy!"
+    ],
+    "cold": [
+      "Thermos, dear? Tea. Mostly tea."
+    ],
+    "long_line": [
+      "Long line for fries. Captive audience. Fifty-fifty!"
+    ],
+    "greet_owner": [
+      "Hello, dear!",
+      "There's the owner! Ticket?"
+    ],
+    "leaving_happy": [
+      "Pot was over three hundred! Agnes is getting a sundae."
+    ],
+    "leaving_angry": [
+      "Ninety dollars tonight. Poor kids. Poor Bud."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "Fifty-fifty! Pot's climbing!",
+        "All for a good cause, dear."
+      ],
+      "public_skate": [
+        "Look at them go. Rascal would've been banned by now."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_bud_mulroney"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "senior_hockey"
+        }
+      ],
+      "node": "fiftyfifty"
+    },
+    {
+      "if": [
+        {
+          "event_now": "public_skate"
+        }
+      ],
+      "node": "thermos"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "bud_mulroney",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Fifty-fifty, half for you, half for the kids, all for a good cause, dear. Oh, you're the owner! Bud Mulroney. Did I ever tell you about Rascal?",
+      "do": [
+        {
+          "set": "met_bud_mulroney"
+        }
+      ],
+      "options": [
+        {
+          "text": "Tell me about Rascal.",
+          "do": [
+            {
+              "rel": [
+                "bud_mulroney",
+                4
+              ]
+            }
+          ],
+          "to": "rascal"
+        },
+        {
+          "text": "I'll take a ticket.",
+          "do": [
+            {
+              "item": [
+                "fifty_fifty_ticket",
+                1
+              ]
+            },
+            {
+              "rel": [
+                "bud_mulroney",
+                1
+              ]
+            }
+          ],
+          "to": "ticket"
+        },
+        {
+          "text": "Maybe next time.",
+          "do": [
+            {
+              "rel": [
+                "bud_mulroney",
+                -2
+              ]
+            }
+          ],
+          "to": "first_next"
+        }
+      ]
+    },
+    "first_next": {
+      "say": "'Next time,' he says. Rascal never said next time. Rascal chased every puck the second it dropped.",
+      "options": [
+        {
+          "text": "Okay, tell me about Rascal.",
+          "to": "rascal"
+        }
+      ]
+    },
+    "rascal": {
+      "say": "Best dog in Millbrook. Chased every puck in town. Seat A-9-3 is his. Nobody puts a coat on it. Agnes sees to that.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "ticket": {
+      "say": "Tear here, dear. If you win, give it to the kids anyway. Everybody does.",
+      "options": [
+        {
+          "text": "Good luck to me.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Pot was only ninety dollars tonight, dear. People were cold and cross. Hard to sell luck to cold people."
+      ],
+      "options": [
+        {
+          "text": "I'll warm the place up.",
+          "do": [
+            {
+              "rel": [
+                "bud_mulroney",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "fiftyfifty": {
+      "say": "Pot's at two hundred and forty and climbing! Over three hundred and I buy Agnes a sundae. Ticket?",
+      "options": [
+        {
+          "text": "One, please.",
+          "do": [
+            {
+              "item": [
+                "fifty_fifty_ticket",
+                1
+              ]
+            },
+            {
+              "rel": [
+                "bud_mulroney",
+                1
+              ]
+            }
+          ],
+          "to": "ticket"
+        },
+        {
+          "text": "Not tonight, Bud.",
+          "to": "hub"
+        }
+      ]
+    },
+    "thermos": {
+      "say": "Public skate from the bench. Thermos of tea, the kids going round. Rascal would've loved this. He'd have been banned.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "There's my favourite customer! Did I tell you about Rascal and the Zambelli?",
+        "Hello, dear! The pot's looking healthy."
+      ],
+      "options": [
+        {
+          "text": "Hi, Bud.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Hello, dear!",
+        "Fifty-fifty, dear? No? Just chatting? Even better.",
+        "Bud. Got a minute? I've got a story."
+      ],
+      "options": [
+        {
+          "text": "How's the 50/50 going?",
+          "to": "job"
+        },
+        {
+          "text": "Tell me about Rascal.",
+          "to": "rascal"
+        },
+        {
+          "text": "What do you like to watch?",
+          "to": "events"
+        },
+        {
+          "text": "How's Agnes?",
+          "to": "agnes"
+        },
+        {
+          "text": "How's the rink, from the stands?",
+          "to": "rink"
+        },
+        {
+          "text": "A ticket, please.",
+          "do": [
+            {
+              "item": [
+                "fifty_fifty_ticket",
+                1
+              ]
+            },
+            {
+              "rel": [
+                "bud_mulroney",
+                1
+              ]
+            }
+          ],
+          "to": "ticket"
+        },
+        {
+          "text": "Bye, Bud.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "The booster club's 50/50 bought a fridge. A fridge, dear! A triumph. Next stop, a drum that doesn't stick.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Kings games, for the pot. Public skate, for the thermos. Minor hockey, for the grandkids of everybody I used to deliver mail to.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "agnes": {
+      "say": "Agnes gives me a seven. Every year. Fifty-six years of sevens. Luckiest seven in the valley.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Warmer in the stands now?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Warm enough that folks take their mittens off to buy tickets. That's good for business, dear.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

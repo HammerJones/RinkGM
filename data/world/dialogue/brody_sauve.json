@@ -1,0 +1,364 @@
+{
+  "id": "brody_sauve",
+  "barks": {
+    "idle": [
+      "Rule 4.3 says... never mind.",
+      "Twenty-five dollars a game. And the experience. Mostly the experience."
+    ],
+    "good_ice": [
+      "Ice is good. Nobody can blame the ice. Which means they'll blame me."
+    ],
+    "bad_ice": [
+      "Kids are tripping on that rut. That's not a penalty. That's the rink."
+    ],
+    "wet_ice": [
+      "Is it okay to delay the game for wet ice? It is. I checked. Twice."
+    ],
+    "cold": [
+      "The ref room's freezing. My whistle stuck to my lip once."
+    ],
+    "hungry": [
+      "Is it okay if I get fries? Between periods? Is that allowed?"
+    ],
+    "long_line": [
+      "I'll just wait. I'm good at waiting. I'm fifteen."
+    ],
+    "bored": [
+      "U9 games where nobody yells. Best games ever."
+    ],
+    "goal": [
+      "Good goal! I mean. Goal. Officially."
+    ],
+    "greet_owner": [
+      "Oh. Hi. Hello. Sir. Ma'am. Owner.",
+      "Hi! Is it okay that I'm here early?"
+    ],
+    "leaving_happy": [
+      "Nobody yelled. Well, one dad. But quietly."
+    ],
+    "leaving_angry": [
+      "Maybe I'll just ref in Harlow Falls."
+    ],
+    "event_specific": {
+      "minor_hockey": [
+        "That's a TRIP. (His voice cracks.) That's a trip.",
+        "Sir, please step back from the glass."
+      ],
+      "tournament": [
+        "Four games today. I have four whistles. Well, one whistle. Four times."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_brody_sauve"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "brody_backed"
+        },
+        {
+          "event_now": "minor_hockey"
+        }
+      ],
+      "node": "backed"
+    },
+    {
+      "if": [
+        {
+          "event_now": "minor_hockey"
+        }
+      ],
+      "node": "minor"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Oh! Hi. I'm Brody. I ref minor hockey. Level 1. I'm fifteen, but the rules are the same for everyone, so that's fine.",
+      "do": [
+        {
+          "set": "met_brody_sauve"
+        }
+      ],
+      "options": [
+        {
+          "text": "Fifteen and reffing? Good for you.",
+          "do": [
+            {
+              "rel": [
+                "brody_sauve",
+                4
+              ]
+            }
+          ],
+          "to": "first_kind"
+        },
+        {
+          "text": "Aren't you a bit young?",
+          "do": [
+            {
+              "rel": [
+                "brody_sauve",
+                -2
+              ]
+            }
+          ],
+          "to": "first_young"
+        }
+      ]
+    },
+    "first_kind": {
+      "say": "Thanks. Marcel says it gets easier. Marcel says a lot of things. He's very calm about it.",
+      "options": [
+        {
+          "text": "Marcel knows.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_young": {
+      "say": "That's what the dads say. Rule 2.1 doesn't have an age in it. I checked. (His voice cracks on 'checked'.)",
+      "options": [
+        {
+          "text": "Fair point.",
+          "do": [
+            {
+              "rel": [
+                "brody_sauve",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Brody. I'll sort it.",
+          "do": [
+            {
+              "rel": [
+                "brody_sauve",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "minor": {
+      "say": [
+        "I've got the U9s next. Nobody yells at U9s. Usually.",
+        "Is that Mr. Saucier at the glass? Is it? Okay. Okay."
+      ],
+      "options": [
+        {
+          "text": "You'll be great.",
+          "do": [
+            {
+              "rel": [
+                "brody_sauve",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Got a minute first?",
+          "to": "hub"
+        }
+      ]
+    },
+    "backed": {
+      "say": "You said you'd back me. Mr. Saucier yelled on Saturday and I thought about that, and I didn't look at him. I just called it. It felt good.",
+      "options": [
+        {
+          "text": "Proud of you, Brody.",
+          "do": [
+            {
+              "rel": [
+                "brody_sauve",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hi! Is everything okay?",
+        "Yes? Sorry. Hi.",
+        "Do you need me? I'm not on for twenty minutes."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "Why ref?",
+          "to": "job"
+        },
+        {
+          "text": "What games do you like best?",
+          "to": "events"
+        },
+        {
+          "text": "How do you handle the yelling?",
+          "to": "gossip"
+        },
+        {
+          "text": "What's the ref room like?",
+          "to": "rink"
+        },
+        {
+          "text": "If a parent gives you trouble, I've got your back.",
+          "if": [
+            {
+              "not_flag": "brody_backed"
+            }
+          ],
+          "to": "back"
+        },
+        {
+          "text": "Good luck, Brody.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Twenty-five dollars a game. I'm saving for a car. Also the experience. Mom says the experience is the main thing. Mom doesn't ref.",
+      "options": [
+        {
+          "text": "Sound plan.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "U9 games where nobody yells. Tournaments are hard but you get four games. And I watch the Mallards. I want to ref high school next year.",
+      "options": [
+        {
+          "text": "You'll get there.",
+          "do": [
+            {
+              "rel": [
+                "brody_sauve",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Marcel says don't look at the glass. Mrs. Pettigrew says she'll handle the parents. And Mr. Saucier says I'm blind. I'm not. I have very good eyes. I had them tested.",
+      "options": [
+        {
+          "text": "Listen to Marcel.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The ref room's a closet. It's cold. There's one hook and Marcel gets it, which is fair. I put my coat on a broom.",
+      "options": [
+        {
+          "text": "Is it better now?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll look at it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "There's a heater! And a chair! I sat on the chair. Is that okay? Nell said it was okay.",
+      "options": [
+        {
+          "text": "It's your chair too.",
+          "to": "hub"
+        }
+      ]
+    },
+    "back": {
+      "say": "Really? Like, if Mr. Saucier yells, you'd talk to him?",
+      "options": [
+        {
+          "text": "I'll talk to him. You call the game.",
+          "do": [
+            {
+              "set": "brody_backed"
+            },
+            {
+              "rel": [
+                "brody_sauve",
+                5
+              ]
+            },
+            {
+              "note": "Told Brody Sauve you'd back him against parents at the glass."
+            }
+          ],
+          "to": "back_yes"
+        },
+        {
+          "text": "Well, within reason.",
+          "do": [
+            {
+              "rel": [
+                "brody_sauve",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "back_yes": {
+      "say": "Okay. Okay! That's. Thank you. (His voice cracks, but in a good way.)",
+      "options": [
+        {
+          "text": "Go get 'em.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Bye! Thank you! Sorry. Bye.",
+        "I'll go check the nets. Twice."
+      ],
+      "options": []
+    }
+  }
+}

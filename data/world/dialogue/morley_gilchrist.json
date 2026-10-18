@@ -1,0 +1,413 @@
+{
+  "id": "morley_gilchrist",
+  "barks": {
+    "idle": [
+      "We arrived in the second hearse. We are, as ever, on time.",
+      "A quiet dressing room is a gift.",
+      "I'm sorry for your loss. I mean the score."
+    ],
+    "good_ice": [
+      "A dignified surface. My thanks."
+    ],
+    "bad_ice": [
+      "The ice has seen better days. Haven't we all."
+    ],
+    "wet_ice": [
+      "The ice is weeping. Understandably."
+    ],
+    "goal": [
+      "My condolences to the goalie.",
+      "Ah. These things happen to all of us eventually."
+    ],
+    "cold": [
+      "It is cool in here. I'm used to cool rooms."
+    ],
+    "hungry": [
+      "A light snack. Nothing that crunches. Out of respect."
+    ],
+    "long_line": [
+      "We all wait our turn. In the end."
+    ],
+    "bored": [
+      "I find stillness restful."
+    ],
+    "greet_owner": [
+      "Good evening, {owner}. How are you holding up?",
+      "{owner}. You look well. Professionally speaking, that's good."
+    ],
+    "leaving_happy": [
+      "A peaceful game. Thank you."
+    ],
+    "leaving_angry": [
+      "I will say only this: it was not peaceful."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Steady hands, gentlemen. Steady hands.",
+        "I'm so sorry. We're up three."
+      ],
+      "figure_show": [
+        "The spins are lovely. Very composed.",
+        "Doreen is playing tonight. How wonderful."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_morley_gilchrist"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "bl_now"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_show"
+        }
+      ],
+      "node": "show_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "morley_gilchrist",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Morley Gilchrist. The third. Gilchrist and Sons, Harlow Falls. I play goal for the Pallbearers. I'm very sorry. Oh, no, nothing's happened. It's just how I talk.",
+      "do": [
+        {
+          "set": "met_morley_gilchrist"
+        }
+      ],
+      "options": [
+        {
+          "text": "Nice to meet you, Morley.",
+          "do": [
+            {
+              "rel": [
+                "morley_gilchrist",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Do the Pallbearers get a friends and family rate?",
+          "do": [
+            {
+              "rel": [
+                "morley_gilchrist",
+                -3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Are you joking right now?",
+          "do": [
+            {
+              "rel": [
+                "morley_gilchrist",
+                3
+              ]
+            }
+          ],
+          "to": "first_joke"
+        }
+      ]
+    },
+    "first_joke": {
+      "say": "I'm afraid I can't say. It would spoil the arrangements.",
+      "options": [
+        {
+          "text": "I like you, Morley.",
+          "do": [
+            {
+              "rel": [
+                "morley_gilchrist",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Morley. I'll make it right.",
+          "do": [
+            {
+              "rel": [
+                "morley_gilchrist",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Is that a joke?",
+          "to": "hub"
+        }
+      ]
+    },
+    "bl_now": {
+      "say": [
+        "Our condolences in advance to the other team.",
+        "We'll take the ice in exactly four minutes. We always do."
+      ],
+      "options": [
+        {
+          "text": "Good luck in net.",
+          "do": [
+            {
+              "rel": [
+                "morley_gilchrist",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "How do you stay so calm in goal?",
+          "to": "steady"
+        }
+      ]
+    },
+    "steady": {
+      "say": "Steady hands. They come with the job. Nobody ever asks which part of the job. I'm grateful.",
+      "options": [
+        {
+          "text": "I won't ask either.",
+          "do": [
+            {
+              "rel": [
+                "morley_gilchrist",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "show_now": {
+      "say": [
+        "Figure skating is restful. Everyone knows where they're going.",
+        "Doreen is on the organ. She chooses such thoughtful music."
+      ],
+      "options": [
+        {
+          "text": "I'll ask Doreen to play something for you.",
+          "do": [
+            {
+              "rel": [
+                "morley_gilchrist",
+                3
+              ]
+            },
+            {
+              "rel": [
+                "doreen_vachon",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Enjoy the show.",
+          "to": "end"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}. A friendly face. Those are rarer than you'd think in my line of work.",
+        "Good evening. I saved you the quiet end of the bench."
+      ],
+      "options": [
+        {
+          "text": "Good to see you, Morley.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Good evening. How may I help?",
+        "{owner}. Please, take your time.",
+        "A pleasure. A quiet one."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's business?",
+          "to": "job"
+        },
+        {
+          "text": "How do you stay so calm in goal?",
+          "to": "steady"
+        },
+        {
+          "text": "What do you make of Gino Russo?",
+          "to": "gino"
+        },
+        {
+          "text": "You're a fan of Doreen's organ?",
+          "to": "doreen"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Good night, Morley.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Steady. People are dying to see us. That is the only joke I am permitted, and I use it sparingly.",
+      "options": [
+        {
+          "text": "That was a good one.",
+          "do": [
+            {
+              "rel": [
+                "morley_gilchrist",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gino": {
+      "say": "Mr. Russo is a passionate young man. He delivered a pizza to our bench during a penalty kill. I tipped him. Then I asked him to leave.",
+      "options": [
+        {
+          "text": "He's an expansion team. Be gentle.",
+          "do": [
+            {
+              "rel": [
+                "gino_russo",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "The pizza guy, eh?",
+          "do": [
+            {
+              "rel": [
+                "morley_gilchrist",
+                1
+              ]
+            },
+            {
+              "rel": [
+                "gino_russo",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "doreen": {
+      "say": "I am the only beer leaguer who has complimented her dirge. It was a beautiful dirge. Played for an icing. I was moved.",
+      "options": [
+        {
+          "text": "I'll tell her you said so.",
+          "do": [
+            {
+              "rel": [
+                "doreen_vachon",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "It is an old building with good bones. I say that often. I mean it here kindly.",
+      "options": [
+        {
+          "text": "The rooms are fixed up now. Better?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "Kindly taken.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "Much improved. The dressing room is quiet and the hooks are level. One notices level hooks.",
+      "options": [
+        {
+          "text": "Level hooks for the Pallbearers.",
+          "do": [
+            {
+              "rel": [
+                "morley_gilchrist",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}
