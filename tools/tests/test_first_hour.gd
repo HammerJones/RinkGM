@@ -114,10 +114,10 @@ func _run() -> void:
 	# inside an owner career: the career's sim and clock, the first hour only on its first morning
 	var link := RinkLink.new_owner("Test", "Owner", "C", 7)
 	var cs := WalkStory.start(_venue, null, link)
-	_expect(cs.sim == link.sim and cs.first_hour and cs.clock_text() == "MON 05:00", "a new owner career walks its own first hour (%s)" % cs.clock_text())
+	_expect(cs.sim == link.sim and cs.first_hour() and cs.clock_text() == "MON 05:00", "a new owner career walks its own first hour (%s)" % cs.clock_text())
 	link.sim.minute = 14 * 60
 	cs = WalkStory.start(_venue, null, link)
-	_expect(not cs.first_hour and not cs.door_locked(front), "later in the career the doors are open (%s)" % cs.clock_text())
+	_expect(not cs.first_hour() and not cs.door_locked(front), "later in the career the doors are open (%s)" % cs.clock_text())
 	link.advance_to_game()
 	link.sim.minute -= 15
 	cs = WalkStory.start(_venue, null, link)

@@ -24,11 +24,9 @@ const READABLES_PATH := "res://data/world/readables.json"
 var venue: Venue
 var sim: RinkSim
 ## The owner career's rink when the walk runs inside one (CareerState.rink):
-## its sim, and its clock, which stops for the owner's Tuesday game.
-var rink: RinkLink
-## The first hour's set-up (dark lot, locked doors) applies: a fresh sim, or
-## a career on its first morning.
-var first_hour := true
+## its sim, and its clock, which stops for the owner's Tuesday game. `flags`
+## are then saved with the career (career.world.walk).
+var link: RinkLink
 ## Set when the career's clock stopped for the owner's game: the walk sends
 ## the player back to the hub to play it.
 var game_due := false
@@ -44,17 +42,21 @@ var _texts := {}
 ## The walk's story. With no sim given it uses the owner career's rink when
 ## there is one (its day and minute are the career's save, so they stay), else
 ## a fresh M1 sim (05:00 on the first Monday, Doris won't start).
-static func start(venue_: Venue, sim_: RinkSim = null, rink_: RinkLink = null) -> WalkStory:
+static func start(venue_: Venue, sim_: RinkSim = null, link_: RinkLink = null) -> WalkStory:
 	var w := WalkStory.new()
 	w.venue = venue_
-	if sim_ == null and rink_ == null:
+	if sim_ == null and link_ == null:
 		# looked up at runtime so --script tests without the autoloads compile
 		var cs: Node = (Engine.get_main_loop() as SceneTree).root.get_node_or_null("CareerState")
-		rink_ = cs.rink if cs else null
-	w.rink = rink_
-	w.sim = rink_.sim if rink_ else (sim_ if sim_ else RinkSim.create_m1())
-	w.first_hour = w.sim.day == 0 and w.sim.minute <= START_MINUTE
-	if not w.first_hour:
+		link_ = cs.rink if cs else null
+	w.link = link_
+	w.sim = link_.sim if link_ else (sim_ if sim_ else RinkSim.create_m1())
+	if link_:
+		if not link_.career.world.has("walk"):
+			link_.career.world["walk"] = {}
+		w.flags = link_.career.world.walk
+	# past the first morning Gus has handed the keys over in person
+	if not (w.sim.day == 0 and w.sim.minute <= START_MINUTE):
 		w.flags["keys"] = true
 	w._load_texts()
 	w._show_sim()
@@ -91,13 +93,19 @@ func tick(dt: float) -> void:
 	_clock_acc += dt * TIME_SCALE
 	while _clock_acc >= RinkSim.STEP_MIN:
 		_clock_acc -= RinkSim.STEP_MIN
-		if rink:
-			game_due = rink.advance(RinkSim.STEP_MIN)
+		if link:
+			game_due = link.advance(RinkSim.STEP_MIN)
 		else:
 			sim.advance(RinkSim.STEP_MIN)
 		_show_sim()
 		if game_due:
 			return
+
+
+## The first hour's set-up (dark lot, locked front doors) holds until the
+## keys are found.
+func first_hour() -> bool:
+	return not flags.has("keys")
 
 
 func clock_text() -> String:

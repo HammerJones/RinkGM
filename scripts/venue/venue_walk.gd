@@ -14,6 +14,7 @@ extends Node3D
 ##
 ## WASD / left stick walk, mouse / right stick look, Shift / L3 run,
 ## E / A read, use or work on what you're looking at (or a door),
+## O the office (in an owner career),
 ## Esc / B close a panel, 1 2 3 / D-pad set this room's age,
 ## F / Y fly, Tab frees the mouse.
 
@@ -82,7 +83,7 @@ func _ready() -> void:
 		var m := story.sim.minute
 		if m < 7 * 60 or m >= 19 * 60:
 			_env.background_color = Color("070a12")  # night outside
-		if story.first_hour:
+		if story.first_hour():
 			walker.global_position = Vector3(-51.0, 0.05, 0.4)
 		else:
 			# in the office, by the door, facing the desk
@@ -138,6 +139,9 @@ func _unhandled_input(e: InputEvent) -> void:
 		match e.keycode:
 			KEY_TAB: Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 			KEY_ESCAPE: _close_panel()
+			KEY_O:
+				if story and story.link and not _busy():
+					_leave_to("office")
 			KEY_E: _use()
 			KEY_Q: _close_panel()
 			KEY_F: _toggle_fly()
@@ -207,6 +211,8 @@ func _hud_lines() -> Array:
 		var d := walker.nearest_door(venue)
 		if d:
 			hint = "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
+	if story and story.link:
+		head += "   [O] OFFICE"
 	return [head, where, hint]
 
 
@@ -329,7 +335,7 @@ func _show_screen(id: String) -> void:
 	if story == null:
 		return
 	var sim := story.sim
-	if id == "desk" and story.rink:
+	if id == "desk" and story.link:
 		_leave_to("office")
 		return
 	if OFFICE_TABS.has(id) and ResourceLoader.exists(OFFICE_SCENE):
