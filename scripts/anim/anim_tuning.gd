@@ -98,6 +98,10 @@ func tunables() -> Array:
 @export_range(0.8, 3.0, 0.05) var stick_thickness := 1.9
 ## Blade length, times the model's 30 cm.
 @export_range(0.7, 2.0, 0.05) var stick_blade_length := 1.3
+## The lie: the fixed angle the shaft rises at when the blade is flat on
+## the ice (degrees). The blade is rigid to the shaft, so it tips onto its
+## heel or toe when the hands are higher or lower than this.
+@export_range(30.0, 65.0, 0.5) var stick_lie := 47.0
 ## Blade height, times the model's 7 cm.
 @export_range(0.7, 2.5, 0.05) var stick_blade_height := 1.6
 
@@ -106,8 +110,13 @@ func tunables() -> Array:
 # hand slides along the shaft and lets go to reach.
 ## Where the top hand sits across the body (- is its own side).
 @export_range(-0.5, 0.3, 0.01) var grip_top_side := -0.14
-## Top hand height above the hips.
-@export_range(0.0, 0.8, 0.01) var grip_top_height := 0.28
+## Top hand height above the hips (it stays between grip_top_low and
+## grip_top_high: hips to chest).
+@export_range(0.0, 0.8, 0.01) var grip_top_height := 0.22
+## Lowest the top hand goes, above the hips.
+@export_range(-0.2, 0.6, 0.01) var grip_top_low := 0.05
+## Highest the top hand goes, above the hips (about chest height).
+@export_range(0.1, 0.9, 0.01) var grip_top_high := 0.45
 ## How far in front of the body the top hand sits.
 @export_range(0.0, 0.6, 0.01) var grip_top_fwd := 0.3
 ## How far the top hand drifts towards the blade's side.
@@ -122,6 +131,16 @@ func tunables() -> Array:
 @export_range(1.0, 30.0, 0.5) var grip_slide_speed := 10.0
 ## Share of the arm's length the hands can use before letting go.
 @export_range(0.7, 1.0, 0.01) var grip_reach := 0.97
+
+# ------------------------------------------------------------------ blade
+# A free stick (no puck, no shot) slides about on the ice instead of sitting
+# still. Only the drawing moves; the game's blade stays where it was.
+## How far the blade slides forward and back with each stride.
+@export_range(0.0, 0.4, 0.005) var blade_stride_slide := 0.14
+## Slow forward/back drift when gliding or standing.
+@export_range(0.0, 0.3, 0.005) var blade_drift := 0.08
+## Slow side-to-side drift.
+@export_range(0.0, 0.3, 0.005) var blade_drift_side := 0.05
 
 # ------------------------------------------------------------------- dash
 ## Stride length multiplier during a dash.

@@ -11,7 +11,7 @@ const FOREHAND_WIND := 100.0  # Skater.WIND_SPOT as an angle (deg) ...
 const WIND_REACH := 0.86      # ... and reach (m)
 
 const LIST := [
-	{"id": &"neutral", "title": "Ready stance", "groups": ["stance", "stick", "grip"], "len": 4.0,
+	{"id": &"neutral", "title": "Ready stance", "groups": ["stance", "grip", "blade", "stick"], "len": 4.0,
 		"note": "Standing still, knees bent, blade on the ice."},
 	{"id": &"stickhandle", "title": "Stickhandling", "groups": ["grip", "stick"], "len": 4.0,
 		"note": "Two hands, quick forehand-backhand moves in front of the body."},
@@ -19,13 +19,13 @@ const LIST := [
 		"note": "Past the front 90 degrees the bottom hand lets go; the top hand keeps the knob and swings the stick on a straight arm."},
 	{"id": &"poke_check", "title": "Poke check", "groups": ["grip"], "len": 3.0,
 		"note": "Stick jabbed straight out front: the bottom hand lets go for the extra reach."},
-	{"id": &"stride_easy", "title": "Skating stride: easy", "groups": ["stance", "stride"], "len": 4.0,
+	{"id": &"stride_easy", "title": "Skating stride: easy", "groups": ["stance", "stride", "blade"], "len": 4.0,
 		"note": "Striding at about 9 mph."},
-	{"id": &"stride_full", "title": "Skating stride: full speed", "groups": ["stance", "stride"], "len": 4.0,
+	{"id": &"stride_full", "title": "Skating stride: full speed", "groups": ["stance", "stride", "blade"], "len": 4.0,
 		"note": "Striding at about 22 mph."},
 	{"id": &"dash", "title": "Dash", "groups": ["dash", "stride"], "len": 4.0,
 		"note": "Burst strides from a cruise, twice per loop."},
-	{"id": &"glide", "title": "Glide", "groups": ["stance"], "len": 3.0,
+	{"id": &"glide", "title": "Glide", "groups": ["stance", "blade"], "len": 3.0,
 		"note": "Coasting on both skates."},
 	{"id": &"cross_left", "title": "Crossovers: left turn", "groups": ["cross", "stride"], "len": 5.0,
 		"note": "Striding through a tight left turn: lean in, outside skate crosses over."},
