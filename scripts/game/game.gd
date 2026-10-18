@@ -33,6 +33,7 @@ signal stick_broken(s: Skater, stick_id: StringName, cause: StringName)
 signal stick_replaced(s: Skater)
 
 var rink: Rink
+var venue: Venue
 var puck: Puck
 var skaters: Array[Skater] = []
 var goalies: Array[Goalie] = []
@@ -99,6 +100,12 @@ func _ready() -> void:
 			seed(hash(arg.trim_prefix("--seed=")))
 	_rng.seed = randi()
 	var args := OS.get_cmdline_user_args()
+	# `-- --venue-walk` explores the building on foot instead of playing
+	if "--venue-walk" in args:
+		set_physics_process(false)
+		set_process(false)
+		get_tree().change_scene_to_file.call_deferred("res://scenes/venue/venue_walk.tscn")
+		return
 	practice = CareerState.practice or "--practice" in args or "--test=practice" in args
 	if "--career" in args and CareerState.fixture.is_empty() and not practice:
 		set_physics_process(false)
@@ -123,6 +130,11 @@ func _ready() -> void:
 	puck = Puck.new()
 	add_child(puck)
 	puck.goal_scored.connect(_on_goal)
+	# the building around the ice (scenes/venue); `-- --no-venue` leaves it out
+	if not "--no-venue" in OS.get_cmdline_user_args():
+		venue = Venue.instantiate_for(fixture)
+		add_child(venue)
+		venue.bind_game(self)
 	# the user's club is always team 0 (red side of the old demo)
 	var clubs: Array = [fixture.home, fixture.away] if fixture.user_home else [fixture.away, fixture.home]
 	var lineups: Array = [fixture.home_lineup, fixture.away_lineup] if fixture.user_home else [fixture.away_lineup, fixture.home_lineup]
