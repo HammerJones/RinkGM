@@ -10,7 +10,7 @@ extends Node3D
 
 const MASS := 90.0
 const ARM := 0.75           # m, how far a hand reaches from its shoulder
-const HAND_SPEED := 4.0     # m/s, the hands' top speed (scaled by skill)
+const HAND_SPEED := 4.5     # m/s, the hands' top speed (scaled by skill)
 const GLOVE_R := 0.13
 ## restitution off each part: pads are lively, the chest soaks it up
 const E_PAD := 0.4
@@ -20,10 +20,10 @@ const E_STICK := 0.3
 const E_GLOVE := 0.1
 const MU := 0.3
 const CLOSE := 3.5          # m: a puck this close in front, the goalie drops to block
-const SET := 0.85           # reaction time factor for a shot the goalie saw being wound up
+const SET := 0.8            # reaction time factor for a shot the goalie saw being wound up
 ## How fast a hand gets going (m/s², scaled by skill): a glove can't jump
 ## to full speed, so a shot just past the hand beats it.
-const HAND_ACCEL := 25.0
+const HAND_ACCEL := 35.0
 
 var game: Node
 var team := 0
@@ -137,7 +137,7 @@ func physics_update(dt: float) -> void:
 			var t := dist / closing
 			tracked = true
 			if not _tracking:
-				_reaction = lerpf(0.3, 0.17, skill) * ai.goalie_reaction * (SET if _alert else 1.0)
+				_reaction = lerpf(0.26, 0.13, skill) * ai.goalie_reaction * (SET if _alert else 1.0)
 			var hit := p2 + pv * t
 			var hy := maxf(0.0, puck.position.y + puck.vel.y * t - 0.5 * Puck.GRAVITY * t * t)
 			reach_target = Vector2(clampf((hit - pos2).dot(right2()), -1.2, 1.2), clampf(hy, 0.0, 1.5))
@@ -151,7 +151,7 @@ func physics_update(dt: float) -> void:
 		butterfly_timer = maxf(butterfly_timer, 0.3)
 	_reaction -= dt
 	butterfly_timer = maxf(0.0, butterfly_timer - dt)
-	var drop := lerpf(3.0, 5.0, skill) * lerpf(0.7, 1.1, gp)  # 0.2-0.4 s to get all the way down
+	var drop := lerpf(4.0, 6.5, skill) * lerpf(0.7, 1.1, gp)  # 0.15-0.35 s to get all the way down
 	butterfly = move_toward(butterfly, 1.0 if butterfly_timer > 0.0 else 0.0, (drop if butterfly_timer > 0.0 else 2.5) * dt)
 	_move_hands(dt, lerpf(0.65, 1.1, gp))
 

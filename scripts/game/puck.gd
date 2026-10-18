@@ -1,7 +1,7 @@
 class_name Puck
 extends Node3D
-## Free puck physics: gravity, ice friction, bounces off boards, posts,
-## crossbar and the outside of the nets, and goal detection at the goal line.
+## Free puck physics: gravity, ice friction, bounces off boards and the
+## nets (NetPhysics), and goal detection at the goal line.
 ## Stick control is applied by Game as spring forces before integrate().
 
 signal goal_scored(net_side: int)
@@ -96,10 +96,7 @@ func integrate(dt: float) -> void:
 		left_rink.emit(position)
 		return
 	_collide_boards()
-	if in_net_side != 0:
-		_hold_in_net()
-	else:
-		_collide_nets(prev)
+	_collide_nets(prev)
 
 
 ## Out of the rink: flying through the stands, bouncing off seats, rails,
@@ -127,64 +124,23 @@ func _collide_boards() -> void:
 		vel *= 0.92
 
 
+## The nets are solid (NetPhysics): posts, crossbar, frame and netting.
+## A goal is the whole puck crossing the goal line between the posts and
+## under the bar.
 func _collide_nets(prev: Vector3) -> void:
+	if NetPhysics.collide(self):
+		post_hit.emit()
+	if in_net_side != 0:
+		return
 	for side in [-1, 1]:
 		var gx: float = side * Rink.GOAL_X
-		# posts (vertical cylinders) and crossbar
-		if position.y < Rink.NET_H + RADIUS:
-			for pz in [-Rink.NET_HALF_W, Rink.NET_HALF_W]:
-				var d := Vector2(position.x - gx, position.z - pz)
-				var min_d := RADIUS + Rink.POST_R
-				if d.length() < min_d and d.length() > 0.0001:
-					var n := d.normalized()
-					position.x = gx + n.x * min_d
-					position.z = pz + n.y * min_d
-					var n3 := Vector3(n.x, 0, n.y)
-					var vn := vel.dot(n3)
-					if vn < 0.0:
-						vel -= n3 * vn * 1.75
-						post_hit.emit()
-		var bar := Vector2(position.x - gx, position.y - Rink.NET_H)
-		if absf(position.z) < Rink.NET_HALF_W and bar.length() < RADIUS + Rink.POST_R and bar.length() > 0.0001:
-			var n := bar.normalized()
-			position.x = gx + n.x * (RADIUS + Rink.POST_R)
-			position.y = Rink.NET_H + n.y * (RADIUS + Rink.POST_R)
-			var n3 := Vector3(n.x, n.y, 0)
-			var vn := vel.dot(n3)
-			if vn < 0.0:
-				vel -= n3 * vn * 1.7
-				post_hit.emit()
-		# u: distance behind this goal line (into the net)
 		var u: float = (position.x - gx) * side
 		var u_prev: float = (prev.x - gx) * side
-		var inside := u > 0.0 and u < Rink.NET_DEPTH and absf(position.z) < Rink.NET_HALF_W and position.y < Rink.NET_H
-		var was_inside := u_prev > 0.0 and u_prev < Rink.NET_DEPTH and absf(prev.z) < Rink.NET_HALF_W and prev.y < Rink.NET_H
-		if not inside or was_inside:
+		if u <= RADIUS or u_prev > RADIUS or u > Rink.NET_DEPTH:
 			continue
-		if u_prev <= 0.0:
-			# crossed the goal line between the posts and under the bar
+		var at := prev.lerp(position, (RADIUS - u_prev) / (u - u_prev))
+		if absf(at.z) < Rink.NET_HALF_W and at.y < Rink.NET_H:
 			in_net_side = side
-			vel *= 0.35
 			goal_scored.emit(side)
 			return
-		# hit the outside of the net: bounce off whichever face it came through
-		if u_prev >= Rink.NET_DEPTH:
-			position.x = gx + side * (Rink.NET_DEPTH + RADIUS)
-			vel.x = -vel.x * 0.25
-		elif absf(prev.z) >= Rink.NET_HALF_W:
-			position.z = signf(prev.z) * (Rink.NET_HALF_W + RADIUS)
-			vel.z = -vel.z * 0.25
-		else:
-			position.y = Rink.NET_H + RADIUS
-			vel.y = absf(vel.y) * 0.2
-		vel *= 0.6
 
-
-func _hold_in_net() -> void:
-	var side := in_net_side
-	var gx: float = side * Rink.GOAL_X
-	var u := clampf((position.x - gx) * side, RADIUS, Rink.NET_DEPTH - RADIUS)
-	position.x = gx + side * u
-	position.z = clampf(position.z, -Rink.NET_HALF_W + RADIUS, Rink.NET_HALF_W - RADIUS)
-	position.y = clampf(position.y, 0.0, Rink.NET_H - RADIUS)
-	vel *= 0.97

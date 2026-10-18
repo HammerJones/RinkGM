@@ -142,13 +142,20 @@ skating and stick-control assistance on top; it never changes contacts.
   blade still holds it. The AI steers round head-on collisions it doesn't
   mean.
 - **Goalies** (`scripts/game/goalie.gd`) are bodies with mass that skate the
-  crease (they can be bumped) to play the angle, read the shooter's wind-up
-  and the shot after a reaction time, drop to the butterfly for low shots and
-  in tight, and reach with the glove or blocker. Saves are collisions with
-  pads, body, blocker, stick and glove, each as lively as the real thing; the
-  glove holds a puck it can squeeze (whistle) and everything else is a
-  rebound off whatever it hit. Over the glass, the puck flies into the
-  building (`Puck.left_rink`, whistle).
+  crease (they can be bumped), come out to the top of the crease to cut the
+  angle, and get set when they see a wind-up. They only react to where the
+  shot goes once it leaves the blade (reaction time from skill and tier);
+  then the hands accelerate toward it and they drop to the butterfly for low
+  shots and in tight. Saves are collisions with pads, body, blocker, stick and
+  glove, each as lively as the real thing; the glove holds a puck it can
+  squeeze (whistle) and everything else is a rebound off whatever it hit.
+  `--only=goalie` in the bench shows how often a lone shooter scores.
+- **Nets** (`scripts/game/net_physics.gd`) are solid: iron posts and
+  crossbar ring a puck back out, and the frame and netting are boxes from
+  the net's own voxel model, so the twine stops a shot (or one from behind
+  the net) where you see it. A goal is the whole puck over the line between
+  the posts. Over the glass, the puck flies into the building
+  (`Puck.left_rink`, whistle).
 - **On-ice AI** (`scripts/game/skater_ai.gd`, the goalie) plays to the league
   tier, not just the ratings: each team reads a `TierAI` (`game.ai_for`). A beer
   league reacts late to turnovers, sends two or three skaters after the puck,
