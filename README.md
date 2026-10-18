@@ -41,6 +41,7 @@ virtual right stick, so both devices drive the same stick model.
 | Restart (practice: reset the puck) | | R |
 | Show/hide controls | | H |
 | Developer menu | D-pad down | ` (tilde key) |
+| Playtest note (screenshot + note) | | N |
 
 "Forward" and "behind" are relative to the way your skater faces; the stick
 itself is camera-relative, like the left stick. A faint arc on the ice shows

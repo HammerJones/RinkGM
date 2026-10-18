@@ -21,7 +21,7 @@ E  pass / call for it    F  check    [ ]  mouse sensitivity
 Esc  menu (pause, frees the cursor)   F1  physics mode
 C  camera   R  restart (practice: reset the puck)
 Tab / Y  fast-forward on the bench (career)
-`  dev menu   H  hide this"""
+`  dev menu   N  playtest note   H  hide this"""
 
 var _home := ""
 var _away := ""

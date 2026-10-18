@@ -17,6 +17,7 @@ InputSetup="*res://scripts/core/input_setup.gd"
 CareerState="*res://scripts/career/career_state.gd"
 DevMenu="*res://scripts/dev/dev_menu.gd"
 PauseMenu="*res://scripts/game/pause_menu.gd"
+PlaytestNotes="*res://scripts/dev/playtest_notes.gd"
 
 [display]
 

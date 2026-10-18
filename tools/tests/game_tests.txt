@@ -3,3 +3,4 @@ devmenu
 sticks
 pausemenu
 practice
+notes
