@@ -7,6 +7,7 @@ extends RefCounted
 ## stick's own shot mechanics in Skater handle them.
 
 const KEEP := 0.5   # seconds of stick history kept
+const HOLD := 0.3   # a snapshot pull-out is held this long before the snap
 
 var _hist: Array[Vector3] = []   # (forward, forehand, age)
 
@@ -58,18 +59,25 @@ func _match(c: Vector2, tilted: bool, lift: bool) -> StringName:
 
 
 ## True when the stick was just out to one side (30 to 70 deg) and had been
-## sitting at about that angle for a moment before.
+## held there, still, for HOLD seconds before: a deliberate pull-out, not the
+## turn of a stickhandling sweep.
 func _held_out(sd: float) -> bool:
 	var at := INF
+	var since := 0.0
 	for i in range(_hist.size() - 1, -1, -1):
 		var g := _hist[i]
 		var a := rad_to_deg(atan2(g.y, g.x)) * sd
 		if g.z < 0.1 and a > 30.0 and a < 70.0 and Vector2(g.x, g.y).length() > 0.7:
 			at = a
+			since = g.z
 			break
-	if at == INF:
+	if at == INF or _hist[0].z < since + HOLD:
 		return false
-	return _was(func(a, rr, age): return absf(a * sd - at) < 12.0 and rr > 0.7 and age > 0.15 and age < 0.4)
+	for g in _hist:
+		if g.z >= since and g.z <= since + HOLD:
+			if absf(rad_to_deg(atan2(g.y, g.x)) * sd - at) > 10.0 or Vector2(g.x, g.y).length() < 0.7:
+				return false
+	return true
 
 
 func _was(test: Callable) -> bool:

@@ -72,6 +72,7 @@ func _run() -> void:
 
 	# --- learned shots and moves
 	await _moves()
+	await _stickhandling()
 
 	# --- lift with the puck raises the blade
 	await _carry(Vector2(-10, 0))
@@ -291,3 +292,43 @@ func _check(ok: bool, what: String) -> void:
 	if not ok:
 		_fails += 1
 		print("  FAIL: ", what)
+
+
+## Stickhandling the puck from side to side must not shoot: sweeps across the
+## front on the rim, through the middle, wide to both sides, at a range of
+## speeds a player would use. Each runs for 3 s with the puck.
+func _stickhandling() -> void:
+	var rim := func(amp: float, hz: float) -> Callable:
+		return func(f, t):
+			var a := deg_to_rad(amp) * sin(TAU * hz * t)
+			# eased out from neutral so the start isn't a flick
+			f.stick = Vector2(cos(a), -sin(a)) * minf(t / 0.3, 1.0)
+	var through := func(hz: float) -> Callable:
+		return func(f, t): f.stick = Vector2(0.15, -sin(TAU * hz * t))
+	var snap := func(hz: float) -> Callable:
+		return func(f, t): f.stick = Vector2(0.45, -0.89 if fmod(t * hz, 1.0) < 0.5 else 0.89)
+	var plans := {
+		"rim +-60 2Hz": rim.call(60.0, 2.0), "rim +-80 2.5Hz": rim.call(80.0, 2.5),
+		"rim +-90 3Hz": rim.call(90.0, 3.0), "rim +-100 1.5Hz": rim.call(100.0, 1.5),
+		"rim +-110 2Hz": rim.call(110.0, 2.0), "rim +-60 0.8Hz": rim.call(60.0, 0.8),
+		"rim +-100 0.8Hz": rim.call(100.0, 0.8),
+		"through 2Hz": through.call(2.0), "through 4Hz": through.call(4.0),
+		"snap 3Hz": snap.call(3.0), "snap 5Hz": snap.call(5.0),
+	}
+	var total := 0
+	for name in plans:
+		await _carry(Vector2(-10, 0))
+		var shots: int = game.stats.shots
+		_set_plan(plans[name])
+		await _wait(3.0)
+		var n: int = game.stats.shots - shots
+		total += n
+		print("stickhandling %s: %d shots, puck kept %s" % [name, n, game.human.has_puck()])
+	_check(total == 0, "stickhandling side to side doesn't shoot")
+
+	# while a short, deliberate draw behind the hip still shoots
+	var quick_draw := await _shot(func(f, t):
+		var a := deg_to_rad(135.0)
+		f.stick = Vector2(cos(a), -sin(a)) if t < 0.18 else Vector2(1, 0))
+	print("short draw-back shot: %.1f m/s" % quick_draw)
+	_check(quick_draw > 0.0, "a quick draw back past the hip, then forward, shoots")
