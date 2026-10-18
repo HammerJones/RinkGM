@@ -179,9 +179,9 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 		var lane_open: bool = g.lane_clear(s.team, me, Vector2(aim.x, aim.z), 0.7)
 		# good shot selection means working it in close before letting go
 		var max_d := lerpf(24.0, 13.0, sel)
-		var sure_d := lerpf(10.0, 7.5, sel)
-		if ahead > 1.0 and open_angle and d < max_d and (d < sure_d or randf() < lerpf(0.5, 0.05, sel)) \
-				and (lane_open or randf() < lerpf(0.6, 0.04, sel)):
+		var sure_d := lerpf(8.0, 6.0, sel)
+		if ahead > 1.0 and open_angle and d < max_d and (d < sure_d or randf() < lerpf(0.35, 0.04, sel)) \
+				and (lane_open or randf() < lerpf(0.35, 0.02, sel)):
 			s.ai_aim = aim
 			s.ai_slap = d > 10.0 and randf() < 0.5
 			s.ai_tilt = 0.0 if randf() < 0.5 else _tilt_for(s, d, randf_range(0.5, 1.0))

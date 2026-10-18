@@ -11,7 +11,7 @@ extends Node3D
 const MASS := 90.0
 const ARM := 0.75           # m, how far a hand reaches from its shoulder
 const HAND_SPEED := 4.5     # m/s, the hands' top speed (scaled by skill)
-const GLOVE_R := 0.13
+const GLOVE_R := 0.17  # an open catcher, about 34 cm across
 ## restitution off each part: pads are lively, the chest soaks it up
 const E_PAD := 0.4
 const E_BODY := 0.15
@@ -218,10 +218,10 @@ static func _arm_limit(t: Vector3, shoulder: Vector3) -> Vector3:
 ## [shape, local centre, half extents or radius, restitution, part].
 func parts() -> Array:
 	var b := butterfly
-	var pad_c := Vector3(lerpf(0.2, 0.43, b), lerpf(0.42, 0.13, b), lerpf(0.06, 0.12, b))
+	var pad_c := Vector3(lerpf(0.24, 0.43, b), lerpf(0.42, 0.13, b), lerpf(0.06, 0.12, b))
 	var pad_h := Vector3(lerpf(0.14, 0.42, b), lerpf(0.42, 0.13, b), lerpf(0.10, 0.11, b))
 	return [
-		[&"box", Vector3(0, lerpf(0.95, 0.68, b), 0.02), Vector3(0.27, lerpf(0.42, 0.34, b), 0.13), E_BODY, &"body"],
+		[&"box", Vector3(0, lerpf(0.95, 0.68, b), 0.02), Vector3(0.3, lerpf(0.42, 0.34, b), 0.13), E_BODY, &"body"],
 		[&"box", Vector3(-pad_c.x, pad_c.y, pad_c.z), pad_h, E_PAD, &"pad"],
 		[&"box", pad_c, pad_h, E_PAD, &"pad"],
 		[&"box", Vector3(lerpf(0.15, 0.0, b), 0.06, lerpf(0.32, 0.4, b)), Vector3(0.3, 0.06, 0.02), E_STICK, &"stick"],
