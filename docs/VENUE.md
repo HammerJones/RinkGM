@@ -144,6 +144,47 @@ under gravity with `contact`/`bounce` and emits an event, and the game blows
 the whistle and faces off at the nearest dot. `tools/tests/test_puck_out.gd`
 runs that flow with a stand-in integrator.
 
+## The first hour (RINK_SIM M1)
+
+`--venue-walk` now starts the first hour at Millbrook (RINK_SIM.md 1.6):
+05:00 on Monday in the dark lot, with the front doors locked and the ice
+lights off. `--free-walk` gives the old walk from the lobby.
+
+Spots (`VenueSpot`) are the things you can press use on. Rooms place them
+with `VenueRoom.add_spot`, so they come back after a renovation rebuild, and
+`VenueWalker.nearest_spot` picks the one you are looking at. There are five
+kinds:
+
+- **READ** opens a note from `data/venue/notes.json` or a readable from
+  `data/world/readables.json`. Examples are Gus's envelope under the mat
+  (it gives the keys), the door of notes, the binder, the power bill and the
+  manuals.
+- **JOB** hands over to a World mini game: the compressors' oil, the oil
+  drum, the glycol thermometer, Doris (she needs the plugs from the parts
+  drawer first) and her blade.
+- **SCREEN** asks UI for a screen: the office phone, the desk, the corkboard
+  (Gus's goals), the ice grid and the log book.
+- **SWITCH** works a building system: the lighting panel in the lobby turns
+  the ice lights on, and the metal halides take about 40 s to warm up.
+- **USE** covers the rest by id: the snow pit. Its heater melts a full pit
+  in 120 sim minutes, and the pile out back is Mount Doris.
+
+`WalkStory` decides what using a spot does and keeps the RinkSim clock
+(about 1.75 sim minutes per real second). The walk scene does what it says:
+
+- `screen_requested(id, sim)` is the signal UI listens to. Until a screen
+  exists, a placeholder panel shows instead.
+- A job instances the `scene` path under `scenes/world/jobs/`
+  (`oil_service`, `oil_top_up`, `plant_round`, `doris_wont_start`,
+  `blade_change`). If the scene has a `context` property, it gets
+  `{sim, job, target, room, args}`. When its `finished(result)` signal fires,
+  `WalkStory.finish_job` runs `RinkSim.job` with the args merged with
+  `result`.
+- If the scene isn't built yet, the job offers the quick way instead.
+
+`tools/tests/test_first_hour.gd` plays the hour headless.
+`tools/venue_shots.gd --first-hour [--lights]` renders it.
+
 ## Built for exploring later
 
 - Human scale: doors 0.95–2.6 m wide and 2.2 m+ high (bench and box gates are
