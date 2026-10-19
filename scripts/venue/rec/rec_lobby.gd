@@ -43,6 +43,7 @@ func furnish(k: VenueKit) -> void:
 	# a bank of kit lockers for drop-in players by the arena door
 	k.prop("lockers", Vector3(-38.4, 0, -30.25), 0.0)
 	_signs(k)
+	RecDetail.lobby(self, k)  # World: detail pass (#23, #27)
 
 
 ## The front desk, an L facing the main doors, with the RINK-OS booking
