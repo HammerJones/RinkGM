@@ -19,6 +19,7 @@ func _initialize() -> void:
 	_check_dialogue_and_quests()
 	_check_brain()
 	_check_data()
+	_check_life()
 	if failures:
 		printerr("test_people: %d failure(s)" % failures)
 	else:
@@ -218,6 +219,115 @@ func _check_data() -> void:
 				break
 			c.choose(rng_pick(c.choices.size()))
 			steps += 1
+
+
+## Townsfolk have jobs with hours, backstories with nothing left unfilled,
+## watchers have reasons, shift swaps read cleanly, and the local-AI
+## setting is off unless the player turns it on (and never phones out here).
+func _check_life() -> void:
+	if not FileAccess.file_exists(Cast.CAST_PATH):
+		return
+	AiDialogue.blocked = true
+	WorldSettings.path = "user://test_people_settings.cfg"
+	if FileAccess.file_exists(WorldSettings.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(WorldSettings.path))
+	WorldSettings.reload()
+	var cast := Cast.load_region(1)
+	var gen := cast.people.values().filter(func(p): return p.generated)
+	var told := 0
+	var working := 0
+	var adults := 0
+	for p: Person in gen:
+		if p.backstory != "":
+			told += 1
+		if "{" in p.backstory or "}" in p.backstory:
+			_fail("%s's backstory has a hole: %s" % [p.id, p.backstory])
+		if p.is_kid():
+			if p.age < 13 and not p.work.is_empty():
+				_fail("%s is %d and has a job (%s)" % [p.id, p.age, p.job])
+			continue
+		if p.age < 65:
+			adults += 1
+		if p.job == "" or p.work.is_empty():
+			continue
+		working += 1
+		var days: Array = p.work.get("days", [])
+		if days.is_empty():
+			_fail("%s works as %s on no days" % [p.id, p.job])
+			continue
+		var from := float(p.work.get("from", 9.0))
+		var to := float(p.work.get("to", 17.0))
+		var mid := fmod((from + to) / 2.0 if to > from else from + 1.0, 24.0)
+		if not p.job_block(int(days[0]), mid) or p.is_free(int(days[0]), mid):
+			_fail("%s should be at work (%s) mid-shift on day %d" % [p.id, p.job, int(days[0])])
+	print("life: %d of %d townsfolk have a backstory, %d of %d working-age adults have a job" % [told, gen.size(), working, adults])
+	if told < gen.size() * 0.95:
+		_fail("every townsperson needs a backstory (%d of %d)" % [told, gen.size()])
+	if working < adults * 0.6:
+		_fail("most working-age adults have a job (%d of %d)" % [working, adults])
+	var storied := gen.filter(func(p): return p.backstory != "" and not p.is_kid())
+	var sample: Person = storied[0]
+	var w := StoryWorld.create(cast)
+	var c := Conversation.open(w, sample)
+	var about := Conversation.first_person(sample.backstory, sample.known_as)
+	if about.strip_edges() == "" or "{" in about:
+		_fail("@about should tell %s's story in their own words ('%s')" % [sample.id, about])
+	# every watcher at a real Saturday game has a reason, and it reads
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	var came := Attendance.who_comes(cast, {"kind": "minor_hockey", "weekday": 6, "hour": 9.0, "hours": 1.5, "ice_rep": 70.0, "seats": 600}, rng)
+	var why := {}
+	for e in came:
+		var r: Dictionary = e.get("reason", {})
+		if str(r.get("why", "")) == "":
+			_fail("%s came as %s with no reason" % [e.person.id, e.as])
+			continue
+		why[r.why] = int(why.get(r.why, 0)) + 1
+		if e.as == "watch":
+			var line := Conversation.open(w, e.person, r).why_line()
+			if line == "" or "{" in line:
+				_fail("%s (%s) can't say why they came: '%s'" % [e.person.id, r.why, line])
+	print("life: minor hockey Saturday, why they came: %s" % [why])
+	if not why.has("parent"):
+		_fail("parents should come to watch their kids")
+	# shift swaps: a keen parent with a flexible boss gets one, and it reads
+	var mum := Person.from_record(_rec("swap_mum", 40, {}, {"traits": {"warmth": 0.5, "chatter": 0.5, "patience": 0.5, "pride": 0.5, "nerve": 1.0, "humour": 0.5},
+		"job": "nurse", "work": {"title": "nurse", "employer": "the hospital", "days": [6], "from": 7.0, "to": 19.0, "flex": 1.0, "boss": "Marjorie", "place": "away"},
+		"schedule": [{"days": [6], "from": 7.0, "to": 19.0, "place": "away", "doing": "work"}]}))
+	var kid := Person.from_record(_rec("swap_kid", 10, {}))
+	var swaps := 0
+	for t in 30:
+		var s := Attendance.negotiate(mum, kid, {"kind": "minor_hockey", "weekday": 6, "hour": 9.0}, 1.0, rng)
+		if s != "":
+			swaps += 1
+			if "{" in s:
+				_fail("a shift swap line has a hole: %s" % s)
+	if swaps == 0:
+		_fail("a parent working during the final should sometimes swap a shift (0 of 30)")
+	if Attendance.negotiate(mum, kid, {"kind": "minor_hockey", "weekday": 6, "hour": 21.0}, 1.0, rng) != "":
+		_fail("no swap needed when they're off work")
+	# local AI: off by default, prompt builds, replies are cleaned, no network
+	if WorldSettings.get_bool("ai_dialogue") or AiDialogue.enabled():
+		_fail("local AI dialogue is off by default")
+	var ai := AiDialogue.new()
+	root.add_child(ai)
+	if ai.ask(c, func(_l): pass):
+		_fail("AiDialogue.ask should do nothing while it's off")
+	WorldSettings.set_value("ai_dialogue", true)
+	if AiDialogue.enabled():
+		_fail("tests block the network even with the setting on")
+	if ai.ask(c, func(_l): pass) or ai.get_child_count() > 0:
+		_fail("no HTTP request in tests")
+	WorldSettings.set_value("ai_dialogue", false)
+	ai.queue_free()
+	var pr := AiDialogue.prompt(c)
+	if not sample.name in pr or not "ONE" in pr:
+		_fail("the AI prompt should say who's talking")
+	if AiDialogue.clean("  \"Cold one tonight, eh.\"\nSecond line") != "Cold one tonight, eh.":
+		_fail("AI replies are cut to one clean line ('%s')" % AiDialogue.clean("\"Cold one tonight, eh.\"\nSecond line"))
+	if AiDialogue.clean("*waves*") != "" or AiDialogue.clean("") != "":
+		_fail("stage directions and empty replies are dropped")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(WorldSettings.path))
 
 
 var _r := RandomNumberGenerator.new()
