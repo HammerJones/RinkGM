@@ -286,6 +286,14 @@ strength)` (`gasp`, `clap`, `zamboni`), `person_arrived(person, how)`
 `send_group_home(group)`, `fell(person_id)`, `goal(scorer)`. A claimed
 agent's brain stops deciding until it's released.
 
+**Sharing the ice**: set `RinkPeople.ice_controller` to the system drawing
+the ice (OnIceSession). While it's set, players walk to the dressing room
+(or the skate rental) and hand off there, `ice_controller.take(person)`
+when it has that method, and aren't drawn; spectators keep watching and
+face the ice. Clearing it gives the players back. The venue walk creates
+`OnIceSession.for_sim(sim, venue, {came})` when a session goes on (if the
+events code is in the build) and frees it after.
+
 **Performance**: brains think in slices (near every 0.25 s, far every
 1.2 s), paths are searched in batches on worker threads, only moving or
 changed agents rewrite their MultiMesh slots, far agents every third

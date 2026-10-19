@@ -43,6 +43,7 @@ func _run() -> void:
 	var cast := Cast.load_region(1)
 	await _check_booked_event(cast)
 	await _check_tutorial(cast)
+	await _check_ice_controller(cast)
 	await _check_benchmark(cast)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(WorldSettings.path))
 	if failures:
@@ -205,6 +206,44 @@ func _check_tutorial(cast: Cast) -> void:
 
 
 ## 400 people moving, thinking and talking: the update stays in budget.
+## Stands in for OnIceSession: records who it was handed.
+class FakeIce:
+	extends Node
+	var taken: Array = []
+	func take(p: Person) -> void:
+		taken.append(p.id)
+
+
+## While another system draws the ice, players hand off to it in the
+## dressing room and RinkPeople draws nobody on the ice; spectators stay.
+func _check_ice_controller(cast: Cast) -> void:
+	var w := StoryWorld.create(cast)
+	w.event_now = "minor_hockey"
+	var people := RinkPeople.new()
+	venue.add_child(people)
+	var ev := {"kind": "minor_hockey", "weekday": 6, "hour": 9.0, "hours": 1.5, "ice_rep": 60.0}
+	people.setup(venue, w, ev)
+	var fake := FakeIce.new()
+	venue.add_child(fake)
+	people.ice_controller = fake
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 21
+	people.populate(Attendance.who_comes(cast, ev, rng), true)
+	people.set_phase("on")
+	await _frames(30)
+	var players := people.agents.filter(func(a): return a.brain.as_ == "play")
+	var watchers := people.agents.filter(func(a): return a.brain.as_ == "watch" and a.brain.arrived)
+	_expect(not players.is_empty() and fake.taken.size() == players.size(), "players hand off to the ice controller (%d of %d)" % [fake.taken.size(), players.size()])
+	_expect(people.on_ice().is_empty(), "nobody of RinkPeople's own is drawn on the ice while it's taken (%d)" % people.on_ice().size())
+	_expect(watchers.size() > 10, "spectators keep watching (%d)" % watchers.size())
+	people.ice_controller = null
+	await _frames(240)
+	_expect(players.all(func(a): return not a.handed), "cleared: players are RinkPeople's again")
+	fake.queue_free()
+	people.queue_free()
+	await _frames(2)
+
+
 func _check_benchmark(cast: Cast) -> void:
 	var w := StoryWorld.create(cast)
 	w.event_now = "public_skate"

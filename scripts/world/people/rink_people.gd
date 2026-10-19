@@ -93,6 +93,19 @@ var sim_rate := 1.0
 var stats := {"thinks": 0, "paths": 0, "writes": 0, "frame_us": 0}
 ## Time each part of the update into stats.sections (benchmarks).
 var profile := false
+## Another system drawing the ice (OnIceSession, scripts/world/events/):
+## while one is set, players walk to the dressing room and hand off to it
+## (`take(person)` when it has one) instead of skating here, and come back
+## when it's cleared; spectators carry on watching.
+var ice_controller: Object = null:
+	set(c):
+		ice_controller = c
+		if c == null:
+			_take_back_all()
+		else:
+			for a: Agent in agents:
+				if a.brain.place == "ice" and a.delay <= 0.0 and not a.exiting and not a.owner_ref:
+					_request_path(a)
 ## Search paths on worker threads (off: on the main thread, PATHS_PER_FRAME at most).
 var threads := true
 var _tick_us := 0
@@ -161,6 +174,7 @@ class Agent:
 	var far := false
 	var door_t := 0.0
 	var shape_t := 0.0
+	var handed := false       # skating in the ice controller's hands, not drawn here
 	var rate_speed := -1.0
 	var walk_rate := 0.0
 	var skate_rate := 0.0
@@ -293,6 +307,10 @@ func populate(came: Array, in_place := false, session := "", kind := "", start_i
 				a.brain.activity = "skate"
 				a.brain.place = "ice"
 			a.pos = _target(a)
+			if a.brain.place == "ice" and ice_taken():
+				var room := map.point(a.brain.place_to_change(), a.spot)
+				a.pos = room if room != Vector3.INF else a.pos
+				_hand_off(a)
 			a.brain.arrive()
 		added.append(a)
 		a.yaw = rng.randf() * TAU
@@ -526,7 +544,40 @@ func set_pose(a: Agent, pose: int) -> void:
 ## controller to take over.
 func on_ice(session := "") -> Array:
 	return agents.filter(func(a): return a.delay <= 0.0 and (session == "" or a.session == session) \
-		and a.brain.as_ == "play" and PlaceMap.on_ice(a.pos))
+		and a.brain.as_ == "play" and PlaceMap.on_ice(a.pos) and not a.handed)
+
+
+## True while an external controller has the ice.
+func ice_taken() -> bool:
+	return ice_controller != null and is_instance_valid(ice_controller)
+
+
+## `a` reached the dressing room on the way to the ice: the controller has
+## them now; they wait here, unseen, until it lets them go.
+func _hand_off(a: Agent) -> void:
+	a.handed = true
+	a.dirty = true
+	a.path = PackedVector3Array()
+	if a.shape:
+		a.shape.position = a.pos + Vector3(0, -5.0, 0)
+	if ice_controller.has_method("take"):
+		ice_controller.take(a.person)
+
+
+func _take_back(a: Agent) -> void:
+	if not a.handed:
+		return
+	a.handed = false
+	a.dirty = true
+	if a.shape:
+		a.shape.position = a.pos + Vector3(0, 0.85, 0)
+
+
+func _take_back_all() -> void:
+	for a: Agent in agents:
+		if a.handed:
+			_take_back(a)
+			_request_path(a)
 
 
 # ------------------------------------------------------------------- update
@@ -636,7 +687,7 @@ func _think_slice(dt: float, base_ctx: Dictionary) -> void:
 		var ctx := base_ctx.duplicate()
 		ctx.phase = phase_of(a)
 		var target: Agent = _by_id.get(a.brain.watch_for) if a.brain.watch_for != "" else null
-		var target_on_ice := target != null and target.delay <= 0.0 and PlaceMap.on_ice(target.pos)
+		var target_on_ice := target != null and target.delay <= 0.0 and (target.handed or PlaceMap.on_ice(target.pos))
 		if a != _talking and a.brain.think(elapsed * time_scale, ctx):
 			_request_path(a)
 		if a.brain.fidget(elapsed, target_on_ice):
@@ -655,7 +706,9 @@ func _think_slice(dt: float, base_ctx: Dictionary) -> void:
 ## seat's arc), or the resurfacer when it's out.
 func _face_target(a: Agent, target: Agent) -> void:
 	var look := Vector3.INF
-	if target and target.delay <= 0.0 and target.pos.distance_to(a.pos) < 70.0:
+	if target and target.handed:
+		look = Vector3.ZERO  # out there somewhere: the ice
+	elif target and target.delay <= 0.0 and target.pos.distance_to(a.pos) < 70.0:
 		look = target.pos
 	elif str(a.reason.get("why", "")) == "zamboni" and poi.has("doris"):
 		look = poi.doris
@@ -776,6 +829,17 @@ func _route(a: Agent) -> Dictionary:
 		a.path = PackedVector3Array()
 		a.brain.arrive()
 		return {}
+	if a.brain.place == "ice" and not a.exiting and ice_taken():
+		if a.handed:
+			return {}
+		var room := map.point(a.brain.place_to_change(), a.spot)
+		if room == Vector3.INF or a.pos.distance_to(room) < 1.0 or PlaceMap.on_ice(a.pos):
+			# already skating when the controller took over: it has them now
+			if room != Vector3.INF:
+				a.pos = room
+			_hand_off(a)
+			return {}
+		return _stand_legs({"nav": true, "from": a.pos, "to": room, "pre": PackedVector3Array(), "post": PackedVector3Array()})
 	if a.brain.place == "ice" and not a.exiting:
 		if PlaceMap.on_ice(a.pos):
 			return {"nav": false, "pre": PackedVector3Array([a.pos, to]), "post": PackedVector3Array()}
@@ -818,6 +882,8 @@ static func _stand_foot(p: Vector3) -> Vector3:
 
 
 func _apply_route(a: Agent, r: Dictionary, mid: PackedVector3Array) -> void:
+	if a.handed:
+		_take_back(a)
 	var path: PackedVector3Array = r.pre.duplicate()
 	path.append_array(mid)
 	path.append_array(r.post)
@@ -912,6 +978,10 @@ func _arrived(a: Agent) -> void:
 	a.path = PackedVector3Array()
 	if a.owner_ref:
 		agent_arrived.emit(a)
+		return
+	if a.brain.place == "ice" and ice_taken() and not a.handed and not a.exiting:
+		_hand_off(a)
+		a.brain.arrive()
 		return
 	if a.brain.place == "stands" and a.seat >= 0:
 		var f: Vector3 = map.seats[a.seat][1]
@@ -1236,7 +1306,7 @@ func _draw() -> void:
 				NpcBrain.Pose.STRETCH, NpcBrain.Pose.SIT_CLAP, NpcBrain.Pose.SIT_CHEER, NpcBrain.Pose.CHEER]:
 			pose = (NpcBrain.Pose.SKATE if a.speed >= SKATE else NpcBrain.Pose.SKATE_WOBBLY) if PlaceMap.on_ice(a.pos) else NpcBrain.Pose.WALK
 		var xf := Transform3D(Basis(Vector3.UP, a.yaw), a.pos)
-		if a.delay > 0.0:
+		if a.delay > 0.0 or a.handed:
 			xf = _HIDDEN
 		var data := PeopleArt.with_pose(a.base, pose, a.phase, moving, a.speed if moving else 0.0)
 		for k in a.keys.size():

@@ -41,6 +41,10 @@ var _hungry := 0.0
 var _frames: PackedFloat32Array = PackedFloat32Array()  # wall-clock frame times, ms
 var _last_us := 0
 var _layer: CanvasLayer
+## The on-ice controller for the session that's on (OnIceSession, when the
+## events code is in the build); RinkPeople hands its players to it.
+var on_ice: Node
+const ON_ICE_SCRIPT := "res://scripts/world/events/on_ice_session.gd"
 
 
 ## Adds the walk's people. `walk_` is the venue walk (it has venue, walker,
@@ -172,8 +176,35 @@ func _on_life(what: String, d: Dictionary) -> void:
 	match str(d.get("phase", "")):
 		"on":
 			_sound("set_event", str(d.get("kind", "")))
+			_start_on_ice(str(d.get("key", "")))
 		"after":
 			_sound("set_event", "")
+			_stop_on_ice()
+
+
+## The session's skaters go to the on-ice controller (when the build has
+## one): it draws the ice, RinkPeople keeps the stands and the halls.
+func _start_on_ice(key: String) -> void:
+	if on_ice or life == null or not ResourceLoader.exists(ON_ICE_SCRIPT):
+		return
+	var cls: Script = load(ON_ICE_SCRIPT)
+	if cls == null or not cls.get_script_method_list().any(func(m): return m.name == "for_sim"):
+		return
+	var came: Array = life.sessions.get(key, {}).get("came", [])
+	var s = cls.for_sim(life.sim, venue, {"world": world, "came": came.filter(func(e): return e.as == "play")})
+	if s == null:
+		return
+	on_ice = s
+	venue.add_child(on_ice)
+	people.ice_controller = on_ice
+
+
+func _stop_on_ice() -> void:
+	if on_ice == null:
+		return
+	people.ice_controller = null
+	on_ice.queue_free()
+	on_ice = null
 
 
 ## Staff on shift for a demo event: the canteen, the pro shop, the office.
