@@ -18,7 +18,11 @@ extends Node3D
 ##           ice_grid, pnl), opened by UI's screens.
 ##   SWITCH  {"system": "arena_lights"} a building system the walker turns
 ##           on or off.
-##   USE     anything else, handled by id.
+##   USE     {"carry": "large"|"mini"} net storage, {"train": machine} a
+##           weight machine (Training.MACHINES), {"pickup": "basketball",
+##           "hoops"} the gym's ball cart (PickupGame), {"scorekeep": true}
+##           the game sheet (ScorekeepingView), all the owner's kit
+##           (KitHud); anything else, handled by id.
 
 enum Kind { READ, JOB, SCREEN, SWITCH, USE }
 
@@ -45,6 +49,7 @@ static func make(kind_: int, id_: String, label_: String, data_ := {}, reach_ :=
 	return s
 
 
-## The prompt line: "[E] READ  ENVELOPE UNDER THE MAT".
+## The prompt line: "[E] READ  ENVELOPE UNDER THE MAT". `data.verb`
+## overrides the kind's verb ("TRAIN", "TAKE").
 func prompt() -> String:
-	return "%s  %s" % [KIND_VERBS[kind], label.to_upper()]
+	return "%s  %s" % [str(data.get("verb", KIND_VERBS[kind])), label.to_upper()]

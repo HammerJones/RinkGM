@@ -69,3 +69,11 @@ func furnish(k: VenueKit) -> void:
 		k.block(Vector3(x1 - 2.2, 0, z1 - 2.3), Vector3(x1 - 1.0, 0.45, z1 - 1.6), vinyl, 0.3, 0.05)
 	wall_sign(k, [["// WEIGHT ROOM", VenueSign.AMBER], ["RE-RACK YOUR WEIGHTS", VenueSign.WHITE, true], ["NO CHALK", VenueSign.WHITE, true]], 20, 3, 0.022, Vector3(x1 - 0.15, 2.6, -52.5), Vector3(-1, 0, 0), "WeightRules")
 	k.prop("trash_can", Vector3(x1 - 0.4, 0, z1 - 0.5), PI)
+	# 15-minute sets on each kind of machine (Training, the owner's kit)
+	var train := [["squat_rack", Vector3(x0 + 2.6, 1.0, -57.0), "Squat rack"], ["bench", Vector3(10.75, 0.6, -53.3), "Flat bench"],
+		["dumbbells", Vector3(x1 - 0.55, 1.0, -52.5), "Dumbbells"], ["treadmill", Vector3(x0 + 4.5, 1.0, z0 + 1.5), "Treadmill"],
+		["bike", Vector3(x0 + 6.2, 0.9, z0 + 1.4), "Exercise bike"]]
+	if k.age == Age.WORN:
+		train.append(["universal", Vector3(x1 - 1.6, 1.0, z1 - 2.0), "Universal machine"])
+	for t in train:
+		add_spot(k, VenueSpot.Kind.USE, "train_" + t[0], t[1], t[2], {"train": t[0], "verb": "15 MIN ON THE"}, 1.5)

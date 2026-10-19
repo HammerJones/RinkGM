@@ -109,16 +109,19 @@ static func slot_class(weekday: int, hour: float) -> String:
 	return "dead"
 
 
-## Bookings on a weekday: [{"org", "name", "use", "start", "hours"}].
+## Bookings on this week's `weekday` as the schedule has them (the contracts'
+## slots with the owner's sales, moves and cancellations):
+## [{"org", "name", "use", "start", "hours"}].
 static func bookings(sim: RinkSim, weekday: int) -> Array:
 	var out: Array = []
-	for id in sim.contracts:
-		var o := RinkContracts.org(id)
-		for s in o.slots:
-			if int(s[0]) == weekday:
-				out.append({"org": id, "name": o.name, "use": o.use, "start": float(s[1]), "hours": float(s[2])})
-	out.sort_custom(func(a, b): return a.start < b.start)
+	for b in sim.sessions(week_day(sim, weekday)):
+		out.append({"org": b.org, "name": RinkSchedule._name(b), "use": b.use, "start": float(b.start), "hours": float(b.hours)})
 	return out
+
+
+## The sim day of `weekday` in the week the grid shows (Monday to Sunday).
+static func week_day(sim: RinkSim, weekday: int) -> int:
+	return sim.day - posmod(sim.weekday() - 1, 7) + posmod(weekday - 1, 7)
 
 
 ## Slots organisations would bid for on a weekday, where the ice is free:

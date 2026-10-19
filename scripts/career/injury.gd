@@ -30,6 +30,10 @@ var severity := Severity.MINOR
 var games_out := 0
 var games_total := 0
 var permanent := {}  # skill -> loss applied when the injury happened
+## Day-counted injuries (a slip on the ice in shoes): out for `days_out`
+## more days, whatever the game schedule.
+var days_out := 0
+var days_total := 0
 
 
 func describe() -> String:
@@ -41,7 +45,7 @@ func is_healed() -> bool:
 
 
 func can_play() -> bool:
-	return games_out <= 0
+	return games_out <= 0 and days_out <= 0
 
 
 ## Temporary skill modifiers for the current point in recovery.
@@ -57,6 +61,8 @@ func modifiers() -> Dictionary:
 
 ## Day-to-day injuries still bite for a couple of games after the player is back.
 func _penalty_scale() -> float:
+	if days_total > 0:
+		return clampf(float(days_out) / float(days_total), 0.0, 1.0)
 	var tail := 2
 	var total := games_total + tail
 	var left := games_out + tail
@@ -68,6 +74,12 @@ func tick_game() -> void:
 	games_out -= 1
 	if games_out < -2:
 		games_out = -2
+
+
+## One day passed: day-counted injuries heal by the day.
+func tick_day() -> void:
+	if days_out > 0:
+		days_out -= 1
 
 
 # ------------------------------------------------------------ the model
@@ -120,8 +132,20 @@ static func create(rng: RandomNumberGenerator, impact: float) -> Injury:
 	return inj
 
 
+## A slip on the ice in shoes (IceBalance): a minor knock that keeps the
+## owner sore for a day or two.
+static func slip(rng: RandomNumberGenerator) -> Injury:
+	var inj := Injury.new()
+	inj.severity = Severity.MINOR
+	inj.part = ["back", "wrist", "knee"][rng.randi() % 3]
+	inj.days_out = rng.randi_range(1, 2)
+	inj.days_total = inj.days_out
+	return inj
+
+
 func to_dict() -> Dictionary:
-	return {"part": part, "severity": severity, "games_out": games_out, "games_total": games_total, "permanent": permanent}
+	return {"part": part, "severity": severity, "games_out": games_out, "games_total": games_total, "permanent": permanent,
+		"days_out": days_out, "days_total": days_total}
 
 
 static func from_dict(d: Dictionary) -> Injury:
@@ -131,4 +155,6 @@ static func from_dict(d: Dictionary) -> Injury:
 	inj.games_out = int(d.games_out)
 	inj.games_total = int(d.games_total)
 	inj.permanent = d.get("permanent", {})
+	inj.days_out = int(d.get("days_out", 0))
+	inj.days_total = int(d.get("days_total", 0))
 	return inj

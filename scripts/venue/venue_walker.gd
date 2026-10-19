@@ -31,6 +31,8 @@ const AIR_ACCEL := 3.0
 
 var wish := Vector3.ZERO
 var running := false
+## Multiplies every pace: 0.5 on the ice in shoes (IceBalance), 0 while down.
+var speed_scale := 1.0
 ## Held to crouch; the walker stays down while there is no room to stand.
 var crouch := false
 var crouched := false
@@ -78,7 +80,7 @@ func _physics_process(dt: float) -> void:
 	if is_on_floor() or not sprinting:
 		_sprint = move_toward(_sprint, 1.0 if sprinting else 0.0, dt / SPRINT_RAMP)
 	var speed := CROUCH_SPEED if crouched else lerpf(WALK, RUN, _sprint)
-	var target := flat * speed
+	var target := flat * speed * speed_scale
 	if is_on_floor():
 		velocity.x = target.x
 		velocity.z = target.z
@@ -172,11 +174,11 @@ func _step_up(motion: Vector3) -> void:
 ## The nearest door within reach, or null.
 ## The spot the walker is looking at: within its reach, in front of the head
 ## (within about 50 degrees of `forward`), the closest to the line of sight.
-func nearest_spot(venue: Venue, forward: Vector3) -> VenueSpot:
+func nearest_spot(venue: Venue, forward: Vector3, extra: Array[VenueSpot] = []) -> VenueSpot:
 	var eye := head.global_position if head else global_position + Vector3(0, 1.6, 0)
 	var best: VenueSpot = null
 	var best_score := INF
-	for s in venue.all_spots():
+	for s in venue.all_spots() + extra:
 		if not s.is_inside_tree():
 			continue
 		var to := s.global_position - eye

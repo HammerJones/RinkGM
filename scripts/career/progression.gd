@@ -43,6 +43,7 @@ static func game_xp(p: PlayerProfile, line: Dictionary, game_len: float) -> Dict
 		xp[k] = ice * 0.5 + shots * 0.8 + line.get("g", 0) * 2.0
 	xp["pass_quality"] += line.get("a", 0) * 2.5
 	xp["stick_handling"] += (line.get("g", 0) + line.get("a", 0)) * 1.0
+	xp["stamina"] = ice * 1.0
 	return xp
 
 
@@ -106,7 +107,7 @@ static func age_one_year(p: PlayerProfile, rng: RandomNumberGenerator) -> Dictio
 
 ## Fatigue: playing raises it, rest days lower it.
 static func add_game_fatigue(p: PlayerProfile, toi_frac: float) -> void:
-	p.fatigue = clampf(p.fatigue + 0.25 * toi_frac, 0.0, 1.0)
+	p.fatigue = clampf(p.fatigue + 0.25 * toi_frac * p.skills.tire_rate(), 0.0, 1.0)
 
 
 static func rest(p: PlayerProfile, days: int) -> void:

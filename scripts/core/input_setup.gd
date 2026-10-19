@@ -81,6 +81,14 @@ func _ready() -> void:
 	_keys("drive_water", [KEY_F])
 	_button("drive_water", JOY_BUTTON_RIGHT_SHOULDER)
 
+	# the owner's kit on foot (KitHud): the watch, the bag, turning what's in hand
+	_keys("watch", [KEY_Q])
+	_button("watch", JOY_BUTTON_LEFT_SHOULDER)
+	_keys("inventory", [KEY_TAB])
+	_button("inventory", JOY_BUTTON_BACK)
+	_keys("rotate_item", [KEY_R])
+	_button("rotate_item", JOY_BUTTON_RIGHT_SHOULDER)
+
 	# developer overlay: ` (tilde key) or D-pad down (InputMap has no chords)
 	_keys("dev_menu", [KEY_QUOTELEFT])
 	_button("dev_menu", JOY_BUTTON_DPAD_DOWN)
