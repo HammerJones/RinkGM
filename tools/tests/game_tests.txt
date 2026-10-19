@@ -4,6 +4,7 @@ sticks
 pausemenu
 practice
 nets
+positions
 lines
 shootout
 notes

@@ -15,6 +15,7 @@ static func think(s: Skater, g: Node, dt: float) -> void:
 	var was_moving := c.move
 	var was_blade: Variant = c.blade_target
 	c.reset()
+	s.ai_on_puck = false
 	var ai: TierAI = g.ai_for(s.team)
 	if s.stick_broken:
 		s.ai_shoot_timer = 0.0
@@ -41,6 +42,7 @@ static func think(s: Skater, g: Node, dt: float) -> void:
 		c.move = was_moving
 		c.blade_target = was_blade
 		return
+	_read_phase(s, g, ai, owner, dt)
 	if owner == s and g.shootout:
 		_shootout_carry(s, g, ai, dt)
 	elif owner == s:
@@ -161,6 +163,9 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 	var c := s.ctrl
 	var att: int = g.attack_side(s.team)
 	var me := _v2(s.position)
+	if TeamSystem.is_d(TeamSystem.role_of(s, g)) and me.x * att > Rink.BLUE_X and randf() < ai.discipline * 4.0:
+		_point_carry(s, g, ai, dt)
+		return
 	var goal := Vector2(att * Rink.GOAL_X, 0)
 	var ahead := (goal.x - me.x) * att
 	var d := me.distance_to(goal)
@@ -210,6 +215,50 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 		target += (me - _v2(opp.position)).normalized() * 3.0
 	_seek(s, ai, target, 1.0, 20.0)
 	c.blade_target = _carry_blade(s, g, ai)
+
+
+## A D with the puck on the point: walks the line rather than going to the
+## net, moves it D-to-D or down low, and shoots low for a tip when the lane
+## is open. The side's discipline decides how often a D stays home like
+## this rather than carrying it in.
+static func _point_carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
+	var c := s.ctrl
+	var att: int = g.attack_side(s.team)
+	var me := _v2(s.position)
+	var f := TeamSystem.to_frame(g, s.team, me)
+	var goal := Vector2(att * Rink.GOAL_X, 0)
+	var pressure: float = g.nearest_opponent_distance_to(s.team, me)
+	# walk the line toward the middle, staying inside the blue line
+	var walk := TeamSystem.to_world(g, s.team, Vector2(Rink.BLUE_X + 1.6, f.y * 0.6))
+	_seek(s, ai, walk, 1.5, 30.0, 0.6)
+	c.blade_target = _carry_blade(s, g, ai)
+	s.ai_decide -= dt
+	if s.ai_decide > 0.0 and pressure > 2.5:
+		return
+	s.ai_decide = randf_range(ai.decide_min, ai.decide_max)
+	var partner: Skater = null
+	for m: Skater in g.teammates(s):
+		if TeamSystem.is_d(TeamSystem.role_of(m, g)):
+			partner = m
+	var aim := Vector3(goal.x, 0, randf_range(-0.6, 0.6))
+	var lane_open: bool = g.lane_clear(s.team, me, Vector2(aim.x, aim.z), 1.0)
+	var roll := randf()
+	if lane_open and roll < 0.35:
+		# low and hard for a tip or a rebound
+		s.ai_aim = aim
+		s.ai_slap = randf() < 0.4
+		s.ai_tilt = 0.0
+		s.ai_shoot_timer = 0.6 if s.ai_slap else randf_range(0.05, 0.25)
+		c.shoot = true
+		c.lift = s.ai_slap
+		c.aim_point = s.ai_aim
+		return
+	var mate: Skater = g.best_pass_option(s, ai.vision)
+	if partner and (roll < 0.65 or mate == null) and g.lane_clear(s.team, me, _v2(partner.position), 0.8):
+		mate = partner  # D-to-D to move the goalie and the box
+	if mate:
+		c.pass_pressed = true
+		c.pass_hint = mate
 
 
 const SETTLED_TURN := 6.0  # m/s^2 of turn load a shootout shooter waits to drop under
@@ -298,27 +347,52 @@ static func _aim_side(s: Skater, g: Node, ai: TierAI, att: int) -> float:
 	return coin
 
 
+## The phase of play as this skater sees it: who has the puck (their
+## believed owner; a loose puck still belongs to whoever last had it under
+## control, so a deflection or a scramble doesn't flip the whole system) and
+## where it is. A change sinks in after the tier's anticipation: a beer
+## leaguer is still standing on the point a second after the puck went the
+## other way.
+static func _read_phase(s: Skater, g: Node, ai: TierAI, owner: Skater, dt: float) -> void:
+	var holder := -1
+	if owner != null:
+		holder = owner.team
+	elif s.ai_phase >= 0:
+		holder = s.team if TeamSystem.ours(s.ai_phase) else 1 - s.team
+	var u := TeamSystem.to_frame(g, s.team, _v2(g.puck.position)).x
+	var ph := TeamSystem.phase(s.team, holder, u)
+	if s.ai_phase < 0:
+		s.ai_phase = ph
+	elif ph != s.ai_phase:
+		if s.ai_phase_lag < 0.0:
+			s.ai_phase_lag = lerpf(1.0, 0.1, ai.anticipation)
+		s.ai_phase_lag -= dt
+		if s.ai_phase_lag <= 0.0:
+			s.ai_phase = ph
+			s.ai_phase_lag = -1.0
+	else:
+		s.ai_phase_lag = -1.0
+
+
+## Where this skater's position puts them in the phase they've read, and how
+## tightly they keep to it: a structured side holds its spots (and rotates
+## to cover a teammate), a beer league drifts toward the puck and wanders.
+static func _role_spot(s: Skater, g: Node, ai: TierAI, carrier: Skater) -> Vector2:
+	var p := TeamSystem.focus(g, s.team)
+	var spots := TeamSystem.assignments(g, s.team, s.ai_phase, p, carrier, ai.discipline)
+	var spot: Vector2 = spots.get(s, _v2(s.position))
+	# squared, so a structured side barely strays while a beer league drifts
+	var loose := (1.0 - ai.discipline) * (1.0 - ai.discipline)
+	var wander := Vector2(sin(g.time * 0.43 + s.number * 1.7), cos(g.time * 0.37 + s.number * 2.3)) * 4.0 * loose
+	var puck := _v2(g.puck.position)
+	spot = (spot + wander).lerp(puck, loose * 0.8)
+	spot.x = clampf(spot.x, -Rink.GOAL_X - 1.0, Rink.GOAL_X + 1.0)
+	spot.y = clampf(spot.y, -Rink.HALF_W + 1.2, Rink.HALF_W - 1.2)
+	return spot
+
+
 static func _support(s: Skater, g: Node, ai: TierAI, owner: Skater) -> void:
-	var att: int = g.attack_side(s.team)
-	var o := _v2(owner.position)
-	var others: Array = g.teammates(owner)
-	var idx := others.find(s)
-	var side := signf(o.y if absf(o.y) > 0.5 else 1.0)
-	# up to four support spots (5-on-5): wide lane, trailer, net front, high point
-	var slots := [
-		Vector2(o.x + att * 5.0, -side * 6.5),
-		Vector2(o.x - att * 6.0, o.y * 0.3),
-		Vector2(o.x + att * 3.5, side * 2.5),
-		Vector2(o.x - att * 11.0, -side * 4.5),
-	]
-	var slot: Vector2 = slots[maxi(idx, 0) % slots.size()]
-	# without structure, support drifts in toward the puck and bunches up
-	var drift := (1.0 - ai.discipline) * 0.65
-	var crowd := o + Vector2(att * 1.5, sin(g.time * 0.7 + s.number * 2.1) * 2.5)
-	slot = slot.lerp(crowd, drift)
-	slot.x = clampf(slot.x, -Rink.GOAL_X + 3.0, Rink.GOAL_X - 3.0)
-	slot.y = clampf(slot.y, -Rink.HALF_W + 2.0, Rink.HALF_W - 2.0)
-	_seek(s, ai, slot, 2.0, 12.0)
+	_seek(s, ai, _role_spot(s, g, ai, owner), 2.0, 12.0)
 	s.ctrl.blade_target = s.position + (owner.position - s.position).normalized() * 1.0
 
 
@@ -327,7 +401,11 @@ static func _defend(s: Skater, g: Node, ai: TierAI, owner: Skater, dt: float) ->
 	var my_goal := Vector2(-g.attack_side(s.team) * Rink.GOAL_X, 0)
 	var me := _v2(s.position)
 	var o := _v2(owner.position)
-	if _rank_to(s, g, o) < _chasers(ai):
+	var p := TeamSystem.to_frame(g, s.team, o)
+	# F1 goes at the carrier; a less disciplined side sends more after it
+	var f1 := TeamSystem.presser(g, s.team, s.ai_phase, p)
+	s.ai_on_puck = s == f1
+	if s == f1 or _rank_to(s, g, o) < _chasers(ai) - 1:
 		var dist := me.distance_to(o)
 		# a structured presser keeps a gap goal-side until close; a scrambler
 		# just goes for the puck
@@ -340,32 +418,23 @@ static func _defend(s: Skater, g: Node, ai: TierAI, owner: Skater, dt: float) ->
 		elif dist < 1.6 and s.lift_cd <= 0.0 and randf() < dt * lerpf(0.4, 1.7, ai.aggression):
 			c.lift = true
 		return
-	# mark an opponent who isn't carrying, staying goal-side; without
-	# discipline the mark is loose, the backcheck lazy and eyes on the puck
-	var opps: Array = g.team_skaters(1 - s.team).filter(func(x): return x != owner)
-	var mine: Array = g.team_skaters(s.team).filter(func(x): return _rank_to(x, g, o) >= _chasers(ai))
-	if opps.is_empty():
-		return
-	var structured := ai.discipline > 0.35
-	if structured:
-		# a system: the deepest defenders take the most dangerous opponents,
-		# and with the puck in our end the deepest one holds the slot
-		var by_depth := func(a, b): return _v2(a.position).distance_squared_to(my_goal) < _v2(b.position).distance_squared_to(my_goal)
-		opps.sort_custom(by_depth)
-		mine.sort_custom(by_depth)
-		if o.distance_to(my_goal) < 18.0 and mine.size() > 0:
-			if mine[0] == s:
-				var slot := my_goal + (o - my_goal).normalized() * 3.0
-				_seek(s, ai, slot, 1.2, 10.0)
-				c.blade_target = g.puck.position
-				return
-			mine.pop_front()
-	var mark: Skater = opps[maxi(mine.find(s), 0) % opps.size()]
-	var m := _v2(mark.position)
-	var spot := m + (my_goal - m).normalized() * lerpf(0.8, 2.0, ai.discipline)
-	spot = spot.lerp(o, (1.0 - ai.discipline) * 0.45)
+	# everyone else to their spot in the system, taking the man who comes
+	# into their area and staying goal-side of him
+	var spot := _role_spot(s, g, ai, owner)
+	var mark: Skater = null
+	var near := lerpf(3.0, 6.0, ai.discipline)
+	for x: Skater in g.team_skaters(1 - s.team):
+		if x == owner:
+			continue
+		var d := _v2(x.position).distance_to(spot)
+		if d < near:
+			near = d
+			mark = x
+	if mark:
+		var m := _v2(mark.position)
+		spot = spot.lerp(m + (my_goal - m).normalized() * lerpf(0.8, 1.6, ai.discipline), 0.6)
 	_seek(s, ai, spot, 1.5, 10.0, lerpf(0.7, 1.0, ai.discipline))
-	c.blade_target = s.position + (mark.position - s.position).normalized()
+	c.blade_target = s.position + ((mark.position if mark else owner.position) - s.position).normalized()
 
 
 static func _loose(s: Skater, g: Node, ai: TierAI) -> void:
@@ -388,24 +457,56 @@ static func _loose(s: Skater, g: Node, ai: TierAI) -> void:
 			_seek(s, ai, q, 0.6, 6.0)
 			c.blade_target = Vector3(q.x, 0, q.y)
 			return
-	var rank := _rank_to(s, g, p)
-	var chasers := _chasers(ai)
-	if rank < chasers:
+	# the nearest player whose position lets them go gets it (D don't chase
+	# deep in the other team's end); a less disciplined side sends more
+	var chaser := _loose_chaser(g, s.team, p)
+	s.ai_on_puck = s == chaser
+	if s.ai_on_puck or _rank_to(s, g, p) < _chasers(ai) - 1:
 		_seek(s, ai, p + pv * lerpf(0.0, 0.45, ant), 0.6, 6.0)
 		c.blade_target = puck.position
 		return
-	var my_goal := Vector2(-g.attack_side(s.team) * Rink.GOAL_X, 0)
-	if rank == chasers and ai.discipline > 0.35:
-		# second man: close enough to win the puck if the chaser loses it,
-		# goal-side and off to one side
-		var back := (my_goal - p).normalized()
-		var sup := p + pv * lerpf(0.0, 0.45, ant) + back * 3.5 + Vector2(-back.y, back.x) * 2.0 * signf(_v2(s.position).y - p.y + 0.01)
-		_seek(s, ai, sup, 1.5, 10.0)
+	# a structured side sends the next forward in close behind the chaser, on
+	# the goal side, to win the battle or pick up what squirts out
+	if ai.discipline > 0.5 and s == _loose_support(g, s.team, p, chaser):
+		var my_goal := Vector2(-g.attack_side(s.team) * Rink.GOAL_X, 0)
+		_seek(s, ai, p + (my_goal - p).normalized() * 2.5, 1.0, 8.0)
 		c.blade_target = puck.position
 		return
-	var spot := p.lerp(my_goal, lerpf(0.15, 0.4, ai.discipline)) + Vector2(0, 5.0 if s.number % 2 == 0 else -5.0)
-	spot.y = clampf(spot.y, -Rink.HALF_W + 2.0, Rink.HALF_W - 2.0)
-	_seek(s, ai, spot, 2.0, 12.0)
+	_seek(s, ai, _role_spot(s, g, ai, null), 2.0, 12.0)
+	c.blade_target = puck.position
+
+
+## Who goes for a loose puck: the nearest skater, except that the D hold
+## the blue line when it's in the attacking end beyond the top of the circles.
+static func _loose_chaser(g: Node, team: int, p: Vector2) -> Skater:
+	var u := TeamSystem.to_frame(g, team, p).x
+	var best: Skater = null
+	var best_d := INF
+	for s: Skater in g.team_skaters(team):
+		if s.changing or s.stick_broken or s.stun_timer > 0.0:
+			continue
+		if u > Rink.BLUE_X + 5.0 and TeamSystem.is_d(TeamSystem.role_of(s, g)):
+			continue
+		var d := _v2(s.position).distance_to(p)
+		if d < best_d:
+			best_d = d
+			best = s
+	return best
+
+
+## The second forward on a loose puck: the nearest one after the chaser,
+## if they're close enough to get there while it matters.
+static func _loose_support(g: Node, team: int, p: Vector2, chaser: Skater) -> Skater:
+	var best: Skater = null
+	var best_d := 12.0
+	for s: Skater in g.team_skaters(team):
+		if s == chaser or s.changing or s.stick_broken or s.stun_timer > 0.0 or TeamSystem.is_d(TeamSystem.role_of(s, g)):
+			continue
+		var d := _v2(s.position).distance_to(p)
+		if d < best_d:
+			best_d = d
+			best = s
+	return best
 
 
 ## Where a carrier's blade goes: it keeps the puck on its face and works it
