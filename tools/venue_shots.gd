@@ -2,7 +2,7 @@ extends SceneTree
 ## Renders eye-level views of the venue for review, one PNG per view. Needs
 ## a renderer (run under xvfb; lavapipe is fine):
 ##   godot --path . --script res://tools/venue_shots.gd -- --out=dir [--age=worn|repaired|renovated] [--tier=N] [--wings]
-##     [--view=name:x,y,z,lookx,looky,lookz ...] [--first-hour [--lights]]
+##     [--view=name:x,y,z,lookx,looky,lookz ...] [--first-hour [--lights]] [--closed]
 ## With no --view it renders the stock tour of the recreation centre wing.
 ## --first-hour renders the M1 walk's spots at 05:00 (WalkStory): dark sky,
 ## ice lights off unless --lights.
@@ -52,6 +52,7 @@ func _initialize() -> void:
 	var wings := false
 	var first_hour := false
 	var lights := false
+	var closed := false
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			_out = a.trim_prefix("--out=")
@@ -65,6 +66,8 @@ func _initialize() -> void:
 			first_hour = true
 		elif a == "--lights":
 			lights = true
+		elif a == "--closed":
+			closed = true
 		elif a.begins_with("--view="):
 			var kv := a.trim_prefix("--view=").split(":")
 			_views[kv[0]] = Array(kv[1].split_floats(","))
@@ -73,11 +76,8 @@ func _initialize() -> void:
 		wings = true
 	_names = _views.keys()
 	DisplayServer.window_set_size(Vector2i(1280, 720))
-	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
+	var env := Look.make("arena")
 	env.background_color = Color("9fb4c8")
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	var we := WorldEnvironment.new()
 	we.environment = env
 	root.add_child(we)
@@ -101,8 +101,9 @@ func _initialize() -> void:
 				v.set_ice_lights(true)
 				v.rooms["lighting"]._set_power(1.0)
 	).call_deferred()
-	for d in v.all_doors():
-		d.open()
+	if not closed:
+		for d in v.all_doors():
+			d.open()
 	_cam = Camera3D.new()
 	_cam.fov = 70.0
 	_cam.near = 0.05

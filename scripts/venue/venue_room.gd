@@ -107,8 +107,10 @@ func room_light(kit: VenueKit, pos: Vector3, reach: float) -> void:
 	l.omni_attenuation = 1.2
 	l.light_energy = kit.by_age(0.55, 0.8, 1.0)
 	l.light_color = kit.by_age(Color("e6eed8"), Color("f6f3ea"), Color("fff4e2"))
-	l.shadow_enabled = false
-	l.light_specular = 0.2
+	Look.fixture(l)
+	# on HIGH the nearest room lights cast soft shadows (they fade out with
+	# distance, so only the room you're in pays for them)
+	l.shadow_enabled = Look.at_least(Look.Quality.HIGH)
 	kit.add(l)
 
 

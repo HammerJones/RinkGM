@@ -47,7 +47,7 @@ const ROOMS := {
 	"gym": ["Gymnasium", "gym", [-32.0, -60.0, 2.0, -44.0], 8.0, "all"],
 	"weight_room": ["Weight room", "weight_room", [2.0, -60.0, 16.0, -44.0], 3.6, "all"],
 	"community_room": ["Community hall", "community_room", [16.0, -60.0, 32.0, -44.0], 4.5, "all"],
-	"workshop": ["Workshop and loading", "workshop", [32.0, -60.0, 46.0, -44.0], 5.0, "all"],
+	"workshop": ["Workshop and receiving", "workshop", [32.0, -60.0, 46.0, -44.0], 5.0, "all"],
 }
 
 ## [label, x, z, wall direction ("x" = the wall runs along X), width, height,
@@ -85,7 +85,7 @@ const DOORS := [
 	# outside
 	["Hall exit", 46.0, -42.0, "z", 1.9, 2.3, VenueDoor.Kind.DOUBLE, "rec_hall"],
 	["Gym exit", -14.0, -60.0, "x", 1.9, 2.3, VenueDoor.Kind.DOUBLE, "gym"],
-	["Loading door", 46.0, -53.0, "z", 3.6, 3.4, VenueDoor.Kind.ROLLUP, "workshop"],
+	["Receiving door", 46.0, -53.0, "z", 3.6, 3.4, VenueDoor.Kind.ROLLUP, "workshop"],
 ]
 
 

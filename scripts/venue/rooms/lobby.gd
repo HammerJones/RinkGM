@@ -78,6 +78,7 @@ func build(k: VenueKit) -> void:
 	_ceiling_lights(k)
 	_signs(k)
 	_first_hour(k)
+	_corkboard(k)
 	room_light(k, Vector3(-41.5, H - 0.4, -6.0), 7.5)
 	room_light(k, Vector3(-41.5, H - 0.4, 6.0), 7.5)
 
@@ -112,10 +113,10 @@ func _ticket_booth(k: VenueKit) -> void:
 	k.aged_block(Vector3(X0, 0, -9.1), Vector3(bx + 0.1, 2.4, -8.9), wood, 0.4)
 	k.aged_block(Vector3(X0, 2.4, -12.6), Vector3(bx + 0.3, 2.6, -8.9), wood, 0.4)
 	k.block(Vector3(bx + 0.1, 1.05, -12.2), Vector3(bx + 0.4, 1.12, -9.3), wood.lightened(0.15), 0.4)
-	var s := VenueSign.make([["// TICKETS", VenueSign.CYAN], ["SKATE 4.00", VenueSign.CYAN, true]], 10, 2, 0.03)
-	s.name = "TicketSign"
-	s.dead = k.by_age(0.04, 0.0, 0.0)
-	k.sign(s, Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(bx + 0.32, 2.9, -10.75)))
+	# the public skate flyer taped inside the window, prices and all
+	var f := Readable.make("cork_public_skate")
+	f.transform = Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(bx + 0.032, 1.62, -10.2))
+	k.add(f)
 
 
 func _snack_bar(k: VenueKit) -> void:
@@ -129,13 +130,10 @@ func _snack_bar(k: VenueKit) -> void:
 	k.glass(Vector3(-39.75, 1.15, -13.25), Vector3(-39.05, 1.7, -13.22), false, Color(1.0, 0.92, 0.6, 0.35))
 	k.block(Vector3(-37.4, 0, -13.7), Vector3(-36.2, 1.9, -13.1), Color("d9d9d6"), 0.3, 0.03)
 	k.glow(Vector3(-37.3, 0.2, -13.09), Vector3(-36.3, 1.8, -13.08), k.by_age(Color("7a8a7a"), Color("cfe8ff"), Color("e8f6ff")))
-	var menu := VenueSign.make([
-		["// SNACK BAR", VenueSign.AMBER], ["----", VenueSign.DIM],
-		["HOT DOG   3.50", VenueSign.CYAN, true], ["POPCORN   2.00", VenueSign.CYAN, true], ["COFFEE    1.25", VenueSign.CYAN, true],
-	], 14, 5, 0.03)
-	menu.name = "SnackMenu"
-	menu.dead = k.by_age(0.05, 0.01, 0.0)
-	k.sign(menu, Transform3D(Basis.IDENTITY, Vector3(-39.0, 2.7, -13.68)))
+	# the felt letter menu board on the back wall (one price written over)
+	var menu := Readable.make("sign_snack_bar")
+	menu.transform = Transform3D(Basis.IDENTITY, Vector3(-39.0, 2.45, -13.7))
+	k.add(menu)
 
 
 func _trophies(k: VenueKit) -> void:
@@ -187,16 +185,7 @@ func _signs(k: VenueKit) -> void:
 	else:
 		# the old hand-painted board over the front doors (letters missing when worn)
 		k.prop("rink_sign", Vector3(-Venue.HALF_X - 0.12, 2.65, 0), PI * 0.5, false)
-	var over_ice := VenueSign.make([["// " + name, VenueSign.CYAN]], name.length() + 3, 1, 0.05)
-	over_ice.name = "MezzanineSign"
-	over_ice.dead = k.by_age(0.06, 0.01, 0.0)
-	k.sign(over_ice, Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(X1 + 0.02, H + 0.15, 0)))
-	var welcome := VenueSign.make([
-		["// WELCOME TO", VenueSign.WHITE], [name, VenueSign.CYAN], ["PUBLIC SKATE SAT 2PM", VenueSign.CYAN, true],
-	], maxi(20, name.length()), 3, 0.025)
-	welcome.name = "WelcomeBoard"
-	welcome.dead = k.by_age(0.04, 0.0, 0.0)
-	k.sign(welcome, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(X1 - 0.31, 3.55, 0)))
+	_rink_wall(k)
 
 
 ## RINK_SIM 1.6: the mat outside the front doors with Gus's envelope under
@@ -218,5 +207,76 @@ func _first_hour(k: VenueKit) -> void:
 		k.block(Vector3(px + 0.14, y, -2.25), Vector3(px + 0.17, y + 0.06, -2.1), Color("e0b020") if i == 2 else Color("1b1d22"), 0.1, 0.0, false)
 	add_spot(k, VenueSpot.Kind.SWITCH, "ice_lights", Vector3(px + 0.15, 1.45, -2.3), "Ice lighting panel",
 		{"system": "ice_lights", "note": "breaker_panel"}, 1.6)
-	k.block(Vector3(px, 1.3, 1.7), Vector3(px + 0.04, 1.75, 2.3), Color("8a6a2a"), 0.2, 0.03, false)
+	# the bronze plaque by the doors and the roof-repair strip screwed under it
+	var face_in := Basis(Vector3.UP, PI * 0.5)
+	var plaque := Readable.make("sign_plaque")
+	plaque.transform = Transform3D(face_in, Vector3(X0 + 0.005, 1.6, 2.0))
+	k.add(plaque)
+	var strip := Readable.make("sign_roof_strip")
+	strip.transform = Transform3D(face_in, Vector3(X0 + 0.005, 1.36, 2.0))
+	k.add(strip)
 	add_spot(k, VenueSpot.Kind.READ, "dedication_plaque", Vector3(px + 0.05, 1.5, 2.0), "Dedication plaque", {"readable": "dedication_plaque"}, 1.5)
+
+
+## The rink-side wall: skate guards notices over the rink doors, the public
+## skate letter board and the "don't lean on the glass" note.
+func _rink_wall(k: VenueKit) -> void:
+	var face := Basis(Vector3.UP, -PI * 0.5)  # looking into the lobby (-X)
+	var x := X1 - 0.305
+	for dz in [-8.5, 8.5]:
+		var g := Readable.make("sign_notice_guards")
+		g.transform = Transform3D(face, Vector3(x, 2.62, dz))
+		k.add(g)
+	var rules := Readable.make("sign_letter_board")
+	rules.transform = Transform3D(face, Vector3(x, 1.55, 6.3))
+	k.add(rules)
+	# taped to the inside of the viewing window
+	var glass := Readable.make("sign_glass_notice")
+	glass.transform = Transform3D(face * Basis(Vector3.BACK, 0.03), Vector3(X1 - 0.185, 1.55, 3.4))
+	k.add(glass)
+
+
+## Notices pinned to the cork board: [readable id, z offset, y offset, tilt]
+const CORK := [
+	["cork_public_skate", -0.5, 0.18, 0.02], ["cork_lost_cat", -0.18, 0.2, -0.04],
+	["cork_vmha", 0.14, 0.16, 0.015], ["cork_bonspiel", 0.47, 0.13, -0.03],
+	["cork_wrong_bag", -0.52, -0.22, 0.06], ["cork_manager", -0.24, -0.25, -0.05],
+	["cork_piano", 0.06, -0.22, 0.04], ["cork_for_sale", 0.3, -0.24, -0.08],
+	["cork_learn_skate", 0.52, -0.25, 0.03],
+]
+
+
+## The lobby's cork board between the north rink doors and the window:
+## real paper flyers, each on a push pin, all of them loose (take one down,
+## pin it somewhere else).
+func _corkboard(k: VenueKit) -> void:
+	var x := X1 - 0.3
+	var zc := -6.3
+	var yc := 1.55
+	var w := 1.15
+	var h := 0.8
+	var wood: Color = k.by_age(Color("6b4a2c"), Color("7a5634"), Color("3a3d44"))
+	k.block(Vector3(x - 0.035, yc - h * 0.5 - 0.04, zc - w * 0.5 - 0.04), Vector3(x, yc + h * 0.5 + 0.04, zc + w * 0.5 + 0.04), wood, 0.3, 0.02, false)
+	k.block(Vector3(x - 0.045, yc - h * 0.5, zc - w * 0.5), Vector3(x - 0.03, yc + h * 0.5, zc + w * 0.5), k.by_age(Color("9a7448"), Color("a87e4e"), Color("b08a5a")), 0.12, 0.05, false)
+	var face := Basis(Vector3.UP, -PI * 0.5)
+	var pin_cols := [Color("c8302c"), Color("2f62c0"), Color("e0c030"), Color("2e8a4a"), Color("f2f2f2")]
+	var i := 0
+	for c in CORK:
+		var r := Readable.make(c[0], true)
+		var pos := Vector3(x - 0.046, yc + c[2] * 0.82, zc + c[1] * 0.8)
+		r.transform = Transform3D(face * Basis(Vector3.BACK, c[3]), pos)
+		k.add(r)
+		var pin := MeshInstance3D.new()
+		var sm := SphereMesh.new()
+		sm.radius = 0.008
+		sm.height = 0.016
+		sm.radial_segments = 6
+		sm.rings = 3
+		var pm := StandardMaterial3D.new()
+		pm.albedo_color = pin_cols[i % pin_cols.size()]
+		pm.roughness = 0.35
+		sm.material = pm
+		pin.mesh = sm
+		pin.position = Vector3(0, r.size.y * 0.5 - 0.02, 0.008)
+		r.add_child(pin)
+		i += 1

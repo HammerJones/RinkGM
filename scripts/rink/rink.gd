@@ -111,8 +111,10 @@ func _build_ice() -> void:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_texture = tex
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	mat.roughness = 0.55
-	mat.metallic_specular = 0.35
+	# glossy, like fresh ice: it mirrors the lamps (screen-space reflections
+	# and the venue's reflection probe, see Look)
+	mat.roughness = 0.08
+	mat.metallic_specular = 0.6
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(LENGTH, WIDTH)
 	plane.material = mat
