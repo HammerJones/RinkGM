@@ -177,11 +177,10 @@ kinds:
   the ice lights on, and the metal halides take about 40 s to warm up.
 - **USE** covers anything else by id. The workshop's machines have USE stubs
   (`{"machine": id, "stub": true}`) for their mini games to come. The
-  weight room's machines are `TrainingSpot`s (`scripts/world/training_spot.gd`):
-  using one is a 15-minute set (`WalkStory` moves the clock, through the
-  career's `RinkLink` when there is one) and fires
-  `trained(skill_keys, minutes, intensity)` with canonical Skills keys; the
-  spots are in the group `training_spots`, and Mechanics hooks the signal. The snow pit is a JOB,
+  weight room's `train_*` spots (`{"train": machine}`) are one 15-minute set
+  each; the machine props stand where they are, listed in the room's
+  `MACHINES` with the spot id each one serves, and
+  `machine_spots(age)` gives where a player stands at each. The snow pit is a JOB,
   the sim's `dump_snow`, and the pile out back is Mount Doris.
 
 `WalkStory` decides what using a spot does and keeps the RinkSim clock

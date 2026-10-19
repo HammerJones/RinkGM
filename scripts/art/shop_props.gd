@@ -56,7 +56,7 @@ const IDS := [
 	# electrical room
 	"switchgear", "breaker_panel", "transformer", "meter_bank", "fire_panel", "fire_extinguisher", "step_ladder",
 	# weight room
-	"bench_press", "squat_rack", "leg_press", "cable_crossover", "lat_pulldown", "dumbbell_rack",
+	"bench_press", "squat_rack", "leg_press", "cable_crossover", "lat_pulldown", "dumbbell_rack", "universal_gym",
 	"plate_tree", "stationary_bike", "treadmill", "slide_board",
 	# equipment storage
 	"ball_bin", "pylon_stack", "mini_net", "spare_net", "puck_bucket", "goalie_pads", "broom_bin",
@@ -67,7 +67,7 @@ const IDS := [
 const MERGED := IDS
 
 ## Coarser collision for the big machines (Props._COLLISION_CELL).
-const COLLISION_CELL := {"knee_mill": 3, "lathe": 3, "switchgear": 3, "transformer": 3, "leg_press": 3, "cable_crossover": 3}
+const COLLISION_CELL := {"knee_mill": 3, "lathe": 3, "switchgear": 3, "transformer": 3, "leg_press": 3, "cable_crossover": 3, "universal_gym": 3}
 
 
 static func build(id: String, age: int) -> VoxelModel:
@@ -96,6 +96,7 @@ static func build(id: String, age: int) -> VoxelModel:
 		"cable_crossover": return _cable_crossover(age)
 		"lat_pulldown": return _lat_pulldown(age)
 		"dumbbell_rack": return _dumbbell_rack(age)
+		"universal_gym": return _universal_gym(age)
 		"plate_tree": return _plate_tree(age)
 		"stationary_bike": return _stationary_bike(age)
 		"treadmill": return _treadmill(age)
@@ -1029,6 +1030,70 @@ static func _lat_pulldown(age: int) -> VoxelModel:
 		m.box(5, 8, 7, 2, 1, 2, Wear.DUCT_TAPE)
 	return m.set_pivot(7, 0, 10)
 
+
+## The club's old universal machine, 2 m wide: a centre tower with two
+## weight stacks on their guide rods, a lat pulldown arm out front on the
+## left with its bar and knee roller, a chest press seat and handles in the
+## middle, and a leg extension seat on the right. Worn: the 1970s brown-gold
+## frame, red vinyl split and taped, a hand-lettered pin tag and rust;
+## repaired: repainted charcoal with new black pads; renovated: restored in
+## navy.
+static func _universal_gym(age: int) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	var g := _gym(age)
+	var frame: Color = g.frame if age != Wear.WORN else GOLD_FRAME
+	var pad: Color = g.pad
+	var bar: Color = g.bar
+	# base: a rail across the back, a spine to the front, feet out to the stations
+	m.box(0, 0, 12, 30, 1, 3, frame)
+	m.box(13, 0, 1, 4, 1, 12, frame)
+	m.box(2, 0, 2, 3, 1, 10, frame)
+	m.box(24, 0, 2, 3, 1, 10, frame)
+	# the tower: two uprights, the top beam and the shroud behind the stacks
+	for x: int in [9, 20]:
+		m.box(x, 1, 12, 2, 32, 2, frame)
+	m.box(0, 32, 12, 30, 2, 3, frame)
+	m.box(11, 1, 14, 9, 30, 1, frame.darkened(0.15))
+	for sx: int in [12, 16]:
+		for y in 14:
+			m.box(sx, 1 + y, 12, 3, 1, 2, IRON if y % 2 == 0 else IRON.lightened(0.12))
+		m.box(sx, 15, 12, 1, 16, 1, CHROME)  # guide rods
+		m.box(sx + 2, 15, 12, 1, 16, 1, CHROME)
+		m.box(sx + 1, 6, 11, 1, 1, 1, Wear.RED)  # the pin
+	# lat pulldown arm on the left: a beam out front, the pulley, cable and bar
+	m.box(2, 31, 2, 3, 2, 10, frame)
+	Plant._cyl_x(m, 3, 1, 30.5, 3.0, 1.2, BLACK)
+	_bar(m, Vector3(3.5, 30, 3), Vector3(3.5, 23.5, 3), 0.25, Color("3a3d44"))
+	m.box(-2, 23, 3, 11, 1, 1, bar)
+	m.box(-2, 22, 3, 1, 1, 1, BLACK).box(8, 22, 3, 1, 1, 1, BLACK)
+	m.box(3, 1, 7, 1, 6, 1, frame)  # seat post
+	m.box(1, 7, 6, 5, 1, 4, pad)
+	Plant._cyl_x(m, 1, 5, 10.5, 5.5, 1.0, pad)  # knee roller
+	m.box(3, 8, 5, 1, 3, 1, frame)
+	# chest press in the middle: a seat, a backrest against the tower, handles
+	m.box(14, 1, 6, 2, 6, 2, frame)
+	m.box(12, 7, 4, 6, 1, 5, pad)
+	m.box(12, 8, 9, 6, 9, 1, pad)
+	m.box(13, 8, 10, 4, 9, 1, frame)
+	for hx: int in [10, 19]:
+		_bar(m, Vector3(hx + 0.5, 16, 11), Vector3(hx + 0.5, 13, 3), 0.8, frame)
+		m.box(hx, 12, 2, 1, 2, 1, BLACK)  # grips
+	# leg extension on the right: a seat, a back pad, the shin roller
+	m.box(25, 1, 6, 2, 5, 2, frame)
+	m.box(23, 6, 4, 6, 1, 6, pad)
+	m.box(23, 7, 9, 6, 7, 1, pad)
+	m.box(25, 2, 2, 2, 4, 2, frame)
+	Plant._cyl_x(m, 22, 8, 3.5, 2.5, 1.0, pad)  # shin roller
+	if age == Wear.WORN:
+		Wear.rust(m, frame, 0.06, 201)
+		Wear.rust(m, CHROME, 0.25, 202)
+		m.box(14, 7, 5, 2, 1, 2, Wear.DUCT_TAPE)  # the split seat
+		m.set_voxel(24, 6, 6, Color("d8c890"))  # foam showing
+		m.box(13, 24, 11, 4, 3, 1, Wear.PAPER)  # "PIN ONLY - NO BOLTS"
+		m.set_voxel(14, 25, 10, Wear.RED)
+	elif age == Wear.REPAIRED:
+		m.box(13, 24, 11, 4, 2, 1, Color("e8c21e"))  # an inspection tag
+	return m.set_pivot(15, 0, 9)
 
 ## A two-tier dumbbell rack, 2 m long, with dumbbells from light to heavy
 ## across the front tier and on the back. Worn: chrome-and-iron dumbbells,

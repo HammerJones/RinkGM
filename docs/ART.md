@@ -143,6 +143,7 @@ readouts, LED lamps, bumper plates).
   `fire_panel`, `fire_extinguisher`, `step_ladder`.
 - Weight room: `bench_press`, `squat_rack` (power rack on its platform),
   `leg_press`, `cable_crossover`, `lat_pulldown`, `dumbbell_rack`,
+  `universal_gym` (the club's old multi-station, worn room only),
   `plate_tree`, `stationary_bike`, `treadmill`, `slide_board`.
 - Storage: `ball_bin`, `pylon_stack`, `mini_net`, `spare_net`,
   `puck_bucket`, `goalie_pads`, `broom_bin`, `skate_cones`, `hockey_bags`.

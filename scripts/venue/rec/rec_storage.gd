@@ -45,8 +45,8 @@ func furnish(k: VenueKit) -> void:
 # rink door (x -2.7..-0.8, within 1 m of z -30) and the hall door stay clear.
 func _kit_detail(k: VenueKit) -> void:
 	var wall := SPLIT + 0.1
-	# a spare regulation net along the partition, a ball cart beside it
-	k.prop("spare_net", Vector3(wall + 0.56, 0, -37.0), -PI * 0.5)
+	# the floor along the partition (x -3.4..-2.5, z -38..-34.4) stays clear
+	# for real net racks; a ball cart and pucks stand off it
 	k.prop("ball_bin", Vector3(-2.0, 0, -37.3), PI * 0.5)
 	k.prop("puck_bucket", Vector3(-2.0, 0, -36.4), 0.3)
 	# two pee-wee nets parked on the spare frames

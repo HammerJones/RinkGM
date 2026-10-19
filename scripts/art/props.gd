@@ -32,7 +32,7 @@ const IDS := [
 	"workbench", "toolbox", "drill_press", "arbor_press", "knee_mill", "lathe", "bench_grinder",
 	"shop_vac", "pegboard", "clamp_rack", "cord_hooks",
 	"switchgear", "breaker_panel", "transformer", "meter_bank", "fire_panel", "fire_extinguisher", "step_ladder",
-	"bench_press", "squat_rack", "leg_press", "cable_crossover", "lat_pulldown", "dumbbell_rack",
+	"bench_press", "squat_rack", "leg_press", "cable_crossover", "lat_pulldown", "dumbbell_rack", "universal_gym",
 	"plate_tree", "stationary_bike", "treadmill", "slide_board",
 	"ball_bin", "pylon_stack", "mini_net", "spare_net", "puck_bucket", "goalie_pads", "broom_bin",
 	"skate_cones", "hockey_bags",
