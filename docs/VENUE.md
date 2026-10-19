@@ -35,8 +35,10 @@ Command-line switches (any scene that has a venue):
 
 The walk-around playtest is also `scenes/venue/venue_walk.tscn`
 (`-- --tier=N` picks the league). WASD or left stick walk, mouse or right
-stick look, Shift/L3 run, E/A open a door, 1 2 3 or the D-pad set the age of
-the room you're standing in, F/Y fly.
+stick look, Shift/L3 sprint, Space jump, Ctrl or C (held) crouch, E/A open a
+door or use a spot (A jumps when nothing is in reach, B held crouches when no
+panel is open), 1 2 3 or the D-pad set the age of the room you're standing
+in, F/Y fly (Space and Ctrl then fly up and down).
 
 Floor plans: `tools/venue_plan.gd` renders straight-down views of the
 building cut at 2.6 m and 8.5 m, plus a JSON list of room bounds and doors.
@@ -222,8 +224,11 @@ checks that every place has a floor under it and room to stand.
   physics layer 2 (`VenueKit.VENUE_LAYER`). Doors (`VenueDoor`) open and
   close and carry their own colliders. The boards and glass have a walker
   collider with gaps at the bench, box and resurfacer gates.
-- `VenueWalker` is a first draft of an on-foot player (1.8 m capsule, steps
-  up to 0.32 m). `tools/tests/test_venue.gd` walks it from the lobby to the
+- `VenueWalker` is the on-foot player: 1.8 m capsule, steps up to 0.32 m,
+  walks at 2.2 m/s and sprints at 6.5 (built up over 0.4 s), jumps 0.45 m
+  under real gravity with a little air steering, and crouches to 1.2 m (eyes
+  at 1.1 m, 1.0 m/s), staying down while there's no headroom.
+  `tools/tests/test_walker_moves.gd` checks those numbers on a test floor. `tools/tests/test_venue.gd` walks it from the lobby to the
   home dressing room, up a grandstand aisle, up the lobby stairs into the
   office and into the resurfacer bay.
 

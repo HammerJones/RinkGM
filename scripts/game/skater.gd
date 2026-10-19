@@ -159,6 +159,11 @@ var ai_tilt := 0.0
 ## tier's reaction delay (ai_react counts down, -1 when not waiting)
 var ai_owner: Skater = null
 var ai_react := -1.0
+## The phase of play this skater has read (TeamSystem.Phase, -1 not yet)
+## and how long until a change of phase sinks in (tier anticipation).
+var ai_phase := -1
+var ai_phase_lag := -1.0
+var ai_on_puck := false  # the one whose job right now is the puck (F1, the loose-puck chaser)
 
 var rig: SkaterRig
 var _prev_shoot := false
