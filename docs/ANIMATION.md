@@ -26,10 +26,10 @@ it, and the blade never re-levels itself, so it tips onto its heel or toe
 when the hands are higher or lower than a flat lie. The top hand mostly goes
 to the height that lays the blade flat (`grip_top_flat`), sways with the
 blade (`grip_top_sway`), and with both hands on, the shoulders turn and dip
-towards the stick (`grip_shoulder_*`). The voxel arms are short for a 2 m
-skater, so `grip_arm_length` stretches them to a real proportion; that and
-a blade about 1.2 m out (`AnimPuppet.READY_BLADE`) are what let the bottom
-hand reach the shaft.
+towards the stick (`grip_shoulder_*`). Limb lengths come from World's
+character sheet (`Models.THIGH_V`, `UPPER_ARM_V` and so on: 28 V tall on
+skates, 27 V in shoes), and a blade about 1.2 m out
+(`AnimPuppet.READY_BLADE`) lets the bottom hand reach the shaft.
 
 The drawn blade sits exactly on the simulated one (`Skater.blade_pos` and
 `blade_height`) every frame; only the body and arms are smoothed. The
@@ -48,6 +48,66 @@ clip catches the puck on one face, pushes it across, lifts over it while it
 slides, sets down on the far side and catches it on the other face; the
 wrists angle the blade (`SkaterRig.blade_turn`) so each push also steers the
 puck back to its spot out front. In games the puck is still Physics' to move.
+
+## Skating backwards
+
+When a skater's velocity points behind them (faster than `back_speed`),
+the stride turns into C-cuts: each skate in turn sweeps out and forward on
+its inside edge with the toe turned in, then glides back in under the hips,
+both skates staying on the ice. The skater sits lower and more upright
+(`back_*` tunables). The studio clip is "Skating backwards". It also
+follows Controls' `Skater.backwards` toggle, and the 0.32 s turn-around
+(`Skater._pivot`) plays a quick open-hipped pivot, skates apart and toes
+out (`back_pivot_*`).
+
+`SkaterRig.blade_reach(local_dir)` says how far out the middle of the blade
+can reach in a body-space direction, from the body itself (the top hand's
+shoulder in the stance, arm and stick lengths, the top hand kept between
+hips and chest). It is the one-handed limit: about 2.0 m in front, 2.2 m
+to the top-hand side, 1.4 m to the other and 1.5 m behind.
+
+## On foot
+
+`PersonRig` (scripts/game/person_rig.gd) is the skater's body without the
+stick: the same parts, joints and two-bone IK, so a person is the same rig
+with or without skates. Owner, staff, coaches and public skaters all use it
+and differ only by palette. It only draws: a `VenueWalker` capsule is the
+simulated body, and `update_person(walker.velocity, dt)` poses the rig from
+it every frame.
+
+- **Walking and running.** Each foot stays planted while it carries weight
+  and slides back under the body at exactly the walker's speed, so stride
+  length always matches speed and feet never skate on the floor. The hips
+  drop as far as the legs need to reach both feet. A run has a flight phase
+  (`walk_duty_run` below 0.5). The body turns to face the way it walks.
+- **Sprint, jump and crouch.** Past `walk_run_full` the run turns into a
+  sprint (`walk_*_sprint`: quick short contacts, high knees, more lean).
+  Set `airborne` while the walker is off the floor (`not is_on_floor()`):
+  the knee drives up on the way up, the feet reach down on the way down,
+  and the frame it lands the hips dip and spring back (`jump_*`). Set
+  `crouched` from `VenueWalker.crouched` to stand and walk low
+  (`crouch_walk_*`).
+- **Poses.** Set `pose` to `SIT` (with `seat` at the seat's front edge;
+  the person sits facing away from it), `CROUCH` (a squat at a low panel)
+  or `KNEEL` (one knee down, for work low on Doris or a compressor).
+- **Reach and grab.** Put a world point in `reach[0]` (left) or `reach[1]`
+  (right) and that hand goes there. When it is out of arm's length, the
+  upper body bends and turns to bring it in (`reach_bend`). `look` turns the
+  head to a point.
+- **First person.** `FirstPersonArms` (scripts/game/first_person_arms.gd)
+  is a child of the first-person camera: slimmer copies of the same arms
+  that rest low in the view and reach to `reach` points with the same IK.
+  They draw on render layer `FirstPersonArms.VIEW_LAYER`. Call
+  `PersonRig.hide_from_view(layer)` and leave that layer out of the
+  first-person camera so the body's own head and arms don't block the view.
+
+The numbers live in AnimTuning's `walk`, `sit`, `crouch` and `reach` groups.
+The studio's "On foot" clips (walk, run, sprint, jump, crouch walk, walk
+and turn, idle, sit, crouch, kneel, reach and grab, first-person arms) run on `AnimPerson`, which has a
+bench, a machine panel and a valve wheel to work at. `--test=anim` checks
+that planted feet don't slide, that a runner leaves the floor, that
+sitting lands on the seat, that a knee touches down, and that hands land on
+their targets and stay there.
 
 ## The studio
 
