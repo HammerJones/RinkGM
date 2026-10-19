@@ -97,6 +97,11 @@ func _ready() -> void:
 	walker.head.add_child(cam)
 	cam.current = true
 	_build_ui()
+	# World: the building's real people (WalkPeople: RinkPeople on this walk's
+	# sim, T to talk, Gus's first-day offer) instead of the seated crowd;
+	# `--no-people` keeps the old crowd.
+	if not "--no-people" in OS.get_cmdline_user_args():
+		WalkPeople.attach(self)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
