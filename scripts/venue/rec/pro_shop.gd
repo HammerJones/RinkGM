@@ -53,12 +53,10 @@ func furnish(k: VenueKit) -> void:
 		k.block(Vector3(x, 1.0, -38.75), Vector3(x + 0.3, 1.75, -38.4), k.aged(c, i), 0.2, 0.05, false)
 	k.collider(Vector3(-31.0, 1.0, -38.75), Vector3(-28.0, 1.8, -38.4))
 	# signs: the shop name over the counter, the price board
-	wall_sign(k, [["// BEV'S EDGE & TAPE", VenueSign.AMBER]], 21, 1, 0.035, Vector3(-26.0, 2.55, -30.0), Vector3(0, 0, -1), "ShopName")
-	var prices := [
-		["// PRICES", VenueSign.AMBER], ["SHARPEN    8.00", VenueSign.CYAN, true], ["TAPE       4.00", VenueSign.CYAN, true],
-		["LACES      6.00", VenueSign.CYAN, true], ["PUCKS      2.00", VenueSign.CYAN, true],
-	]
-	wall_sign(k, prices, 15, 5, 0.02, Vector3(-22.4, 1.9, -30.0), Vector3(0, 0, -1), "PriceBoard")
+	# the shop's painted arrow board over the counter, and Bev's chalkboard:
+	# hollows, prices and her opinions
+	readable(k, "sign_bev_arrow", Vector3(-26.0, 2.5, -30.0), Vector3(0, 0, -1))
+	readable(k, "bev_chalkboard", Vector3(-22.95, 1.8, -30.0), Vector3(0, 0, -1))
 
 
 ## Shelves of skate boxes on the west wall.

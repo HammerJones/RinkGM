@@ -26,7 +26,7 @@ static func create(tier_: int, number_: int, teams: Array, rng: RandomNumberGene
 	s.team_ids = teams.duplicate()
 	s.team_ids.shuffle()
 	for t in s.team_ids:
-		s.standings[t] = {"gp": 0, "w": 0, "l": 0, "otl": 0, "pts": 0, "gf": 0, "ga": 0}
+		s.standings[t] = {"gp": 0, "w": 0, "l": 0, "otl": 0, "t": 0, "pts": 0, "gf": 0, "ga": 0}
 	s._build_schedule(int(LeagueTiers.get_tier(tier_).games), rng)
 	return s
 
@@ -102,6 +102,9 @@ func record(game: Dictionary, result: Dictionary) -> void:
 		if gf > ga:
 			row.w += 1
 			row.pts += 2
+		elif gf == ga:  # a tie stands in leagues that allow them (LeagueRules)
+			row["t"] = int(row.get("t", 0)) + 1
+			row.pts += 1
 		elif result.ot or result.so:
 			row.otl += 1
 			row.pts += 1

@@ -229,6 +229,15 @@ func wall_sign(k: VenueKit, lines: Array, cols: int, rows: int, px: float, pos: 
 	return s
 
 
+## A physical readable (Readable) on the wall face at `pos` with outward
+## `normal`, or lying on a table when `normal` is UP (top edge toward `top`).
+func readable(k: VenueKit, id: String, pos: Vector3, normal: Vector3, movable := false, top := Vector3.FORWARD) -> Readable:
+	var r := Readable.make(id, movable)
+	r.transform = Transform3D(Readable.on_table(top) if normal.y > 0.9 else Readable.on_wall(normal), pos + normal * 0.002)
+	k.add(r)
+	return r
+
+
 ## A plain table: top at `top_y`, four legs.
 func table(k: VenueKit, a: Vector3, b: Vector3, top_y: float, col: Color, leg := Color("3a3b3e")) -> void:
 	var lo := a.min(b)

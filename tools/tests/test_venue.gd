@@ -70,7 +70,7 @@ func _run() -> void:
 		print("  %-9s built in %d ms: %s, %d seats" % [VenueRoom.AGE_NAMES[age], Time.get_ticks_msec() - t0, st, n])
 		_expect(st.triangles < TRI_BUDGET, "%s: %d triangles within budget %d" % [VenueRoom.AGE_NAMES[age], st.triangles, TRI_BUDGET])
 		_expect(st.draws < DRAW_BUDGET, "%s: %d draws within %d" % [VenueRoom.AGE_NAMES[age], st.draws, DRAW_BUDGET])
-		_expect(st.lights <= 13 and _no_shadows(_venue), "%s: %d lights, none casting shadows" % [VenueRoom.AGE_NAMES[age], st.lights])
+		_expect(st.lights <= 13 and _no_shadows(_venue), "%s: %d lights always on (+%d fading fixtures), shadows only from fading ones" % [VenueRoom.AGE_NAMES[age], st.lights, st.faded_lights])
 	_expect(seats[0] < seats[1], "worn stands have missing planks (%d < %d seats)" % [seats[0], seats[1]])
 	# human-scale doors (bench and box gates are half doors by design)
 	for d in _venue.all_doors():
@@ -86,7 +86,8 @@ func _run() -> void:
 
 
 func _no_shadows(n: Node) -> bool:
-	if n is Light3D and n.shadow_enabled:
+	# fixture lights may cast shadows: they fade them out with distance
+	if n is Light3D and n.shadow_enabled and not (n.distance_fade_enabled and n.distance_fade_shadow < 40.0):
 		return false
 	if n is GeometryInstance3D and n.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
 		return false

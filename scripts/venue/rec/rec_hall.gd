@@ -43,9 +43,9 @@ func furnish(k: VenueKit) -> void:
 	k.prop("trash_can", Vector3(-15.5, 0, z1 - 0.3), PI)
 	k.prop("vending_machine", Vector3(30.5, 0, z0 + 0.45), PI)
 	# exit sign over the east doors
-	var ex := VenueSign.make([["EXIT", VenueSign.GREEN]], 4, 1, 0.025)
-	ex.name = "ExitSign"
-	k.sign(ex, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(x1 - 0.32, 2.6, -42.0)))
+	var ex := Readable.make("sign_exit")
+	ex.transform = Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(x1 - 0.32, 2.6, -42.0))
+	k.add(ex)
 
 
 ## Spans of the wall face on edge line `line` (along X) not cut by a door.

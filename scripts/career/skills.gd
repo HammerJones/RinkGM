@@ -20,13 +20,18 @@ const SKATER_KEYS := [
 	"toughness",       # staying up through contact, injury resistance
 ]
 const GOALIE_KEYS := ["reflexes", "positioning", "rebound_control", "glove", "toughness"]
+## Off-ice conditioning a skater trains in the gym and pickup games
+## (playtest #29, #33). Kept out of SKATER_KEYS so generated rosters, their
+## random draws and the overall rating stay as they were: stamina is derived
+## from speed and toughness when a player is made or an old save loads.
+const CONDITIONING := ["stamina"]
 
 const LABELS := {
 	"speed": "Speed", "agility": "Agility", "stick_handling": "Stick handling",
 	"shot_accuracy": "Shot accuracy", "shot_power": "Shot power", "shot_release": "Shot release",
 	"pass_quality": "Passing", "hitting": "Hitting", "toughness": "Toughness",
 	"reflexes": "Reflexes", "positioning": "Positioning", "rebound_control": "Rebound control",
-	"glove": "Glove",
+	"glove": "Glove", "stamina": "Stamina",
 }
 
 ## Overall-rating weights by position. Keys missing from a position count 0.
@@ -57,6 +62,19 @@ func eff(key: String) -> float:
 ## Effective rating as 0..1, the input to every curve below.
 func n(key: String) -> float:
 	return (eff(key) - 1.0) / 99.0
+
+
+## Fills in conditioning a skater doesn't have yet (new or old saves),
+## from speed and toughness; no random draws.
+func derive_conditioning() -> void:
+	if is_goalie() or values.has("stamina"):
+		return
+	values["stamina"] = clampf((float(values.get("speed", 50.0)) + float(values.get("toughness", 50.0))) * 0.5, 1.0, 100.0)
+
+
+## 0.75 (fit) .. 1.25 (gassed): how fast games and work tire this player.
+func tire_rate() -> float:
+	return lerpf(1.25, 0.75, n("stamina")) if values.has("stamina") else 1.0
 
 
 func is_goalie() -> bool:
@@ -99,4 +117,5 @@ static func from_dict(d: Dictionary) -> Skills:
 	var s := Skills.new()
 	s.values = d.get("values", {}).duplicate()
 	s.modifiers = d.get("modifiers", {}).duplicate()
+	s.derive_conditioning()
 	return s

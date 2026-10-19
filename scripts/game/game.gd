@@ -57,6 +57,9 @@ var time := 0.0
 # match / career
 var fixture: Dictionary
 var settings: GameSettings
+## The level's game rules (LeagueRules): running or stop time, ties,
+## overtime and the shootout.
+var rules: Dictionary
 var career_mode := false
 var benches: Array = []  # Bench per team
 var box := BoxScore.new()
@@ -130,6 +133,7 @@ func _ready() -> void:
 	career_mode = int(fixture.user_id) >= 0
 	settings = fixture.settings
 	tier_ai = TierAI.for_tier(int(fixture.get("tier", 4)))
+	rules = LeagueRules.for_tier(int(fixture.get("tier", 4)))
 	for arg in OS.get_cmdline_user_args():
 		# `-- --period=2` plays 2-minute periods (quick tests)
 		if arg.begins_with("--period="):
@@ -403,7 +407,7 @@ func dev_end_period() -> void:
 func dev_end_game() -> void:
 	if state == State.OVER:
 		return
-	if score[0] == score[1]:
+	if score[0] == score[1] and LeagueRules.after_tie(rules, bool(fixture.playoff), true) != "tie":
 		_shootout()
 	else:
 		_game_over()
@@ -507,6 +511,11 @@ func _update_rules(dt: float) -> void:
 		_so.update(dt)
 		return
 	_state_timer -= dt
+	if _running_time():
+		clock = maxf(clock - dt, 0.0)
+		if clock <= 0.0:
+			_end_period()
+			return
 	match state:
 		State.FACEOFF:
 			if _state_timer <= 0.0:
@@ -859,6 +868,14 @@ func _print_box() -> void:
 		print("  injury: ", e.pid, " ", e.injury.describe(), " out ", e.injury.games_out)
 
 
+## Running time (beer league): the clock keeps going through whistles and
+## faceoffs, except late in a period or between periods.
+func _running_time() -> bool:
+	if state == State.PLAY or state == State.OVER or _between_periods or clock <= 0.0:
+		return false
+	return LeagueRules.clock_runs_in_stoppage(rules, clock, settings.period_length(), period >= settings.periods, overtime, score[0] - score[1])
+
+
 ## Clock hit zero: intermission, overtime, shootout or final.
 func _end_period() -> void:
 	events.period_ended.emit(period, _period_label())
@@ -870,12 +887,15 @@ func _end_period() -> void:
 	if score[0] != score[1]:
 		_game_over()
 		return
-	if fixture.playoff or not overtime:
-		overtime = true
-		hud.show_message("OVERTIME\nNext goal wins", settings.intermission_seconds)
-		_intermission()
-		return
-	_shootout()
+	match LeagueRules.after_tie(rules, bool(fixture.playoff), overtime):
+		"tie":
+			_game_over()
+		"overtime":
+			overtime = true
+			hud.show_message("OVERTIME\nNext goal wins", settings.intermission_seconds)
+			_intermission()
+		_:
+			_shootout()
 
 
 func _intermission() -> void:
@@ -1209,14 +1229,10 @@ func _credit_goal(team: int) -> void:
 # ---------------------------------------------------------------- scene
 
 func _build_environment() -> void:
-	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
+	var env := Look.make("arena")
 	env.background_color = Color("24252b")
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.86, 0.89, 0.96)
 	env.ambient_light_energy = 0.28
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.ssao_enabled = true
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)

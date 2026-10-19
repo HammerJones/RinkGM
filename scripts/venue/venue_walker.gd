@@ -31,6 +31,8 @@ const AIR_ACCEL := 3.0
 
 var wish := Vector3.ZERO
 var running := false
+## Multiplies every pace: 0.5 on the ice in shoes (IceBalance), 0 while down.
+var speed_scale := 1.0
 ## Held to crouch; the walker stays down while there is no room to stand.
 var crouch := false
 var crouched := false
@@ -38,6 +40,9 @@ var head: Node3D
 var _shape: CollisionShape3D
 var _jump_queued := false
 var _sprint := 0.0  # 0 walking pace .. 1 full sprint
+var _step_t := 0.0  # seconds since the last footstep
+var _was_floor := true
+var _venue: Venue
 
 
 func _init() -> void:
@@ -75,7 +80,7 @@ func _physics_process(dt: float) -> void:
 	if is_on_floor() or not sprinting:
 		_sprint = move_toward(_sprint, 1.0 if sprinting else 0.0, dt / SPRINT_RAMP)
 	var speed := CROUCH_SPEED if crouched else lerpf(WALK, RUN, _sprint)
-	var target := flat * speed
+	var target := flat * speed * speed_scale
 	if is_on_floor():
 		velocity.x = target.x
 		velocity.z = target.z
@@ -91,8 +96,52 @@ func _physics_process(dt: float) -> void:
 		velocity.y -= GRAVITY * dt
 	_jump_queued = false
 	_step_up(Vector3(velocity.x, 0, velocity.z) * dt)
+	var fall := velocity.y
 	move_and_slide()
+	if RinkSound.enabled():
+		_footsteps(dt, fall)
 	head.position.y = move_toward(head.position.y, CROUCH_EYE if crouched else EYE, 4.0 * dt)
+
+
+## A footstep every stride while moving on a floor (about 0.55 s apart at
+## a walk, 0.32 s at a sprint) on the surface of the room underfoot, and a
+## heavier one on landing from a jump or a drop.
+func _footsteps(dt: float, fall: float) -> void:
+	var on_floor := is_on_floor()
+	var landed := on_floor and not _was_floor and fall < -1.5
+	_was_floor = on_floor
+	var speed := Vector2(velocity.x, velocity.z).length()
+	if landed:
+		_step_sound(-8.0, 0.85)
+		_step_t = 0.0
+		return
+	if not on_floor or speed < 0.4:
+		_step_t = 0.4  # the first step comes soon after setting off
+		return
+	var interval := lerpf(0.55, 0.32, clampf((speed - WALK) / (RUN - WALK), 0.0, 1.0))
+	if crouched:
+		interval = 0.7
+	_step_t += dt
+	if _step_t >= interval:
+		_step_t = 0.0
+		_step_sound(-24.0 if crouched else lerpf(-16.0, -11.0, clampf((speed - WALK) / (RUN - WALK), 0.0, 1.0)), 1.0)
+
+
+func _step_sound(db: float, pitch: float) -> void:
+	if _venue == null or not is_instance_valid(_venue):
+		_venue = null
+		var p := get_parent()
+		if p:
+			for c in p.get_children():
+				if c is Venue:
+					_venue = c
+					break
+	var kind := "rubber"
+	if _venue:
+		var r := _venue.room_at(_venue.to_local(global_position + Vector3(0, 0.1, 0)))
+		if r:
+			kind = RinkSound.floor_kind(r.room_id)
+	RinkSound.play_at(get_parent(), "footstep_" + kind, global_position + Vector3(0, 0.05, 0), db, pitch, 2.0, 25.0)
 
 
 ## Crouches at once; stands back up only when the full height fits.
@@ -125,11 +174,11 @@ func _step_up(motion: Vector3) -> void:
 ## The nearest door within reach, or null.
 ## The spot the walker is looking at: within its reach, in front of the head
 ## (within about 50 degrees of `forward`), the closest to the line of sight.
-func nearest_spot(venue: Venue, forward: Vector3) -> VenueSpot:
+func nearest_spot(venue: Venue, forward: Vector3, extra: Array[VenueSpot] = []) -> VenueSpot:
 	var eye := head.global_position if head else global_position + Vector3(0, 1.6, 0)
 	var best: VenueSpot = null
 	var best_score := INF
-	for s in venue.all_spots():
+	for s in venue.all_spots() + extra:
 		if not s.is_inside_tree():
 			continue
 		var to := s.global_position - eye

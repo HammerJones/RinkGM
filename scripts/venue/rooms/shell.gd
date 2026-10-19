@@ -116,10 +116,9 @@ func _in_gate(p: Vector2, n: Vector2) -> bool:
 
 
 func _exit_sign(k: VenueKit, pos: Vector3, s: int) -> void:
-	var sign := VenueSign.make([["EXIT", VenueSign.GREEN]], 4, 1, 0.025)
-	sign.name = "ExitSign"
-	var basis := Basis(Vector3.UP, 0.0 if s < 0 else PI)
-	k.sign(sign, Transform3D(basis, pos))
+	var sign := Readable.make("sign_exit")
+	sign.transform = Transform3D(Basis(Vector3.UP, 0.0 if s < 0 else PI), pos)
+	k.add(sign)
 
 
 ## Corner clutter between the side stands and the end rooms. A worn rink

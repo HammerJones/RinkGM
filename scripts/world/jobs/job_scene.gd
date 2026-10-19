@@ -461,14 +461,10 @@ func light(pos: Vector3, energy := 1.0, rng := 6.0, col := Color(1.0, 0.95, 0.86
 
 
 func environment(bg := Color("1a1b1e"), ambient := 0.35) -> void:
-	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
+	var env := Look.make("studio")
 	env.background_color = bg
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.92, 0.95, 1.0)
 	env.ambient_light_energy = ambient
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.ssao_enabled = true
 	_env = WorldEnvironment.new()
 	_env.environment = env
 
