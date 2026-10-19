@@ -43,14 +43,21 @@ func build(k: VenueKit) -> void:
 		for ex in [x0, x1]:
 			k.aged_block(Vector3(ex - 0.08, 0, z0), Vector3(ex + 0.08, 1.3, z1 - 0.25), wall, 0.5)
 			k.glass(Vector3(ex - 0.03, 1.3, z0), Vector3(ex + 0.03, 2.5, z1 - 0.25))
-		# stick rack behind the back wall (walkway side) and bottles on its cap
+		# World: real sticks leaning on the back wall from the walkway side
+		# (playtest #40): StickProp bodies on a walk, static copies in a match;
+		# a rubber blade mat under them. Bottles on the wall's cap.
 		var rack_x := x0 + 0.6 if home else x1 - 3.6
+		var face := z1 - 0.245
+		var pal := Models.team_palette("", team_col, home_secondary() if home else Color("eeeeea"))
+		var mix := StickProps.room_mix(pal, 30 + bi, 10, 10, 0.75)
+		var vs: Array[Dictionary] = []
+		var poses: Array[Transform3D] = []
 		for i in 10:
-			var sx := rack_x + i * 0.3
-			var lean := Basis(Vector3.RIGHT, deg_to_rad(-8.0))
-			var shaft := Transform3D(lean.scaled(Vector3(0.03, 1.5, 0.03)), Vector3(sx, 0.85, z1 - 0.34))
-			k.oriented(shaft, k.by_age(Color("3a3330"), Color("2d2f35"), Color("16181c")).lerp(Color("c9b48a"), 0.4 if i % 3 == 0 else 0.0))
-			k.block(Vector3(sx - 0.02, 0.0, z1 - 0.3), Vector3(sx + 0.02, 0.06, z1 - 0.6), Color("1b1c1f"), 0.5, 0.0, false)
+			var v: Dictionary = mix[i]
+			vs.append(v)
+			poses.append(StickProps.pose(v, StickProps.lean_slot(Vector3(rack_x + i * 0.3, 1.33, face - 0.022), Vector3.BACK, 12.0)))
+		StickProps.place(k, vs, poses, StickProps.walkable(self))
+		k.block(Vector3(rack_x - 0.2, 0.0, face - 0.7), Vector3(rack_x + 2.9, 0.012, face), Color("1b1c1f"), 0.5, 0.04, false)
 		for i in 8:
 			var bx := (x0 + x1) * 0.5 - 1.2 + i * 0.3
 			var bottle: Color = Color(["2f80c8", "d8d4c7", "c84b2f", "3e8f4f"][i % 4]) if k.age == VenueRoom.Age.WORN else team_col.lightened(0.1)

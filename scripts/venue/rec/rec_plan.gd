@@ -16,6 +16,10 @@ extends RefCounted
 ##   z -30 .. -40  south band (against the arena wall)
 ##   z -40 .. -44  the main hall
 ##   z -44 .. -60  north band (the big rooms)
+##
+## World (playtest #34): the pro shop grew 1.5 m west into the front lobby's
+## empty east strip (lobby x1, hall x0 and the lobby-to-hall opening moved
+## from -32 to -33.5 with it).
 
 const Z_ARENA := -30.0
 const Z_HALL_S := -40.0
@@ -30,10 +34,10 @@ const OPEN := -1     # a door kind with no leaf: just an opening
 ## walls "all" builds every edge but the arena's; "outer" only the building's
 ## outside edges (the hall and the link, whose sides belong to their rooms).
 const ROOMS := {
-	"rec_lobby": ["Front desk", "rec_lobby", [-46.0, -44.0, -32.0, -30.0], 4.0, "all"],
-	"rec_hall": ["Main hall", "rec_hall", [-32.0, -44.0, 46.0, -40.0], 3.2, "outer"],
+	"rec_lobby": ["Front desk", "rec_lobby", [-46.0, -44.0, -33.5, -30.0], 4.0, "all"],
+	"rec_hall": ["Main hall", "rec_hall", [-33.5, -44.0, 46.0, -40.0], 3.2, "outer"],
 	"rec_link": ["Arena link", "rec_hall", [38.0, -40.0, 42.0, -30.0], 3.2, "outer"],
-	"pro_shop": ["Pro shop", "pro_shop", [-32.0, -40.0, -20.0, -30.0], 3.4, "all"],
+	"pro_shop": ["Pro shop", "pro_shop", [-33.5, -40.0, -20.0, -30.0], 3.4, "all"],
 	"rec_washrooms": ["Washrooms", "rec_washrooms", [-20.0, -40.0, -13.0, -30.0], 3.0, "all"],
 	"rec_officials": ["Referees and first aid", "rec_officials", [-13.0, -40.0, -6.0, -30.0], 3.0, "all"],
 	"rec_storage": ["Storage closets", "rec_storage", [-6.0, -40.0, 0.0, -30.0], 3.0, "all"],
@@ -56,7 +60,7 @@ const ROOMS := {
 const DOORS := [
 	# front lobby
 	["Main entrance", -46.0, -37.0, "z", 2.6, 2.5, VenueDoor.Kind.DOUBLE, "rec_lobby"],
-	["Lobby to hall", -32.0, -42.0, "z", 3.6, 3.0, OPEN, ""],
+	["Lobby to hall", -33.5, -42.0, "z", 3.6, 3.0, OPEN, ""],
 	["Programs office", -43.5, -44.0, "x", 0.95, 2.2, VenueDoor.Kind.SWING, "rec_offices"],
 	["Bookings office", -39.0, -44.0, "x", 0.95, 2.2, VenueDoor.Kind.SWING, "rec_offices"],
 	["Director's office", -34.5, -44.0, "x", 0.95, 2.2, VenueDoor.Kind.SWING, "rec_offices"],

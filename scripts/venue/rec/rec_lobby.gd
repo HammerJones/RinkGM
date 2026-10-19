@@ -114,7 +114,8 @@ func _signs(k: VenueKit) -> void:
 	wall_sign(k, [["// ARENA", VenueSign.CYAN], ["->", VenueSign.CYAN]], 9, 2, 0.03, Vector3(-40.0, 2.9, -30.05), Vector3(0, 0, -1), "ToArena")
 	if k.age == Age.WORN:
 		# the club's old painted letters, half gone, over the hall opening
-		wall_sign(k, [["ATH ETIC C UB  EST 19 8", Color("8a7a5a")]], 23, 1, 0.025, Vector3(-32.15, 3.5, -42.0), Vector3(-1, 0, 0), "OldLetters", Color("c9b98f"))
+		# World: on the east wall wherever RecPlan puts it (the pro shop grew)
+		wall_sign(k, [["ATH ETIC C UB  EST 19 8", Color("8a7a5a")]], 23, 1, 0.025, Vector3(x1 - 0.15, 3.5, -42.0), Vector3(-1, 0, 0), "OldLetters", Color("c9b98f"))
 
 
 func _centre_name() -> String:

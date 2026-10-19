@@ -36,6 +36,9 @@ const IDS := [
 	"plate_tree", "stationary_bike", "treadmill", "slide_board",
 	"ball_bin", "pylon_stack", "mini_net", "spare_net", "puck_bucket", "goalie_pads", "broom_bin",
 	"skate_cones", "hockey_bags",
+	# stick racks and the pro shop's back room (stick_props.gd)
+	"stick_rack_wall", "stick_rack_shop", "stick_rack_aframe", "stick_barrel", "stick_rack_team",
+	"skate_sharpener", "skate_rack_tags", "tape_tower", "foot_measure", "shop_till", "puck_bin",
 ]
 
 ## The plant room builders live in their own file.
@@ -102,6 +105,8 @@ static func _build(id: String, age: int) -> VoxelModel:
 		"glass_pane": return _glass_pane(age)
 		"concession_counter": return _concession_counter(age)
 		"scoreboard": return _scoreboard(age)
+	if id in StickProps.IDS:
+		return StickProps.build(id, age)
 	var m := Plant.build(id, age)
 	return m if m else Shop.build(id, age)
 
@@ -120,7 +125,7 @@ static func collision_boxes(id: String, age: int) -> Array[AABB]:
 		var m := model(id, age)
 		var boxes: Array[AABB] = []
 		if m:
-			boxes = m.collision_boxes(_COLLISION_CELL.get(id, Shop.COLLISION_CELL.get(id, 2)))
+			boxes = m.collision_boxes(_COLLISION_CELL.get(id, StickProps.COLLISION_CELL.get(id, Shop.COLLISION_CELL.get(id, 2))))
 		_cache[key] = boxes
 	return _cache[key]
 
@@ -155,7 +160,7 @@ static func mesh(id: String, age: int, lod := 0) -> ArrayMesh:
 		Wear.fine = true
 		if m == null:
 			_cache[key] = null
-		elif lod == 0 and not id in _MERGED and not id in Plant.MERGED and not id in Shop.MERGED:
+		elif lod == 0 and not id in _MERGED and not id in Plant.MERGED and not id in Shop.MERGED and not id in StickProps.MERGED:
 			_cache[key] = m.build_mesh()
 		else:
 			_cache[key] = m.build_mesh_merged()

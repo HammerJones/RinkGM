@@ -80,12 +80,34 @@ func build(k: VenueKit) -> void:
 	plate.name = "DoorPlate"
 	plate.dead = k.by_age(0.05, 0.0, 0.0)
 	k.sign(plate, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(X0 - 0.01, 2.6, door_z)))
+	_stick_racks(k, team_col, z_in)
 	room_light(k, Vector3(39.5, H - 0.4, s * 9.5), 7.0)
 	# lights
 	var lit: Color = k.by_age(Color("e6f0d8"), Color("f4f6f0"), Color("fff6e6"))
 	for x in [36.5, 39.5, 42.5]:
 		for zz in [7.5, 11.0]:
 			k.glow(Vector3(x - 0.6, H - 0.06, s * zz - 0.15), Vector3(x + 0.6, H - 0.03, s * zz + 0.15), lit if not (k.age == Age.WORN and x == 39.5 and zz == 7.5) else Color("4a4d48"))
+
+
+## World: stick racks with real sticks along the wall shared with the Zamboni
+## bay (playtest #28): the home room a team rack and a barrel, the visitors a
+## wall slot rack and a barrel. Physics sticks on a walk, static in a match.
+func _stick_racks(k: VenueKit, team_col: Color, z_in: float) -> void:
+	var s := float(side)
+	var home := side < 0
+	var pal := Models.team_palette("HOME" if home else "AWAY", team_col, home_secondary() if home else Color("ece7dc"))
+	var physics := StickProps.walkable(self)
+	var field: StickField = null
+	if physics:
+		field = StickField.new()
+		field.name = "Sticks"
+		k.add(field)
+	var rot := 0.0 if home else PI
+	if home:
+		StickProps.fill(k, "stick_rack_team", Vector3(37.2, 0, z_in + s * 0.27), rot, StickProps.room_mix(pal, 1, 12, 11, 0.85), physics, field)
+	else:
+		StickProps.fill(k, "stick_rack_wall", Vector3(37.2, 0, z_in + s * 0.205), rot, StickProps.room_mix(pal, 2, 14, 10, 0.7), physics, field)
+	StickProps.fill(k, "stick_barrel", Vector3(40.2, 0, z_in + s * 0.55), 0.0, StickProps.room_mix(pal, 3 + side, 6, 5, 0.4), physics, field)
 
 
 func _floor(k: VenueKit, team_col: Color, z_in: float, z_out: float) -> void:

@@ -46,10 +46,30 @@ func furnish(k: VenueKit) -> void:
 	board.dead = 0.0
 	# the room number big over the door, inside
 	wall_sign(k, [["%d" % _number(), VenueSign.AMBER]], 2, 1, 0.06, Vector3(x0 + 4.5, 2.2, z0 + 0.15), Vector3(0, 0, 1), "RoomNumber")
-	# a stick rack by the door and a tape ball someone left
-	k.block(Vector3(x0 + 3.4, 0, z0 + 0.2), Vector3(x0 + 5.6, 0.1, z0 + 0.5), Color("3a3d44"), 0.3, 0.0)
-	for i in 6:
-		var x := x0 + 3.55 + i * 0.35
-		k.block(Vector3(x, 0.1, z0 + 0.3), Vector3(x + 0.03, 1.5, z0 + 0.33), [Color("1b1d22"), Color("d0202a"), Color("eeeeea")][i % 3], 0.3, 0.04, false)
+	# World: a stick rack by the door, a different design in each room, full
+	# of real sticks (playtest #28, #35), and a tape ball someone left
+	_stick_racks(k, team)
 	if k.age == Age.WORN:
 		k.block(Vector3(x0 + 5.0, 0, -35.0), Vector3(x0 + 5.12, 0.12, -34.88), Color("1b1d22"), 0.1, 0.0, false)
+
+
+## World: the room's stick racks (StickProps): room 3 a wall slot rack and a
+## corner barrel, 4 a team rack with name tape, 5 a barrel and a wall rack,
+## 6 a floor A-frame and a team rack. The hall wall's inside face is z0 + 0.15.
+func _stick_racks(k: VenueKit, team: Color) -> void:
+	var n := _number()
+	var pal := Models.team_palette("ROOM %d" % n, team, Color("ece7dc"))
+	var field := StickField.new()
+	field.name = "Sticks"
+	k.add(field)
+	var wall := z0 + 0.15
+	var at := Vector3(x0 + 4.6, 0, 0)
+	match n:
+		3, 5:
+			StickProps.fill(k, "stick_rack_wall", at + Vector3(0, 0, wall + 0.205), PI, StickProps.room_mix(pal, n, 14, 9), true, field)
+			StickProps.fill(k, "stick_barrel", Vector3(x1 - 0.6, 0, wall + 0.5), 0.0, StickProps.room_mix(pal, n + 10, 6, 4, 0.3), true, field)
+		4:
+			StickProps.fill(k, "stick_rack_team", at + Vector3(0, 0, wall + 0.27), PI, StickProps.room_mix(pal, n, 12, 10, 0.8), true, field)
+		_:
+			StickProps.fill(k, "stick_rack_team", at + Vector3(0, 0, wall + 0.27), PI, StickProps.room_mix(pal, n, 12, 8, 0.8), true, field)
+			StickProps.fill(k, "stick_rack_aframe", Vector3(x0 + 5.0, 0, -35.6), 0.0, StickProps.room_mix(pal, n + 20, 12, 7, 0.4), true, field)
