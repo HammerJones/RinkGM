@@ -1,0 +1,442 @@
+{
+  "id": "shauna_reid",
+  "barks": {
+    "idle": [
+      "You're fine. Ice it. Next.",
+      "11:15 pm. Best ice of the day. Nobody's awake but us.",
+      "Crullers for the refs. Day-old. They don't care."
+    ],
+    "good_ice": [
+      "Fast ice. Good. Let's go.",
+      "Clean sheet. I can fly on this."
+    ],
+    "bad_ice": [
+      "That rut by the blue line is a sprained ankle waiting to happen."
+    ],
+    "wet_ice": [
+      "Wet ice. Somebody's going down. I'll be ready."
+    ],
+    "goal": [
+      "Good. Next shift.",
+      "That's a goal. Change!"
+    ],
+    "cold": [
+      "Cold's fine. Keep moving. Circulation."
+    ],
+    "hungry": [
+      "Twelve-hour shift, then hockey. Fries. Now."
+    ],
+    "long_line": [
+      "Triage this line. Coffee people to the front."
+    ],
+    "bored": [
+      "Bored is fine. Bored means nobody's bleeding."
+    ],
+    "greet_owner": [
+      "Hey, {owner}. You good? You look good. Next.",
+      "Owner. Hydrating? Hydrate."
+    ],
+    "leaving_happy": [
+      "Good skate. Bed by four. Perfect."
+    ],
+    "leaving_angry": [
+      "Slow changes, soft ice. Never again. Until Thursday."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Change! Change! Code blue tempo, Owls!",
+        "Night Owls are wide awake. Everyone else isn't. That's the plan."
+      ],
+      "stick_and_puck": [
+        "Edges and sprints. Twenty minutes. Then sleep."
+      ],
+      "high_school": [
+        "Josie on D. Look at her gap. Good kid."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_shauna_reid"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "path": "player"
+        },
+        {
+          "day_gte": 200
+        },
+        {
+          "not_flag": "shauna_invited"
+        }
+      ],
+      "node": "invite"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            23.0,
+            24.0
+          ]
+        }
+      ],
+      "node": "late"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "shauna_reid",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Shauna Reid. Night Owls, centre. Night nurse at Harlow Falls General. You look fine. Ice it anyway.",
+      "do": [
+        {
+          "set": "met_shauna_reid"
+        }
+      ],
+      "options": [
+        {
+          "text": "Ice what?",
+          "do": [
+            {
+              "rel": [
+                "shauna_reid",
+                2
+              ]
+            }
+          ],
+          "to": "first_ice"
+        },
+        {
+          "text": "You must be tired, working nights.",
+          "do": [
+            {
+              "rel": [
+                "shauna_reid",
+                -3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Good to meet you, Shauna.",
+          "do": [
+            {
+              "rel": [
+                "shauna_reid",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_ice": {
+      "say": "Whatever hurts. Something always hurts. You run a rink. Your back hurts. Your ego hurts. Ice it.",
+      "options": [
+        {
+          "text": "Noted, nurse.",
+          "do": [
+            {
+              "rel": [
+                "shauna_reid",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll get it fixed, Shauna.",
+          "do": [
+            {
+              "rel": [
+                "shauna_reid",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll treat that as urgent.",
+          "do": [
+            {
+              "rel": [
+                "shauna_reid",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "invite": {
+      "say": "Saw you at late ice. You're not bad. Owls need a body Thursdays. Beer League C. You free Thursdays?",
+      "options": [
+        {
+          "text": "I'm free. Count me in.",
+          "do": [
+            {
+              "set": "shauna_invited"
+            },
+            {
+              "rel": [
+                "shauna_reid",
+                4
+              ]
+            },
+            {
+              "note": "Shauna Reid asked if the owner was free Thursdays. Beer League C."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Let me check the rink schedule.",
+          "do": [
+            {
+              "set": "shauna_invited"
+            },
+            {
+              "rel": [
+                "shauna_reid",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "late": {
+      "say": [
+        "11:15. Wide awake. Let's skate.",
+        "Ice is ours till one. Nobody's tired. Don't say tired."
+      ],
+      "options": [
+        {
+          "text": "Have a good skate.",
+          "do": [
+            {
+              "rel": [
+                "shauna_reid",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "What's it like playing this late?",
+          "to": "events"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}. You look good. Hydrated, even.",
+        "Hey. Saved you a cruller. Don't tell the refs."
+      ],
+      "options": [
+        {
+          "text": "Thanks, Shauna.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What do you need? Quick. I'm on in ten.",
+        "You good? You're good. What's up?",
+        "Owner. Talk to me."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the hospital?",
+          "to": "job"
+        },
+        {
+          "text": "Why 11:15 ice?",
+          "to": "events"
+        },
+        {
+          "text": "What's with the crullers for the refs?",
+          "to": "crullers"
+        },
+        {
+          "text": "You know Josie Bautista?",
+          "to": "josie"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Take care, Shauna.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Twelve hours. Two codes, one baby, a man who swallowed a key. Then hockey. Hockey is the calm part.",
+      "options": [
+        {
+          "text": "Hockey is the calm part. Wow.",
+          "do": [
+            {
+              "rel": [
+                "shauna_reid",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "At 11:15 everyone else is dead tired. We're wide awake. Night shift legs. Fastest skater in the division, and that's not bragging. It's a chart.",
+      "options": [
+        {
+          "text": "Respect.",
+          "do": [
+            {
+              "rel": [
+                "shauna_reid",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "crullers": {
+      "say": "Refs work for nothing and get yelled at. Same as nurses. Day-old crullers from Double-Double. Marcel says thank you in the incident book. Every page.",
+      "options": [
+        {
+          "text": "I'll leave a box in the ref room too.",
+          "do": [
+            {
+              "money": -6
+            },
+            {
+              "rel": [
+                "shauna_reid",
+                3
+              ]
+            },
+            {
+              "rel": [
+                "marcel_thibodeau",
+                2
+              ]
+            },
+            {
+              "rel": [
+                "nell_haraldsen",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Very thoughtful.",
+          "to": "hub"
+        }
+      ]
+    },
+    "josie": {
+      "say": "She wants to be me. I told her be faster. She's working on it. She's got a gap on D like a surgeon. Don't tell her I said surgeon. She'll get ideas.",
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "do": [
+            {
+              "rel": [
+                "josie_bautista",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Ref room smells like brooms. Dressing room bench is splintered. Ice is fine. Diagnosis: survivable.",
+      "options": [
+        {
+          "text": "The rooms are fixed now. New diagnosis?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "I'll get to the broom smell.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "Upgraded to healthy. No splinters. Refs stopped complaining. Mostly. Discharged.",
+      "options": [
+        {
+          "text": "Discharged. Good.",
+          "do": [
+            {
+              "rel": [
+                "shauna_reid",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

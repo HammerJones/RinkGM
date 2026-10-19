@@ -1,0 +1,338 @@
+{
+  "id": "doreen_vachon",
+  "barks": {
+    "idle": [
+      "Da-da-da-DA. Charge.",
+      "Somebody in the lobby is humming flat. I can hear it, dear."
+    ],
+    "good_ice": [
+      "Lovely ice. That deserves a little fanfare."
+    ],
+    "bad_ice": [
+      "Ice like that gets a dirge, dear."
+    ],
+    "goal": [
+      "(Organ 2) Da-da-da-DA!",
+      "Flip the card! Flip the card!"
+    ],
+    "cold": [
+      "Cold fingers, dear. The Casio doesn't care. I do."
+    ],
+    "greet_owner": [
+      "Hello, dear.",
+      "There you are, dear. Da-DA."
+    ],
+    "leaving_happy": [
+      "Auld Lang Syne for you, dear. Well, half of it."
+    ],
+    "leaving_angry": [
+      "That was a dirge of an evening, dear."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "The 15 card stays in the drawer. Where it belongs.",
+        "Missed call. Dirge. You earned it, Marcel."
+      ],
+      "beer_league": [
+        "Beer league gets the cheap fanfare. It's the same fanfare."
+      ],
+      "figure_show": [
+        "Such lovely music. Not mine. Lovely anyway."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_doreen_vachon"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "senior_hockey"
+        }
+      ],
+      "node": "clock"
+    },
+    {
+      "if": [
+        {
+          "weekday": 2
+        },
+        {
+          "hour_between": [
+            15.0,
+            19.0
+          ]
+        }
+      ],
+      "node": "piano"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "doreen_vachon",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hello, dear. Doreen Vachon. I run the clock and the Casio. Be nice to me and you'll get a fanfare.",
+      "do": [
+        {
+          "set": "met_doreen_vachon"
+        }
+      ],
+      "options": [
+        {
+          "text": "I'd love a fanfare.",
+          "do": [
+            {
+              "rel": [
+                "doreen_vachon",
+                3
+              ]
+            }
+          ],
+          "to": "first_fan"
+        },
+        {
+          "text": "What happens if I'm not nice?",
+          "to": "first_dirge"
+        },
+        {
+          "text": "I hum the anthem in the lobby sometimes.",
+          "do": [
+            {
+              "rel": [
+                "doreen_vachon",
+                -1
+              ]
+            }
+          ],
+          "to": "first_hum"
+        }
+      ]
+    },
+    "first_fan": {
+      "say": "(Three notes, on an imaginary keyboard.) There. Organ 2. That one's free.",
+      "options": [
+        {
+          "text": "Lovely.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_dirge": {
+      "say": "The Kingsport dirge, dear. Ask Marcel Thibodeau. He's heard it four hundred times.",
+      "options": [
+        {
+          "text": "I'll be nice.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_hum": {
+      "say": "Oh, that's you? In B flat? Oh, dear. Tuesdays, upstairs. We'll fix it.",
+      "options": [
+        {
+          "text": "Sorry, Doreen.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "The clock froze twice and the HOME numbers fell off the box. That was a dirge of an evening, dear."
+      ],
+      "options": [
+        {
+          "text": "I'll have it looked at.",
+          "do": [
+            {
+              "rel": [
+                "doreen_vachon",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "clock": {
+      "say": "Game night. The Casio's warmed up, the flip chart's ready, and the 15 card is in the drawer where it belongs.",
+      "options": [
+        {
+          "text": "Break a leg.",
+          "to": "hub"
+        }
+      ]
+    },
+    "piano": {
+      "say": "Tuesday lessons, dear. Little ones upstairs playing Ode to Joy like they're cross with it. I love them.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Hello, dear. A little fanfare for you. Da-da-DA.",
+        "There you are. Pete's been telling everyone about you. In 1971 terms."
+      ],
+      "options": [
+        {
+          "text": "Hi, Doreen.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Yes, dear?",
+        "Hello, dear. Make it quick or make it musical.",
+        "Doreen. What's the tune?"
+      ],
+      "options": [
+        {
+          "text": "How's the clock?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love to watch?",
+          "to": "events"
+        },
+        {
+          "text": "Tell me about Pete.",
+          "to": "pete"
+        },
+        {
+          "text": "And the referees?",
+          "to": "marcel"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Could I hear the dirge?",
+          "to": "dirge"
+        },
+        {
+          "text": "Bye, Doreen.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "The HOME scoreboard died at the 2003 home opener. So I hang painted numbers off the box. Never needed the 15. Never will.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Kings games, beer league, the figure show. Anything with a crowd I can play at.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "pete": {
+      "say": "Fifty years, dear. He starts every story in 1971. I've heard 1971 more than I've heard Christmas.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "marcel": {
+      "say": "Marcel's a fine referee who has missed four hundred calls. He gets the dirge. He knows why.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "What if we fixed the scoreboard?",
+          "if": [
+            {
+              "rooms_gte": 55
+            }
+          ],
+          "to": "board"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "board": {
+      "say": "Then I'd miss my numbers. I'll keep the 15 card anyway. For luck. Bad luck.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dirge": {
+      "say": "(Da... da... dum.) That was a dirge, dear. You earned it, just by asking.",
+      "do": [
+        {
+          "set": "heard_the_dirge"
+        }
+      ],
+      "options": [
+        {
+          "text": "I deserved that.",
+          "do": [
+            {
+              "rel": [
+                "doreen_vachon",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

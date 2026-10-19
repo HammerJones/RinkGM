@@ -1,0 +1,304 @@
+{
+  "id": "stan_szymanski",
+  "barks": {
+    "idle": [
+      "Mm.",
+      "(He nods at the ice.)"
+    ],
+    "good_ice": [
+      "Good sheet."
+    ],
+    "bad_ice": [
+      "Kings deserve better."
+    ],
+    "goal": [
+      "(His elbows leave the rail. Briefly.)",
+      "There."
+    ],
+    "cold": [
+      "Colder in '74."
+    ],
+    "greet_owner": [
+      "(A nod.)",
+      "Mm."
+    ],
+    "leaving_happy": [
+      "Good game."
+    ],
+    "leaving_angry": [
+      "No."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "1979.",
+        "(He says nothing. His elbows are on the rail. It is enough.)"
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_stan_szymanski"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "stan_stool_at_rail"
+        },
+        {
+          "event_now": "senior_hockey"
+        }
+      ],
+      "node": "stool"
+    },
+    {
+      "if": [
+        {
+          "event_now": "senior_hockey"
+        }
+      ],
+      "node": "rail"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "(He nods. A long pause.) Stan.",
+      "do": [
+        {
+          "set": "met_stan_szymanski"
+        }
+      ],
+      "options": [
+        {
+          "text": "(Hand him a coffee without a word.)",
+          "do": [
+            {
+              "rel": [
+                "stan_szymanski",
+                6
+              ]
+            }
+          ],
+          "to": "first_coffee"
+        },
+        {
+          "text": "Big Kings fan, then?",
+          "to": "first_fan"
+        },
+        {
+          "text": "Weren't you in the Ledger?",
+          "do": [
+            {
+              "rel": [
+                "stan_szymanski",
+                -8
+              ]
+            }
+          ],
+          "to": "first_ledger"
+        }
+      ]
+    },
+    "first_coffee": {
+      "say": "(He takes it. Nods again.) Good.",
+      "options": [
+        {
+          "text": "(Nod back.)",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_fan": {
+      "say": "1979. The whole town sang.",
+      "options": [
+        {
+          "text": "I bet.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_ledger": {
+      "say": "(He looks at the ice for a long time.) No.",
+      "options": [
+        {
+          "text": "Sorry, Stan.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Ice was bad. Kings deserved better."
+      ],
+      "options": [
+        {
+          "text": "They'll get it.",
+          "do": [
+            {
+              "rel": [
+                "stan_szymanski",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rail": {
+      "say": "(Elbows on the rail.) Watch.",
+      "options": [
+        {
+          "text": "(Watch with him.)",
+          "do": [
+            {
+              "rel": [
+                "stan_szymanski",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "stool": {
+      "say": "Good stool. Not sitting. Leaning.",
+      "options": [
+        {
+          "text": "Leaning's allowed.",
+          "do": [
+            {
+              "rel": [
+                "stan_szymanski",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Mm.",
+        "(A nod.)",
+        "Yep."
+      ],
+      "options": [
+        {
+          "text": "What was 1979 like?",
+          "to": "y79"
+        },
+        {
+          "text": "Why the rafters end?",
+          "to": "job"
+        },
+        {
+          "text": "What does Pete say about you?",
+          "to": "pete"
+        },
+        {
+          "text": "How's the ice?",
+          "to": "rink"
+        },
+        {
+          "text": "Want to start a wave?",
+          "to": "wave"
+        },
+        {
+          "text": "See you, Stan.",
+          "to": "end"
+        }
+      ]
+    },
+    "y79": {
+      "say": "The whole town sang, and I thought the roof would lift.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "job": {
+      "say": "Stood here opening night, 1974. Never saw a reason to move.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "pete": {
+      "say": "Pete keeps the records. I keep the rail.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Good enough for the Kings?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Puck's sitting down. Like '79.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "wave": {
+      "say": "No.",
+      "options": [
+        {
+          "text": "Fair.",
+          "do": [
+            {
+              "rel": [
+                "stan_szymanski",
+                -3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

@@ -14,6 +14,19 @@ func _ready() -> void:
 	display_name = "Rink glass"
 
 
+## Where people stand at the glass: the end walkways behind the nets and the
+## side walkways past the benches and boxes.
+func places() -> Dictionary:
+	var pts: Array[Vector3] = []
+	for sx in [-1.0, 1.0]:
+		for z in [-9.0, -3.0, 3.0, 9.0]:
+			pts.append(Vector3(sx * (Rink.HALF_L + 1.3), 0, z))
+		for x in [13.5, 18.5, 23.0]:
+			for sz in [-1.0, 1.0]:
+				pts.append(Vector3(sx * x, 0, sz * 16.3))
+	return {"glass": pts}
+
+
 func build(k: VenueKit) -> void:
 	var top := Rink.BOARD_H + 0.04
 	# the asset kit's panel and its frame; panes are see-through per age.

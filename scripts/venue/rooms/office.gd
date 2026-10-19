@@ -53,6 +53,7 @@ func build(k: VenueKit) -> void:
 	cal.name = "Calendar"
 	cal.background = Color("e8e4da")
 	k.sign(cal, Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(X0 + 0.01, Y + 1.6, -8.0)))
+	_m1(k)
 	k.glow(Vector3(-43.5, Y + H - 0.06, -10.4), Vector3(-42.0, Y + H - 0.02, -9.8), k.by_age(Color("e6f0d8"), Color("f4f6f0"), Color("fff6e6")))
 
 
@@ -70,3 +71,30 @@ func _terminal_lines() -> Array:
 		["> FACILITY: %s" % AGE_NAMES[age].to_upper(), VenueSign.AMBER],
 		["> _", VenueSign.WHITE],
 	]
+
+
+## RINK_SIM M1: the desk, the rotary phone, last month's power bill, the
+## corkboard of goals and the ice grid whiteboard, each a spot that opens
+## UI's office screens (or reads, for the bill).
+func _m1(k: VenueKit) -> void:
+	var beige := Color("cbbf9f")
+	k.block(Vector3(-41.55, Y + 0.75, -11.85), Vector3(-41.15, Y + 0.86, -11.45), beige, 0.1, 0.03, false)
+	k.block(Vector3(-41.5, Y + 0.86, -11.82), Vector3(-41.2, Y + 0.9, -11.48), beige.darkened(0.2), 0.1, 0.0, false)
+	add_spot(k, VenueSpot.Kind.SCREEN, "office_phone", Vector3(-41.35, Y + 0.85, -11.65), "Phone", {"screen": "phone"}, 1.4)
+	if k.age != Age.RENOVATED:
+		k.block(Vector3(-41.75, Y + 0.75, -10.5), Vector3(-41.45, Y + 0.755, -10.1), Color("eeeae0"), 0.1, 0.0, false)
+	add_spot(k, VenueSpot.Kind.READ, "power_bill", Vector3(-41.6, Y + 0.8, -10.3), "Electricity bill", {"note": "power_bill"}, 1.3)
+	add_spot(k, VenueSpot.Kind.SCREEN, "office_desk", Vector3(-41.8, Y + 0.8, -10.9), "Desk", {"screen": "desk"}, 1.4)
+	# corkboard on the inner wall, sticky notes for the week's goals
+	var cork := Color("a9814f")
+	k.block(Vector3(-44.4, Y + 1.15, Z1 - 0.13), Vector3(-42.4, Y + 2.05, Z1 - 0.1), cork, 0.3, 0.06, false)
+	for i in 4:
+		var nx := -44.2 + i * 0.48
+		k.block(Vector3(nx, Y + 1.5 + (i % 2) * 0.2, Z1 - 0.135), Vector3(nx + 0.3, Y + 1.78 + (i % 2) * 0.2, Z1 - 0.13), Color("f2e27a"), 0.1, 0.0, false)
+	add_spot(k, VenueSpot.Kind.SCREEN, "corkboard", Vector3(-43.4, Y + 1.6, Z1 - 0.15), "Corkboard", {"screen": "goals"}, 1.6)
+	# the ice grid whiteboard with its magnets
+	k.block(Vector3(-44.8, Y + 1.0, Z0 - 0.02), Vector3(-42.9, Y + 2.0, Z0 + 0.02), Color("eef0f0"), 0.3, 0.02, false)
+	for i in 10:
+		var mx := -44.6 + (i % 5) * 0.34
+		k.block(Vector3(mx, Y + 1.3 + (i / 5) * 0.35, Z0 + 0.02), Vector3(mx + 0.1, Y + 1.38 + (i / 5) * 0.35, Z0 + 0.04), [Color("c8191e"), Color("1d3557"), Color("2a8a4a"), Color("e0b020")][i % 4], 0.1, 0.0, false)
+	add_spot(k, VenueSpot.Kind.SCREEN, "ice_grid", Vector3(-43.85, Y + 1.5, Z0 + 0.05), "Ice grid", {"screen": "ice_grid"}, 1.6)

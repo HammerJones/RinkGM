@@ -1,0 +1,425 @@
+{
+  "id": "dwayne_kuzyk",
+  "barks": {
+    "idle": [
+      "To the ice! To the rink! To whoever's buying!",
+      "10:45 pitcher. Pre-ordered. As is tradition.",
+      "Everybody in the photo. EVERYBODY."
+    ],
+    "good_ice": [
+      "To good ice! *raises imaginary glass*"
+    ],
+    "bad_ice": [
+      "To bad ice! Which is still ice! Cheers!"
+    ],
+    "wet_ice": [
+      "It's practically a pool. To swimming!"
+    ],
+    "goal": [
+      "TO THE GOAL! To the scorer! To his mother!",
+      "Cheers to that one!"
+    ],
+    "cold": [
+      "Cold out here. Warm at the Hat Trick. Just saying."
+    ],
+    "hungry": [
+      "Fries for the table! What table? Any table!"
+    ],
+    "long_line": [
+      "A line is just a party standing up."
+    ],
+    "bored": [
+      "Is it 10:45 yet? It's 10:45 somewhere."
+    ],
+    "greet_owner": [
+      "{owner}! My friend! What are you drinking? Don't tell me. Coffee, double cream.",
+      "A toast! To the owner!"
+    ],
+    "leaving_happy": [
+      "Great game! Even better postgame coming!"
+    ],
+    "leaving_angry": [
+      "Overtime. OVERTIME. The pitcher's getting warm, people."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Is the game over? No? When's it over?",
+        "Ice Holes! Every shot is one step closer to the bar!"
+      ],
+      "broomball": [
+        "Broomball! The postgame with a ball!",
+        "Nobody has to pretend at broomball. That's the beauty."
+      ],
+      "special": [
+        "An event! I love an event! Is there a toast? There's a toast."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_dwayne_kuzyk"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "broomball"
+        }
+      ],
+      "node": "broom_now"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            22.5,
+            24.0
+          ]
+        }
+      ],
+      "node": "late"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "dwayne_kuzyk",
+            45
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Dwayne Kuzyk! Ice Holes, social convenor, Hat Trick Tavern, upstairs apartment. I've missed eleven games and zero postgames. Don't tell me your drink. I'll guess.",
+      "do": [
+        {
+          "set": "met_dwayne_kuzyk"
+        }
+      ],
+      "options": [
+        {
+          "text": "Go on, guess.",
+          "do": [
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                3
+              ]
+            }
+          ],
+          "to": "first_guess"
+        },
+        {
+          "text": "Shouldn't you make the games?",
+          "do": [
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Cheers, Dwayne.",
+          "do": [
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_guess": {
+      "say": "Coffee, one sugar, too tired to care. Am I right? I'm always right. It's a gift. Lorraine taught me.",
+      "options": [
+        {
+          "text": "Scary accurate.",
+          "do": [
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll fix it. Next pitcher's on me.",
+          "do": [
+            {
+              "money": -12
+            },
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                4
+              ]
+            },
+            {
+              "mood": 0.08
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll sort it, Dwayne.",
+          "do": [
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                1
+              ]
+            },
+            {
+              "mood": 0.03
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "broom_now": {
+      "say": [
+        "Broomball Wednesday! Sneakers on, dignity off!",
+        "Kev's laughing already. Rhonda's in goal. Life is good."
+      ],
+      "options": [
+        {
+          "text": "Have fun out there.",
+          "do": [
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Why broomball?",
+          "to": "events"
+        }
+      ]
+    },
+    "late": {
+      "say": [
+        "It's late! It's practically 10:45! Somebody check the clock!",
+        "Is the pitcher ready? Tell me the pitcher's ready."
+      ],
+      "options": [
+        {
+          "text": "The game isn't over yet, Dwayne.",
+          "to": "hub"
+        },
+        {
+          "text": "To the pitcher!",
+          "do": [
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! The finest rink owner I've ever toasted!",
+        "There they are! Somebody get my friend a coffee, double cream."
+      ],
+      "options": [
+        {
+          "text": "Cheers, Dwayne.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What can I pour you? Metaphorically.",
+        "To you! What's up?",
+        "Dwayne's here. Party's officially started."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the Hat Trick?",
+          "to": "job"
+        },
+        {
+          "text": "Why do you love broomball?",
+          "to": "events"
+        },
+        {
+          "text": "What's going on with you and Dale?",
+          "to": "dale"
+        },
+        {
+          "text": "Tell me about seat F-2-12.",
+          "to": "seat"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Can I be in the team photo?",
+          "if": [
+            {
+              "not_flag": "in_ice_holes_photo"
+            }
+          ],
+          "to": "photo"
+        },
+        {
+          "text": "Cheers, Dwayne. Later.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "I pour, I listen, I remember. Kev's a lager. Rhonda's a cider. Lorraine is a tea, black, and a secret. I live upstairs. My commute is twelve steps.",
+      "options": [
+        {
+          "text": "The dream.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Broomball's the postgame with a ball. No skates, no edges, no pretending. Just sneakers and laughing and Kev's laugh, which is louder than the horn.",
+      "options": [
+        {
+          "text": "Sounds like your sport.",
+          "do": [
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "dale": {
+      "say": "Dale fines me for being late. I'm late because the game started on time. Who starts a game on time? Dale. Dale and his binder. I love him. Don't tell him.",
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "do": [
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "seat": {
+      "say": "We donated it. Plaque says 'This is not a joke. Okay it's a bit of a joke.' Best twelve dollars the Ice Holes ever spent.",
+      "options": [
+        {
+          "text": "It's my favourite plaque in the building.",
+          "do": [
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Great rink. Clock runs a bit fast, which helps everyone get to the pitcher on time.",
+      "options": [
+        {
+          "text": "The rooms are nicer now, eh?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "Ha. I'll keep an eye on that clock.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "The dressing room has a bench that doesn't pinch. To the bench! To the carpenter!",
+      "options": [
+        {
+          "text": "Cheers to that.",
+          "to": "hub"
+        }
+      ]
+    },
+    "photo": {
+      "say": "YOU WANT TO BE IN THE PHOTO? Everybody in the photo! That's the rule! Stand there. Squeeze in. Say 'Hat Trick'!",
+      "options": [
+        {
+          "text": "Hat Trick!",
+          "do": [
+            {
+              "set": "in_ice_holes_photo"
+            },
+            {
+              "rel": [
+                "dwayne_kuzyk",
+                5
+              ]
+            },
+            {
+              "note": "The owner is in the Ice Holes team photo. Everybody's in it."
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

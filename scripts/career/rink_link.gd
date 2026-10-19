@@ -12,12 +12,12 @@ extends RefCounted
 ##   Tuesday 22:00 slot of the `vbl_d` contract. The clock stops there so the
 ##   hub can stage the match; play_round() records it and charges the owner.
 ## - League dues: Career.league_gate is RinkSim.owner_can_play.
-## - Money: one balance, the sim's. The owner's dues and costs come out of it.
+## - Money: one balance, the sim's. The owner's dues and costs come out of it,
+##   and the Community Ice Agreement's weekly pay goes into it.
 ## - Save: the sim goes under the career save's `world.rink_sim` key.
 
 const GAME_WEEKDAY := 2           # Tuesday
 const GAME_MINUTE := 22 * 60      # the vbl_d late slot
-const GAME_HOURS := 3.0           # warm-up, the game, the beer (RINK_SIM.md 2.1)
 const UNRESTED_FATIGUE := 70.0
 
 var career: Career
@@ -41,7 +41,7 @@ static func start(c: Career, s: RinkSim) -> RinkLink:
 static func new_owner(first: String, last: String, position: String, seed_: int = 0) -> RinkLink:
 	var c := Career.new_career(first, last, position, seed_)
 	c.save_path = Career.SLOTS.owner.path
-	return start(c, RinkSim.create(seed_ if seed_ != 0 else randi()))
+	return start(c, RinkSim.create_m1(seed_ if seed_ != 0 else randi()))
 
 
 ## The link for a loaded career that follows the world, or null.
@@ -96,7 +96,7 @@ func play_round(user_result: Dictionary = {}) -> Dictionary:
 	var played_user: bool = not career.next_user_game().is_empty() and career.user().dressed()
 	var summary := career.play_round(user_result)
 	if played_user:
-		sim.hours_left -= GAME_HOURS
+		sim.owner_played_game(int(career.settings.game_length() / 60.0))
 	career.game_day = _next_game_day(maxi(career.game_day, sim.day + 1))
 	return summary
 
@@ -107,13 +107,16 @@ func _next_game_day(from: int) -> int:
 	return from + posmod(GAME_WEEKDAY - wd, 7)
 
 
-## Catches the career up with the sim's calendar, a day at a time.
+## Catches the career up with the sim's calendar, a day at a time, and
+## banks the owner's pay.
 func _follow() -> void:
 	while career.day < sim.day:
 		career.pass_day(fatigue() < UNRESTED_FATIGUE)
+	if sim.owner_pay_owed > 0.0:
+		sim.book("Community Ice Agreement", sim.take_owner_pay())
 
 
-## The owner's fatigue, 0..100 (0 until the sim tracks it).
+## The owner's fatigue, 0..100.
 func fatigue() -> float:
-	return float(sim.get("fatigue")) if "fatigue" in sim else 0.0
+	return sim.fatigue
 

@@ -136,6 +136,10 @@ func _show_new_career() -> void:
 		if slot == "owner":
 			CareerState.rink = RinkLink.new_owner(fn, ln, ps)
 			CareerState.career = CareerState.rink.career
+			CareerState.career.save()
+			if not _auto:
+				CareerState.open_walk()  # the week starts at 05:00 in the parking lot
+				return
 		else:
 			CareerState.career = Career.new_demo(slot, fn, ln, ps) if demo else Career.new_career(fn, ln, ps)
 		career = CareerState.career
@@ -202,7 +206,7 @@ func _refresh() -> void:
 	_news(right)
 	var bottom := _row(_root)
 	bottom.add_child(_button("Practice", CareerState.start_practice, false))
-	if CareerState.has_office():
+	if CareerState.has_office() and CareerState.rink.game_due():
 		bottom.add_child(_button("Rink office", CareerState.open_office, false))
 	bottom.add_child(_button("Main menu", func():
 		CareerState.career = null
@@ -295,14 +299,12 @@ func _actions(parent: Control) -> void:
 	if rink and not rink.game_due():
 		parent = _section(parent, "millbrook")
 		parent.add_child(_term_text("> NEXT GAME: %s 22:00 ON YOUR OWN ICE." % RinkSim.DAY_NAMES[RinkLink.GAME_WEEKDAY].to_upper()))
+		parent.add_child(_term_text("> RUN THE RINK FROM THE OFFICE OR ON FOOT. EITHER SENDS YOU BACK HERE AT GAME TIME."))
+		var go := _button("Rink office", CareerState.open_office)
+		go.disabled = not CareerState.has_office()
 		var row := _row(parent)
-		var go := _button("Run the rink to game night", _run_rink)
 		row.add_child(go)
-		if float(rink.sim.league.owed) > 0.0:
-			row.add_child(_button("Pay league dues ($%.0f)" % float(rink.sim.league.owed), func():
-				rink.sim.pay_dues()
-				career.save()
-				_refresh(), false))
+		row.add_child(_button("Walk the rink", CareerState.open_walk, false))
 		go.grab_focus()
 		return
 	var g := career.next_user_game()
@@ -344,7 +346,8 @@ func _actions(parent: Control) -> void:
 	opts.add_child(plen)
 
 
-## Runs the owner's rink until the next game is due.
+## Runs the owner's rink until the next game is due (autopilot only; a player
+## runs the rink from the office).
 func _run_rink() -> void:
 	CareerState.rink.advance_to_game()
 	career.save()

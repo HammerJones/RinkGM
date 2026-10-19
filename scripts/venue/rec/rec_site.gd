@@ -33,10 +33,25 @@ func build(k: VenueKit) -> void:
 	k.aged_block(Vector3(48.0, 0, -58.0), Vector3(50.0, 1.4, -56.6), Color("2a5a3a"), 0.5)
 	for i in 5:
 		k.block(Vector3(-49.0, 0, -50.0 + i * 0.6), Vector3(-48.95, 0.8, -49.95 + i * 0.6), Color("8f9498"), 0.3, 0.0)
-	for p in [Vector2(-62, -75), Vector2(-62, -30), Vector2(-62, 15), Vector2(0, -75), Vector2(40, -75)]:
+	# lot lamps light the lot at night (one sodium lamp out when worn), and
+	# one more by the arena's front doors for the 05:00 walk in
+	var poles := [Vector2(-62, -75), Vector2(-62, -30), Vector2(-62, 15), Vector2(0, -75), Vector2(40, -75), Vector2(-54, -4)]
+	for i in poles.size():
+		var p: Vector2 = poles[i]
+		var out := k.age == Age.WORN and i == 1
 		k.block(Vector3(p.x - 0.12, 0, p.y - 0.12), Vector3(p.x + 0.12, 7.0, p.y + 0.12), Color("6a6e74"), 1.0, 0.0)
 		k.block(Vector3(p.x - 0.3, 6.9, p.y - 0.8), Vector3(p.x + 0.3, 7.1, p.y + 0.8), Color("3a3d44"), 0.5, 0.0, false)
-		k.glow(Vector3(p.x - 0.25, 6.88, p.y - 0.7), Vector3(p.x + 0.25, 6.9, p.y + 0.7), k.by_age(Wear.SODIUM_DIM, Wear.SODIUM, Wear.LED))
+		k.glow(Vector3(p.x - 0.25, 6.88, p.y - 0.7), Vector3(p.x + 0.25, 6.9, p.y + 0.7), Color("3a3936") if out else k.by_age(Wear.SODIUM_DIM, Wear.SODIUM, Wear.LED))
+		if not out:
+			var l := OmniLight3D.new()
+			l.name = "LotLight%d" % i
+			l.position = Vector3(p.x, 6.4, p.y)
+			l.omni_range = 20.0
+			l.omni_attenuation = 1.1
+			l.light_energy = k.by_age(1.8, 2.1, 2.3)
+			l.light_color = k.by_age(Color("ffb060"), Color("ffc070"), Color("eef4ff"))
+			l.shadow_enabled = false
+			k.add(l)
 
 
 ## A concrete apron round the building.

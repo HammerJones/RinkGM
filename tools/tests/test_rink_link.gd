@@ -27,15 +27,23 @@ func _init() -> void:
 		_expect(sim.weekday() == RinkLink.GAME_WEEKDAY and sim.minute >= RinkLink.GAME_MINUTE, "round %d is on Tuesday night (%s)" % [r, sim.clock_text()])
 		_expect(c.day == sim.day, "round %d: the career follows the rink's day (%d vs %d)" % [r, c.day, sim.day])
 		var dressed: bool = not c.next_user_game().is_empty() and c.user().dressed()
-		var hours := sim.hours_left
+		var games := sim.games.size()
 		var gp: int = c.user().season_stats.gp
 		link.play_round()
 		if dressed:
 			_expect(c.user().season_stats.gp == gp + 1, "round %d: the user's game counts" % r)
-			_expect(is_equal_approx(sim.hours_left, hours - RinkLink.GAME_HOURS), "round %d: the evening costs the owner %.0f hours" % [r, RinkLink.GAME_HOURS])
+			_expect(sim.games.size() == games + 1, "round %d: the rink records the owner's evening" % r)
 		_expect(not link.game_due(), "round %d: the next game isn't due yet" % r)
 		_expect(posmod(sim.weekday() + c.game_day - sim.day, 7) == RinkLink.GAME_WEEKDAY, "round %d: the next game is on a Tuesday" % r)
 	_expect(sim.day - start_day >= 14 and sim.day - start_day <= 21, "three weekly games take two to three weeks (%d days)" % (sim.day - start_day))
+	_expect(sim.owner_pay_owed == 0.0 and sim.weekly_reports.size() >= 2, "the Community Ice Agreement's pay is banked each week")
+
+	# an exhausted owner doesn't rest
+	c.user().fatigue = 0.5
+	sim.fatigue = 80.0
+	link.advance(24 * 60)
+	_expect(is_equal_approx(c.user().fatigue, 0.5), "a day ending at fatigue 80 doesn't count as rest")
+	sim.fatigue = 0.0
 
 	# rest: a day only counts when the owner isn't worn out
 	var u := c.user()

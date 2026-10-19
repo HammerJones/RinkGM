@@ -1,0 +1,384 @@
+{
+  "id": "archetype_stick_and_puck_regular",
+  "start": [
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "rel_lt": [
+            "self",
+            -15
+          ]
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "stick_and_puck"
+        }
+      ],
+      "node": "event"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            5,
+            9
+          ]
+        }
+      ],
+      "node": "time"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "self",
+            30
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "grumpy": {
+      "say": [
+        "Got bumped from my hour again. Some of us plan our whole week around this.",
+        "Ice was chewed. Pucks were hopping. Not a good session.",
+        "@how_are_things"
+      ],
+      "options": [
+        {
+          "text": "I'm sorry. What would make it better?",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            },
+            {
+              "mood": 0.03
+            }
+          ],
+          "to": "better"
+        },
+        {
+          "text": "It's an old building. Bear with us.",
+          "to": "hub"
+        },
+        {
+          "text": "Rinks are hard. Take it or leave it.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                -3
+              ]
+            },
+            {
+              "mood": -0.03
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "event": {
+      "say": [
+        "Bucket of pucks, empty net. I'll talk, but I'm still shooting.",
+        "{event}. Five people out here. It's paradise.",
+        "Working on the backhand. It's a long project. Years."
+      ],
+      "options": [
+        {
+          "text": "What are you working on?",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "love"
+        },
+        {
+          "text": "I'll leave you to it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "time": {
+      "say": [
+        "Early hour, best hour. Nobody here but me and the echo.",
+        "Morning. Ice is fresh. Don't talk too loud, you'll wake it."
+      ],
+      "options": [
+        {
+          "text": "Good to see you anyway.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}. Grab a stick. I'll feed you a few.",
+        "Hey. Thanks for keeping the hour. Means a lot. That's all I'll say."
+      ],
+      "options": [
+        {
+          "text": "Good to see you too, {known_as}.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "@how_are_things",
+        "Yeah? What's up.",
+        "Hey. Quick, though. Ice is ticking."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "Why stick and puck?",
+          "to": "love"
+        },
+        {
+          "text": "What brings you to the rink?",
+          "to": "why"
+        },
+        {
+          "text": "What do you make of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Who else comes out for this?",
+          "to": "gossip"
+        },
+        {
+          "text": "What would make this place better for you?",
+          "to": "better"
+        },
+        {
+          "text": "Take care.",
+          "to": "bye"
+        }
+      ]
+    },
+    "love": {
+      "say": [
+        "No refs, no score, no yelling. Just the puck and you. It's church.",
+        "The sound. Puck off the crossbar. Ping. Best sound there is.",
+        "Can't make the beer league schedule. This I can do."
+      ],
+      "options": [
+        {
+          "text": "Makes sense to me.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "why": {
+      "say": "@why_here",
+      "options": [
+        {
+          "text": "Tell me a bit about yourself.",
+          "to": "about"
+        },
+        {
+          "text": "Glad you come.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "about": {
+      "say": "@about",
+      "options": [
+        {
+          "text": "Good to know you, {known_as}.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": [
+        "Ice is the ice. Dead board's still dead. That's fine, I like the dead board.",
+        "Somebody took my favourite puck. I know it's under the visitors' bench.",
+        "@ice"
+      ],
+      "options": [
+        {
+          "text": "The ice has been better lately, hasn't it?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "ice_up"
+        },
+        {
+          "text": "Noticed the work on the building?",
+          "if": [
+            {
+              "rooms_gte": 45
+            }
+          ],
+          "to": "rooms_up"
+        },
+        {
+          "text": "Fair enough. We're working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "ice_up": {
+      "say": [
+        "Ice is quick now. Pucks stay flat. Good work.",
+        "Clean sheet. Nobody ruins it at my hour. Perfect."
+      ],
+      "options": [
+        {
+          "text": "Glad it shows.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rooms_up": {
+      "say": [
+        "Rooms are better. Showers are hot. Didn't need it, appreciated it.",
+        "Fixed the lobby. Fine. I only see it on the way in."
+      ],
+      "options": [
+        {
+          "text": "That's the idea.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": [
+        "There's a guy, Hank Lavoie, comes off nights at the mill. Shoots a hundred pucks, never says a word. Hero.",
+        "Saw Ronnie Haverstock out here once. Passed off the dead board to himself. I nearly retired."
+      ],
+      "options": [
+        {
+          "text": "Ha. Good to know.",
+          "to": "hub"
+        }
+      ]
+    },
+    "better": {
+      "say": [
+        "More stick and puck. An early slot, every weekday. I'd pay for a card of them.",
+        "A punch card for weekday stick and puck. Five bucks a time. I'd never miss."
+      ],
+      "options": [
+        {
+          "text": "I'll see what I can do.",
+          "if": [
+            {
+              "not_flag": "heard_wants_more_stick_and_puck"
+            }
+          ],
+          "do": [
+            {
+              "set": "heard_wants_more_stick_and_puck"
+            },
+            {
+              "rel": [
+                "self",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Can't promise anything, but noted.",
+          "if": [
+            {
+              "not_flag": "heard_wants_more_stick_and_puck"
+            }
+          ],
+          "do": [
+            {
+              "set": "heard_wants_more_stick_and_puck"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "You're not the first to say it. It's on the list.",
+          "if": [
+            {
+              "flag": "heard_wants_more_stick_and_puck"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Back to it. Pucks don't shoot themselves.",
+        "Later. Keep the hour, {owner}."
+      ]
+    }
+  }
+}

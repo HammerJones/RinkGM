@@ -1,0 +1,301 @@
+{
+ "id": "devon_one_song",
+ "giver": "devon_marsh",
+ "quest": "devon_one_song",
+ "nodes": {
+  "offer": {
+   "say": "Can I tell you something? Don't look at my pocket. I'm going to propose to Ama. Here. Saturday skate, during our song, with the lights down. We met here. She fell on me by the rental window. I need help, {owner}. I need, like, a whole operation.",
+   "options": [
+    {
+     "text": "Congratulations. Let's make it happen.",
+     "do": [
+      {
+       "quest_start": "devon_one_song"
+      },
+      {
+       "rel": [
+        "devon_marsh",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why here and not a nice restaurant?",
+     "to": "why"
+    },
+    {
+     "text": "Lights down at public skate? People will crash.",
+     "to": "safety"
+    },
+    {
+     "text": "I'm not great at romance. Ask Doreen.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Because the nice restaurant is the Wobbly Pop. And because here is where she laughed so hard she couldn't get up, and I thought, oh no. Oh no, I'm in trouble.",
+   "options": [
+    {
+     "text": "Okay. You've convinced me.",
+     "do": [
+      {
+       "quest_start": "devon_one_song"
+      },
+      {
+       "rel": [
+        "devon_marsh",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "safety": {
+   "say": "Half the lamps, one song, slow song. Everyone just glides. I asked Dylan, he says people skate slower in the dark because they're scared, which is technically safer.",
+   "options": [
+    {
+     "text": "That's horrifying logic. I'm in.",
+     "do": [
+      {
+       "quest_start": "devon_one_song"
+      },
+      {
+       "rel": [
+        "devon_marsh",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "I'll ask Doreen. She'll ask if my intentions are honourable. They are. Mostly nervous.",
+   "do": [
+    {
+     "rel": [
+      "devon_marsh",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Okay. Song, lights, a spot to kneel. Three things. I can do three things. I can't, but you can.",
+   "options": []
+  },
+  "progress": {
+   "say": "Status report. Please. I haven't eaten.",
+   "options": [
+    {
+     "text": "I'm talking to Doreen about the song.",
+     "if": [
+      {
+       "step": [
+        "devon_one_song",
+        "song"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Dylan's next, for the lights.",
+     "if": [
+      {
+       "step": [
+        "devon_one_song",
+        "lights"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Song and lights are set. Where do you want to kneel?",
+     "if": [
+      {
+       "step": [
+        "devon_one_song",
+        "plan"
+       ]
+      }
+     ],
+     "to": "p_plan"
+    },
+    {
+     "text": "It's all set. Just get through Saturday.",
+     "if": [
+      {
+       "step": [
+        "devon_one_song",
+        "night"
+       ]
+      }
+     ],
+     "to": "p_night"
+    },
+    {
+     "text": "Just checking you're breathing.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_plan": {
+   "say": "Where would you do it?",
+   "options": [
+    {
+     "text": "Centre ice. Classic.",
+     "do": [
+      {
+       "set": "devon_centre_ice"
+      },
+      {
+       "set": "devon_plan_set"
+      }
+     ],
+     "to": "p_centre"
+    },
+    {
+     "text": "Behind the north net, at the Millbrook bank. Where things stop and stay.",
+     "do": [
+      {
+       "set": "devon_bank"
+      },
+      {
+       "set": "devon_plan_set"
+      },
+      {
+       "rel": [
+        "devon_marsh",
+        2
+       ]
+      }
+     ],
+     "to": "p_bank"
+    },
+    {
+     "text": "Next to Doris. Earl can hold the ring.",
+     "do": [
+      {
+       "set": "devon_doris"
+      },
+      {
+       "set": "devon_plan_set"
+      }
+     ],
+     "to": "p_doris"
+    }
+   ]
+  },
+  "p_centre": {
+   "say": "Centre ice. On the faceoff dot. Okay. If she says no I'll just drop the puck and skate away.",
+   "options": []
+  },
+  "p_bank": {
+   "say": "Where the puck stops and stays. Oh, that's good. That's really good. I'm going to cry before she does.",
+   "options": []
+  },
+  "p_doris": {
+   "say": "Earl said 'Fine. Once.' and then he said if I drop the ring in the snow tank it belongs to Doris now. I'll hold it myself.",
+   "options": []
+  },
+  "p_night": {
+   "say": "Saturday. I've practised kneeling on skates in my kitchen. In socks. Ama thinks I've hurt my back. I have, a bit.",
+   "options": []
+  },
+  "complete": {
+   "say": "She said yes. She said yes and then she fell over, on purpose I think, and then everybody clapped and Doreen played the song again, slower, which I didn't think was possible.",
+   "options": [
+    {
+     "text": "Where did you end up kneeling?",
+     "to": "c_where"
+    },
+    {
+     "text": "Congratulations, both of you.",
+     "do": [
+      {
+       "rel": [
+        "devon_marsh",
+        2
+       ]
+      }
+     ],
+     "to": "c_congrats"
+    },
+    {
+     "text": "Does this mean a wedding in the Mezzanine Hall?",
+     "do": [
+      {
+       "set": "devon_wedding_hall_lead"
+      }
+     ],
+     "to": "c_hall"
+    }
+   ]
+  },
+  "c_where": {
+   "say": "Where we planned.",
+   "options": [
+    {
+     "text": "At centre ice?",
+     "if": [
+      {
+       "flag": "devon_centre_ice"
+      }
+     ],
+     "to": "c_centre"
+    },
+    {
+     "text": "At the Millbrook bank?",
+     "if": [
+      {
+       "flag": "devon_bank"
+      }
+     ],
+     "to": "c_bank"
+    },
+    {
+     "text": "Beside Doris?",
+     "if": [
+      {
+       "flag": "devon_doris"
+      }
+     ],
+     "to": "c_doris"
+    }
+   ]
+  },
+  "c_centre": {
+   "say": "Right on the dot. The ref in the stands blew an imaginary whistle. Best faceoff of my life.",
+   "options": []
+  },
+  "c_bank": {
+   "say": "Behind the net. She said 'Why here?' and I said 'Because this is where things stop and stay.' Ronnie Haverstock was there. He took his hat off.",
+   "options": []
+  },
+  "c_doris": {
+   "say": "Earl turned her headlamps on at the exact right moment. I don't know how he knew. Doris knew, he says.",
+   "options": []
+  },
+  "c_congrats": {
+   "say": "Thank you. Really. You ran a whole operation. Ama wants to sign the guestbook. She wants to sign it twice.",
+   "options": []
+  },
+  "c_hall": {
+   "say": "Ama's mum already asked if THE TABLE can be the head table. I said I'd ask you. I'm asking you.",
+   "options": []
+  },
+  "done": {
+   "say": "Engaged. At a rink. My mum thinks it's the most Millbrook thing that's ever happened.",
+   "options": []
+  }
+ }
+}

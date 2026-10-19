@@ -1,0 +1,231 @@
+class_name NpcBrain
+extends RefCounted
+## What one person in the building wants to do next. Pure logic: RinkPeople
+## asks it where to go and how to stand, moves the body there, and tells it
+## when it has arrived. Needs (hunger, bladder, cold, boredom) climb at the
+## person's archetype rates; the event, the ice and the canteen push them
+## around; what happens to them is tallied for Attendance.settle.
+
+enum Pose { STAND, WALK, SIT, SKATE, SKATE_WOBBLY, SPIN, CHEER, CLAP, TALK, WAVE, QUEUE, CARRY, WORK, FALL }
+
+## What the building is doing, set by RinkPeople: "before" (warm-up, people
+## arriving), "on" (play), "break" (intermission, flood), "after" (go home).
+const PHASES := ["before", "on", "break", "after"]
+const DEFAULT_NEEDS := {"hunger": 0.45, "bladder": 0.5, "cold": 0.2, "boredom": 0.3}
+
+var person: Person
+var as_ := "watch"      # play, watch or work
+var kind := ""          # event kind
+var needs := {"hunger": 0.0, "bladder": 0.0, "cold": 0.0, "boredom": 0.0}
+var rates := DEFAULT_NEEDS.duplicate()
+var activity := "arrive"
+var place := "entrance"  # where they're headed or standing (PEOPLE.md 7)
+var pose := Pose.WALK
+var arrived := false
+var wait := 0.0          # minutes left at the current activity
+var home := "stands"     # where they go back to: stands, glass, ice, a work place
+# tallies for the end of the night
+var line_minutes := 0.0
+var wet_minutes := 0.0
+var cold_peak := 0.0
+var left_early := ""
+var mood_bits: Array = []  # [what, delta] worth remembering
+var bark_topic := ""       # set when something is worth saying; RinkPeople clears it
+var rng: RandomNumberGenerator
+
+
+static func make(p: Person, as__: String, kind_: String, rng_: RandomNumberGenerator, archetype := {}) -> NpcBrain:
+	var b := NpcBrain.new()
+	b.person = p
+	b.as_ = as__
+	b.kind = kind_
+	b.rng = rng_
+	var r: Dictionary = archetype.get("needs", {})
+	for k in DEFAULT_NEEDS:
+		b.rates[k] = float(r.get(k, DEFAULT_NEEDS[k]))
+	for k in b.needs:
+		b.needs[k] = rng_.randf() * 0.35
+	match as__:
+		"play":
+			b.home = "ice"
+			b.place = "dressing_room"
+			b.activity = "dress"
+		"work":
+			# RinkPeople puts them at their scheduled place
+			b.activity = "work"
+		_:
+			# some people never sit: the glass-leaners and the coffee coaches
+			var stand := p.archetype in ["coffee_coach", "scout", "superfan"] or p.trait_value("chatter") > 0.8
+			b.home = "glass" if stand and rng_.randf() < 0.6 else "stands"
+			b.place = b.home
+			b.activity = "watch"
+	return b
+
+
+## Advance `minutes` of building time. `ctx`: {"phase", "ice_wet" (bool),
+## "canteen_open" (bool), "line" (people queued), "air_c" (stand
+## temperature), "goal" (true on the frame a goal is scored)}.
+## Returns true when the brain wants to go somewhere new (read `place`).
+func think(minutes: float, ctx: Dictionary) -> bool:
+	var phase: String = ctx.get("phase", "on")
+	var interest := person.interest(kind, "play" if as_ == "play" else "watch")
+	needs.hunger += rates.hunger * minutes / 60.0
+	needs.bladder += rates.bladder * minutes / 60.0
+	# cold: the stands are about 6 C; parkas and blankets help, players are warm
+	var warm := 0.4 if person.look.get("outfit", "") in ["parka", "coveralls"] or person.look.get("accessory", "") in ["blanket", "scarf", "toque", "thermos"] else 0.0
+	var chill := clampf((14.0 - float(ctx.get("air_c", 7.0))) / 10.0, 0.0, 1.5)
+	if as_ == "watch":
+		needs.cold += rates.cold * chill * (1.0 - warm) * minutes / 60.0
+		needs.boredom += rates.boredom * (1.1 - interest) * minutes / 60.0 * (0.4 if phase == "on" else 1.0)
+	cold_peak = maxf(cold_peak, needs.cold)
+	if ctx.get("goal", false) and as_ == "watch" and activity == "watch":
+		pose = Pose.CHEER if rng.randf() < 0.3 + 0.6 * interest else Pose.CLAP
+		wait = 0.08
+		needs.boredom = maxf(needs.boredom - 0.3, 0.0)
+		if rng.randf() < 0.15:
+			bark_topic = "goal"
+	if wait > 0.0:
+		wait -= minutes
+		if activity == "queue":
+			line_minutes += minutes
+		if activity == "gate" and ctx.get("ice_wet", false):
+			wet_minutes += minutes
+		if wait > 0.0:
+			return false
+	return _next(phase, ctx)
+
+
+func _next(phase: String, ctx: Dictionary) -> bool:
+	if phase == "after" or activity == "leave":
+		return _go("leave", "entrance", Pose.WALK) if activity != "leave" else false
+	match as_:
+		"play":
+			return _next_player(phase, ctx)
+		"work":
+			return false
+	# spectators
+	if needs.cold > 1.0 and person.trait_value("patience") < 0.7:
+		left_early = "too cold"
+		mood_bits.append(["froze in the stands", -0.05])
+		bark_topic = "cold"
+		return _go("leave", "entrance", Pose.WALK)
+	if needs.boredom > 1.2 and person.interest(kind, "watch") < 0.3:
+		left_early = "bored"
+		bark_topic = "bored"
+		return _go("leave", "entrance", Pose.WALK)
+	if activity in ["watch", "wander"]:
+		var urgent: bool = needs.bladder > 0.85 or (phase == "break" and needs.bladder > 0.5)
+		if urgent:
+			return _go("washroom", "washroom", Pose.WALK)
+		if needs.hunger > 0.8 or (phase == "break" and needs.hunger > 0.45):
+			if ctx.get("canteen_open", true):
+				return _go("queue", "canteen", Pose.WALK)
+			if rng.randf() < 0.3:
+				mood_bits.append(["the canteen was closed", -0.03])
+				bark_topic = "hungry"
+			needs.hunger = 0.5
+		if needs.boredom > 0.9 and activity == "watch":
+			return _go("wander", "lobby", Pose.WALK)
+	if activity != "watch" or place != home:
+		return _go("watch", home, Pose.WALK)
+	return false
+
+
+func _next_player(phase: String, ctx: Dictionary) -> bool:
+	match activity:
+		"dress":
+			if phase in ["on", "break"] or (phase == "before" and arrived):
+				return _go("gate", "bench", Pose.WALK)
+		"gate":
+			if ctx.get("ice_wet", false):
+				if wet_minutes > 3.0 and bark_topic == "" and rng.randf() < 0.3:
+					bark_topic = "wet_ice"
+				wait = 1.0
+				pose = Pose.QUEUE
+				return false
+			return _go("skate", "ice", _skate_pose())
+		"skate":
+			if phase == "break":
+				return _go("gate", "bench", Pose.WALK)
+			# a lap somewhere else on the ice
+			wait = rng.randf_range(0.2, 0.6)
+			pose = _skate_pose()
+			place = "ice"
+			return true
+	return false
+
+
+func _skate_pose() -> int:
+	if kind == "learn_to_skate" or (kind == "public_skate" and person.interest("public_skate", "play") < 0.4):
+		return Pose.FALL if rng.randf() < 0.06 else Pose.SKATE_WOBBLY
+	if kind in ["figure_practice", "figure_show"] and rng.randf() < 0.25:
+		return Pose.SPIN
+	return Pose.SKATE
+
+
+func _go(act: String, where: String, walking: int) -> bool:
+	activity = act
+	place = where
+	pose = walking
+	arrived = false
+	wait = 0.0
+	return true
+
+
+## The body got where it was going: settle into the activity.
+func arrive() -> void:
+	arrived = true
+	match activity:
+		"watch":
+			pose = Pose.SIT if place == "stands" else Pose.STAND
+			wait = rng.randf_range(2.0, 6.0)
+		"queue":
+			pose = Pose.QUEUE
+			wait = 0.5   # RinkPeople serves the queue; until then keep waiting
+		"washroom":
+			pose = Pose.STAND
+			wait = rng.randf_range(2.0, 4.0)
+			needs.bladder = 0.0
+		"wander":
+			pose = Pose.STAND
+			wait = rng.randf_range(2.0, 5.0)
+			needs.boredom = maxf(needs.boredom - 0.6, 0.0)
+		"dress":
+			pose = Pose.STAND
+			wait = rng.randf_range(4.0, 9.0)
+		"gate":
+			pose = Pose.QUEUE
+			wait = 0.5
+		"skate":
+			pose = _skate_pose()
+			wait = rng.randf_range(0.2, 0.5)
+		"work":
+			pose = Pose.WORK
+		"leave":
+			pose = Pose.WALK
+
+
+## Served at the canteen: fed, and back to their spot.
+func served() -> void:
+	needs.hunger = 0.0
+	needs.cold = maxf(needs.cold - 0.3, 0.0)  # hot chocolate
+	wait = 0.0
+	if line_minutes > 8.0:
+		bark_topic = "long_line"
+	activity = "carry"
+	_go("watch", home, Pose.CARRY)
+
+
+func is_gone() -> bool:
+	return activity == "leave" and arrived
+
+
+## What they'll remember, for Attendance.settle's "extra".
+func verdict() -> Array:
+	if left_early == "too cold":
+		return ["left early, frozen", -0.08]
+	var worst: Array = []
+	for b in mood_bits:
+		if worst.is_empty() or float(b[1]) < float(worst[1]):
+			worst = b
+	return worst

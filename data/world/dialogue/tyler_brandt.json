@@ -1,0 +1,659 @@
+{
+  "id": "tyler_brandt",
+  "barks": {
+    "idle": [
+      "When I was in Junior B, we had a guy just for sticks. Just sticks.",
+      "Senior camp invite's coming. Any day. Any day now.",
+      "Turn the speaker up. Warm-up's not warm-up without music."
+    ],
+    "good_ice": [
+      "Now this is Junior B ice. Slapshot ice.",
+      "Fast ice. I'm faster."
+    ],
+    "bad_ice": [
+      "I can't wind up on this. In Junior B the ice was perfect. Every night. Mostly."
+    ],
+    "wet_ice": [
+      "Wet ice kills a slapshot. It's science."
+    ],
+    "goal": [
+      "Blue line! Did you see where that came from? The BLUE LINE.",
+      "That's what I'm talking about!"
+    ],
+    "cold": [
+      "Cold? Junior B bus heater broke in Ellery. This is nothing."
+    ],
+    "hungry": [
+      "Junior B pre-game meal was pasta. Here it's fries. I adapt."
+    ],
+    "long_line": [
+      "I've got a phone sale at nine, people."
+    ],
+    "bored": [
+      "I could be at Senior camp right now. Theoretically."
+    ],
+    "greet_owner": [
+      "{owner}! You catch my slapper last week?",
+      "Hey, owner. Ice good tonight? It better be."
+    ],
+    "leaving_happy": [
+      "Three shots from the point. One went in. That's Junior B math."
+    ],
+    "leaving_angry": [
+      "Ref's blind and the ice is garbage. Great night."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Cold Ones on three! Music up!",
+        "Every rush ends with a slapshot. That's the system."
+      ],
+      "senior_hockey": [
+        "That should be me out there. Next year. Watch."
+      ],
+      "stick_and_puck": [
+        "Hundred slappers before work. That's the routine."
+      ],
+      "pro_practice": [
+        "The Dukes. One day they'll be watching me."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_tyler_brandt"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "path": "player"
+        },
+        {
+          "day_gte": 365
+        },
+        {
+          "not_flag": "tyler_told_call"
+        }
+      ],
+      "node": "call"
+    },
+    {
+      "if": [
+        {
+          "path": "player"
+        },
+        {
+          "day_gte": 730
+        },
+        {
+          "flag": "tyler_told_call"
+        },
+        {
+          "not_flag": "tyler_came_down"
+        }
+      ],
+      "node": "came_down"
+    },
+    {
+      "if": [
+        {
+          "flag": "tyler_came_down"
+        }
+      ],
+      "node": "humble"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "bl_now"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Tyler Brandt. Cold Ones captain. Played Junior B in 2017. Half a season, but it was the good half.",
+      "do": [
+        {
+          "set": "met_tyler_brandt"
+        }
+      ],
+      "options": [
+        {
+          "text": "Junior B! Impressive.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                4
+              ]
+            }
+          ],
+          "to": "first_jrb"
+        },
+        {
+          "text": "Only half a season, though?",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                -3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Nice to meet you, Tyler.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_jrb": {
+      "say": "Right? People forget. Twenty-two games. Four goals. Two from the blue line. Senior's calling. I can feel it.",
+      "options": [
+        {
+          "text": "I hope they call.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll sort it, Tyler.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Junior B ice was probably worse.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "call": {
+      "say": "Got the call. Kessler. Millmen camp. I'm going, {owner}. A year ahead of you. Just saying.",
+      "options": [
+        {
+          "text": "Congratulations. You earned it.",
+          "do": [
+            {
+              "set": "tyler_told_call"
+            },
+            {
+              "rel": [
+                "tyler_brandt",
+                4
+              ]
+            }
+          ],
+          "to": "call_yes"
+        },
+        {
+          "text": "See you in the Barn, rival.",
+          "do": [
+            {
+              "set": "tyler_told_call"
+            },
+            {
+              "rel": [
+                "tyler_brandt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "call_yes": {
+      "say": "...Thanks. Seriously. I thought you'd chirp me. Don't make this weird.",
+      "options": [
+        {
+          "text": "Go get 'em.",
+          "to": "hub"
+        }
+      ]
+    },
+    "came_down": {
+      "say": "So. They let me go. Kessler. Hap said 'We'll see' and then he saw. I'm back in A. Don't say anything about 2017.",
+      "options": [
+        {
+          "text": "I wasn't going to. You'll be back.",
+          "do": [
+            {
+              "set": "tyler_came_down"
+            },
+            {
+              "rel": [
+                "tyler_brandt",
+                5
+              ]
+            }
+          ],
+          "to": "came_down2"
+        },
+        {
+          "text": "Junior B, though, right?",
+          "do": [
+            {
+              "set": "tyler_came_down"
+            },
+            {
+              "rel": [
+                "tyler_brandt",
+                -4
+              ]
+            }
+          ],
+          "to": "came_down2"
+        }
+      ]
+    },
+    "came_down2": {
+      "say": "I was scared the whole time up there. Every shift. Nobody tells you that part. Anyway. Back to beer league. Back to the speaker.",
+      "options": [
+        {
+          "text": "Scared means you cared.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Beer league's lucky to have you.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "humble": {
+      "say": [
+        "Hey, {owner}. Ice looks good. Honestly.",
+        "Hey. I've stopped talking about 2017. Mostly. Kenny counts. I'm at four this month."
+      ],
+      "options": [
+        {
+          "text": "Good to see you, Tyler.",
+          "to": "hub"
+        },
+        {
+          "text": "Good game, Tyler. Handshake line rules.",
+          "if": [
+            {
+              "flag": "tyler_handshake"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bl_now": {
+      "say": [
+        "Music's up, Cold Ones are up. Watch the blue line.",
+        "Tonight I'm shooting from the point every rush. Every rush."
+      ],
+      "options": [
+        {
+          "text": "Maybe try a pass?",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Good game in the handshake line, whatever happens.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                1
+              ]
+            }
+          ],
+          "to": "handshake"
+        },
+        {
+          "text": "Have a good one.",
+          "to": "end"
+        }
+      ]
+    },
+    "handshake": {
+      "say": "The handshake line. Yeah. It's... that's actually my favourite part. Don't tell the guys. Good game. Whatever happens. You too.",
+      "options": [
+        {
+          "text": "You too, Tyler.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                3
+              ]
+            },
+            {
+              "set": "tyler_handshake"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What's up? Make it quick, I'm hydrating.",
+        "Owner! You know I'm one call from Senior, right?",
+        "Hey. Junior B question? Ask away."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What do you do for work?",
+          "to": "job"
+        },
+        {
+          "text": "What's the Cold Ones' game plan?",
+          "to": "events"
+        },
+        {
+          "text": "You and Kenny Szabo get on?",
+          "to": "rivals"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Ready to be coached, Tyler?",
+          "if": [
+            {
+              "path": "coach"
+            },
+            {
+              "not_flag": "tyler_coached"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "Passing more these days, Tyler?",
+          "if": [
+            {
+              "path": "coach"
+            },
+            {
+              "flag": "tyler_coached"
+            }
+          ],
+          "to": "coach2"
+        },
+        {
+          "text": "Let's talk contracts.",
+          "if": [
+            {
+              "path": "gm"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "See you, Tyler.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Phones. Harlow Falls mall. I'm the top seller. You know why? Junior B. You learn to close in Junior B.",
+      "options": [
+        {
+          "text": "Sounds like a life skill.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Slapshot from the blue line, every rush. I saw it on TV. It works. Statistically. Sometimes.",
+      "options": [
+        {
+          "text": "And the music in warm-up?",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Ever try a wrist shot?",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rivals": {
+      "say": "Kenny's nice. Too nice. Nobody's that nice. What's he hiding? And don't get me started on the other Tyler. At Bev's. The till Tyler. There can only be one.",
+      "options": [
+        {
+          "text": "Kenny's just nice, Tyler.",
+          "do": [
+            {
+              "rel": [
+                "kenny_szabo",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Two Tylers is plenty for one town.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "It's not Junior B. But the boards are good for a rim. Junior B boards were better.",
+      "options": [
+        {
+          "text": "And now that the ice is better?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "We'll get there.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Okay. Fine. This is better than Junior B. Don't tell anybody. I'll deny it.",
+      "options": [
+        {
+          "text": "Not a word.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "Coach. Okay. Just put me on the point and let me shoot. That's all I need.",
+      "options": [
+        {
+          "text": "You'll shoot when it's the right shot. And you'll backcheck.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                -1
+              ]
+            },
+            {
+              "set": "tyler_coached"
+            }
+          ],
+          "to": "coach2"
+        },
+        {
+          "text": "Show me you can pass first.",
+          "do": [
+            {
+              "set": "tyler_coached"
+            }
+          ],
+          "to": "coach2"
+        }
+      ]
+    },
+    "coach2": {
+      "say": "Backcheck. Pass. Right. ...Nobody in Junior B ever told me that. Maybe that's why it was half a season.",
+      "options": [
+        {
+          "text": "Maybe. Let's find out.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "I'm worth top dollar. Junior B pedigree. Slapshot. Leadership. I'll sign for... okay, what are you offering?",
+      "options": [
+        {
+          "text": "Less than you want. More than you think.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Show me a season first.",
+          "do": [
+            {
+              "rel": [
+                "tyler_brandt",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

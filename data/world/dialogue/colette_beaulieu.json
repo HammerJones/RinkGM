@@ -1,0 +1,530 @@
+{
+  "id": "colette_beaulieu",
+  "barks": {
+    "idle": [
+      "Knees soft, eyes up, you've got this.",
+      "Sticker chart's full again. I need more penguins.",
+      "Allez, allez!"
+    ],
+    "good_ice": [
+      "Beautiful ice. My little ones will glide today.",
+      "Oh, look at that sheet. Merci, Earl."
+    ],
+    "bad_ice": [
+      "Ruts at learn-to-skate are how we lose a kid for a whole year."
+    ],
+    "wet_ice": [
+      "Wet ice means wet mittens means tears. I'll get the spare mittens."
+    ],
+    "goal": [
+      "Yay! Good job, everyone!",
+      "Wow, look at that!"
+    ],
+    "cold": [
+      "Little fingers get cold fast. Mittens on!"
+    ],
+    "hungry": [
+      "One tea and twelve juice boxes, please."
+    ],
+    "long_line": [
+      "We'll do a line drill while we wait. Single file, ducklings!"
+    ],
+    "bored": [
+      "Let's play red light, green light!"
+    ],
+    "greet_owner": [
+      "Bonjour, {owner}! Knees soft today?",
+      "Hi! The kids asked if you'd come watch."
+    ],
+    "leaving_happy": [
+      "Three kids let go today. THREE."
+    ],
+    "leaving_angry": [
+      "Too many parents filming. Not enough parents holding."
+    ],
+    "event_specific": {
+      "learn_to_skate": [
+        "Knees soft! Eyes up! Hands out like airplane wings!",
+        "One more push. Then a sticker."
+      ],
+      "figure_practice": [
+        "Hélène's watching. Back straight. Toujours.",
+        "Again. Oh, I sound like her."
+      ],
+      "figure_show": [
+        "Snowflakes, line up! Biggest smile wins!",
+        "If you fall, you smile. That's showbusiness."
+      ],
+      "public_skate": [
+        "Helmets on the little ones, please! And the big ones."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_colette_beaulieu"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "learn_to_skate"
+        }
+      ],
+      "node": "lts_now"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_show"
+        }
+      ],
+      "node": "show_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "colette_beaulieu",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hi! Colette Beaulieu. Assistant coach with the figure club, and the kids' learn-to-skate. Everybody under twelve calls me Coach Colette. You can too!",
+      "do": [
+        {
+          "set": "met_colette_beaulieu"
+        }
+      ],
+      "options": [
+        {
+          "text": "Nice to meet you, Coach Colette.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "What's the secret to teaching kids?",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                2
+              ]
+            }
+          ],
+          "to": "first_secret"
+        }
+      ]
+    },
+    "first_secret": {
+      "say": "Patience, stickers, and never saying 'it's fine' when it isn't. They always know. Kids are tiny lie detectors.",
+      "options": [
+        {
+          "text": "Good advice for adults too.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll fix it, Colette. For the kids.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "What can I do right now?",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "lts_now": {
+      "say": [
+        "Eleven kids, one me, one chair. Maddie's on chair 3. Come say hi!",
+        "Airplane arms! Good! Knees soft! Very good!"
+      ],
+      "options": [
+        {
+          "text": "Need an extra pair of hands?",
+          "if": [
+            {
+              "not_flag": "helped_colette_lts"
+            }
+          ],
+          "to": "lts_help"
+        },
+        {
+          "text": "Same three by the boards? Good falls only.",
+          "if": [
+            {
+              "flag": "helped_colette_lts"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Looking great, Coach.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "lts_help": {
+      "say": "Yes! Take the three by the boards. Hold them, don't film them. If anyone falls, help them up and say 'good fall'. That's it. That's coaching.",
+      "options": [
+        {
+          "text": "Good fall! Got it.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                4
+              ]
+            },
+            {
+              "set": "helped_colette_lts"
+            },
+            {
+              "note": "Helped Coach Colette with the kids' learn-to-skate group."
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "show_now": {
+      "say": [
+        "The Snowflake Showcase! Thirty snowflakes, one tiny Zamboni costume. I haven't slept.",
+        "Maddie might let go today. Don't say anything. Don't look at her. Okay, look."
+      ],
+      "options": [
+        {
+          "text": "You've got this, Coach.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Can I help backstage?",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! The kids made you a card. It's mostly glitter.",
+        "Bonjour! My favourite owner! My only owner. Still."
+      ],
+      "options": [
+        {
+          "text": "Hi, Colette.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hi! What's up?",
+        "Bonjour! Quick, I have a sticker emergency in ten minutes.",
+        "Knees soft! Sorry. Habit. Hi!"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's coaching with Hélène?",
+          "to": "helene"
+        },
+        {
+          "text": "What's the best part of learn-to-skate?",
+          "to": "events"
+        },
+        {
+          "text": "Can I have a sticker?",
+          "if": [
+            {
+              "not_flag": "got_colette_sticker"
+            }
+          ],
+          "to": "sticker"
+        },
+        {
+          "text": "How's Maddie doing?",
+          "to": "maddie"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Should adults have to wear helmets here too?",
+          "if": [
+            {
+              "not_flag": "lts_adult_helmets"
+            }
+          ],
+          "to": "helmets"
+        },
+        {
+          "text": "Can I help with the kids' group?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "See you, Coach.",
+          "to": "end"
+        }
+      ]
+    },
+    "helene": {
+      "say": "I've skated for her since I was six. She says 'good' once a year. I wait all year. Je l'adore. I never landed the triple loop. Most days, I'm at peace with it.",
+      "options": [
+        {
+          "text": "Most days?",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "The moment someone lets go. The look on their face. Like they just discovered they can fly. I've seen it a thousand times. I still cry.",
+      "options": [
+        {
+          "text": "That's beautiful.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "sticker": {
+      "say": "Hmm. Did you get up after you fell today? Then yes. Gold star. For effort.",
+      "options": [
+        {
+          "text": "I'll treasure it.",
+          "do": [
+            {
+              "item": [
+                "gold_star_sticker",
+                1
+              ]
+            },
+            {
+              "set": "got_colette_sticker"
+            },
+            {
+              "rel": [
+                "colette_beaulieu",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "maddie": {
+      "say": "She holds chair 3 like it's a life raft. She asks why ice is slippery. She'll let go when she's ready. I think it'll be soon.",
+      "options": [
+        {
+          "text": "She will.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Learn-to-skate needs soft, smooth ice, warm benches, and parents who hold instead of film. You control two of those.",
+      "options": [
+        {
+          "text": "The ice is better now. Noticed?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "I'll work on my two.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Oh, so much. The little ones fall less, and when they fall, it's a good fall. Merci.",
+      "options": [
+        {
+          "text": "De rien.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "helmets": {
+      "say": "Yes! Helmetless adults at learn-to-skate make me crazy. One fall and it's a concussion. Can we make it a rule?",
+      "options": [
+        {
+          "text": "It's a rule. Helmets for everyone at learn-to-skate.",
+          "do": [
+            {
+              "set": "lts_adult_helmets"
+            },
+            {
+              "rel": [
+                "colette_beaulieu",
+                5
+              ]
+            },
+            {
+              "note": "Helmets are now required for adults at learn-to-skate."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll think about it.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "You're helping? Thank goodness. Eleven kids, one me, one chair. You take the drills, I'll take the stickers. Skate it so they can see it.",
+      "options": [
+        {
+          "text": "Show, don't tell. Got it.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

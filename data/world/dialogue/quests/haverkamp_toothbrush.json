@@ -1,0 +1,336 @@
+{
+ "id": "haverkamp_toothbrush",
+ "giver": "lyle_haverkamp",
+ "quest": "haverkamp_toothbrush",
+ "nodes": {
+  "offer": {
+   "say": "A hundred and eighty dollars, {owner}. One front incisor, one crown, one Saturday morning I'd planned to spend fishing. He's refused the toothbrush in the handshake line eleven games running. Eleven! It's a good toothbrush. Medium bristle.",
+   "options": [
+    {
+     "text": "Let me talk to Sauce. Maybe we can settle this.",
+     "do": [
+      {
+       "quest_start": "haverkamp_toothbrush"
+      },
+      {
+       "rel": [
+        "lyle_haverkamp",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Is this really about the money?",
+     "to": "why"
+    },
+    {
+     "text": "Were you wearing a mouthguard, Doctor?",
+     "to": "cheek"
+    },
+    {
+     "text": "I stay out of beer league feuds.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "No. It's about the handshake line. A handshake line is a promise, {owner}. You don't refuse a toothbrush. It's like refusing a hand. With bristles.",
+   "options": [
+    {
+     "text": "Then let's fix the handshake line.",
+     "do": [
+      {
+       "quest_start": "haverkamp_toothbrush"
+      },
+      {
+       "rel": [
+        "lyle_haverkamp",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "That is a separate matter and I will thank you not to raise it in front of the hygienist.",
+   "options": [
+    {
+     "text": "Noted. I'll talk to Sauce.",
+     "do": [
+      {
+       "quest_start": "haverkamp_toothbrush"
+      },
+      {
+       "rel": [
+        "lyle_haverkamp",
+        2
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "So that's a no, then.",
+     "do": [
+      {
+       "rel": [
+        "lyle_haverkamp",
+        -1
+       ]
+      }
+     ],
+     "to": "cheek2"
+    }
+   ]
+  },
+  "cheek2": {
+   "say": "It is a 'not yet'. Will you help or not?",
+   "options": [
+    {
+     "text": "I'll help.",
+     "do": [
+      {
+       "quest_start": "haverkamp_toothbrush"
+      },
+      {
+       "rel": [
+        "lyle_haverkamp",
+        2
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Wise. The Toothbrush Incident has claimed better rink owners than you. Well. Gus.",
+   "do": [
+    {
+     "rel": [
+      "lyle_haverkamp",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "He drinks at the Legion after the Moose Knuckles play. Go before the second pint. After the second pint it's all 1994.",
+   "options": []
+  },
+  "progress": {
+   "say": "Any movement on the incisor question?",
+   "options": [
+    {
+     "text": "I still need to hear Sauce out.",
+     "if": [
+      {
+       "step": [
+        "haverkamp_toothbrush",
+        "rick"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "I've talked to Sauce. Here's my offer.",
+     "if": [
+      {
+       "step": [
+        "haverkamp_toothbrush",
+        "settle"
+       ]
+      }
+     ],
+     "to": "p_settle"
+    },
+    {
+     "text": "It's set. Just the game now.",
+     "if": [
+      {
+       "step": [
+        "haverkamp_toothbrush",
+        "game"
+       ]
+      }
+     ],
+     "to": "p_game"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_settle": {
+   "say": "I'm listening. Professionally.",
+   "options": [
+    {
+     "text": "The rink pays the bill. Everyone shakes hands.",
+     "do": [
+      {
+       "money": -180
+      },
+      {
+       "set": "toothbrush_owner_paid"
+      },
+      {
+       "set": "toothbrush_settled"
+      },
+      {
+       "rel": [
+        "lyle_haverkamp",
+        2
+       ]
+      }
+     ],
+     "to": "p_paid"
+    },
+    {
+     "text": "Sauce doesn't pay, but the Moose Knuckles wear mouthguards all season.",
+     "do": [
+      {
+       "set": "toothbrush_mouthguards"
+      },
+      {
+       "set": "toothbrush_settled"
+      },
+      {
+       "rel": [
+        "lyle_haverkamp",
+        4
+       ]
+      }
+     ],
+     "to": "p_guards"
+    },
+    {
+     "text": "The next game decides it. Winner takes the toothbrush, loser takes the bill.",
+     "do": [
+      {
+       "set": "toothbrush_wager"
+      },
+      {
+       "set": "toothbrush_settled"
+      },
+      {
+       "rel": [
+        "rick_saucier",
+        2
+       ]
+      }
+     ],
+     "to": "p_bet"
+    }
+   ]
+  },
+  "p_paid": {
+   "say": "The rink paying for Sauce's tooth. That's very generous and it teaches him nothing. I accept.",
+   "options": []
+  },
+  "p_guards": {
+   "say": "Mouthguards? All of them? For a whole season? You've just given a dentist the happiest day of his career. I'll fit them myself. Free. I'll weep a little.",
+   "options": []
+  },
+  "p_bet": {
+   "say": "A wager. Very beer league. Very unwise. I love it.",
+   "options": []
+  },
+  "p_game": {
+   "say": "I've brought a fresh toothbrush. Soft bristle, as a gesture.",
+   "options": []
+  },
+  "complete": {
+   "say": "He took the toothbrush. He took it! He said 'fine' and put it in his glove and the whole Molars bench applauded. Here. The first toothbrush he refused, 2024, framed. For the visitors' room wall. History should be seen.",
+   "options": [
+    {
+     "text": "How did the settlement land with him?",
+     "to": "c_how"
+    },
+    {
+     "text": "It'll go up beside TOOTHBRUSH INCIDENT, NEVER FORGET.",
+     "do": [
+      {
+       "set": "toothbrush_framed_on_wall"
+      }
+     ],
+     "to": "c_wall"
+    },
+    {
+     "text": "Now will you wear a mouthguard?",
+     "do": [
+      {
+       "rel": [
+        "lyle_haverkamp",
+        1
+       ]
+      }
+     ],
+     "to": "c_guard"
+    }
+   ]
+  },
+  "c_how": {
+   "say": "Depends what you did.",
+   "options": [
+    {
+     "text": "I paid the bill.",
+     "if": [
+      {
+       "flag": "toothbrush_owner_paid"
+      }
+     ],
+     "to": "c_paid"
+    },
+    {
+     "text": "The mouthguards.",
+     "if": [
+      {
+       "flag": "toothbrush_mouthguards"
+      }
+     ],
+     "to": "c_guards"
+    },
+    {
+     "text": "The wager.",
+     "if": [
+      {
+       "flag": "toothbrush_wager"
+      }
+     ],
+     "to": "c_bet"
+    }
+   ]
+  },
+  "c_paid": {
+   "say": "He said someone finally understood the value of a 1994 tooth. He's telling people the rink 'settled out of court'. There was no court.",
+   "options": []
+  },
+  "c_guards": {
+   "say": "Seven Moose Knuckles in mouthguards. Sauce says it makes his stories hard to understand. Nobody has complained.",
+   "options": []
+  },
+  "c_bet": {
+   "say": "We lost, three to two. He took the toothbrush AND the bill went away. He's never been happier. Neither have I, oddly.",
+   "options": []
+  },
+  "c_wall": {
+   "say": "Under the pike drawing. Port Ainsley's dentist will be so jealous.",
+   "options": []
+  },
+  "c_guard": {
+   "say": "I will wear one when he pays his... you know what, yes. Fine. Yes. Leading by example. Don't tell the hygienist I said fine.",
+   "options": []
+  },
+  "done": {
+   "say": "Handshake line, toothbrush accepted. A civilisation.",
+   "options": []
+  }
+ }
+}

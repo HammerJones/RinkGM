@@ -19,6 +19,16 @@ func _ready() -> void:
 	spawn = Vector3(X0 + 1.5, 0, 0)
 
 
+## The snack bar line (front first), the skate window and the front doors
+## (outside, then just inside).
+func places() -> Dictionary:
+	var line: Array[Vector3] = []
+	for i in 5:
+		line.append(Vector3(-39.5, 0, -10.2 + i * 0.8))
+	return {"canteen": line, "skate_rental": [Vector3(X0 + 3.5, 0, -10.0)],
+		"entrance": [Vector3(X0 - 1.4, 0, 0.4), Vector3(X0 + 1.5, 0, 0.4)]}
+
+
 func build(k: VenueKit) -> void:
 	var t := Venue.WALL_T
 	var brick: Color = k.by_age(Color("8e5a45"), Color("9c6650"), Wear.STEEL)
@@ -67,6 +77,7 @@ func build(k: VenueKit) -> void:
 	_seating(k)
 	_ceiling_lights(k)
 	_signs(k)
+	_first_hour(k)
 	room_light(k, Vector3(-41.5, H - 0.4, -6.0), 7.5)
 	room_light(k, Vector3(-41.5, H - 0.4, 6.0), 7.5)
 
@@ -186,3 +197,26 @@ func _signs(k: VenueKit) -> void:
 	welcome.name = "WelcomeBoard"
 	welcome.dead = k.by_age(0.04, 0.0, 0.0)
 	k.sign(welcome, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(X1 - 0.31, 3.55, 0)))
+
+
+## RINK_SIM 1.6: the mat outside the front doors with Gus's envelope under
+## it (the keys), the ice lighting panel inside the doors, and the
+## dedication plaque beside them.
+func _first_hour(k: VenueKit) -> void:
+	var xo := -Venue.HALF_X - 0.05
+	k.block(Vector3(xo - 1.1, 0.0, -0.9), Vector3(xo - 0.1, 0.03, 0.9), k.by_age(Color("3b3a36"), Color("2f3236"), Color("1d1f24")), 0.3, 0.08, false)
+	if k.age == Age.WORN:
+		k.block(Vector3(xo - 0.75, 0.03, 0.15), Vector3(xo - 0.45, 0.035, 0.5), Color("e8e0c8"), 0.2, 0.02, false)  # the envelope's corner
+	add_spot(k, VenueSpot.Kind.READ, "gus_envelope", Vector3(xo - 0.6, 0.1, 0.3), "Envelope under the mat",
+		{"readable": "gus_envelope", "gives": "keys"}, 1.8)
+	# the lighting panel: grey box, a column of breakers, one taped over
+	var px := X0 + 0.02
+	k.aged_block(Vector3(px, 1.0, -2.75), Vector3(px + 0.14, 1.9, -1.85), Color("7d8288"), 0.3)
+	for i in 6:
+		var y := 1.1 + i * 0.13
+		k.block(Vector3(px + 0.14, y, -2.55), Vector3(px + 0.17, y + 0.06, -2.4), Color("1b1d22"), 0.1, 0.0, false)
+		k.block(Vector3(px + 0.14, y, -2.25), Vector3(px + 0.17, y + 0.06, -2.1), Color("e0b020") if i == 2 else Color("1b1d22"), 0.1, 0.0, false)
+	add_spot(k, VenueSpot.Kind.SWITCH, "ice_lights", Vector3(px + 0.15, 1.45, -2.3), "Ice lighting panel",
+		{"system": "ice_lights", "note": "breaker_panel"}, 1.6)
+	k.block(Vector3(px, 1.3, 1.7), Vector3(px + 0.04, 1.75, 2.3), Color("8a6a2a"), 0.2, 0.03, false)
+	add_spot(k, VenueSpot.Kind.READ, "dedication_plaque", Vector3(px + 0.05, 1.5, 2.0), "Dedication plaque", {"readable": "dedication_plaque"}, 1.5)

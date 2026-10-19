@@ -2,8 +2,22 @@ extends SceneTree
 ## Renders eye-level views of the venue for review, one PNG per view. Needs
 ## a renderer (run under xvfb; lavapipe is fine):
 ##   godot --path . --script res://tools/venue_shots.gd -- --out=dir [--age=worn|repaired|renovated] [--tier=N] [--wings]
-##     [--view=name:x,y,z,lookx,looky,lookz ...]
+##     [--view=name:x,y,z,lookx,looky,lookz ...] [--first-hour [--lights]]
 ## With no --view it renders the stock tour of the recreation centre wing.
+## --first-hour renders the M1 walk's spots at 05:00 (WalkStory): dark sky,
+## ice lights off unless --lights.
+
+const FIRST_HOUR := {
+	"lot_0500": [-58.0, 1.7, 3.0, -46.0, 1.5, 0.0],
+	"mat": [-48.6, 1.7, 0.4, -46.6, 0.0, 0.3],
+	"light_panel": [-43.6, 1.65, -2.3, -45.5, 1.4, -2.3],
+	"plant_door": [34.4, 1.65, 23.6, 36.5, 1.3, 23.6],
+	"compressors": [38.6, 1.65, 23.5, 42.0, 0.9, 25.6],
+	"office": [-40.6, 6.1, -8.0, -43.0, 5.2, -11.5],
+	"bay_doris": [35.5, 1.65, 3.5, 41.0, 0.8, -1.0],
+	"snow_pit": [40.0, 2.0, -1.0, 44.0, 0.0, -3.5],
+	"mount_doris": [52.0, 2.0, -16.0, 48.5, 1.0, -8.0],
+}
 
 const TOUR := {
 	"entrance_outside": [-58.0, 1.7, -37.0, -46.0, 2.6, -37.0],
@@ -36,6 +50,8 @@ func _initialize() -> void:
 	var age := -1
 	var tier := 0
 	var wings := false
+	var first_hour := false
+	var lights := false
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			_out = a.trim_prefix("--out=")
@@ -45,11 +61,15 @@ func _initialize() -> void:
 			tier = a.trim_prefix("--tier=").to_int()
 		elif a == "--wings":
 			wings = true
+		elif a == "--first-hour":
+			first_hour = true
+		elif a == "--lights":
+			lights = true
 		elif a.begins_with("--view="):
 			var kv := a.trim_prefix("--view=").split(":")
 			_views[kv[0]] = Array(kv[1].split_floats(","))
 	if _views.is_empty():
-		_views = TOUR
+		_views = FIRST_HOUR if first_hour else TOUR
 		wings = true
 	_names = _views.keys()
 	DisplayServer.window_set_size(Vector2i(1280, 720))
@@ -70,7 +90,17 @@ func _initialize() -> void:
 	root.add_child(v)
 	if age >= 0:
 		v.set_all_ages(age)
-	v.apply_lighting(env, sun)
+	# the rooms build once the venue is in the running tree, so the lighting
+	# (and the first hour's dark) waits a frame
+	(func():
+		v.apply_lighting(env, sun)
+		if first_hour:
+			WalkStory.start(v)
+			env.background_color = Color("070a12")
+			if lights:
+				v.set_ice_lights(true)
+				v.rooms["lighting"]._set_power(1.0)
+	).call_deferred()
 	for d in v.all_doors():
 		d.open()
 	_cam = Camera3D.new()

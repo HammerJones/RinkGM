@@ -5,6 +5,7 @@ extends Node
 const HUB_SCENE := "res://scenes/career_hub.tscn"
 const RINK_SCENE := "res://scenes/main.tscn"
 const OFFICE_SCENE := "res://scenes/ui/rink_office.tscn"
+const WALK_SCENE := "res://scenes/venue/venue_walk.tscn"
 
 var career: Career
 ## The owner's rink running alongside the career (the "owner" slot), or null.
@@ -90,6 +91,11 @@ func play_round(result: Dictionary = {}) -> Dictionary:
 ## The owner's rink office (UI's office screens), for a career with a rink.
 func open_office() -> void:
 	get_tree().change_scene_to_file(OFFICE_SCENE)
+
+
+## Walking the owner's rink on foot (Venue's walk on the career's rink).
+func open_walk() -> void:
+	get_tree().change_scene_to_file(WALK_SCENE)
 
 
 func has_office() -> bool:

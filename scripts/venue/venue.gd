@@ -272,6 +272,55 @@ func room_at(p: Vector3) -> VenueRoom:
 	return best
 
 
+func all_spots() -> Array[VenueSpot]:
+	var out: Array[VenueSpot] = []
+	for r in _room_nodes():
+		out.append_array(r.spots)
+	return out
+
+
+## Room ids whose spawn is a place of that name (Venue.places()).
+const PLACE_ROOMS := {"lobby": "lobby", "office": "office", "plant_room": "plant_room", "zamboni_bay": "zamboni_bay",
+	"benches": "bench"}
+
+
+## Where people go, for World's RinkPeople: {key: Array[Vector3]} in venue
+## space. Keys: canteen (the line, front first), washroom, glass, pro_shop,
+## skate_rental, bench, entrance, lobby, office, plant_room, zamboni_bay,
+## dressing_room, penalty_box. Washroom and pro shop are in the rec wing, so a
+## match venue without it has none.
+func places() -> Dictionary:
+	var out := {}
+	for r in _room_nodes():
+		if PLACE_ROOMS.has(r.room_id):
+			_add_places(out, PLACE_ROOMS[r.room_id], [r.spawn])
+		var p: Dictionary = r.places()
+		for key in p:
+			_add_places(out, key, p[key])
+	return out
+
+
+func _add_places(out: Dictionary, key: String, pts: Array) -> void:
+	if not out.has(key):
+		out[key] = [] as Array[Vector3]
+	for v in pts:
+		out[key].append(v)
+
+
+func spot(id: String) -> VenueSpot:
+	for s in all_spots():
+		if s.id == id:
+			return s
+	return null
+
+
+func door(label: String) -> VenueDoor:
+	for d in all_doors():
+		if d.label == label:
+			return d
+	return null
+
+
 func all_doors() -> Array[VenueDoor]:
 	var out: Array[VenueDoor] = []
 	for r in _room_nodes():
@@ -297,6 +346,18 @@ func bind_game(g: Node) -> void:
 			apply_lighting(c.environment, null)
 		elif c is DirectionalLight3D:
 			apply_lighting(null, c)
+
+
+## The ice lights' breakers (walking the building at 05:00 they start off).
+func set_ice_lights(on: bool) -> void:
+	var l = rooms.get("lighting")
+	if l and l.has_method("switch"):
+		l.switch(on)
+
+
+func ice_lights_on() -> bool:
+	var l = rooms.get("lighting")
+	return l != null and l.lights_on
 
 
 func apply_lighting(env: Environment, sun: DirectionalLight3D) -> void:

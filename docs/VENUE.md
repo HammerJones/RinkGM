@@ -144,6 +144,76 @@ under gravity with `contact`/`bounce` and emits an event, and the game blows
 the whistle and faces off at the nearest dot. `tools/tests/test_puck_out.gd`
 runs that flow with a stand-in integrator.
 
+## The first hour (RINK_SIM M1)
+
+`--venue-walk` starts the first hour at Millbrook (RINK_SIM.md 1.6):
+05:00 on Monday in the dark lot, with the front doors locked and the ice
+lights off. `--free-walk` gives the old walk from the lobby.
+
+Spots (`VenueSpot`) are the things you can press use on. Rooms place them
+with `VenueRoom.add_spot`, so they come back after a renovation rebuild, and
+`VenueWalker.nearest_spot` picks the one you are looking at. There are five
+kinds:
+
+- **READ** opens a note from `data/venue/notes.json` or a readable from
+  `data/world/readables.json`. Examples are Gus's envelope under the mat
+  (it gives the keys), the door of notes, the binder, the power bill and the
+  manuals.
+- **JOB** hands over to a World mini game: the compressors' oil, Doris's
+  plugs (she needs them from the parts drawer first) and her blade. The
+  glycol thermometers are the plant round, which has no scene and happens
+  on the spot.
+- **SCREEN** asks UI for a screen: the office phone, the desk, the corkboard
+  (Gus's goals), the ice grid and the log book.
+- **SWITCH** works a building system: the lighting panel in the lobby turns
+  the ice lights on, and the metal halides take about 40 s to warm up.
+- **USE** covers anything else by id (nothing yet). The snow pit is a JOB,
+  the sim's `dump_snow`, and the pile out back is Mount Doris.
+
+`WalkStory` decides what using a spot does and keeps the RinkSim clock
+(about 1.75 sim minutes per real second). The walk scene does what it says:
+
+- Screen spots open UI's rink office (`scenes/ui/rink_office.tscn`) on the
+  walk's sim: the ice grid, log book, corkboard (Gus's goals) and the desk
+  (jobs). Q, Esc or B leaves it. The phone has no screen yet, so it shows a
+  plain panel. `screen_requested(id, sim)` fires for every screen spot.
+- A job instances its scene under `scenes/world/jobs/`
+  (`compressor_oil_service`, `doris_plugs`, `doris_blade`; the contract is
+  World's). The walk calls the root's `begin(ctx)` with
+  `{sim, job, target, room, args}`. When its `finished(result)` signal
+  fires, `WalkStory.finish_job` runs the job with the args merged with
+  `result`, through `RinkLife.job` when the walk has one (`WalkStory.life`),
+  else `RinkSim.job`.
+- If the scene isn't built yet, the job offers the quick way instead.
+- Texts prefer World's readables (`note_door_oil`, `note_screwdriver`,
+  `note_doris_dash`) and fall back to `data/venue/notes.json`.
+- The sim owns the building's state. The breaker calls `sim.set_lights(on)`,
+  the lamps follow `sim.lights_on`, and the pit heap follows `sim.snow_pit`.
+  The lamps' glow still warms up over the venue's 40 s, because the sim
+  warms them in quarter-hour steps.
+
+Inside an owner career (`CareerState.rink`), the walk uses the career's sim
+and clock (`RinkLink.advance`) and leaves its day and minute alone. The
+first hour's set-up applies only on the career's first morning. Any other
+time, the walk starts in the office with the doors unlocked. The office desk
+saves and goes back to the rink office. When the clock stops for the
+owner's game, the walk saves and sends the player to the hub. Without a
+career, the walk runs a fresh M1 sim (`RinkSim.create_m1`).
+
+`tools/tests/test_first_hour.gd` plays the hour headless.
+`tools/venue_shots.gd --first-hour [--lights]` renders it.
+
+## Places for people
+
+`Venue.places()` is for World's RinkPeople. It returns where people go as
+`{key: Array[Vector3]}` in venue space. The keys are canteen (the snack bar
+line, front first), washroom, glass, pro_shop, skate_rental, bench, entrance,
+lobby, office, plant_room, zamboni_bay, dressing_room and penalty_box. The
+washroom and pro shop are in the rec wing. A room lists its own with
+`places()`, and Venue adds the spawns of the rooms in `PLACE_ROOMS`. The stand
+rooms' `seats()` gives `[[position, facing], ...]`. `tools/tests/test_places.gd`
+checks that every place has a floor under it and room to stand.
+
 ## Built for exploring later
 
 - Human scale: doors 0.95–2.6 m wide and 2.2 m+ high (bench and box gates are

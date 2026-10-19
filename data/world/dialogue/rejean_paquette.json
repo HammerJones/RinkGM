@@ -1,0 +1,368 @@
+{
+  "id": "rejean_paquette",
+  "barks": {
+    "idle": [
+      "Minus five point two. You said minus five. You were close.",
+      "(He points the infrared gun at the ice. Beep.)"
+    ],
+    "good_ice": [
+      "Minus five point one, centre ice. Minus five point three, the corners. Acceptable. Do not quote me."
+    ],
+    "bad_ice": [
+      "Minus three point eight by the home bench. Somebody has been described, not measured."
+    ],
+    "wet_ice": [
+      "Surface water. My gun does not like it. I do not like it."
+    ],
+    "cold": [
+      "Cold is a number. Give me the number."
+    ],
+    "hungry": [
+      "I will eat when the skates are dry."
+    ],
+    "long_line": [
+      "Inefficient."
+    ],
+    "bored": [
+      "(He measures the boards. Then the bench. Then his coffee.)"
+    ],
+    "goal": [
+      "Good. Now the skates must be sharpened again."
+    ],
+    "greet_owner": [
+      "Owner. Your log, please.",
+      "Bonjour. What does your log say? Mine says minus five point two."
+    ],
+    "leaving_happy": [
+      "The numbers agreed. Rare. I will tell Coach Rourke."
+    ],
+    "leaving_angry": [
+      "The log had gaps. I have written down the gaps."
+    ],
+    "event_specific": {
+      "pro_practice": [
+        "Do not touch the gun.",
+        "Minus five point two. Practise."
+      ],
+      "senior_hockey": [
+        "Senior ice. I measure it anyway. For my own peace."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_rejean_paquette"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "dukes_trust_ice"
+        }
+      ],
+      "node": "trust"
+    },
+    {
+      "if": [
+        {
+          "event_now": "pro_practice"
+        }
+      ],
+      "node": "practice"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Rejean Paquette. Equipment, Duncannon Dukes, twenty-six years. (He points an infrared gun at your ice. It beeps.) Minus four point eight. What does your log say?",
+      "do": [
+        {
+          "set": "met_rejean_paquette"
+        }
+      ],
+      "options": [
+        {
+          "text": "Let me check. Minus four point nine at the last round.",
+          "do": [
+            {
+              "rel": [
+                "rejean_paquette",
+                4
+              ]
+            }
+          ],
+          "to": "first_log"
+        },
+        {
+          "text": "It feels about right.",
+          "do": [
+            {
+              "rel": [
+                "rejean_paquette",
+                -4
+              ]
+            }
+          ],
+          "to": "first_feels"
+        },
+        {
+          "text": "Can I see the gun?",
+          "do": [
+            {
+              "rel": [
+                "rejean_paquette",
+                -2
+              ]
+            }
+          ],
+          "to": "first_gun"
+        }
+      ]
+    },
+    "first_log": {
+      "say": "Point one apart. (He writes it down.) Close. Closer than most. We will see if you are close every time.",
+      "options": [
+        {
+          "text": "We will.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_feels": {
+      "say": "Ice does not feel. Ice is a number. People feel. Usually wrong.",
+      "options": [
+        {
+          "text": "I'll get the number.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_gun": {
+      "say": "You may see it. From there. (He does not move it any closer.) Nobody touches the gun.",
+      "options": [
+        {
+          "text": "Understood.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry. It'll be in the log next time.",
+          "do": [
+            {
+              "rel": [
+                "rejean_paquette",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "practice": {
+      "say": [
+        "Do not walk on my ice before the Dukes. I have measured it. If you walk on it, I have to measure it again.",
+        "Minus five point two, centre. Skates are dry. Acceptable. Go away, please. Politely."
+      ],
+      "options": [
+        {
+          "text": "I'll leave you to it.",
+          "to": "end"
+        },
+        {
+          "text": "Quick question.",
+          "to": "hub"
+        }
+      ]
+    },
+    "trust": {
+      "say": "Your numbers and my numbers agree. Five rounds, two practices. I have told Coach Rourke. I do not tell Coach Rourke things lightly.",
+      "options": [
+        {
+          "text": "Thank you, Rejean.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Yes? Quickly. The skates are drying.",
+        "Owner. What is it?",
+        "(Beep.) Yes?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "Twenty-six years with the Dukes?",
+          "to": "job"
+        },
+        {
+          "text": "What do you look for at a practice?",
+          "to": "events"
+        },
+        {
+          "text": "You know Old Pete?",
+          "to": "gossip"
+        },
+        {
+          "text": "What do you make of our ice?",
+          "to": "rink"
+        },
+        {
+          "text": "Why the infrared gun?",
+          "to": "gun"
+        },
+        {
+          "text": "See you, Rejean.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Twenty-six years. Skates, sticks, the skate room, the dryer. I have seen a hundred players go to Kingsport. Their skates were always dry. That is my contribution.",
+      "options": [
+        {
+          "text": "A big contribution.",
+          "do": [
+            {
+              "rel": [
+                "rejean_paquette",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Practice ice that is the same every time. A dry skate room. A log with no gaps. And the Lumber Kings, on my night off, to measure somebody else's ice for pleasure.",
+      "options": [
+        {
+          "text": "Understood.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Old Pete Vachon puts a hollow on a skate like nobody in the north. I will not say this to him. We discuss hollows. We have discussed hollows since 1999. And Coach Rourke is the only person I trust with the log.",
+      "options": [
+        {
+          "text": "Got it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Your ice is {ice_word}. I want numbers. The Dukes practise at eighty-five or better, and the log must agree with my gun.",
+      "options": [
+        {
+          "text": "We're over eighty-five now.",
+          "if": [
+            {
+              "ice_gte": 85
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll keep the log honest.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "(Beep. Beep. Beep.) Yes. Minus five point one, everywhere. Do not let it go to your head. Let it go to your log.",
+      "options": [
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gun": {
+      "say": "Because people describe ice. 'Fast'. 'Good'. 'Fine'. My gun does not describe. My gun says minus five point two.",
+      "options": [
+        {
+          "text": "Can I borrow it sometime?",
+          "do": [
+            {
+              "rel": [
+                "rejean_paquette",
+                -3
+              ]
+            }
+          ],
+          "to": "gun_borrow"
+        },
+        {
+          "text": "I'll start measuring properly.",
+          "if": [
+            {
+              "not_flag": "rejean_measuring"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "rejean_paquette",
+                2
+              ]
+            },
+            {
+              "set": "rejean_measuring"
+            }
+          ],
+          "to": "gun_measure"
+        },
+        {
+          "text": "Makes sense.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gun_borrow": {
+      "say": "No. (A pause.) No.",
+      "options": [
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gun_measure": {
+      "say": "Good. Write it in the log. Every round. If you skip one, I will know. I will not say anything. I will look at you.",
+      "options": [
+        {
+          "text": "Understood.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Au revoir. Measure.",
+        "(Beep.) Goodbye."
+      ],
+      "options": []
+    }
+  }
+}

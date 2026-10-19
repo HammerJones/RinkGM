@@ -1,0 +1,423 @@
+{
+  "id": "donnie_delorme",
+  "barks": {
+    "idle": [
+      "(He brushes flour off his sleeve.)",
+      "Mm.",
+      "(He offers the person next to him a cruller. They accept.)"
+    ],
+    "good_ice": [
+      "(He nods at the ice, once.)"
+    ],
+    "bad_ice": [
+      "(He looks at the ice the way he looks at dough that won't rise.)"
+    ],
+    "wet_ice": [
+      "(He lifts his boots off the wet floor and keeps them there.)"
+    ],
+    "cold": [
+      "(He turns his collar up and holds the coffee with both hands.)"
+    ],
+    "hungry": [
+      "(He opens a paper bag. It is his own crullers. He is not hungry for anyone else's.)"
+    ],
+    "long_line": [
+      "(He waits. He waits like a man who gets up at 3:30 every morning.)"
+    ],
+    "bored": [
+      "(He folds a napkin into a very neat square.)"
+    ],
+    "goal": [
+      "(He claps once, quietly, and looks around to make sure nobody saw.)"
+    ],
+    "greet_owner": [
+      "(He nods.)",
+      "Morning."
+    ],
+    "leaving_happy": [
+      "(He leaves a cruller on the seat for whoever comes next.)"
+    ],
+    "leaving_angry": [
+      "(He takes his crullers with him. All of them.)"
+    ],
+    "event_specific": {
+      "beer_league": [
+        "(Back row. Coffee. Coat on the next seat.)",
+        "(He sees a camera and pulls his toque down.)"
+      ],
+      "stick_and_puck": [
+        "(Early. Nobody else here. He seems content.)"
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_donnie_delorme"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "donnie_cake_no"
+        }
+      ],
+      "node": "cake_no_greet"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "back_row"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "(A quiet man in a flour-dusted jacket nods at you. He hands you a cruller. That appears to be the whole introduction.)",
+      "do": [
+        {
+          "set": "met_donnie_delorme"
+        },
+        {
+          "item": [
+            "cruller",
+            1
+          ]
+        }
+      ],
+      "options": [
+        {
+          "text": "Thanks. I'm {owner}.",
+          "do": [
+            {
+              "rel": [
+                "donnie_delorme",
+                3
+              ]
+            }
+          ],
+          "to": "first_name"
+        },
+        {
+          "text": "Aren't you the twin? From 1996?",
+          "do": [
+            {
+              "rel": [
+                "donnie_delorme",
+                -5
+              ]
+            },
+            {
+              "item": [
+                "cruller",
+                -1
+              ]
+            }
+          ],
+          "to": "first_1996"
+        },
+        {
+          "text": "(Eat the cruller.)",
+          "do": [
+            {
+              "rel": [
+                "donnie_delorme",
+                4
+              ]
+            }
+          ],
+          "to": "first_eat"
+        }
+      ]
+    },
+    "first_name": {
+      "say": "Donnie. (He nods a second time. You get the sense that two nods is a lot.)",
+      "options": [
+        {
+          "text": "Nice to meet you, Donnie.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_1996": {
+      "say": "(He looks at you for a long time. Then he gently takes the cruller back and puts it in his pocket.)",
+      "options": [
+        {
+          "text": "Sorry. Forget I asked.",
+          "do": [
+            {
+              "rel": [
+                "donnie_delorme",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_eat": {
+      "say": "(You eat it. It is the best cruller you have ever had. He watches you realise this, and very nearly smiles.)",
+      "options": [
+        {
+          "text": "That's incredible.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "(He looks at the coffee. He looks at you. He puts a cruller back in the bag instead of handing it over.)",
+      "options": [
+        {
+          "text": "I'm sorry, Donnie. I'll do better.",
+          "do": [
+            {
+              "rel": [
+                "donnie_delorme",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "back_row": {
+      "say": "(Back row, coffee in hand. He sees you and moves his coat off the seat next to him. Around here, that is an honour.)",
+      "options": [
+        {
+          "text": "(Sit with him.)",
+          "do": [
+            {
+              "rel": [
+                "donnie_delorme",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Hi, Donnie.",
+          "to": "hub"
+        }
+      ]
+    },
+    "cake_no_greet": {
+      "say": "(He nods. Then he puts a small cake on the bench beside you. It says OK in blue icing. You are forgiven, apparently.)",
+      "options": [
+        {
+          "text": "Thank you, Donnie.",
+          "do": [
+            {
+              "clear": "donnie_cake_no"
+            },
+            {
+              "rel": [
+                "donnie_delorme",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "(He nods.)",
+        "Mm?",
+        "(He waits, holding a paper bag.)"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the bakery?",
+          "to": "job"
+        },
+        {
+          "text": "What brings you here?",
+          "to": "events"
+        },
+        {
+          "text": "Who are the crullers for?",
+          "to": "gossip"
+        },
+        {
+          "text": "What do you think of the place?",
+          "to": "rink"
+        },
+        {
+          "text": "Could I buy half a dozen?",
+          "to": "buy"
+        },
+        {
+          "text": "Would you help me run my bench?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "path_coach"
+        },
+        {
+          "text": "I'd like to offer you a contract.",
+          "if": [
+            {
+              "path": "gm"
+            },
+            {
+              "not_flag": "donnie_cake_no"
+            }
+          ],
+          "to": "path_gm"
+        },
+        {
+          "text": "See you, Donnie.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Four a.m. (He holds up four floury fingers, then mimes rolling dough, then mimes going back to bed at one in the afternoon.)",
+      "options": [
+        {
+          "text": "Sounds like a good life.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "(He points at the back row. Then at the canteen. Then he shrugs. A seat, a coffee, and nobody looking. That is the whole plan.)",
+      "options": [
+        {
+          "text": "Fair enough.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "(He opens the box. Twelve crullers. The lid says SHAUNA in marker. A second box says RONNIE. You are looking at a standing order system older than your mortgage.)",
+      "options": [
+        {
+          "text": "Lucky them.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "(He taps the snack bar counter, then the coffee machine, then gives the coffee machine a look you would not want to receive.)",
+      "options": [
+        {
+          "text": "It's been fixed up, hasn't it?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll look into the coffee.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "(He runs a hand along the new counter. He nods. Two nods.)",
+      "options": [
+        {
+          "text": "Two nods. I'll take it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "buy": {
+      "say": "Nine. (He holds out a white bag. It is warm. It is somehow still warm.)",
+      "options": [
+        {
+          "text": "(Pay nine dollars.)",
+          "do": [
+            {
+              "money": -9
+            },
+            {
+              "item": [
+                "cruller",
+                6
+              ]
+            },
+            {
+              "rel": [
+                "donnie_delorme",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Maybe next time.",
+          "to": "hub"
+        }
+      ]
+    },
+    "path_coach": {
+      "say": "(He says nothing. On Saturday he is at the end of your bench in a flour-dusted jacket, and he does not say why, and you learn not to ask.)",
+      "options": [
+        {
+          "text": "(Don't ask.)",
+          "do": [
+            {
+              "rel": [
+                "donnie_delorme",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "path_gm": {
+      "say": "(He says nothing. The next morning there is a cake on your office desk. It says NO, in very neat icing. It is delicious.)",
+      "options": [
+        {
+          "text": "I suppose that's an answer.",
+          "do": [
+            {
+              "set": "donnie_cake_no"
+            },
+            {
+              "note": "Donnie Delorme's reply to your contract offer: a cake that says NO. It was delicious."
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "(He nods.)",
+        "(He raises his coffee an inch.)"
+      ],
+      "options": []
+    }
+  }
+}
