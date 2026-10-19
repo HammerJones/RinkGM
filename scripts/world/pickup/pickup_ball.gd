@@ -16,7 +16,7 @@ const MASS := 0.62
 const V := 0.03
 const ORANGE := Color("c8642a")
 const SEAM := Color("2b1a12")
-## The court's collision layer (bit 20): only the ball and PickupGame's
+## The court's collision layer (bit 20): only the ball and PickupRun's
 ## floor, walls, rims and backboards are on it, so nothing else in the
 ## building notices the ball and the ball notices nothing else.
 const LAYER := 1 << 19

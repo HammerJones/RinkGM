@@ -1,4 +1,4 @@
-class_name PickupGame
+class_name PickupRun
 extends Node3D
 ## Pickup basketball in the gym (Sean's playtest notes #32, #33). In peak
 ## hours (PickupSchedule) a few of the valley's people turn up through the
@@ -19,16 +19,17 @@ extends Node3D
 ##
 ## The player can join: walk up during a run and press E ("join next game",
 ## or straight in when a side is short). On the court the ball dribbles by
-## itself; aim with the mouse (where you look), hold left click and let go
-## on the meter's green band to shoot, right click to pass. Walk off the
+## itself; aim with the mouse (where you look) and hold left click for power,
+## letting go with the bar in the band for the distance (the same hold-LMB
+## power shot as Mechanics' solo PickupGame shootaround); right click passes. Walk off the
 ## court or press Esc to leave. Playing trains: `trained` fires at the end of
 ## each game you played and when you leave.
 ##
-##   var g := PickupGame.new()
+##   var g := PickupRun.new()
 ##   venue.add_child(g)            # venue coordinates, as in gym.gd
 ##   g.sim = sim                   # or set clock_* and clock_rate yourself
 ##   g.player_body = walker; g.player_eye = cam
-##   # or: PickupGame.attach_to_walk(venue_walk) does all of that plus the HUD
+##   # or: PickupRun.attach_to_walk(venue_walk) does all of that plus the HUD
 ##
 ## Sound hooks (the lead thread plays them; this node plays nothing):
 ## bounced (floor, dribbles, walls), squeaked (sneakers), swished, rim_hit,
@@ -76,7 +77,7 @@ const WINDUP := 0.32         # gather to release
 const JUMP_T := 0.6
 const JUMP_H := 0.4
 const POSS_MAX := 14.0
-const METER_HZ := 0.65       # meter sweeps up and back this often a second
+const POWER_FILL := 1.1      # seconds of holding left click to full power
 
 class Hooper:
 	var person: Person
@@ -183,11 +184,11 @@ func _ready() -> void:
 
 ## Wires a game into the venue walk (scripts/venue/venue_walk.gd): the walk's
 ## sim clock, walker, camera and a HUD. Null when the venue has no gym.
-static func attach_to_walk(walk: Node) -> PickupGame:
+static func attach_to_walk(walk: Node) -> PickupRun:
 	var venue: Node3D = walk.get("venue")
 	if venue == null or not ("rooms" in venue) or not venue.rooms.has("gym"):
 		return null
-	var g := PickupGame.new()
+	var g := PickupRun.new()
 	g.name = "Pickup"
 	var story: Variant = walk.get("story")
 	if story != null:
@@ -201,8 +202,10 @@ static func attach_to_walk(walk: Node) -> PickupGame:
 	if walk.has_method("_busy"):
 		g.busy_check = Callable(walk, "_busy")
 	var walker: Variant = walk.get("walker")
+	# E stays the walk's when a door or a readable spot is in reach
 	if walker != null and walker.has_method("nearest_door"):
-		g.door_check = func() -> bool: return walker.nearest_door(venue) != null
+		g.door_check = func() -> bool:
+			return walker.nearest_door(venue) != null or (walk.has_method("_looked_at") and walk._looked_at() != null)
 	venue.add_child(g)
 	var hud := PickupHud.new()
 	hud.game = g
@@ -940,12 +943,12 @@ func _carry(i: int, dt: float) -> void:
 	if u0 < 0.5 and _dribble_u >= 0.5:
 		bounced.emit(h.pos + right * 0.32 + fwd * 0.38, 0.35 + 0.2 * clampf(speed / RUN, 0.0, 1.0))
 	var s := absf(2.0 * _dribble_u - 1.0)
-	var hand := (0.82 if not h.me else 0.78) * sc
+	var hand := (0.82 if not h.me else 1.0) * sc
 	var y := PickupBall.RADIUS + (hand - PickupBall.RADIUS) * (1.0 - (1.0 - s) * (1.0 - s))
 	var out := 0.3 + 0.08 * clampf(speed / RUN, 0.0, 1.0)
 	if h.me:
-		out = 0.5
-	_hold(h.pos + right * (0.3 if not h.me else 0.24) + fwd * out + Vector3(0, y, 0))
+		out = 0.85  # out in front, so a first-person view sees the top of each bounce
+	_hold(h.pos + right * (0.3 if not h.me else 0.28) + fwd * out + Vector3(0, y, 0))
 	_ball.spin_with(h.vel, dt)
 
 
@@ -1437,15 +1440,14 @@ func _update_player(dt: float) -> void:
 		leave()  # walked out of the gym while waiting
 
 
-## The timing meter, 0..1, sweeping up and back while the shot is held.
+## Shot power 0..1: it builds while left click is held.
 func meter_value() -> float:
 	if meter < 0.0:
 		return 0.0
-	var x := fmod(meter * METER_HZ * 2.0, 2.0)
-	return 1.0 - absf(x - 1.0)
+	return clampf(meter / POWER_FILL, 0.0, 1.0)
 
 
-## The meter's sweet spot for a shot from here: [centre, half width].
+## The right power for a shot from here: [centre, half width].
 func meter_band() -> Vector2:
 	if player_idx < 0:
 		return Vector2(0.7, 0.08)
@@ -1454,7 +1456,7 @@ func meter_band() -> Vector2:
 	return Vector2(clampf(0.45 + d * 0.06, 0.5, 0.95), lerpf(0.045, 0.11, _skill("shot_accuracy")))
 
 
-## Left click down: start the shot meter with the ball, or reach for a steal.
+## Left click down: start building power with the ball, or reach for a steal.
 func shoot_press() -> void:
 	if player_idx < 0:
 		return
@@ -1476,7 +1478,7 @@ func shoot_press() -> void:
 			say("POKED IT LOOSE.")
 
 
-## Left click up: let the shot go with the meter where it is.
+## Left click up: let the shot go with the power built so far.
 func shoot_release() -> void:
 	if meter < 0.0 or holder != player_idx:
 		meter = -1.0
@@ -1486,9 +1488,9 @@ func shoot_release() -> void:
 	player_shot(power)
 
 
-## The player's shot with `power` 0..1 from the meter and the aim from
-## where they look: off the line by however far the look is off the rim,
-## long or short by how far the release is off the band.
+## The player's shot with `power` 0..1 (how long they held) and the aim
+## from where they look: off the line by however far the look is off the
+## rim, long or short by how far the power is off the band.
 func player_shot(power: float) -> void:
 	var h := _hooper(player_idx)
 	if h == null or holder != player_idx:
@@ -1751,3 +1753,38 @@ func _rebuild() -> void:
 
 func ball() -> PickupBall:
 	return _ball
+
+
+## Playtests and screenshots: opens the day's next run now, with everyone
+## already in the gym.
+func start_now() -> void:
+	if run.is_empty():
+		var runs := runs_today()
+		var r: Dictionary = runs[0] if not runs.is_empty() else {}
+		for x: Dictionary in runs:
+			if int(x.end) > now_minute():
+				r = x
+				break
+		if r.is_empty():
+			return
+		clock_minute = float(r.start) + 1.0
+		if sim:
+			sim.minute = int(r.start) + 1
+		_open_run(r)
+	for i in hoopers.size():
+		var h: Hooper = hoopers[i]
+		if h.state == "arrive":
+			h.delay = 0.0
+			h.pos = _bench_spot(queue.size())
+			h.state = "wait"
+			queue.append(i)
+	_run_t = 999.0
+
+
+## Playtests and screenshots: the player gets the ball (on the court).
+func hand_ball_to_player() -> void:
+	if is_playing() and stage not in ["handshake", "dead"]:
+		if offense != _hooper(player_idx).team:
+			offense = _hooper(player_idx).team
+		cleared = true
+		_give(player_idx, "pass")

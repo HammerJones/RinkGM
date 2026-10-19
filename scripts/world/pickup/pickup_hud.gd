@@ -2,9 +2,9 @@ class_name PickupHud
 extends CanvasLayer
 ## The pickup game's few words on screen: the score in the corner, what E
 ## does near the court, the call ("CHECK.", "GAME."), a dot to aim with and
-## the shot meter while the player holds the ball (RinkOS colours, STYLE.md).
+## the power bar while the player holds the ball (RinkOS colours, STYLE.md).
 
-var game: PickupGame
+var game: PickupRun
 
 var _score: Label
 var _prompt: Label

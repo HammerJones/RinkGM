@@ -6,7 +6,7 @@ extends SceneTree
 ##   godot --headless --path . --script res://tools/tests/test_pickup.gd
 
 var failures := 0
-var game: PickupGame
+var game: PickupRun
 var body: Node3D
 var ball_out := 0
 var hits := {}
@@ -36,6 +36,7 @@ func _run() -> void:
 	create_timer(250.0, true, false, true).timeout.connect(func():
 		printerr("FAIL: test_pickup timed out")
 		quit(1))
+	_check_court()
 	_check_schedule()
 	await _check_game()
 	print("  %d steps (%.1f game minutes) in %.1f s" % [steps, steps / float(HZ) / 60.0, Time.get_ticks_msec() / 1000.0])
@@ -46,6 +47,12 @@ func _run() -> void:
 	Engine.time_scale = 1.0
 	Engine.physics_ticks_per_second = HZ
 	quit(1 if failures else 0)
+
+
+func _check_court() -> void:
+	var r := RecPlan.rect("gym")
+	_expect(r.is_equal_approx(PickupCourt.ROOM) and is_equal_approx(float(RecPlan.ROOMS["gym"][3]), PickupCourt.ROOM_H),
+		"the pickup court's room matches the gym in RecPlan")
 
 
 func _check_schedule() -> void:
@@ -101,11 +108,11 @@ func _until(cond: Callable, seconds: float) -> bool:
 
 
 ## A stand-in for the player: chase loose balls, shoot from wherever they
-## catch it, a timing right in the band.
+## catch it, with the power right in the band.
 func _drive_player() -> void:
 	if game.player_idx < 0 or body == null:
 		return
-	var me: PickupGame.Hooper = game.hoopers[game.player_idx]
+	var me: PickupRun.Hooper = game.hoopers[game.player_idx]
 	var to := Vector3.ZERO
 	if game.player_has_ball():
 		var end := game.attack_end(me.team)
@@ -146,7 +153,7 @@ func _check_game() -> void:
 		if day >= 0:
 			break
 	_expect(day >= 0, "some weekday has a 3 on 3 sized run")
-	game = PickupGame.new()
+	game = PickupRun.new()
 	game.seed = sd
 	game.cast = cast
 	game.clock_day = day
@@ -172,10 +179,10 @@ func _check_game() -> void:
 	await _ticks(10)
 	_expect(game.is_on() and game.hoopers.size() == int(r.turnout), "the run starts in its slot with its turnout (%d)" % int(r.turnout))
 	var real := true
-	for h: PickupGame.Hooper in game.hoopers:
-		if h.person == null or cast.person(h.person.id) != h.person or not (PickupGame.POOL.has(h.person.archetype) or h.person.interest("pickup", "play") > 0.0):
+	for h: PickupRun.Hooper in game.hoopers:
+		if h.person == null or cast.person(h.person.id) != h.person or not (PickupRun.POOL.has(h.person.archetype) or h.person.interest("pickup", "play") > 0.0):
 			real = false
-		if h.age < PickupGame.AGES.x or h.age > PickupGame.AGES.y:
+		if h.age < PickupRun.AGES.x or h.age > PickupRun.AGES.y:
 			real = false
 	_expect(real, "the players are real Cast people of a rec-sports archetype and age")
 	_expect(game.can_join() == "now", "while they shoot around the player can join the next game (%s)" % game.can_join())
@@ -197,7 +204,7 @@ func _check_game() -> void:
 		pts[int(s[0])] += int(s[1])
 		ones += 1 if int(s[1]) == 1 else 0
 		twos += 1 if int(s[1]) == 2 else 0
-	_expect(maxi(pts[0], pts[1]) >= PickupGame.TO and maxi(pts[0], pts[1]) <= PickupGame.TO + 1, "the winner got to 11 (%d-%d, %d ones, %d twos)" % [pts[0], pts[1], ones, twos])
+	_expect(maxi(pts[0], pts[1]) >= PickupRun.TO and maxi(pts[0], pts[1]) <= PickupRun.TO + 1, "the winner got to 11 (%d-%d, %d ones, %d twos)" % [pts[0], pts[1], ones, twos])
 	_expect(ones > 0, "baskets inside the arc count one")
 	_expect(int(hits.get("rim", 0)) > 0 and int(hits.get("floor", 0)) > 0 and int(hits.get("bounce", 0)) > 0, "the ball rattles rims and bounces (%s)" % str(hits))
 	_expect(int(hits.get("squeak", 0)) > 0, "sneakers squeak")
@@ -213,7 +220,7 @@ func _check_game() -> void:
 	_expect(game.player_idx >= 0 and game.queue.front() == game.player_idx, "the player is first in line")
 	var g := game.games_played
 	# no need to watch all of game two: it's next basket wins
-	game.score = [PickupGame.TO - 1, PickupGame.TO - 1]
+	game.score = [PickupRun.TO - 1, PickupRun.TO - 1]
 	var rotated := await _until(func() -> bool: return game.games_played > g and game.stage in ["check", "live", "pass", "inbound"], 1800.0)
 	_expect(rotated, "game two finished and the next one is on")
 	var on_after := _npcs_on_court()
@@ -256,7 +263,7 @@ func _check_game() -> void:
 				break
 		if bday >= 0:
 			break
-	game = PickupGame.new()
+	game = PickupRun.new()
 	game.seed = sd
 	game.cast = cast
 	game.clock_day = bday

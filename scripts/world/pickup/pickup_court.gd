@@ -1,14 +1,18 @@
 class_name PickupCourt
 extends RefCounted
-## The gym's court as the pickup game sees it, in venue coordinates. The
-## numbers come from Rink environment's gym (scripts/venue/rec/gym.gd: the
-## court is centred on CX, CZ, 28 x 13 m, a hoop on a wall arm at each end)
-## and its room in RecPlan (the gym is x -32..2, z -60..-44, 8 m high).
+## The gym's court as the pickup run sees it, in venue coordinates. The
+## court's centre and size are read from Rink environment's gym
+## (scripts/venue/rec/gym.gd); the hoop offsets match how gym.gd draws them
+## (board 1.2 m in from the baseline, rim 0.38 m out from the board, 3.05 m
+## up). Once Mechanics' "pickup_basketball" spot carries hoops data, read
+## the rims and boards from there instead.
 
-const CX := -15.0
-const CZ := -52.0
-const HALF_L := 14.0
-const HALF_W := 6.5
+const GYM := preload("res://scripts/venue/rec/gym.gd")
+const CX: float = GYM.CX
+const CZ: float = GYM.CZ
+const HALF_L: float = GYM.HALF_L
+const HALF_W: float = GYM.HALF_W
+## RecPlan.ROOMS["gym"] ([-32, -60, 2, -44], 8 m high), checked by the test.
 const ROOM := Rect2(-32.0, -60.0, 34.0, 16.0)
 const ROOM_H := 8.0
 const RIM_Y := 3.05
