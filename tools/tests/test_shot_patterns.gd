@@ -15,9 +15,11 @@ func _initialize() -> void:
 		var big := ShotPatterns.match(_trace(kind, 2.5, 0.0, 0.5), 0.5)
 		_check(big.kind == kind and big.match > 0.9, "a %s drawn 2.5x bigger still reads (%.2f)" % [kind, big.match])
 	var clean := ShotPatterns.match(_trace(&"snap_shot", 1.0, 0.0, 0.5), 0.3)
-	var wobbly := ShotPatterns.match(_trace(&"snap_shot", 1.0, 14.0, 0.5), 0.3)
+	# the same wobbly drawing graded at low and high shot accuracy
+	var shaky := _trace(&"snap_shot", 1.0, 14.0, 0.5)
+	var wobbly := ShotPatterns.match(shaky, 0.3)
 	_check(wobbly.match < clean.match - 0.15, "a wobbly snap shot matches worse (%.2f vs %.2f)" % [wobbly.match, clean.match])
-	var skilled := ShotPatterns.match(_trace(&"snap_shot", 1.0, 14.0, 0.5), 1.0)
+	var skilled := ShotPatterns.match(shaky, 1.0)
 	_check(skilled.match > wobbly.match + 0.1, "shot accuracy forgives the wobble (%.2f vs %.2f)" % [skilled.match, wobbly.match])
 	# drawn sideways it's no shot pattern
 	var side := []
