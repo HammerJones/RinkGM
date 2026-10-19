@@ -50,6 +50,7 @@ var _office: CanvasLayer
 var _leaving := false
 var _sun: DirectionalLight3D
 var _env: Environment
+var pickup_run: PickupRun  # World: the gym's pickup games, null without a gym
 
 
 func _ready() -> void:
@@ -97,6 +98,7 @@ func _ready() -> void:
 	walker.head.add_child(cam)
 	cam.current = true
 	_build_ui()
+	pickup_run = PickupRun.attach_to_walk(self)  # World: pickup basketball in the gym (scripts/world/pickup)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
