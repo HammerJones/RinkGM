@@ -486,6 +486,18 @@ func _touch(fx0: int, fz0: int, fx1: int, fz1: int) -> void:
 	revision += 1
 
 
+## Marks the cells within `rad` metres of `p` changed (machines working
+## the fine arrays directly call this so the view redraws them).
+func touch_around(p: Vector2, rad: float) -> void:
+	_touch(clampi(int(floor((p.x - rad + HALF_L) / CX)), 0, FW - 1), clampi(int(floor((p.y - rad + HALF_W) / CZ)), 0, FD - 1),
+		clampi(int(floor((p.x + rad + HALF_L) / CX)), 0, FW - 1), clampi(int(floor((p.y + rad + HALF_W) / CZ)), 0, FD - 1))
+
+
+## Recomputes the coarse grid after a machine worked the fine arrays.
+func resync() -> void:
+	_recalc()
+
+
 func _touch_all() -> void:
 	dirty = Rect2i(0, 0, FW, FD)
 	revision += 1
@@ -869,10 +881,10 @@ func freeze(seconds: float) -> float:
 
 ## Lets standing water run downhill to the low spots: a film thinner than
 ## FILM_PIN_MM stays put. `passes` sweeps over the wet cells.
-func settle(passes := 2) -> void:
+func settle(passes := 2, only: PackedInt32Array = PackedInt32Array()) -> void:
 	for _p in passes:
 		var moved := false
-		var cells: Array = _active.keys()
+		var cells: Array = Array(only) if not only.is_empty() else _active.keys()
 		for i: int in cells:
 			var liq := liquid_at(i) - FILM_PIN_MM
 			if liq <= 0.0:
@@ -900,7 +912,10 @@ func settle(passes := 2) -> void:
 			moved = true
 		if not moved:
 			break
-	_touch_all()
+	if only.is_empty():
+		_touch_all()
+	else:
+		revision += 1
 
 
 func _move_water(i: int, j: int, mm: float) -> void:
