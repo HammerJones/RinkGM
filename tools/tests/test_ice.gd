@@ -28,6 +28,7 @@ func _initialize() -> void:
 	_check_deep(worn)
 	_check_empty_tank(worn)
 	_check_sim_jobs(normal)
+	_check_drive_scene()
 	print("test_ice: %d ms" % (Time.get_ticks_msec() - t0))
 	if failures:
 		printerr("test_ice: %d failure(s)" % failures)
@@ -302,6 +303,45 @@ func _check_empty_tank(worn: IceSlab) -> void:
 	_expect(float(r.flood_coverage) < 0.6, "empty tank: much of the cut got no water (%.2f)" % float(r.flood_coverage))
 	_expect(not bool(r.complete), "empty tank: an incomplete cut")
 	_expect(float(r.quality) < 0.85, "empty tank: a worse job (%.2f)" % float(r.quality))
+
+
+## The drive scene on autopilot: its sound hooks fire, and what it hands
+## the venue goes through RinkSim.job("resurface").
+func _check_drive_scene() -> void:
+	var sim := RinkSim.create_m1()
+	sim.doris.part("spark_plugs").condition = 1.0
+	sim.doris.choke_stuck = false
+	var scene: DorisDrive = load("res://scenes/world/jobs/doris_drive.tscn").instantiate()
+	scene.set_physics_process(false)
+	root.add_child(scene)
+	var heard := {}
+	for sig in ["blade_scrape", "flood_flow", "wash_pump", "auger", "bin_dump", "engine", "hose"]:
+		scene.connect(sig, func(_a: Variant = null, _b: Variant = null) -> void: heard[sig] = int(heard.get(sig, 0)) + 1)
+	var got := {}
+	scene.finished.connect(func(r: Dictionary) -> void: got.merge(r))
+	scene.begin({"sim": sim, "job": "resurface", "target": "doris_drive", "autopilot": true})
+	scene.input.scripted = func(f: JobInput.Frame, _dt: float, _c: int) -> void: f.interact_pressed = true
+	var n := 0
+	while not scene.closed and n < 30000:
+		scene.tick(DT * 2.0)
+		n += 1
+	_expect(scene.closed and got.has("ice_state"), "drive scene: the autopilot finishes and hands back the ice (%d ticks)" % n)
+	for sig in ["blade_scrape", "flood_flow", "wash_pump", "bin_dump", "engine", "hose"]:
+		_expect(int(heard.get(sig, 0)) > 0, "drive scene: the %s hook fires" % sig)
+	var r := sim.job("resurface", got)
+	_expect(bool(r.ok) and sim.doris.cuts_driven == 1, "drive scene: the venue's job goes through (%s)" % r.get("text", ""))
+	scene.free()
+	# with a driver hired, Earl takes her out
+	var s2 := RinkSim.create_m1()
+	s2.earl_hired = true
+	s2.doris.part("spark_plugs").condition = 1.0
+	s2.doris.choke_stuck = false
+	var sc2: DorisDrive = load("res://scenes/world/jobs/doris_drive.tscn").instantiate()
+	sc2.set_physics_process(false)
+	root.add_child(sc2)
+	sc2.begin({"sim": s2, "job": "resurface", "target": "doris_drive"})
+	_expect(sc2.complete and float(sc2.result.get("coverage", 0.0)) > 0.9, "drive scene: a hired driver's resurface is automatic")
+	sc2.free()
 
 
 func _check_sim_jobs(normal: Dictionary) -> void:

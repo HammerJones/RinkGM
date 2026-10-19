@@ -74,6 +74,9 @@ func _m1(k: VenueKit) -> void:
 		{"job": "doris_plugs", "target": "doris_plugs", "readable": "note_doris_dash", "note": "doris_dash", "needs": "spark_plugs", "scene": "res://scenes/world/jobs/doris_plugs.tscn"}, 2.0)
 	add_spot(k, VenueSpot.Kind.JOB, "doris_blade", Vector3(41.9, 0.5, 0.0), "Doris's blade",
 		{"job": "blade_change", "target": "doris_blade", "scene": "res://scenes/world/jobs/doris_blade.tscn"}, 1.6)
+	# World: up into the seat to drive the resurface (docs/world/ICE.md 4)
+	add_spot(k, VenueSpot.Kind.JOB, "doris_drive", Vector3(40.3, 1.9, -0.5), "Drive Doris",
+		{"job": "resurface", "target": "doris_drive", "scene": "res://scenes/world/jobs/doris_drive.tscn"}, 1.8)
 	# the parts cabinet: every drawer labelled DORIS
 	var steel: Color = k.by_age(Color("6f7378"), Color("8a8f94"), Color("50555c"))
 	k.aged_block(Vector3(38.5, 0, 4.3), Vector3(39.6, 1.3, 4.85), steel, 0.3)
