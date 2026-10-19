@@ -190,13 +190,21 @@ func _build() -> void:
 		Look.fixture(l, 18.0)
 		add_child(l)
 	_pick_shape(thick)
-	no_shadows(self)
+	# boards and signs cast shadows like other furniture; flat paper would only
+	# flicker against its wall, and banners hang in the (overhead) rafters
+	if thick > 0.0:
+		shadows(self, Look.cast())
+	else:
+		no_shadows(self)
 
 
-## Like the rest of the venue's dressing, readables cast no shadows.
 static func no_shadows(n: Node) -> void:
+	shadows(n, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+
+
+static func shadows(n: Node, setting: int) -> void:
 	for c in n.find_children("*", "GeometryInstance3D", true, false):
-		c.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		c.cast_shadow = setting
 
 
 func _backing(thick: float, col: Color) -> void:

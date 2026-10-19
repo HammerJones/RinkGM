@@ -294,7 +294,7 @@ func _door_notes(k: VenueKit) -> void:
 	m.roughness = 0.6
 	bm.material = m
 	b.mesh = bm
-	b.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	b.cast_shadow = Look.cast()
 	_door.attach(b, Transform3D(Basis.IDENTITY, Vector3(0.3, 0.78, -0.06)))
 
 
@@ -322,6 +322,6 @@ func _spots(k: VenueKit) -> void:
 	add_spot(k, VenueSpot.Kind.SCREEN, "log_book", PLANT * Vector3(LEFT + 0.15, 1.3, 3.2), "Plant log book", {"screen": "log_book"}, 1.5)
 	# the Nordale page Gus keeps taped up by the log book
 	var nordale := Readable.make("nordale_page", true)
-	nordale.transform = Transform3D(PLANT.basis * Basis(Vector3.UP, PI * 0.5), PLANT * Vector3(LEFT + 0.022, 1.95, 2.2))
+	nordale.transform = Transform3D(PLANT.basis * Basis(Vector3.UP, PI * 0.5), PLANT * Vector3(LEFT + 0.003, 1.62, 3.2))
 	k.add(nordale)
 	add_spot(k, VenueSpot.Kind.READ, "nordale_manual", PLANT * Vector3(LEFT + 0.15, 1.3, 2.7), "Nordale RC-4 manual", {"readable": "nordale_manual"}, 1.3)

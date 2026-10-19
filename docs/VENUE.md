@@ -250,7 +250,9 @@ checks that every place has a floor under it and room to stand.
   Silkscreen for titles, VT323 for numbers, clocks and prices, on a CRT
   panel, crisp and in full colour; only the housing looks worn.
 - Budget, about 0.6M triangles and 180-200 draws (checked by `tools/tests/test_venue.gd`, numbers printed per age):
-  13 lights with no shadows, no venue geometry casts sun shadows, props and
+  at most 13 lights that are always drawn; fixtures (`Look.fixture`) fade out
+  with distance and may cast shadows. Furniture casts shadows from MEDIUM
+  (`Look.cast()`), overhead rooms never (docs/ART.md, Lighting). Props and
   the crowd drawn as MultiMeshes (the crowd's cheers run in its shader), and
   the live scoreboard only changes Label3D text.
 

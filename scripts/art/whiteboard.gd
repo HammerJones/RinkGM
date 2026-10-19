@@ -109,7 +109,7 @@ func _ready() -> void:
 	body.set_meta("whiteboard", self)
 	add_child(body)
 	marks.set_pickable(false)  # the board's own shape picks it
-	Readable.no_shadows(self)
+	Readable.shadows(self, Look.cast())
 
 
 ## The whiteboard a pick ray hit, or null.

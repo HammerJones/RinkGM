@@ -19,6 +19,12 @@ extends RefCounted
 ##          probe, a few shadowed lamps.
 ##  HIGH    + screen-space indirect light, volumetric haze (visible lamp
 ##          cones), more shadowed lamps.
+##
+## Shadows: from MEDIUM the building's furniture (stands, benches, boards,
+## props, doors, people) casts shadows; overhead rooms (roof, lamp truss)
+## never do, or the roof would black out the ice under the top light. Atlas
+## size, soft-shadow filtering and the top light's cascades step up with the
+## quality (SHADOWS).
 
 enum Quality { LOW, MEDIUM, HIGH }
 const QUALITY_NAMES := ["low", "medium", "high"]
@@ -27,6 +33,14 @@ const SAVE_PATH := "user://look.cfg"
 ## How much brighter than white a glowing lamp face is drawn, so the glow
 ## (bloom) picks lamps out and nothing else.
 const LAMP_HDR := [1.35, 1.7, 1.9]
+
+## Per quality: [directional atlas px, positional atlas px, soft filter,
+## top light cascades]
+const SHADOWS := [
+	[2048, 2048, RenderingServer.SHADOW_QUALITY_SOFT_LOW, DirectionalLight3D.SHADOW_ORTHOGONAL],
+	[4096, 4096, RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM, DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS],
+	[8192, 8192, RenderingServer.SHADOW_QUALITY_SOFT_HIGH, DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS],
+]
 
 static var _quality := -1
 ## Environments made through setup(), re-applied when the quality changes.
@@ -64,6 +78,7 @@ static func set_quality(q: int) -> void:
 	var mat := VenueKit.glow_material()
 	if mat:
 		mat.albedo_color = lamp_glow()
+	apply_shadows()
 
 
 static func at_least(q: int) -> bool:
@@ -94,6 +109,43 @@ static func setup(env: Environment, kind := "arena") -> void:
 	env.adjustment_saturation = 1.06
 	_apply_effects(env, kind)
 	_envs.append(weakref(env))
+	apply_shadows()
+
+
+## Shadow atlases and filtering for the main viewport at this quality.
+static func apply_shadows() -> void:
+	var s: Array = SHADOWS[quality()]
+	RenderingServer.directional_shadow_atlas_set_size(s[0], true)
+	RenderingServer.directional_soft_shadow_filter_set_quality(s[2])
+	RenderingServer.positional_soft_shadow_filter_set_quality(s[2])
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree and tree.root:
+		tree.root.positional_shadow_atlas_size = s[1]
+		tree.root.positional_shadow_atlas_16_bits = true
+
+
+## Whether the building's furniture casts shadows at this quality.
+static func casts_shadows() -> bool:
+	return at_least(Quality.MEDIUM)
+
+
+## The shadow casting setting for venue geometry (furniture, props, people).
+static func cast() -> int:
+	return GeometryInstance3D.SHADOW_CASTING_SETTING_ON if casts_shadows() else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## The top light's shadow: crisp near the camera, cascaded on MEDIUM and up.
+static func sun_shadows(sun: DirectionalLight3D) -> void:
+	sun.shadow_enabled = true
+	sun.directional_shadow_mode = SHADOWS[quality()][3]
+	sun.directional_shadow_max_distance = 60.0
+	sun.directional_shadow_split_1 = 0.08
+	sun.directional_shadow_split_2 = 0.22
+	sun.directional_shadow_split_3 = 0.5
+	sun.directional_shadow_blend_splits = at_least(Quality.HIGH)
+	sun.directional_shadow_fade_start = 0.85
+	sun.shadow_bias = 0.03
+	sun.shadow_normal_bias = 0.8
 
 
 static func _apply_effects(env: Environment, kind: String) -> void:
@@ -147,7 +199,7 @@ static func lamp_glow() -> Color:
 
 ## How many arena lamps cast shadows at this quality.
 static func shadowed_lamps() -> int:
-	return [0, 2, 6][quality()]
+	return [0, 4, 8][quality()]
 
 
 ## Sets up a fixture light the same way everywhere: soft falloff, a little

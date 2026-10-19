@@ -271,6 +271,13 @@ comes from fixtures, not a sun: every arena lamp is a spot light
 lights that are always on). Quality is LOW / MEDIUM / HIGH, saved in
 `user://look.cfg`, overridden per run with `-- --look=low|medium|high`.
 
+Shadows step up with it (`Look.SHADOWS`): atlas size (2k / 4k / 8k), soft
+filtering, and the top light's cascades (one / two / four). From MEDIUM the
+building's furniture casts shadows (`Look.cast()`: stands, benches, boards,
+props, doors, the crowd, boards and signs); overhead rooms (roof, lamp truss,
+banners) never do, or the roof would black out the ice under the top light.
+Flat paper never casts.
+
 ## Authoring in MagicaVoxel
 
 `VoxLoader.load_vox(path, voxel_size)` reads a `.vox` file into a

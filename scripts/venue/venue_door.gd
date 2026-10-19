@@ -87,7 +87,7 @@ func _leaf(hinge_x: float, w: float, dir: float) -> void:
 		b.add_box(Transform3D(Basis.from_scale(Vector3(0.05, 0.05, t + 0.08)), Vector3(hx, 1.05, 0)), Color("c9ccd1"))
 	var mi := MeshInstance3D.new()
 	mi.mesh = b.commit()
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.cast_shadow = Look.cast()
 	pivot.add_child(mi)
 	var body := AnimatableBody3D.new()
 	body.sync_to_physics = false  # follow the swinging pivot every frame

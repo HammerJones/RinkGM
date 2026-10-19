@@ -48,7 +48,7 @@ var _mat: ShaderMaterial
 
 
 func _ready() -> void:
-	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	cast_shadow = Look.cast()
 	_mat = ShaderMaterial.new()
 	var sh := Shader.new()
 	sh.code = SHADER

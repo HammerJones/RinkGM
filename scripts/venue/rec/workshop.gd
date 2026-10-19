@@ -26,7 +26,7 @@ func furnish(k: VenueKit) -> void:
 	var wood: Color = k.by_age(Color("8a6a45"), Color("9a7a50"), Color("6a6e74"))
 	var yellow := k.aged(Color("e0b020"), 5)
 	# the old stencilled LOADING by the roll-up door, painted over: RECEIVING
-	readable(k, "sign_receiving", Vector3(x1 - 0.15, 2.0, -50.6), Vector3(-1, 0, 0))
+	readable(k, "sign_receiving", Vector3(x1 - 0.3, 2.0, -50.6), Vector3(-1, 0, 0))
 	# a painted keep-clear box inside the roll-up door
 	for z in [-55.0, -51.0]:
 		k.block(Vector3(x1 - 4.0, 0, z - 0.06), Vector3(x1 - 0.3, 0.005, z + 0.06), yellow, 1.0, 0.04, false)

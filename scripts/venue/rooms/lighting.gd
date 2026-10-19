@@ -181,8 +181,9 @@ func apply(env: Environment, sun: DirectionalLight3D) -> void:
 		sun.rotation_degrees = Vector3(-76.0, -24.0, 0.0)
 		sun.light_energy = [0.42, 0.5, 0.56][a] * lerpf(0.04, 1.0, out)
 		sun.light_color = [Color(1.0, 0.92, 0.8), Color(1.0, 0.97, 0.92), Color(0.95, 0.98, 1.0)][a]
-		sun.shadow_blur = 1.6
-		sun.light_angular_distance = 2.0
+		Look.sun_shadows(sun)
+		sun.shadow_blur = 1.2
+		sun.light_angular_distance = 1.2
 	if env:
 		env.ambient_light_color = [Color(0.8, 0.78, 0.74), Color(0.85, 0.85, 0.86), Color(0.84, 0.88, 0.96)][a]
 		env.ambient_light_energy = [0.27, 0.31, 0.34][a] * lerpf(0.3, 1.0, out)

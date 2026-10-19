@@ -275,8 +275,10 @@ func commit(parent: Node3D) -> void:
 			continue
 		var mi := MeshInstance3D.new()
 		mi.mesh = b.commit(pair[1])
-		# the building never casts sun shadows: its roof would black out the ice
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		# furniture casts shadows when the quality allows; overhead rooms (the
+		# roof, the lamp truss) never do or they'd black out the ice, and lamp
+		# faces and glass never do
+		mi.cast_shadow = Look.cast() if pair[1] == null and not parent.get("overhead") else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(mi)
 	if not _shapes.is_empty():
 		var body := StaticBody3D.new()
@@ -301,7 +303,7 @@ func commit(parent: Node3D) -> void:
 			mm.set_instance_transform(i, xfs[i])
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
-		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if parent.get("overhead") else Look.cast()
 		parent.add_child(mmi)
 	if not _occluders.is_empty():
 		var verts := PackedVector3Array()
