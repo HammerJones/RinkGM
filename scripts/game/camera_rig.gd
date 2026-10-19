@@ -8,6 +8,8 @@ extends Node3D
 ##   ISOMETRIC  orthographic, matching the reference renders
 ## The human's controls are camera-relative (HumanController reads
 ## forward_flat / right_flat), so "up" on the stick is always into the screen.
+## Holding free look (LMB / LB) turns the view from where the camera stands
+## without turning the controls; letting go eases it back.
 
 enum Mode { END, FIRST, BROADCAST, ISOMETRIC }
 
@@ -19,6 +21,12 @@ var _fp_yaw := 0.0
 var _fp_pitch := 0.0
 var _hidden_rig: Node3D
 var zoom := 16.0
+## Free look: yaw (right +) and pitch (up +) on top of the mode's view.
+var look := Vector2.ZERO
+var looking := false
+var _base_basis := Basis.IDENTITY   # the view before free look: the controls use it
+const LOOK_YAW := deg_to_rad(160.0)
+const LOOK_PITCH := deg_to_rad(55.0)
 
 const END_BACK := 10.5    # how far behind the focus the end camera sits
 const END_HEIGHT := 6.5
@@ -54,7 +62,17 @@ func set_mode(m: Mode) -> void:
 	_place()
 
 
+## Adds `delta` (radians, x right, y up) to the free look while `held`.
+func free_look(delta: Vector2, held: bool) -> void:
+	looking = held and mode != Mode.ISOMETRIC
+	if looking:
+		look.x = clampf(look.x + delta.x, -LOOK_YAW, LOOK_YAW)
+		look.y = clampf(look.y + delta.y, -LOOK_PITCH, LOOK_PITCH)
+
+
 func follow(focus: Vector3, dt: float) -> void:
+	if not looking:
+		look = look.lerp(Vector2.ZERO, 1.0 - exp(-6.0 * dt))
 	var h := _human()
 	if h:
 		var ax := h.attack_goal().x
@@ -72,13 +90,13 @@ func follow(focus: Vector3, dt: float) -> void:
 
 
 func forward_flat() -> Vector3:
-	var f := -cam.global_transform.basis.z
+	var f := -_base_basis.z
 	f.y = 0.0
 	return f.normalized()
 
 
 func right_flat() -> Vector3:
-	var r := cam.global_transform.basis.x
+	var r := _base_basis.x
 	r.y = 0.0
 	return r.normalized()
 
@@ -119,6 +137,7 @@ func _follow_eyes(h: Skater, dt: float) -> void:
 	cam.cull_mask = ~SELF_LAYER
 	cam.transform = Transform3D(Basis.from_euler(Vector3(_fp_pitch, _fp_yaw, 0)), eye)
 	_center = h.global_position
+	_apply_look()
 
 
 const SELF_LAYER := 1 << 19
@@ -166,4 +185,13 @@ func _place() -> void:
 			cam.look_at(_center, Vector3.UP)
 		Mode.FIRST:
 			# placed by follow() once there is a skater to look out of
-			pass
+			return
+	_apply_look()
+
+
+## Turns the view by the free look, from where the camera stands.
+func _apply_look() -> void:
+	_base_basis = cam.basis
+	if mode == Mode.ISOMETRIC or look.is_zero_approx():
+		return
+	cam.basis = (Basis(Vector3.UP, -look.x) * _base_basis * Basis(Vector3.RIGHT, look.y)).orthonormalized()

@@ -27,6 +27,8 @@ func update(dt: float) -> void:
 	c.dash = f.dash
 	c.stop = f.stop
 	c.check = f.check_pressed
+	c.turn_around = f.turn_pressed
+	game.camera_rig.free_look(f.look, f.looking)
 	c.lift = f.lift > 0.5
 	c.tilt = f.tilt
 	var sw := right * f.stick.x + fwd * f.stick.y

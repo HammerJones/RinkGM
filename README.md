@@ -30,10 +30,12 @@ virtual right stick, so both devices drive the same stick model.
 | Backhand | Draw back behind your backhand hip, then sweep forward | Same with the mouse |
 | Learned moves (snapshot, dekes, toe drag...) | Stick patterns, see below | Same with the mouse |
 | Lift stick (offense: over the puck; defense: lift their stick) | LT | Right click |
-| Tilt blade (raises shots and passes) | RT (analog) | Left click (hold longer for more) |
+| Tilt blade (raises shots and passes) | RT (analog) | Ctrl (hold) |
 | Aim at the near or far post | Lean the left stick | Lean with W / S |
 | Pass, or call for a pass without the puck | A or RB | E |
-| Body check | B | F |
+| Turn around: skate backwards, again to face forward | X | F |
+| Look around (the blade holds still; let go and the view eases back) | Hold LB + right stick | Hold left click + mouse |
+| Body check | B | Q |
 | Mouse sensitivity | | [ and ] |
 | Physics mode (Sim / Hybrid / Arcade) | Back | F1 |
 | Camera (down the ice / first person / broadcast / isometric) | D-pad up | C |

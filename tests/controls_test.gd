@@ -76,6 +76,7 @@ func _run() -> void:
 	await _moves()
 	await _stickhandling()
 	await _job_input()
+	await _backwards_and_look()
 
 	# --- lift with the puck raises the blade
 	await _carry(Vector2(-10, 0))
@@ -294,6 +295,44 @@ func _freeze_others(keep: Array = []) -> void:
 			s.stun_timer = 1.0
 			s.position = Vector3(25 + s.number, 0, -10 - s.team * 5)
 			s.vel = Vector3.ZERO
+
+
+## Turn around (F / X) and skate backwards; free look (LMB / LB) turns the
+## view but not the controls.
+func _backwards_and_look() -> void:
+	var h: Skater = game.human
+	# skate forwards to speed, then turn around
+	await _carry(Vector2(-25, 0), false)
+	_plan = func(f, t): f.move = Vector2(1, 0)
+	await _wait(3.0)
+	var fwd_speed := h.vel.length()
+	_plan = func(f, t):
+		f.move = Vector2(1, 0)
+		f.turn_pressed = t > 3.0 and t < 3.01
+	await _wait(0.5)
+	_check(h.backwards and h.heading.dot(Vector3(-1, 0, 0)) > 0.9, "turning around faces the other way (%s)" % h.heading)
+	# still skating the same way, now backwards
+	await _wait(3.0)
+	_check(h.vel.x > 2.0 and h.heading.x < -0.9, "skating backwards keeps going where the stick points (%.1f m/s)" % h.vel.x)
+	_check(h.vel.length() < fwd_speed * 0.85, "backwards is slower than forwards (%.1f vs %.1f)" % [h.vel.length(), fwd_speed])
+	_plan = func(f, t): f.turn_pressed = t > 0.0 and t < 0.01
+	_t = 0.0
+	await _wait(0.5)
+	_check(not h.backwards and h.heading.x > 0.9, "turning around again faces forwards")
+	# free look: the view turns, the controls don't
+	var rig: CameraRig = game.camera_rig
+	var before := rig.forward_flat()
+	var cam_before := -rig.cam.global_basis.z
+	_plan = func(f, t):
+		f.looking = true
+		f.look = Vector2(0.02, 0.0)
+	await _wait(0.5)
+	var cam_now := -rig.cam.global_basis.z
+	_check(cam_now.angle_to(cam_before) > 0.5, "holding free look turns the view")
+	_check(rig.forward_flat().angle_to(before) < 0.05, "and leaves the controls where they were")
+	_plan = Callable()
+	await _wait(1.5)
+	_check(rig.look.length() < 0.05, "letting go eases the view back")
 
 
 ## The rink job input (JobInput): the real bindings, not the scripted hook.

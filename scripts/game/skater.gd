@@ -57,6 +57,7 @@ class Controls:
 	var pass_dir := Vector2.ZERO
 	var pass_hint: Variant = null     ## Skater the AI wants to pass to
 	var check := false                ## pressed this frame: shoulder check
+	var turn_around := false          ## pressed this frame: pivot, skate backwards / forwards again
 	var move_id := &""                ## a recognised stick move to start (Moves catalog id)
 
 	func reset() -> void:
@@ -73,6 +74,7 @@ class Controls:
 		pass_dir = Vector2.ZERO
 		pass_hint = null
 		check = false
+		turn_around = false
 		move_id = &""
 
 
@@ -92,6 +94,15 @@ var heading := Vector3(1, 0, 0)
 var yaw_rate := 0.0
 var turn_load := 0.0   ## m/s^2 of sideways load from turning, hurts balance
 var braking := false
+## Skating backwards (the turn-around toggle): the skater faces away from
+## where the left stick points and pushes with backward C-cuts, slower than
+## forwards. Physics, for now, from the Controls thread.
+var backwards := false
+const BACK_SPEED := 0.72     # top speed backwards, of forwards
+const BACK_ACCEL := 0.65     # stride push backwards, of forwards
+const PIVOT_TIME := 0.32     # s a turn-around takes
+var _pivot := 0.0            # s left in a turn-around
+var _pivot_face := Vector3.ZERO
 var stamina := 1.0
 var stun_timer := 0.0
 var check_timer := 0.0
@@ -220,6 +231,8 @@ func place(p: Vector2, facing: Vector3) -> void:
 	position = Vector3(p.x, 0, p.y)
 	vel = Vector3.ZERO
 	heading = facing.normalized()
+	backwards = false
+	_pivot = 0.0
 	_set_blade(DEFAULT_BLADE)
 	blade_pos = _blade_world(blade_local)
 	blade_from = blade_pos
@@ -322,19 +335,40 @@ func physics_update(dt: float) -> void:
 	braking = ctrl.stop and able and spd > 0.6
 	var prev_heading := heading
 
+	# turning around: a quick pivot to face the other way, then skating
+	# backwards (or forwards again)
+	if ctrl.turn_around and able and _pivot <= 0.0:
+		backwards = not backwards
+		_pivot = PIVOT_TIME
+		_pivot_face = -heading
+	_pivot = maxf(0.0, _pivot - dt)
+	# the way the skater pushes: forwards along the heading, backwards away from it
+	var push := -heading if backwards else heading
+	if backwards:
+		top *= BACK_SPEED
+
 	# steering: tight at low speed, wide arcs at full speed
-	if amount > 0.15:
+	if amount > 0.15 or _pivot > 0.0:
 		var turn := lerpf(p.turn_slow, p.turn_fast, clampf(spd / p.max_speed, 0.0, 1.0)) * (1.0 + 0.5 * blend)
 		if braking:
 			turn *= 0.4
-		heading = _rotate_toward(heading, desired, turn * dt)
+		var face := desired
+		if backwards:
+			face = -desired
+		if _pivot > 0.0:
+			if amount <= 0.15:
+				face = _pivot_face
+			turn = maxf(turn, PI / PIVOT_TIME)
+		heading = _rotate_toward(heading, face, turn * dt)
+		push = -heading if backwards else heading
 
 	# stride thrust along the blades, plus arcade direct thrust
 	if amount > 0.15 and not braking:
-		var align := maxf(0.0, heading.dot(desired))
+		var align := maxf(0.0, push.dot(desired))
 		# strides stay strong until you're close to top speed
-		var room := sqrt(clampf(1.0 - vel.dot(heading) / top, 0.0, 1.0))
-		vel += heading * p.accel * align * amount * room * dt
+		var room := sqrt(clampf(1.0 - vel.dot(push) / top, 0.0, 1.0))
+		var accel := p.accel * (BACK_ACCEL if backwards else 1.0)
+		vel += push * accel * align * amount * room * dt
 		var room_direct := clampf(1.0 - vel.dot(desired) / top, 0.0, 1.0)
 		vel += desired * p.accel * 0.35 * blend * amount * room_direct * dt
 

@@ -12,12 +12,14 @@ R-stick  stick blade (220 deg arc), side to side to stickhandle
 LT  lift stick (hold while pulling back = slapshot,
   on D = stick lift)   RT  tilt blade (raise shots/passes)
 A / RB  pass, or call for it    B  body check
+X  turn around (skate backwards)   LB (hold)  look around
 Back  physics mode   D-up  camera   Start  menu (pause)
 
 [b]Keyboard + mouse[/b]  (the mouse is the right stick)
 WASD  skate    Shift  dash    Space  stop
-RMB  lift stick    LMB  tilt blade (hold for more)
-E  pass / call for it    F  check    [ ]  mouse sensitivity
+RMB  lift stick    Ctrl  tilt blade    LMB (hold)  look around
+E  pass / call for it    F  turn around (skate backwards)
+Q  check    [ ]  mouse sensitivity
 Esc  menu (pause, frees the cursor)   F1  physics mode
 C  camera   R  restart (practice: reset the puck)
 Tab / Y  fast-forward on the bench (career)

@@ -33,14 +33,21 @@ func _ready() -> void:
 	_mouse("lift", MOUSE_BUTTON_RIGHT)
 	_axis("lift", JOY_AXIS_TRIGGER_LEFT, 1.0)
 
-	_mouse("tilt", MOUSE_BUTTON_LEFT)
+	_keys("tilt", [KEY_CTRL])
 	_axis("tilt", JOY_AXIS_TRIGGER_RIGHT, 1.0)
+
+	# hold to look around with the mouse / right stick (the stick holds still)
+	_mouse("free_look", MOUSE_BUTTON_LEFT)
+	_button("free_look", JOY_BUTTON_LEFT_SHOULDER)
+	# turn around: skate backwards, again to face forward
+	_keys("turn_around", [KEY_F])
+	_button("turn_around", JOY_BUTTON_X)
 
 	_keys("pass", [KEY_E])
 	_button("pass", JOY_BUTTON_A)
 	_button("pass", JOY_BUTTON_RIGHT_SHOULDER)
 
-	_keys("check", [KEY_F])
+	_keys("check", [KEY_Q])
 	_button("check", JOY_BUTTON_B)
 
 	_keys("sens_down", [KEY_BRACKETLEFT])
