@@ -16,6 +16,8 @@ var path := ""            # "player", "coach" or "gm" once chosen
 var rink_name := "Millbrook Memorial Arena"
 var town := "Millbrook"
 var event_now := ""       # event kind on the ice right now, or ""
+## Extra text tokens other systems fill in ({tutorial_hint} from TutorialGuide).
+var tokens := {}
 var rng := RandomNumberGenerator.new()
 
 
@@ -151,6 +153,7 @@ func fill(s: String, sp: Person = null) -> String:
 		"ice_word": ice_word(),
 		"name": sp.name if sp else "", "known_as": sp.known_as if sp else "",
 	}
+	t.merge(tokens)
 	return s.format(t)
 
 
