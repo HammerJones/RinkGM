@@ -395,7 +395,6 @@ static func place(k: VenueKit, vs: Array[Dictionary], poses: Array[Transform3D],
 			var mi := MeshInstance3D.new()
 			mi.name = "Sticks"
 			mi.mesh = merged
-			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			k.add(mi)
 		return made
 	var f := field
