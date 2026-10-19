@@ -49,6 +49,14 @@ slides, sets down on the far side and catches it on the other face; the
 wrists angle the blade (`SkaterRig.blade_turn`) so each push also steers the
 puck back to its spot out front. In games the puck is still Physics' to move.
 
+## Skating backwards
+
+When a skater's velocity points behind them (faster than `back_speed`),
+the stride turns into C-cuts: each skate in turn sweeps out and forward on
+its inside edge with the toe turned in, then glides back in under the hips,
+both skates staying on the ice. The skater sits lower and more upright
+(`back_*` tunables). The studio clip is "Skating backwards".
+
 ## On foot
 
 `PersonRig` (scripts/game/person_rig.gd) is the skater's body without the

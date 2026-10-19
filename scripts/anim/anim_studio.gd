@@ -509,7 +509,7 @@ func _finish_reel() -> void:
 			&"check": "check", &"fall_back": "fall", &"fall_forward": "fall",
 			&"cel_arms_up": "celebrate", &"cel_fist_pump": "celebrate", &"cel_knee_slide": "celebrate",
 			&"hockey_stop": "brake", &"cross_left": "cross", &"cross_right": "cross",
-			&"stickhandle": "handled",
+			&"stickhandle": "handled", &"skate_back": "back",
 			&"walk": "planted", &"run": "flight", &"walk_turn": "planted", &"sit": "sat",
 			&"sprint": "flight", &"jump": "air", &"crouch_walk": "low",
 			&"crouch_work": "reached", &"kneel_work": "knelt", &"reach_grab": "reached",
@@ -550,6 +550,8 @@ func _test_frame(id: StringName) -> void:
 		seen["brake"] = true
 	if r._cross > 0.5:
 		seen["cross"] = true
+	if r._back > 0.8:
+		seen["back"] = true
 	if puppet.position != Vector3.ZERO:
 		_fail("%s: the skater left the treadmill" % id)
 	# the two-handed clips keep the bottom hand on the shaft

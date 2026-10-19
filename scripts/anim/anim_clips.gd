@@ -25,6 +25,8 @@ const LIST := [
 		"note": "Striding at about 22 mph."},
 	{"id": &"dash", "title": "Dash", "groups": ["dash", "stride"], "len": 4.0,
 		"note": "Burst strides from a cruise, twice per loop."},
+	{"id": &"skate_back", "title": "Skating backwards", "groups": ["back", "stride"], "len": 5.0,
+		"note": "C-cuts at 4 m/s backwards: each skate sweeps out and forward, the skater sits low."},
 	{"id": &"glide", "title": "Glide", "groups": ["stance"], "len": 3.0,
 		"note": "Coasting on both skates."},
 	{"id": &"cross_left", "title": "Crossovers: left turn", "groups": ["cross", "stride"], "len": 5.0,
@@ -119,6 +121,9 @@ static func run(id: StringName, p: AnimPuppet, t: float, dt: float, mem: Diction
 			if _once(mem, "d1", t >= 0.4) or _once(mem, "d2", t >= 2.4):
 				p.dash_timer = 0.45
 				p.vel = p.heading * minf(p.speed() + 2.5, 11.2)
+		&"skate_back":
+			p.go_speed = -4.0
+			p.push = true
 		&"glide":
 			if _once(mem, "v", true):
 				p.vel = p.heading * 7.0

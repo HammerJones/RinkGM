@@ -62,6 +62,7 @@ var _brake := 0.0
 var _fall := 0.0
 var _fall_dir := 1.0      # +1 falls backward, -1 forward
 var _check := 0.0
+var _back := 0.0          # 0 forwards .. 1 skating backwards
 var _bf := 0.0
 var _time := 0.0
 ## Knee to the sole: a skate (SHIN) or, on PersonRig, a shoe.
@@ -243,6 +244,7 @@ func update_skater(s: Skater, dt: float) -> void:
 	_lean = lerpf(_lean, clampf(s.yaw_rate * speed * T.cross_lean, -T.cross_lean_max, T.cross_lean_max), smooth)
 	_cross = lerpf(_cross, clampf((absf(_lean) - T.cross_start) / T.cross_range, 0.0, 1.0) if pushing and speed > 2.5 else 0.0, smooth)
 	_brake = lerpf(_brake, T.stop_turn if s.braking else 0.0, 1.0 - exp(-T.stop_speed * dt))
+	_back = lerpf(_back, 1.0 if s.vel.dot(-s.global_basis.z) < -T.back_speed and able else 0.0, smooth)
 	var down := s.stun_timer > 0.25
 	if down and _fall < 0.05:
 		# pushed back while skating slowly (or backwards) goes over backwards
@@ -261,6 +263,9 @@ func update_skater(s: Skater, dt: float) -> void:
 		var sd := -1.0 if i == 0 else 1.0
 		var u := fmod(_cycle + (0.0 if i == 0 else 0.5), 1.0)
 		var r := _stride_foot(T, sd, u, _amp, _cross if sd == outside else 0.0, _cross if sd != outside else 0.0)
+		if _back > 0.01:
+			var c := _back_foot(T, sd, u, _amp)
+			r = [r[0].lerp(c[0], _back), lerpf(r[1], c[1], _back)]
 		var glide := Vector3(sd * T.stance_width, 0, -sd * 0.05 * k)
 		var foot: Vector3 = glide.lerp(r[0], stride_w)
 		var yaw: float = r[1] * stride_w
@@ -278,7 +283,7 @@ func update_skater(s: Skater, dt: float) -> void:
 	_shift = lerpf(_shift, sup_x * T.stride_hip_shift * stride_w, 1.0 - exp(-6.0 * dt))
 	var crouch := T.stance_crouch + T.stance_crouch_speed * k + T.stop_crouch * stop + (T.dash_crouch if dashing else 0.0)
 	crouch += T.check_crouch * _check - (T.check_crouch + T.check_rise) * rise
-	crouch += T.fall_drop * _fall + T.celebrate_knee_drop * slide
+	crouch += T.fall_drop * _fall + T.celebrate_knee_drop * slide + T.back_sit * _back
 	_crouch = lerpf(_crouch, crouch, smooth)
 	var bob := absf(sin(_cycle * TAU)) * T.stride_bob * _amp + sin(_time * 2.2) * T.stance_breathe * (1.0 - stride_w)
 	hips.position = Vector3(_shift, HIP_Y - _crouch - bob, 0.03 * k)
@@ -298,6 +303,7 @@ func update_skater(s: Skater, dt: float) -> void:
 	var fol := smoothstep(0.0, 1.0, _follow)
 	var lean_x := -(T.stance_lean + T.stance_lean_speed * k) + w * T.shot_windup_rise + stop * T.stop_lean - fol * T.shot_follow_rise * _follow_h
 	lean_x -= T.check_lean * _check
+	lean_x += T.back_upright * _back
 	lean_x = lerpf(lean_x, T.celebrate_lean_back, _cel)
 	var turn_y := _twist - _stick_yaw * T.shot_shoulder_turn + fol * T.shot_follow_turn * _follow_side
 	# both hands on the stick: the bottom shoulder comes round and down to it
@@ -373,6 +379,21 @@ func _stride_foot(T: AnimTuning, sd: float, u: float, amp: float, cross: float, 
 	var p := out.lerp(front, smoothstep(0.0, 1.0, r))
 	p.y = sin(PI * r) * (T.stride_lift + T.cross_lift * cross) * maxf(amp, 0.3)
 	return [p, lerpf(toe_out, 0.0, r)]
+
+
+## Skating backwards, one leg at cycle point `u` (body space, +z behind):
+## the first half is the C-cut, out and forward on the inside edge with the
+## toe turned in; the second half glides the skate back in under the hips.
+## Both skates stay on the ice.
+func _back_foot(T: AnimTuning, sd: float, u: float, amp: float) -> Array:
+	var a := clampf(amp / maxf(T.stride_amp, 0.01), 0.3, 1.5)
+	var under := Vector3(sd * 0.08, 0, 0.04)
+	if u < 0.5:
+		var e := u / 0.5
+		var p := under + Vector3(sd * T.back_cut_width * sin(PI * e), 0, -T.back_cut_reach * e) * a
+		return [p, sd * T.back_toe_in * sin(PI * e) * a]
+	var e := smoothstep(0.0, 1.0, (u - 0.5) / 0.5)
+	return [(under + Vector3(0, 0, -T.back_cut_reach * a)).lerp(under, e), 0.0]
 
 
 ## Two-bone IK for one leg: knee bends forward and a little out.

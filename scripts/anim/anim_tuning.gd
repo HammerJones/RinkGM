@@ -89,6 +89,21 @@ func tunables() -> Array:
 ## Swing of the free hand when skating one-handed.
 @export_range(0.0, 0.4, 0.005) var stride_arm_swing := 0.12
 
+# ------------------------------------------------------------------- back
+# Skating backwards: C-cuts. Each skate in turn sweeps out and forward on
+# its inside edge, toe turned in, pushing the body back, then glides back in
+# under the hips. The skater sits lower with the back more upright.
+## How far out each C-cut sweeps, and how far forward it reaches.
+@export_range(0.0, 0.5, 0.005) var back_cut_width := 0.2
+@export_range(0.0, 0.6, 0.005) var back_cut_reach := 0.28
+## Toe turned in through the cut (radians).
+@export_range(0.0, 1.0, 0.01) var back_toe_in := 0.45
+## Extra hip sink and less forward lean skating backwards.
+@export_range(0.0, 0.3, 0.005) var back_sit := 0.06
+@export_range(0.0, 1.0, 0.01) var back_upright := 0.25
+## Backwards speed (m/s) that counts as skating backwards.
+@export_range(0.1, 2.0, 0.05) var back_speed := 0.4
+
 # ------------------------------------------------------------------ stick
 # Real sticks are about 163 cm tall with a 32-39 cm blade 5-9 cm high; the
 # blocky voxel players need a chunkier stick to read at that scale.
