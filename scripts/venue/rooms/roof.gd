@@ -3,11 +3,9 @@ extends VenueRoom
 ## Overhead: hidden in the isometric view.
 
 const TRUSS_STEP := 6.0
-const BANNERS := [
-	[["// LEAGUE", VenueSign.AMBER], ["CHAMPIONS", VenueSign.WHITE], ["----", VenueSign.DIM], ["1987-88", VenueSign.CYAN, true]],
-	[["// RETIRED", VenueSign.AMBER], ["#9", VenueSign.WHITE], ["----", VenueSign.DIM], ["D. PELLETIER", VenueSign.CYAN, true]],
-	[["// PROVINCIAL", VenueSign.AMBER], ["FINALISTS", VenueSign.WHITE], ["----", VenueSign.DIM], ["1994", VenueSign.CYAN, true]],
-]
+## Felt banners hung from the rafters over the lobby end, facing the ice
+## (readables.json ids), each on two strings up to the truss.
+const BANNERS := ["banner_league_8788", "banner_lumber_kings", "banner_retired_9", "banner_mallards", "banner_midget_94"]
 
 
 func _ready() -> void:
@@ -51,11 +49,10 @@ func build(k: VenueKit) -> void:
 			k.block(Vector3(dx, y - 2.4 - sag, zc - 0.45), Vector3(dx + piece - 0.05, y - 1.6 - sag, zc + 0.45), k.aged(duct, i), 1.0, 0.06, false)
 			dx += piece
 			i += 1
-	# banners: three over the lobby end, facing the ice
+	# banners: five over the lobby end, facing the ice, tops level
+	var top := y - 3.0
 	for i in BANNERS.size():
-		var b := VenueSign.make(BANNERS[i], 12, 4, 0.04)
-		b.name = "Banner%d" % i
-		b.dead = k.by_age(0.05, 0.01, 0.0)
-		b.background = k.by_age(Color("1a1410"), VenueSign.BG, Color("06080d"))
-		k.sign(b, Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(-33.0, 8.6, -8.0 + i * 8.0)))
-		k.block(Vector3(-33.05, 9.5, -8.0 + i * 8.0 - 0.02), Vector3(-33.0, y - 1.4, -8.0 + i * 8.0 + 0.02), Color("1b1c1f"), 1.0, 0.0, false)
+		var b := Readable.make(BANNERS[i])
+		b.string_length = (y - 1.4) - top
+		b.transform = Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(-33.0, top - b.size.y * 0.5, -12.0 + i * 6.0))
+		k.add(b)

@@ -17,8 +17,17 @@ extends Node3D
 ## E / A read, use or work on what you're looking at (or a door); A jumps
 ## when there's nothing in reach, B (held) crouches when no panel is open,
 ## O the office (in an owner career),
-## Esc / B close a panel, 1 2 3 / D-pad set this room's age,
-## F / Y fly, Tab frees the mouse.
+## Q / LB raise the watch, Tab / Back the bag (R turns what's in hand),
+## Esc / B close a panel or the office computer, 1 2 3 / D-pad set this room's age,
+## F / Y fly. On the ice in shoes the mouse or right stick keeps the
+## owner's balance (KitHud).
+##
+## Notes, signs and manuals are real objects (Readable), read where they
+## hang: E leans in on the one you're looking at (or the one a READ spot is
+## about), right mouse (held) leans in on whatever is ahead, left mouse takes
+## a loose note down and sticks the held one to whatever you click (a wall,
+## a door, the cork board, another sign), F crumples the held note. On a
+## whiteboard the left mouse (held) draws and X wipes your own marks.
 
 ## UI's office screens and anything else listening: the player asked for
 ## screen `id` (log_book, phone, goals, ice_grid, desk) with the sim.
@@ -31,6 +40,11 @@ const OFFICE_SCENE := "res://scenes/ui/rink_office.tscn"
 ## Screen spot -> UI rink office tab.
 const OFFICE_TABS := {"ice_grid": "grid", "log_book": "log", "goals": "board", "desk": "jobs"}
 const JOBS_DIR := "res://scenes/world/jobs/"
+## How far away a readable can be leaned in on, and taken down or stuck up.
+const READ_REACH := 3.6
+const HAND_REACH := 2.2
+const FOV := 70.0
+const LEAN_FOV := 30.0
 
 var venue: Venue
 var walker: VenueWalker
@@ -40,6 +54,7 @@ var flying := false
 var _yaw := -PI * 0.5  # facing +X, toward the front doors and the ice
 var _pitch := 0.0
 var _label: Label
+var _prompt: Label   # the [E] line, under the middle of the screen
 var _toast: Label
 var _toast_t := 0.0
 var _panel: PanelContainer
@@ -50,6 +65,15 @@ var _office: CanvasLayer
 var _leaving := false
 var _sun: DirectionalLight3D
 var _env: Environment
+## The note in your hand, if any, and whether it's held up close.
+var _held: Readable
+var _held_close := false
+## The readable being leaned in on (the view aims at it and narrows).
+var _inspect: Readable
+var _lean := false
+## The whiteboard the left mouse is drawing on.
+var _drawing: Whiteboard
+var kit: KitHud
 
 
 func _ready() -> void:
@@ -60,11 +84,7 @@ func _ready() -> void:
 			tier = a.trim_prefix("--tier=").to_int()
 		elif a == "--free-walk":
 			free = true
-	_env = Environment.new()
-	_env.background_mode = Environment.BG_COLOR
-	_env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	_env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	_env.ssao_enabled = true
+	_env = Look.make("arena")
 	var we := WorldEnvironment.new()
 	we.environment = _env
 	add_child(we)
@@ -92,11 +112,15 @@ func _ready() -> void:
 			walker.global_position = Vector3(-42.4, venue.rooms["office"].spawn.y + 0.05, -7.0)
 			_yaw = 0.0
 	cam = Camera3D.new()
-	cam.fov = 70.0
+	cam.fov = FOV
 	cam.near = 0.05
 	walker.head.add_child(cam)
 	cam.current = true
 	_build_ui()
+	kit = KitHud.new()
+	add_child(kit)
+	kit.toast.connect(_show_toast)
+	kit.setup(story, walker, cam, venue)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
@@ -108,6 +132,14 @@ func _build_ui() -> void:
 	_label.add_theme_color_override("font_color", RinkOS.READOUT)
 	_label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	layer.add_child(_label)
+	_prompt = Label.new()
+	_prompt.set_anchors_preset(Control.PRESET_CENTER)
+	_prompt.position = Vector2(-300, 28)
+	_prompt.size = Vector2(600, 40)
+	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_prompt.add_theme_color_override("font_color", RinkOS.ACTION)
+	_prompt.add_theme_color_override("font_shadow_color", Color.BLACK)
+	layer.add_child(_prompt)
 	_toast = Label.new()
 	_toast.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_toast.position = Vector2(-300, -120)
@@ -116,6 +148,14 @@ func _build_ui() -> void:
 	_toast.add_theme_color_override("font_color", RinkOS.ACTION)
 	_toast.add_theme_color_override("font_shadow_color", Color.BLACK)
 	layer.add_child(_toast)
+	# a small dot in the middle of the view: what E, the mouse and leaning aim at
+	var dot := ColorRect.new()
+	dot.color = Color(1, 1, 1, 0.6)
+	dot.set_anchors_preset(Control.PRESET_CENTER)
+	dot.size = Vector2(3, 3)
+	dot.position = Vector2(-1.5, -1.5)
+	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(dot)
 	_panel = PanelContainer.new()
 	_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_panel.custom_minimum_size = Vector2(720, 420)
@@ -133,14 +173,37 @@ func _build_ui() -> void:
 
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _busy():
-		_yaw -= e.relative.x * 0.003
-		_pitch = clampf(_pitch - e.relative.y * 0.003, -1.45, 1.45)
-	elif e is InputEventMouseButton and e.pressed:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		# on the ice in shoes the mouse mostly fights for balance; slower
+		# while leaning in
+		var look := (0.35 if kit.balancing else 1.0) * cam.fov / FOV
+		if kit.balancing:
+			kit.push(e.relative)
+		_yaw -= e.relative.x * 0.003 * look
+		_pitch = clampf(_pitch - e.relative.y * 0.003 * look, -1.45, 1.45)
+		if _inspect and e.relative.length() > 30.0:
+			_inspect = null
+	elif e is InputEventMouseButton:
+		if e.button_index == MOUSE_BUTTON_RIGHT:
+			_lean = e.pressed
+		elif e.button_index == MOUSE_BUTTON_LEFT and not e.pressed:
+			if _drawing:
+				_drawing.end_stroke()
+				_drawing = null
+		elif e.pressed and e.button_index == MOUSE_BUTTON_LEFT and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			if not _busy():
+				_hand()
+		elif e.pressed and not kit.bag_open:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	elif e is InputEventKey and e.pressed and not e.echo:
+		if kit.key(e):
+			return
 		match e.keycode:
-			KEY_TAB: Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-			KEY_ESCAPE: _close_panel()
+			KEY_TAB:
+				if not _busy():
+					kit.toggle_bag()
+			KEY_ESCAPE:
+				_inspect = null
+				_close_panel()
 			KEY_O:
 				if story and story.link and not _busy():
 					_leave_to("office")
@@ -148,8 +211,21 @@ func _unhandled_input(e: InputEvent) -> void:
 			KEY_SPACE:
 				if not flying and not _busy():
 					walker.jump()
-			KEY_Q: _close_panel()
-			KEY_F: _toggle_fly()
+			KEY_Q:
+				_inspect = null
+				if _panel.visible or _office:
+					_close_panel()
+				else:
+					kit.toggle_watch()
+			KEY_F:
+				if _held:
+					_crumple()
+				else:
+					_toggle_fly()
+			KEY_X:
+				var wb := _looked_whiteboard()
+				if wb and not _busy():
+					wb.wipe()
 			KEY_1: _age_here(VenueRoom.Age.WORN)
 			KEY_2: _age_here(VenueRoom.Age.REPAIRED)
 			KEY_3: _age_here(VenueRoom.Age.RENOVATED)
@@ -160,7 +236,15 @@ func _unhandled_input(e: InputEvent) -> void:
 					_use()
 				elif not flying:
 					walker.jump()
-			JOY_BUTTON_B: _close_panel()
+			JOY_BUTTON_B:
+				if kit.bag_open:
+					kit.toggle_bag()
+				else:
+					_close_panel()
+			JOY_BUTTON_LEFT_SHOULDER: kit.toggle_watch()
+			JOY_BUTTON_BACK:
+				if kit.bag_open or not _busy():
+					kit.toggle_bag()
 			JOY_BUTTON_Y: _toggle_fly()
 			JOY_BUTTON_DPAD_LEFT: _age_here(VenueRoom.Age.WORN)
 			JOY_BUTTON_DPAD_UP: _age_here(VenueRoom.Age.REPAIRED)
@@ -168,7 +252,7 @@ func _unhandled_input(e: InputEvent) -> void:
 
 
 func _busy() -> bool:
-	return _panel.visible or _job_scene != null or _office != null
+	return _panel.visible or _job_scene != null or _office != null or kit.busy()
 
 
 func _process(dt: float) -> void:
@@ -183,11 +267,20 @@ func _process(dt: float) -> void:
 	if _busy():
 		walker.wish = Vector3.ZERO
 		walker.crouch = false
+		_prompt.text = ""
 		return
+	walker.speed_scale = kit.step(dt) if not flying else 1.0
+	_aim(dt)
+	if _drawing:
+		if _looked_whiteboard() == _drawing:
+			_drawing.draw_at(_ray(HAND_REACH, 1 << (Readable.READ_LAYER - 1)).position)
+		else:
+			_drawing.end_stroke()
 	var look := Vector2(Input.get_joy_axis(0, JOY_AXIS_RIGHT_X), Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y))
 	if look.length() > 0.15:
-		_yaw -= look.x * 2.5 * dt
-		_pitch = clampf(_pitch - look.y * 2.0 * dt, -1.45, 1.45)
+		var k := 0.35 if kit.balancing else 1.0  # the stick is busy balancing
+		_yaw -= look.x * 2.5 * dt * k
+		_pitch = clampf(_pitch - look.y * 2.0 * dt * k, -1.45, 1.45)
 	walker.rotation.y = _yaw
 	walker.head.rotation.x = _pitch
 	var mv := Vector2(
@@ -196,6 +289,8 @@ func _process(dt: float) -> void:
 	var stick := Vector2(Input.get_joy_axis(0, JOY_AXIS_LEFT_X), Input.get_joy_axis(0, JOY_AXIS_LEFT_Y))
 	if stick.length() > 0.15:
 		mv += stick
+	if _inspect and mv.length() > 0.2:
+		_inspect = null  # walking away
 	var basis := Basis(Vector3.UP, _yaw)
 	var dir := basis * Vector3(mv.x, 0, mv.y)
 	walker.running = Input.is_physical_key_pressed(KEY_SHIFT) or Input.is_joy_button_pressed(0, JOY_BUTTON_LEFT_STICK)
@@ -210,27 +305,47 @@ func _process(dt: float) -> void:
 		walker.crouch = Input.is_physical_key_pressed(KEY_CTRL) or Input.is_physical_key_pressed(KEY_C) \
 			or Input.is_joy_button_pressed(0, JOY_BUTTON_B)
 	_label.text = "\n".join(_hud_lines())
+	_prompt.text = _hint()
 
 
 func _hud_lines() -> Array:
 	var room := venue.room_at(walker.global_position + Vector3(0, 0.5, 0))
 	var head := "// %s   %s" % [venue.rink_name, story.clock_text() if story else "FREE WALK"]
 	var where := "%s [%s]" % [room.display_name.to_upper() if room else "OUTSIDE", VenueRoom.AGE_NAMES[room.age].to_upper() if room else "-"]
-	var s := _looked_at()
-	var hint := ""
-	if s:
-		hint = "[E] " + s.prompt()
-	else:
-		var d := walker.nearest_door(venue)
-		if d:
-			hint = "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
 	if story and story.link:
 		head += "   [O] OFFICE"
-	return [head, where, hint]
+	return [head, where]
+
+
+## The [E] line (shown under the middle of the screen, playtest #20): what
+## you can do with what you're looking at or holding, else the nearest door.
+func _hint() -> String:
+	if kit.status() != "":
+		return kit.status()
+	var s := _looked_at()
+	var r := _looked_readable(READ_REACH)
+	if _held:
+		return "[LMB] STICK IT HERE   [E] %s   [F] CRUMPLE" % ("LOWER" if _held_close else "LOOK CLOSER")
+	if _inspect:
+		return "[E] STEP BACK"
+	if _looked_whiteboard():
+		return "[E] LEAN IN   [LMB] DRAW   [X] WIPE YOUR MARKS"
+	if r:
+		var lean := "[E] LEAN IN"
+		if r.movable and _looked_readable(HAND_REACH) == r:
+			lean += "   [LMB] TAKE DOWN"
+		return lean
+	if s:
+		return "[E] " + s.prompt()
+	var hint := kit.hands_hint()
+	var d := walker.nearest_door(venue)
+	if d and not hint.begins_with("[E]"):
+		hint = "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
+	return hint
 
 
 func _looked_at() -> VenueSpot:
-	return walker.nearest_spot(venue, -cam.global_transform.basis.z)
+	return walker.nearest_spot(venue, -cam.global_transform.basis.z, kit.spots)
 
 
 ## E / A: the spot you're looking at, else the nearest door.
@@ -243,9 +358,31 @@ func _use() -> void:
 		return
 	if _job_scene or _office:
 		return
+	if _held:
+		_held_close = not _held_close
+		_place_held()
+		return
+	if _inspect:
+		_inspect = null
+		return
 	var s := _looked_at()
+	var r := _looked_readable(READ_REACH)
+	if r == null and s and s.kind == VenueSpot.Kind.READ:
+		r = _readable_for(s.id)
+	if r:
+		_inspect = r
+		# a READ spot about this readable still counts as read (flags, keys)
+		if s and s.kind == VenueSpot.Kind.READ and story and (s.id == r.story or _readable_for(s.id) == r):
+			var a := story.use(s)
+			a.erase("read")
+			_act(a)
+		return
 	if s:
 		_act(story.use(s) if story else {"toast": s.prompt()})
+		return
+	var hands := kit.use_hands()
+	if hands != "":
+		_show_toast(hands)
 		return
 	var d := walker.nearest_door(venue)
 	if d:
@@ -256,7 +393,9 @@ func _use() -> void:
 
 
 func _act(a: Dictionary) -> void:
-	if a.has("read"):
+	if kit.handles(a):
+		_show_toast(kit.act(a))
+	elif a.has("read"):
 		_show_read(a.read)
 	elif a.has("job"):
 		_start_job(a.job)
@@ -321,7 +460,7 @@ func _start_job(job: Dictionary) -> void:
 	var note := story.spot_text(job)
 	if not note.is_empty():
 		bb += "%s\n\n" % note.text
-	bb += "[color=#%s]The mini game for this one isn't in yet.[/color]\n\n[color=#%s][E] DO IT THE QUICK WAY   [Q] LEAVE IT[/color]" % [RinkOS.DIM.to_html(false), RinkOS.ACTION.to_html(false)]
+	bb += "[color=#%s]The mini game for this one isn't in yet.[/color]\n\n[color=#%s][E] DO IT THE QUICK WAY   [ESC] LEAVE IT[/color]" % [RinkOS.DIM.to_html(false), RinkOS.ACTION.to_html(false)]
 	_open_panel(bb)
 
 
@@ -413,3 +552,140 @@ func _age_here(age: int) -> void:
 		venue.set_room_age(room.room_id, age)
 		if room.room_id == "lighting" or room.room_id == "shell":
 			venue.apply_lighting(_env, _sun)
+
+
+## The readable straight ahead within `reach`, if any (walls block the view).
+func _looked_readable(reach: float) -> Readable:
+	var hit := _ray(reach, (1 << (VenueKit.VENUE_LAYER - 1)) | (1 << (Readable.READ_LAYER - 1)))
+	return Readable.from_collider(hit.get("collider")) if hit else null
+
+
+## The whiteboard straight ahead within reach (to draw on), if any.
+func _looked_whiteboard() -> Whiteboard:
+	var hit := _ray(HAND_REACH, (1 << (VenueKit.VENUE_LAYER - 1)) | (1 << (Readable.READ_LAYER - 1)))
+	return Whiteboard.from_collider(hit.get("collider")) if hit else null
+
+
+func _ray(reach: float, mask: int, exclude: Array[RID] = []) -> Dictionary:
+	var from := cam.global_position
+	var q := PhysicsRayQueryParameters3D.create(from, from - cam.global_transform.basis.z * reach, mask, exclude)
+	return get_world_3d().direct_space_state.intersect_ray(q)
+
+
+## The nearest readable belonging to world readable `story_id` near you.
+func _readable_for(story_id: String) -> Readable:
+	var best: Readable = null
+	var best_d := READ_REACH
+	for n in get_tree().get_nodes_in_group("readables"):
+		var r := n as Readable
+		if r and r != _held and r.story == story_id:
+			var d := r.face_center().distance_to(cam.global_position)
+			if d < best_d:
+				best_d = d
+				best = r
+	return best
+
+
+## Leaning in: the view turns to the readable being inspected and narrows
+## until it fills most of the screen; right mouse narrows it on anything.
+func _aim(dt: float) -> void:
+	var fov := LEAN_FOV if _lean else FOV
+	if _inspect and not is_instance_valid(_inspect):
+		_inspect = null
+	if _inspect:
+		var to := _inspect.face_center() - cam.global_position
+		var t := 1.0 - exp(-8.0 * dt)
+		_yaw = lerp_angle(_yaw, atan2(-to.x, -to.z), t)
+		_pitch = lerpf(_pitch, clampf(atan2(to.y, Vector2(to.x, to.z).length()), -1.45, 1.45), t)
+		var aspect := get_viewport().get_visible_rect().size.aspect()
+		var extent := maxf(_inspect.size.y, _inspect.size.x / aspect)
+		fov = clampf(rad_to_deg(2.0 * atan(extent * 0.5 / 0.8 / maxf(to.length(), 0.1))), 8.0, FOV)
+	cam.fov = lerpf(cam.fov, fov, 1.0 - exp(-10.0 * dt))
+
+
+## Left mouse: take down the loose note ahead, or stick the held one up.
+func _hand() -> void:
+	if _held:
+		_stick_held()
+		return
+	var wb := _looked_whiteboard()
+	if wb:
+		_inspect = null
+		_drawing = wb
+		return
+	var r := _looked_readable(HAND_REACH)
+	if r == null or not r.movable:
+		return
+	_inspect = null
+	_held = r
+	_held_close = false
+	r.set_pickable(false)
+	r.reparent(cam, false)
+	_place_held()
+
+
+## The held note in front of the view: low in the hand, or up close.
+func _place_held() -> void:
+	var extent := maxf(_held.size.y, _held.size.x / 1.78)
+	var d := clampf(extent / (2.0 * tan(deg_to_rad(FOV * 0.5))) / 0.8, 0.16, 0.6)
+	if _held_close:
+		_held.transform = Transform3D(Basis.IDENTITY, Vector3(0, 0, -d))
+	else:
+		_held.transform = Transform3D(Basis(Vector3.RIGHT, -0.5), Vector3(0.08, -0.16, -d * 1.3))
+
+
+## Sticks the held note to whatever is ahead (wall, door, board, sign),
+## flat against it, upright, and parented to it so it moves with it.
+func _stick_held() -> void:
+	var hit := _ray(HAND_REACH, (1 << (VenueKit.VENUE_LAYER - 1)) | (1 << (Readable.READ_LAYER - 1)))
+	if hit.is_empty():
+		_show_toast("NOTHING TO STICK IT TO.")
+		return
+	var n: Vector3 = hit.normal
+	var up := Vector3.UP
+	if absf(n.y) > 0.9:
+		# on a table or the floor: the top edge away from you
+		var f := -cam.global_transform.basis.z
+		up = Vector3(f.x, 0, f.z).normalized() if Vector2(f.x, f.z).length() > 0.01 else Vector3.FORWARD
+	var x := up.cross(n).normalized()
+	var y := n.cross(x).normalized()
+	var r := _held
+	_held = null
+	var target: Node = hit.collider
+	r.reparent(target, false)
+	r.global_transform = Transform3D(Basis(x, y, n), hit.position + n * 0.0015)
+	r.set_pickable(true)
+
+
+## F with a note in hand: it's a paper ball now, dropped where you stand.
+func _crumple() -> void:
+	var ball := RigidBody3D.new()
+	ball.name = "CrumpledNote"
+	ball.collision_layer = 0
+	ball.collision_mask = 1 << (VenueKit.VENUE_LAYER - 1)
+	ball.mass = 0.02
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.032
+	mesh.height = 0.055
+	mesh.radial_segments = 5
+	mesh.rings = 3
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Readable.KINDS.get(_held.kind, Readable.KINDS.paper)[1]
+	m.roughness = 0.95
+	mesh.material = m
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.rotation = Vector3(0.6, 1.1, 0.3)
+	ball.add_child(mi)
+	var cs := CollisionShape3D.new()
+	var sh := SphereShape3D.new()
+	sh.radius = 0.03
+	cs.shape = sh
+	ball.add_child(cs)
+	venue.add_child(ball)
+	var f := -cam.global_transform.basis.z
+	ball.global_position = cam.global_position + f * 0.3 + Vector3(0, -0.1, 0)
+	ball.linear_velocity = f * 1.2 + Vector3(0, 0.6, 0) + walker.velocity
+	ball.angular_velocity = Vector3(3, 5, 2)
+	_held.queue_free()
+	_held = null

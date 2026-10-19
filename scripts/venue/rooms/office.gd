@@ -91,6 +91,13 @@ func _m1(k: VenueKit) -> void:
 	for i in 4:
 		var nx := -44.2 + i * 0.48
 		k.block(Vector3(nx, Y + 1.5 + (i % 2) * 0.2, Z1 - 0.135), Vector3(nx + 0.3, Y + 1.78 + (i % 2) * 0.2, Z1 - 0.13), Color("f2e27a"), 0.1, 0.0, false)
+	# Gus's Florida postcard pinned in the corner, the Clarion clipping on the desk
+	var card := Readable.make("gus_postcard", true)
+	card.transform = Transform3D(Basis(Vector3.UP, PI) * Basis(Vector3.BACK, -0.06), Vector3(-42.62, Y + 1.32, Z1 - 0.131))
+	k.add(card)
+	var clip := Readable.make("clarion_clipping", true)
+	clip.transform = Transform3D(Readable.on_table(Vector3.RIGHT) * Basis(Vector3.BACK, 0.2), Vector3(-41.6, Y + 0.752, -10.85))
+	k.add(clip)
 	add_spot(k, VenueSpot.Kind.SCREEN, "corkboard", Vector3(-43.4, Y + 1.6, Z1 - 0.15), "Corkboard", {"screen": "goals"}, 1.6)
 	# the ice grid whiteboard with its magnets
 	k.block(Vector3(-44.8, Y + 1.0, Z0 - 0.02), Vector3(-42.9, Y + 2.0, Z0 + 0.02), Color("eef0f0"), 0.3, 0.02, false)

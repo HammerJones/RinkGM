@@ -285,7 +285,7 @@ func play_round(user_result: Dictionary = {}) -> Dictionary:
 		if users_game and not user_result.is_empty():
 			res = user_result
 		else:
-			res = QuickSim.simulate(g.home, g.away, lineup_for(teams[g.home]), lineup_for(teams[g.away]), settings, playoff, rng)
+			res = QuickSim.simulate(g.home, g.away, lineup_for(teams[g.home]), lineup_for(teams[g.away]), settings, playoff, rng, LeagueRules.for_tier(tier))
 		apply_result(res)
 		season.record(g, res)
 		summary.results.append(res)
@@ -346,6 +346,9 @@ func _after_round(played_teams: Dictionary) -> void:
 				if played_teams.has(tid) and not p.injury.can_play():
 					Progression.apply_rust(p)
 				p.injury.tick_game()
+				if not (follows_world and p.is_user):  # pass_day() ticks the user's days
+					for i in days:
+						p.injury.tick_day()
 				if p.injury.is_healed():
 					if p.is_user:
 						_news("You're fully healed.")
@@ -370,8 +373,15 @@ func _after_round(played_teams: Dictionary) -> void:
 ## left the user too tired to recover (the rink owner's fatigue, RINK_SIM.md 2.1).
 func pass_day(rested: bool) -> void:
 	day += 1
+	var u := user()
+	if u.injury and u.injury.days_total > 0:
+		u.injury.tick_day()
+		if u.injury.is_healed():
+			_news("You're fully healed.")
+			u.injury = null
+		u.refresh_modifiers()
 	if rested:
-		Progression.rest(user(), 1)
+		Progression.rest(u, 1)
 
 
 ## Whether the current round is due: always, unless the world's clock hasn't
@@ -413,7 +423,7 @@ func end_season() -> void:
 	var champ: Team = teams[season.champion]
 	u.history.append({
 		"season": season_number, "tier": tier, "team": team.name, "age": int(u.age),
-		"record": "%d-%d-%d" % [row.w, row.l, row.otl], "stats": u.season_stats.duplicate(),
+		"record": "%d-%d-%d" % [row.w, row.l, int(row.otl) + int(row.get("t", 0))], "stats": u.season_stats.duplicate(),
 		"playoffs": u.playoff_stats.duplicate(), "champion": champ.id == team.id, "overall": snappedf(u.overall(), 0.1),
 	})
 	_news("%s win the %s championship!" % [champ.name, LeagueTiers.get_tier(tier).name])

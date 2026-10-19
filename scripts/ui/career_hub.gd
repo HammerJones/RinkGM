@@ -365,15 +365,18 @@ func _season_table(parent: Control) -> void:
 	var phase: String = ["regular season", "playoffs", "final"][s.phase]
 	var box := _section(parent, "%s // %s" % [LeagueTiers.get_tier(s.tier).name, phase])
 	var lines := PackedStringArray()
-	lines.append(_c(RinkOS.DIM, "%-3s %-22s %3s %3s %3s %3s %4s" % ["#", "TEAM", "GP", "W", "L", "OTL", "PTS"]))
+	# leagues where ties stand have no overtime losses (LeagueRules)
+	var ties := bool(LeagueRules.for_tier(s.tier).ties)
+	lines.append(_c(RinkOS.DIM, "%-3s %-22s %3s %3s %3s %3s %4s" % ["#", "TEAM", "GP", "W", "L", "T" if ties else "OTL", "PTS"]))
 	var pos := 0
 	for tid in s.ranked():
 		pos += 1
 		var r: Dictionary = s.standings[tid]
 		var nm: String = career.teams[tid].name.to_upper().left(22)
-		var row := "%-3d %-22s %3d %3d %3d %3d %s" % [pos, nm, r.gp, r.w, r.l, r.otl, _c(RinkOS.READOUT, "%4d" % r.pts)]
+		var extra := int(r.otl) + int(r.get("t", 0))
+		var row := "%-3d %-22s %3d %3d %3d %3d %s" % [pos, nm, r.gp, r.w, r.l, extra, _c(RinkOS.READOUT, "%4d" % r.pts)]
 		if tid == career.user().team_id:
-			row = _c(RinkOS.ACTION, "%-3d %-22s %3d %3d %3d %3d %4d" % [pos, nm, r.gp, r.w, r.l, r.otl, r.pts])
+			row = _c(RinkOS.ACTION, "%-3d %-22s %3d %3d %3d %3d %4d" % [pos, nm, r.gp, r.w, r.l, extra, r.pts])
 		lines.append(row)
 	for ri in s.bracket.size():
 		lines.append("")

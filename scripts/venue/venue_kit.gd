@@ -43,6 +43,8 @@ static func glow_material() -> StandardMaterial3D:
 		_glow_mat.vertex_color_use_as_albedo = true
 		_glow_mat.vertex_color_is_srgb = true
 		_glow_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		# brighter than white, so the environment's glow blooms the lamps
+		_glow_mat.albedo_color = Look.lamp_glow()
 	return _glow_mat
 
 
