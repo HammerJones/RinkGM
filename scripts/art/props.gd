@@ -28,10 +28,20 @@ const IDS := [
 	"pipe_glycol", "pipe_glycol_elbow", "pipe_glycol_valve",
 	"pipe_refrig", "pipe_refrig_elbow", "pipe_refrig_valve",
 	"condenser", "control_panel", "ammonia_detector", "eyewash_station",
+	# the rec wing's workshop, electrical room, weight room and storage (shop_props.gd)
+	"workbench", "toolbox", "drill_press", "arbor_press", "knee_mill", "lathe", "bench_grinder",
+	"shop_vac", "pegboard", "clamp_rack", "cord_hooks",
+	"switchgear", "breaker_panel", "transformer", "meter_bank", "fire_panel", "fire_extinguisher", "step_ladder",
+	"bench_press", "squat_rack", "leg_press", "cable_crossover", "lat_pulldown", "dumbbell_rack",
+	"plate_tree", "stationary_bike", "treadmill", "slide_board",
+	"ball_bin", "pylon_stack", "mini_net", "spare_net", "puck_bucket", "goalie_pads", "broom_bin",
+	"skate_cones", "hockey_bags",
 ]
 
 ## The plant room builders live in their own file.
 const Plant := preload("res://scripts/art/plant_props.gd")
+## So do the rec wing's working rooms (workshop, electrical, weights, storage).
+const Shop := preload("res://scripts/art/shop_props.gd")
 
 ## Penalty box size in voxels: 4.3 m along the boards, a 1 m door gap.
 const PENALTY_BOX_W := 66
@@ -92,7 +102,8 @@ static func _build(id: String, age: int) -> VoxelModel:
 		"glass_pane": return _glass_pane(age)
 		"concession_counter": return _concession_counter(age)
 		"scoreboard": return _scoreboard(age)
-	return Plant.build(id, age)
+	var m := Plant.build(id, age)
+	return m if m else Shop.build(id, age)
 
 
 ## Big one-offs whose flat panels would cost too many faces with per-voxel
@@ -109,7 +120,7 @@ static func collision_boxes(id: String, age: int) -> Array[AABB]:
 		var m := model(id, age)
 		var boxes: Array[AABB] = []
 		if m:
-			boxes = m.collision_boxes(_COLLISION_CELL.get(id, 2))
+			boxes = m.collision_boxes(_COLLISION_CELL.get(id, Shop.COLLISION_CELL.get(id, 2)))
 		_cache[key] = boxes
 	return _cache[key]
 
@@ -144,7 +155,7 @@ static func mesh(id: String, age: int, lod := 0) -> ArrayMesh:
 		Wear.fine = true
 		if m == null:
 			_cache[key] = null
-		elif lod == 0 and not id in _MERGED and not id in Plant.MERGED:
+		elif lod == 0 and not id in _MERGED and not id in Plant.MERGED and not id in Shop.MERGED:
 			_cache[key] = m.build_mesh()
 		else:
 			_cache[key] = m.build_mesh_merged()

@@ -122,6 +122,35 @@ resurfacer): about 650-5,200 triangles at full detail. Pipe pieces are
 room for review (`--age=worn|repaired|renovated`), and the prop sheet renders
 one age in a labelled grid with `--age=<name> [--cols=N]`.
 
+### Rec wing working rooms (`scripts/art/shop_props.gd`)
+
+The workshop, electrical room, weight room and equipment store have their
+own builder file, dispatched like the plant's. Every id is merged at full
+detail (`Shop.MERGED`), 150-3,000 triangles each, and the big machines use
+coarser collision (`Shop.COLLISION_CELL`). Worn is the Athletic Club's kit
+kept past its time (faded machine grey-green, rust, oil, torn vinyl, tape);
+repaired is volunteer upkeep (fresh paint, a yellow replacement guard, new
+pads, tags); renovated is new or restored kit (navy and charcoal, digital
+readouts, LED lamps, bumper plates).
+
+- Workshop: `workbench` (vise, drawers), `toolbox` (rolling chest),
+  `drill_press`, `arbor_press` (the riveter), `knee_mill` (Bridgeport style),
+  `lathe` (South Bend style toolroom lathe), `bench_grinder`, `shop_vac`, and
+  the wall pieces `pegboard` (a shadow board when renovated), `clamp_rack`,
+  `cord_hooks`.
+- Electrical: `switchgear` (three-section lineup), `breaker_panel` (door open,
+  labelled breakers, directory card), `transformer`, `meter_bank`,
+  `fire_panel`, `fire_extinguisher`, `step_ladder`.
+- Weight room: `bench_press`, `squat_rack` (power rack on its platform),
+  `leg_press`, `cable_crossover`, `lat_pulldown`, `dumbbell_rack`,
+  `plate_tree`, `stationary_bike`, `treadmill`, `slide_board`.
+- Storage: `ball_bin`, `pylon_stack`, `mini_net`, `spare_net`,
+  `puck_bucket`, `goalie_pads`, `broom_bin`, `skate_cones`, `hockey_bags`.
+
+Wall pieces keep the floor pivot (bottom centre, back toward +Z); rooms place
+them at mounting height with `solid` off. Review them with the prop sheet
+(`--age=worn --ids=...`); `tools/tests/test_rec_detail.gd` checks they build.
+
 ## People (`scripts/art/people.gd`)
 
 Everyone in the building (fans, parents, staff, refs, skaters, kids and
