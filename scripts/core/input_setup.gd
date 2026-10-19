@@ -30,24 +30,27 @@ func _ready() -> void:
 	_keys("stop", [KEY_SPACE])
 	_button("stop", JOY_BUTTON_RIGHT_STICK)
 
-	_mouse("lift", MOUSE_BUTTON_RIGHT)
+	# gamepad only for now: the keyboard + mouse scheme has no lift or tilt
 	_axis("lift", JOY_AXIS_TRIGGER_LEFT, 1.0)
-
-	_keys("tilt", [KEY_CTRL])
 	_axis("tilt", JOY_AXIS_TRIGGER_RIGHT, 1.0)
+
+	# hold and draw a shot pattern with the mouse (ShotPatterns)
+	_mouse("shot_trace", MOUSE_BUTTON_RIGHT)
+	# cycle the shot pattern overlay: off, wrist, snap, slap, toe drag
+	_keys("shot_overlay", [KEY_V])
 
 	# hold to look around with the mouse / right stick (the stick holds still)
 	_mouse("free_look", MOUSE_BUTTON_LEFT)
 	_button("free_look", JOY_BUTTON_LEFT_SHOULDER)
 	# turn around: skate backwards, again to face forward
-	_keys("turn_around", [KEY_F])
+	_keys("turn_around", [KEY_R])
 	_button("turn_around", JOY_BUTTON_X)
 
 	_keys("pass", [KEY_E])
 	_button("pass", JOY_BUTTON_A)
 	_button("pass", JOY_BUTTON_RIGHT_SHOULDER)
 
-	_keys("check", [KEY_Q])
+	_keys("check", [KEY_F])
 	_button("check", JOY_BUTTON_B)
 
 	_keys("sens_down", [KEY_BRACKETLEFT])
@@ -62,7 +65,7 @@ func _ready() -> void:
 	_button("cycle_mode", JOY_BUTTON_BACK)
 	_keys("camera", [KEY_C])
 	_button("camera", JOY_BUTTON_DPAD_UP)
-	_keys("reset", [KEY_R])
+	_keys("reset", [KEY_BACKSPACE])
 	# the Esc / Start menu (PauseMenu); Esc also frees the cursor (free_mouse)
 	_keys("pause_menu", [KEY_ESCAPE])
 	_button("pause_menu", JOY_BUTTON_START)

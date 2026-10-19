@@ -98,6 +98,17 @@ var braking := false
 ## where the left stick points and pushes with backward C-cuts, slower than
 ## forwards. Physics, for now, from the Controls thread.
 var backwards := false
+## The human on keyboard + mouse: shots come from traced patterns
+## (shoot_traced), not from stick motion, and there are no stick moves.
+var traced_shots := false
+## Stickhandling rhythm (traced_shots only): how fast the blade is being
+## swept side to side against what the stickhandling rating allows; over 1
+## the puck starts getting away (handle_rate() for the gauge).
+var handle_load := 0.0
+var _handle_prev := 0.0
+var _handle_from := 0.0           # blade side (m) at the last reversal
+var _handle_short := 0.0          # 0..1: how much too short the last handle was
+var _handle_hands := 0.0
 const BACK_SPEED := 0.72     # top speed backwards, of forwards
 const BACK_ACCEL := 0.65     # stride push backwards, of forwards
 const PIVOT_TIME := 0.32     # s a turn-around takes
@@ -637,9 +648,13 @@ func _update_blade(dt: float, blend: float) -> void:
 
 func _handle_actions(dt: float) -> void:
 	var able: bool = stun_timer <= 0.0 and not game.is_frozen() and stick_lifted_timer <= 0.0 and not stick_broken
-	if ctrl.move_id != &"" and move_id == &"" and able:
+	if traced_shots:
+		_stickhandle_rhythm(dt, able)
+	elif ctrl.move_id != &"" and move_id == &"" and able:
 		start_move(ctrl.move_id)
-	if move_id != &"":
+	if traced_shots:
+		pass
+	elif move_id != &"":
 		_run_move(dt, able)
 	else:
 		_handle_shot_input(dt, able)
@@ -814,6 +829,78 @@ func _fire() -> void:
 	if puck.controller == null and not puck.frozen and puck.position.y < StickPuck.BLADE_TOP * 2.0 \
 			and d < StickPuck.BLADE_HALF + StickPuck.SWEEP * 2.0 and puck.can_be_touched_by(self):
 		shoot(held, slap, puck.horizontal_speed())
+
+
+## The quickest side-to-side the stickhandling rating handles cleanly, in
+## blade metres per second: wide slow sweeps for a beginner, quick small
+## handles for the best.
+func handle_limit() -> float:
+	return lerpf(2.5, 9.0, skill("stick_handling"))
+
+
+## Tracks how hard the blade is being swept across the puck. Small handles
+## count for more than their speed at a low rating (the puck needs a wide
+## sweep to follow), and past the limit the puck can squirt away.
+func _stickhandle_rhythm(dt: float, able: bool) -> void:
+	# the hands' side-to-side (where the stick is being pushed, m/s across
+	# the body), not the blade, which lags behind them
+	var hands := ctrl.stick.dot(Vector2(right_vec().x, right_vec().z)) * REACH_MAX
+	var side := (hands - _handle_hands) / maxf(dt, 0.001)
+	_handle_hands = hands
+	# a reversal: short handles are hard for a weak stickhandler
+	if signf(side) != signf(_handle_prev) and absf(_handle_prev) > 0.3:
+		var need := lerpf(0.9, 0.25, skill("stick_handling"))
+		var width := absf(hands - _handle_from)
+		_handle_short = maxf(_handle_short, (need - width) / need)
+		_handle_from = hands
+	_handle_prev = side
+	_handle_short = maxf(0.0, _handle_short - 2.0 * dt)
+	var rate := absf(side) * (1.0 + _handle_short)
+	var target := rate / handle_limit() if has_puck() else 0.0
+	handle_load = lerpf(handle_load, target, 1.0 - exp(-8.0 * dt))
+	if able and has_puck() and handle_load > 1.0 and randf() < (handle_load - 1.0) * 4.0 * dt:
+		# it got away from the blade
+		var away := Vector3(blade_vel.x, 0, blade_vel.z) * 0.6 + heading * 1.0
+		puck.release(self, away)
+		puck.ignore_briefly(self, 0.3)
+		handle_load = 0.6
+
+
+## A traced shot (ShotPatterns): `kind` the pattern, `speed` m/s off the
+## blade, aimed at `target` (a point in the net's plane, already spread by how
+## clean the pattern was). Fires from the puck on the blade, or a loose one
+## right at the blade.
+func shoot_traced(kind: StringName, speed: float, target: Vector3) -> bool:
+	if stun_timer > 0.0 or game.is_frozen() or stick_broken:
+		return false
+	if not has_puck():
+		var d := Vector2(puck.position.x - blade_pos.x, puck.position.z - blade_pos.z).length()
+		if puck.controller != null or puck.frozen or puck.position.y > StickPuck.BLADE_TOP * 2.0 \
+				or d > StickPuck.BLADE_HALF + StickPuck.SWEEP * 2.0 or not puck.can_be_touched_by(self):
+			return false
+	shot_kind = kind
+	var from := puck.position
+	var dir := Vector3(target.x - from.x, 0, target.z - from.z)
+	var dist := dir.length()
+	dir = dir.normalized() if dist > 0.3 else heading
+	speed *= lerpf(0.94, 1.0, stick_health)
+	var slap := kind == &"slapshot"
+	if StickWear.stress(self, (speed / 30.0) * (speed / 30.0) * (2.0 if slap else 0.15), &"slapshot"):
+		speed *= 0.25
+	# loft to reach the target's height: the drop over the flight added on
+	var t := dist / maxf(speed, 1.0)
+	var loft := atan2(target.y - from.y + 0.5 * 9.8 * t * t, maxf(dist, 0.5))
+	loft = clampf(loft, deg_to_rad(1.0), deg_to_rad(40.0))
+	var e := 0.5
+	var face := _aim_face(dir, loft, speed, e)
+	var n := _face_normal(face, loft)
+	_set_blade(Vector2(REACH_MAX * 0.85, 0.15))
+	if rig:
+		rig.follow_through(0.9 if slap else 0.5, 1.0)
+	StickPuck.strike(self, puck, _swing(n, speed, e), n, e)
+	puck.pass_target = null
+	game.on_shot(self, slap)
+	return true
 
 
 func attack_goal() -> Vector3:

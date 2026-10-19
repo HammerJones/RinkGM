@@ -22,6 +22,9 @@ func _ready() -> void:
 		sk.set_skills(sk.skills)   # the physics profile is built from them at setup
 	# the scripted stick is in screen space for the side-on view: right is +x
 	game.camera_rig.set_mode(CameraRig.Mode.BROADCAST)
+	# the stick-motion shots and moves below are the gamepad scheme; the
+	# keyboard + mouse traced shots have their own section
+	game.controller.pad_scheme = true
 	game.controller.player_input.scripted = func(f, dt):
 		_t += dt
 		if _plan.is_valid():
@@ -77,6 +80,7 @@ func _run() -> void:
 	await _stickhandling()
 	await _job_input()
 	await _backwards_and_look()
+	await _traced_shots()
 
 	# --- lift with the puck raises the blade
 	await _carry(Vector2(-10, 0))
@@ -295,6 +299,74 @@ func _freeze_others(keep: Array = []) -> void:
 			s.stun_timer = 1.0
 			s.position = Vector3(25 + s.number, 0, -10 - s.team * 5)
 			s.vel = Vector3.ZERO
+
+
+## Keyboard + mouse: RMB traces a shot pattern (ShotPatterns) and fires on
+## release; side-to-side stickhandling has a rhythm limit.
+func _traced_shots() -> void:
+	var h: Skater = game.human
+	var ctl: HumanController = game.controller
+	ctl.pad_scheme = false
+	for kind in [&"wrist_shot", &"snap_shot", &"slapshot", &"toe_drag_shot"]:
+		await _carry(Vector2(-12, 0))
+		var tr := _pattern(kind, 0.25)
+		_plan = func(f, t):
+			f.tracing = t < 0.3
+			f.trace_done = t >= 0.3 and t < 0.305
+			if f.trace_done:
+				f.trace = tr
+		var shot := await _until(func(): return not ctl.last_shot.is_empty() and ctl.last_shot.get("fired", false), 0.6)
+		_check(shot and ctl.last_shot.kind == kind, "a traced %s fires as one (%s)" % [kind, ctl.last_shot.get("kind", "-")])
+		_check(game.puck.vel.x > 12.0, "and goes at the net (%.1f m/s)" % game.puck.vel.x)
+		ctl.last_shot = {}
+	# a slow, sloppy wrist shot is weaker and spreads wider than a quick clean one
+	await _carry(Vector2(-12, 0))
+	var clean := ctl.grade(h, _pattern(&"wrist_shot", 0.2), ctl.net_target(h))
+	var sloppy := ctl.grade(h, _pattern(&"wrist_shot", 1.2, 30.0), ctl.net_target(h))
+	_check(clean.puck_speed > sloppy.puck_speed + 4.0, "a quick stroke shoots harder (%.1f vs %.1f m/s)" % [clean.puck_speed, sloppy.puck_speed])
+	_check(clean.radius < sloppy.radius * 0.6, "a clean pattern lands tighter (%.2f vs %.2f m)" % [clean.radius, sloppy.radius])
+	# stickhandling: wide easy sweeps keep it, frantic ones lose it
+	var sweep := func(hz: float, amp: float) -> Array:
+		await _carry(Vector2(-14, 0))
+		_plan = func(f, t):
+			f.move = Vector2(0.4, 0)
+			f.stick = Vector2(0.7, -amp * sin(t * TAU * hz))
+		var peak := 0.0
+		var lost := false
+		var lo := INF
+		var hi := -INF
+		for i in 480:
+			await get_tree().physics_frame
+			_freeze_others()
+			lost = lost or game.puck.controller != h
+			if i > 60 and not lost:
+				peak = maxf(peak, h.handle_load)
+				var side: float = (game.puck.position - h.position).dot(h.right_vec())
+				lo = minf(lo, side)
+				hi = maxf(hi, side)
+		return [peak, lost, hi - lo]
+	var easy: Array = await sweep.call(0.7, 0.8)
+	_check(easy[0] < 1.0 and not easy[1], "slow wide handles stay in the green and keep the puck (%.2f)" % easy[0])
+	_check(easy[2] > 1.0, "the handles carry the puck side to side across the body (%.2f m)" % easy[2])
+	var frantic: Array = await sweep.call(4.0, 0.8)
+	_check(frantic[1], "frantic handles run past the limit and lose the puck (%.2f)" % frantic[0])
+	_plan = Callable()
+	ctl.pad_scheme = true
+
+
+## A pattern as mouse motion: Vector3(x px, y px up, t s), drawn in `seconds`.
+func _pattern(kind: StringName, seconds: float, wobble := 0.0) -> Array:
+	var pts := ShotPatterns.outline(kind)
+	var out := []
+	var n := 40
+	for i in n + 1:
+		var u := float(i) / n * (pts.size() - 1)
+		var k := mini(int(u), pts.size() - 2)
+		var q := pts[k].lerp(pts[k + 1], u - k)
+		if i > 0 and i < n:
+			q += Vector2(wobble * sin(i * 2.3), wobble * cos(i * 1.7))
+		out.append(Vector3(q.x, q.y, seconds * i / n))
+	return out
 
 
 ## Turn around (F / X) and skate backwards; free look (LMB / LB) turns the

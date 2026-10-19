@@ -24,23 +24,23 @@ virtual right stick, so both devices drive the same stick model.
 | Dash (push-off burst) | L3 (click left stick) | Shift |
 | Hockey stop | R3 (click right stick) | Space |
 | Stick blade (220 degree arc, back past each hip) | Right stick | Mouse (cursor is captured; Esc opens the menu and frees it) |
-| Stickhandle | Right stick side to side | Mouse side to side |
-| Quick shot (instant) | Flick the right stick forward | Flick the mouse forward |
-| Wrist shot | Draw the stick back behind your forehand hip, then sweep it forward | Same with the mouse |
-| Backhand | Draw back behind your backhand hip, then sweep forward | Same with the mouse |
-| Learned moves (snapshot, dekes, toe drag...) | Stick patterns, see below | Same with the mouse |
-| Lift stick (offense: over the puck; defense: lift their stick) | LT | Right click |
-| Tilt blade (raises shots and passes) | RT (analog) | Ctrl (hold) |
+| Stickhandle | Right stick side to side | Mouse side to side: the blade carries the puck. The HANDS gauge shows how close you are to the fastest rhythm your stickhandling allows; in the red the puck gets away |
+| Shoot | Flick or wind up the right stick (below) | Hold right click and draw a shot pattern, release to shoot (below) |
+| Aim | | Hold left click to look around; the centre dot is the aim. Add right click to lock the view and draw. Right click alone aims at the middle of the net |
+| Shot pattern guide (wrist, snap, slap, toe drag, off) | | V |
+| Learned moves (snapshot, dekes, toe drag...) | Stick patterns, see below | |
+| Lift stick (offense: over the puck; defense: lift their stick) | LT | |
+| Tilt blade (raises shots and passes) | RT (analog) | |
 | Aim at the near or far post | Lean the left stick | Lean with W / S |
 | Pass, or call for a pass without the puck | A or RB | E |
-| Turn around: skate backwards, again to face forward | X | F |
+| Turn around: skate backwards, again to face forward | X | R |
 | Look around (the blade holds still; let go and the view eases back) | Hold LB + right stick | Hold left click + mouse |
-| Body check | B | Q |
+| Body check | B | F |
 | Mouse sensitivity | | [ and ] |
 | Physics mode (Sim / Hybrid / Arcade) | Back | F1 |
 | Camera (down the ice / first person / broadcast / isometric) | D-pad up | C |
 | Menu: pause, restart, controls, practice, quit (frees the cursor) | Start | Esc |
-| Restart (practice: reset the puck) | | R |
+| Restart (practice: reset the puck) | | Backspace |
 | Show/hide controls | | H |
 | Developer menu | D-pad down | ` (tilde key) |
 | Playtest note (screenshot + note) | | N |
@@ -51,6 +51,22 @@ where the blade can reach. Device reading lives in `scripts/input/`
 (`PlayerInput` reads devices, `HumanController` fills `Skater.Controls`).
 Both hands stay on the stick in the front 90 degrees; past that the bottom
 hand lets go and the top hand reaches.
+
+**Keyboard + mouse shots** (Sean, 19 Oct). Up the screen is toward the net;
+the patterns are drawn for a right shot (forehand on the right):
+
+| Shot | Pattern |
+| --- | --- |
+| Wrist shot | a short pull back to the forehand, then straight forward |
+| Snap shot | across to the forehand, a short drop, then straight forward |
+| Slap shot | across, a long drop (the backswing), then all the way forward |
+| Toe drag shot | pull it in and across, back and forth, then forward |
+
+How fast the forward stroke goes sets the power (shot power lets a slower
+stroke hit as hard). How closely the drawing matches the pattern sets how
+far from the aim the puck can land, anywhere inside that circle (shot
+accuracy forgives a wobblier pattern). At maxed shooting skills the clock
+slows while right click is held. `ShotPatterns` has the templates.
 
 Rink jobs (the M1 mini games) read `JobInput` instead, in three contexts:
 

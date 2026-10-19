@@ -17,11 +17,12 @@ Back  physics mode   D-up  camera   Start  menu (pause)
 
 [b]Keyboard + mouse[/b]  (the mouse is the right stick)
 WASD  skate    Shift  dash    Space  stop
-RMB  lift stick    Ctrl  tilt blade    LMB (hold)  look around
-E  pass / call for it    F  turn around (skate backwards)
-Q  check    [ ]  mouse sensitivity
+LMB (hold)  look around + aim dot    RMB (hold)  draw a shot
+V  shot pattern overlay
+E  pass / call for it    R  turn around (skate backwards)
+F  check    [ ]  mouse sensitivity
 Esc  menu (pause, frees the cursor)   F1  physics mode
-C  camera   R  restart (practice: reset the puck)
+C  camera   Backspace  restart (practice: reset the puck)
 Tab / Y  fast-forward on the bench (career)
 `  dev menu   N  playtest note   H  hide this"""
 

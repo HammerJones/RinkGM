@@ -11,10 +11,12 @@ extends Node
 ##   X           turn around (skate backwards / forwards)
 ##   LB (hold)   look around with the right stick; the blade holds still
 ##
-## Keyboard + mouse: the mouse drives a virtual right stick (captured cursor).
-##   WASD skate   Shift dash   Space stop   RMB lift   Ctrl tilt   Q pass
-##   E turn around   LMB (hold) look around with the mouse   F check
-##   [ ] mouse sensitivity     Esc free the cursor
+## Keyboard + mouse (Sean, 19 Oct): the mouse drives a virtual right stick
+## (captured cursor); side to side stickhandles. No lift, tilt or stick moves.
+##   WASD skate   Shift dash   Space stop   E pass   F check   R turn around
+##   LMB (hold) look around, the centre dot aims
+##   RMB (hold) draw a shot pattern (ShotPatterns); release to shoot
+##   V shot pattern overlay   [ ] mouse sensitivity   Esc free the cursor
 
 class Frame:
 	var move := Vector2.ZERO    # screen space, length <= 1
@@ -28,6 +30,10 @@ class Frame:
 	var turn_pressed := false   # turn around (forwards <-> backwards)
 	var looking := false        # free look held: `stick` holds still
 	var look := Vector2.ZERO    # radians this tick: x right, y up
+	var tracing := false        # RMB held: the mouse draws a shot pattern
+	var trace_pos := Vector2.ZERO   # px from where the pattern started, y up
+	var trace_done := false     # RMB released this tick: `trace` is the pattern
+	var trace: Array = []       # Vector3(x px, y px up, t s)
 
 ## Virtual stick travel per pixel of mouse motion.
 var mouse_sensitivity := 0.006
@@ -51,6 +57,9 @@ var _mouse_idle := 0.0
 var _kbm_tilt := 0.0
 var _look := Vector2.ZERO        # mouse free look since the last poll
 var _pad_held := Vector2.ZERO    # the pad stick when free look started
+var _trace: Array = []
+var _trace_pos := Vector2.ZERO
+var _trace_t0 := 0
 var _capture := not ("--autoplay" in OS.get_cmdline_user_args()) and DisplayServer.get_name() != "headless"
 
 
@@ -71,7 +80,12 @@ func capture_mouse() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_action_pressed("free_look"):
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _trace.is_empty():
+		# drawing a shot: the stick and the view hold still (in real time, so
+		# a slowed clock doesn't change the drawing)
+		_trace_pos += Vector2(event.relative.x, -event.relative.y)
+		_trace.append(Vector3(_trace_pos.x, _trace_pos.y, (Time.get_ticks_usec() - _trace_t0) / 1e6))
+	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_action_pressed("free_look"):
 		# looking around: the virtual stick stays where it was
 		_look += Vector2(event.relative.x, -event.relative.y) * mouse_look
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -104,6 +118,9 @@ func poll(dt: float) -> Frame:
 		f.turn_pressed = false
 		f.looking = false
 		f.look = Vector2.ZERO
+		f.tracing = false
+		f.trace_done = false
+		f.trace = []
 		scripted.call(f, dt)
 		f.stick = f.stick.limit_length(1.0)
 		return f
@@ -136,7 +153,23 @@ func poll(dt: float) -> Frame:
 		if _mouse_idle > 0.2 and mouse_recenter > 0.0:
 			_vstick = _vstick.move_toward(Vector2.ZERO, mouse_recenter * dt)
 		f.stick = _vstick
-		var held := 1.0 if Input.is_action_pressed("tilt") else 0.0
-		_kbm_tilt = held if kbm_tilt_ramp <= 0.0 else move_toward(_kbm_tilt, held, dt / kbm_tilt_ramp)
-		f.tilt = _kbm_tilt
+		f.lift = 0.0
+		f.tilt = 0.0
+		_poll_trace(f)
 	return f
+
+
+## RMB: start a pattern on the press, hand it over on the release.
+func _poll_trace(f: Frame) -> void:
+	f.trace_done = false
+	var held := Input.is_action_pressed("shot_trace") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	if held and _trace.is_empty():
+		_trace_t0 = Time.get_ticks_usec()
+		_trace_pos = Vector2.ZERO
+		_trace = [Vector3.ZERO]
+	elif not held and not _trace.is_empty():
+		f.trace = _trace
+		f.trace_done = true
+		_trace = []
+	f.tracing = not _trace.is_empty()
+	f.trace_pos = _trace_pos if f.tracing else Vector2.ZERO
