@@ -3,6 +3,8 @@ extends VenueRoom
 ## roll-up doors to the rink and to the outside, the resurfacer itself,
 ## the snow-melt pit, a workbench and tool wall. A worn bay houses a rusty
 ## old machine; a renovated one has a new electric unit in club colours.
+## Outside it, the pair of big gates in the boards where the resurfacer
+## goes on the ice, and the net storage along the wall either side.
 
 const X0 := Venue.END_FRONT
 const X1 := Venue.HALF_X - Venue.WALL_T
@@ -10,6 +12,13 @@ const Z := 5.0
 const H := 5.0
 ## The snow-melt pit under its grate, in venue space.
 const PIT := Rect2(42.8, -4.6, 2.5, 2.2)
+## The resurfacer gate in the end boards (Shell.GATES "x+").
+const GATE_HALF := 1.8
+## Net storage along the walkway wall: [z from, z to, kind]. Big nets are
+## 1.83 m regulation goals, small ones the 1.2 m peewee nets, two high.
+const NET_BAYS := [[2.1, 3.95, "large"], [4.15, 6.0, "large"], [6.3, 8.85, "small"]]
+const NET_LARGE := Vector3(1.83, 1.22, 1.0)
+const NET_SMALL := Vector3(1.22, 0.9, 0.7)
 
 ## Snow in the melt pit, 0 (empty) to 1 (heaped over the grate), as the
 ## walk shows RinkSim.snow_pit: Doris adds a load per flood, the tired heater
@@ -54,7 +63,12 @@ func build(k: VenueKit) -> void:
 	for i in 3:
 		var dx := 35.2 + i * 0.7
 		k.block(Vector3(dx, 0, 3.9), Vector3(dx + 0.55, 0.85, 4.6), [Color("d42a30"), Color("2f5eb0"), Color("e4e1d8")][i], 0.3, 0.06)
+	# the roof over the bay
+	k.slab(Vector3(X0, H, -Z - 0.15), Vector3(X1, H + 0.25, Z + 0.15), block_col.darkened(0.15), 1.0)
+	k.slab(Vector3(X0 + 0.3, H - 0.02, -Z + 0.15), Vector3(X1, H, Z - 0.15), k.by_age(Color("8f8b80"), Color("a39f94"), Color("c9c7c0")), 1.0, 0.05, true, false)
 	_m1(k)
+	_gates(k)
+	_net_storage(k)
 	room_light(k, Vector3(40.0, H - 0.5, 0.0), 7.0)
 	# lights and sign
 	var lit: Color = k.by_age(Color("e0d8b0"), Color("f4f6f0"), Color("f4f8ff"))
@@ -107,6 +121,102 @@ func _m1(k: VenueKit) -> void:
 	var sign := VenueSign.make([["MOUNT DORIS", VenueSign.AMBER], ["NO CLIMBING", VenueSign.RED]], 11, 2, 0.02)
 	sign.name = "MountDorisSign"
 	k.sign(sign, Transform3D(Basis(Vector3.UP, PI), Vector3(xo + 2.5, 1.25, -12.24)))
+
+
+## The resurfacer gate: two big leaves in the end boards and the glass over
+## them, hinged at the outer posts and latched in the middle. Trim over the
+## rink's own boards (they stay shut until the gate mechanic opens them).
+func _gates(k: VenueKit) -> void:
+	var xo := Rink.HALF_L + 0.32  # walkway face of the boards
+	var top := VenuePhysics.board_top()
+	var glass_top := top + VenuePhysics.END_GLASS
+	var steel: Color = k.by_age(Color("8a7a5a"), Color("9aa0a6"), Color("2a2e36"))
+	var hinge := Color("55585e")
+	for side in [-1.0, 1.0]:
+		var z_out: float = side * GATE_HALF
+		var z_in: float = side * 0.03
+		var zl := minf(z_out, z_in)
+		var zh := maxf(z_out, z_in)
+		# the leaf's frame on the walkway side: stiles, rails and a brace
+		for z in [z_out, z_in]:
+			k.block(Vector3(xo, 0.05, z - 0.04), Vector3(xo + 0.05, glass_top, z + 0.04), steel, 0.3, 0.03, false)
+		for y in [0.05, top - 0.08, glass_top - 0.08]:
+			k.block(Vector3(xo, y, zl), Vector3(xo + 0.05, y + 0.08, zh), steel, 0.3, 0.03, false)
+		var d := Vector3(0, top - 0.25, z_in - z_out)
+		var brace := Transform3D(Basis(Vector3(0.05, 0, 0), d.normalized() * d.length(), Vector3(0, -d.z, d.y).normalized() * 0.06), Vector3(xo + 0.025, 0.1 + d.y * 0.5, (z_out + z_in) * 0.5))
+		k.oriented(brace, steel)
+		# hinges on the outer post, a handle by the latch
+		for y in [0.3, 0.85, 1.6, 2.6]:
+			k.block(Vector3(xo + 0.02, y, z_out - 0.06), Vector3(xo + 0.09, y + 0.12, z_out + 0.06), hinge, 0.2, 0.0, false)
+		k.block(Vector3(xo + 0.05, 0.75, z_in - side * 0.14), Vector3(xo + 0.12, 0.95, z_in - side * 0.1), hinge, 0.2, 0.0, false)
+		# the seams show on the ice side too
+		k.block(Vector3(Rink.HALF_L - 0.012, 0.02, z_out - 0.015), Vector3(Rink.HALF_L, top - 0.02, z_out + 0.015), Color("2a2c30"), 0.2, 0.0, false)
+	k.block(Vector3(Rink.HALF_L - 0.012, 0.02, -0.015), Vector3(Rink.HALF_L, top - 0.02, 0.015), Color("2a2c30"), 0.2, 0.0, false)
+	# the drop bolt in the middle and a yellow-and-black stripe over the gate
+	k.block(Vector3(xo + 0.05, 0.0, -0.03), Vector3(xo + 0.1, 0.6, 0.03), hinge, 0.2, 0.0, false)
+	for i in 8:
+		var z0 := -GATE_HALF + i * GATE_HALF * 0.25
+		k.block(Vector3(xo + 0.05, top - 0.2, z0), Vector3(xo + 0.06, top - 0.1, z0 + GATE_HALF * 0.25), Color("e0b020") if i % 2 == 0 else Color("1b1d22"), 0.3, 0.0, false)
+
+
+## Nets stored against the walkway wall either side of the bay door, each
+## standing on its painted bay: two big goals and four small ones a side.
+func _net_storage(k: VenueKit) -> void:
+	var red: Color = k.aged(Color("c8191e"), 7)
+	var x_wall := X0
+	for side in [-1.0, 1.0]:
+		for bay in NET_BAYS:
+			var za: float = side * bay[0]
+			var zb: float = side * bay[1]
+			var zc := (za + zb) * 0.5
+			var big: bool = bay[2] == "large"
+			var size: Vector3 = NET_LARGE if big else NET_SMALL
+			# the painted outline of the bay on the floor
+			var paint := Color("d9b84a").darkened(0.25 if k.age == Age.WORN else 0.0)
+			var x_out := x_wall - (NET_LARGE.z + 0.2)
+			for zz in [za, zb]:
+				k.block(Vector3(x_out, 0.0, zz - 0.04), Vector3(x_wall, 0.012, zz + 0.04), paint, 0.3, 0.06, false)
+			k.block(Vector3(x_out - 0.04, 0.0, minf(za, zb)), Vector3(x_out + 0.04, 0.012, maxf(za, zb)), paint, 0.3, 0.06, false)
+			if big:
+				_net(k, Vector3(x_wall - 0.05, 0, zc), size, red)
+			else:
+				for i in 2:
+					var zi: float = zc + side * (i - 0.5) * (size.x + 0.04)
+					_net(k, Vector3(x_wall - 0.05, 0, zi), size, red)
+					_net(k, Vector3(x_wall - 0.05, size.y + 0.02, zi), size, red)
+
+
+## A goal frame and its net, its back against a wall at `back` (x) and its
+## mouth facing -X (out to the walkway).
+func _net(k: VenueKit, back: Vector3, size: Vector3, red: Color) -> void:
+	var t := 0.05
+	var front := back.x - size.z
+	var z0 := back.z - size.x * 0.5
+	var z1 := back.z + size.x * 0.5
+	var y0 := back.y
+	for z in [z0, z1 - t]:
+		k.block(Vector3(front, y0, z), Vector3(front + t, y0 + size.y, z + t), red, 0.3, 0.04, false)  # posts
+		k.block(Vector3(front, y0, z), Vector3(back.x, y0 + t, z + t), Color("e8e8e2"), 0.3, 0.04, false)  # base frame
+	k.block(Vector3(front, y0 + size.y - t, z0), Vector3(front + t, y0 + size.y, z1), red, 0.3, 0.04, false)  # crossbar
+	k.block(Vector3(back.x - t, y0, z0), Vector3(back.x, y0 + t, z1), Color("e8e8e2"), 0.3, 0.04, false)
+	# the mesh: top, back and sides
+	var mesh := Color(0.92, 0.92, 0.9, 0.4)
+	k.glass(Vector3(front + t, y0 + size.y - 0.02, z0), Vector3(back.x - size.z * 0.5, y0 + size.y, z1), false, mesh)
+	k.glass(Vector3(back.x - size.z * 0.5, y0 + t, z0), Vector3(back.x - size.z * 0.5 + 0.02, y0 + size.y, z1), false, mesh)
+	for z in [z0, z1 - 0.02]:
+		k.glass(Vector3(front + t, y0 + t, z), Vector3(back.x - size.z * 0.5, y0 + size.y, z + 0.02), false, mesh)
+	k.collider(Vector3(front, y0, z0), Vector3(back.x, y0 + size.y, z1))
+
+
+## Where the nets live, for the net mechanic: [{pos, kind}] in venue space
+## (pos is the middle of the bay on the floor).
+func net_slots() -> Array:
+	var out := []
+	for side in [-1.0, 1.0]:
+		for bay in NET_BAYS:
+			var zc: float = side * (bay[0] + bay[1]) * 0.5
+			out.append({"pos": Vector3(X0 - 0.6, 0, zc), "kind": bay[2]})
+	return out
 
 
 ## Shows the pit's snow at `level` 0..1 (the heap grows over the grate).

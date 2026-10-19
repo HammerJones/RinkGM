@@ -81,7 +81,11 @@ func build(k: VenueKit) -> void:
 	var cz0 := front(rows)
 	var cz1 := Venue.HALF_Z - Venue.WALL_T
 	var strip := cz0 + Venue.ROW_RUN * 0.5
-	k.aged_block(Vector3(-Venue.STAND_X, 0, s * strip), Vector3(Venue.STAND_X, top_y(), s * cz1), concrete, 1.0)
+	var hall := _has_corridor()
+	if hall:
+		_corridor(k, concrete, strip, cz1)
+	else:
+		k.aged_block(Vector3(-Venue.STAND_X, 0, s * strip), Vector3(Venue.STAND_X, top_y(), s * cz1), concrete, 1.0)
 	for a in SECTIONS + 1:
 		var ax0 := -Venue.STAND_X + a * (sec_w + AISLE)
 		k.aged_block(Vector3(ax0, 0, s * cz0), Vector3(ax0 + AISLE, top_y() - Venue.ROW_RISE * 0.5, s * strip), concrete, 0.6)
@@ -98,12 +102,49 @@ func build(k: VenueKit) -> void:
 	# closing walls at the stand ends (the corner spaces are open floor)
 	for ex in [-1, 1]:
 		var x: float = ex * (Venue.STAND_X + 0.15)
-		k.aged_block(Vector3(x - 0.15, 0, s * Venue.STAND_FRONT), Vector3(x + 0.15, top_y() + 1.0, s * cz1), concrete, 0.6)
+		if hall and ex > 0:
+			# the corridor comes out here into the corner
+			var c: Array = RecPlan.RINK_CORRIDOR
+			k.aged_block(Vector3(x - 0.15, 0, s * Venue.STAND_FRONT), Vector3(x + 0.15, top_y() + 1.0, c[2]), concrete, 0.6)
+			k.aged_block(Vector3(x - 0.15, c[3], c[2]), Vector3(x + 0.15, top_y() + 1.0, s * cz1), concrete, 0.6)
+		else:
+			k.aged_block(Vector3(x - 0.15, 0, s * Venue.STAND_FRONT), Vector3(x + 0.15, top_y() + 1.0, s * cz1), concrete, 0.6)
 	for bx in [-16.0, 0.0, 16.0]:
 		k.prop("trash_can", Vector3(bx, top_y(), s * (cz1 - 0.5)), PI if side < 0 else 0.0)
 	if k.age == VenueRoom.Age.RENOVATED:
 		# LED ribbon along the concourse fascia in the home colour
 		k.glow(Vector3(-Venue.STAND_X, top_y() - 0.25, s * (cz0 - 0.02)), Vector3(Venue.STAND_X, top_y() - 0.05, s * cz0), home_primary().lightened(0.15))
+
+
+## The bench-side stand has a corridor under its concourse when the rec
+## wing is built: the wing's dressing rooms open onto it (RecPlan).
+func _has_corridor() -> bool:
+	return side < 0 and venue != null and venue.has_wings()
+
+
+## The concourse's solid fill with the corridor cut out of its back, along
+## the arena wall at floor level, out through the stand's east end.
+func _corridor(k: VenueKit, concrete: Color, strip: float, cz1: float) -> void:
+	var c: Array = RecPlan.RINK_CORRIDOR
+	var xa: float = c[0]
+	var zi: float = c[2]
+	var ch: float = c[3]
+	var zb := -cz1
+	var sx := Venue.STAND_X
+	k.aged_block(Vector3(-sx, 0, -strip), Vector3(xa, top_y(), zb), concrete, 1.0)
+	k.aged_block(Vector3(xa, 0, -strip), Vector3(sx, top_y(), zi), concrete, 1.0)
+	k.aged_block(Vector3(xa, ch, zi), Vector3(sx, top_y(), zb), concrete, 1.0)
+	# painted block walls, a rubber runner, and tube lights in cages
+	var paint: Color = k.by_age(Wear.OLD_MINT.darkened(0.15), Wear.OLD_MINT, Color("d8d4cb"))
+	k.block(Vector3(xa, 0, zi - 0.02), Vector3(sx, 1.2, zi), paint, 0.5, 0.05, false)
+	k.block(Vector3(xa, 0.0, zi - 1.4), Vector3(sx, 0.012, zi - 0.6), Color("1f2024"), 0.5, 0.05, false)
+	var x := xa + 2.0
+	var i := 0
+	while x < sx - 1.0:
+		var lit: Color = Color("4a4d48") if k.age == Age.WORN and i % 4 == 2 else k.by_age(Color("e6f0d8"), Color("f4f6f0"), Color("fff6e6"))
+		k.glow(Vector3(x - 0.6, ch - 0.05, zi - 1.1), Vector3(x + 0.6, ch - 0.01, zi - 0.9), lit)
+		x += 4.0
+		i += 1
 
 
 ## One row of the Props kit's arena seats (one MultiMesh per age). Worn rows

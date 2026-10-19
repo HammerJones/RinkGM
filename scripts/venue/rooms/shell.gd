@@ -48,6 +48,10 @@ func build(k: VenueKit) -> void:
 	for s in [-1, 1]:
 		var z: float = s * (hz - t * 0.5)
 		var exits := [{"at": -40.0, "w": 1.9, "y0": 0.0, "y1": 2.3}, {"at": 40.0, "w": 1.9, "y0": 0.0, "y1": 2.3}]
+		if s < 0 and venue and venue.has_wings():
+			# the wing's rink doors (the rec rooms hang them)
+			for d in RecPlan.doors_on("x", RecPlan.Z_ARENA, -hx, hx):
+				exits.append({"at": d[1], "w": d[4] + 0.04, "y0": 0.0, "y1": d[5] + 0.02})
 		k.wall_x(z, -hx, hx, 0, Venue.ROOF_Y, t, wall_col, exits, 1.0)
 		for ex in [-40.0, 40.0]:
 			var d := add_door(k, Vector3(ex, 0, z), 0.0 if s < 0 else PI, VenueDoor.Kind.DOUBLE, 1.9, 2.3, Color("6d7680"), "Exit %s%d" % ["N" if s < 0 else "S", int(ex)])
@@ -60,11 +64,14 @@ func build(k: VenueKit) -> void:
 			k.wall_z(x, z0, z1, 0, Venue.ROOF_Y, t, wall_col, [], 1.0)
 	# painted bands at eye level: the old 70s orange and gold, or the club colour
 	var bands: Array = [home_primary()] if k.age == VenueRoom.Age.RENOVATED else [Wear.OLD_ORANGE, Wear.OLD_GOLD]
+	# (they stop short of the fire exits, whose signs sit at the same height)
 	for s in [-1, 1]:
 		var zf: float = s * (hz - t - 0.01)
+		var runs := [[-hx + t, -41.4], [-38.6, 38.6], [41.4, hx - t]]
 		for bi in bands.size():
 			var y0 := 2.6 + bi * 0.4
-			k.aged_block(Vector3(-hx + t, y0, zf), Vector3(hx - t, y0 + 0.3, zf - s * 0.03), bands[bi], 1.0, 0.05, false)
+			for run in runs:
+				k.aged_block(Vector3(run[0], y0, zf), Vector3(run[1], y0 + 0.3, zf - s * 0.03), bands[bi], 1.0, 0.05, false)
 	_corners(k)
 
 
@@ -122,23 +129,23 @@ func _exit_sign(k: VenueKit, pos: Vector3, s: int) -> void:
 	k.sign(sign, Transform3D(basis, pos))
 
 
-## Corner clutter between the side stands and the end rooms. A worn rink
-## keeps junk here; a renovated one has a fan zone with high-top tables.
+## The four corners between the side stands and the end rooms: flat benches
+## on rubber mats where public skaters lace up, and the clutter that piles
+## up by the back wall. A worn rink keeps folding chairs and puck buckets
+## here; a renovated one has a fan zone with high-top tables.
 func _corners(k: VenueKit) -> void:
 	for cx in [-1, 1]:
 		for cz in [-1, 1]:
+			_skate_benches(k, cx, cz)
 			var x0: float = cx * 27.0
 			var z0: float = cz * 26.5
 			match k.age:
 				VenueRoom.Age.WORN:
-					# stacked folding chairs, puck buckets
-					for i in 4:
-						k.block(Vector3(x0 + cx * i * 0.6, 0, z0), Vector3(x0 + cx * (i * 0.6 + 0.5), 0.9 + 0.12 * (i % 2), z0 + cz * 0.5), k.aged(Wear.OLD_STEEL, i), 0.25, 0.1)
+					_folding_chairs(k, Vector3(cx * 26.6, 0, cz * (Venue.HALF_Z - Venue.WALL_T)), cx)
 					for i in 3:
-						k.block(Vector3(x0 - cx * 1.2, 0, z0 + cz * (i * 0.55)), Vector3(x0 - cx * 0.8, 0.45, z0 + cz * (i * 0.55 + 0.4)), Color("2c2d31"), 0.2, 0.1)
+						_puck_bucket(k, Vector3(cx * (28.4 + i * 0.45), 0, cz * 29.0))
 				VenueRoom.Age.REPAIRED:
-					for i in 3:
-						k.block(Vector3(x0 + cx * i * 1.4, 0, z0), Vector3(x0 + cx * (i * 1.4 + 1.0), 0.45, z0 + cz * 0.4), Wear.OLD_WOOD, 0.25, 0.06)
+					_folding_chairs(k, Vector3(cx * 26.6, 0, cz * (Venue.HALF_Z - Venue.WALL_T)), cx)
 				VenueRoom.Age.RENOVATED:
 					for i in 3:
 						var tx: float = x0 + cx * i * 1.8
@@ -147,3 +154,53 @@ func _corners(k: VenueKit) -> void:
 			# a drinks machine and a bin from the Props kit in every corner
 			k.prop("vending_machine", Vector3(x0 + cx * 3.45, 0, z0 + cz * 2.05), 0.0 if cz > 0 else PI)
 			k.prop("trash_can", Vector3(x0 + cx * 4.4, 0, z0 + cz * 2.1), 0.0 if cz > 0 else PI)
+
+
+## Two long flat benches, no backs, on a rubber mat: sit, lace up, walk the
+## mat to the ice in skates.
+func _skate_benches(k: VenueKit, cx: int, cz: int) -> void:
+	var wood: Color = k.by_age(Color("7a5c3c"), Color("8a6a45"), Color("3a3d44"))
+	var top: Color = k.by_age(Color("8a6a45"), Color("9a7a52"), home_primary().darkened(0.25))
+	var leg := Color("2b2d33")
+	var xa: float = cx * 25.6
+	var xb: float = cx * 31.4
+	var lo := minf(xa, xb)
+	var hi := maxf(xa, xb)
+	# the mat runs from the benches to the walkway along the stands
+	k.block(Vector3(lo - 0.3, 0, cz * 18.0), Vector3(hi + 0.3, 0.015, cz * 23.6), Color("1d1e21"), 0.6, 0.08, false)
+	for bz in [19.6, 22.0]:
+		var z: float = cz * bz
+		k.aged_block(Vector3(lo, 0.4, z - 0.22), Vector3(hi, 0.46, z + 0.22), top, 0.6)
+		k.block(Vector3(lo + 0.1, 0.36, z - 0.18), Vector3(hi - 0.1, 0.4, z + 0.18), wood, 0.6, 0.04, false)
+		var x := lo + 0.3
+		while x < hi:
+			k.block(Vector3(x, 0, z - 0.2), Vector3(x + 0.08, 0.36, z + 0.2), leg, 0.3, 0.0)
+			x += 1.8
+		k.block(Vector3(hi - 0.38, 0, z - 0.2), Vector3(hi - 0.3, 0.36, z + 0.2), leg, 0.3, 0.0)
+
+
+## A row of folded steel chairs leaning on the back wall, each a seat panel
+## and a back panel with the legs showing.
+func _folding_chairs(k: VenueKit, at: Vector3, cx: int) -> void:
+	var out := -signf(at.z)  # away from the wall
+	for i in 6:
+		var col: Color = k.aged(Wear.OLD_STEEL, i)
+		var x: float = at.x + cx * i * 0.22
+		var lean := Basis(Vector3(1, 0, 0), deg_to_rad(-12.0) * out)
+		var base := Vector3(x, 0.0, at.z + out * 0.28)
+		k.oriented(Transform3D(lean * Basis.from_scale(Vector3(0.44, 0.82, 0.03)), base + lean * Vector3(0, 0.41, 0)), col)
+		k.oriented(Transform3D(lean * Basis.from_scale(Vector3(0.4, 0.36, 0.035)), base + lean * Vector3(0, 0.62, out * 0.035)), col.lightened(0.12))
+		for lx in [-0.19, 0.19]:
+			k.oriented(Transform3D(lean * Basis.from_scale(Vector3(0.025, 0.86, 0.025)), base + lean * Vector3(lx, 0.43, out * 0.02)), Color("2b2d33"))
+	k.collider(Vector3(at.x - 0.3, 0, at.z), Vector3(at.x + cx * 1.5, 0.9, at.z + out * 0.45))
+
+
+## A five-gallon pail of practice pucks.
+func _puck_bucket(k: VenueKit, p: Vector3) -> void:
+	var pail := Color("2c2d31")
+	k.block(p + Vector3(-0.15, 0, -0.15), p + Vector3(0.15, 0.36, 0.15), pail, 0.2, 0.05)
+	k.block(p + Vector3(-0.17, 0.34, -0.17), p + Vector3(0.17, 0.38, 0.17), pail.lightened(0.1), 0.2, 0.0, false)
+	for j in 4:
+		var o := Vector3((j % 2) * 0.13 - 0.07, 0.36, (j / 2) * 0.13 - 0.07)
+		k.block(p + o + Vector3(-0.038, 0, -0.038), p + o + Vector3(0.038, 0.025, 0.038), Color("101113"), 0.1, 0.0, false)
+	k.oriented(Transform3D(Basis.from_scale(Vector3(0.3, 0.015, 0.015)), p + Vector3(0, 0.46, 0)), Color("8c9096"))

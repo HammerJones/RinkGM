@@ -79,6 +79,8 @@ func _run() -> void:
 	await _walk("hall to the pro shop", Vector3(-26.0, 0, -42.0), [Vector3(-26.0, 0, -37.5)], "pro_shop")
 	await _walk("hall to dressing room 5", Vector3(15.0, 0, -42.0), [Vector3(18.0, 0, -42.0), Vector3(18.0, 0, -38.5), Vector3(19.5, 0, -36.0)], "locker_5")
 	await _walk("arena concourse through the link to the hall", Vector3(40.0, 0, -27.5), [Vector3(40.0, 0, -36.0), Vector3(40.0, 0, -42.0), Vector3(36.0, 0, -42.0)], "rec_hall")
+	await _walk("dressing room 4 out its rink door, under the stands to the corner", Vector3(13.5, 0, -33.5), [Vector3(15.1, 0, -31.0), Vector3(15.2, 0, -28.4), Vector3(25.0, 0, -28.4), Vector3(24.9, 0, -16.4)], "shell")
+	await _walk("equipment store out to the rink corridor", Vector3(-1.75, 0, -33.0), [Vector3(-1.75, 0, -28.4), Vector3(3.0, 0, -28.4)], "stands_bench")
 	await _walk("hall to the weight room", Vector3(12.0, 0, -42.0), [Vector3(9.0, 0, -42.0), Vector3(9.0, 0, -47.0)], "weight_room")
 	await _walk("hall into the workshop", Vector3(37.0, 0, -42.0), [Vector3(37.0, 0, -47.0), Vector3(40.0, 0, -52.0)], "workshop")
 	print("\n%s (%d failure%s)" % ["FAILED" if failures else "OK", failures, "" if failures == 1 else "s"])

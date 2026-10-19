@@ -28,8 +28,9 @@ signal screen_requested(id: String, sim: RinkSim)
 signal job_started(job: Dictionary)
 
 const OFFICE_SCENE := "res://scenes/ui/rink_office.tscn"
-## Screen spot -> UI rink office tab.
-const OFFICE_TABS := {"ice_grid": "grid", "log_book": "log", "goals": "board", "desk": "jobs"}
+## Screen spot -> UI rink office tab. The plant log book isn't one: it's
+## read where it hangs, in the plant room.
+const OFFICE_TABS := {"ice_grid": "grid", "goals": "board", "desk": "jobs"}
 const JOBS_DIR := "res://scenes/world/jobs/"
 
 var venue: Venue
@@ -402,7 +403,12 @@ func _leave_to(where: String) -> void:
 
 
 func _toggle_fly() -> void:
-	flying = not flying
+	set_noclip(not flying)
+
+
+## Fly through walls (F / Y, or the dev menu's noclip).
+func set_noclip(on: bool) -> void:
+	flying = on
 	walker.set_physics_process(not flying)
 	walker.velocity = Vector3.ZERO
 
