@@ -289,7 +289,7 @@ func populate(came: Array, in_place := false, session := "", kind := "", start_i
 		if in_place or (life and start_in - arrive < -5.0):
 			# already here: in their seat, at work, or (mid-session) on the ice
 			a.delay = 0.0
-			if life and start_in <= 0.0 and a.brain.as_ == "play":
+			if a.brain.as_ == "play" and (start_in <= 0.0 if life else in_place):
 				a.brain.activity = "skate"
 				a.brain.place = "ice"
 			a.pos = _target(a)
@@ -786,8 +786,35 @@ func _route(a: Agent) -> Dictionary:
 		return {"nav": true, "from": a.pos, "to": gate, "pre": PackedVector3Array(), "post": PackedVector3Array([door, to])}
 	if PlaceMap.on_ice(a.pos):
 		var gate := Vector3(3.05, 0, -12.6)
-		return {"nav": true, "from": gate, "to": to, "pre": PackedVector3Array([a.pos]), "post": PackedVector3Array()}
-	return {"nav": true, "from": a.pos, "to": to, "pre": PackedVector3Array(), "post": PackedVector3Array()}
+		return _stand_legs({"nav": true, "from": gate, "to": to, "pre": PackedVector3Array([a.pos]), "post": PackedVector3Array()})
+	return _stand_legs({"nav": true, "from": a.pos, "to": to, "pre": PackedVector3Array(), "post": PackedVector3Array()})
+
+
+## The stand rows are steps the walk mesh can't climb: a seat is reached
+## from the walkway at the foot of its column, straight up the rows (and
+## left the same way down).
+func _stand_legs(r: Dictionary) -> Dictionary:
+	var f0 := _stand_foot(r.from)
+	if f0 != Vector3.INF:
+		var pre: PackedVector3Array = r.pre.duplicate()
+		pre.append_array(PackedVector3Array([r.from, f0]))
+		r.pre = pre
+		r.from = f0
+	var f1 := _stand_foot(r.to)
+	if f1 != Vector3.INF:
+		var post := PackedVector3Array([f1, r.to])
+		post.append_array(r.post)
+		r.post = post
+		r.to = f1
+	return r
+
+
+## The walkway spot below a point in the side stands, or INF when `p`
+## isn't up in the stands.
+static func _stand_foot(p: Vector3) -> Vector3:
+	if p.y < 0.6 or absf(p.z) < Venue.STAND_FRONT - 0.3:
+		return Vector3.INF
+	return Vector3(p.x, 0.0, signf(p.z) * (Venue.STAND_FRONT - 0.9))
 
 
 func _apply_route(a: Agent, r: Dictionary, mid: PackedVector3Array) -> void:

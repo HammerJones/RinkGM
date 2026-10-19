@@ -172,6 +172,17 @@ func _next(phase: String, ctx: Dictionary) -> bool:
 		left_early = "bored"
 		bark_topic = "bored"
 		return _go("leave", "entrance", Pose.WALK)
+	if activity == "queue" and arrived:
+		# in line until served (RinkPeople serves the front), or fed up
+		if line_minutes > 6.0 + 14.0 * person.trait_value("patience"):
+			mood_bits.append(["gave up on the canteen line", -0.04])
+			bark_topic = "long_line"
+			needs.hunger = 0.5
+			return _go("watch", home, Pose.WALK)
+		wait = 0.5
+		return false
+	if not arrived and activity != "watch":
+		return false  # still on the way there
 	if activity in ["watch", "wander", "vending", "lesson_wait"]:
 		var urgent: bool = needs.bladder > 0.85 or (phase == "break" and needs.bladder > 0.5)
 		if urgent:
