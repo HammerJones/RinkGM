@@ -58,6 +58,7 @@ func _spawn() -> void:
 		var staff := int(ctx.get("staff", 1 + target_count / 90))
 		var places: Dictionary = venue.call("places") if venue and venue.has_method("places") else {}
 		rental.setup({"staff": maxi(staff, looks.size()), "staff_looks": looks, "seed": rng.seed + 3, "places": places,
+			"window": ctx.get("rental_window"),
 			"return_rack": bool(ctx.get("return_rack", sim.get("return_rack") == true if sim else false))})
 		rental.auto_run = false
 		add_child(rental)

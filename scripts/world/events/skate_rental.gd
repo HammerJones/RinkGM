@@ -119,7 +119,9 @@ func setup(opts := {}) -> void:
 		var pl: Dictionary = opts.get("places", {})
 		var sr: Array = pl.get("skate_rental", [])
 		var at := OnIceData.v2(cfg.get("window"), anchor)
-		if not sr.is_empty():
+		if opts.get("window") is Vector2:
+			at = opts.window  # an explicit window spot (a walk-through before the booth lands)
+		elif not sr.is_empty():
 			at = Vector2(sr[0].x, sr[0].z)
 		set_frame(at, OnIceData.v2(cfg.get("into"), Vector2(-1, 0)), OnIceData.v2(cfg.get("along"), Vector2(0, 1)), pl)
 	rng.seed = int(opts.get("seed", 7))

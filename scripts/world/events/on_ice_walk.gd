@@ -5,16 +5,18 @@ extends "res://scripts/venue/venue_walk.gd"
 ##
 ##   godot --path . res://scenes/world/on_ice_walk.tscn -- --free-walk --event=minor_hockey
 ##     [--hour=5 --weekday=6 --month=12 --dom=24 --count=120 --line=12 --warm=30]
-##     [--shot=out.png --shot-after=12 --venue-cam=x,y,z,lx,ly,lz]
+##     [--shot=out.png --shot-after=4 (frames) --cam=x,y,z,lx,ly,lz]
 ##
 ## --warm=S runs the session S seconds before the first frame (pads laid,
 ## drills going); --line=N puts N more people in the rental line. The rink's
 ## own nets are hidden: the event's nets are real objects (OnIceSession.gear).
+## --booth=1 puts the rental at the ticket booth window from on_ice.json
+## (-34.3, -14.7) when this base's Venue.places() still has the old spot.
 ## R at the rental window: serve the front customer (asks the size, grabs it).
 
 var session: OnIceSession
 var _shot := ""
-var _shot_t := 12.0
+var _shot_frames := 4
 var _info: Label
 
 
@@ -39,9 +41,13 @@ func _ready() -> void:
 			"warm": warm = kv[1].to_float()
 			"line": line = kv[1].to_int()
 			"shot": _shot = kv[1]
-			"shot-after": _shot_t = kv[1].to_float()
+			"shot-after": _shot_frames = kv[1].to_int()
 			"fast": c["fast"] = kv[1] == "1"
 			"in-place": c["in_place"] = kv[1] == "1"
+			"cam": _fixed_cam(kv[1])
+			"booth":
+				if kv[1] == "1":
+					c["rental_window"] = OnIceData.v2(OnIceData.section("rental").get("window"))
 	if float(c.hour) < 0.0:
 		c.hour = _usual_hour(kind)
 	c["seed"] = 11
@@ -63,6 +69,19 @@ func _ready() -> void:
 	_info.add_theme_color_override("font_shadow_color", Color.BLACK)
 	_label.get_parent().add_child(_info)
 	print("on-ice walk: %s (%s), %d people" % [kind, session.controller, session.skaters.size()])
+
+
+## A fixed camera at x,y,z looking at lx,ly,lz (venue space), for screenshots.
+func _fixed_cam(spec: String) -> void:
+	var f := spec.split_floats(",")
+	if f.size() < 6:
+		return
+	var c3 := Camera3D.new()
+	c3.fov = 62.0
+	c3.near = 0.05
+	add_child(c3)
+	c3.look_at_from_position(Vector3(f[0], f[1], f[2]), Vector3(f[3], f[4], f[5]))
+	c3.current = true
 
 
 func _usual_hour(kind: String) -> float:
@@ -105,8 +124,8 @@ func _process(dt: float) -> void:
 			txt += "  %s  %d-%d  P%d" % [gm.game_phase, gm.score[0], gm.score[1], gm.period]
 		_info.text = txt
 	if _shot != "":
-		_shot_t -= dt
-		if _shot_t <= 0.0:
+		_shot_frames -= 1
+		if _shot_frames <= 0:
 			var img := get_viewport().get_texture().get_image()
 			img.save_png(_shot)
 			print("on-ice walk: saved %s" % _shot)
