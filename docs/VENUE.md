@@ -114,6 +114,12 @@ lights and furniture in code, in all three ages.
   match budget is unchanged.
 - Walls in the wing add occluders (`kit.occlude_walls`), and the project turns
   occlusion culling on, so a walker draws the room they are in, not the wing.
+- World's detail pass (`scripts/world/rec_detail.gd`) adds the small things to
+  the community hall, offices, lobby, officials' rooms, washrooms and hall,
+  one `# World:` call per room. The weight room's mirror is a `PlanarMirror`
+  (`scripts/world/planar_mirror.gd`): a SubViewport camera mirrored across
+  the glass, rendering only while someone near is looking at it.
+  `tools/rec_room_stats.gd` prints draws and triangles per wing room.
 - `tools/tests/test_rec_centre.gd` checks the rooms, door sizes, budget
   (1.4M triangles, 700 draws with the arena) and walks eight short routes.
 - `tools/venue_shots.gd -- --out=x --wings [--age=..] [--view=name:x,y,z,lx,ly,lz]`
@@ -169,7 +175,13 @@ kinds:
   (Gus's goals), the ice grid and the log book.
 - **SWITCH** works a building system: the lighting panel in the lobby turns
   the ice lights on, and the metal halides take about 40 s to warm up.
-- **USE** covers anything else by id (nothing yet). The snow pit is a JOB,
+- **USE** covers anything else by id. The workshop's machines have USE stubs
+  (`{"machine": id, "stub": true}`) for their mini games to come. The
+  weight room's machines are `TrainingSpot`s (`scripts/world/training_spot.gd`):
+  using one is a 15-minute set (`WalkStory` moves the clock, through the
+  career's `RinkLink` when there is one) and fires
+  `trained(skill_keys, minutes, intensity)` with canonical Skills keys; the
+  spots are in the group `training_spots`, and Mechanics hooks the signal. The snow pit is a JOB,
   the sim's `dump_snow`, and the pile out back is Mount Doris.
 
 `WalkStory` decides what using a spot does and keeps the RinkSim clock

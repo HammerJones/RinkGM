@@ -27,6 +27,7 @@ func furnish(k: VenueKit) -> void:
 	partition(k, "z", SPLIT, z0, z1, paint(k))
 	for half in [[x0, SPLIT, true], [SPLIT, x1, false]]:
 		_half(k, half[0] + (0.15 if half[0] == x0 else 0.1), half[1] - (0.1 if half[1] == SPLIT else 0.15), half[2])
+	RecDetail.washrooms(self, k)  # World: detail pass (#23, #27)
 
 
 func _half(k: VenueKit, a: float, b: float, mens: bool) -> void:

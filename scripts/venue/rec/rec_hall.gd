@@ -46,6 +46,7 @@ func furnish(k: VenueKit) -> void:
 	var ex := VenueSign.make([["EXIT", VenueSign.GREEN]], 4, 1, 0.025)
 	ex.name = "ExitSign"
 	k.sign(ex, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(x1 - 0.32, 2.6, -42.0)))
+	RecDetail.hall(self, k)  # World: detail pass (#23, #27)
 
 
 ## Spans of the wall face on edge line `line` (along X) not cut by a door.
