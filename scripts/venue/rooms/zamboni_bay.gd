@@ -86,6 +86,11 @@ func _m1(k: VenueKit) -> void:
 		k.block(Vector3(38.9, y + 0.07, 4.27), Vector3(39.2, y + 0.13, 4.28), Color("e8e4da"), 0.1, 0.0, false)
 	add_spot(k, VenueSpot.Kind.READ, "plug_drawer", Vector3(39.05, 1.0, 4.25), "Drawer labelled DORIS", {"note": "plug_drawer", "gives": "spark_plugs"}, 1.5)
 	add_spot(k, VenueSpot.Kind.READ, "zambelli_525_manual", Vector3(36.0, 1.0, -4.5), "Zambelli 525 manual", {"readable": "zambelli_525_manual"}, 1.4)
+	# World: the ice kit on the bench: caliper and drill, the survey laser, the tablet (docs/world/ICE.md 3)
+	var ms := "res://scenes/world/jobs/ice_measure.tscn"
+	add_spot(k, VenueSpot.Kind.JOB, "ice_depth", Vector3(36.9, 1.0, -4.5), "Depth plates: caliper and drill", {"job": "ice_depth", "target": "ice_depth", "scene": ms}, 1.2)
+	add_spot(k, VenueSpot.Kind.JOB, "ice_survey", Vector3(37.8, 1.0, -4.5), "Survey laser and rod", {"job": "ice_survey", "target": "ice_survey", "scene": ms}, 1.2)
+	add_spot(k, VenueSpot.Kind.JOB, "ice_lidar", Vector3(38.7, 1.0, -4.5), "Lidar tablet", {"job": "ice_survey", "target": "ice_lidar", "scene": ms}, 1.2)
 	# the pit: a heap of old snow over the grate, and its heater switch
 	var b := VoxelMeshBuilder.new()
 	b.add_box(Transform3D(Basis.IDENTITY, Vector3(0, 0.5, 0)), Color("e9eef2"))

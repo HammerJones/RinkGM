@@ -29,6 +29,7 @@ func _initialize() -> void:
 	_check_empty_tank(worn)
 	_check_sim_jobs(normal)
 	_check_drive_scene()
+	_check_measure_scene()
 	print("test_ice: %d ms" % (Time.get_ticks_msec() - t0))
 	if failures:
 		printerr("test_ice: %d failure(s)" % failures)
@@ -342,6 +343,51 @@ func _check_drive_scene() -> void:
 	sc2.begin({"sim": s2, "job": "resurface", "target": "doris_drive"})
 	_expect(sc2.complete and float(sc2.result.get("coverage", 0.0)) > 0.9, "drive scene: a hired driver's resurface is automatic")
 	sc2.free()
+
+
+## The measuring scene: a caliper reading at the centre plate, a plate ordered
+## at an empty dot, survey readings off the laser, and the numbers into the sim.
+func _check_measure_scene() -> void:
+	var sim := RinkSim.create_m1()
+	var sc: IceMeasure = load("res://scenes/world/jobs/ice_measure.tscn").instantiate()
+	root.add_child(sc)
+	var got := {}
+	sc.finished.connect(func(r: Dictionary) -> void: got.merge(r))
+	sc.begin({"sim": sim, "job": "ice_depth", "target": "ice_depth"})
+	_expect(sc.mode == "depth", "measure: the depth kit opens on the plates")
+	sc._take()
+	var want := sim.ice.plate_depth_mm("centre")
+	_expect(sc.showing and absf(float(sc.cur.value) - want) < 0.2, "measure: the caliper reads the centre plate (%.2f vs %.2f mm)" % [float(sc.cur.get("value", 0.0)), want])
+	var cal := IceGauges.caliper(float(sc.cur.value))
+	_expect(absf(IceGauges.caliper_mm(float(cal.beam), roundf(float(cal.dial)), true) - float(sc.cur.value)) <= 0.011, "measure: the beam and dial add back up")
+	sc._write()
+	_expect(sc.readings.has("centre") and sc._choices[sc.sel] == "home_left", "measure: written down, on to the next dot")
+	var cash := sim.money
+	sc._take()
+	_expect(sim.plate_pending("home_left") and sim.money < cash, "measure: an empty dot orders a plate (%s)" % sc.prompt)
+	sc.sel = sc._choices.size() - 1
+	sc.input.scripted = func(f: JobInput.Frame, _dt: float, _c: int) -> void: f.interact_pressed = true
+	var n := 0
+	while not sc.closed and n < 20:
+		sc.tick(DT)
+		n += 1
+	_expect(sc.closed and got.has("readings"), "measure: handed in")
+	var r := sim.job("ice_depth", got)
+	_expect(bool(r.ok) and (r.readings as Dictionary).has("centre"), "measure: the sim logs the caliper's numbers (%s)" % r.get("text", ""))
+	sc.free()
+	# the survey: centre first, then the rest go off it
+	var sv: IceMeasure = load("res://scenes/world/jobs/ice_measure.tscn").instantiate()
+	root.add_child(sv)
+	sv.begin({"sim": sim, "job": "ice_survey", "target": "ice_survey"})
+	for i in [7, 0, 4, 10, 14]:
+		sv.sel = i
+		sv._take()
+		sv._write()
+	var res := sv._result()
+	_expect(sv.mode == "survey" and (res.readings as Dictionary).size() == 5 and (res.points as Array).size() == 5, "measure: five rod readings with their spots")
+	var r2 := sim.job("ice_survey", res)
+	_expect(bool(r2.ok) and (r2.readings as Dictionary).size() == 5, "measure: the survey goes in (%s)" % r2.get("text", ""))
+	sv.free()
 
 
 func _check_sim_jobs(normal: Dictionary) -> void:

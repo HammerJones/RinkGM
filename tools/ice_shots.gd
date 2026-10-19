@@ -36,7 +36,7 @@ func _initialize() -> void:
 
 func _next() -> void:
 	if _root:
-		_root.queue_free()
+		_root.free()
 		_root = null
 	if _queue.is_empty():
 		quit()

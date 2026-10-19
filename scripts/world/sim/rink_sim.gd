@@ -1300,7 +1300,9 @@ func job(id: String, args := {}) -> Dictionary:
 			out["closed_day"] = on_day
 			out["sessions_lost"] = sessions(on_day).size()
 		"ice_depth":
-			var rd := depth_readings(str(args.get("spot", "")))
+			# the measuring scene's own caliper readings when it has them
+			var given: Variant = args.get("readings", null)
+			var rd: Dictionary = given if given is Dictionary and not (given as Dictionary).is_empty() else depth_readings(str(args.get("spot", "")))
 			_log("ice_depth", rd)
 			out["readings"] = rd
 			var parts := PackedStringArray()
@@ -1309,7 +1311,8 @@ func job(id: String, args := {}) -> Dictionary:
 			text = "Depth at the plates: %s." % ", ".join(parts)
 		"ice_survey":
 			var pts: Array = args.get("points", [])
-			var rd := survey_readings(pts)
+			var given_s: Variant = args.get("readings", null)
+			var rd: Dictionary = given_s if given_s is Dictionary and not (given_s as Dictionary).is_empty() else survey_readings(pts)
 			_log("ice_survey", rd)
 			out["readings"] = rd
 			text = "Surveyed %d spots off the laser." % rd.size()
