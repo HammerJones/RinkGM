@@ -6,13 +6,14 @@ extends "res://scripts/venue/venue_walk.gd"
 ##   godot --path . res://scenes/world/pickup_gym.tscn -- --free-walk [--play] [--weekday=6]
 ##
 ## `--play` joins straight away and puts you at the top of the key with the
-## ball once your game is on. `--shot=<png>` saves a screenshot after
-## `--shot-after=` seconds (default 12) and quits; `--venue-cam=` views it
+## ball once your game is on. `--shot=<png>` saves a screenshot
+## `--shot-after=` seconds of game time (default 4) into the first game, and
+## quits (game time: a slow software renderer runs the game in slow motion); `--venue-cam=` views it
 ## from a fixed camera instead of your eyes. `--clock=<min/s>` sets how fast
 ## the gym clock runs (default WalkStory's pace).
 
 var _shot := ""
-var _shot_t := 12.0
+var _shot_t := 4.0
 var _play := false
 var _placed := false
 
@@ -61,7 +62,7 @@ func _process(dt: float) -> void:
 		_yaw = -PI * 0.5
 		_pitch = -0.12
 		pickup_run.hand_ball_to_player()
-	if _shot != "":
+	if _shot != "" and pickup_run and pickup_run.mode in ["3v3", "5v5"] and (_placed or not _play):
 		_shot_t -= dt
 		if _shot_t <= 0.0:
 			var img := get_viewport().get_texture().get_image()

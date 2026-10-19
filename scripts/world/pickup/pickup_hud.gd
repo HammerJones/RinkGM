@@ -23,29 +23,19 @@ const METER_H := 160.0
 func _ready() -> void:
 	layer = 5
 	_score = _label(RinkOS.READOUT)
-	_score.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_score.position = Vector2(-620, 12)
 	_score.size = Vector2(600, 30)
 	_score.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_prompt = _label(RinkOS.ACTION)
-	_prompt.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	_prompt.position = Vector2(-400, -170)
 	_prompt.size = Vector2(800, 30)
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_call = _label(RinkOS.TEXT)
-	_call.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	_call.position = Vector2(-400, 90)
 	_call.size = Vector2(800, 30)
 	_call.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_dot = ColorRect.new()
 	_dot.color = RinkOS.TEXT
 	_dot.size = Vector2(4, 4)
-	_dot.set_anchors_preset(Control.PRESET_CENTER)
-	_dot.position = Vector2(-2, -2)
 	add_child(_dot)
 	_meter = Control.new()
-	_meter.set_anchors_preset(Control.PRESET_CENTER)
-	_meter.position = Vector2(60, -METER_H * 0.5)
 	add_child(_meter)
 	var back := ColorRect.new()
 	back.color = RinkOS.PANEL
@@ -78,6 +68,13 @@ func _process(dt: float) -> void:
 	if game == null or not is_instance_valid(game):
 		visible = false
 		return
+	# laid out against the window each frame (a CanvasLayer has no parent rect)
+	var vp := get_viewport().get_visible_rect().size
+	_score.position = Vector2(vp.x - 620.0, 12.0)
+	_prompt.position = Vector2(vp.x * 0.5 - 400.0, vp.y - 170.0)
+	_call.position = Vector2(vp.x * 0.5 - 400.0, 90.0)
+	_dot.position = vp * 0.5 - Vector2(2, 2)
+	_meter.position = vp * 0.5 + Vector2(60.0, -METER_H * 0.5)
 	_score.text = game.score_text()
 	_prompt.text = game.prompt()
 	_call_t -= dt
