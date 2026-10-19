@@ -103,6 +103,11 @@ func tunables() -> Array:
 @export_range(0.0, 1.0, 0.01) var back_upright := 0.25
 ## Backwards speed (m/s) that counts as skating backwards.
 @export_range(0.1, 2.0, 0.05) var back_speed := 0.4
+## The turn-around pivot (Skater.backwards toggling): skates apart, toes
+## turned out, hips dropped a little.
+@export_range(0.05, 0.5, 0.005) var back_pivot_width := 0.22
+@export_range(0.0, 1.5, 0.01) var back_pivot_toe_out := 0.7
+@export_range(0.0, 0.2, 0.005) var back_pivot_sink := 0.05
 
 # ------------------------------------------------------------------ stick
 # Real sticks are about 163 cm tall with a 32-39 cm blade 5-9 cm high; the

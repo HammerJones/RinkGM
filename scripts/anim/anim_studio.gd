@@ -520,6 +520,16 @@ func _finish_reel() -> void:
 				continue   # not in this run (--clips)
 			if not _test_log.get(id, {}).has(expect[id]):
 				_fail("%s never showed %s" % [id, expect[id]])
+		# the body's reach for the blade: out past the ready blade in front,
+		# much less behind the skater
+		var front := SkaterRig.blade_reach(Vector3.FORWARD)
+		var behind := SkaterRig.blade_reach(Vector3.BACK)
+		var ready := AnimPuppet.READY_BLADE.length()
+		print("anim test: blade reach front %.2f m, behind %.2f m, right %.2f m, left %.2f m" % [front, behind, SkaterRig.blade_reach(Vector3.RIGHT), SkaterRig.blade_reach(Vector3.LEFT)])
+		if front < ready or front > 2.2:
+			_fail("blade reach in front is %.2f m (the ready blade is %.2f m out)" % [front, ready])
+		if behind >= front:
+			_fail("the blade reaches as far behind (%.2f m) as in front (%.2f m)" % [behind, front])
 		for f in _test_fail:
 			printerr("FAIL: ", f)
 		print("anim test: %s" % ("all passed" if _test_fail.is_empty() else "%d failure(s)" % _test_fail.size()))

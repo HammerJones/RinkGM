@@ -55,7 +55,16 @@ When a skater's velocity points behind them (faster than `back_speed`),
 the stride turns into C-cuts: each skate in turn sweeps out and forward on
 its inside edge with the toe turned in, then glides back in under the hips,
 both skates staying on the ice. The skater sits lower and more upright
-(`back_*` tunables). The studio clip is "Skating backwards".
+(`back_*` tunables). The studio clip is "Skating backwards". It also
+follows Controls' `Skater.backwards` toggle, and the 0.32 s turn-around
+(`Skater._pivot`) plays a quick open-hipped pivot, skates apart and toes
+out (`back_pivot_*`).
+
+`SkaterRig.blade_reach(local_dir)` says how far out the middle of the blade
+can reach in a body-space direction, from the body itself (the top hand's
+shoulder in the stance, arm and stick lengths, the top hand kept between
+hips and chest). It is the one-handed limit: about 2.0 m in front, 2.2 m
+to the top-hand side, 1.4 m to the other and 1.5 m behind.
 
 ## On foot
 
