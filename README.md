@@ -180,6 +180,20 @@ skating and stick-control assistance on top; it never changes contacts.
   forces passes and shoots from anywhere, and its goalie is slow and off the
   angle. Higher tiers hold support spots and gaps, move the puck early to the
   open man and work it in close before shooting.
+- **Positions** (`scripts/game/team_system.gd`): every skater plays the
+  position of their bench slot (C, LW, RW, LD, RD), through line changes. The
+  team reads the phase of play from who last had the puck under control and
+  where it is, and each position has its spot: in their zone the D hold the
+  points and move it D to D, the strong-side winger works the wall, the other
+  goes to the net front and the C sits high as the safety; breakouts put the D
+  on retrievals, the wingers on the boards at the hash marks and the C low;
+  the forecheck is a 1-2-2 with the D holding the line; in the D zone it's a
+  box +1. The spots follow the play at skating speed. `TierAI.discipline` is
+  how tightly players keep to their spots (a beer league drifts toward the
+  puck and sends extra chasers; a disciplined side rotates to cover a man
+  caught out), `anticipation` how soon they read the phase change.
+  `-- --test=positions [--heatmaps=dir]` measures it and draws where each
+  position plays.
 - **Sticks wear and break** (`scripts/game/stick_wear.gd`). Slapshots and
   one-timers load a stick hardest; blocking a hot puck, hard pokes, stick lifts
   and falls load it too. Each load wears it (`Skater.stick_health`) and may snap
@@ -278,6 +292,7 @@ plays a full season of live engine games with the AI driving you.
 Arguments after `--` are read by the game:
 
 - `--test=controls` runs the scripted control checks in `tests/controls_test.gd` and exits non-zero on failure.
+- `--test=positions [--seconds=200] [--heatmaps=dir]` plays both teams at TierAI level 0 and then 3, prints each position's average distance from its spot by phase, fails unless level 3 keeps its positions clearly better, and with `--heatmaps` writes a sheet per tier of where each position plays.
 - `--demo=controls` plays a captioned showcase of every move (`tests/controls_demo.gd`). Record it with `godot --path . --write-movie demo.avi --fixed-fps 30 --resolution 1280x720 -- --demo=controls`.
 - `--demo=skating` and `--demo=moves` are close-up reels of the skating animation and of the stick arc and every shot and stick move, with the right stick's path drawn on a pad.
 - `--autoplay` lets the AI drive your skater too (prints stats and a box score on exit).
