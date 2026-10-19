@@ -138,6 +138,13 @@ func use(s: VenueSpot) -> Dictionary:
 	var gives: String = d.get("gives", "")
 	if gives != "":
 		flags[gives] = true
+	# World: a weight-room machine is one 15-minute set on the clock; its
+	# `trained` signal is Mechanics' hook into Skills
+	if s is TrainingSpot:
+		var r: Dictionary = (s as TrainingSpot).train(link if link else sim)
+		game_due = game_due or bool(r.get("game_due", false))
+		_show_sim()
+		return {"toast": r.get("toast", s.label)}
 	match s.kind:
 		VenueSpot.Kind.READ:
 			flags["read:" + s.id] = true
