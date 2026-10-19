@@ -56,6 +56,7 @@ static func create(id_: int, pos: String, base: float, rng: RandomNumberGenerato
 		p._nudge({"shot_accuracy": 3, "shot_release": 4, "speed": 2, "hitting": -2})
 	for k in keys:
 		p.potential[k] = clampf(p.skills.values[k] + rng.randf_range(4.0, 30.0), 1.0, 100.0)
+	p._derive_conditioning()
 	p.reset_season_stats()
 	p.career_stats = _blank_stats()
 	p.moves = MoveUnlocks.STARTER.duplicate()
@@ -73,6 +74,13 @@ func unlock_move(move: String) -> bool:
 		return false
 	moves.append(move)
 	return true
+
+
+## Stamina from speed and toughness, its ceiling a little above (Skills.CONDITIONING).
+func _derive_conditioning() -> void:
+	skills.derive_conditioning()
+	if skills.values.has("stamina") and not potential.has("stamina"):
+		potential["stamina"] = clampf(float(skills.values.stamina) + 18.0, 1.0, 100.0)
 
 
 func _nudge(d: Dictionary) -> void:
@@ -185,6 +193,7 @@ static func from_dict(d: Dictionary) -> PlayerProfile:
 	p.team_id = int(d.team_id)
 	p.skills = Skills.from_dict(d.skills)
 	p.potential = d.potential
+	p._derive_conditioning()
 	p.fatigue = float(d.get("fatigue", 0.0))
 	p.injury = Injury.from_dict(d.injury) if d.get("injury") != null else null
 	p.training_focus = d.get("training_focus", "balanced")

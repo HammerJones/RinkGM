@@ -17,7 +17,7 @@ const D_TOI := [0.56, 0.44]
 
 
 ## `home_lu` / `away_lu` are Team.lineup() dictionaries.
-static func simulate(home_id: int, away_id: int, home_lu: Dictionary, away_lu: Dictionary, settings: GameSettings, playoff: bool, rng: RandomNumberGenerator) -> Dictionary:
+static func simulate(home_id: int, away_id: int, home_lu: Dictionary, away_lu: Dictionary, settings: GameSettings, playoff: bool, rng: RandomNumberGenerator, rules: Dictionary = {}) -> Dictionary:
 	var lu := [home_lu, away_lu]
 	var st := [Team.strength(home_lu), Team.strength(away_lu)]
 	var res := new_result(home_id, away_id, playoff)
@@ -33,8 +33,10 @@ static func simulate(home_id: int, away_id: int, home_lu: Dictionary, away_lu: D
 		var lam := BASE_GOALS * exp(edge) * (1.05 if side == 0 else 1.0)
 		goals[side] = _poisson(lam, rng)
 		shots[side] = maxi(goals[side] + 3, _poisson(BASE_SHOTS * exp(0.4 * edge), rng))
-	# overtime / shootout
-	if goals[0] == goals[1]:
+	# overtime / shootout, unless the level lets a tie stand (LeagueRules)
+	var tie_stands: bool = goals[0] == goals[1] and LeagueRules.after_tie(rules, playoff, true) == "tie" \
+		and LeagueRules.after_tie(rules, playoff, false) == "tie"
+	if goals[0] == goals[1] and not tie_stands:
 		var p_home := 1.0 / (1.0 + exp(-(st[0].att - st[1].att) * 0.06))
 		if playoff or rng.randf() < 0.6:
 			res.ot = true
@@ -132,7 +134,7 @@ static func _credit_goalie(res: Dictionary, g: PlayerProfile, sa: int, ga: int, 
 		l.w = 1
 	elif extra:
 		l.otl = 1
-	else:
+	elif res.hg != res.ag:  # a tie is neither
 		l.l = 1
 	if ga == 0:
 		l.so = 1

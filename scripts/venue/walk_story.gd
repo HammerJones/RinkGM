@@ -93,13 +93,19 @@ func tick(dt: float) -> void:
 	_clock_acc += dt * TIME_SCALE
 	while _clock_acc >= RinkSim.STEP_MIN:
 		_clock_acc -= RinkSim.STEP_MIN
-		if link:
-			game_due = link.advance(RinkSim.STEP_MIN)
-		else:
-			sim.advance(RinkSim.STEP_MIN)
-		_show_sim()
+		advance_minutes(RinkSim.STEP_MIN)
 		if game_due:
 			return
+
+
+## Moves the clock on `minutes` at once (a training set, a pickup game):
+## the career's clock when there is one, stopping for the owner's game.
+func advance_minutes(minutes: int) -> void:
+	if link:
+		game_due = link.advance(minutes) or game_due
+	else:
+		sim.advance(minutes)
+	_show_sim()
 
 
 ## The first hour's set-up (dark lot, locked front doors) holds until the
@@ -165,6 +171,19 @@ func use(s: VenueSpot) -> Dictionary:
 				sim.set_lights(not sim.lights_on)
 				_show_sim()
 				return {"toast": "ICE LIGHTS ON. THEY TAKE A FEW MINUTES." if venue.ice_lights_on() else "ICE LIGHTS OFF."}
+		VenueSpot.Kind.USE:
+			# the owner's kit (KitHud): net storage {"carry": "large"|"mini"},
+			# a weight machine {"train": Training.MACHINES id}, the gym's
+			# ball cart {"pickup": "basketball", "hoops": [...]}, the game sheet
+			# in the timekeeper's box {"scorekeep": true}
+			if d.has("carry"):
+				return {"carry": d.carry}
+			if d.has("train"):
+				return {"train": d.train}
+			if d.has("pickup"):
+				return {"pickup": d}
+			if d.has("scorekeep"):
+				return {"scorekeep": true}
 	return {"toast": s.label}
 
 

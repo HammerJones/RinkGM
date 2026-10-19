@@ -67,7 +67,7 @@ func to_result(home_id: int, away_id: int, goals: Array, ot: bool, so: bool, pla
 			l.w = 1
 		elif ot or so:
 			l.otl = 1
-		else:
+		elif goals[side] != goals[1 - side]:  # a tie is neither
 			l.l = 1
 		if l.ga == 0:
 			l.so = 1
