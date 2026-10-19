@@ -15,13 +15,14 @@ extends Node3D
 ## hands hold the stick in `_pose_stick`; Controls owns the stick's swing.
 
 const V := Models.V
-const HIP_Y := 12 * V
+const HIP_Y := (Models.HIP_SKATE_V - 0.5) * V   # knees a little bent at rest
+const GOALIE_HIP_Y := 12 * V   # the goalie's one-piece legs
 const STICK_LEN := 23.5 * V   # goalie stick
 const SHAFT_LEN := Models.SHAFT_VOX * Models.STICK_V   # model size; AnimTuning stick_* scale it
-const THIGH := 6.0 * V
-const SHIN := 6.5 * V           # knee to the bottom of the blade
-const UPPER_ARM := 4.0 * V
-const FOREARM := 3.5 * V        # elbow to the middle of the glove
+const THIGH := Models.THIGH_V * V
+const SHIN := (Models.SHIN_V + Models.SKATE_V) * V   # knee to the bottom of the blade
+const UPPER_ARM := Models.UPPER_ARM_V * V
+const FOREARM := Models.FOREARM_V * V        # elbow to the middle of the glove
 const LEG_X := 2.0 * V
 const SHOULDER_REACH := 0.08    # how far a shoulder can roll forward to reach
 const CHECK_TIME := 0.35        # Skater sets check_timer to this when a check starts
@@ -61,8 +62,12 @@ var _brake := 0.0
 var _fall := 0.0
 var _fall_dir := 1.0      # +1 falls backward, -1 forward
 var _check := 0.0
+var _back := 0.0          # 0 forwards .. 1 skating backwards
+var _piv := 0.0           # in a turn-around pivot
 var _bf := 0.0
 var _time := 0.0
+## Knee to the sole: a skate (SHIN) or, on PersonRig, a shoe.
+var shin_len := SHIN
 var _feet: Array[Vector3] = [Vector3(-0.15, 0, 0), Vector3(0.15, 0, 0)]
 var _yaws: Array[float] = [0.0, 0.0]
 var _one_hand := 0.0
@@ -103,7 +108,7 @@ func build(pal: Dictionary, is_goalie: bool) -> void:
 	body = Node3D.new()
 	faller.add_child(body)
 	hips = VoxelPart.make(Models.pants(pal, goalie))
-	hips.position.y = HIP_Y
+	hips.position.y = GOALIE_HIP_Y if goalie else HIP_Y
 	body.add_child(hips)
 	torso = VoxelPart.make(Models.torso(pal, goalie))
 	torso.position.y = 3 * V
@@ -111,7 +116,7 @@ func build(pal: Dictionary, is_goalie: bool) -> void:
 	head = VoxelPart.make(Models.head(pal, goalie))
 	head.position.y = (10 if goalie else 9) * V
 	torso.add_child(head)
-	var arm_x := (6.5 if goalie else 5.5) * V
+	var arm_x := 6.5 * V if goalie else (Models.SHOULDERS_V * 0.5 + 0.5) * V
 	var arm_y := (10 if goalie else 9) * V
 	if goalie:
 		var leg_x := 2.6 * V
@@ -240,6 +245,13 @@ func update_skater(s: Skater, dt: float) -> void:
 	_lean = lerpf(_lean, clampf(s.yaw_rate * speed * T.cross_lean, -T.cross_lean_max, T.cross_lean_max), smooth)
 	_cross = lerpf(_cross, clampf((absf(_lean) - T.cross_start) / T.cross_range, 0.0, 1.0) if pushing and speed > 2.5 else 0.0, smooth)
 	_brake = lerpf(_brake, T.stop_turn if s.braking else 0.0, 1.0 - exp(-T.stop_speed * dt))
+	# backwards: Controls' turn-around (Skater.backwards) or simply moving
+	# the way the skater's back faces
+	var back_flag = s.get("backwards")
+	var going_back: bool = s.vel.dot(-s.global_basis.z) < -T.back_speed or (back_flag == true and speed > 0.3)
+	_back = lerpf(_back, 1.0 if going_back and able else 0.0, smooth)
+	var pivot_left = s.get("_pivot")
+	_piv = lerpf(_piv, 1.0 if pivot_left != null and pivot_left > 0.0 else 0.0, 1.0 - exp(-25.0 * dt))
 	var down := s.stun_timer > 0.25
 	if down and _fall < 0.05:
 		# pushed back while skating slowly (or backwards) goes over backwards
@@ -258,11 +270,17 @@ func update_skater(s: Skater, dt: float) -> void:
 		var sd := -1.0 if i == 0 else 1.0
 		var u := fmod(_cycle + (0.0 if i == 0 else 0.5), 1.0)
 		var r := _stride_foot(T, sd, u, _amp, _cross if sd == outside else 0.0, _cross if sd != outside else 0.0)
+		if _back > 0.01:
+			var c := _back_foot(T, sd, u, _amp)
+			r = [r[0].lerp(c[0], _back), lerpf(r[1], c[1], _back)]
 		var glide := Vector3(sd * T.stance_width, 0, -sd * 0.05 * k)
 		var foot: Vector3 = glide.lerp(r[0], stride_w)
 		var yaw: float = r[1] * stride_w
 		foot = foot.lerp(Vector3(sd * T.stop_width, 0, sd * 0.04), stop)
 		yaw = lerpf(yaw, 0.0, stop)
+		# a turn-around pivot: heels in, toes out, the hips open through it
+		foot = foot.lerp(Vector3(sd * T.back_pivot_width, 0, 0.0), _piv)
+		yaw = lerpf(yaw, -sd * T.back_pivot_toe_out, _piv)
 		# knee slide: left knee down on the ice behind, right skate out front
 		foot = foot.lerp(Vector3(-0.12, 0.02, 0.45) if i == 0 else Vector3(0.18, 0, -0.3), slide)
 		_feet[i] = _feet[i].lerp(foot, 1.0 - exp(-30.0 * dt))
@@ -275,7 +293,7 @@ func update_skater(s: Skater, dt: float) -> void:
 	_shift = lerpf(_shift, sup_x * T.stride_hip_shift * stride_w, 1.0 - exp(-6.0 * dt))
 	var crouch := T.stance_crouch + T.stance_crouch_speed * k + T.stop_crouch * stop + (T.dash_crouch if dashing else 0.0)
 	crouch += T.check_crouch * _check - (T.check_crouch + T.check_rise) * rise
-	crouch += T.fall_drop * _fall + T.celebrate_knee_drop * slide
+	crouch += T.fall_drop * _fall + T.celebrate_knee_drop * slide + T.back_sit * _back + T.back_pivot_sink * _piv
 	_crouch = lerpf(_crouch, crouch, smooth)
 	var bob := absf(sin(_cycle * TAU)) * T.stride_bob * _amp + sin(_time * 2.2) * T.stance_breathe * (1.0 - stride_w)
 	hips.position = Vector3(_shift, HIP_Y - _crouch - bob, 0.03 * k)
@@ -295,6 +313,7 @@ func update_skater(s: Skater, dt: float) -> void:
 	var fol := smoothstep(0.0, 1.0, _follow)
 	var lean_x := -(T.stance_lean + T.stance_lean_speed * k) + w * T.shot_windup_rise + stop * T.stop_lean - fol * T.shot_follow_rise * _follow_h
 	lean_x -= T.check_lean * _check
+	lean_x += T.back_upright * _back
 	lean_x = lerpf(lean_x, T.celebrate_lean_back, _cel)
 	var turn_y := _twist - _stick_yaw * T.shot_shoulder_turn + fol * T.shot_follow_turn * _follow_side
 	# both hands on the stick: the bottom shoulder comes round and down to it
@@ -372,13 +391,64 @@ func _stride_foot(T: AnimTuning, sd: float, u: float, amp: float, cross: float, 
 	return [p, lerpf(toe_out, 0.0, r)]
 
 
+## How far out (metres, from the skater's centre over the ice) the middle of
+## the blade can reach in body-space direction `local_dir` (flat; -Z is
+## forward, +X right), from the body itself: the top hand's shoulder in the
+## ready stance, the arm's length and the stick's, with the top hand kept
+## between hips and chest (grip_top_low..high). Physics can use it as the
+## blade's reach limit, so the body sets where the stick can go.
+static func blade_reach(local_dir: Vector3, T: AnimTuning = null) -> float:
+	if T == null:
+		T = AnimTuning.current()
+	var d := Vector2(local_dir.x, local_dir.z)
+	if d.length() < 0.0001:
+		return 0.0
+	d = d.normalized()
+	# the top hand's shoulder (left), the torso leaning forward in the stance
+	var hip_y := HIP_Y - T.stance_crouch
+	var lean := T.stance_lean
+	var arm_y := 9.0 * V
+	var sh := Vector3(-(Models.SHOULDERS_V * 0.5 + 0.5) * V, hip_y + 3.0 * V + arm_y * cos(lean), -arm_y * sin(lean))
+	var arm := (UPPER_ARM + FOREARM) * T.grip_arm_length * T.grip_reach + SHOULDER_REACH
+	var stick: float = (_stick_ref(T).knob as Vector3).length()
+	# the knob anywhere in the hand's height band: farthest horizontal reach
+	# of blade from shoulder is the stick's flat run plus the arm's
+	var far := 0.0
+	for k in 9:
+		var h := lerpf(hip_y + T.grip_top_low, hip_y + T.grip_top_high, k / 8.0)
+		var dy := sh.y - h
+		if absf(dy) > arm or h > stick:
+			continue
+		far = maxf(far, sqrt(stick * stick - h * h) + sqrt(arm * arm - dy * dy))
+	# along `d` from the centre, out to that distance from the shoulder
+	var s := Vector2(sh.x, sh.z)
+	var b := d.dot(s)
+	var disc := far * far - s.length_squared() + b * b
+	return b + sqrt(disc) if disc > 0.0 else 0.0
+
+
+## Skating backwards, one leg at cycle point `u` (body space, +z behind):
+## the first half is the C-cut, out and forward on the inside edge with the
+## toe turned in; the second half glides the skate back in under the hips.
+## Both skates stay on the ice.
+func _back_foot(T: AnimTuning, sd: float, u: float, amp: float) -> Array:
+	var a := clampf(amp / maxf(T.stride_amp, 0.01), 0.3, 1.5)
+	var under := Vector3(sd * 0.08, 0, 0.04)
+	if u < 0.5:
+		var e := u / 0.5
+		var p := under + Vector3(sd * T.back_cut_width * sin(PI * e), 0, -T.back_cut_reach * e) * a
+		return [p, sd * T.back_toe_in * sin(PI * e) * a]
+	var e := smoothstep(0.0, 1.0, (u - 0.5) / 0.5)
+	return [(under + Vector3(0, 0, -T.back_cut_reach * a)).lerp(under, e), 0.0]
+
+
 ## Two-bone IK for one leg: knee bends forward and a little out.
 func _pose_leg(i: int) -> void:
 	var sd := -1.0 if i == 0 else 1.0
 	var root := Vector3(sd * LEG_X, 0, 0)
 	var target: Vector3 = hips.transform.affine_inverse() * (_feet[i] + Vector3(0, 0, 0))
-	var knee := _two_bone(root, target, THIGH, SHIN, Vector3(sd * 0.25, 0, -1))
-	var foot := root + (target - root).limit_length(THIGH + SHIN - 0.002) if root.distance_to(target) > THIGH + SHIN else target
+	var knee := _two_bone(root, target, THIGH, shin_len, Vector3(sd * 0.25, 0, -1))
+	var foot := root + (target - root).limit_length(THIGH + shin_len - 0.002) if root.distance_to(target) > THIGH + shin_len else target
 	thighs[i].transform = Transform3D(_basis_along(root - knee, 0.0), root)
 	shins[i].transform = Transform3D(_basis_along(knee - foot, _yaws[i] - hips.rotation.y), knee)
 
@@ -386,7 +456,7 @@ func _pose_leg(i: int) -> void:
 func update_goalie(g: Goalie, dt: float) -> void:
 	var smooth := 1.0 - exp(-14.0 * dt)
 	_bf = lerpf(_bf, 1.0 if g.butterfly_timer > 0.0 else 0.0, smooth)
-	hips.position.y = lerpf(HIP_Y - 0.1, 0.34, _bf)
+	hips.position.y = lerpf(GOALIE_HIP_Y - 0.1, 0.34, _bf)
 	leg_l.rotation = Vector3(lerpf(0.0, -0.25, _bf), 0, -lerpf(0.14, 1.35, _bf))
 	leg_r.rotation = Vector3(lerpf(0.0, -0.25, _bf), 0, lerpf(0.14, 1.35, _bf))
 	torso.rotation.x = -0.18

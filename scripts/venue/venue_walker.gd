@@ -28,6 +28,9 @@ const CROUCH_SPEED := 1.0
 ## momentum and can only steer a little (AIR_ACCEL, m/s^2).
 const SPRINT_RAMP := 0.4
 const AIR_ACCEL := 3.0
+## How stiffly the eyes follow the body over steps (per second): the body
+## pops up each step, the eyes glide after it on a critically damped spring.
+const EYE_FOLLOW := 16.0
 
 var wish := Vector3.ZERO
 var running := false
@@ -38,6 +41,10 @@ var head: Node3D
 var _shape: CollisionShape3D
 var _jump_queued := false
 var _sprint := 0.0  # 0 walking pace .. 1 full sprint
+var _eye := EYE        # standing or crouched eye height
+var _eye_y := 0.0      # the eyes' smoothed height (world) over steps
+var _eye_v := 0.0
+var _air_time := 0.0
 
 
 func _init() -> void:
@@ -92,7 +99,19 @@ func _physics_process(dt: float) -> void:
 	_jump_queued = false
 	_step_up(Vector3(velocity.x, 0, velocity.z) * dt)
 	move_and_slide()
-	head.position.y = move_toward(head.position.y, CROUCH_EYE if crouched else EYE, 4.0 * dt)
+	_air_time = 0.0 if is_on_floor() else _air_time + dt
+	# on stairs the body pops up a step at a time (and settles back onto the
+	# tread); the eyes glide after it instead. A jump or a real fall the eyes
+	# follow exactly.
+	var y := global_position.y
+	if velocity.y > 0.5 or _air_time > 0.35 or absf(_eye_y - y) > 3.0 * STEP:
+		_eye_y = y
+		_eye_v = velocity.y
+	else:
+		_eye_v += (EYE_FOLLOW * EYE_FOLLOW * (y - _eye_y) - 2.0 * EYE_FOLLOW * _eye_v) * dt
+		_eye_y += _eye_v * dt
+	_eye = move_toward(_eye, CROUCH_EYE if crouched else EYE, 4.0 * dt)
+	head.position.y = _eye + _eye_y - y
 
 
 ## Crouches at once; stands back up only when the full height fits.

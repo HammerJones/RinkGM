@@ -29,6 +29,10 @@ func _ready() -> void:
 		_t += dt
 		if _plan.is_valid():
 			_plan.call(f, _t)
+	var reach := "body reach (m) by angle:"
+	for d in range(-180, 181, 30):
+		reach += "  %d %.2f" % [d, Skater.reach_limit(deg_to_rad(d))]
+	print(reach)
 	await _run()
 	print("controls test: ", "FAILED %d" % _fails if _fails else "all passed")
 	get_tree().quit(1 if _fails else 0)
@@ -206,7 +210,7 @@ func _moves() -> void:
 		f.tilt = 1.0
 		var a: float = lerpf(-60.0, 120.0, clampf((t - 0.4) / 0.4, 0.0, 1.0))
 		f.stick = side.call(a, minf(t / 0.3, 0.85)) if t < 1.3 else Vector2(1, 0))
-	print("lacrosse: puck rode up to %.2f m" % peak[0])
+	print("lacrosse: puck rode up to %.2f m, %s" % [peak[0], seen])
 	_check(seen[0] == &"lacrosse" and seen[1] and peak[0] > 0.6, "lacrosse lifts the puck onto the blade and throws it")
 	h.skills.values["stick_handling"] = 55.0
 
@@ -330,7 +334,7 @@ func _traced_shots() -> void:
 		await _carry(Vector2(-14, 0))
 		_plan = func(f, t):
 			f.move = Vector2(0.4, 0)
-			f.stick = Vector2(0.7, -amp * sin(t * TAU * hz))
+			f.stick = Vector2(0.5, -amp * sin(t * TAU * hz))
 		var peak := 0.0
 		var lost := false
 		var lo := INF
@@ -345,10 +349,10 @@ func _traced_shots() -> void:
 				lo = minf(lo, side)
 				hi = maxf(hi, side)
 		return [peak, lost, hi - lo]
-	var easy: Array = await sweep.call(0.7, 0.8)
+	var easy: Array = await sweep.call(0.7, 0.6)
 	_check(easy[0] < 1.0 and not easy[1], "slow wide handles stay in the green and keep the puck (%.2f)" % easy[0])
 	_check(easy[2] > 1.0, "the handles carry the puck side to side across the body (%.2f m)" % easy[2])
-	var frantic: Array = await sweep.call(4.0, 0.8)
+	var frantic: Array = await sweep.call(4.0, 0.6)
 	_check(frantic[1], "frantic handles run past the limit and lose the puck (%.2f)" % frantic[0])
 	_plan = Callable()
 	ctl.pad_scheme = true
