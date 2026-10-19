@@ -21,6 +21,12 @@ var vel := Vector3.ZERO
 var accel := 6.0
 ## First-person clip: the eye camera shows the view and FirstPersonArms reach.
 var first_person := false
+## Crouched, as VenueWalker.crouched.
+var crouched := false
+## Height off the floor and vertical speed in a jump (VenueWalker's numbers).
+var y := 0.0
+var vy := 0.0
+const JUMP_SPEED := 2.97
 
 var bench: MeshInstance3D
 var panel: MeshInstance3D
@@ -83,6 +89,11 @@ func restart() -> void:
 	go = Vector3.ZERO
 	vel = Vector3.ZERO
 	first_person = false
+	crouched = false
+	accel = 6.0
+	y = 0.0
+	vy = 0.0
+	rig.position = Vector3.ZERO
 	rig.pose = PersonRig.Pose.STAND
 	rig.seat = PersonRig.NONE
 	rig.facing = Vector3.FORWARD
@@ -99,11 +110,27 @@ func clear_intent() -> void:
 	arms.reach = [FirstPersonArms.NONE, FirstPersonArms.NONE]
 
 
+## Takes off, if on the floor.
+func jump() -> void:
+	if y <= 0.0:
+		vy = JUMP_SPEED
+
+
 ## Applies this frame's intent and poses the rig.
 func step(dt: float) -> void:
 	vel = vel.move_toward(go, accel * dt)
 	position = Vector3.ZERO
-	rig.update_person(vel, dt)
+	# a jump is the only thing that leaves the floor on the treadmill
+	if vy != 0.0 or y > 0.0:
+		vy -= VenueWalker.GRAVITY * dt
+		y += vy * dt
+		if y <= 0.0:
+			y = 0.0
+			vy = 0.0
+	rig.position.y = y
+	rig.airborne = y > 0.0
+	rig.crouched = crouched
+	rig.update_person(Vector3(vel.x, vy, vel.z), dt)
 	# the eye sits in the head and looks where the head looks
 	var h := rig.head.global_transform
 	eye.global_transform = Transform3D(h.basis.orthonormalized(), h * Vector3(0.0, 0.13, -0.08))

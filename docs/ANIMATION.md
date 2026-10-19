@@ -63,6 +63,13 @@ it every frame.
   length always matches speed and feet never skate on the floor. The hips
   drop as far as the legs need to reach both feet. A run has a flight phase
   (`walk_duty_run` below 0.5). The body turns to face the way it walks.
+- **Sprint, jump and crouch.** Past `walk_run_full` the run turns into a
+  sprint (`walk_*_sprint`: quick short contacts, high knees, more lean).
+  Set `airborne` while the walker is off the floor (`not is_on_floor()`):
+  the knee drives up on the way up, the feet reach down on the way down,
+  and the frame it lands the hips dip and spring back (`jump_*`). Set
+  `crouched` from `VenueWalker.crouched` to stand and walk low
+  (`crouch_walk_*`).
 - **Poses.** Set `pose` to `SIT` (with `seat` at the seat's front edge;
   the person sits facing away from it), `CROUCH` (a squat at a low panel)
   or `KNEEL` (one knee down, for work low on Doris or a compressor).
@@ -78,8 +85,8 @@ it every frame.
   first-person camera so the body's own head and arms don't block the view.
 
 The numbers live in AnimTuning's `walk`, `sit`, `crouch` and `reach` groups.
-The studio's "On foot" clips (walk, run, walk and turn, idle, sit, crouch,
-kneel, reach and grab, first-person arms) run on `AnimPerson`, which has a
+The studio's "On foot" clips (walk, run, sprint, jump, crouch walk, walk
+and turn, idle, sit, crouch, kneel, reach and grab, first-person arms) run on `AnimPerson`, which has a
 bench, a machine panel and a valve wheel to work at. `--test=anim` checks
 that planted feet don't slide, that a runner leaves the floor, that
 sitting lands on the seat, that a knee touches down, and that hands land on

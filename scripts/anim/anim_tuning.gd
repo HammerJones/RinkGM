@@ -273,6 +273,16 @@ func tunables() -> Array:
 @export_range(1.0, 20.0, 0.5) var walk_turn := 8.0
 ## Standing still: slow weight shift side to side.
 @export_range(0.0, 0.06, 0.002) var walk_idle_sway := 0.015
+## Speeds (m/s) where a walk starts turning into a run, is a full run, and
+## is a flat-out sprint (VenueWalker: walk 2.2, sprint 6.5).
+@export_range(1.5, 4.0, 0.05) var walk_run_from := 2.5
+@export_range(2.5, 5.0, 0.05) var walk_run_full := 3.6
+@export_range(4.0, 9.0, 0.1) var walk_sprint_speed := 6.5
+## A sprint: quick steps, short contacts, high knees, more lean.
+@export_range(2.5, 5.5, 0.05) var walk_cadence_sprint := 4.2
+@export_range(0.15, 0.4, 0.01) var walk_duty_sprint := 0.24
+@export_range(0.0, 0.5, 0.005) var walk_lift_sprint := 0.3
+@export_range(0.0, 0.6, 0.01) var walk_sprint_lean := 0.2
 
 # -------------------------------------------------------------------- sit
 ## Upper-body lean back when sitting (radians).
@@ -289,6 +299,19 @@ func tunables() -> Array:
 @export_range(0.3, 0.8, 0.01) var crouch_kneel_hips := 0.5
 ## Forward lean of the upper body crouched / kneeling (radians).
 @export_range(0.0, 1.2, 0.01) var crouch_lean := 0.45
+## Crouched walking and standing (VenueWalker.crouched): hip height and
+## forward lean.
+@export_range(0.3, 0.8, 0.01) var crouch_walk_hips := 0.52
+@export_range(0.0, 1.0, 0.01) var crouch_walk_lean := 0.35
+
+# ------------------------------------------------------------------- jump
+## How high the feet tuck up under the body in the air.
+@export_range(0.0, 0.5, 0.01) var jump_tuck := 0.25
+## How far the arms swing up in a jump (radians).
+@export_range(0.0, 2.0, 0.01) var jump_arms := 0.8
+## How far the hips dip on landing, and how long the landing takes.
+@export_range(0.0, 0.4, 0.01) var jump_land_dip := 0.16
+@export_range(0.1, 0.8, 0.01) var jump_land_time := 0.32
 
 # ------------------------------------------------------------------ reach
 ## How far the upper body bends and turns to bring a hand to a job part

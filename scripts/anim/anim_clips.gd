@@ -61,9 +61,15 @@ const LIST := [
 		"note": "Drops to one knee and slides, pumping the fist."},
 	# on foot (PersonRig): "person" clips run on AnimPerson instead of the skater
 	{"id": &"walk", "title": "On foot: walk", "groups": ["walk"], "len": 4.0, "person": true,
-		"note": "A stroll at 1.4 m/s. Planted feet never slide on the floor."},
+		"note": "The venue walk, 2.2 m/s. Planted feet never slide on the floor."},
 	{"id": &"run", "title": "On foot: run", "groups": ["walk"], "len": 4.0, "person": true,
 		"note": "Running at 4 m/s, both feet off the floor between steps."},
+	{"id": &"sprint", "title": "On foot: sprint", "groups": ["walk"], "len": 4.0, "person": true,
+		"note": "Flat out at 6.5 m/s: quick short contacts, high knees, arms pumping."},
+	{"id": &"jump", "title": "On foot: jump", "groups": ["jump"], "len": 4.0, "person": true,
+		"note": "Walking jumps (0.45 m up): knee drives up, feet reach down, the landing dips."},
+	{"id": &"crouch_walk", "title": "On foot: crouch walk", "groups": ["crouch"], "len": 5.0, "person": true,
+		"note": "Crouched still, then walking low at 1 m/s, then still again."},
 	{"id": &"walk_turn", "title": "On foot: walk and turn", "groups": ["walk"], "len": 6.0, "person": true,
 		"note": "Walks a curve, the body turning to face the way it goes."},
 	{"id": &"idle", "title": "On foot: idle", "groups": ["walk"], "len": 5.0, "person": true,
@@ -357,12 +363,22 @@ static func run_person(id: StringName, q: AnimPerson, t: float, dt: float, mem: 
 	var r := q.rig
 	match id:
 		&"walk":
-			q.go = Vector3.FORWARD * VenueWalker.WALK
+			q.go = Vector3.FORWARD * 2.2
 		&"run":
-			q.go = Vector3.FORWARD * VenueWalker.RUN
+			q.go = Vector3.FORWARD * 4.0
+		&"sprint":
+			q.go = Vector3.FORWARD * 6.5
+			q.accel = 10.0
+		&"jump":
+			q.go = Vector3.FORWARD * 2.2
+			if _once(mem, "j1", t > 1.0) or _once(mem, "j2", t > 2.6):
+				q.jump()
+		&"crouch_walk":
+			q.crouched = t > 0.3 and t < 4.7
+			q.go = Vector3.FORWARD * 1.0 if t > 1.3 and t < 3.8 else Vector3.ZERO
 		&"walk_turn":
 			var a := 0.0 if t < 1.0 else (t - 1.0) * 0.7
-			q.go = Vector3.FORWARD.rotated(Vector3.UP, a) * VenueWalker.WALK
+			q.go = Vector3.FORWARD.rotated(Vector3.UP, a) * 2.2
 		&"idle":
 			q.go = Vector3.ZERO
 			r.look = r.to_global(Vector3(sin(t * 0.9) * 2.0, 1.4 + sin(t * 0.5) * 0.3, -2.0)) if t > 0.8 else PersonRig.NONE

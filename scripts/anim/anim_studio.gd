@@ -511,6 +511,7 @@ func _finish_reel() -> void:
 			&"hockey_stop": "brake", &"cross_left": "cross", &"cross_right": "cross",
 			&"stickhandle": "handled",
 			&"walk": "planted", &"run": "flight", &"walk_turn": "planted", &"sit": "sat",
+			&"sprint": "flight", &"jump": "air", &"crouch_walk": "low",
 			&"crouch_work": "reached", &"kneel_work": "knelt", &"reach_grab": "reached",
 			&"first_person": "reached",
 		}
@@ -596,17 +597,31 @@ func _test_person(id: StringName, dt: float) -> void:
 	seen["feet"] = feet
 	var low := minf(feet[0].y, feet[1].y)
 	# (running, both feet leave the floor between steps)
-	var top := 0.12 if person.vel.length() < VenueWalker.WALK * 1.5 else 0.35
-	if low < -0.03 or (r.pose == PersonRig.Pose.STAND and low > top):
+	var top := 0.12 if person.vel.length() < 2.5 else 0.4
+	var jumping := person.y > 0.0 or r._land > 0.0
+	if jumping:
+		seen["air"] = true
+		if person.y > 0.3 and low < 0.1:
+			_fail("%s: the feet hang down to the floor at the top of a jump" % id)
+	elif low < -0.03 or (r.pose == PersonRig.Pose.STAND and low > top):
 		_fail("%s: the feet are at height %.2f" % [id, low])
 	# turning, the body pivots over a planted foot, so allow for that
 	var face := person.heading()
 	var turn := absf(face.signed_angle_to(seen.get("face", face), Vector3.UP)) / dt
 	seen["face"] = face
-	if _t > 1.5 and person.vel.length() > 0.5:
+	if r.crouched and r._low > 0.95:
+		if r.hips.position.y > AnimTuning.current().crouch_walk_hips + 0.02:
+			_fail("%s: crouched, but the hips are up at %.2f" % [id, r.hips.position.y])
+		elif person.vel.length() > 0.5:
+			seen["low"] = true
+	# (steady walking only: starting and stopping blend the feet in and out)
+	var steady: float = seen.get("steady", 0.0) + dt if person.vel.distance_to(person.go) < 0.05 else 0.0
+	seen["steady"] = steady
+	if r._gait > 0.95 and person.vel.length() > 0.5 and steady > 0.8 and not jumping:
 		var down := 0
 		for i in 2:
-			if feet[i].y < 0.01 and prev[i].y < 0.01:
+			var planted: Array = seen.get("planted_now", [false, false])
+			if r._planted[i] and planted[i]:
 				down += 1
 				# on the treadmill the floor runs backwards under a planted foot
 				var slip: Vector3 = (feet[i] - prev[i]) / dt + person.vel
@@ -617,6 +632,7 @@ func _test_person(id: StringName, dt: float) -> void:
 					seen["planted"] = true
 		if down == 0 and low > 0.02:
 			seen["flight"] = true
+	seen["planted_now"] = r._planted.duplicate()
 	if r.pose == PersonRig.Pose.SIT and r.seat != PersonRig.NONE and r.hips.global_position.distance_to(r.seat) < 0.2:
 		seen["sat"] = true
 	if r.pose == PersonRig.Pose.KNEEL:
