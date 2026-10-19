@@ -85,7 +85,6 @@ func _ready() -> void:
 	_quad.mesh = _quad_mesh(size)
 	_quad.material_override = _mat
 	_quad.layers = MIRROR_LAYER
-	_quad.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_quad)
 
 
