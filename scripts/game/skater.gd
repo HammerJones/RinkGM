@@ -574,7 +574,10 @@ func _update_blade(dt: float, blend: float) -> void:
 	elif able and ctrl.stick.length() > 0.2:
 		var l := _stick_local(ctrl.stick)
 		var mag := minf(l.length(), 1.0)
-		target = Vector2(cos(atan2(l.y, l.x)), sin(atan2(l.y, l.x))) * lerpf(REACH_MIN, REACH_MAX, mag)
+		# the stick's travel is the two-handed reach the body has that way;
+		# reaching further (a poke, a loose puck) takes a hand off
+		var a := atan2(l.y, l.x)
+		target = Vector2(cos(a), sin(a)) * lerpf(REACH_MIN, two_hand_reach(a), mag)
 	if able:
 		var reach_for: Variant = _loose_puck_reach(target, blend)
 		if reach_for != null:
@@ -610,14 +613,17 @@ func _update_blade(dt: float, blend: float) -> void:
 		# the puck: weak hands stickhandle slower rather than throwing it away.
 		# It still comes loose when you turn harder than that, or when the
 		# grip drops as the bottom hand lets go mid-swing.
-		var oh_to := smoothstep(TWO_HAND_HALF - 0.08, TWO_HAND_HALF + 0.17, absf(ang))
+		var oh_to := _one_hand_at(ang, reach)
+		# a cradled puck (lacrosse) needs the gentlest hands
+		if MovePhysics.glued(move_id):
+			oh_to = 1.0
 		acc = minf(acc, profile.puck_grip * lerpf(1.0, 0.7, maxf(oh, oh_to)) * 0.9)
 	# brake in time to stop on the target instead of swinging past it
 	want.x = signf(want.x) * minf(absf(want.x), sqrt(2.0 * acc * absf(tan_err)))
 	want.y = signf(want.y) * minf(absf(want.y), sqrt(2.0 * acc * absf(reach - blade_reach)))
 	_blade_pvel = _blade_pvel.move_toward(want, acc * dt)
 	blade_ang = clampf(blade_ang + _blade_pvel.x / maxf(blade_reach, 0.3) * dt, -ARC_HALF, ARC_HALF)
-	blade_reach = clampf(blade_reach + _blade_pvel.y * dt, REACH_MIN, REACH_ONE_HAND)
+	blade_reach = clampf(blade_reach + _blade_pvel.y * dt, REACH_MIN, reach_limit(blade_ang))
 	var prev_local := blade_local
 	blade_local = Vector2(cos(blade_ang), sin(blade_ang)) * blade_reach
 	blade_lvel = (blade_local - prev_local) / dt
@@ -1085,12 +1091,48 @@ func _try_stick_lift() -> void:
 func one_hand() -> float:
 	if winding:
 		return 0.0
-	return smoothstep(TWO_HAND_HALF - 0.08, TWO_HAND_HALF + 0.17, absf(blade_ang))
+	return _one_hand_at(blade_ang, blade_reach)
 
 
-## How far the blade can reach at this angle.
+## The body sets the reach (Sean, 19 Oct): SkaterRig.blade_reach works it
+## out from the shoulder, arm and stick in the ready stance. The last
+## TWO_HAND_LOSS of it is one-handed (and anything past REACH_MAX); the change
+## happens over a 10 cm band past the two-hand reach so the grip doesn't
+## flicker.
+const TWO_HAND_LOSS := 0.15
+const _REACH_STEP := deg_to_rad(10.0)
+static var _reach_table := PackedFloat32Array()
+
+
+static func _one_hand_at(ang: float, reach: float) -> float:
+	var two := two_hand_reach(ang)
+	return smoothstep(two, two + 0.1, reach)
+
+
+## How far the blade goes with both hands on the stick at this angle: as
+## far as REACH_MAX, but never past what the body reaches that way.
+static func two_hand_reach(ang: float) -> float:
+	return maxf(REACH_MIN + 0.05, minf(REACH_MAX, reach_limit(ang) - TWO_HAND_LOSS))
+
+
+## How far the blade can reach at this angle (radians from straight ahead,
+## + = right): the body's one-handed reach, from a table every 10 degrees.
 static func reach_limit(ang: float) -> float:
-	return lerpf(REACH_MAX, REACH_ONE_HAND, smoothstep(TWO_HAND_HALF - 0.08, TWO_HAND_HALF + 0.17, absf(ang)))
+	if _reach_table.is_empty():
+		refresh_reach()
+	var u := (wrapf(ang, -PI, PI) + PI) / _REACH_STEP
+	var i := mini(int(u), _reach_table.size() - 2)
+	return lerpf(_reach_table[i], _reach_table[i + 1], u - i)
+
+
+## Rebuilds the reach table (after the stance or stick changes in AnimTuning).
+static func refresh_reach() -> void:
+	_reach_table.clear()
+	var n := int(round(TAU / _REACH_STEP))
+	for i in n + 1:
+		var a := -PI + i * _REACH_STEP
+		# body space: -Z forward, +X right
+		_reach_table.append(maxf(REACH_MIN + 0.1, SkaterRig.blade_reach(Vector3(sin(a), 0, -cos(a)))))
 
 
 func _set_blade(local: Vector2) -> void:
