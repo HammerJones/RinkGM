@@ -1,23 +1,43 @@
 class_name VenueWalker
 extends CharacterBody3D
-## A person on foot in the venue: 1.8 m capsule, walks at 1.4 m/s (runs at
-## 4), climbs steps up to STEP high, and collides only with the venue's
-## physics layer. This is the seed of the explorable rink; for now it drives
-## the walk-around playtest and the walkability test.
+## A person on foot in the venue: 1.8 m capsule, walks at 2.2 m/s and
+## sprints at 6.5 (building up over 0.4 s), hops about 0.45 m,
+## crouches to 1.2 m (eyes at 1.1 m) to get under pipes and machines,
+## climbs steps up to STEP high, and collides only with the venue's physics
+## layer. It drives the walk (venue_walk.gd) and the walkability tests.
 ##
-## Drive it with `wish` (a world-space direction, set by input or a test).
+## Drive it with `wish` (a world-space direction), `running`, `crouch` (held)
+## and `jump()` (a press), set by input or a test.
 
 const HEIGHT := 1.8
 const RADIUS := 0.3
 const EYE := 1.65
 const STEP := 0.32
-const WALK := 1.4
-const RUN := 4.0
+const WALK := 2.2
+const RUN := 6.5
 const GRAVITY := 9.8
+## Jump apex above the floor, and the take-off speed that reaches it.
+const JUMP_HEIGHT := 0.45
+const JUMP_SPEED := 2.97  # sqrt(2 * GRAVITY * JUMP_HEIGHT)
+## Crouched: capsule height, eye height and speed.
+const CROUCH_HEIGHT := 1.2
+const CROUCH_EYE := 1.1
+const CROUCH_SPEED := 1.0
+## Seconds for a sprint to build from walking pace to full speed. On the
+## ground the walker turns and stops at once; in the air it keeps its
+## momentum and can only steer a little (AIR_ACCEL, m/s^2).
+const SPRINT_RAMP := 0.4
+const AIR_ACCEL := 3.0
 
 var wish := Vector3.ZERO
 var running := false
+## Held to crouch; the walker stays down while there is no room to stand.
+var crouch := false
+var crouched := false
 var head: Node3D
+var _shape: CollisionShape3D
+var _jump_queued := false
+var _sprint := 0.0  # 0 walking pace .. 1 full sprint
 
 
 func _init() -> void:
@@ -25,31 +45,66 @@ func _init() -> void:
 	collision_mask = 1 << (VenueKit.VENUE_LAYER - 1)
 	floor_snap_length = STEP + 0.05
 	floor_max_angle = deg_to_rad(50.0)
-	var cs := CollisionShape3D.new()
+	_shape = CollisionShape3D.new()
 	var cap := CapsuleShape3D.new()
 	cap.radius = RADIUS
 	cap.height = HEIGHT
-	cs.shape = cap
-	cs.position.y = HEIGHT * 0.5
-	add_child(cs)
+	_shape.shape = cap
+	_shape.position.y = HEIGHT * 0.5
+	add_child(_shape)
 	head = Node3D.new()
 	head.position.y = EYE
 	add_child(head)
 
 
+## A jump press: takes off on the next physics tick if standing on a floor.
+func jump() -> void:
+	_jump_queued = true
+
+
+func height() -> float:
+	return CROUCH_HEIGHT if crouched else HEIGHT
+
+
 func _physics_process(dt: float) -> void:
+	_update_crouch()
 	var flat := Vector3(wish.x, 0, wish.z)
 	if flat.length() > 1.0:
 		flat = flat.normalized()
-	var speed := RUN if running else WALK
-	velocity.x = flat.x * speed
-	velocity.z = flat.z * speed
+	var sprinting := running and not crouched and flat.length() > 0.1
+	if is_on_floor() or not sprinting:
+		_sprint = move_toward(_sprint, 1.0 if sprinting else 0.0, dt / SPRINT_RAMP)
+	var speed := CROUCH_SPEED if crouched else lerpf(WALK, RUN, _sprint)
+	var target := flat * speed
+	if is_on_floor():
+		velocity.x = target.x
+		velocity.z = target.z
+	else:
+		var h := Vector2(velocity.x, velocity.z).move_toward(Vector2(target.x, target.z), AIR_ACCEL * dt)
+		velocity.x = h.x
+		velocity.z = h.y
 	if is_on_floor():
 		velocity.y = 0.0
+		if _jump_queued and not crouched:
+			velocity.y = JUMP_SPEED
 	else:
 		velocity.y -= GRAVITY * dt
+	_jump_queued = false
 	_step_up(Vector3(velocity.x, 0, velocity.z) * dt)
 	move_and_slide()
+	head.position.y = move_toward(head.position.y, CROUCH_EYE if crouched else EYE, 4.0 * dt)
+
+
+## Crouches at once; stands back up only when the full height fits.
+func _update_crouch() -> void:
+	if crouch == crouched:
+		return
+	if not crouch and test_move(global_transform, Vector3(0, HEIGHT - CROUCH_HEIGHT, 0)):
+		return  # a ceiling, pipe or machine overhead: stay down
+	crouched = crouch
+	var cap := _shape.shape as CapsuleShape3D
+	cap.height = height()
+	_shape.position.y = height() * 0.5
 
 
 ## Lifts the walker onto a step when the way ahead is blocked low down but

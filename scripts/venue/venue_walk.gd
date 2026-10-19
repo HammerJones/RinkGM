@@ -13,7 +13,9 @@ extends Node3D
 ##   (or `-- --venue-walk` on the normal game)
 ##
 ## WASD / left stick walk, mouse / right stick look, Shift / L3 run,
-## E / A read, use or work on what you're looking at (or a door),
+## Space jump, Ctrl or C (held) crouch,
+## E / A read, use or work on what you're looking at (or a door); A jumps
+## when there's nothing in reach, B (held) crouches when no panel is open,
 ## O the office (in an owner career),
 ## Esc / B close a panel, 1 2 3 / D-pad set this room's age,
 ## F / Y fly, Tab frees the mouse.
@@ -143,6 +145,9 @@ func _unhandled_input(e: InputEvent) -> void:
 				if story and story.link and not _busy():
 					_leave_to("office")
 			KEY_E: _use()
+			KEY_SPACE:
+				if not flying and not _busy():
+					walker.jump()
 			KEY_Q: _close_panel()
 			KEY_F: _toggle_fly()
 			KEY_1: _age_here(VenueRoom.Age.WORN)
@@ -150,7 +155,11 @@ func _unhandled_input(e: InputEvent) -> void:
 			KEY_3: _age_here(VenueRoom.Age.RENOVATED)
 	elif e is InputEventJoypadButton and e.pressed:
 		match e.button_index:
-			JOY_BUTTON_A: _use()
+			JOY_BUTTON_A:
+				if _busy() or _looked_at() or walker.nearest_door(venue):
+					_use()
+				elif not flying:
+					walker.jump()
 			JOY_BUTTON_B: _close_panel()
 			JOY_BUTTON_Y: _toggle_fly()
 			JOY_BUTTON_DPAD_LEFT: _age_here(VenueRoom.Age.WORN)
@@ -173,6 +182,7 @@ func _process(dt: float) -> void:
 	_toast.visible = _toast_t > 0.0
 	if _busy():
 		walker.wish = Vector3.ZERO
+		walker.crouch = false
 		return
 	var look := Vector2(Input.get_joy_axis(0, JOY_AXIS_RIGHT_X), Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y))
 	if look.length() > 0.15:
@@ -194,8 +204,11 @@ func _process(dt: float) -> void:
 		v.y += float(Input.is_physical_key_pressed(KEY_SPACE)) - float(Input.is_physical_key_pressed(KEY_CTRL))
 		walker.global_position += v * (12.0 if walker.running else 5.0) * dt
 		walker.wish = Vector3.ZERO
+		walker.crouch = false
 	else:
 		walker.wish = dir
+		walker.crouch = Input.is_physical_key_pressed(KEY_CTRL) or Input.is_physical_key_pressed(KEY_C) \
+			or Input.is_joy_button_pressed(0, JOY_BUTTON_B)
 	_label.text = "\n".join(_hud_lines())
 
 
