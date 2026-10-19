@@ -1,18 +1,33 @@
 extends VenueRoom
-## The scoreboard, live with score, period and clock (the HUD layout at
-## arena scale: teams and scores in TEXT, period and clock in ACTION). A worn or repaired rink
-## has the old board bolted to the +X end wall (dead pixels on a worn one);
-## renovating it hangs a four-sided board over centre ice. The housings are
-## the asset kit's "scoreboard"; the centre-hung one is overhead (hidden in
-## iso view).
+## The scoreboard, live with score, period and clock: a classic light panel
+## (BulbBoard), seven-segment digits made of bulbs with painted HOME / GUEST
+## / PERIOD lettering, laid out like an old arena wall board: HOME score |
+## MM:SS | GUEST score, period under the clock. A worn or repaired rink has
+## the old board bolted to the +X end wall (a few dead bulbs and tired wiring
+## on a worn one) with the rink name painted on its header; renovating it
+## hangs a four-sided board over centre ice. The housings are the asset
+## kit's "scoreboard"; the centre-hung one is overhead (hidden in iso view).
+## `mode` "clock" shows the time of day instead (set via show_time()).
 
 const WALL_X := Venue.HALF_X - Venue.WALL_T
 ## The centre-hung board's ceiling mount; the kit board's bottom is 3.8 m
 ## below it, above the broadcast camera's view.
 const HUNG_MOUNT_Y := Venue.ROOF_Y - 1.4
-const _START := {"home": 0, "away": 0, "period": "1ST", "clock": "20:00"}
+## The wall housing's sponsor header (kit voxels): centre height, size, and
+## its front (the painted strip is thick enough to cover its lamp knobs).
+const _HEADER_Y := 40.5 * Models.V
+const _HEADER_SIZE := Vector2(96.0, 7.0) * Models.V
+const _HEADER_Z := -4.0 * Models.V
 
-var _faces: Array[VenueSign] = []
+## "game" (score, period, clock) or "clock" (time of day, scores dark).
+var mode := "game":
+	set(v):
+		mode = v
+		if _board:
+			_board.mode = v
+
+var _board: BulbBoard
+var _time := Vector2i(-1, 0)
 
 
 func _ready() -> void:
@@ -21,73 +36,49 @@ func _ready() -> void:
 
 
 func build(k: VenueKit) -> void:
-	_faces.clear()
 	overhead = k.age == Age.RENOVATED
 	visible = true
+	_board = BulbBoard.make(k.age, hash(rink_name()))
+	_board.name = "Board"
+	_board.mode = mode
+	if _time.x >= 0:
+		_board.show_time(_time.x, _time.y)
 	if overhead:
 		_hung(k)
 	else:
 		_wall(k)
+	k.add(_board)
 
 
 func _wall(k: VenueKit) -> void:
-	var y0 := 6.6
-	var xf := Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(WALL_X, y0, 0))
+	var xf := Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(WALL_X, 6.6, 0))
 	k.prop("scoreboard", xf.origin, PI * 0.5, false)
-	var s := _face_sign(k, xf, Props.scoreboard_faces(k.age)[0], _wall_lines(_START, "HOME", "AWAY"), 16, 3, 3)
-	s.name = "WallBoard"
-	s.dead = k.by_age(0.03, 0.006, 0.0)
-	var sponsor := VenueSign.make([["// " + rink_name(), VenueSign.WHITE]], rink_name().length() + 3, 1, 0.03)
-	sponsor.name = "WallBoardName"
-	sponsor.background = home_primary().darkened(0.55)
-	k.sign(sponsor, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(WALL_X - 0.36, y0 + 3.35, 0)))
+	_board.add_face(k, _face_xf(xf, Props.scoreboard_faces(k.age)[0]), Props.scoreboard_faces(k.age)[0].size, false)
+	var header := xf * Transform3D(Basis(Vector3.UP, PI), Vector3(0, _HEADER_Y, _HEADER_Z))
+	BulbBoard.paint_strip(k, header, _HEADER_SIZE, rink_name(), home_primary().darkened(0.35), Color("efe6cf"), 0.085)
 
 
 func _hung(k: VenueKit) -> void:
 	# the kit's four-sided board hangs from a ceiling mount like the lights
 	var xf := Transform3D(Basis.IDENTITY, Vector3(0, HUNG_MOUNT_Y, 0))
 	k.prop("scoreboard", xf.origin, 0.0, false)
-	var f := 0
 	for face in Props.scoreboard_faces(k.age):
-		var s := _face_sign(k, xf, face, _hung_lines(_START, "HOME", "AWAY"), 11, 3, 2)
-		s.name = "Face%d" % f
-		f += 1
+		_board.add_face(k, _face_xf(xf, face), face.size, true, rink_name(), Color("121214"), Color("f4f1ea"))
 
 
-## A RINK-OS sign on one of the kit scoreboard's display faces, scaled
-## down if the text would not fit the face.
-func _face_sign(k: VenueKit, xf: Transform3D, face: Dictionary, lines: Array, cols: int, rows: int, px_scale: int) -> VenueSign:
-	var size: Vector2 = face.size
-	var px := 0.03
-	var probe := VenueSign.make(lines, cols, rows, px, px_scale)
-	var fit := minf(size.x / probe.size_m().x, size.y / probe.size_m().y)
-	probe.free()
-	var s := VenueSign.make(lines, cols, rows, px * fit * 0.97, px_scale)
+## A display face of the kit housing as a transform looking out of it.
+func _face_xf(xf: Transform3D, face: Dictionary) -> Transform3D:
 	var n: Vector3 = xf.basis * (face.normal as Vector3)
-	var basis := Basis(Vector3.UP, atan2(n.x, n.z))
-	k.sign(s, Transform3D(basis, xf * (face.center as Vector3) + n * 0.01))
-	_faces.append(s)
-	return s
+	return Transform3D(Basis(Vector3.UP, atan2(n.x, n.z)), xf * (face.center as Vector3))
 
 
-func show_score(st: Dictionary, home: String, away: String) -> void:
-	var lines := _hung_lines(st, home, away) if overhead else _wall_lines(st, home, away)
-	for f in _faces:
-		if is_instance_valid(f):
-			f.set_lines(lines)
+func show_score(st: Dictionary, _home: String, _away: String) -> void:
+	if is_instance_valid(_board):
+		_board.show_score(st)
 
 
-func _hung_lines(st: Dictionary, home: String, away: String) -> Array:
-	return [
-		["%-4s %2d" % [home, st.home], VenueSign.WHITE],
-		["%-4s %2d" % [away, st.away], VenueSign.WHITE],
-		["%s %s" % [st.period, st.clock], VenueSign.AMBER, true],
-	]
-
-
-func _wall_lines(st: Dictionary, home: String, away: String) -> Array:
-	return [
-		["%-4s %2d  %2d %4s" % [home, st.home, st.away, away], VenueSign.WHITE],
-		["----", VenueSign.DIM],
-		["      %s  %s" % [st.period, st.clock], VenueSign.AMBER, true],
-	]
+## The time of day (24-hour) for "clock" mode, kept across rebuilds.
+func show_time(hours: int, minutes: int) -> void:
+	_time = Vector2i(hours, minutes)
+	if is_instance_valid(_board):
+		_board.show_time(hours, minutes)
