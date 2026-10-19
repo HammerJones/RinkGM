@@ -91,6 +91,15 @@ func _m1(k: VenueKit) -> void:
 	add_spot(k, VenueSpot.Kind.JOB, "ice_depth", Vector3(36.9, 1.0, -4.5), "Depth plates: caliper and drill", {"job": "ice_depth", "target": "ice_depth", "scene": ms}, 1.2)
 	add_spot(k, VenueSpot.Kind.JOB, "ice_survey", Vector3(37.8, 1.0, -4.5), "Survey laser and rod", {"job": "ice_survey", "target": "ice_survey", "scene": ms}, 1.2)
 	add_spot(k, VenueSpot.Kind.JOB, "ice_lidar", Vector3(38.7, 1.0, -4.5), "Lidar tablet", {"job": "ice_survey", "target": "ice_lidar", "scene": ms}, 1.2)
+	# World: the hand tools: the big hose on its wall spool, the edger, the chipper (docs/world/ICE.md 5)
+	var hs := "res://scenes/world/jobs/ice_hand.tscn"
+	k.block(Vector3(35.85, 0.85, 4.4), Vector3(36.55, 1.55, 4.72), Color("b8312f"), 0.4, 0.03, false)
+	k.block(Vector3(35.95, 0.95, 4.36), Vector3(36.45, 1.45, 4.4), Color("c8a020"), 0.6, 0.02, false)
+	k.block(Vector3(42.2, 0.0, 3.6), Vector3(42.82, 0.5, 4.1), Color("c43c2a"), 0.4, 0.03, false)
+	k.block(Vector3(43.3, 0.05, 4.62), Vector3(43.36, 1.65, 4.68), Color("8a6a40"), 0.6, 0.0, false)
+	add_spot(k, VenueSpot.Kind.JOB, "ice_hose", Vector3(36.2, 1.2, 4.3), "Big hose on the spool", {"job": "hose_flood", "target": "ice_hose", "scene": hs}, 1.4)
+	add_spot(k, VenueSpot.Kind.JOB, "ice_edger", Vector3(42.5, 0.5, 3.5), "Edger", {"job": "edge_ice", "target": "ice_edger", "scene": hs}, 1.3)
+	add_spot(k, VenueSpot.Kind.JOB, "ice_chipper", Vector3(43.33, 1.0, 4.5), "Ice chipper", {"job": "chip_ice", "target": "ice_chipper", "scene": hs}, 1.2)
 	# the pit: a heap of old snow over the grate, and its heater switch
 	var b := VoxelMeshBuilder.new()
 	b.add_box(Transform3D(Basis.IDENTITY, Vector3(0, 0.5, 0)), Color("e9eef2"))

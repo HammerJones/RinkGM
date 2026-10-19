@@ -1136,6 +1136,70 @@ func chip_boards(quality: float) -> float:
 	return moved
 
 
+## The big hose at rink point `p`: `litres` of water at `temp_c` spread over
+## a puddle `rad` metres across, thickest under the nozzle. It runs off
+## downhill on the next settle() like any flood. Returns the litres laid.
+func hose_at(p: Vector2, litres: float, temp_c := FLOOD_TEMP_C, rad := 0.6) -> float:
+	if litres <= 0.0:
+		return 0.0
+	var cells := _disc(p, rad)
+	var tot := 0.0
+	for c: Array in cells:
+		tot += float(c[1])
+	if tot <= 0.0:
+		return 0.0
+	for c: Array in cells:
+		add_water(int(c[0]), litres * float(c[1]) / (tot * CELL_AREA), temp_c)
+	return litres
+
+
+## The walk-behind edger's disc at `p` (0.25 m across a side): one pass takes
+## `mm` off at `quality`, and the snow it spits lands a pace off along
+## `throw` (a unit vector). Returns litres of ice cut.
+func edge_at(p: Vector2, mm: float, quality: float, throw: Vector2) -> float:
+	var cut_l := 0.0
+	var spit := 0.0
+	for c: Array in _disc(p, 0.25):
+		var i := int(c[0])
+		var k := float(c[1]) * clampf(quality, 0.0, 1.0)
+		var cut := minf(mm * k, maxf(t[i] - 6.0, 0.0))  # never down to the paint
+		t[i] -= cut
+		g[i] = maxf(g[i] - cut, 0.0)
+		r[i] = maxf(r[i] - 0.05 * k, 0.0)
+		cut_l += cut * CELL_AREA
+		spit += cut * 1.5 * CELL_AREA
+	if spit > 0.0:
+		var q := p + throw * 0.9
+		var land := _disc(q, 0.35)
+		var wt := 0.0
+		for c: Array in land:
+			wt += float(c[1])
+		for c: Array in land:
+			s[int(c[0])] += spit * float(c[1]) / (wt * CELL_AREA)
+	_recalc_blocks_near(p, 1.4)
+	return cut_l
+
+
+## One swing of the chipper at `p`: breaks the slush ridge within `rad` of the
+## blade where it's against the boards and drags it out where the resurfacer
+## can pick it up. Returns litres moved.
+func chip_at(p: Vector2, rad: float, quality: float) -> float:
+	var moved := 0.0
+	for c: Array in _disc(p, rad):
+		var i := int(c[0])
+		if board_m[i] >= BLADE_REACH or s[i] <= 0.0:
+			continue
+		var take := s[i] * clampf(quality, 0.0, 1.0) * clampf(float(c[1]) * 1.6, 0.0, 1.0)
+		s[i] -= take
+		var cp := cell_pos(i % FW, i / FW)
+		var j := cell_at(cp - Rink.board_normal(cp) * 0.7)
+		s[j] += take
+		moved += take * CELL_AREA
+	touch_around(p, rad + 0.8)
+	_recalc_blocks_near(p, rad + 0.8)
+	return moved
+
+
 ## Snow in the ridge along the boards, litres.
 func board_ridge_litres() -> float:
 	var tot := 0.0

@@ -67,7 +67,7 @@ void fragment() {
 	float stri = c.g * stripes;
 	// snow lies in drifts
 	float sn = clamp(snow * (0.3 + 1.4 * vnoise(wpos * 4.0) * vnoise(wpos * 11.0 + 3.0) * 1.6), 0.0, 1.0);
-	sn = smoothstep(0.05, 0.9, sn);
+	sn = smoothstep(0.05, 0.9, sn) * (1.0 - wet);  // water soaks the snow into slush
 	// clean glossy ice shows the paint through a grey-blue skin; anything
 	// that scatters light (scratches, cut lines, frost, snow) reads white
 	float white = clamp(haze * 0.75 + scratches * 0.8 + stri * 0.55, 0.0, 1.0);
@@ -75,10 +75,12 @@ void fragment() {
 	col = mix(col, vec3(0.98), scratches * 0.35);
 	col = mix(col, col * vec3(0.97, 0.99, 1.0) + 0.03, clamp(c.a, 0.0, 1.0) * 0.5);
 	col = mix(col, vec3(0.97, 0.98, 1.0) + vec3(hash(floor(wpos * 60.0))) * 0.03, sn);
-	col *= mix(1.0, 0.72, wet * (1.0 - sn));
+	// standing water: darker, a little blue, a mirror on top
+	col = mix(col, col * vec3(0.5, 0.56, 0.64), wet);
 	ALBEDO = col;
 	if (debug_view == 1) { ALBEDO = s.rgb; }
 	if (debug_view == 2) { ALBEDO = c.rgb; }
+	if (debug_view == 3) { ALBEDO = vec3(wet, c.b, snow); }
 	float matte = 0.1 + haze * 0.5 + scratches * 0.3 + stri * 0.35 + sn * 0.6;
 	ROUGHNESS = clamp(mix(matte, 0.03, wet), 0.02, 1.0);
 	SPECULAR = mix(0.4, 0.75, wet);

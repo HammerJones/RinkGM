@@ -30,6 +30,7 @@ func _initialize() -> void:
 	_check_sim_jobs(normal)
 	_check_drive_scene()
 	_check_measure_scene()
+	_check_hand_tools()
 	print("test_ice: %d ms" % (Time.get_ticks_msec() - t0))
 	if failures:
 		printerr("test_ice: %d failure(s)" % failures)
@@ -388,6 +389,84 @@ func _check_measure_scene() -> void:
 	var r2 := sim.job("ice_survey", res)
 	_expect(bool(r2.ok) and (r2.readings as Dictionary).size() == 5, "measure: the survey goes in (%s)" % r2.get("text", ""))
 	sv.free()
+
+
+## The hand tools: the big hose lays hot water where it's pointed and the sim
+## bills the gas, the edger takes the strip down and spits its snow on the
+## ice, the chipper drags the ridge off the boards.
+func _hand(sim: RinkSim, target: String, job: String) -> IceHand:
+	var sc: IceHand = load("res://scenes/world/jobs/ice_hand.tscn").instantiate()
+	root.add_child(sc)
+	sc.begin({"sim": sim, "job": job, "target": target})
+	return sc
+
+
+func _check_hand_tools() -> void:
+	var sim := RinkSim.create_m1()
+	sim.ice.wear_sessions(6.0, 30.0)
+	sim.ice.flush()
+	# the hose
+	var hz := _hand(sim, "ice_hose", "hose_flood")
+	var heard := {}
+	hz.hose.connect(func(on: bool) -> void: heard["hose"] = on)
+	hz.hose_flow.connect(func(_r: float) -> void: heard["flow"] = true)
+	_expect(hz.mode == "hose", "hand: the hose scene opens on the hose")
+	hz.pos = Vector2(10.0, 3.0)
+	var i := IceSlab.cell_at(hz.pos + Vector2(cos(hz.heading), sin(hz.heading)) * (0.9 + 2.2 * hz.flow))
+	var t0 := hz.ice.t[i]
+	hz._use()
+	for k in 200:
+		hz.step_work(0.05, Vector2.ZERO)
+	var want := IceHand.HOSE_LPS * hz.flow * 10.0
+	_expect(heard.get("hose", false) and heard.has("flow") and absf(hz.litres - want) < 0.5, "hand: the hose runs %.1f L in 10 s (%.1f expected), hooks fire" % [hz.litres, want])
+	_expect(hz.ice.t[i] > t0 + 1.0 and hz.ice.liquid_at(i) > 0.0, "hand: the water stands where it's pointed (%.1f mm more)" % (hz.ice.t[i] - t0))
+	_expect(hz.hose_out(Vector2(-29.0, 0.0)) > IceHand.HOSE_M, "hand: 61 m of hose doesn't reach the far end")
+	_expect(is_equal_approx(sim.ice.t[i], t0), "hand: the sim's sheet is untouched till it's handed in")
+	hz.input.scripted = func(f: JobInput.Frame, _dt: float, _c: int) -> void: f.back_pressed = true
+	var got := {}
+	hz.finished.connect(func(r: Dictionary) -> void: got.merge(r))
+	hz.tick(DT)
+	_expect(hz.complete and not heard.get("hose", true), "hand: X shuts the nozzle and finishes")
+	var money := sim.money
+	var r := sim.job("hose_flood", hz.result)
+	_expect(bool(r.ok) and sim.money < money and sim.ice.t[i] > t0 + 1.0, "hand: the sim takes the flood and bills the hot water (%s)" % r.get("text", ""))
+	hz.free()
+	# the edger along the home end's side boards
+	var ed := _hand(sim, "ice_edger", "edge_ice")
+	var lip0 := ed.ice.edge_lip_mm()
+	var snow0 := 0.0
+	for j in IceSlab.FCELLS:
+		snow0 += ed.ice.s[j]
+	ed.pos = Vector2(20.0, -Rink.HALF_W + 0.9)
+	ed._cy = 0.0  # camera behind, looking up the ice toward -x
+	ed.depth_idx = 3
+	ed._use()
+	for k in 600:
+		ed.step_work(0.05, Vector2(0.0, 1.0))
+	var snow1 := 0.0
+	for j in IceSlab.FCELLS:
+		snow1 += ed.ice.s[j]
+	_expect(ed.cut_l > 1.0 and ed.pos.x < 5.0, "hand: the edger walks the boards cutting (%.1f L, at x %.1f)" % [ed.cut_l, ed.pos.x])
+	_expect(snow1 > snow0, "hand: the edger spits its snow on the ice")
+	ed.ice.resync()
+	_expect(ed.ice.edge_lip_mm() < lip0, "hand: the strip along the boards comes down (%.2f to %.2f mm)" % [lip0, ed.ice.edge_lip_mm()])
+	ed.free()
+	# the chipper
+	var ch := _hand(sim, "ice_chipper", "chip_ice")
+	var ridge0 := ch.ice.board_ridge_litres()
+	var hits := [0]
+	ch.chipper.connect(func(_m: float) -> void: hits[0] += 1)
+	ch.pos = Vector2(15.0, Rink.HALF_W - 0.8)
+	ch.heading = PI * 0.5
+	for k in 10:
+		ch.swing()
+		ch.step_work(IceHand.CHIP_COOLDOWN, Vector2.ZERO)
+		ch.pos.x -= 1.2
+	_expect(hits[0] == 10 and ch.moved_l > 20.0 and ch.ice.board_ridge_litres() < ridge0 - 20.0, "hand: ten swings drag %.0f L of the ridge out" % ch.moved_l)
+	var res := ch._result()
+	var r3 := sim.job("chip_ice", res)
+	_expect(bool(r3.ok) and sim.ice.board_ridge_litres() < ridge0 - 20.0, "hand: the sim takes the chipped boards (%s)" % r3.get("text", ""))
+	ch.free()
 
 
 func _check_sim_jobs(normal: Dictionary) -> void:

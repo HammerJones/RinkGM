@@ -3,7 +3,8 @@ extends SceneTree
 ## the same sheet just after a driven resurface, the cockpit, and the
 ## measuring tools' popups. Needs a renderer (run under xvfb; lavapipe is fine):
 ##   godot --path . --script res://tools/ice_shots.gd -- --out=dir [--only=name,name]
-## Shots: ice_before, ice_after, ice_after_wide, cockpit, caliper, survey, lidar.
+## Shots: ice_before, ice_after, ice_after_wide, cockpit, caliper, survey, lidar,
+## hose, edger, chipper.
 
 var _out := "shot"
 var _only: PackedStringArray = []
@@ -28,7 +29,7 @@ func _initialize() -> void:
 	_worn.surface_temp = -5.0
 	_worn.wear_sessions(3.0, 20.0)
 	_worn.flush()
-	for n in ["ice_before", "ice_after", "ice_after_wide", "cockpit", "caliper", "survey", "lidar"]:
+	for n in ["ice_before", "ice_after", "ice_after_wide", "cockpit", "caliper", "survey", "lidar", "hose", "edger", "chipper"]:
 		if _only.is_empty() or n in _only:
 			_queue.append(Callable(self, "_shot_" + n))
 	_next()
@@ -156,3 +157,28 @@ func _popup(mode: String) -> void:
 	_root.add_child(scene)
 	scene.call("begin", {"job": {"caliper": "ice_depth", "survey": "ice_survey", "lidar": "ice_survey"}[mode], "target": "ice_" + mode,
 		"preview": mode, "ice": _worn})
+
+
+func _shot_hose() -> void:
+	_hand("hose")
+
+
+func _shot_edger() -> void:
+	_hand("edger")
+
+
+func _shot_chipper() -> void:
+	_hand("chipper")
+
+
+func _hand(mode: String) -> void:
+	var scene: Node = load("res://scenes/world/jobs/ice_hand.tscn").instantiate()
+	_root.add_child(scene)
+	var ice := _worn.copy()
+	if mode == "chipper":
+		ice.wear_sessions(6.0, 30.0)  # a long day's ridge along the boards
+		ice.flush()
+	scene.call("begin", {"job": "hose_flood", "target": "ice_" + mode, "preview": mode, "ice": ice})
+	var iv := scene.get("_view") as IceView
+	if iv and OS.get_environment("ICE_DEBUG") != "":
+		iv.debug_view = OS.get_environment("ICE_DEBUG").to_int()
