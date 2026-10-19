@@ -1,8 +1,9 @@
 extends SceneTree
 ## Headless check of VenueWalker's moves on a test floor: the walk and sprint
 ## speeds it reaches, the jump apex, crouch height and eyes, getting under a
-## low beam crouched (and not standing up under it), and steps still climbed
-## at a sprint.
+## low beam crouched (and not standing up under it), steps still climbed
+## at a sprint, and the eyes gliding up and down stairs instead of jumping
+## a step at a time.
 ##
 ##   godot --headless --path . --script tools/tests/test_walker_moves.gd
 
@@ -126,6 +127,39 @@ func _run() -> void:
 	w.running = true
 	await _ticks(150)
 	_expect(w.global_position.x < -33.0 and w.global_position.y > 0.25, "sprints up a 0.3 m step (at %s)" % w.global_position)
+	w.queue_free()
+
+	# stairs (0.21 m rise, 0.28 m going): the eyes climb smoothly instead of
+	# jumping a step at a time
+	for i in 8:
+		_box(Vector3(0.28 * (8 - i) + 4.0, 0.21, 6), Vector3(60.0 + 0.28 * i + (0.28 * (8 - i) + 4.0) * 0.5, 0.21 * i + 0.105, 15))
+	await _ticks(2)
+	w = _walker(Vector3(57, 0.05, 15))
+	await _ticks(30)
+	w.wish = Vector3(1, 0, 0)
+	var last := w.head.global_position.y
+	var worst := 0.0
+	for i in 3 * Engine.physics_ticks_per_second:
+		await physics_frame
+		var eye := w.head.global_position.y
+		worst = maxf(worst, absf(eye - last))
+		last = eye
+	var climb := 0.21 / 0.28 * VenueWalker.WALK / Engine.physics_ticks_per_second
+	_expect(w.global_position.y > 1.6, "walks up the stairs (at %s)" % w.global_position)
+	_expect(worst < climb * 2.0, "the eyes climb the stairs smoothly (worst jump %.3f m in a tick, want under %.3f)" % [worst, climb * 2.0])
+	# and back down
+	w.global_position.x = 63.0
+	await _ticks(30)
+	w.wish = Vector3(-1, 0, 0)
+	last = w.head.global_position.y
+	worst = 0.0
+	for i in 3 * Engine.physics_ticks_per_second:
+		await physics_frame
+		var eye := w.head.global_position.y
+		worst = maxf(worst, absf(eye - last))
+		last = eye
+	_expect(w.global_position.y < 0.1, "walks back down (at %s)" % w.global_position)
+	_expect(worst < climb * 2.0, "the eyes come down the stairs smoothly (worst jump %.3f m in a tick, want under %.3f)" % [worst, climb * 2.0])
 	w.queue_free()
 
 	print("\n%s (%d failure%s)" % ["FAILED" if failures else "OK", failures, "" if failures == 1 else "s"])
