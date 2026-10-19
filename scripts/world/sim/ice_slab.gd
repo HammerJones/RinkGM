@@ -820,6 +820,7 @@ func add_water(i: int, mm: float, temp_c := FLOOD_TEMP_C) -> void:
 	t[i] += ice_mm
 	var fill := minf(g[i], ice_mm * (0.6 + 0.4 * clampf(temp_c / 60.0, 0.0, 1.2)))
 	g[i] -= fill
+	stri[i] *= exp(-mm * 3.0)  # water fills the blade's lines
 	w[i] += mm
 	var h := mm * heat_per_mm(temp_c)
 	hq[i] += h
