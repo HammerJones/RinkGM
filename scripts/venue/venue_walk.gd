@@ -17,8 +17,8 @@ extends Node3D
 ## E / A read, use or work on what you're looking at (or a door); A jumps
 ## when there's nothing in reach, B (held) crouches when no panel is open,
 ## O the office (in an owner career),
-## Esc / B close a panel, 1 2 3 / D-pad set this room's age,
-## F / Y fly, Tab frees the mouse.
+## Esc / B close a panel or the office computer, 1 2 3 / D-pad set this room's age,
+## F / D-pad down fly, Tab frees the mouse. Q / Y are free for the watch (#13).
 
 ## UI's office screens and anything else listening: the player asked for
 ## screen `id` (log_book, phone, goals, ice_grid, desk) with the sim.
@@ -40,6 +40,7 @@ var flying := false
 var _yaw := -PI * 0.5  # facing +X, toward the front doors and the ice
 var _pitch := 0.0
 var _label: Label
+var _prompt: Label   # the [E] line, under the middle of the screen
 var _toast: Label
 var _toast_t := 0.0
 var _panel: PanelContainer
@@ -108,6 +109,14 @@ func _build_ui() -> void:
 	_label.add_theme_color_override("font_color", RinkOS.READOUT)
 	_label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	layer.add_child(_label)
+	_prompt = Label.new()
+	_prompt.set_anchors_preset(Control.PRESET_CENTER)
+	_prompt.position = Vector2(-300, 28)
+	_prompt.size = Vector2(600, 40)
+	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_prompt.add_theme_color_override("font_color", RinkOS.ACTION)
+	_prompt.add_theme_color_override("font_shadow_color", Color.BLACK)
+	layer.add_child(_prompt)
 	_toast = Label.new()
 	_toast.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_toast.position = Vector2(-300, -120)
@@ -148,7 +157,6 @@ func _unhandled_input(e: InputEvent) -> void:
 			KEY_SPACE:
 				if not flying and not _busy():
 					walker.jump()
-			KEY_Q: _close_panel()
 			KEY_F: _toggle_fly()
 			KEY_1: _age_here(VenueRoom.Age.WORN)
 			KEY_2: _age_here(VenueRoom.Age.REPAIRED)
@@ -161,7 +169,7 @@ func _unhandled_input(e: InputEvent) -> void:
 				elif not flying:
 					walker.jump()
 			JOY_BUTTON_B: _close_panel()
-			JOY_BUTTON_Y: _toggle_fly()
+			JOY_BUTTON_DPAD_DOWN: _toggle_fly()
 			JOY_BUTTON_DPAD_LEFT: _age_here(VenueRoom.Age.WORN)
 			JOY_BUTTON_DPAD_UP: _age_here(VenueRoom.Age.REPAIRED)
 			JOY_BUTTON_DPAD_RIGHT: _age_here(VenueRoom.Age.RENOVATED)
@@ -183,6 +191,7 @@ func _process(dt: float) -> void:
 	if _busy():
 		walker.wish = Vector3.ZERO
 		walker.crouch = false
+		_prompt.text = ""
 		return
 	var look := Vector2(Input.get_joy_axis(0, JOY_AXIS_RIGHT_X), Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y))
 	if look.length() > 0.15:
@@ -210,23 +219,27 @@ func _process(dt: float) -> void:
 		walker.crouch = Input.is_physical_key_pressed(KEY_CTRL) or Input.is_physical_key_pressed(KEY_C) \
 			or Input.is_joy_button_pressed(0, JOY_BUTTON_B)
 	_label.text = "\n".join(_hud_lines())
+	_prompt.text = _hint()
 
 
 func _hud_lines() -> Array:
 	var room := venue.room_at(walker.global_position + Vector3(0, 0.5, 0))
 	var head := "// %s   %s" % [venue.rink_name, story.clock_text() if story else "FREE WALK"]
 	var where := "%s [%s]" % [room.display_name.to_upper() if room else "OUTSIDE", VenueRoom.AGE_NAMES[room.age].to_upper() if room else "-"]
-	var s := _looked_at()
-	var hint := ""
-	if s:
-		hint = "[E] " + s.prompt()
-	else:
-		var d := walker.nearest_door(venue)
-		if d:
-			hint = "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
 	if story and story.link:
 		head += "   [O] OFFICE"
-	return [head, where, hint]
+	return [head, where]
+
+
+## The [E] line for what you're looking at, else the nearest door.
+func _hint() -> String:
+	var s := _looked_at()
+	if s:
+		return "[E] " + s.prompt()
+	var d := walker.nearest_door(venue)
+	if d:
+		return "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
+	return ""
 
 
 func _looked_at() -> VenueSpot:
@@ -321,7 +334,7 @@ func _start_job(job: Dictionary) -> void:
 	var note := story.spot_text(job)
 	if not note.is_empty():
 		bb += "%s\n\n" % note.text
-	bb += "[color=#%s]The mini game for this one isn't in yet.[/color]\n\n[color=#%s][E] DO IT THE QUICK WAY   [Q] LEAVE IT[/color]" % [RinkOS.DIM.to_html(false), RinkOS.ACTION.to_html(false)]
+	bb += "[color=#%s]The mini game for this one isn't in yet.[/color]\n\n[color=#%s][E] DO IT THE QUICK WAY   [ESC] LEAVE IT[/color]" % [RinkOS.DIM.to_html(false), RinkOS.ACTION.to_html(false)]
 	_open_panel(bb)
 
 
