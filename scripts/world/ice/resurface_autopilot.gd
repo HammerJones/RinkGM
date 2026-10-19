@@ -31,6 +31,8 @@ var _mark_idx := {}
 var _stuck := 0.0
 var _reverse := 0.0
 var _dump_tried := false
+## The bin filled and jammed solid, and the cut was cut short.
+var gave_up := false
 
 
 func _init(r: ResurfaceRun, s := NORMAL) -> void:
@@ -56,7 +58,7 @@ func tick(dt: float) -> Dictionary:
 				phase = "out"
 			brake = 1.0
 		"out", "cut", "home":
-			if run.jammed:
+			if run.jammed and not gave_up:
 				_clear_jam()
 				brake = 1.0
 			else:
@@ -92,12 +94,7 @@ func _phase_marks() -> void:
 		run.flood_valve = float(settings.valve)
 		run.blade_mm = float(settings.blade_mm)
 	elif phase == "cut" and idx > cut_end:
-		phase = "home"
-		run.flood_valve = 0.0
-		run.wash_on = false
-		run.towel_down = false
-		run.cond_down = false
-		run.blade_mm = 0.0
+		_end_cut()
 	elif phase == "home" and idx >= park - 1 and run.pos.distance_to(points[park]) < 1.2:
 		if dump_at_end and run.bin_m3 > 0.0:
 			phase = "dump"
@@ -106,8 +103,25 @@ func _phase_marks() -> void:
 			done = true
 
 
+## Conditioner up, water off, and back to the gate.
+func _end_cut() -> void:
+	phase = "home"
+	run.flood_valve = 0.0
+	run.wash_on = false
+	run.towel_down = false
+	run.cond_down = false
+	run.blade_mm = 0.0
+	var gate: int = _mark_idx.get("gate", points.size() - 4)
+	idx = maxi(idx, gate - 1) if gave_up else idx
+
+
 func _clear_jam() -> void:
 	run.cond_down = false
+	if run.bin_fill() >= 0.98:
+		# the tank's packed solid: no plunger clears that. Off home to dump.
+		gave_up = true
+		_end_cut()
+		return
 	run.plunger = true
 	if not run.jammed:
 		run.plunger = false

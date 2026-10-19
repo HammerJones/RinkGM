@@ -238,7 +238,7 @@ func step(dt: float, throttle: float, steer_in: float, brake := 0.0) -> void:
 				if time_s - _flood_at[i] < 8.0:
 					keep[i] = true
 			_recent = keep
-	if _freeze_acc >= 1.0:
+	if _freeze_acc >= 4.0:
 		ice.freeze(_freeze_acc)
 		_freeze_acc = 0.0
 	# engine: idle, the pedal, and the load of the augers
@@ -439,7 +439,7 @@ func _conditioner(dt: float) -> void:
 		if jam_risk >= 1.0:
 			jammed = true
 			jams += 1
-			events.append("jam" if bin_fill() < 1.0 else "bin_full")
+			events.append("jam" if bin_fill() < 0.98 else "bin_full")
 	# wash water: sprayed ahead of the blade and vacuumed back into the tank
 	if wash_on and wash_l > 0.0:
 		var used := minf(WASH_Q * dt, wash_l)
@@ -529,6 +529,7 @@ func result() -> Dictionary:
 	ice.resync()
 	var cov := coverage()
 	var even := _evenness()
+	var wet := flood_coverage()
 	var smooth_after := ice.felt_smoothness()
 	var kind := "normal"
 	if water_laid_l < 30.0 and ice_cut_m3 > 0.05:
@@ -537,7 +538,7 @@ func result() -> Dictionary:
 		kind = "flood"
 	elif ice_cut_m3 < 0.05 and water_laid_l <= 30.0:
 		kind = "none"
-	var q := 0.32 * clampf(cov / 0.92, 0.0, 1.0) + 0.28 * smooth_after + 0.15 * even + 0.1 * clampf(1.0 - ice.snow * 2.0, 0.0, 1.0) \
+	var q := 0.32 * clampf(cov / 0.92, 0.0, 1.0) * (1.0 if kind == "dry" else lerpf(0.5, 1.0, wet)) + 0.28 * smooth_after + 0.15 * even + 0.1 * clampf(1.0 - ice.snow * 2.0, 0.0, 1.0) \
 		+ 0.1 * (0.0 if jams > 0 else 1.0) + 0.05 * (1.0 if board_hits == 0 else 0.0)
 	if kind == "dry" or kind == "flood":
 		q = 0.45 * clampf(cov / 0.92, 0.0, 1.0) + 0.3 * (even if kind == "flood" else blade_quality) + 0.15 * (0.0 if jams > 0 else 1.0) + 0.1 * (1.0 if board_hits == 0 else 0.0)
@@ -555,6 +556,7 @@ func result() -> Dictionary:
 		"smooth_after": smooth_after,
 		"coverage": cov,
 		"evenness": even,
+		"flood_coverage": wet,
 		"jam": jams > 0,
 		"jams": jams,
 		"board_hits": board_hits,
@@ -571,8 +573,20 @@ func result() -> Dictionary:
 		"gas_cost": gas_cost,
 		"fuel_used": fuel_used,
 		"minutes": time_s / 60.0,
-		"complete": cov >= 0.9 and jams == 0,
+		"complete": cov >= 0.9 and jams == 0 and (kind == "dry" or kind == "none" or wet >= 0.9),
 	}
+
+
+## Fraction of the cells the blade went over that got flood water too (an
+## empty tank partway round leaves the rest dry-cut).
+func flood_coverage() -> float:
+	if _covered_n == 0:
+		return 0.0
+	var n := 0
+	for i in IceSlab.FCELLS:
+		if _covered[i] == 1 and _water_cell[i] > 0.0:
+			n += 1
+	return float(n) / float(_covered_n)
 
 
 ## 1 when every covered cell got the same water, 0 when it went on in puddles.

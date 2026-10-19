@@ -101,6 +101,14 @@ var books: Array = [] # one entry per finished day: {"day", "revenue", "costs", 
 var auto_resurface := false  # Doris goes out for every flood on the grid that has a crew
 var morning_flood := true    # the first flood of the day at 05:50
 var earl_hired := false      # Earl floods evenings and weekends once he's back (M2)
+## The owner's own floods wait for the player to drive Doris (the
+## doris_drive mini game) instead of happening by themselves: always when
+## set, and while the owner is on site (the walk calls owner_on_site()).
+## With a driver hired they stay automatic.
+var owner_drives := false
+var owner_here_until := -1      # absolute minute the walk last vouched for
+var floods_waiting: Array = []  # [{"day", "minute", "for_org", "kind"}] owner floods not driven yet
+var plate_closures: Array = []  # [{"day", "spot"}] the ice shut while a depth plate freezes in
 var orders: Array = []    # [{"model", "arrives_day", "balance"}] compressors on the way
 var delivered: Array = [] # models sitting in the parking lot, waiting to go in
 var installs: Array = []  # [{"compressor", "model", "done_day", "quality"}]
@@ -534,7 +542,7 @@ func _step() -> void:
 		_auto_floods()
 	var use: String = s.get("use", "hockey")
 	var skaters := 0.0
-	if not s.is_empty() and evacuated_day != day:
+	if not s.is_empty() and evacuated_day != day and not ice_closed(day):
 		skaters = 20.0 if use == "hockey" else 30.0
 	# the controller chases the target for whatever skates next, or idles warmer overnight
 	var target: float = IceSlab.TARGET_TEMP.get(use, -5.0)
@@ -629,13 +637,24 @@ func _auto_floods() -> void:
 			continue
 		_floods_done.append(m)
 		var entry := {"day": day, "minute": m, "crew": f.crew, "for_org": f.for_org, "kind": f.kind, "ok": false, "text": ""}
-		if _abs_minute() - _last_flood_abs < 30:
+		if ice_closed(day):
+			entry.ok = true
+			entry.text = "The ice is closed: a depth plate is freezing in."
+		elif _abs_minute() - _last_flood_abs < 30:
 			entry.ok = true
 			entry.text = "Already flooded."
 		elif str(f.crew) == "":
 			entry.text = "Nobody to flood."
 			if f.for_org != "":
 				_note("Nobody flooded before %s." % RinkContracts.org(f.for_org).get("name", f.for_org), "flood")
+		elif owner_waits() and str(f.crew) == "you":
+			entry.text = "Waiting for you to drive Doris."
+			entry["waiting"] = true
+			floods_waiting.append({"day": day, "minute": m, "for_org": f.for_org, "kind": f.kind})
+			if floods_waiting.size() > 20:
+				floods_waiting = floods_waiting.slice(floods_waiting.size() - 20)
+			_note("%02d:%02d: the flood%s is due. Doris is in the bay." % [m / 60, m % 60,
+				(" before %s" % RinkContracts.org(f.for_org).get("name", f.for_org)) if f.for_org != "" else ""], "flood")
 		else:
 			var r := job("resurface")
 			entry.ok = bool(r.ok)
@@ -665,6 +684,14 @@ func _start_session(s: Dictionary) -> void:
 		book("refunds", -50.0)
 		c.satisfaction = maxf(float(c.satisfaction) - 10.0, 0.0)
 		_note("%s sent home: the building is closed after the ammonia release." % o.name, "session")
+		session_started.emit(s, -1.0, 0.0)
+		return
+	if ice_closed(day):
+		entry.cancelled = true
+		cancelled_sessions += 1
+		_cur_session = {}
+		c.satisfaction = maxf(float(c.satisfaction) - 3.0, 0.0)
+		_note("%s booked elsewhere today: the ice is closed while a depth plate freezes in." % o.name, "session")
 		session_started.emit(s, -1.0, 0.0)
 		return
 	if not lights_on:
@@ -739,6 +766,7 @@ func _plant_consequences(h: float) -> void:
 
 
 func _end_day() -> void:
+	_plates_frozen(day)
 	book("electricity", -_kwh_today * POWER_PRICE)
 	if _recovered_kwh > 0.0:
 		book("heat recovered", _recovered_kwh * HEAT_RECOVERY_PRICE)
@@ -1103,6 +1131,12 @@ const JOBS := {
 	"install_compressor": {"hours": 4.0, "cost": 0.0, "cat": "equipment"},  # the contractor does the rest
 	"convert_refrigerant": {"hours": 6.0, "cost": 0.0, "cat": "equipment"},
 	"recharge_refrigerant": {"hours": 1.0, "cost": 0.0, "cat": "refrigerant"},
+	# the ice jobs (docs/world/ICE.md)
+	"install_plate": {"hours": 2.0, "cost": 65.0, "cat": "parts and supplies"},
+	"ice_depth": {"hours": 0.3, "cost": 0.0},
+	"ice_survey": {"hours": 0.6, "cost": 0.0},
+	"hose_flood": {"hours": 0.4, "cost": 0.0, "cat": "natural gas"},
+	"chip_ice": {"hours": 1.0, "cost": 0.0},
 }
 
 
@@ -1129,16 +1163,24 @@ func job(id: String, args := {}) -> Dictionary:
 		"resurface":
 			if snow_pit >= 1.0:
 				return {"ok": false, "text": "The snow pit is full: Doris has nowhere to dump."}
-			var pat := PackedFloat64Array(args.get("pattern", []))
-			var snow_before := ice.snow
-			var r := doris.resurface(ice, skill.driving, pat)
-			if r < 0.0:
-				return {"ok": false, "text": "Doris %s." % doris.fault()}
-			snow_pit = minf(snow_pit + 0.1 + 0.15 * snow_before, 1.0)
-			_last_flood_abs = _abs_minute()
-			skill.driving = minf(skill.driving + 0.002, 1.0)
-			text = "Resurfaced (%.0f%%)." % (r * 100.0)
-			out["quality"] = r
+			if args.get("ice_state") is IceSlab:
+				# driven (the doris_drive mini game or its autopilot)
+				var dr := _driven_resurface(args)
+				cost = float(dr.cost)
+				extra_hours = float(dr.hours) - hours
+				text = str(dr.text)
+				out.merge(dr.out, true)
+			else:
+				var pat := PackedFloat64Array(args.get("pattern", []))
+				var snow_before := ice.snow
+				var r := doris.resurface(ice, skill.driving, pat)
+				if r < 0.0:
+					return {"ok": false, "text": "Doris %s." % doris.fault()}
+				snow_pit = minf(snow_pit + 0.1 + 0.15 * snow_before, 1.0)
+				_last_flood_abs = _abs_minute()
+				skill.driving = minf(skill.driving + 0.002, 1.0)
+				text = "Resurfaced (%.0f%%)." % (r * 100.0)
+				out["quality"] = r
 		"plant_round":
 			var rd := readings()
 			_log("plant_round", rd)
@@ -1237,9 +1279,56 @@ func job(id: String, args := {}) -> Dictionary:
 			snow_pit = minf(snow_pit + 0.25, 1.0)
 			text = "A dry cut with the blade down: about %.1f mm off." % mm
 		"edge_ice":
-			ice.edge_cut(6.0, q)
-			snow_pit = minf(snow_pit + 0.05, 1.0)
-			text = "Edged the boards; the lip is down to %.0f mm." % maxf(ice.edge_lip_mm(), 0.0)
+			if args.get("ice_state") is IceSlab:
+				ice.adopt(args.ice_state)
+				snow_pit = minf(snow_pit + 0.05, 1.0)
+				text = "Edged the boards; the lip is down to %.0f mm." % maxf(ice.edge_lip_mm(), 0.0)
+				out["quality"] = q
+			else:
+				ice.edge_cut(6.0, q)
+				snow_pit = minf(snow_pit + 0.05, 1.0)
+				text = "Edged the boards; the lip is down to %.0f mm." % maxf(ice.edge_lip_mm(), 0.0)
+		"install_plate":
+			var spot := str(args.get("spot", ""))
+			if not IceSlab.PLATE_SPOTS.has(spot) or spot in ice.plates or plate_pending(spot):
+				return {"ok": false, "text": "There's already a plate there." if spot in ice.plates or plate_pending(spot) else "Put a plate where?"}
+			var on_day := int(args.get("day", day + 1))
+			if on_day < day:
+				return {"ok": false, "text": "That day's gone."}
+			plate_closures.append({"day": on_day, "spot": spot})
+			text = "Plate ordered for %s. The ice closes on %s while it freezes in." % [spot.replace("_", " "), date_text(on_day)]
+			out["closed_day"] = on_day
+			out["sessions_lost"] = sessions(on_day).size()
+		"ice_depth":
+			var rd := depth_readings(str(args.get("spot", "")))
+			_log("ice_depth", rd)
+			out["readings"] = rd
+			var parts := PackedStringArray()
+			for k: String in rd:
+				parts.append("%s %s" % [k.replace("_", " "), rd[k].text])
+			text = "Depth at the plates: %s." % ", ".join(parts)
+		"ice_survey":
+			var pts: Array = args.get("points", [])
+			var rd := survey_readings(pts)
+			_log("ice_survey", rd)
+			out["readings"] = rd
+			text = "Surveyed %d spots off the laser." % rd.size()
+		"hose_flood":
+			if args.get("ice_state") is IceSlab:
+				ice.adopt(args.ice_state)
+			var litres := float(args.get("litres", 0.0))
+			cost = ResurfacerSim.heat_cost(litres, float(args.get("temp_c", doris.flood_temp_c)))
+			text = "Hose-flooded the low spots: %.0f L." % litres
+			out["quality"] = q
+		"chip_ice":
+			var cut := 0.0
+			if args.get("ice_state") is IceSlab:
+				ice.adopt(args.ice_state)
+			else:
+				cut = ice.chip_boards(q)
+			snow_pit = minf(snow_pit + 0.04, 1.0)
+			text = "Chipped the ridge off along the boards; the lip is down to %.0f mm." % maxf(ice.edge_lip_mm(), 0.0)
+			out["chipped_mm"] = cut
 		"dump_snow":
 			snow_pit = 0.0
 			text = "Hosed the snow pit down to the drain."
@@ -1295,6 +1384,114 @@ func job(id: String, args := {}) -> Dictionary:
 	out["cost"] = cost
 	_note(text, "job")
 	_update_goals()
+	return out
+
+
+## The walk: the owner is in the building for the next `minutes`, so their
+## floods wait to be driven.
+func owner_on_site(minutes := 30) -> void:
+	owner_here_until = _abs_minute() + minutes
+
+
+func owner_waits() -> bool:
+	return not earl_hired and (owner_drives or _abs_minute() <= owner_here_until)
+
+
+## The ice is closed on day `d` while a depth plate freezes in.
+func ice_closed(d: int) -> bool:
+	for c in plate_closures:
+		if int(c.day) == d:
+			return true
+	return false
+
+
+func plate_pending(spot: String) -> bool:
+	for c in plate_closures:
+		if str(c.spot) == spot:
+			return true
+	return false
+
+
+## The day a closure ends: its plates are in.
+func _plates_frozen(d: int) -> void:
+	var keep: Array = []
+	for c in plate_closures:
+		if int(c.day) <= d:
+			if not str(c.spot) in ice.plates:
+				ice.plates.append(str(c.spot))
+				_note("The depth plate at %s has frozen in." % str(c.spot).replace("_", " "), "job")
+		else:
+			keep.append(c)
+	plate_closures = keep
+
+
+## The owner flood waiting to be driven (the latest in the last two hours),
+## or {}.
+func flood_waiting() -> Dictionary:
+	var now := _abs_minute()
+	for i in range(floods_waiting.size() - 1, -1, -1):
+		var f: Dictionary = floods_waiting[i]
+		var at := int(f.day) * 24 * 60 + int(f.minute)
+		if now - at <= 120 and at > _last_flood_abs:
+			return f
+	return {}
+
+
+## A driven resurface (the doris_drive mini game or its autopilot): the
+## worked ice comes back as `ice_state` with what the run measured.
+func _driven_resurface(args: Dictionary) -> Dictionary:
+	ice.adopt(args.ice_state)
+	var q := clampf(float(args.get("quality", 0.5)), 0.0, 1.0)
+	doris.flood_l = clampf(float(args.get("flood_l_left", 0.0)), 0.0, ResurfacerSim.FLOOD_TANK_L)
+	doris.wash_l = clampf(float(args.get("wash_l_left", 0.0)), 0.0, ResurfacerSim.WASH_TANK_L)
+	doris.cuts_driven += 1
+	doris.fuel = maxf(doris.fuel - float(args.get("fuel_used", 0.045)), 0.0)
+	for id in doris.parts:
+		(doris.parts[id] as SimPart).run(ResurfacerSim.RESURFACE_HOURS, 1.0 + (0.5 if bool(args.get("jam", false)) and id == "auger_bearing" else 0.0))
+	doris.engine_oil = maxf(doris.engine_oil - ResurfacerSim.RESURFACE_HOURS / 120.0, 0.0)
+	# the pit takes what was dumped (a full Doris load is about 0.25 of it)
+	var dumped := float(args.get("dumped_m3", 0.0))
+	snow_pit = minf(snow_pit + dumped / ResurfacerSim.SNOW_TANK_M3 * 0.25, 1.0)
+	_last_flood_abs = _abs_minute()
+	floods_waiting = []
+	skill.driving = minf(skill.driving + 0.004, 1.0)
+	var mins := float(args.get("minutes", 15.0))
+	var kind := str(args.get("kind", "normal"))
+	var what: String = {"normal": "Resurfaced", "dry": "Dry cut", "flood": "Flooded", "none": "Drove round"}.get(kind, "Resurfaced")
+	var text := "%s (%.0f%%): %+.1f mm, %d%% covered." % [what, q * 100.0, float(args.get("thickness_change_mm", 0.0)), roundi(float(args.get("coverage", 0.0)) * 100.0)]
+	if bool(args.get("jam", false)):
+		text += " The augers jammed."
+	if int(args.get("board_hits", 0)) > 0:
+		text += " Doris kissed the boards."
+	return {"cost": float(args.get("gas_cost", FLOOD_GAS)), "hours": maxf(mins / 60.0, 0.1), "text": text, "out": {"quality": q}}
+
+
+## What the drill or the calipers read at the plates (`spot`, or all of them).
+func depth_readings(spot := "") -> Dictionary:
+	var out := {}
+	var tier := int(tools.get("ice_thickness", 0))
+	for id in ice.plates:
+		if spot != "" and id != spot:
+			continue
+		out[id] = SimInstrument.read("ice_thickness", tier, ice.plate_depth_mm(str(id)), rng, _sigma_mult())
+	return out
+
+
+## Survey rod readings at rink points `pts` ([Vector2] or [[x, y]]): the
+## laser's mark on the rod, mm (SimInstrument "ice_level").
+func survey_readings(pts: Array) -> Dictionary:
+	var out := {}
+	var tier := int(tools.get("ice_level", 0))
+	var k := 0
+	for p in pts:
+		var v := Vector2.ZERO
+		if p is Vector2:
+			v = p
+		elif p is Array and (p as Array).size() >= 2:
+			v = Vector2(float(p[0]), float(p[1]))
+		out["p%d" % k] = SimInstrument.read("ice_level", tier, ice.rod_reading_mm(v), rng, _sigma_mult())
+		out["p%d" % k]["at"] = [v.x, v.y]
+		k += 1
 	return out
 
 
@@ -1355,6 +1552,12 @@ func buy_tool(reading: String, tier: int) -> bool:
 		return false
 	book("tools", -float(t[tier].price))
 	tools[reading] = tier
+	if reading == "ice_level" and str(t[tier].id) == "level_sense":
+		# the new machine: it reads the lidar map and sets blade and water itself
+		doris.auto_level = true
+		doris.model = "Zambelli 750 Level-Sense"
+		for id in doris.parts:
+			(doris.parts[id] as SimPart).replace()
 	_note("Bought a %s." % t[tier].name, "purchase")
 	return true
 
@@ -1440,7 +1643,7 @@ const SAVE_VARS := ["mode", "day", "minute", "start_weekday", "start_doy", "mone
 	"conversion", "rental_until", "evacuated_day", "owner_game_weekday", "games", "lights_on", "lights_warm",
 	"auto_lights", "snow_pit", "pit_melt_per_h", "log_book", "session_log", "flood_log", "trips", "bills", "goals",
 	"bids", "binder", "weekly_reports", "cancelled_sessions", "lost_contracts", "compressor_1_decision",
-	"trip_script", "owner_pay_owed", "cia_weekly_pay",
+	"trip_script", "owner_pay_owed", "cia_weekly_pay", "owner_drives", "owner_here_until", "floods_waiting", "plate_closures",
 	"_kwh_today", "_hours_today", "_money_day_start", "_session_key", "_ratings_today", "_cur_session",
 	"_floods_done", "_last_flood_abs", "_last_active_abs", "_woke_day", "_script", "_recovered_kwh"]
 ## Old save keys that map onto renamed members.

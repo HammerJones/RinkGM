@@ -1,0 +1,345 @@
+extends SceneTree
+## The ice simulation and the driven resurface (docs/world/ICE.md): IceSlab v2
+## cutting, flooding and freezing cell by cell, ResurfaceRun driven round the
+## standard pattern by ResurfaceAutopilot (normal, dry and flood-only cuts, a
+## blade set too deep, a tank that runs dry), the old IceSlab API and old
+## saves, the caliper and survey arithmetic, and the RinkSim jobs.
+##   godot --headless --path . --script res://tools/tests/test_ice.gd
+
+const DT := 1.0 / 20.0
+
+var failures := 0
+
+
+func _initialize() -> void:
+	var t0 := Time.get_ticks_msec()
+	_check_old_api()
+	_check_old_save()
+	_check_freeze()
+	_check_water_spreads()
+	_check_hot_water()
+	_check_wear()
+	_check_gauges()
+	var worn := _worn()
+	var normal := _drive(worn, ResurfaceAutopilot.NORMAL)
+	_check_normal(normal)
+	_check_dry(_drive(worn, ResurfaceAutopilot.DRY))
+	_check_flood(_drive(worn, ResurfaceAutopilot.FLOOD))
+	_check_deep(worn)
+	_check_empty_tank(worn)
+	_check_sim_jobs(normal)
+	print("test_ice: %d ms" % (Time.get_ticks_msec() - t0))
+	if failures:
+		printerr("test_ice: %d failure(s)" % failures)
+	else:
+		print("test_ice: ok")
+	quit(1 if failures else 0)
+
+
+func _fail(msg: String) -> void:
+	failures += 1
+	printerr("FAIL: " + msg)
+
+
+func _expect(ok: bool, msg: String) -> void:
+	if not ok:
+		_fail(msg)
+
+
+## Millbrook after an evening's skating.
+func _worn() -> IceSlab:
+	var ice := IceSlab.create_millbrook()
+	ice.surface_temp = -5.0
+	ice.wear_sessions(3.0, 20.0)
+	return ice
+
+
+## One autopilot run on a copy of `ice`: {"run", "ap", "r" (the result)}.
+func _drive(ice: IceSlab, preset: Dictionary, doris: ResurfacerSim = null, fill := true, max_s := 1500.0) -> Dictionary:
+	var d := doris if doris else ResurfacerSim.create_doris()
+	var run := ResurfaceRun.start(ice, d)
+	var ap := ResurfaceAutopilot.new(run, preset)
+	ap.fill_first = fill
+	var ev := PackedStringArray()
+	var bin_max := 0.0
+	while not ap.done and run.time_s < max_s:
+		ap.tick(DT)
+		ev.append_array(run.drain_events())
+		bin_max = maxf(bin_max, run.bin_fill())
+	var r := run.result()
+	print("  %-6s %4.0f s, cov %.2f, wet %.2f, even %.2f, %+.2f mm, gouge %.2f -> %.2f, q %.2f, jams %d, hits %d, snow %.2f m3, water %.0f L"
+		% [str(preset.kind), run.time_s, r.coverage, r.flood_coverage, r.evenness, r.thickness_change_mm, r.gouge_before_mm,
+		r.gouge_after_mm, r.quality, r.jams, r.board_hits, r.snow_m3, r.water_l])
+	return {"run": run, "ap": ap, "r": r, "events": ev, "bin_max": bin_max}
+
+
+func _check_old_api() -> void:
+	var ice := IceSlab.new()
+	_expect(absf(ice.thickness_mm - 48.0) < 0.5, "old API: a new slab is about 48 mm (%.2f)" % ice.thickness_mm)
+	ice.thickness_mm = 40.0
+	_expect(absf(ice.thickness_mm - 40.0) < 0.01, "old API: thickness_mm sets the sheet (%.2f)" % ice.thickness_mm)
+	ice.smoothness = 0.5
+	_expect(absf(ice.smoothness - 0.5) < 0.02, "old API: smoothness sets the sheet (%.3f)" % ice.smoothness)
+	var before := ice.thickness_mm
+	ice.resurface(1.0, 0.4, 450.0)
+	_expect(ice.smoothness > 0.8, "old API: resurface smooths (%.2f)" % ice.smoothness)
+	_expect(absf(ice.thickness_mm - before) < 0.6, "old API: resurface keeps the thickness about level (%+.2f)" % (ice.thickness_mm - before))
+	_expect(ice.wetness() > 0.0, "old API: a fresh flood is wet")
+	ice.run(0.5, 120.0, 260.0, 0.0)
+	_expect(ice.wetness() < 0.05, "old API: half an hour of the plant freezes it in (%.2f)" % ice.wetness())
+	var cl := ice.cell(10, 4)
+	_expect(cl.has("thickness_mm") and cl.has("smoothness"), "old API: cell() keeps its keys")
+	_expect(ice.rating("hockey") > 0.0, "old API: rating()")
+	_expect(ice.grid_text().length() > 50, "old API: grid_text()")
+
+
+func _check_old_save() -> void:
+	# a version 1 save: the coarse grid and the sheet values only
+	var thick: Array = []
+	var smooth: Array = []
+	for x in IceSlab.W:
+		for z in IceSlab.D:
+			thick.append(30.0 + x)
+			smooth.append(0.6)
+	var v1 := {"surface_temp": -4.5, "cleanliness": 0.7, "paint": 0.5, "snow": 0.2, "pending_heat_mj": 0.0,
+		"thick": thick, "smooth": smooth}
+	var ice := IceSlab.new()
+	ice.load_dict(v1)
+	_expect(absf(float(ice.cell(3, 4).thickness_mm) - 33.0) < 0.6, "old save: coarse thickness comes back (%.2f)" % float(ice.cell(3, 4).thickness_mm))
+	_expect(absf(ice.smoothness - 0.6) < 0.08, "old save: smoothness comes back (%.3f)" % ice.smoothness)
+	_expect(absf(ice.surface_temp + 4.5) < 0.001, "old save: surface temperature")
+	var d2 := ice.to_dict()
+	_expect(int(d2.version) == IceSlab.VERSION and d2.has("fine") and d2.has("thick"), "save: v2 keeps the old keys and adds the fine grid")
+	var back := IceSlab.new()
+	back.load_dict(JSON.parse_string(JSON.stringify(d2)))
+	_expect(absf(back.thickness_mm - ice.thickness_mm) < 1e-4, "save: v2 thickness round-trips through JSON")
+	_expect(absf(back.smoothness - ice.smoothness) < 0.01, "save: v2 smoothness round-trips")
+	var mb := IceSlab.create_millbrook()
+	mb.plates.append("away_left")
+	var mb2 := IceSlab.new()
+	mb2.load_dict(JSON.parse_string(JSON.stringify(mb.to_dict())))
+	_expect(absf(mb2.plate_depth_mm("centre") - mb.plate_depth_mm("centre")) < 0.01, "save: the fine grid comes back cell by cell")
+	_expect("away_left" in mb2.plates, "save: the plates come back")
+	var sim := RinkSim.create_m1()
+	sim.ice.load_dict(v1)
+	_expect(absf(sim.ice.thickness_mm - 39.5) < 0.6, "old save: a RinkSim loads a v1 ice (%.2f)" % sim.ice.thickness_mm)
+
+
+## A 1/32 in flood at 60 C on -5 C ice freezes in about the time the pros
+## wait before skaters go on (10 to 20 minutes, docs/world/ICE.md 1.4).
+func _check_freeze() -> void:
+	var ice := IceSlab.new()
+	ice.surface_temp = -5.0
+	for fz in range(40, 64):
+		for fx in range(100, 140):
+			ice.add_water(fz * IceSlab.FW + fx, 0.8, 60.0)
+	var i := 52 * IceSlab.FW + 120
+	_expect(ice.liquid_at(i) > 0.7, "freeze: the water is liquid when laid")
+	_expect("wet" in ice.states(), "states: a fresh flood reads wet (%s)" % ", ".join(ice.states()))
+	_expect(ice.frozen_at(i) < 0.05, "freeze: not frozen when laid")
+	var t := 0.0
+	while ice.frozen_at(i) < 0.95 and t < 3600.0:
+		ice.freeze(30.0)
+		t += 30.0
+	print("  freeze: 0.8 mm at 60 C on -5 C ice is frozen in after %.1f min" % (t / 60.0))
+	_expect(t >= 6.0 * 60.0 and t <= 25.0 * 60.0, "freeze: a flood freezes in over realistic minutes (%.1f)" % (t / 60.0))
+	# cold water has less heat to lose; warm ice freezes slower
+	var cold := IceSlab.new()
+	cold.surface_temp = -5.0
+	cold.add_water(i, 0.8, 15.0)
+	var warm := IceSlab.new()
+	warm.surface_temp = -2.0
+	warm.add_water(i, 0.8, 60.0)
+	var hot := IceSlab.new()
+	hot.surface_temp = -5.0
+	hot.add_water(i, 0.8, 60.0)
+	for k in 10:
+		cold.freeze(30.0)
+		warm.freeze(30.0)
+		hot.freeze(30.0)
+	_expect(cold.frozen_at(i) > hot.frozen_at(i), "freeze: cold water freezes faster than hot")
+	_expect(warm.frozen_at(i) < hot.frozen_at(i), "freeze: warm ice freezes slower")
+
+
+## Water runs off the high spots and pools in the dish.
+func _check_water_spreads() -> void:
+	var ice := IceSlab.create_millbrook()
+	var hi := IceSlab.cell_at(Vector2(0.0, 0.0))
+	var spot := Vector2(-27.0, 0.0)  # near the home boards: the bowl's lip slopes in
+	var j := IceSlab.cell_at(spot)
+	ice.add_water(j, 3.0, 60.0)
+	var before := ice.liquid_at(j)
+	ice.settle(8)
+	_expect(ice.liquid_at(j) < before, "water: a puddle spreads (%.2f -> %.2f mm)" % [before, ice.liquid_at(j)])
+	_expect(hi != j, "water: sanity")
+	_expect("bowled" in IceSlab.create_millbrook().states(), "states: Millbrook is bowled")
+
+
+## Hot water bonds better and costs more gas.
+func _check_hot_water() -> void:
+	var cold := ResurfacerSim.heat_cost(1100.0, 15.0)
+	var hot := ResurfacerSim.heat_cost(1100.0, 60.0)
+	_expect(hot > cold * 5.0, "hot water: costs more to heat ($%.2f vs $%.2f)" % [hot, cold])
+	_expect(absf(hot - RinkSim.FLOOD_GAS) < 0.25, "hot water: a full tank at 60 C costs about the flood's gas ($%.2f)" % hot)
+	var a := _worn()
+	var b := _worn()
+	a.resurface(0.9, 0.4, 450.0, PackedFloat64Array(), 0.0, false, 60.0)
+	b.resurface(0.9, 0.4, 450.0, PackedFloat64Array(), 0.0, false, 15.0)
+	_expect(a.felt_smoothness() > b.felt_smoothness(), "hot water: bonds smoother (%.3f vs %.3f)" % [a.felt_smoothness(), b.felt_smoothness()])
+
+
+func _check_wear() -> void:
+	var ice := IceSlab.new()
+	ice.smoothness = 1.0
+	var p := Vector2(-26.0, 0.0)
+	var i := IceSlab.cell_at(p)
+	var g0 := ice.g[i]
+	ice.wear(p, 0.5)
+	ice.flush()
+	_expect(ice.g[i] > g0 + 0.3, "wear: a crease's worth of skating gouges the spot (%.2f mm)" % ice.g[i])
+	var far := IceSlab.cell_at(Vector2(10.0, 8.0))
+	_expect(ice.g[far] < 0.05, "wear: the far ice is untouched")
+	var s := IceSlab.new()
+	s.smoothness = 1.0
+	s.wear_sessions(2.0, 20.0)
+	_expect(s.smoothness < 0.9 and s.snow > 0.0, "wear: sessions rough the sheet and throw snow (%.2f, %.2f)" % [s.smoothness, s.snow])
+
+
+func _check_gauges() -> void:
+	var c := IceGauges.caliper(31.76)
+	_expect(is_equal_approx(float(c.beam), 31.0), "caliper: beam line 31 (%s)" % c.beam)
+	_expect(absf(float(c.dial) - 38.0) < 0.01, "caliper: dial at 38 of 50 (%.2f)" % float(c.dial))
+	_expect(str(c.text) == "31.76 mm", "caliper: reads 31.76 mm (%s)" % c.text)
+	_expect(absf(float(c.needle) - 0.76 * TAU) < 1e-4, "caliper: needle three quarters round")
+	_expect(absf(IceGauges.caliper_mm(31.0, 38.0) - 31.76) < 1e-6, "caliper: read back")
+	var ci := IceGauges.caliper(31.75, false)  # 1.25 in exactly
+	_expect(absf(float(ci.beam) - 1.2) < 1e-6 and absf(float(ci.dial) - 50.0) < 0.01, "caliper: imperial 1.2 on the beam, 50 on the dial (%s, %.2f)" % [ci.beam, float(ci.dial)])
+	_expect(str(ci.text) == "1.250 in", "caliper: imperial reads 1.250 in (%s)" % ci.text)
+	_expect(absf(IceGauges.caliper_mm(1.2, 50.0, false) - 31.75) < 1e-6, "caliper: imperial read back")
+	var odd := IceGauges.caliper(12.013)
+	_expect(str(odd.text) == "12.02 mm" or str(odd.text) == "12.00 mm", "caliper: rounds to the 0.02 graduation (%s)" % odd.text)
+	var ro := IceGauges.rod(1263.4)
+	_expect(int(ro.cm) == 126 and int(ro.mm) == 3, "rod: 126 cm and 3 mm (%s)" % ro.text)
+	var ice := IceSlab.create_millbrook()
+	var at_c := ice.rod_reading_mm(Vector2.ZERO)
+	var at_b := ice.rod_reading_mm(Vector2(-28.5, 0.0))
+	var true_rise := (ice.level_at(IceSlab.cell_at(Vector2(-28.5, 0.0))) - ice.level_at(IceSlab.cell_at(Vector2.ZERO)))
+	_expect(absf(IceGauges.rise_mm(at_c, at_b) - true_rise) < 0.6, "survey: the rod finds the bowl's lip (%.1f vs %.1f mm)" % [IceGauges.rise_mm(at_c, at_b), true_rise])
+	_expect(IceGauges.rise_mm(at_c, at_b) > 5.0, "survey: the home end sits higher than centre (%.1f)" % IceGauges.rise_mm(at_c, at_b))
+	var depth := IceGauges.plate_depth(ice, "centre")
+	_expect(absf(float(depth.value) - ice.plate_depth_mm("centre")) <= 0.011, "caliper: the plate depth (%s)" % depth.text)
+	var scan := IceGauges.lidar(ice)
+	_expect(float(scan.max) - float(scan.min) > 8.0, "lidar: the bowl shows (%.1f mm across)" % (float(scan.max) - float(scan.min)))
+
+
+func _check_normal(d: Dictionary) -> void:
+	var r: Dictionary = d.r
+	var ap: ResurfaceAutopilot = d.ap
+	_expect(ap.done and ap.phase == "done", "autopilot: drives the standard pattern to the end (%s)" % ap.phase)
+	_expect(float(r.coverage) >= 0.92, "normal: covers the sheet (%.3f)" % float(r.coverage))
+	_expect(float(r.gouge_after_mm) < float(r.gouge_before_mm) * 0.4, "normal: takes the gouges out (%.2f -> %.2f)" % [float(r.gouge_before_mm), float(r.gouge_after_mm)])
+	_expect(absf(float(r.thickness_change_mm)) < 0.4, "normal: keeps the thickness about level (%+.2f)" % float(r.thickness_change_mm))
+	_expect(not bool(r.jam) and int(r.board_hits) == 0, "normal: no jam, no boards")
+	_expect(float(r.flood_l_left) < 60.0, "normal: 65%% empties the tank over the pattern (%.0f L left)" % float(r.flood_l_left))
+	_expect(float(r.flood_l_left) > 0.0 or float(r.flood_coverage) > 0.95, "normal: the tank lasts the pattern (wet %.2f)" % float(r.flood_coverage))
+	_expect(float(r.dumped_m3) > 0.5 and float(r.bin_m3) < 0.01, "normal: dumps the snow at the pit (%.2f m3)" % float(r.dumped_m3))
+	_expect(float(r.quality) > 0.8 and bool(r.complete), "normal: a good, complete job (%.2f)" % float(r.quality))
+	var mins := float(r.minutes)
+	_expect(mins > 6.0 and mins < 16.0, "normal: takes the minutes a resurface takes (%.1f)" % mins)
+	_expect(r.ice_state is IceSlab, "normal: hands the worked ice back")
+	_expect(str(r.kind) == "normal", "normal: kind")
+	var ice: IceSlab = r.ice_state
+	_expect(ice.wetness() > 0.05, "normal: the ice is wet just after")
+
+
+func _check_dry(d: Dictionary) -> void:
+	var r: Dictionary = d.r
+	_expect(str(r.kind) == "dry", "dry: kind (%s)" % r.kind)
+	_expect(float(r.thickness_change_mm) < -0.3, "dry: lowers the sheet (%+.2f)" % float(r.thickness_change_mm))
+	_expect(float(r.water_l) < 1.0, "dry: no water")
+
+
+func _check_flood(d: Dictionary) -> void:
+	var r: Dictionary = d.r
+	_expect(str(r.kind) == "flood", "flood: kind (%s)" % r.kind)
+	var dt := float(r.thickness_change_mm)
+	_expect(dt > 0.55 and dt < 0.95, "flood: a full tank raises the sheet about 1/32 in (%+.2f mm)" % dt)
+
+
+## A blade wound down too far: the snow comes faster than a tank holds, the
+## bin packs solid and the augers jam.
+func _check_deep(worn: IceSlab) -> void:
+	var deep := ResurfaceAutopilot.NORMAL.duplicate()
+	deep.kind = "deep"
+	deep.blade_mm = ResurfacerSim.BLADE_MAX_MM
+	var d := _drive(worn, deep)
+	var r: Dictionary = d.r
+	var ev: PackedStringArray = d.events
+	_expect(bool(r.jam), "deep blade: the augers jam")
+	_expect(float(d.bin_max) > 0.9, "deep blade: the bin all but overfills (%.2f, %s)" % [float(d.bin_max), ", ".join(ev)])
+	_expect(not bool(r.complete), "deep blade: not a complete job")
+	_expect(float(r.thickness_change_mm) < -0.2, "deep blade: takes the sheet down (%+.2f)" % float(r.thickness_change_mm))
+	# a tank not dumped last time: it packs solid and the driver has to go and dump
+	var full := ResurfaceRun.start(worn, ResurfacerSim.create_doris())
+	full.bin_m3 = ResurfacerSim.SNOW_TANK_M3 * 0.8
+	var ap := ResurfaceAutopilot.new(full, deep)
+	var ev2 := PackedStringArray()
+	while not ap.done and full.time_s < 1500.0:
+		ap.tick(DT)
+		ev2.append_array(full.drain_events())
+	_expect("bin_full" in ev2, "full bin: it jams solid (%s)" % ", ".join(ev2))
+	_expect(ap.gave_up and "dump_done" in ev2, "full bin: the driver gives up the cut and dumps")
+
+
+## A tank a third full: it runs dry partway round and the rest is cut dry.
+func _check_empty_tank(worn: IceSlab) -> void:
+	var dor := ResurfacerSim.create_doris()
+	dor.flood_l = 350.0
+	dor.wash_l = ResurfacerSim.WASH_TANK_L
+	var d := _drive(worn, ResurfaceAutopilot.NORMAL, dor, false)
+	var r: Dictionary = d.r
+	_expect("flood_empty" in (d.events as PackedStringArray), "empty tank: runs dry")
+	_expect(float(r.flood_coverage) < 0.6, "empty tank: much of the cut got no water (%.2f)" % float(r.flood_coverage))
+	_expect(not bool(r.complete), "empty tank: an incomplete cut")
+	_expect(float(r.quality) < 0.85, "empty tank: a worse job (%.2f)" % float(r.quality))
+
+
+func _check_sim_jobs(normal: Dictionary) -> void:
+	var sim := RinkSim.create_m1()
+	sim.doris.part("spark_plugs").condition = 1.0
+	sim.doris.choke_stuck = false
+	var r: Dictionary = normal.r.duplicate()
+	var before_money := sim.money
+	var out := sim.job("resurface", r)
+	_expect(bool(out.ok), "sim: a driven resurface goes through (%s)" % out.text)
+	_expect(absf(sim.ice.thickness_mm - (r.ice_state as IceSlab).thickness_mm) < 1e-3, "sim: adopts the driven ice")
+	_expect(sim.money < before_money and sim.doris.cuts_driven == 1, "sim: gas charged, the cut counted")
+	_expect(float(out.hours) > 0.1, "sim: the drive's minutes are the job's hours (%.2f)" % float(out.hours))
+	# the owner's floods wait for the player in the walk
+	var s2 := RinkSim.create_m1()
+	s2.owner_drives = true
+	s2.advance(60)
+	_expect(not s2.flood_waiting().is_empty(), "sim: the 05:50 flood waits for the owner to drive")
+	var s3 := RinkSim.create_m1()
+	s3.owner_drives = true
+	s3.earl_hired = true
+	_expect(not s3.owner_waits(), "sim: with a driver hired, floods stay automatic")
+	# a depth plate: a day closed, then it's in
+	var s4 := RinkSim.create_m1()
+	var pr := s4.job("install_plate", {"spot": "away_left"})
+	_expect(bool(pr.ok), "plate: ordered (%s)" % pr.get("text", ""))
+	_expect(s4.ice_closed(s4.day + 1), "plate: tomorrow's ice is closed")
+	var cancelled := s4.cancelled_sessions
+	s4.advance_days(2)
+	_expect("away_left" in s4.ice.plates, "plate: frozen in after its day")
+	_expect(s4.cancelled_sessions >= cancelled, "plate: the closed day's sessions are lost")
+	var dr := s4.job("ice_depth")
+	_expect(bool(dr.ok) and (dr.readings as Dictionary).has("away_left"), "plate: read at the new plate")
+	var sv := s4.job("ice_survey", {"points": [[0.0, 0.0], [-28.0, 0.0]]})
+	_expect(bool(sv.ok) and (sv.readings as Dictionary).size() == 2, "survey: two readings logged")
+	_expect(SimInstrument.tiers("ice_level").size() == 3, "instrument: the ice_level tiers")
+	s4.money = 200000.0
+	_expect(s4.buy_tool("ice_level", 2) and s4.doris.auto_level, "instrument: the Level-Sense machine levels itself")
+	var d1 := s4.to_dict()
+	var s5 := RinkSim.from_dict(JSON.parse_string(JSON.stringify(d1)))
+	_expect("away_left" in s5.ice.plates and s5.doris.auto_level and s5.owner_drives == s4.owner_drives, "save: the ice jobs' state round-trips")

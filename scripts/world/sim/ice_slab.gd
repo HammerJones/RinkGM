@@ -72,6 +72,12 @@ const C_WATER := 4.18     # kJ/kg K
 const L_FUSION := 334.0   # kJ/kg
 ## Hot flood water from the bay's tank heater, C (140 F).
 const FLOOD_TEMP_C := 60.0
+## Where a fresh flood's heat goes besides the pipes, kJ/s per m2: down into
+## the cold slab (transient conduction into ice at -5 C runs at about 0.3 to
+## 0.4 kW/m2 over the first ten minutes) and up into the air (convection and
+## evaporation, about 0.15). With the plant's share a 1/32 in flood at 60 C
+## freezes in 10 to 15 minutes, as the pros wait (docs/world/ICE.md 1.4).
+const SLAB_SINK := 0.5
 ## The blade can't reach this close to the boards, m: snow and water collect there.
 const BLADE_REACH := 0.35
 ## Faceoff dots and centre ice, for the depth plates (world metres, x along).
@@ -574,8 +580,14 @@ func wear_sessions(hours: float, skaters: float) -> void:
 		for z in D:
 			var b := x * D + z
 			var gouge := 1.0 + clampf((30.0 - thick[b]) / 8.0, 0.0, 2.0)
-			_wear_pending[b] += skaters * hours * 0.012 * (0.6 + soft) * gouge * traffic(x, z)
+			var d := minf(skaters * hours * 0.012 * (0.6 + soft) * gouge * traffic(x, z), smooth[b])
+			_wear_pending[b] += d
+			smooth[b] -= d
 	_snow_pending += skaters * hours * 0.006 * (0.6 + soft)
+	var sm := 0.0
+	for b in CELLS:
+		sm += smooth[b]
+	_avg_s = sm / CELLS
 
 
 ## Puts the pending skating into the fine grid: gouge strokes by the traffic,
@@ -802,6 +814,8 @@ static func heat_per_mm(temp_c: float) -> float:
 func add_water(i: int, mm: float, temp_c := FLOOD_TEMP_C) -> void:
 	if mm <= 0.0 or inside[i] == 0:
 		return
+	if _active.is_empty():
+		flood_heat_mj = 0.0  # a new flood on dry ice
 	var ice_mm := mm * ICE_PER_WATER
 	t[i] += ice_mm
 	var fill := minf(g[i], ice_mm * (0.6 + 0.4 * clampf(temp_c / 60.0, 0.0, 1.2)))
@@ -812,6 +826,7 @@ func add_water(i: int, mm: float, temp_c := FLOOD_TEMP_C) -> void:
 	hq0[i] += h
 	_pending_mj += h * CELL_AREA / 1000.0
 	_active[i] = true
+	flood_heat_mj = maxf(flood_heat_mj, _pending_mj)
 
 
 func _set_pending(v: float) -> void:
@@ -848,7 +863,7 @@ func freeze(seconds: float) -> float:
 	if _active.is_empty():
 		_pending_mj = 0.0
 		return 0.0
-	var q := freeze_kw() / AREA * clampf(0.55 + (-surface_temp) * 0.09, 0.4, 1.6)  # kJ/s per m2
+	var q := (freeze_kw() / AREA + SLAB_SINK) * clampf(0.55 + (-surface_temp) * 0.09, 0.4, 1.6)  # kJ/s per m2
 	var qs := q * seconds
 	var out_kj := 0.0
 	var done := PackedInt32Array()
@@ -996,6 +1011,9 @@ func resurface(quality: float, shave_mm: float, flood_litres: float, pattern: Pa
 	for b in CELLS:
 		targets[b] = 1.0 - chatter * (0.25 + 0.2 * float(((b / D) * 7 + (b % D) * 3) % 5) / 4.0)
 	var heat_kj := 0.0
+	# hot water melts into the old surface and bonds; cold water sits on top
+	# with air in it (60 C is the standard, docs/world/ICE.md 1.3)
+	quality = clampf(quality * clampf(0.8 + 0.2 * (water_c - 15.0) / 45.0, 0.8, 1.04), 0.0, 1.0)
 	var st := clampf(0.25 + chatter * 1.5 + (1.0 - quality) * 0.3, 0.0, 1.0)
 	var snow_keep := 1.0 - (0.5 + 0.5 * quality)
 	for i in FCELLS:
