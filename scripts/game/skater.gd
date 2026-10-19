@@ -128,6 +128,7 @@ var blade_lvel := Vector2.ZERO  ## blade velocity relative to the body (forward,
 var blade_ang := atan2(DEFAULT_BLADE.y, DEFAULT_BLADE.x)  ## radians from straight ahead, + = right
 var blade_reach := DEFAULT_BLADE.length()
 var _blade_pvel := Vector2.ZERO  # (tangential, radial) blade speed in m/s
+var _lunge := 0.0               # extra reach from leaning out for a loose puck
 var _shot_hand := 0.0            # one_hand() when the current shot was released
 ## The stick move being performed (Moves catalog id), or &"".
 var move_id := &""
@@ -494,7 +495,7 @@ func _loose_puck_reach(stick_target: Vector2, blend: float) -> Variant:
 	var local := Vector2(d.dot(heading), d.dot(right_vec()))
 	var ang := atan2(local.y, local.x)
 	var reach := local.length()
-	if absf(ang) > ARC_HALF or reach > reach_limit(ang) + lerpf(0.05, 0.3, sh) * lerpf(0.6, 1.4, blend):
+	if absf(ang) > ARC_HALF or reach > reach_limit(ang) + lunge() + lerpf(0.05, 0.3, sh) * lerpf(0.6, 1.4, blend):
 		return null
 	# a puck sliding in too hot to handle isn't one you'd lunge at
 	if (puck.vel - vel).length() > 20.0:
@@ -578,10 +579,14 @@ func _update_blade(dt: float, blend: float) -> void:
 		# reaching further (a poke, a loose puck) takes a hand off
 		var a := atan2(l.y, l.x)
 		target = Vector2(cos(a), sin(a)) * lerpf(REACH_MIN, two_hand_reach(a), mag)
+	var lunge_to := 0.0
 	if able:
 		var reach_for: Variant = _loose_puck_reach(target, blend)
 		if reach_for != null:
 			target = reach_for
+			lunge_to = lunge()
+	# leaning out comes and goes with the body, not instantly
+	_lunge = move_toward(_lunge, lunge_to, LUNGE.y * 4.0 * dt)
 	# stickhandling: to move the puck back the other way you go round it,
 	# lifting the blade over and setting it down on the far side
 	crossing = able and has_puck() and move_id == &"" and not winding and _wants_round(target)
@@ -600,7 +605,7 @@ func _update_blade(dt: float, blend: float) -> void:
 		move_h = k[2]
 	# keep it inside the 220 degree arc; one hand reaches further
 	var ang := clampf(atan2(target.y, target.x), -ARC_HALF, ARC_HALF)
-	var reach := clampf(target.length(), REACH_MIN, reach_limit(ang))
+	var reach := clampf(target.length(), REACH_MIN, reach_limit(ang) + _lunge)
 	# the blade swings around the body (it never cuts through it) with limited
 	# speed and acceleration; one hand makes it harder to whip around
 	var oh := one_hand()
@@ -614,6 +619,12 @@ func _update_blade(dt: float, blend: float) -> void:
 		# It still comes loose when you turn harder than that, or when the
 		# grip drops as the bottom hand lets go mid-swing.
 		var oh_to := _one_hand_at(ang, reach)
+		# stickhandling, the hands are already stretched over the outer
+		# quarter of the two-hand reach: ease toward the one-hand cap before
+		# the grip changes (moves and a cupped, tilted blade keep their own)
+		if move_id == &"" and absf(ctrl.tilt) < 0.1:
+			var two := two_hand_reach(ang)
+			oh_to = maxf(oh_to, EDGE_HANDS * smoothstep(two * 0.75, two, maxf(reach, blade_reach)))
 		# a cradled puck (lacrosse) needs the gentlest hands
 		if MovePhysics.glued(move_id):
 			oh_to = 1.0
@@ -623,7 +634,7 @@ func _update_blade(dt: float, blend: float) -> void:
 	want.y = signf(want.y) * minf(absf(want.y), sqrt(2.0 * acc * absf(reach - blade_reach)))
 	_blade_pvel = _blade_pvel.move_toward(want, acc * dt)
 	blade_ang = clampf(blade_ang + _blade_pvel.x / maxf(blade_reach, 0.3) * dt, -ARC_HALF, ARC_HALF)
-	blade_reach = clampf(blade_reach + _blade_pvel.y * dt, REACH_MIN, reach_limit(blade_ang))
+	blade_reach = clampf(blade_reach + _blade_pvel.y * dt, REACH_MIN, reach_limit(blade_ang) + _lunge)
 	var prev_local := blade_local
 	blade_local = Vector2(cos(blade_ang), sin(blade_ang)) * blade_reach
 	blade_lvel = (blade_local - prev_local) / dt
@@ -1100,6 +1111,15 @@ func one_hand() -> float:
 ## happens over a 10 cm band past the two-hand reach so the grip doesn't
 ## flicker.
 const TWO_HAND_LOSS := 0.15
+## Leaning the shoulders out after a loose puck adds this to the arm's
+## reach, at stick handling 0 and 1.
+const LUNGE := Vector2(0.35, 0.45)
+
+
+func lunge() -> float:
+	return lerpf(LUNGE.x, LUNGE.y, skill("stick_handling"))
+## How much of the one-hand carry cap the edge of the two-hand reach takes.
+const EDGE_HANDS := 1.0
 const _REACH_STEP := deg_to_rad(10.0)
 static var _reach_table := PackedFloat32Array()
 
