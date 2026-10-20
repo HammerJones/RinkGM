@@ -23,6 +23,20 @@ import numpy as np
 
 SR = 22050
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets", "audio")
+ASSETS = OUT
+
+
+def _recorded():
+	"""Sounds now made from CC0 recordings by cc0_sounds.py (listed in
+	assets/audio/CREDITS.md): their placeholders are no longer written there."""
+	path = os.path.join(ASSETS, "CREDITS.md")
+	if not os.path.exists(path):
+		return set()
+	import re
+	return set(re.findall(r"^\| `([a-z0-9_]+)\.wav` \|", open(path).read(), re.M))
+
+
+RECORDED = _recorded()
 
 
 # --------------------------------------------------------------------- basics
@@ -32,6 +46,9 @@ def secs(n):
 
 
 def write(name, x, peak=0.89):
+	if OUT == ASSETS and name in RECORDED:
+		print("%-24s kept (a CC0 recording, see CREDITS.md)" % (name + ".wav"))
+		return
 	x = np.asarray(x, dtype=np.float64)
 	m = np.max(np.abs(x))
 	if m > 0:
