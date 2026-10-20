@@ -379,7 +379,17 @@ static func fill(k: VenueKit, id: String, pos: Vector3, rot_y: float, variants: 
 			continue
 		poses.append(xf * pose(v, list[i]))
 		vs.append(v)
-	return place(k, vs, poses, physics, field)
+	if id == "stick_barrel" and physics:
+		# W6: the voxel staves' collision is one voxel thick and its diagonal
+		# steps only touch at corners, so a shoved stick slipped through them
+		# and twitched half inside. A closed ring of overlapping boxes, mid
+		# wall, holds them in (or lets them tumble out over the rim).
+		for i in 24:
+			var a := TAU * i / 24.0
+			var c := pos + Vector3(cos(a), 0, sin(a)) * 0.25
+			k.collider(c + Vector3(-0.05, V, -0.05), c + Vector3(0.05, 12 * V, 0.05))
+	var made := place(k, vs, poses, physics, field)
+	return made
 
 
 ## Sticks at world poses: StickProp bodies (physics) or static copies.

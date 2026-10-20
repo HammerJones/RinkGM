@@ -68,7 +68,8 @@ It needs a renderer, so run it under xvfb (lavapipe is fine):
 - +X end: home dressing room (z −14..−5), resurfacer bay (z ±5, roofed, roll-up
   doors outside, two big gate leaves drawn on the boards), visitors' dressing
   room (z 5..14). Nets are stored in painted bays along the walkway wall on
-  both sides of the bay (`zamboni_bay.net_slots()` lists them). The
+  both sides of the bay, out on the walkway: 4 big, 8 small (`zamboni_bay.net_slots()`
+  lists each net; `set_stored(large, mini)` hides the ones out on the ice). The
   scoreboard is a classic bulb light panel (`BulbBoard`, 7-segment bulb
   digits in one MultiMesh); `scoreboard.mode = "clock"` and `show_time(h, m)`
   turn it into a wall clock between games.

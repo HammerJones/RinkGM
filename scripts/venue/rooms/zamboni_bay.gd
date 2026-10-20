@@ -14,8 +14,9 @@ const H := 5.0
 const PIT := Rect2(42.8, -4.6, 2.5, 2.2)
 ## The resurfacer gate in the end boards (Shell.GATES "x+").
 const GATE_HALF := 1.8
-## Net storage along the walkway wall: [z from, z to, kind]. Big nets are
-## 1.83 m regulation goals, small ones the 1.2 m peewee nets, two high.
+## Net storage along the walkway wall outside the bay: [z from, z to, kind].
+## Big nets are 1.83 m regulation goals, small ones the 1.2 m peewee nets,
+## two side by side and two high per bay.
 const NET_BAYS := [[2.1, 3.95, "large"], [4.15, 6.0, "large"], [6.3, 8.85, "small"]]
 const NET_LARGE := Vector3(1.83, 1.22, 1.0)
 const NET_SMALL := Vector3(1.22, 0.9, 0.7)
@@ -25,6 +26,9 @@ const NET_SMALL := Vector3(1.22, 0.9, 0.7)
 ## melts a little, and the dump_snow job hoses it down the drain.
 var snow := 0.6
 var _heap: MeshInstance3D
+## Per kind: the nets' MultiMeshes and colliders, in net_slots() order.
+var _net_meshes := {"large": [], "mini": []}
+var _net_bodies := {"large": [], "mini": []}
 
 
 func _ready() -> void:
@@ -183,36 +187,110 @@ func _gates(k: VenueKit) -> void:
 		k.block(Vector3(xo + 0.05, top - 0.2, z0), Vector3(xo + 0.06, top - 0.1, z0 + GATE_HALF * 0.25), Color("e0b020") if i % 2 == 0 else Color("1b1d22"), 0.3, 0.0, false)
 
 
-## Nets stored against the walkway wall either side of the bay door, each
-## standing on its painted bay: two big goals and four small ones a side.
+## Nets stored out on the walkway, against the wall either side of the
+## bay's rink door (evening notes W1: never inside the bay), each standing
+## on its painted bay: two big goals and four small ones a side, 4 and 8 in
+## all (RinkOps.NETS_LARGE, NETS_MINI). They draw as one MultiMesh per kind
+## so set_stored() can hide the ones that are out on the ice. The two USE spots
+## (`net_storage` big, `net_storage_mini` small) stand in front of the -Z
+## bays; while they exist KitHud adds no fallback spots of its own.
 func _net_storage(k: VenueKit) -> void:
 	var red: Color = k.aged(Color("c8191e"), 7)
 	var x_wall := X0
+	_net_meshes = {"large": [], "mini": []}
+	_net_bodies = {"large": [], "mini": []}
 	for side in [-1.0, 1.0]:
 		for bay in NET_BAYS:
 			var za: float = side * bay[0]
 			var zb: float = side * bay[1]
-			var zc := (za + zb) * 0.5
-			var big: bool = bay[2] == "large"
-			var size: Vector3 = NET_LARGE if big else NET_SMALL
 			# the painted outline of the bay on the floor
 			var paint := Color("d9b84a").darkened(0.25 if k.age == Age.WORN else 0.0)
 			var x_out := x_wall - (NET_LARGE.z + 0.2)
 			for zz in [za, zb]:
 				k.block(Vector3(x_out, 0.0, zz - 0.04), Vector3(x_wall, 0.012, zz + 0.04), paint, 0.3, 0.06, false)
 			k.block(Vector3(x_out - 0.04, 0.0, minf(za, zb)), Vector3(x_out + 0.04, 0.012, maxf(za, zb)), paint, 0.3, 0.06, false)
-			if big:
-				_net(k, Vector3(x_wall - 0.05, 0, zc), size, red)
-			else:
-				for i in 2:
-					var zi: float = zc + side * (i - 0.5) * (size.x + 0.04)
-					_net(k, Vector3(x_wall - 0.05, 0, zi), size, red)
-					_net(k, Vector3(x_wall - 0.05, size.y + 0.02, zi), size, red)
+	# one shared mesh per kind, drawn as a MultiMesh in slot order (so
+	# set_stored() just trims the visible count), plus a collider per net
+	for kind: String in ["large", "mini"]:
+		var nk := VenueKit.new(7, k.age)
+		var size: Vector3 = NET_LARGE if kind == "large" else NET_SMALL
+		_net(nk, Vector3(size.z, 0, 0), size, red, false)
+		var tmp := Node3D.new()
+		nk.commit(tmp)
+		var xfs: Array[Transform3D] = []
+		for slot: Dictionary in net_slots():
+			if slot.kind != kind:
+				continue
+			var at: Vector3 = slot.pos
+			xfs.append(Transform3D(Basis.IDENTITY, at + Vector3(0.55 - size.z, 0, 0)))
+			var body := StaticBody3D.new()
+			body.name = "Net_%s_%d" % [kind, xfs.size() - 1]
+			body.collision_layer = 1 << (VenueKit.VENUE_LAYER - 1)
+			body.collision_mask = 0
+			var cs := CollisionShape3D.new()
+			var box := BoxShape3D.new()
+			box.size = size
+			cs.shape = box
+			cs.position = at + Vector3(0.55 - size.z * 0.5, size.y * 0.5, 0)
+			body.add_child(cs)
+			k.add(body)
+			(_net_bodies[kind] as Array).append(body)
+		for c in tmp.get_children():
+			if c is MeshInstance3D:
+				var mm := MultiMesh.new()
+				mm.transform_format = MultiMesh.TRANSFORM_3D
+				mm.mesh = (c as MeshInstance3D).mesh
+				mm.instance_count = xfs.size()
+				for i in xfs.size():
+					mm.set_instance_transform(i, xfs[i])
+				var mmi := MultiMeshInstance3D.new()
+				mmi.name = "Nets_%s" % kind
+				mmi.multimesh = mm
+				mmi.cast_shadow = (c as MeshInstance3D).cast_shadow
+				k.add(mmi)
+				(_net_meshes[kind] as Array).append(mm)
+		tmp.free()
+	var l_z: float = -(float(NET_BAYS[0][0]) + float(NET_BAYS[1][1])) * 0.5
+	var m_z: float = -(float(NET_BAYS[2][0]) + float(NET_BAYS[2][1])) * 0.5
+	add_spot(k, VenueSpot.Kind.USE, "net_storage", Vector3(x_wall - 1.6, 1.0, l_z), "Big nets",
+		{"carry": "large", "note": "net_storage", "verb": "TAKE OR RETURN"}, 2.2)
+	add_spot(k, VenueSpot.Kind.USE, "net_storage_mini", Vector3(x_wall - 1.6, 0.6, m_z), "Small nets",
+		{"carry": "mini", "note": "net_storage", "verb": "TAKE OR RETURN"}, 1.8)
+	# the coffee can of ice crampons on the workbench, with its note (it
+	# stood in KitHud's fallback spots, which go once the venue has these)
+	add_spot(k, VenueSpot.Kind.READ, "crampons_can", Vector3(37.9, 1.0, -4.45), "Coffee can with a note",
+		{"note": "crampons_note", "gives": "crampons"}, 1.4)
+
+
+## Shows `large` big and `mini` small nets in storage (the rest are out on
+## the ice), for Mechanics' nets job to call as nets are taken and put back
+## (RinkOps.nets_on). Hidden nets lose their collision too.
+func set_stored(large: int, mini: int) -> void:
+	for kind: String in _net_meshes:
+		var keep := large if kind == "large" else mini
+		for mm: MultiMesh in _net_meshes[kind]:
+			mm.visible_instance_count = clampi(keep, 0, mm.instance_count)
+		var bodies: Array = _net_bodies[kind]
+		for i in bodies.size():
+			var body: StaticBody3D = bodies[i]
+			if is_instance_valid(body):
+				body.collision_layer = (1 << (VenueKit.VENUE_LAYER - 1)) if i < keep else 0
+
+
+## How many of each kind storage shows: {"large": n, "mini": n}.
+func stored() -> Dictionary:
+	var out := {}
+	for kind: String in _net_meshes:
+		var n := 0
+		for mm: MultiMesh in _net_meshes[kind]:
+			n = mm.instance_count if mm.visible_instance_count < 0 else mm.visible_instance_count
+		out[kind] = n
+	return out
 
 
 ## A goal frame and its net, its back against a wall at `back` (x) and its
 ## mouth facing -X (out to the walkway).
-func _net(k: VenueKit, back: Vector3, size: Vector3, red: Color) -> void:
+func _net(k: VenueKit, back: Vector3, size: Vector3, red: Color, collide := true) -> void:
 	var t := 0.05
 	var front := back.x - size.z
 	var z0 := back.z - size.x * 0.5
@@ -229,17 +307,27 @@ func _net(k: VenueKit, back: Vector3, size: Vector3, red: Color) -> void:
 	k.glass(Vector3(back.x - size.z * 0.5, y0 + t, z0), Vector3(back.x - size.z * 0.5 + 0.02, y0 + size.y, z1), false, mesh)
 	for z in [z0, z1 - 0.02]:
 		k.glass(Vector3(front + t, y0 + t, z), Vector3(back.x - size.z * 0.5, y0 + size.y, z + 0.02), false, mesh)
-	k.collider(Vector3(front, y0, z0), Vector3(back.x, y0 + size.y, z1))
+	if collide:
+		k.collider(Vector3(front, y0, z0), Vector3(back.x, y0 + size.y, z1))
 
 
-## Where the nets live, for the net mechanic: [{pos, kind}] in venue space
-## (pos is the middle of the bay on the floor).
+## Where the nets live, for the net mechanic and Career/sim inventory: one
+## entry per stored net, {pos, kind, level} in venue space. pos is the net's
+## mouth line on the floor (x) at its centre (z), on the walkway outside the
+## bay (y is the rack height); kind is "large" (4) or "mini" (8); level 0 on
+## the floor, 1 a small net racked on top of another.
 func net_slots() -> Array:
 	var out := []
 	for side in [-1.0, 1.0]:
 		for bay in NET_BAYS:
-			var zc: float = side * (bay[0] + bay[1]) * 0.5
-			out.append({"pos": Vector3(X0 - 0.6, 0, zc), "kind": bay[2]})
+			var zc: float = side * (float(bay[0]) + float(bay[1])) * 0.5
+			if bay[2] == "large":
+				out.append({"pos": Vector3(X0 - 0.6, 0, zc), "kind": "large", "level": 0})
+				continue
+			for i in 2:
+				var zi: float = zc + side * (i - 0.5) * (NET_SMALL.x + 0.04)
+				for lv in 2:
+					out.append({"pos": Vector3(X0 - 0.6, lv * (NET_SMALL.y + 0.02), zi), "kind": "mini", "level": lv})
 	return out
 
 
