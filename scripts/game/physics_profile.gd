@@ -58,11 +58,12 @@ func apply(sk: Skills) -> void:
 	var hit := sk.n("hitting")
 	var tough := sk.n("toughness")
 
-	# absolute ceiling, dash included: 12 mph for a 1, 25 mph for a 100, rising
-	# faster at the top end, so a beer leaguer (~35) tops out near 15 mph and
-	# senior AAA (~55) near 18
-	max_speed = lerpf(12.0, 25.0, pow(spd, 1.35)) * MPH
-	accel = lerpf(4.0, 8.0, 0.75 * spd + 0.25 * agi)
+	# absolute ceiling, dash included: 11 mph for a 1, 25 mph for a 100, rising
+	# much faster at the top end, so a beer leaguer (~35) tops out near 13 mph
+	# and senior AAA (~55) near 15.5; striding alone cruises at Skater.CRUISE
+	# of that (Sean, 2026-10-19: skating felt far too fast)
+	max_speed = lerpf(11.0, 25.0, pow(spd, 2.0)) * MPH
+	accel = lerpf(3.0, 7.5, pow(0.75 * spd + 0.25 * agi, 1.5))
 	turn_slow = lerpf(5.5, 9.5, agi)
 	turn_fast = lerpf(1.7, 3.3, agi)
 	edge_grip = lerpf(3.2, 7.5, agi)
