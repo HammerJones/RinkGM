@@ -3,8 +3,9 @@ extends VenueRoom
 ## roll-up doors to the rink and to the outside, the resurfacer itself,
 ## the snow-melt pit, a workbench and tool wall. A worn bay houses a rusty
 ## old machine; a renovated one has a new electric unit in club colours.
-## Outside it, the pair of big gates in the boards where the resurfacer
-## goes on the ice, and the net storage along the wall either side.
+## Outside it the Zamboni door in the boards (a RinkDoor the rink glass
+## room hangs over Shell.GATES "x+"), and the net storage along the wall
+## either side.
 
 const X0 := Venue.END_FRONT
 const X1 := Venue.HALF_X - Venue.WALL_T
@@ -14,8 +15,9 @@ const H := 5.0
 const DORIS_AT := Vector3(39.7, 0, 0)
 ## The snow-melt pit under its grate, in venue space.
 const PIT := Rect2(42.8, -4.6, 2.5, 2.2)
-## The resurfacer gate in the end boards (Shell.GATES "x+").
-const GATE_HALF := 1.8
+## The Zamboni door in the end boards (Shell.GATES "x+", a RinkDoor): half
+## its width. Doris's own lane through it is ResurfaceRun.GATE_HALF.
+const GATE_HALF := 2.5
 ## Net storage along the walkway wall outside the bay: [z from, z to, kind].
 ## Big nets are 1.83 m regulation goals, small ones the 1.2 m peewee nets,
 ## two side by side and two high per bay.
@@ -80,7 +82,6 @@ func build(k: VenueKit) -> void:
 	k.slab(Vector3(X0, H, -Z - 0.15), Vector3(X1, H + 0.25, Z + 0.15), block_col.darkened(0.15), 1.0)
 	k.slab(Vector3(X0 + 0.3, H - 0.02, -Z + 0.15), Vector3(X1, H, Z - 0.15), k.by_age(Color("8f8b80"), Color("a39f94"), Color("c9c7c0")), 1.0, 0.05, true, false)
 	_m1(k)
-	_gates(k)
 	_net_storage(k)
 	room_light(k, Vector3(40.0, H - 0.5, 0.0), 7.0)
 	# lights and sign
@@ -167,42 +168,6 @@ func _m1(k: VenueKit) -> void:
 	var sign := VenueSign.make([["MOUNT DORIS", VenueSign.AMBER], ["NO CLIMBING", VenueSign.RED]], 11, 2, 0.02)
 	sign.name = "MountDorisSign"
 	k.sign(sign, Transform3D(Basis(Vector3.UP, PI), Vector3(xo + 2.5, 1.25, -12.24)))
-
-
-## The resurfacer gate: two big leaves in the end boards and the glass over
-## them, hinged at the outer posts and latched in the middle. Trim over the
-## rink's own boards (they stay shut until the gate mechanic opens them).
-func _gates(k: VenueKit) -> void:
-	var xo := Rink.HALF_L + 0.32  # walkway face of the boards
-	var top := VenuePhysics.board_top()
-	var glass_top := top + VenuePhysics.END_GLASS
-	var steel: Color = k.by_age(Color("8a7a5a"), Color("9aa0a6"), Color("2a2e36"))
-	var hinge := Color("55585e")
-	for side in [-1.0, 1.0]:
-		var z_out: float = side * GATE_HALF
-		var z_in: float = side * 0.03
-		var zl := minf(z_out, z_in)
-		var zh := maxf(z_out, z_in)
-		# the leaf's frame on the walkway side: stiles, rails and a brace
-		for z in [z_out, z_in]:
-			k.block(Vector3(xo, 0.05, z - 0.04), Vector3(xo + 0.05, glass_top, z + 0.04), steel, 0.3, 0.03, false)
-		for y in [0.05, top - 0.08, glass_top - 0.08]:
-			k.block(Vector3(xo, y, zl), Vector3(xo + 0.05, y + 0.08, zh), steel, 0.3, 0.03, false)
-		var d := Vector3(0, top - 0.25, z_in - z_out)
-		var brace := Transform3D(Basis(Vector3(0.05, 0, 0), d.normalized() * d.length(), Vector3(0, -d.z, d.y).normalized() * 0.06), Vector3(xo + 0.025, 0.1 + d.y * 0.5, (z_out + z_in) * 0.5))
-		k.oriented(brace, steel)
-		# hinges on the outer post, a handle by the latch
-		for y in [0.3, 0.85, 1.6, 2.6]:
-			k.block(Vector3(xo + 0.02, y, z_out - 0.06), Vector3(xo + 0.09, y + 0.12, z_out + 0.06), hinge, 0.2, 0.0, false)
-		k.block(Vector3(xo + 0.05, 0.75, z_in - side * 0.14), Vector3(xo + 0.12, 0.95, z_in - side * 0.1), hinge, 0.2, 0.0, false)
-		# the seams show on the ice side too
-		k.block(Vector3(Rink.HALF_L - 0.012, 0.02, z_out - 0.015), Vector3(Rink.HALF_L, top - 0.02, z_out + 0.015), Color("2a2c30"), 0.2, 0.0, false)
-	k.block(Vector3(Rink.HALF_L - 0.012, 0.02, -0.015), Vector3(Rink.HALF_L, top - 0.02, 0.015), Color("2a2c30"), 0.2, 0.0, false)
-	# the drop bolt in the middle and a yellow-and-black stripe over the gate
-	k.block(Vector3(xo + 0.05, 0.0, -0.03), Vector3(xo + 0.1, 0.6, 0.03), hinge, 0.2, 0.0, false)
-	for i in 8:
-		var z0 := -GATE_HALF + i * GATE_HALF * 0.25
-		k.block(Vector3(xo + 0.05, top - 0.2, z0), Vector3(xo + 0.06, top - 0.1, z0 + GATE_HALF * 0.25), Color("e0b020") if i % 2 == 0 else Color("1b1d22"), 0.3, 0.0, false)
 
 
 ## Nets stored out on the walkway, against the wall either side of the

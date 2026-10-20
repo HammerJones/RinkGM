@@ -46,6 +46,9 @@ func _collect_places() -> void:
 	places.clear()
 	seats.clear()
 	doors = venue.all_doors() if venue and venue.has_method("all_doors") else []
+	# the doors in the rink boards aren't for walking through: people don't
+	# open them in passing and the walk mesh keeps them shut
+	doors = doors.filter(func(d) -> bool: return not d is RinkDoor)
 	if venue and venue.has_method("places"):
 		# the venue names its own spots (checked for floor and standing room)
 		var vp: Dictionary = venue.places()

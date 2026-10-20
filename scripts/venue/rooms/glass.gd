@@ -4,6 +4,9 @@ extends VenueRoom
 ## from VenuePhysics, which the puck and the shell's board collider use too, so
 ## a puck clears exactly the glass you see. Panels and frames are
 ## the asset kit's glass_pane and glass_frame at the room's age.
+## The doors in the boards are hung here too (RinkDoors): their glass is the
+## same kit panel at the same age, on the leaf, and the fixed panels stop at
+## each door's opening.
 
 const PANEL := 1.83   # the kit panel (6 ft)
 const PANE_H := 1.17  # kit panel height above the boards
@@ -33,7 +36,8 @@ func build(k: VenueKit) -> void:
 	# Low detail: from the broadcast camera the bolts and rust are a pixel.
 	var pane := Props.mesh("glass_pane", k.age, 1)
 	var frame := Props.mesh("glass_frame", k.age, 1)
-	for smp in _perimeter(PANEL):
+	RinkDoors.build(self, k)
+	for smp in _pieces(_perimeter(PANEL)):
 		var p: Vector2 = smp[0]
 		var t: Vector2 = smp[1]
 		var w: float = smp[2]
@@ -48,6 +52,46 @@ func build(k: VenueKit) -> void:
 		var xf := Transform3D(basis, Vector3(p.x + n.x * 0.16, top, p.y + n.y * 0.16))
 		k.instance(pane, xf)
 		k.instance(frame, xf)
+
+
+## The panels with the doors' openings taken out: a panel an opening
+## overlaps is cut into the pieces either side of it (each its own stretched
+## kit panel, with its own post), same sample format.
+func _pieces(samples: Array) -> Array:
+	var out := []
+	for smp in samples:
+		var p: Vector2 = smp[0]
+		var t: Vector2 = smp[1]
+		var w: float = smp[2]
+		var wall := ""
+		if absf(t.x) > 0.99 and absf(absf(p.y) - Rink.HALF_W) < 0.01:
+			wall = "z+" if p.y > 0.0 else "z-"
+		elif absf(t.y) > 0.99 and absf(absf(p.x) - Rink.HALF_L) < 0.01:
+			wall = "x+" if p.x > 0.0 else "x-"
+		var spans := RinkDoors.glass_spans(wall) if wall != "" else []
+		if spans.is_empty():
+			out.append(smp)
+			continue
+		var along := p.x if wall[0] == "z" else p.y
+		var bits := [[along - w * 0.5, along + w * 0.5]]
+		for s: Array in spans:
+			var next := []
+			for b: Array in bits:
+				if s[1] <= b[0] or s[0] >= b[1]:
+					next.append(b)
+					continue
+				if s[0] > b[0]:
+					next.append([b[0], s[0]])
+				if s[1] < b[1]:
+					next.append([s[1], b[1]])
+			bits = next
+		for b: Array in bits:
+			if b[1] - b[0] < 0.02:
+				continue
+			var c: float = (b[0] + b[1]) * 0.5
+			var q := Vector2(c, p.y) if wall[0] == "z" else Vector2(p.x, c)
+			out.append([q, t, b[1] - b[0]])
+	return out
 
 
 ## Board line samples [[position, unit tangent, spacing], ...], about `step` apart.

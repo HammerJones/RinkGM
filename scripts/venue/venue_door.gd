@@ -15,6 +15,10 @@ var height := 2.2
 var color := Color("6f4b2e")
 var label := ""
 var is_open := false
+## How far a swinging leaf turns open and how long it takes (RinkDoor's
+## Zamboni gate folds right back against the boards).
+var swing := deg_to_rad(95.0)
+var swing_time := 0.45
 var leaves: Array[Node3D] = []
 var _tween: Tween
 ## Things stuck to the (first) leaf, kept until the leaf exists: [node,
@@ -132,7 +136,7 @@ func _set_open(v: bool) -> void:
 		if dir == 0.0:
 			_tween.tween_property(pivot, "position:y", height - 0.25 if v else 0.0, 1.6)
 		else:
-			_tween.tween_property(pivot, "rotation:y", (-dir * deg_to_rad(95.0)) if v else 0.0, 0.45)
+			_tween.tween_property(pivot, "rotation:y", (-dir * swing) if v else 0.0, swing_time)
 	if RinkSound.enabled():
 		# steel doors: the push bar and the hinge's groan, then the closer
 		# pulling it home onto the latch; roll-ups rattle lower and slower
