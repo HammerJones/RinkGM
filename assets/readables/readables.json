@@ -384,6 +384,84 @@
    "kind": "board"
   },
   {
+   "id": "sign_tickets",
+   "texture": "res://assets/readables/sign_tickets.png",
+   "texels": [
+    222,
+    55
+   ],
+   "size": [
+    1.665,
+    0.4125
+   ],
+   "kind": "sign"
+  },
+  {
+   "id": "sign_programs",
+   "texture": "res://assets/readables/sign_programs.png",
+   "texels": [
+    155,
+    127
+   ],
+   "size": [
+    0.961,
+    0.7874
+   ],
+   "kind": "board"
+  },
+  {
+   "id": "sign_room_3",
+   "texture": "res://assets/readables/sign_room_3.png",
+   "texels": [
+    93,
+    37
+   ],
+   "size": [
+    0.4185,
+    0.1665
+   ],
+   "kind": "plaque"
+  },
+  {
+   "id": "sign_room_4",
+   "texture": "res://assets/readables/sign_room_4.png",
+   "texels": [
+    67,
+    67
+   ],
+   "size": [
+    0.3685,
+    0.3685
+   ],
+   "kind": "sign"
+  },
+  {
+   "id": "sign_room_5",
+   "texture": "res://assets/readables/sign_room_5.png",
+   "texels": [
+    71,
+    71
+   ],
+   "size": [
+    0.3195,
+    0.3195
+   ],
+   "kind": "sign"
+  },
+  {
+   "id": "sign_room_6",
+   "texture": "res://assets/readables/sign_room_6.png",
+   "texels": [
+    73,
+    75
+   ],
+   "size": [
+    0.3285,
+    0.3375
+   ],
+   "kind": "plaque"
+  },
+  {
    "id": "banner_lumber_kings",
    "texture": "res://assets/readables/banner_lumber_kings.png",
    "texels": [

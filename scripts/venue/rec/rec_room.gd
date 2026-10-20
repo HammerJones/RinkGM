@@ -211,7 +211,12 @@ func _hang(k: VenueKit, d: Array, along: String, center: float, wall_col: Color)
 		k.block(Vector3(pos.x - hw, d[5], pos.z - th * 0.5), Vector3(pos.x + hw, d[5] + 0.08, pos.z + th * 0.5), trim, 0.5, 0.0, false)
 	else:
 		k.block(Vector3(pos.x - th * 0.5, d[5], pos.z - hw), Vector3(pos.x + th * 0.5, d[5] + 0.08, pos.z + hw), trim, 0.5, 0.0, false)
-	# a RINK-OS plate on the outside, over the door
+	# a RINK-OS plate on the outside, over the door. World: not on the
+	# numbered dressing rooms, which hang their own real sign by the door
+	# (rec_locker.gd, W17)
+	var room_sign := "sign_room_" + String(d[0]).trim_prefix("Dressing room ")
+	if String(d[0]).begins_with("Dressing room ") and Readable.has_def(room_sign):
+		return
 	var out := -_inward(d)
 	var text: String = "// " + String(d[0]).to_upper()
 	var plate := VenueSign.make([[text, plate_color()]], text.length() + 1, 1, 0.018)

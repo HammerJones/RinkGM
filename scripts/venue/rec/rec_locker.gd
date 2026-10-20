@@ -46,8 +46,13 @@ func furnish(k: VenueKit) -> void:
 	var plan := [["// ROOM %d" % _number(), VenueSign.WHITE], ["----", Color("8a8f99")], ["SKATE HARD", Color("1b1d22")], ["HAVE FUN", Color("1b1d22")]]
 	var board := wall_sign(k, plan, 12, 4, 0.02, Vector3(x0 + 0.15, 1.6, -37.0), Vector3(1, 0, 0), "Whiteboard", Color("eef0f2") if k.age != Age.WORN else Color("d8d6cc"))
 	board.dead = 0.0
-	# the room number big over the door, inside
-	wall_sign(k, [["%d" % _number(), VenueSign.AMBER]], 2, 1, 0.06, Vector3(x0 + 4.5, 2.2, z0 + 0.15), Vector3(0, 0, 1), "RoomNumber")
+	# World: the room number, a real sign in each room's own 90s style (an
+	# engraved plate, painted plywood, a steel plate, a brass numeral that
+	# swung round), over the door inside and beside the door in the hall (W17)
+	var num_id := "sign_room_%d" % _number()
+	if Readable.has_def(num_id):
+		readable(k, num_id, Vector3(x0 + 4.5, 2.25, z0 + 0.15), Vector3(0, 0, 1)).name = "RoomNumber"
+		readable(k, num_id, Vector3(x0 + 3.0, 1.75, z0 - 0.15), Vector3(0, 0, -1)).name = "RoomNumberHall"
 	# World: a stick rack by the door, a different design in each room, full
 	# of real sticks (playtest #28, #35), and a tape ball someone left
 	_stick_racks(k, team)
