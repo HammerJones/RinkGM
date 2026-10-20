@@ -289,6 +289,14 @@ def arena_room():
 	return loop(filt(x, 25.0), 104.0, 8.0, 1.0), [src]
 
 
+def steady_loop(sid, lo, start, dur, xf=0.6, hi=0.0, note=""):
+	"""A seamless loop of `dur` s from a steady stretch of Freesound `sid`."""
+	def build():
+		x, src = freesound(sid)
+		return loop(filt(x, lo, hi), start, dur, xf), [src]
+	return build
+
+
 RECIPES = {
 	"puck_boards": (puck_boards, "one hit cut out, low rumble filtered, short arena tail added"),
 	"puck_post": (puck_post, "one strike and its ring cut to 3.3 s, rumble filtered"),
@@ -306,6 +314,19 @@ RECIPES = {
 	"crowd_ooh": (crowd_ooh, "the ooh cut out, arena tail added"),
 	"crowd_murmur": (crowd_murmur, "8 s cut into a seamless loop, rumble filtered"),
 	"arena_room": (arena_room, "8 s cut into a seamless loop"),
+	# Doris and the building's machines (loops). No CC0 resurfacer recording
+	# exists, so Doris's gas four-cylinder idles on a car's.
+	"zamboni_idle": (steady_loop(616598, 30.0, 41.5, 6.0, 0.8), "a car's gas four-cylinder at idle, 6 s cut into a seamless loop"),
+	"plant_room": (steady_loop(848086, 25.0, 109.25, 8.0, 1.0), "a hotel plant room's compressors, 8 s cut into a seamless loop"),
+	"fluorescent_buzz": (steady_loop(870708, 50.0, 46.75, 4.0, 0.5), "fluorescent tube hum, 4 s cut into a seamless loop"),
+	"lobby_room": (steady_loop(842225, 30.0, 58.25, 8.0, 1.0), "an empty hall's air and a vending machine, 8 s cut into a seamless loop"),
+	"wash_pump": (steady_loop(637715, 40.0, 2.25, 6.0), "a small electric water pump, 6 s cut into a seamless loop"),
+	"edger_motor": (steady_loop(402565, 60.0, 8.0, 6.0), "a two-stroke string trimmer running, 6 s cut into a seamless loop"),
+	"auger_grind": (steady_loop(184410, 40.0, 2.25, 4.0, 0.5), "a snowblower's augers in snow, 4 s cut into a seamless loop"),
+	"blade_scrape": (steady_loop(450718, 80.0, 26.0, 6.0), "a shovel scraping an outdoor rink's ice, 6 s cut into a seamless loop"),
+	"flood_water": (steady_loop(770039, 80.0, 1.5, 5.0), "water poured out onto a stone floor, 5 s cut into a seamless loop"),
+	"hose_fill": (steady_loop(452663, 60.0, 66.0, 6.0), "a hose filling a bucket, 6 s cut into a seamless loop"),
+	"hose_spray": (steady_loop(754321, 80.0, 1.75, 6.0), "a garden hose spraying, 6 s cut into a seamless loop"),
 	"glass_rattle": (glass_rattle, "the hard-close hit and pane rattle cut out, light arena tail added"),
 }
 GAIN = {}
