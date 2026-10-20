@@ -51,9 +51,13 @@ func _input(event: InputEvent) -> void:
 		if event.is_action_pressed("ui_cancel"):
 			get_viewport().set_input_as_handled()
 			close(false)
-		elif event is InputEventKey and event.pressed and event.keycode == KEY_ENTER and not event.shift_pressed:
+		elif event is InputEventKey and event.pressed and event.keycode in [KEY_ENTER, KEY_KP_ENTER]:
 			get_viewport().set_input_as_handled()
-			close(true)
+			if event.shift_pressed:
+				# TextEdit ignores Shift+Enter, so insert the new line ourselves.
+				_text.insert_text_at_caret("\n")
+			else:
+				close(true)
 		return
 	var toggle := false
 	if InputMap.has_action("playtest_note"):
