@@ -269,6 +269,8 @@ func _faces(b: VoxelMeshBuilder, lo: Vector3, hi: Vector3, col: Color, tile: flo
 
 ## Adds the meshes, colliders, signs and extra nodes under `parent`.
 func commit(parent: Node3D) -> void:
+	# a room's `overhead`, or a plain holder node marked with the meta
+	var overhead: bool = parent.get("overhead") == true or parent.get_meta("overhead", false) == true
 	for pair in [[_solid, null], [_glow, glow_material()], [_glass, glass_material()]]:
 		var b: VoxelMeshBuilder = pair[0]
 		if b.is_empty():
@@ -278,7 +280,7 @@ func commit(parent: Node3D) -> void:
 		# furniture casts shadows when the quality allows; overhead rooms (the
 		# roof, the lamp truss) never do or they'd black out the ice, and lamp
 		# faces and glass never do
-		mi.cast_shadow = Look.cast() if pair[1] == null and not parent.get("overhead") else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.cast_shadow = Look.cast() if pair[1] == null and not overhead else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(mi)
 	if not _shapes.is_empty():
 		var body := StaticBody3D.new()
@@ -303,7 +305,7 @@ func commit(parent: Node3D) -> void:
 			mm.set_instance_transform(i, xfs[i])
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
-		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if parent.get("overhead") else Look.cast()
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if overhead else Look.cast()
 		parent.add_child(mmi)
 	if not _occluders.is_empty():
 		var verts := PackedVector3Array()

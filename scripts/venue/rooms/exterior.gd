@@ -63,6 +63,7 @@ func build(k: VenueKit) -> void:
 	_roof_units(top)
 	_top = Node3D.new()
 	_top.name = "RoofTop"
+	_top.set_meta("overhead", true)  # the roof never shadows the bowl
 	top.commit(_top)
 	_top.visible = not _hidden
 	k.add(_top)

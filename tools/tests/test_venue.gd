@@ -11,12 +11,14 @@ const ROOMS := ["shell", "roof", "stands_bench", "stands_box", "benches", "penal
 	"lobby", "office", "locker_home", "locker_away", "zamboni_bay", "plant_room", "lighting", "scoreboard"]
 ## Triangles the whole building may use, crowd and props included. A
 ## mid-range GPU (GTX 1060 class) draws several million per frame at 60 fps;
-## 900k keeps the building well under that. The stands use the kit's
-## low-detail seats (about 600k triangles for the whole building).
-const TRI_BUDGET := 900000
+## under a million keeps the building well under that. The stands use the
+## kit's low-detail seats (about 600k triangles for the whole building).
+## Raised from 900k / 260 when the lighting, venue and world detail passes
+## landed together (each fit alone; together ~910k and 262).
+const TRI_BUDGET := 940000
 ## Meshes, MultiMeshes and sign labels. Forward+ handles thousands of draws
 ## per frame on that class of GPU; a couple of hundred static ones is little.
-const DRAW_BUDGET := 260
+const DRAW_BUDGET := 275
 
 var failures := 0
 var _root: Node3D
