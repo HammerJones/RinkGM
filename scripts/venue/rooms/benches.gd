@@ -4,6 +4,11 @@ extends VenueRoom
 ## racks and water bottles. Home bench is on the -X half.
 
 const BENCHES := [[-11.4, -2.6], [2.6, 11.4]]
+## Skaters dressed per team (goalies keep theirs in the crease): one spare each
+## stands in the bench (W11), from SPARE_FROM in from each end, SPARE_GAP apart.
+const DRESSED := 18
+const SPARE_FROM := 1.8  # clear of the ice gates at the bench ends (W9, W10)
+const SPARE_GAP := 0.22
 
 
 func _ready() -> void:
@@ -43,21 +48,26 @@ func build(k: VenueKit) -> void:
 		for ex in [x0, x1]:
 			k.aged_block(Vector3(ex - 0.08, 0, z0), Vector3(ex + 0.08, 1.3, z1 - 0.25), wall, 0.5)
 			k.glass(Vector3(ex - 0.03, 1.3, z0), Vector3(ex + 0.03, 2.5, z1 - 0.25))
-		# World: real sticks leaning on the back wall from the walkway side
-		# (playtest #40): StickProp bodies on a walk, static copies in a match;
-		# a rubber blade mat under them. Bottles on the wall's cap.
-		var rack_x := x0 + 0.6 if home else x1 - 3.6
-		var face := z1 - 0.245
+		# World: each dressed player's spare stick stood up inside the bench
+		# (evening notes W11; the one in play is in his hands): team-issue
+		# sticks in the club's colours, each player's own curve and tape,
+		# leaning on the inside of the boards in two rows clear of the gates at
+		# the bench ends and of the middle where the lines change. StickProp
+		# bodies on a walk, static copies in a match.
 		var pal := Models.team_palette("", team_col, home_secondary() if home else Color("eeeeea"))
-		var mix := StickProps.room_mix(pal, 30 + bi, 10, 10, 0.75)
+		var tapes := ["white", "black", "black", "white", "candy"]
+		var top := VenuePhysics.board_top()
 		var vs: Array[Dictionary] = []
 		var poses: Array[Transform3D] = []
-		for i in 10:
-			var v: Dictionary = mix[i]
+		for i in DRESSED:
+			var h := absi(hash(Vector3i(bi, i, 11)))
+			var v := StickProps.team_variant(pal, 1 if h % 3 != 0 else -1, tapes[(h >> 4) % tapes.size()])
+			var end := i % 2  # alternate ends: half the bench at each
+			var j := int(i / 2.0)
+			var sx: float = x0 + SPARE_FROM + j * SPARE_GAP if end == 0 else x1 - SPARE_FROM - j * SPARE_GAP
 			vs.append(v)
-			poses.append(StickProps.pose(v, StickProps.lean_slot(Vector3(rack_x + i * 0.3, 1.33, face - 0.022), Vector3.BACK, 12.0)))
+			poses.append(StickProps.pose(v, StickProps.lean_slot(Vector3(sx, top, z0 - 0.022), Vector3.BACK, 10.0, 0.06)))
 		StickProps.place(k, vs, poses, StickProps.walkable(self))
-		k.block(Vector3(rack_x - 0.2, 0.0, face - 0.7), Vector3(rack_x + 2.9, 0.012, face), Color("1b1c1f"), 0.5, 0.04, false)
 		for i in 8:
 			var bx := (x0 + x1) * 0.5 - 1.2 + i * 0.3
 			var bottle: Color = Color(["2f80c8", "d8d4c7", "c84b2f", "3e8f4f"][i % 4]) if k.age == VenueRoom.Age.WORN else team_col.lightened(0.1)

@@ -352,6 +352,22 @@ func _check_venue() -> void:
 		var c := _count_sticks(_venue.rooms[id])
 		counts.append("%s %d" % [id, c])
 		_expect(c >= 4, "%s has real sticks (%d)" % [id, c])
+	# W11: the benches hold exactly one spare team stick per dressed skater,
+	# stood inside the bench (between the boards and the back wall), and
+	# they stay put once let go
+	var bench_sticks: Array = _venue.rooms["benches"].find_children("*", "StickProp", true, false)
+	var inside := bench_sticks.all(func(s: StickProp) -> bool: return s.global_position.z > -Venue.BENCH_BACK and s.global_position.z < -Venue.BOARD_OUT + 0.05)
+	var team := bench_sticks.all(func(s: StickProp) -> bool: return str(s.variant.get("model", "")) == "team")
+	_expect(bench_sticks.size() == 2 * 18 and inside and team, "the benches stand %d team sticks inside them, one spare per skater (36)" % bench_sticks.size())
+	var bstart := {}
+	for s: StickProp in bench_sticks:
+		bstart[s] = s.global_position
+		s.sleeping = false  # woken: the boards and the mat must hold them
+	await _frames(90)
+	var bmoved := 0.0
+	for s: StickProp in bench_sticks:
+		bmoved = maxf(bmoved, s.global_position.distance_to(bstart[s]))
+	_expect(bmoved < 0.05, "the bench sticks stay stood up (moved at most %.3f m)" % bmoved)
 	var st := _venue.stats()
 	print("  walk venue with sticks: ", st)
 	_venue.set_all_ages(Wear.WORN)
