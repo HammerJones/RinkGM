@@ -1111,6 +1111,8 @@ func one_hand() -> float:
 ## happens over a 10 cm band past the two-hand reach so the grip doesn't
 ## flicker.
 const TWO_HAND_LOSS := 0.15
+## Furthest the blade gets with both hands on (a little past the stick's travel).
+const GRIP_MAX := 1.7
 ## Leaning the shoulders out after a loose puck adds this to the arm's
 ## reach, at stick handling 0 and 1.
 const LUNGE := Vector2(0.35, 0.45)
@@ -1130,9 +1132,10 @@ static func _one_hand_at(ang: float, reach: float) -> float:
 
 
 ## How far out the bottom hand can stay on the stick at this angle: all but
-## the last TWO_HAND_LOSS of the body's reach.
+## the last TWO_HAND_LOSS of the body's reach, and no more than GRIP_MAX
+## (the bottom arm's own length).
 static func grip_reach(ang: float) -> float:
-	return maxf(REACH_MIN + 0.05, reach_limit(ang) - TWO_HAND_LOSS)
+	return maxf(REACH_MIN + 0.05, minf(GRIP_MAX, reach_limit(ang) - TWO_HAND_LOSS))
 
 
 ## How far the stick's travel takes the blade at this angle: as far as
