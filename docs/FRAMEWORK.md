@@ -179,10 +179,13 @@ Hero props come from `tools/propgen/`, a Python generator (numpy and
 Pillow only): a prop is a small signed-distance scene voxelised at its
 resolution, with a palette lifted from the references, a 5x7 bitmap font
 for labels (flat faces or wrapped around a cylinder), grilles, vent slots,
-screws and dither. `tools/propgen/library.py` holds the eight-prop
-retro-electronics set (boombox, VCR, VHS tape, desk phone, walkie-talkie,
-coffee mug, microwave, wall clock) and writes each `.vox` with its
-manifest in `data/props/`; `--preview` adds a quick render per prop.
+screws and dither. `tools/propgen/library.py` holds the retro set
+(boombox, VCR, VHS tape, desk phone, walkie-talkie, coffee mug, microwave,
+wall clock, and the lobby pay phone booth built from a photo) and writes
+each `.vox` with its manifest in `data/props/`; `--preview` adds a quick
+render per prop. A prop from a photo is the same loop: proportions and
+palette read off the picture, built, rendered on the sheet next to the
+photo, adjusted; two or three rounds.
 
 ```
 python3 tools/propgen/library.py                 # regenerate everything
@@ -210,9 +213,12 @@ Two things the generator settled that apply to every `.vox`:
   low-detail mesh and the collision boxes in the `VoxAsset` (the
   `bake_mesh` import option), reading `voxel_m` from the prop's manifest.
   A 100k-voxel prop then loads in milliseconds; meshing it at runtime took
-  1 to 4 s. Hero props are 30k to 150k triangles with AO (the dither is
-  what stops faces merging); the flat low-detail mesh is for distance and
-  big repeats.
+  1 to 4 s. Hero props are 20k to 130k triangles with AO (the dither is
+  what stops faces merging); the low-detail mesh snaps colours to a coarse
+  palette first (`quantize`), so the dither collapses and it comes out at
+  a fraction of the faces, for distance and big repeats. Resolution is the
+  other lever: triangles scale with the inverse square of the voxel size,
+  and a handheld reads the same at 1.4 mm as at 1 mm.
 
 ## 6. The prop studio
 

@@ -6,9 +6,9 @@
   "mesh": "merged",
   "name": "Walkie-talkie",
   "pivot": [
-    32.5,
+    23.0,
     0,
-    20.0
+    14.5
   ],
   "shape": [
     [
@@ -17,9 +17,9 @@
     ]
   ],
   "size_m": [
-    0.065,
+    0.0644,
     0.245,
-    0.04
+    0.0406
   ],
   "sound": "plastic",
   "source": "tools/propgen/library.py",
@@ -36,7 +36,7 @@
     "use"
   ],
   "vox": "art/props/walkie_talkie.vox",
-  "voxel_m": 0.001,
+  "voxel_m": 0.0014,
   "wear": {
     "renovated": "none",
     "repaired": "tint:8a7a60:0.1",

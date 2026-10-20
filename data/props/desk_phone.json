@@ -6,15 +6,15 @@
   "mesh": "merged",
   "name": "Desk phone",
   "pivot": [
-    76.5,
+    57.5,
     0,
-    66.5
+    50.0
   ],
   "shape": [],
   "size_m": [
-    0.2295,
+    0.23,
     0.12,
-    0.1995
+    0.2
   ],
   "sound": "plastic",
   "source": "tools/propgen/library.py",
@@ -30,7 +30,7 @@
     "use"
   ],
   "vox": "art/props/desk_phone.vox",
-  "voxel_m": 0.0015,
+  "voxel_m": 0.002,
   "wear": {
     "renovated": "none",
     "repaired": "tint:8a7a60:0.1",

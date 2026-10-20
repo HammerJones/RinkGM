@@ -1,0 +1,39 @@
+{
+  "collision_cell": 8,
+  "id": "wall_phone_booth",
+  "inspect": "The lobby pay phone in its wood booth. Local calls were a quarter; the binder underneath is the league phone list.",
+  "mass_kg": 22.0,
+  "mesh": "merged",
+  "name": "Pay phone",
+  "pivot": [
+    46.0,
+    0,
+    60
+  ],
+  "shape": [],
+  "size_m": [
+    0.46,
+    0.9,
+    0.3
+  ],
+  "sound": "wood",
+  "source": "tools/propgen/library.py",
+  "tags": [
+    "lobby",
+    "hallway",
+    "electronics",
+    "furniture"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "inspect",
+    "use"
+  ],
+  "vox": "art/props/wall_phone_booth.vox",
+  "voxel_m": 0.005,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

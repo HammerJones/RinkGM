@@ -140,11 +140,15 @@ func _show(id: String) -> void:
 	var dir := Vector3(sin(deg_to_rad(yaw)), 0.55, -cos(deg_to_rad(yaw))).normalized()
 	_cam.position = centre + dir * dist
 	_cam.look_at(centre, Vector3.UP)
+	var lod_tris := 0
+	if asset.mesh_lod and asset.mesh_lod.get_surface_count() > 0:
+		lod_tris = asset.mesh_lod.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() / 3
 	_label.text = (
-		"%s  %d tris  %.2f x %.2f x %.2f m"
+		"%s  %d tris (lod %d)  %.2f x %.2f x %.2f m"
 		% [
 			id,
 			mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() / 3,
+			lod_tris,
 			aabb.size.x,
 			aabb.size.y,
 			aabb.size.z

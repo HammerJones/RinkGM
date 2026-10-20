@@ -138,7 +138,7 @@ def vcr() -> Scene:
 def vhs_tape() -> Scene:
     """A VHS cassette with a hand-written label. 0.188 x 0.025 x 0.104 m at
     1.2 mm voxels (the micro cassette's density)."""
-    v = 0.0012
+    v = 0.0015
     s = Scene((0.19, 0.03, 0.11), v)
     W, H, D = 0.188, 0.025, 0.104
     s.add(s.rbox((W / 2, H / 2, D / 2), (W, H, D), r=0.003), PAL.grey_dark, dither=PAL.grey_dark2, amount=0.18)
@@ -161,7 +161,7 @@ def vhs_tape() -> Scene:
 def desk_phone() -> Scene:
     """A push-button desk phone with the handset in the cradle and a coiled
     cord. 0.23 x 0.11 x 0.20 m at 1.5 mm voxels."""
-    v = 0.0015
+    v = 0.002
     s = Scene((0.23, 0.12, 0.21), v)
     W, D = 0.23, 0.20
     # wedge body: a box cut by a sloping plane
@@ -199,7 +199,7 @@ def desk_phone() -> Scene:
 def walkie_talkie() -> Scene:
     """A rink staff handheld radio: rubber antenna, speaker grille, a big
     orange talk button. 0.065 x 0.25 x 0.035 m at 1 mm voxels."""
-    v = 0.001
+    v = 0.0014
     s = Scene((0.07, 0.26, 0.04), v)
     W, H, D = 0.065, 0.165, 0.035
     s.add(s.rbox((W / 2, H / 2, D / 2), (W, H, D), r=0.006), PAL.grey_dark, dither=PAL.grey_dark2, amount=0.18)
@@ -221,7 +221,7 @@ def walkie_talkie() -> Scene:
 def coffee_mug() -> Scene:
     """The Hot Stove mug: cream stoneware, a red band, the rink's name,
     a chip on the handle side. 0.12 x 0.10 x 0.085 m at 1 mm voxels."""
-    v = 0.001
+    v = 0.0014
     s = Scene((0.125, 0.105, 0.09), v)
     cx, cz, R, H = 0.045, 0.045, 0.042, 0.096
     s.add(s.cylinder((cx, H / 2, cz), R, H, axis="y", r=0.004), PAL.cream, dither=PAL.cream2, amount=0.15)
@@ -232,8 +232,8 @@ def coffee_mug() -> Scene:
     # handle: a torus-ish loop from two boxes
     s.add(s.rbox((cx + R + 0.012, 0.050, cz), (0.028, 0.050, 0.012), r=0.006) - s.rbox((cx + R + 0.012, 0.050, cz), (0.014, 0.034, 0.02)), PAL.cream, dither=PAL.cream2, amount=0.15)
     # 1.6 mm cells: on a curve, one-voxel cells lose columns to sampling
-    s.label("HOT STOVE", (cx, 0.050, cz - R), size=v * 1.6, ink=PAL.red_dark, around=(cx, cz, R), depth=v * 2.5)
-    s.label("MILLBROOK", (cx, 0.034, cz - R), size=v * 1.6, ink=PAL.ink, around=(cx, cz, R), depth=v * 2.5)
+    s.label("HOT STOVE", (cx, 0.050, cz - R), size=v * 1.2, ink=PAL.red_dark, around=(cx, cz, R), depth=v * 2.5)
+    s.label("MILLBROOK", (cx, 0.034, cz - R), size=v * 1.2, ink=PAL.ink, around=(cx, cz, R), depth=v * 2.5)
     # the chip
     s.cut(s.sphere((cx + R + 0.004, 0.094, cz + 0.006), 0.006))
     return s
@@ -242,7 +242,7 @@ def coffee_mug() -> Scene:
 def microwave() -> Scene:
     """A canteen microwave: beige box, dark door with a window, a dial and
     a timer. 0.50 x 0.30 x 0.38 m at 3.5 mm voxels."""
-    v = 0.0035
+    v = 0.004
     s = Scene((0.50, 0.31, 0.38), v)
     W, H, D = 0.50, 0.30, 0.38
     s.add(s.rbox((W / 2, H / 2, D / 2), (W, H, D), r=0.008), PAL.beige, dither=PAL.beige2, amount=0.18)
@@ -273,7 +273,7 @@ def wall_clock() -> Scene:
     """A schoolhouse wall clock: black steel rim, cream face, red second
     hand. 0.30 m across, 0.05 m deep, at 2 mm voxels; the pivot is the
     wall mount (centre back)."""
-    v = 0.002
+    v = 0.0025
     s = Scene((0.31, 0.31, 0.06), v)
     c = (0.155, 0.155, 0.03)
     s.add(s.cylinder(c, 0.150, 0.050, axis="z", r=0.008), PAL.black, dither=PAL.grey_dark, amount=0.15)
@@ -307,6 +307,88 @@ def wall_clock() -> Scene:
     return s
 
 
+def wall_phone_booth() -> Scene:
+    """The lobby pay phone, from Sean's photo: a wood-laminate booth hung on
+    the wall (two side wings, a canopy, a shelf over a lower cubby with a
+    blue binder in it), a black perforated panel with a cream wall phone,
+    the handset hung on top with a red sticker, a coiled cord, and a blue
+    placard to the right. 0.46 x 0.90 x 0.30 m at 5 mm voxels; the pivot is
+    the wall mount (bottom centre of the back)."""
+    v = 0.005
+    s = Scene((0.46, 0.90, 0.31), v)
+    W, H, D = 0.46, 0.90, 0.30
+    T = 0.018  # board thickness
+    wood = dict(colour=PAL.walnut, dither=PAL.walnut2, amount=0.2)
+    # back board, sides, canopy, bottom
+    s.add(s.box((0.0, 0.0, D - T), (W, H, D)), **wood)
+    s.add(s.box((0.0, 0.0, 0.0), (T, H, D)), **wood)
+    s.add(s.box((W - T, 0.0, 0.0), (W, H, D)), **wood)
+    s.add(s.box((0.0, H - T, 0.0), (W, H, D)), **wood)
+    s.add(s.box((0.0, 0.0, 0.0), (W, T, D)), **wood)
+    # shelf with a thicker front edge, and the cubby under it
+    shelf_y = 0.15
+    s.add(s.box((T, shelf_y, 0.0), (W - T, shelf_y + T, D)), **wood)
+    s.add(s.box((T, shelf_y - 0.008, 0.0), (W - T, shelf_y + T, 0.02)), **wood)
+    # laminate grain: faint vertical lines on the outside faces and the shelf
+    for face_lo, face_hi in (((-0.001, 0.0, 0.0), (0.002, H, D)), ((W - 0.002, 0.0, 0.0), (W + 0.001, H, D))):
+        s.slots(face_lo, face_hi, pitch=0.022, slot=0.005, along="z", colour=PAL.walnut_dark)
+    # black steel panel set into the back board, with the perforation grid
+    px0, px1 = 0.155, 0.325
+    py0, py1 = shelf_y + 0.06, H - T - 0.01
+    panel_z = D - T - 0.006
+    s.paint(s.box((px0, py0, panel_z), (px1, py1, D - T + 0.001)), PAL.black)
+    s.add(s.box((px0, py0, panel_z), (px1, py1, D - T)), PAL.black)
+    s.grille((px0 + 0.012, py0 + 0.02, panel_z - 0.001), (px1 - 0.012, py1 - 0.02, panel_z + 0.004), pitch=0.016, hole=0.006, depth_axis="z", colour=PAL.grey_dark)
+    # the phone body on the panel
+    bx, bw = 0.24, 0.10
+    by0, bh = 0.52, 0.20
+    bz = panel_z - 0.055
+    s.add(s.rbox((bx, by0 + bh / 2, bz + 0.0275), (bw, bh, 0.055), r=0.006), PAL.cream, dither=PAL.cream2, amount=0.15)
+    # keypad on the right half: 3 x 4 small keys in a dark bezel
+    kx0 = bx + 0.024
+    s.paint(s.rbox((kx0, by0 + 0.095, bz), (0.040, 0.066, 0.006), r=0.003), PAL.grey_dark)
+    for row in range(4):
+        for col in range(3):
+            kx = kx0 - 0.012 + col * 0.012
+            ky = by0 + 0.072 + row * 0.015
+            s.add(s.rbox((kx, ky, bz - 0.002), (0.009, 0.010, 0.006), r=0.002), PAL.chrome, dither=PAL.chrome2, amount=0.15)
+    # the handset hung on the left: earpiece over the hook at the top, mouthpiece at the bottom, a slim grip between
+    hx = bx - 0.022
+    hz = bz - 0.028
+    s.add(s.rbox((hx, by0 + bh + 0.006, bz + 0.010), (0.034, 0.012, 0.030), r=0.003), PAL.grey_dark)  # the hook
+    ear = s.rbox((hx, by0 + bh + 0.010, hz), (0.052, 0.046, 0.050), r=0.016)
+    mouth = s.rbox((hx, by0 - 0.012, hz), (0.052, 0.046, 0.050), r=0.016)
+    grip = s.rbox((hx, by0 + bh / 2, hz - 0.004), (0.030, bh, 0.034), r=0.013)
+    s.add(ear | mouth | grip, PAL.cream, dither=PAL.cream2, amount=0.15)
+    s.grille((hx - 0.016, by0 + bh - 0.008, hz - 0.028), (hx + 0.016, by0 + bh + 0.028, hz - 0.022), pitch=0.005, hole=0.002, depth_axis="z", colour=PAL.grey_dark)
+    s.grille((hx - 0.016, by0 - 0.030, hz - 0.028), (hx + 0.016, by0 + 0.004, hz - 0.022), pitch=0.005, hole=0.002, depth_axis="z", colour=PAL.grey_dark)
+    # the red sticker on the handset
+    s.paint(s.rbox((hx, by0 + 0.17, hz - 0.02), (0.028, 0.022, 0.010), r=0.002), PAL.red)
+    s.label("911", (hx, by0 + 0.17, hz - 0.02), face="front", size=v, ink=PAL.white)
+    # coiled cord: from the mouthpiece down almost to the shelf and back up into the body's bottom
+    import math
+    for i in range(80):
+        t = i / 79.0
+        y = by0 - 0.03 - (by0 - 0.03 - shelf_y - T - 0.03) * math.sin(t * math.pi)
+        x = hx + 0.044 * t
+        z = hz + 0.012 + 0.012 * math.sin(i * 1.3)
+        s.add(s.cylinder((x, y, z), 0.008, 0.005, axis="y"), PAL.cream2, dither=PAL.chrome2, amount=0.2)
+    # the blue placard on the right wing of the back board
+    s.paint(s.box((0.345, 0.62, D - T - 0.002), (0.395, 0.69, D - T + 0.001)), PAL.placard_blue)
+    s.paint(s.box((0.352, 0.675, D - T - 0.002), (0.388, 0.680, D - T + 0.001)), PAL.white)
+    for i in range(5):
+        s.paint(s.box((0.352, 0.632 + i * 0.008, D - T - 0.002), (0.388 - (0.010 if i % 2 else 0.0), 0.634 + i * 0.008, D - T + 0.001)), PAL.white)
+    # the binder in the cubby, a cable hanging out of the shelf's front
+    s.add(s.rbox((0.23, T + 0.03, 0.15), (0.29, 0.06, 0.25), r=0.004), PAL.binder_blue, dither=PAL.binder_blue2, amount=0.2)
+    s.paint(s.box((0.09, T + 0.012, 0.0), (0.37, T + 0.048, 0.03)), PAL.binder_blue2)
+    s.paint(s.box((0.30, T + 0.02, 0.0), (0.355, T + 0.040, 0.026)), PAL.white)
+    for i in range(3):
+        s.add(s.cylinder((0.20 + i * 0.045, T + 0.06, 0.06), 0.004, 0.012, axis="y"), PAL.chrome)
+    for i in range(20):
+        s.add(s.cylinder((0.07 + i * 0.003, T + 0.02 - i * 0.004, 0.02 + i * 0.001), 0.003, 0.004, axis="y"), PAL.white)
+    return s
+
+
 # ---------------------------------------------------------------- the table
 
 LIBRARY = {
@@ -333,10 +415,25 @@ LIBRARY = {
     "microwave": dict(build=microwave, name="Microwave", mass_kg=14.0, sound="metal",
         tags=["canteen", "dressing_room", "electronics"], verbs=["inspect", "open", "use"],
         inspect="Canteen microwave. The turntable has not turned since the playoffs."),
+    "wall_phone_booth": dict(build=wall_phone_booth, name="Pay phone", mass_kg=22.0, sound="wood",
+        tags=["lobby", "hallway", "electronics", "furniture"], verbs=["inspect", "use"],
+        inspect="The lobby pay phone in its wood booth. Local calls were a quarter; the binder underneath is the league phone list.",
+        pivot="wall"),
     "wall_clock": dict(build=wall_clock, name="Wall clock", mass_kg=1.4, sound="metal",
         tags=["lobby", "office", "dressing_room", "sign"], verbs=["inspect"],
         inspect="Schoolhouse clock, ten past ten, like every clock in every catalogue."),
 }
+
+
+def _pivot(spec: dict, geo: dict) -> list:
+    """Bottom centre by default; a wall-hung prop pivots on its mount: the
+    clock at the centre of its back, the booth at the bottom centre of its back."""
+    sx, sy, sz = geo["size_vox"]
+    if spec.get("pivot") == "wall":
+        return [sx / 2, 0, sz]
+    if spec.get("build") is wall_clock:
+        return [sx / 2, sy / 2, sz]
+    return geo["pivot"]
 
 
 def generate(ids: list[str], preview: bool) -> None:
@@ -354,7 +451,7 @@ def generate(ids: list[str], preview: bool) -> None:
             "vox": f"art/props/{pid}.vox",
             "voxel_m": scene.voxel_m,
             "size_m": geo["size_m"],
-            "pivot": geo["pivot"] if pid != "wall_clock" else [geo["size_vox"][0] / 2, geo["size_vox"][1] / 2, geo["size_vox"][2]],
+            "pivot": _pivot(spec, geo),
             "mass_kg": spec["mass_kg"],
             "tags": spec["tags"],
             "verbs": spec["verbs"],

@@ -11,7 +11,8 @@ extends VoxelMeshBuilder
 ##
 ## Options: ao (true), ao_strength (0.42: how dark a fully tucked corner
 ## gets), greedy (false: merge same-colour faces; AO edges still split
-## them, so a box keeps its soft corners), jitter (the model's), material.
+## them, so a box keeps its soft corners), jitter (the model's), quantize
+## (0: colour steps a channel, so dithered tones merge), material.
 ##
 ## AO is the classic voxel kind: each face corner counts its three
 ## neighbouring voxels (two sides and the diagonal) and darkens by how many
@@ -33,6 +34,10 @@ func append(m: VoxelModel, opts := {}, xf := Transform3D.IDENTITY) -> void:
 	var strength: float = opts.get("ao_strength", 0.42)
 	var greedy: bool = opts.get("greedy", false)
 	var jitter: float = opts.get("jitter", 0.0 if greedy else m.jitter)
+	# snap colours to this many steps a channel first, so a dithered surface
+	# (two close tones) becomes one colour and its faces merge (for a
+	# low-detail mesh; 0 keeps every colour)
+	var quantize: int = opts.get("quantize", 0)
 	var vox := m.voxels
 	var nb := xf.basis.inverse().transposed()
 	for i in 6:
@@ -53,6 +58,9 @@ func append(m: VoxelModel, opts := {}, xf := Transform3D.IDENTITY) -> void:
 			if vox.has(p + dir):
 				continue
 			var c: Color = jitter_color(vox[p], p, jitter)
+			if quantize > 0:
+				var q := float(quantize)
+				c = Color(roundf(c.r * q) / q, roundf(c.g * q) / q, roundf(c.b * q) / q)
 			var face: Array = [c, 3, 3, 3, 3]
 			if ao:
 				var o := p + dir

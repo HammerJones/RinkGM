@@ -6,9 +6,9 @@
   "mesh": "merged",
   "name": "Coffee mug",
   "pivot": [
-    55.0,
+    39.5,
     0,
-    42.0
+    30.0
   ],
   "shape": [
     [
@@ -17,8 +17,8 @@
     ]
   ],
   "size_m": [
-    0.11,
-    0.096,
+    0.1106,
+    0.0966,
     0.084
   ],
   "sound": "ceramic",
@@ -36,7 +36,7 @@
     "push"
   ],
   "vox": "art/props/coffee_mug.vox",
-  "voxel_m": 0.001,
+  "voxel_m": 0.0014,
   "wear": {
     "renovated": "none",
     "repaired": "tint:8a7a60:0.1",

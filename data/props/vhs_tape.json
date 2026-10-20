@@ -6,9 +6,9 @@
   "mesh": "merged",
   "name": "VHS tape",
   "pivot": [
-    78.5,
+    62.5,
     0,
-    43.5
+    34.5
   ],
   "shape": [
     [
@@ -21,9 +21,9 @@
     ]
   ],
   "size_m": [
-    0.1884,
-    0.0252,
-    0.1044
+    0.1875,
+    0.0255,
+    0.1035
   ],
   "sound": "plastic",
   "source": "tools/propgen/library.py",
@@ -40,7 +40,7 @@
     "push"
   ],
   "vox": "art/props/vhs_tape.vox",
-  "voxel_m": 0.0012,
+  "voxel_m": 0.0015,
   "wear": {
     "renovated": "none",
     "repaired": "tint:8a7a60:0.1",

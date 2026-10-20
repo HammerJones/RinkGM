@@ -66,6 +66,13 @@ PALETTE = {
     "steel_blue": (120, 125, 135),
     "steel_blue2": (112, 118, 128),
     "copper": (184, 115, 51),
+    "binder_blue": (46, 92, 190),
+    "binder_blue2": (40, 82, 172),
+    "placard_blue": (28, 70, 160),
+    "wood_dark": (96, 64, 56),
+    "walnut": (92, 60, 46),
+    "walnut2": (82, 52, 40),
+    "walnut_dark": (62, 40, 30),
 }
 NAMES = list(PALETTE.keys())  # palette index = position + 1
 

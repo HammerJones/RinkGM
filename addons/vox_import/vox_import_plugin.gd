@@ -41,6 +41,12 @@ func _get_priority() -> float:
 	return 1.0
 
 
+## Bump when the bake changes (the mesher, the options, the asset's fields):
+## every .vox is then imported again instead of served from the cache.
+func _get_format_version() -> int:
+	return 2
+
+
 func _get_import_order() -> int:
 	return 0
 
@@ -99,7 +105,8 @@ func _import(
 			b.position.x + b.size.x / 2.0 + 0.5, b.position.y, b.position.z + b.size.z / 2.0 + 0.5
 		)
 		asset.mesh = VoxMesher.build(m, {"greedy": true})
-		asset.mesh_lod = VoxMesher.build(m, {"greedy": true, "ao": false})
+		# low detail: flat colours, dither collapsed, no AO; a fraction of the faces
+		asset.mesh_lod = VoxMesher.build(m, {"greedy": true, "ao": false, "quantize": 4})
 		asset.boxes = m.collision_boxes(int(options.get("collision_cell", 8)))
 	return ResourceSaver.save(asset, "%s.%s" % [save_path, _get_save_extension()])
 

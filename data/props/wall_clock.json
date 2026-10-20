@@ -6,14 +6,14 @@
   "mesh": "merged",
   "name": "Wall clock",
   "pivot": [
-    74.5,
-    74.5,
-    30
+    60.0,
+    60.0,
+    24
   ],
   "shape": [],
   "size_m": [
-    0.298,
-    0.298,
+    0.3,
+    0.3,
     0.06
   ],
   "sound": "metal",
@@ -29,7 +29,7 @@
     "inspect"
   ],
   "vox": "art/props/wall_clock.vox",
-  "voxel_m": 0.002,
+  "voxel_m": 0.0025,
   "wear": {
     "renovated": "none",
     "repaired": "tint:8a7a60:0.1",
