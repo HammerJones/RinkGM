@@ -25,6 +25,7 @@ var _pass_call_until := -10.0
 var gestures := StickGestures.new()
 var _aim_dot: Variant = null   # where the centre dot was when the pattern started
 var last_shot := {}            # the last traced shot's grade (tests, HUD)
+var _stick_prev := Vector2.ZERO
 
 ## Puck speed of each traced shot at full power, of the skater's slapshot.
 const SHOT_POWER := {&"slapshot": 1.0, &"snap_shot": 0.88, &"wrist_shot": 0.8, &"toe_drag_shot": 0.75}
@@ -52,15 +53,33 @@ func update(dt: float) -> void:
 	var right: Vector3 = game.camera_rig.right_flat()
 	var w := right * f.move.x + fwd * f.move.y
 	c.move = Vector2(w.x, w.z)
+	# on the keyboard, pushing against the way you're skating brakes rather
+	# than turning you round (S going forwards, W going backwards on the
+	# chase camera)
+	var brake := false
+	var going := Vector2(human.vel.x, human.vel.z)
+	if kbm and going.length() > 0.6 and c.move.length() > 0.3 \
+			and going.normalized().dot(c.move.normalized()) < -0.7:
+		brake = true
+		c.move = Vector2.ZERO
 	c.dash = f.dash
-	c.stop = f.stop
+	c.stop = f.stop or brake
 	c.check = f.check_pressed
 	c.turn_around = f.turn_pressed
 	game.camera_rig.free_look(Vector2.ZERO if f.tracing else f.look, f.looking)
 	c.lift = f.lift > 0.5
 	c.tilt = f.tilt
-	var sw := right * f.stick.x + fwd * f.stick.y
+	# the pad's stick is camera-relative; the mouse places the blade around
+	# the body (up is where you face), so turning carries the puck round with
+	# you instead of leaving the blade pointing where it was
+	var s_right := human.right_vec() if kbm else right
+	var s_fwd := human.heading if kbm else fwd
+	var sw := s_right * f.stick.x + s_fwd * f.stick.y
 	c.stick = Vector2(sw.x, sw.z)
+	var ds := f.stick - _stick_prev
+	_stick_prev = f.stick
+	var dw := s_right * ds.x + s_fwd * ds.y
+	c.stick_move = Vector2(dw.x, dw.z)
 	if not kbm:
 		# stick patterns for learned moves (Moves); physics runs them
 		var local := Vector2(sw.dot(human.heading), sw.dot(human.right_vec()))

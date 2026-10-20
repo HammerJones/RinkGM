@@ -22,7 +22,7 @@ virtual right stick, so both devices drive the same stick model.
 | --- | --- | --- |
 | Skate | Left stick | WASD |
 | Dash (push-off burst) | L3 (click left stick) | Shift |
-| Hockey stop | R3 (click right stick) | Space |
+| Hockey stop | R3 (click right stick) | Space, or push back against the way you're going (S skating forwards, W skating backwards) |
 | Stick blade (220 degree arc, back past each hip) | Right stick | Mouse (cursor is captured; Esc opens the menu and frees it) |
 | Stickhandle | Right stick side to side | Mouse side to side: the blade carries the puck. The HANDS gauge shows how close you are to the fastest rhythm your stickhandling allows; in the red the puck gets away |
 | Shoot | Flick or wind up the right stick (below) | Hold right click and draw a shot pattern, release to shoot (below) |
@@ -46,7 +46,9 @@ virtual right stick, so both devices drive the same stick model.
 | Playtest note (screenshot + note) | | N |
 
 "Forward" and "behind" are relative to the way your skater faces; the stick
-itself is camera-relative, like the left stick. A faint arc on the ice shows
+itself is camera-relative on the pad, like the left stick; the mouse places
+the blade around your body (up is where you face), so turning carries the
+puck round with you. A faint arc on the ice shows
 where the blade can reach. Device reading lives in `scripts/input/`
 (`PlayerInput` reads devices, `HumanController` fills `Skater.Controls`).
 Both hands stay on the stick in the front 90 degrees; past that the bottom
@@ -123,11 +125,11 @@ skating and stick-control assistance on top; it never changes contacts.
 
 - **Skating** (`scripts/game/skater.gd`): you only push along your skates, so
   turning is carving, and turns get wider at speed. Top speed runs from
-  12 mph (speed 1) to 25 mph (speed 100), where the strides fade out against
-  drag (25 mph is the hard ceiling for anyone), rising faster at the top:
-  about 15 mph in a beer league, 18 at senior AAA. A dash is a few hard
-  strides, a push over 0.2 s, that gets you to top speed faster and costs
-  stamina. The hockey stop scrapes speed off
+  11 mph (speed 1) to 25 mph (speed 100) (25 mph is the hard ceiling for
+  anyone), rising much faster at the top: about 13 mph in a beer league, 15.5
+  at senior AAA. Striding alone cruises at 85% of that; a dash is a few hard
+  strides, a push over 0.2 s, that takes you the rest of the way and costs
+  stamina. A turn redirects your speed but never adds to it. The hockey stop scrapes speed off
   sideways; agility sets how fast you turn, how hard your edges grip, and how
   short you stop. Carving never adds speed past top speed.
 - **Stick and puck** (`scripts/game/stick_puck.gd`): the blade swings around

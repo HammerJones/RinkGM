@@ -334,7 +334,7 @@ func _traced_shots() -> void:
 		await _carry(Vector2(-14, 0))
 		_plan = func(f, t):
 			f.move = Vector2(0.4, 0)
-			f.stick = Vector2(0.5, -amp * sin(t * TAU * hz))
+			f.stick = Vector2(amp * sin(t * TAU * hz), 0.5)  # mouse: x across the body, y ahead
 		var peak := 0.0
 		var lost := false
 		var lo := INF
@@ -349,6 +349,35 @@ func _traced_shots() -> void:
 				lo = minf(lo, side)
 				hi = maxf(hi, side)
 		return [peak, lost, hi - lo]
+	# turning the body with the stick held still moves no hands: the puck stays
+	await _carry(Vector2(-14, 0))
+	_plan = func(f, t):
+		f.move = Vector2(cos(t * 2.5), sin(t * 2.5))
+		f.stick = Vector2(0.0, 0.5)
+	var turn_peak := 0.0
+	var turn_lost := false
+	for i in 360:
+		await get_tree().physics_frame
+		_freeze_others()
+		turn_lost = turn_lost or game.puck.controller != h
+		turn_peak = maxf(turn_peak, h.handle_load)
+	_check(not turn_lost and turn_peak < 0.5, "turning with the puck keeps it and the meter low (%.2f)" % turn_peak)
+	# skating feel: turns redirect speed but never add it; pulling back brakes
+	await _carry(Vector2(-14, 0), false)
+	_set_plan(func(f, t): f.move = Vector2(1, 0) if t < 2.0 else Vector2(cos((t - 2.0) * 3.0), sin((t - 2.0) * 3.0)))
+	await _until(func(): return _t >= 2.0, 2.5)
+	var cruise := h.speed()
+	var turn_top := 0.0
+	await _until(func():
+		turn_top = maxf(turn_top, h.speed())
+		return false, 1.5)
+	_check(turn_top <= cruise + 0.05, "a turn never adds speed (%.2f vs %.2f m/s)" % [turn_top, cruise])
+	await _carry(Vector2(-14, 0), false)
+	_set_plan(func(f, t): f.move = Vector2(1, 0) if t < 2.0 else Vector2(-1, 0))
+	await _until(func(): return _t >= 2.0, 2.5)
+	var fast := h.speed()
+	await _until(func(): return false, 0.6)
+	_check(h.speed() < fast * 0.4 and h.vel.x > -0.3, "pulling back brakes rather than turning round (%.2f -> %.2f m/s)" % [fast, h.speed()])
 	var easy: Array = await sweep.call(0.7, 0.6)
 	_check(easy[0] < 1.0 and not easy[1], "slow wide handles stay in the green and keep the puck (%.2f)" % easy[0])
 	_check(easy[2] > 1.0, "the handles carry the puck side to side across the body (%.2f m)" % easy[2])

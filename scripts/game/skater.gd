@@ -37,6 +37,7 @@ const CROSS_AWAY := 0.12                   # moving the blade this far away from
 const STICK_LIFTED_TIME := 0.55
 const LIFT_REACH := 0.3      # m: your blade has to be this close under their shaft
 const DASH_PUSH := 0.2       # s the dash's push lasts
+const CRUISE := 0.85         # share of top speed that striding alone reaches; dashes take you the rest
 const FLICK_WINDOW := 0.09   # a flick is measured over this much stick history
 const FLICK_TRAVEL := 0.9    # forward stick travel inside the window that counts as a flick
 
@@ -48,6 +49,7 @@ class Controls:
 	var dash := false                 ## pressed this frame (L3)
 	var stop := false                 ## held: hockey stop (R3)
 	var stick := Vector2.ZERO         ## world XZ, length <= 1 (right stick); back = wind up
+	var stick_move := Vector2.ZERO    ## world XZ: how far the input itself moved the stick this frame (not the body or camera turning)
 	var blade_target: Variant = null  ## world Vector3 (mouse); overrides `stick`
 	var lift := false                 ## held: stick lift (LT)
 	var tilt := 0.0                   ## 0..1 blade tilt, lofts shots and passes (RT)
@@ -65,6 +67,7 @@ class Controls:
 		dash = false
 		stop = false
 		stick = Vector2.ZERO
+		stick_move = Vector2.ZERO
 		blade_target = null
 		lift = false
 		tilt = 0.0
@@ -378,10 +381,10 @@ func physics_update(dt: float) -> void:
 	if amount > 0.15 and not braking:
 		var align := maxf(0.0, push.dot(desired))
 		# strides stay strong until you're close to top speed
-		var room := sqrt(clampf(1.0 - vel.dot(push) / top, 0.0, 1.0))
+		var room := sqrt(clampf(1.0 - vel.dot(push) / (top * CRUISE), 0.0, 1.0))
 		var accel := p.accel * (BACK_ACCEL if backwards else 1.0)
 		vel += push * accel * align * amount * room * dt
-		var room_direct := clampf(1.0 - vel.dot(desired) / top, 0.0, 1.0)
+		var room_direct := clampf(1.0 - vel.dot(desired) / (top * CRUISE), 0.0, 1.0)
 		vel += desired * p.accel * 0.35 * blend * amount * room_direct * dt
 
 	# dash: a few hard strides toward the stick, a push over DASH_PUSH seconds
@@ -399,6 +402,7 @@ func physics_update(dt: float) -> void:
 		vel += heading * clampf(top - vel.dot(heading), 0.0, _check_push * dt)
 
 	# edges: sideways slide decays, most of it is carved into forward speed
+	var before := vel.length()
 	var fwd := vel.dot(heading)
 	var lat := vel - heading * fwd
 	lat.y = 0.0
@@ -408,6 +412,10 @@ func physics_update(dt: float) -> void:
 		# carving keeps speed through a turn but never adds speed past top
 		fwd = minf(fwd + (lat.length() - lat_new.length()) * 0.6, maxf(fwd, top))
 	vel = heading * fwd + lat_new
+	# a turn redirects speed, it never adds any
+	var after := vel.length()
+	if after > before and after > 0.0:
+		vel *= before / after
 
 	if braking:
 		var s := vel.length()
@@ -859,11 +867,13 @@ func handle_limit() -> float:
 ## count for more than their speed at a low rating (the puck needs a wide
 ## sweep to follow), and past the limit the puck can squirt away.
 func _stickhandle_rhythm(dt: float, able: bool) -> void:
-	# the hands' side-to-side (where the stick is being pushed, m/s across
-	# the body), not the blade, which lags behind them
-	var hands := ctrl.stick.dot(Vector2(right_vec().x, right_vec().z)) * REACH_MAX
-	var side := (hands - _handle_hands) / maxf(dt, 0.001)
-	_handle_hands = hands
+	# the hands' side-to-side (how fast the stick is being pushed across the
+	# body, m/s), not the blade, which lags behind them. Only the input's own
+	# motion counts: turning the body (or the camera) with the stick held
+	# still moves no hands.
+	var side := ctrl.stick_move.dot(Vector2(right_vec().x, right_vec().z)) * REACH_MAX / maxf(dt, 0.001)
+	_handle_hands += side * dt
+	var hands := _handle_hands
 	# a reversal: short handles are hard for a weak stickhandler
 	if signf(side) != signf(_handle_prev) and absf(_handle_prev) > 0.3:
 		var need := lerpf(0.9, 0.25, skill("stick_handling"))
