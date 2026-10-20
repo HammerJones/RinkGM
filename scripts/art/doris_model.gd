@@ -42,7 +42,7 @@ const COND_TRAVEL_S := 5.5
 const COND_LIFT_M := 0.12
 const BIN_TILT := 0.85        # radians, fully up
 const BIN_TRAVEL_S := 3.0
-const HATCH_SWING := 1.8
+const HATCH_SWING := 3.0       # folds right up against her side, clear of the work
 const HATCH_TRAVEL_S := 0.8
 ## The bin hinges at its front bottom edge; the hatch at its top edge.
 const BIN_HINGE := Vector3(0.0, 11 * V, (1 - PZ) * V)
