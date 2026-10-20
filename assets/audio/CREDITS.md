@@ -12,3 +12,4 @@ file can be traced to its source. Every other .wav here is synthesised by
 | `glass_rattle.wav` | [door wood old with inlaid glass close hard rattle or window pane shutter.flac](https://freesound.org/people/kyles/sounds/455758/) | kyles | CC0 1.0 | the hard-close hit and pane rattle cut out, light arena tail added |
 | `puck_boards.wav` | [hockey outdoor puck hit board clean cu.flac](https://freesound.org/people/kyles/sounds/450719/) | kyles | CC0 1.0 | one hit cut out, low rumble filtered, short arena tail added |
 | `puck_post.wav` | [hit - metallic - basketball hoop pipe 01.wav](https://freesound.org/people/Anthousai/sounds/406490/) | Anthousai | CC0 1.0 | one strike and its ring cut to 3.3 s, rumble filtered |
+| `puck_stick.wav` | [ice hockey outside field recording with zoom h2n](https://freesound.org/people/Garuda1982/sounds/422610/) | Garuda1982 | CC0 1.0 | one crack cut out of an outdoor game, rumble filtered, short arena tail added |

@@ -44,7 +44,12 @@ class Source:
 def _get(url, path):
 	if not os.path.exists(path):
 		os.makedirs(os.path.dirname(path), exist_ok=True)
-		subprocess.run(["curl", "-sSLf", "-m", "180", "-o", path + ".part", url], check=True)
+		for wait in (3, 8, 20, 40, 0):  # freesound throttles bursts of requests
+			if subprocess.run(["curl", "-sSLf", "-m", "180", "-o", path + ".part", url]).returncode == 0:
+				break
+			time.sleep(wait)
+		else:
+			sys.exit("could not fetch " + url)
 		os.replace(path + ".part", path)
 	return path
 
@@ -195,9 +200,15 @@ def glass_rattle():
 	return room(filt(cut(x, 5.968, 1.1, 0.5), 160.0), rt60=1.2, wet_db=-18.0), [src]
 
 
+def puck_stick():
+	x, src = freesound(422610)  # outdoor game; a clean, sharp blade-on-puck crack
+	return room(filt(cut(x, 188.039, 0.32, 0.12), 120.0), rt60=0.9, wet_db=-16.0), [src]
+
+
 RECIPES = {
 	"puck_boards": (puck_boards, "one hit cut out, low rumble filtered, short arena tail added"),
 	"puck_post": (puck_post, "one strike and its ring cut to 3.3 s, rumble filtered"),
+	"puck_stick": (puck_stick, "one crack cut out of an outdoor game, rumble filtered, short arena tail added"),
 	"glass_rattle": (glass_rattle, "the hard-close hit and pane rattle cut out, light arena tail added"),
 }
 GAIN = {}
