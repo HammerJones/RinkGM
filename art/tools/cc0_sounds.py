@@ -205,10 +205,57 @@ def puck_stick():
 	return room(filt(cut(x, 188.039, 0.32, 0.12), 120.0), rt60=0.9, wet_db=-16.0), [src]
 
 
+CARVES = [(0.02, 1.0), (2.95, 1.2), (4.45, 1.05)]  # three of the five slashes in 593623
+
+
+def blade_carve(i):
+	def build():
+		x, src = freesound(593623)  # single skate strokes, close up, indoors
+		t, d = CARVES[i]
+		return cut(filt(x, 150.0), t, d, 0.3, pre=0.0), [src]
+	return build
+
+
+def stop_spray():
+	x, src = freesound(450717)  # an outdoor skate-by ending in a spray of snow
+	return room(filt(cut(x, 5.35, 2.1, 0.6, pre=0.0), 180.0), rt60=1.2, wet_db=-20.0), [src]
+
+
+def skates_ice():
+	"""A few skaters going round: the recorded strokes and skate-bys scattered
+	over a circular 8 s buffer (so it loops seamlessly), at varied distance.
+	The open-air skating recordings all have voices in them, which would
+	repeat every loop."""
+	a, sa = freesound(593623)
+	b, sb = freesound(450717)
+	a, b = filt(a, 150.0), filt(b, 150.0)
+	strokes = [cut(a, t, d, 0.3, pre=0.0) for t, d in CARVES + [(1.3, 1.3), (5.8, 0.85)]]
+	strokes += [cut(b, t, d, 0.5, pre=0.0) for t, d in [(0.2, 2.0), (2.6, 2.6), (8.0, 2.8)]]
+	rng = np.random.default_rng(7)
+	n = secs(8.0)
+	out = np.zeros(n)
+	t = 0.0
+	while t < 8.0:
+		s = strokes[rng.integers(len(strokes))]
+		s = filt(s, 0.0, rng.uniform(3500.0, 9000.0)) * 10 ** (rng.uniform(-14.0, 0.0) / 20.0)  # near and far
+		i = secs(t)
+		for k in range(0, len(s), n):  # wrap round the loop point
+			seg = s[k:k + n]
+			j = np.arange(len(seg)) + i
+			np.add.at(out, j % n, seg)
+		t += rng.uniform(0.25, 0.7)
+	return out, [sa, sb]
+
+
 RECIPES = {
 	"puck_boards": (puck_boards, "one hit cut out, low rumble filtered, short arena tail added"),
 	"puck_post": (puck_post, "one strike and its ring cut to 3.3 s, rumble filtered"),
 	"puck_stick": (puck_stick, "one crack cut out of an outdoor game, rumble filtered, short arena tail added"),
+	"blade_carve_1": (blade_carve(0), "one skate stroke cut out, rumble filtered"),
+	"blade_carve_2": (blade_carve(1), "one skate stroke cut out, rumble filtered"),
+	"blade_carve_3": (blade_carve(2), "one skate stroke cut out, rumble filtered"),
+	"stop_spray": (stop_spray, "the end of a skate-by cut out, rumble filtered, light arena tail added"),
+	"skates_ice": (skates_ice, "the strokes and skate-bys above scattered over a seamless 8 s loop at varied distance"),
 	"glass_rattle": (glass_rattle, "the hard-close hit and pane rattle cut out, light arena tail added"),
 }
 GAIN = {}
