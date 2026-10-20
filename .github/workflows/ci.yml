@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
-      GODOT_VERSION: 4.3-stable
+      GODOT_VERSION: 4.6-stable
     steps:
       - uses: actions/checkout@v4
       - name: Cache Godot
@@ -25,5 +25,7 @@ jobs:
           mkdir -p ~/godot && cd ~/godot
           curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
           unzip -q godot.zip && rm godot.zip
-      - name: Import, play a headless game, run tests
+      - name: Install gdtoolkit (gdlint, gdformat)
+        run: pip install --quiet "gdtoolkit==4.*"
+      - name: Lint, import, play a headless game, run tests
         run: GODOT=~/godot/Godot_v${GODOT_VERSION}_linux.x86_64 tools/ci.sh

@@ -4,11 +4,13 @@
 #   2. play a full AI-vs-AI game headless and fail on any runtime error,
 #      or if the game never reports its end-of-game stats
 #   3. run every tools/tests/test_*.gd headless; each must exit 0 to pass
+#   3b. run the gdUnit4 suites in tests/unit
 #   4. run each in-game test mode listed in tools/tests/game_tests.txt
 #      (`-- --test=<name>`, with autoloads and the full scene, or the scene
 #      named after it on the line); each must
 #      exit 0 and print "<name> test: all passed"
 #   5. tools/tier_ai_check.sh when present (mid-tier AI must beat low tier)
+#   0. before all that, tools/lint.sh (gdlint + gdformat on the framework layer)
 # Usage: GODOT=/path/to/godot tools/ci.sh
 set -uo pipefail
 GODOT=${GODOT:-godot}
@@ -20,6 +22,9 @@ ERR_RE='SCRIPT ERROR|Parse Error|ERROR:|Failed to load script|Invalid call|Inval
 # Known noise from the headless dummy renderer at shutdown, not a game bug.
 IGNORE_RE='Parameter "m" is null'
 errors() { grep -E "$ERR_RE" "$1" | grep -vE "$IGNORE_RE"; }
+
+echo "== lint (framework layer)"
+bash tools/lint.sh || fail=1
 
 echo "== import"
 # On a fresh checkout the first import loads the project theme before its
@@ -47,6 +52,16 @@ for t in tools/tests/test_*.gd; do
 		tail -3 "$LOG/t.txt"
 	fi
 done
+
+# gdUnit4 suites under tests/unit (the editor runs the same ones from its panel)
+if [ -d tests/unit ]; then
+	echo "== gdUnit4 (tests/unit)"
+	if timeout 600 "$GODOT" --headless --path . -s -d res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a tests/unit --ignoreHeadlessMode >"$LOG/unit.txt" 2>&1; then
+		grep -E "Overall Summary|Executed test cases" "$LOG/unit.txt" | sed 's/\x1b\[[0-9;]*m//g'
+	else
+		sed 's/\x1b\[[0-9;]*m//g' "$LOG/unit.txt" | grep -vE "^\[ *[0-9]+%" | tail -40; fail=1
+	fi
+fi
 
 if [ -f tools/tests/game_tests.txt ]; then
 	# a line is "<name>" (runs the main scene) or "<name> res://scene.tscn"
