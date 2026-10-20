@@ -156,6 +156,9 @@ func _run() -> void:
 	stick._show(true)
 	_expect(stick._mi.cast_shadow == want, "an awake stick casts by Look.cast()")
 
+	# a match puck's contacts (VenueSound.watch_puck)
+	await _match_puck(w)
+
 	WorldSound.recording = false
 	WorldSound.reset()
 	w.queue_free()
@@ -163,6 +166,48 @@ func _run() -> void:
 	await process_frame
 	print("\n%s (%d failure%s)" % ["FAILED" if failures else "OK", failures, "" if failures == 1 else "s"])
 	quit(1 if failures else 0)
+
+
+## The venue's sound hears the match puck: the boards (by its velocity
+## turning round there), the glass when it's high, a post, the glass cleared.
+func _match_puck(w: Node3D) -> void:
+	for k: String in VenueSound.CONTACTS:
+		var f: String = VenueSound.CONTACTS[k]
+		_expect(ResourceLoader.exists(RinkSound.DIR + f + ".wav"), "contact %s -> %s.wav exists" % [k, f])
+	_expect(ResourceLoader.exists(RinkSound.DIR + str(WorldSound.PUCK["glass"]) + ".wav"), "World's puck_hit glass -> glass_rattle.wav exists")
+	var edge := Vector3(Rink.HALF_L - 0.0381, 0.0, 0.0)
+	_expect(VenueSound.board_hit(edge, Vector3(20, 0, 0), Vector3(-11, 0, 0)) > 19.0, "a puck turned round at the end boards is a hit")
+	_expect(VenueSound.board_hit(edge, Vector3(0.5, 0, 3), Vector3(-0.3, 0, 3)) == 0.0, "a puck nudged along the boards is silent")
+	_expect(VenueSound.board_hit(Vector3.ZERO, Vector3(20, 0, 0), Vector3(-11, 0, 0)) == 0.0, "a turn at centre ice is no boards hit")
+	_expect(VenueSound.board_kind(Vector3(0, 0.3, 12.9)) == "boards" and VenueSound.board_kind(Vector3(0, 1.6, 12.9)) == "glass",
+			"low is the boards, high is the glass")
+	VenueSound.recording = true
+	var vs := VenueSound.new()
+	w.add_child(vs)
+	var puck = load("res://scripts/game/puck.gd").new()  # loaded late: Puck pulls in the match classes
+	w.add_child(puck)
+	vs.watch_puck(puck)
+	var heard := func(name: String) -> bool:
+		return VenueSound.heard.any(func(h: Dictionary) -> bool: return str(h.sound) == name)
+	for c in [[Vector3(Rink.HALF_L - 0.05, 0.0, 1.0), "puck_boards"], [Vector3(Rink.HALF_L - 0.05, 1.7, 1.0), "glass_rattle"]]:
+		await create_timer(0.06).timeout  # past the rate limit
+		VenueSound.heard.clear()
+		puck.position = c[0]
+		puck.vel = Vector3(18, 0, 0)
+		vs._physics_process(0.016)
+		puck.vel = Vector3(-10, 0, 0)
+		vs._physics_process(0.016)
+		_expect(heard.call(c[1]), "a match puck off the %s -> %s" % ["glass" if c[0].y > 1.0 else "boards", c[1]])
+	VenueSound.heard.clear()
+	await create_timer(0.06).timeout
+	puck.post_hit.emit()
+	_expect(heard.call("puck_post"), "Puck.post_hit -> puck_post")
+	VenueSound.heard.clear()
+	await create_timer(0.06).timeout
+	puck.left_rink.emit(puck.position)
+	_expect(heard.call("glass_rattle"), "Puck.left_rink -> glass_rattle")
+	VenueSound.recording = false
+	VenueSound.heard.clear()
 
 
 func _collect(n: Node, want: int, odd: Array) -> void:

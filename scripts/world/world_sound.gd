@@ -10,7 +10,7 @@ extends Node3D
 ##
 ## What plays (assets/audio, made by art/tools/synth_sounds.py):
 ##   on the ice   blade_carve -> blade_carve_N, stop_spray, puck_hit -> puck_
-##                stick/boards/post/pad/net, whistle -> ref_whistle,
+##                stick/boards/post/pad/net, glass -> glass_rattle, whistle -> ref_whistle,
 ##                coach_whistle, crowd_reaction -> the roar (VenueSound.cheer),
 ##                crowd_applause or crowd_ooh, skater_fell -> body_fall
 ##   pickup       bounced -> ball_bounce_N, squeaked -> sneaker_squeak_N,
@@ -44,7 +44,7 @@ static var _next := {}
 const GAP := {"blade_carve": 0.07, "stop_spray": 0.15, "puck": 0.04, "whistle": 0.3, "body_fall": 0.2,
 	"ball_bounce": 0.05, "sneaker_squeak": 0.12, "hoop": 0.06, "shout": 1.0, "voice_bark": 0.4,
 	"crowd": 1.2, "cheer": 2.5, "stick_clatter": 0.08, "blade_skip": 0.3, "ice_chip": 0.1}
-const PUCK := {"stick": "puck_stick", "boards": "puck_boards", "post": "puck_post", "pad": "puck_pad",
+const PUCK := {"stick": "puck_stick", "boards": "puck_boards", "post": "puck_post", "glass": "glass_rattle", "pad": "puck_pad",
 	"goalie": "puck_pad", "skate": "puck_pad", "net": "puck_net", "pylon": "puck_stick"}
 ## Fades of the loops, dB a second.
 const FADE := 40.0
