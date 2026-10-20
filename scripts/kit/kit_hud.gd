@@ -461,8 +461,12 @@ func _build_world() -> void:
 	_rebuild_nets()
 
 
-## The stacks by the gate show what's left in storage.
+## The racks show what's left in storage: the venue's own (zamboni bay),
+## or the kit's stacks by the gate when the venue has none.
 func _refresh_storage() -> void:
+	var bay: Node = venue.rooms.get("zamboni_bay") if venue else null
+	if bay and bay.has_method("set_stored"):
+		bay.set_stored(kit.in_storage("large", _ops()), kit.in_storage("mini", _ops()))
 	for s in spots:
 		if not s.data.has("carry"):
 			continue

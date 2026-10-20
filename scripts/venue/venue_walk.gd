@@ -106,6 +106,9 @@ func _ready() -> void:
 	else:
 		story = WalkStory.start(venue)
 		IceView.attach(rink, story.sim.ice)  # World: the sim's ice, cell by cell, on the sheet
+		# World's whiteboards say something new each day
+		Whiteboard.set_day(get_tree(), story.sim.day)
+		story.sim.day_ended.connect(func(d: int): Whiteboard.set_day(get_tree(), d + 1))
 		var m := story.sim.minute
 		if m < 7 * 60 or m >= 19 * 60:
 			_env.background_color = Color("070a12")  # night outside

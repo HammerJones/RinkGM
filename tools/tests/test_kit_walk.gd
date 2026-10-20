@@ -68,6 +68,8 @@ func _run() -> void:
 	await _frames(2)
 	walk._act({"carry": "large"})
 	_expect(kit.kit.carrying == "large" and kit.kit.in_storage("large", ops) == 3, "a big net comes off the rack")
+	var bay: Node = walk.venue.rooms.get("zamboni_bay")
+	_expect(bay == null or int(bay.stored().large) == 3, "and the bay's rack shows one gone")
 
 	# onto the ice in shoes
 	walk.walker.global_position = Vector3(20.0, 0.05, 0.0)
