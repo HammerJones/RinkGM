@@ -105,7 +105,9 @@ func _ready() -> void:
 		tree_exiting.connect(_save)
 		venue.add_child(people)
 		people.setup(venue, world, {"kind": "", "weekday": story.sim.weekday(), "hour": story.sim.minute / 60.0})
-		people.time_scale = 0.35
+		# brains think in building minutes: on the sim's clock, needs and
+		# moods keep pace with the bookings (a crowd stays for the whole game)
+		people.time_scale = WalkStory.TIME_SCALE
 		people.set_phase("on")
 		people.drive(life, WalkStory.TIME_SCALE)
 		guide = TutorialGuide.create(people, life, venue, walker, story.flags if link else null)

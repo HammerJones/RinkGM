@@ -26,7 +26,12 @@ const SEATED := [Pose.SIT, Pose.SIT_CLAP, Pose.SIT_CHEER, Pose.SIT_PHONE, Pose.S
 ## Where a bored or restless person drifts to.
 const WANDER := ["lobby", "hall", "vending", "glass", "pro_shop"]
 ## Activities a body can fidget through (it is standing or sitting still).
-const STILL := ["watch", "wait_for", "wander", "vending", "drop_in", "lesson_wait", "wait", "work"]
+const STILL := ["watch", "wait_for", "wander", "vending", "drop_in", "lesson_wait", "wait", "work", "pregame"]
+## Game nights: before the puck drops the crowd stands around the lobby
+## (activity "pregame") and heads for the seats once play starts.
+const PREGAME_KINDS := ["beer_league", "senior_hockey", "high_school", "tournament", "minor_hockey"]
+## Sessions where whoever came for a skater watches from the glass.
+const GLASS_KINDS := ["learn_to_skate", "figure_practice", "public_skate"]
 
 var person: Person
 var as_ := "watch"      # play, watch or work
@@ -95,6 +100,8 @@ static func make(p: Person, as__: String, kind_: String, rng_: RandomNumberGener
 					# some people never sit: the glass-leaners and the coffee coaches
 					var stand := p.archetype in ["coffee_coach", "scout", "superfan"] or p.trait_value("chatter") > 0.8
 					b.home = "glass" if stand and rng_.randf() < 0.6 else "stands"
+					if kind_ in GLASS_KINDS and str(why.get("for", "")) != "":
+						b.home = "glass"  # parents line the glass at lessons and practices
 					b.activity = "watch"
 			b.place = b.home
 	return b
@@ -183,7 +190,7 @@ func _next(phase: String, ctx: Dictionary) -> bool:
 		return false
 	if not arrived and activity != "watch":
 		return false  # still on the way there
-	if activity in ["watch", "wander", "vending", "lesson_wait"]:
+	if activity in ["watch", "wander", "vending", "lesson_wait", "pregame"]:
 		var urgent: bool = needs.bladder > 0.85 or (phase == "break" and needs.bladder > 0.5)
 		if urgent:
 			return _go("washroom", "washroom", Pose.WALK)
@@ -203,6 +210,11 @@ func _next(phase: String, ctx: Dictionary) -> bool:
 			bark_topic = "zamboni"
 			return _go("watch", "glass", Pose.WALK)
 	if activity == "lesson_wait":
+		return false
+	if phase == "before" and kind in PREGAME_KINDS:
+		if activity != "pregame":
+			return _go("pregame", "lobby", Pose.WALK)
+		wait = rng.randf_range(2.0, 6.0)
 		return false
 	if activity != "watch" or place != home:
 		return _go("watch", home, Pose.WALK)
@@ -280,7 +292,7 @@ func arrive() -> void:
 		"watch", "lesson_wait":
 			pose = Pose.SIT if place == "stands" else (Pose.LEAN if place == "glass" and rng.randf() < 0.5 else Pose.STAND)
 			wait = rng.randf_range(2.0, 6.0)
-		"wait_for", "drop_in", "wait":
+		"wait_for", "drop_in", "wait", "pregame":
 			pose = Pose.STAND
 			wait = rng.randf_range(1.0, 4.0)
 		"queue":

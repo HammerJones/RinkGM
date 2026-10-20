@@ -913,6 +913,10 @@ func _target(a: Agent) -> Vector3:
 	if place == "lobby" and a.brain.activity == "wait_for":
 		# the group waits together
 		return map.point("lobby", hash(a.group)) + Vector3(fmod(a.spot * 0.37, 1.2) - 0.6, 0, fmod(a.spot * 0.71, 1.2) - 0.6)
+	if place == "lobby" and a.brain.activity == "pregame":
+		# the game-night crowd stands around in knots, each group together
+		var h := hash(a.person.id)
+		return map.point("lobby", hash(a.group)) + Vector3(float(h % 100) / 50.0 - 1.0, 0, float((h / 100) % 100) / 50.0 - 1.0)
 	if a.brain.as_ == "work" and not place in ["hall", "ice", "stands", "away"]:
 		# one worker per work point; with none free, a round of the hall
 		var w := map.claim(place, a.person.id)

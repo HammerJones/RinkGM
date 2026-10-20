@@ -22,6 +22,10 @@ const LEAD_MIN := 50.0
 const BREAK_AT := 55.0
 const BREAK_MIN := 12.0
 const BREAK_KINDS := ["beer_league", "minor_hockey", "high_school", "senior_hockey", "tournament", "broomball"]
+## Sessions that start before this hour are early mornings: the skaters
+## come, but most families drop them off and go (EARLY_WATCH of them stay).
+const EARLY_HOUR := 8.0
+const EARLY_WATCH := 0.2
 ## Drop-ins in the building at once, at most.
 const DROP_INS_MAX := 30
 
@@ -174,11 +178,20 @@ func _book(p: RinkPeople, key: String, s: Dictionary, d: int, start: float, end:
 	ev.weekday = sim.weekday_of(d)
 	ev.seats = p.map.seats.size() if p.map else 600
 	var came := Attendance.who_comes(world.cast, ev, rng)
+	came = early_crowd(came, float(s.start), rng)
 	var r := {"s": s, "ev": ev, "start": start, "end": end, "came": came, "phase": "", "settled": false}
 	sessions[key] = r
 	p.session_phase[key] = _phase(r, now)
 	r.phase = p.session_phase[key]
 	p.populate(came, false, key, ev.kind, start - now)
+
+
+## Who of `came` is still there for a session starting at `hour`: everyone,
+## unless it's early morning, when most of the watchers just dropped off.
+static func early_crowd(came: Array, hour: float, rng_: RandomNumberGenerator) -> Array:
+	if hour >= EARLY_HOUR:
+		return came
+	return came.filter(func(e) -> bool: return e.as != "watch" or rng_.randf() < EARLY_WATCH)
 
 
 func _settle_live(p: RinkPeople, key: String, r: Dictionary) -> void:
