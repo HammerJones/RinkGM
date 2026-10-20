@@ -304,7 +304,8 @@ lights that are always on). Quality is LOW / MEDIUM / HIGH, saved in
 Shadows step up with it (`Look.SHADOWS`): atlas size (2k / 4k / 8k), soft
 filtering, and the top light's cascades (one / two / four). From MEDIUM the
 building's furniture casts shadows (`Look.cast()`: stands, benches, boards,
-props, doors, the crowd, boards and signs); overhead rooms (roof, lamp truss,
+props, doors, the crowd, boards and signs, and World's people, skaters and
+their gear, sticks, the pickup players and ball, Doris); overhead rooms (roof, lamp truss,
 banners) never do, or the roof would black out the ice under the top light.
 Flat paper never casts.
 

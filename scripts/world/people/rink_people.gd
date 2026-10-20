@@ -187,6 +187,7 @@ func _ready() -> void:
 	_body.collision_layer = 1 << (VenueKit.VENUE_LAYER - 1)
 	_body.collision_mask = 0
 	add_child(_body)
+	WorldSound.attach(self)
 
 
 ## `ev`: the event (Attendance format). Builds the place map from the venue.
@@ -1344,7 +1345,7 @@ func _rebuild() -> void:
 		if not _mm.has(key):
 			var mmi := MultiMeshInstance3D.new()
 			mmi.name = "People_" + str(key).validate_node_name()
-			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			mmi.cast_shadow = Look.cast()
 			mmi.multimesh = PeopleArt.multimesh(key, counts[key])
 			add_child(mmi)
 			_mm[key] = mmi

@@ -81,6 +81,7 @@ func _init() -> void:
 	add_to_group("stick_props")
 	body_entered.connect(_on_body_entered)
 	sleeping_state_changed.connect(_on_sleeping_changed)
+	WorldSound.hook_stick(self)  # the clatter (only when sound is on)
 
 
 func _ready() -> void:
@@ -134,6 +135,7 @@ func _show(on: bool) -> void:
 		_mi = MeshInstance3D.new()
 		_mi.mesh = mesh
 		_mi.visibility_range_end = StickField.DRAW_RANGE
+		_mi.cast_shadow = Look.cast()
 		add_child(_mi)
 	elif not on and _mi != null:
 		_mi.queue_free()

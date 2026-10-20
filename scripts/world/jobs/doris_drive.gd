@@ -22,7 +22,7 @@ extends JobScene
 ## "ice"/"doris" when there's no sim. With a driver hired (sim.earl_hired)
 ## Earl takes her out and the job finishes at once.
 
-## Sound hooks for the lead's audio (this scene plays nothing).
+## Sound hooks (WorldSound plays them; this scene plays nothing).
 signal blade_scrape(quality: float, skipping: bool)
 signal flood_flow(rate: float, state: String)
 signal wash_pump(on: bool)
@@ -102,7 +102,9 @@ func _build() -> void:
 	add_child(body)
 	var model := MeshInstance3D.new()
 	model.mesh = Props.mesh("resurfacer", Wear.WORN)
+	model.cast_shadow = Look.cast()
 	body.add_child(model)
+	WorldSound.attach(self, body)
 	_build_cockpit()
 	_build_bay_bits()
 	_build_ui()

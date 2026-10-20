@@ -39,7 +39,7 @@ func mark_dirty() -> void:
 func _ready() -> void:
 	_mi = MeshInstance3D.new()
 	_mi.name = "Resting"
-	_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_mi.cast_shadow = Look.cast()
 	_mi.visibility_range_end = DRAW_RANGE
 	add_child(_mi)
 	_rebuild()

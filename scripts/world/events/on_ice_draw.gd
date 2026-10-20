@@ -68,7 +68,7 @@ func _rebuild(list: Array) -> void:
 		if not _mm.has(key):
 			var mmi := MultiMeshInstance3D.new()
 			mmi.name = _prefix + "_" + str(key).validate_node_name()
-			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			mmi.cast_shadow = Look.cast()
 			mmi.multimesh = PeopleArt.multimesh(key, counts[key])
 			_parent.add_child(mmi)
 			_mm[key] = mmi

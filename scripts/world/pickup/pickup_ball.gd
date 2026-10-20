@@ -52,6 +52,7 @@ func _init() -> void:
 	add_child(cs)
 	_mesh = MeshInstance3D.new()
 	_mesh.mesh = mesh()
+	_mesh.cast_shadow = Look.cast()
 	add_child(_mesh)
 	body_entered.connect(_on_body_entered)
 

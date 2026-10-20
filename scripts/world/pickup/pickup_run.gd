@@ -31,7 +31,7 @@ extends Node3D
 ##   g.player_body = walker; g.player_eye = cam
 ##   # or: PickupRun.attach_to_walk(venue_walk) does all of that plus the HUD
 ##
-## Sound hooks (the lead thread plays them; this node plays nothing):
+## Sound hooks (WorldSound plays them; this node plays nothing):
 ## bounced (floor, dribbles, walls), squeaked (sneakers), swished, rim_hit,
 ## backboard_hit.
 
@@ -179,6 +179,7 @@ func _ready() -> void:
 	add_child(_ball)
 	_ball.carry(PickupCourt.CART)
 	_ball.hit.connect(_on_ball_hit)
+	WorldSound.attach(self)
 
 
 ## Wires a game into the venue walk (scripts/venue/venue_walk.gd): the walk's
@@ -1742,6 +1743,7 @@ func _rebuild() -> void:
 		if not _mm.has(key):
 			var mmi := MultiMeshInstance3D.new()
 			mmi.name = "Hoopers_" + str(key).validate_node_name()
+			mmi.cast_shadow = Look.cast()
 			mmi.multimesh = PeopleArt.multimesh(key, counts[key])
 			add_child(mmi)
 			_mm[key] = mmi

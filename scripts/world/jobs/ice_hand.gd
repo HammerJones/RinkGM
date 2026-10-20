@@ -180,6 +180,7 @@ func _build_worker() -> void:
 	_worker = Node3D.new()
 	_worker.name = "Worker"
 	add_child(_worker)
+	WorldSound.attach(self, _worker)
 	slab(Vector3(0.36, 0.85, 0.24), Vector3(0, 0.95, 0), Color("2c4a7a"), 0.0, _worker)   # jacket
 	slab(Vector3(0.3, 0.55, 0.2), Vector3(0, 0.28, 0), Color("2a2a2e"), 0.0, _worker)     # legs
 	slab(Vector3(0.2, 0.22, 0.2), Vector3(0, 1.5, 0), Color("d9b08c"), 0.0, _worker)      # head

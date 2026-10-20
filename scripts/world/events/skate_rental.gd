@@ -670,6 +670,7 @@ func _draw_pairs() -> void:
 		if mmi == null:
 			mmi = MultiMeshInstance3D.new()
 			mmi.name = "Pairs_" + id
+			mmi.cast_shadow = Look.cast()
 			var mm := MultiMesh.new()
 			mm.transform_format = MultiMesh.TRANSFORM_3D
 			mm.mesh = OnIceArt.mesh(id)
@@ -711,12 +712,14 @@ func _build_shelves() -> void:
 		_slab(b, dd - 0.015, dd + 0.015, ka - 0.17, ka + 0.17, 0.05, 1.25, dark)
 	var mi := MeshInstance3D.new()
 	mi.name = "Cubbies"
+	mi.cast_shadow = Look.cast()
 	mi.mesh = b.commit(VoxelMeshBuilder.material())
 	add_child(mi)
 	var rk := get_node_or_null("ReturnRack")
 	if has_rack and rk == null:
 		var r := MeshInstance3D.new()
 		r.name = "ReturnRack"
+		r.cast_shadow = Look.cast()
 		r.mesh = OnIceArt.mesh("return_rack")
 		r.transform = Transform3D(Basis(Vector3.UP, atan2(into.x, into.y)).scaled(Vector3.ONE * 0.5), Vector3(RACK.x, 1.12, RACK.y))
 		add_child(r)

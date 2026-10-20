@@ -488,6 +488,7 @@ func draw() -> void:
 		if mmi == null:
 			mmi = MultiMeshInstance3D.new()
 			mmi.name = "Gear_" + id
+			mmi.cast_shadow = Look.cast()
 			var mm := MultiMesh.new()
 			mm.transform_format = MultiMesh.TRANSFORM_3D
 			mm.mesh = OnIceArt.mesh(id)
@@ -518,6 +519,7 @@ func _rebuild() -> void:
 		if not _nodes.has(key):
 			var mi := MeshInstance3D.new()
 			mi.name = "Net%d" % k
+			mi.cast_shadow = Look.cast()
 			mi.mesh = OnIceArt.mesh("full_net" if nets[k].size == "full" else "mini_net")
 			add_child(mi)
 			_nodes[key] = mi
@@ -530,6 +532,7 @@ func _rebuild() -> void:
 			var d := b - a
 			var mi2 := MeshInstance3D.new()
 			mi2.name = "Pad%d" % k
+			mi2.cast_shadow = Look.cast()
 			mi2.mesh = OnIceArt.mesh("pad")
 			mi2.transform = Transform3D(Basis(Vector3.UP, -atan2(d.y, d.x)), Vector3((a.x + b.x) * 0.5, 0, (a.y + b.y) * 0.5))
 			add_child(mi2)
@@ -541,6 +544,7 @@ func _rebuild() -> void:
 			var at: Vector2 = pr.pos
 			var mi3 := MeshInstance3D.new()
 			mi3.name = "Prop_%s%d" % [pr.id, k]
+			mi3.cast_shadow = Look.cast()
 			mi3.mesh = OnIceArt.mesh(str(pr.id))
 			mi3.transform = Transform3D(Basis(Vector3.UP, float(pr.yaw)), Vector3(at.x, float(pr.y), at.y))
 			add_child(mi3)

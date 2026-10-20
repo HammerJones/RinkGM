@@ -145,8 +145,8 @@ func _ready() -> void:
 	world.owner_name = "Sam" if world.owner_name == "the owner" else world.owner_name
 	people.focus = walker
 	people.barked.connect(_on_bark)
-	# the venue's sound (when the building has one): what's on, and cheers
-	people.cheered.connect(func(_at: Vector3, strength: float) -> void: _sound("cheer", strength))
+	# the venue's sound (when the building has one): what's on (the people's
+	# own cheers, gasps and chatter go through their WorldSound)
 	if life:
 		life.happened.connect(_on_life)
 	else:

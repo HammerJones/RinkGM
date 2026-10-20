@@ -13,7 +13,7 @@ extends Node3D
 ##
 ##   OnIceSession.for_sim(sim, venue)  # the controller for sim.session_now(), or null
 ##
-## Sound hooks (the lead thread connects; nothing here plays audio):
+## Sound hooks (WorldSound plays them; nothing here plays audio):
 ## blade_carve(pos, speed) once per stride, stop_spray(pos, speed) for a
 ## hockey stop, puck_hit(pos, what, speed) for boards / post / pylon / pad /
 ## net / skate / stick / goalie, whistle(pos) for a ref, coach_whistle(pos),
@@ -129,6 +129,7 @@ func _setup_common(c: Dictionary) -> void:
 	gear.add_prop("rack_pads", rack_pads, PI * 0.5)
 	_draw = OnIceDraw.new(self, "OnIce")
 	_hooks = {"fell": on_fell, "stride": _on_stride, "bump": bump}
+	WorldSound.attach(self)
 
 
 ## Subclasses put their people and gear out here.
