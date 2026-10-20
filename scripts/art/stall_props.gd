@@ -192,12 +192,14 @@ static func _stall(m: VoxelModel, run: Dictionary, i: int, age: int, look: Dicti
 	elif _roll(seed_, 4) < (0.75 if worn else 0.9):
 		_fill(m, run, x + 1 + posmod(seed_ >> 3, 2), H - 2, 0, 5, 1, 1, Wear.DUCT_TAPE)  # tape and marker
 	# what's in it: a sweater on the bar, a helmet and gloves up top, skates
-	var kit := team if not worn else paint.lerp(Wear.OLD_CREAM, 0.2)
+	# renovated backs are the team colour, so the sweaters hang as whites
+	var kit: Color = [paint.lerp(Wear.OLD_CREAM, 0.2), team, Wear.WHITE][age]
+	var stripe: Color = [Wear.OLD_GOLD, Wear.WHITE, team][age]
 	if _roll(seed_, 5) < 0.55:
 		_fill(m, run, x + 2, BAR_Y - 8, BAR_D, w - 4, 8, 1, kit)  # hung sweater
 		_fill(m, run, x + 1, BAR_Y - 2, BAR_D, 1, 2, 1, kit)      # its shoulders
 		_fill(m, run, x + w - 2, BAR_Y - 2, BAR_D, 1, 2, 1, kit)
-		_fill(m, run, x + 2, BAR_Y - 5, BAR_D, w - 4, 1, 1, Wear.WHITE if not worn else Wear.OLD_GOLD)  # stripe
+		_fill(m, run, x + 2, BAR_Y - 5, BAR_D, w - 4, 1, 1, stripe)  # stripe
 	if _roll(seed_, 6) < 0.7:
 		var hc: Color = [Wear.CHARCOAL, team, Wear.WHITE, Wear.CHARCOAL][posmod(seed_ >> 5, 4)]
 		_fill(m, run, x + 1, SHELF_Y + 1, 2, 3, 3, 3, hc)  # helmet
