@@ -1162,6 +1162,9 @@ const JOBS := {
 	"pump_bearing": {"hours": 4.0, "cost": 190.0, "cat": "plant parts"},
 	"blade_change": {"hours": 1.0, "cost": 160.0, "cat": "Doris parts"},
 	"doris_plugs": {"hours": 0.4, "cost": 28.0, "cat": "Doris parts"},
+	# World: through her service hatch, in place (DorisCarb, DorisOil)
+	"doris_carb": {"hours": 0.75, "cost": 9.0, "cat": "Doris parts"},
+	"doris_oil_change": {"hours": 0.5, "cost": 46.0, "cat": "Doris parts"},
 	"engine_tune": {"hours": 1.5, "cost": 70.0, "cat": "Doris parts"},
 	"towel_change": {"hours": 0.5, "cost": 85.0, "cat": "Doris parts"},
 	"shave_ice": {"hours": 0.5, "cost": 2.0, "cat": "gasoline"},
@@ -1302,10 +1305,39 @@ func job(id: String, args := {}) -> Dictionary:
 				text = "New plugs in, but she cranks and won't fire. Unless it's the choke."
 			if bool(args.get("cross_threaded", false)):
 				text += " One plug cross-threaded: two hours with a thread repair kit."
+		"doris_carb":
+			# the jets and the float bowl cleaned, a new bowl gasket
+			var clean := clampf(float(args.get("jets_clean", 1.0)) * 0.6 + float(args.get("bowl_clean", 1.0)) * 0.4, 0.0, 1.0)
+			doris.carb = clampf((0.6 + 0.4 * q) * (0.5 + 0.5 * clean), 0.0, 1.0)
+			if bool(args.get("choke_freed", true)):
+				doris.choke_stuck = false
+			text = "Carburettor cleaned"
+			if not bool(args.get("gasket_ok", true)):
+				extra_hours += 0.25
+				text += "; the old bowl gasket weeps gas, so you do it twice"
+			text += "." if doris.fault() == "" else ", but she still won't fire."
+		"doris_oil_change":
+			# drained, a new filter, refilled to the dipstick (0.5 ADD .. 1 FULL)
+			var lv := clampf(float(args.get("oil_level", 0.9)), 0.0, 1.5)
+			var fresh := 0.8 + 0.2 * q
+			if lv < 0.5:
+				fresh *= 0.5 + lv  # short of the ADD mark: it cooks what's there
+			if not bool(args.get("filter_ok", true)):
+				fresh *= 0.85
+			if not bool(args.get("drain_plug_torque_ok", true)):
+				fresh *= 0.8  # it weeps from the drain plug
+			doris.engine_oil = clampf(fresh, 0.0, 1.0)
+			text = "Fresh oil and a new filter in Doris"
+			if lv > 1.1:
+				text += "; over the FULL line, she'll smoke a little"
+			elif lv < 0.5:
+				text += "; she's under the ADD mark"
+			text += "."
 		"engine_tune":
 			doris.part("spark_plugs").replace()
 			doris.part("air_filter").replace()
 			doris.engine_oil = 1.0
+			doris.carb = 1.0
 			doris.choke_stuck = false
 			text = "Doris tuned up."
 		"towel_change":
@@ -1493,6 +1525,7 @@ func _driven_resurface(args: Dictionary) -> Dictionary:
 	for id in doris.parts:
 		(doris.parts[id] as SimPart).run(ResurfacerSim.RESURFACE_HOURS, 1.0 + (0.5 if bool(args.get("jam", false)) and id == "auger_bearing" else 0.0))
 	doris.engine_oil = maxf(doris.engine_oil - ResurfacerSim.RESURFACE_HOURS / 120.0, 0.0)
+	doris.carb = maxf(doris.carb - ResurfacerSim.RESURFACE_HOURS / ResurfacerSim.CARB_LIFE_H, 0.0)
 	# the pit takes what was dumped (a full Doris load is about 0.25 of it)
 	var dumped := float(args.get("dumped_m3", 0.0))
 	snow_pit = minf(snow_pit + dumped / ResurfacerSim.SNOW_TANK_M3 * 0.25, 1.0)
