@@ -1,0 +1,40 @@
+{
+  "collision_cell": 8,
+  "id": "soviet_phone",
+  "inspect": "A VEF TA-68 from Riga, black bakelite. Dials slower than you can think of the number.",
+  "mass_kg": 1.6,
+  "mesh": "merged",
+  "name": "Rotary phone",
+  "pivot": [
+    77.0,
+    0,
+    70.0
+  ],
+  "shape": [],
+  "size_m": [
+    0.231,
+    0.141,
+    0.21
+  ],
+  "sound": "plastic",
+  "source": "tools/propgen/library.py",
+  "tags": [
+    "office",
+    "electronics",
+    "handheld"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "take",
+    "inspect",
+    "push",
+    "use"
+  ],
+  "vox": "art/props/soviet_phone.vox",
+  "voxel_m": 0.0015,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

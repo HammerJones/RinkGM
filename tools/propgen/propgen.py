@@ -73,6 +73,9 @@ PALETTE = {
     "walnut": (92, 60, 46),
     "walnut2": (82, 52, 40),
     "walnut_dark": (62, 40, 30),
+    "bakelite": (30, 29, 31),
+    "bakelite2": (25, 24, 27),
+    "bakelite_hi": (54, 53, 57),
 }
 NAMES = list(PALETTE.keys())  # palette index = position + 1
 

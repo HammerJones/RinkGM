@@ -389,6 +389,80 @@ def wall_phone_booth() -> Scene:
     return s
 
 
+def soviet_phone() -> Scene:
+    """A VEF TA-68, the Soviet desk phone (after the Sketchfab model by Ruslan
+    Maer, which could not be opened from here, so this is the TA-68 from its
+    known design): a rounded wedge body in black bakelite with a sloped
+    front, a rotary dial with a chrome finger wheel, ten holes and a number
+    card, the handset lying across a two-prong cradle, a coiled cord.
+    0.22 x 0.13 x 0.20 m at 1.5 mm voxels."""
+    import math
+
+    v = 0.0015
+    s = Scene((0.23, 0.14, 0.21), v)
+    W, D = 0.22, 0.20
+    bake = dict(colour=PAL.bakelite, dither=PAL.bakelite2, amount=0.2)
+    SL, K = 0.040, 0.40  # the front slope: top surface y = SL + K * z, clamped by the box top
+
+    def slope(off: float):
+        return s.plane((0.0, 1.0, -K), SL + off)
+
+    def top(z: float) -> float:
+        return min(SL + K * z, 0.10)
+
+    body = s.rbox((W / 2, 0.050, D / 2), (W, 0.10, D), r=0.014) & slope(0.0)
+    s.add(body, **bake)
+    # cradle on the flat deck at the back: two prongs with a dip between
+    for px in (W / 2 - 0.060, W / 2 + 0.060):
+        s.add(s.rbox((px, 0.108, D - 0.060), (0.022, 0.026, 0.050), r=0.006), **bake)
+    s.cut(s.cylinder((W / 2, 0.160, D - 0.060), 0.062, 0.124, axis="x"))
+    # rotary dial on the slope: chrome ring, finger wheel with ten holes, number card on top
+    dz = 0.065
+    dy = top(dz)
+    ring = s.cylinder((W / 2, dy, dz), 0.052, 0.040, axis="y") & slope(0.008) - slope(-0.004)
+    s.add(ring, PAL.chrome, dither=PAL.chrome2, amount=0.15)
+    wheel = s.cylinder((W / 2, dy, dz), 0.046, 0.040, axis="y") & slope(0.012) - slope(0.004)
+    s.add(wheel, PAL.chrome, dither=PAL.chrome2, amount=0.15)
+    s.paint(s.cylinder((W / 2, dy, dz), 0.046, 0.040, axis="y") & slope(0.012) - slope(0.0105), PAL.silver)
+    # holes: 1 at the upper right, round counter-clockwise to 0 at the lower
+    # right, as seen from the front (the viewer's right is -X; the top of
+    # the dial on the slope is +Z)
+    for i in range(10):
+        phi = math.radians(60 - i * 30)
+        hx = W / 2 - math.sin(phi) * 0.035
+        hz = dz + math.cos(phi) * 0.035
+        s.cut(s.cylinder((hx, dy, hz), 0.0075, 0.080, axis="y"))
+        nx = W / 2 - math.sin(phi) * 0.0205
+        nz = dz + math.cos(phi) * 0.0205
+        s.label(str((i + 1) % 10), (nx, top(nz) + 0.012, nz), face="top", size=v, ink=PAL.ink, depth=v * 2)
+    card = s.cylinder((W / 2, dy, dz), 0.013, 0.040, axis="y") & slope(0.015) - slope(0.010)
+    s.add(card, PAL.cream, dither=PAL.cream2, amount=0.1)
+    s.label("2-16", (W / 2, top(dz) + 0.015, dz), face="top", size=v, ink=PAL.ink, depth=v * 2)
+    # finger stop at the lower right of the dial
+    sx_, sz_ = W / 2 - math.sin(math.radians(105)) * 0.046, dz + math.cos(math.radians(105)) * 0.046
+    s.add(s.rbox((sx_, top(sz_) + 0.012, sz_), (0.012, 0.018, 0.012), r=0.003), PAL.chrome)
+    # VEF badge below the dial
+    s.label("VEF", (W / 2, top(0.018) + 0.001, 0.018), face="top", size=v, ink=PAL.chrome, depth=v * 2)
+    # handset lying across the cradle: a bent grip with the two cups
+    hy = 0.128
+    hz = D - 0.060
+    grip = s.rbox((W / 2, hy + 0.006, hz), (0.150, 0.030, 0.036), r=0.013)
+    cups = (s.cylinder((W / 2 - 0.090, hy - 0.010, hz), 0.032, 0.040, axis="y", r=0.010)
+            | s.cylinder((W / 2 + 0.090, hy - 0.010, hz), 0.032, 0.040, axis="y", r=0.010))
+    s.add(grip | cups, **bake)
+    for cx_ in (W / 2 - 0.090, W / 2 + 0.090):
+        s.paint(s.cylinder((cx_, hy - 0.030, hz), 0.022, 0.004, axis="y"), PAL.bakelite_hi)
+        s.grille((cx_ - 0.014, hy - 0.031, hz - 0.014), (cx_ + 0.014, hy - 0.027, hz + 0.014), pitch=0.005, hole=0.002, depth_axis="y", colour=PAL.ink)
+    # coiled cord from the mouthpiece round the back to the body's rear
+    for i in range(40):
+        t = i / 39.0
+        x = W / 2 + 0.100 - 0.11 * t
+        y = hy - 0.030 - 0.05 * math.sin(t * math.pi * 0.5)
+        z = hz + 0.040 + 0.025 * math.sin(t * math.pi) + 0.006 * math.sin(i * 1.4)
+        s.add(s.cylinder((x, y, z), 0.006, 0.003, axis="x"), PAL.bakelite2, dither=PAL.bakelite_hi, amount=0.3)
+    return s
+
+
 # ---------------------------------------------------------------- the table
 
 LIBRARY = {
@@ -419,6 +493,9 @@ LIBRARY = {
         tags=["lobby", "hallway", "electronics", "furniture"], verbs=["inspect", "use"],
         inspect="The lobby pay phone in its wood booth. Local calls were a quarter; the binder underneath is the league phone list.",
         pivot="wall"),
+    "soviet_phone": dict(build=soviet_phone, name="Rotary phone", mass_kg=1.6, sound="plastic",
+        tags=["office", "electronics", "handheld"], verbs=["take", "inspect", "push", "use"],
+        inspect="A VEF TA-68 from Riga, black bakelite. Dials slower than you can think of the number."),
     "wall_clock": dict(build=wall_clock, name="Wall clock", mass_kg=1.4, sound="metal",
         tags=["lobby", "office", "dressing_room", "sign"], verbs=["inspect"],
         inspect="Schoolhouse clock, ten past ten, like every clock in every catalogue."),
