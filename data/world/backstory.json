@@ -1,0 +1,196 @@
+{
+  "version": 1,
+  "_doc": "Pieces Townsfolk.backstory() assembles into two or three sentences for every generated person: who they are (by archetype), their work or family, and one thing the rink knows about them. Tokens: {first} {surname} {town} {job} {employer} {kid} {kids} {partner} {grandkid} {parent} {friend} {years} {since} {fav} {age}. A line whose token has nothing to fill it is skipped. Tone: warm, a little satirical, never cruel (LORE.md, PATHS.md).",
+  "who": {
+    "hockey_parent": [
+      "{first} has driven {kid} to more 6 a.m. practices than the bus has routes.",
+      "{first} learned the offside rule in a week out of self-defence and now explains it to other parents, loudly.",
+      "{first} owns four travel mugs and a seat cushion with {kid}'s number on it.",
+      "{first} keeps a spare neck guard, a spare skate lace and a spare opinion in the glovebox."
+    ],
+    "figure_parent": [
+      "{first} can tell a double toe from a double flip at forty metres and won't, out of politeness.",
+      "{first} has sewn more sequins onto {kid}'s dresses than anyone should have to.",
+      "{first} is on the six a.m. coffee bench, second thermos from the left.",
+      "{first} has read the test-day rules twice and the club newsletter once, under protest."
+    ],
+    "rink_rat": [
+      "{first} is at the rink so much the vending machine knows {first}'s order.",
+      "{first} has never paid for public skate and has never once been asked to.",
+      "{first} knows which door sticks, which drain gurgles and where Earl hides the good shovel.",
+      "{first} wants to drive the resurfacer more than anything, including dessert."
+    ],
+    "beer_leaguer": [
+      "{first} has played beer league in the valley for {years} years and peaked in about the second one.",
+      "{first} brings a cooler, a stick from 2009 and an unshakeable belief in the wrist shot.",
+      "{first} hasn't missed a Tuesday since the team got its own jerseys.",
+      "{first} plays defence because nobody else on the team would."
+    ],
+    "retiree_regular": [
+      "{first} retired in {retired} and has been at the rink every week since, mostly for the coffee.",
+      "{first} remembers when the snack bar sold cigarettes and still thinks the fries were better then.",
+      "{first} has an opinion about every renovation since 1974, and a bench.",
+      "{first} sits in the same seat every week and considers it, legally, theirs."
+    ],
+    "date_night": [
+      "{first} is here with {partner} because the movie theatre in {town} closed in 2011.",
+      "{first} met {partner} at a public skate, which {partner} remembers differently.",
+      "{first} pretends not to be able to skate so {partner} has to hold on.",
+      "{first} and {partner} are trying something new this year, and the something is ice."
+    ],
+    "figure_skater": [
+      "{first} has landed the axel in practice nine times and in front of {parent} zero times.",
+      "{first} is working toward a test day that {parent} has circled on the fridge in red.",
+      "{first} practises spins in the kitchen in socks, which is how the lamp broke.",
+      "{first} is the youngest skater in the club who can do a layback, and knows it."
+    ],
+    "minor_player": [
+      "{first} plays for the Millbrook Minor Mallards and is convinced the coach has a system.",
+      "{first} wants to play in the Grand Northern like Ronnie Haverstock, or failing that, drive a truck.",
+      "{first} has a lucky roll of tape that is now mostly lucky and very little tape.",
+      "{first} asks for the puck from every game, including the ones they lost."
+    ],
+    "teen": [
+      "{first} is in grade {grade} at Millbrook High and would like that to be over, eventually.",
+      "{first} comes to the rink for the hot chocolate and to be seen not caring about anything.",
+      "{first} has a group chat with {friend} that is ninety percent rink gossip.",
+      "{first} is saving up for a car with roughly the money you'd need for a wheel."
+    ],
+    "learn_to_skate_adult": [
+      "{first} decided at {age} that it was time to learn, and the ice has opinions about it.",
+      "{first} signed up for adult lessons after promising {kid} they'd skate together one day.",
+      "{first} grew up somewhere without winter and is still a little offended by this one.",
+      "{first} holds the boards like they owe {first} money, and is getting better every week."
+    ],
+    "stick_and_puck_regular": [
+      "{first} shows up to every stick and puck with a bucket of pucks and no plan.",
+      "{first} has been working on the same toe drag since the spring.",
+      "{first} played junior B for half a season and talks about it for the other half of every year.",
+      "{first} comes for the empty ice and stays to complain that it's not empty."
+    ],
+    "broomballer": [
+      "{first} plays broomball in running shoes and treats it like an Olympic event.",
+      "{first} joined the Harlow Falls Broomball Club for the social side and stayed for the bruises.",
+      "{first} has explained broomball to six people this year and converted two.",
+      "{first} owns more broom than broom handle, after the incident."
+    ],
+    "superfan": [
+      "{first} has had Lumber Kings season tickets since {since} and a voice for about as long.",
+      "{first} brings a cowbell, a sign and an air horn the league has written to them about.",
+      "{first} has never once agreed with a referee and is proud of it.",
+      "{first} knows every player's mother's name and uses them."
+    ],
+    "autograph_hunter": [
+      "{first} has a binder of signed cards and a pen in every coat pocket.",
+      "{first} once got Barry Pomeroy to sign a pizza box, and the box is framed.",
+      "{first} waits by the dressing room door with a Sharpie and an extraordinary amount of patience.",
+      "{first} can tell you which Dukes sign nicely and which ones sign like doctors."
+    ],
+    "coffee_coach": [
+      "{first} coaches {kid}'s team from the stands, which the actual coach has mentioned.",
+      "{first} played midget AA in 1996 and it shows in every sentence.",
+      "{first} has a whiteboard in the car. Nobody knows why it's in the car.",
+      "{first} brings coffee for the coaches, which makes it harder for them to ask {first} to stop."
+    ],
+    "grandparent": [
+      "{first} drives in from {town} to watch {grandkid} and brings butterscotch candies for the whole bench.",
+      "{first} knits a scarf in the team colours every season and hands them out to whoever looks cold.",
+      "{first} played on this ice in 1962 and says it was colder then, and better.",
+      "{first} is the only person in the stands who claps for the other team's goals, too."
+    ],
+    "scout": [
+      "{first} scouts the valley for a junior club two provinces over and writes everything in a little notebook.",
+      "{first} drinks the rink coffee black and doesn't wince, which is how you know they're a professional.",
+      "{first} has watched more U15 hockey than anyone alive and says nothing about any of it.",
+      "{first} wears a team jacket from a club that folded in 2014, for luck."
+    ],
+    "shift_worker": [
+      "{first} works shifts at {employer} and comes to the rink at hours nobody else does.",
+      "{first} sleeps in the afternoons, skates at noon and eats breakfast at nine at night.",
+      "{first} brings a lunch pail to the rink out of habit.",
+      "{first} knows exactly how long a flood takes, because {first} has watched about four hundred."
+    ],
+    "shopkeeper": [
+      "{first} runs a shop on Main Street in {town} and closes it early for the playoffs.",
+      "{first} puts the Lumber Kings schedule in the shop window every September.",
+      "{first} sponsors a minor hockey team and checks the crest every game to make sure it's straight."
+    ],
+    "canteen_worker": [
+      "{first} works the Hot Stove and can make change for a fifty in the dark.",
+      "{first} knows who wants extra gravy before they ask.",
+      "{first} has been told by Lorraine three times how to do the fries, and does them better."
+    ],
+    "volunteer": [
+      "{first} sells 50/50 tickets with the persistence of a tax collector.",
+      "{first} runs the clock at minor hockey and has never once missed a buzzer.",
+      "{first} is on four committees, two of which meet at the rink.",
+      "{first} has volunteered so long nobody remembers asking."
+    ],
+    "official": [
+      "{first} has reffed in the valley for {years} years and been called blind in every arena in it.",
+      "{first} has a whistle on a lanyard and a day job at {employer} that is quieter.",
+      "{first} carries a rule book in the bag and has never had to open it in an argument.",
+      "{first} refs because somebody has to, and because the money buys skate sharpening."
+    ],
+    "coach": [
+      "{first} coaches because a coach once believed in {first}, and that coach was a lot like this.",
+      "{first} has a clipboard with every line combination since 2015 on it.",
+      "{first} works at {employer} and coaches nights, which means {first} is mostly coffee.",
+      "{first} gives the same speech before every game and the kids say it along with them."
+    ],
+    "rink_staff": [
+      "{first} works the rink and can tell the ice temperature by the sound of a skate.",
+      "{first} has keys to doors that no longer exist.",
+      "{first} knows where every mop in the building is, and who took the good one."
+    ],
+    "any": [
+      "{first} grew up in {town} and never quite left.",
+      "{first} moved to {town} for a job and stayed for reasons that are mostly the rink."
+    ]
+  },
+  "work": [
+    "By day {first} is {job_a} at {employer}.",
+    "{first} works as {job_a} at {employer} and plans the week around the rink schedule.",
+    "Weekdays belong to {employer}; the rink gets the rest.",
+    "{first}'s hours at {employer} decide which games {first} makes and which ones {first} hears about on the radio."
+  ],
+  "retired": [
+    "{first} retired from {employer} and immediately got busier.",
+    "Retired now, {first} has time for every event the rink puts on, and an opinion on each."
+  ],
+  "family": {
+    "partner": [
+      "{partner} is usually somewhere nearby, holding the coffee.",
+      "{first} and {partner} have been married long enough to argue about the same penalty for a decade."
+    ],
+    "kids": [
+      "{kids} keep {first}'s calendar full and the car smelling like hockey bags.",
+      "Most of {first}'s weekends belong to {kids}."
+    ],
+    "grandkids": [
+      "{grandkid} is the light of {first}'s life and the reason for the seat cushion."
+    ],
+    "kid": [
+      "{parent} drives {first} to the rink and pretends to read in the car.",
+      "{parent} is the one in the stands wearing {first}'s old jersey."
+    ],
+    "single": [
+      "{first} lives alone with a dog that has more hockey opinions than most people.",
+      "{first} says the rink is the most social thing in the week, and means it."
+    ]
+  },
+  "rink": [
+    "{first} likes {fav} best and would never say so to the {fav2} crowd.",
+    "Ask {first} about the 2005 night the Cup came to Millbrook. Or don't, if you're in a hurry.",
+    "{first} has a favourite spot on the glass by the penalty box and will tell you why.",
+    "{first} claims to have seen Doris start on the first try once. Nobody believes it.",
+    "{first} always buys a coffee and never drinks the last third.",
+    "{first} still talks about the year the heaters worked.",
+    "{first} has strong feelings about the canteen fries, all of them positive.",
+    "{first} once found a puck from 1988 under the bleachers and keeps it in the car.",
+    "{first} is suspicious of composite sticks, on principle.",
+    "{first} reads every notice on the corkboard, including the ones from 2014.",
+    "{first} thinks the new owner seems all right. For now.",
+    "{first} keeps a mitten in each coat pocket and has never found a pair."
+  ]
+}

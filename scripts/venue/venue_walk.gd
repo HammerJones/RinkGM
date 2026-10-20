@@ -99,6 +99,11 @@ func _ready() -> void:
 	cam.current = true
 	_build_ui()
 	pickup_run = PickupRun.attach_to_walk(self)  # World: pickup basketball in the gym (scripts/world/pickup)
+	# World: the building's real people (WalkPeople: RinkPeople on this walk's
+	# sim, T to talk, Gus's first-day offer) instead of the seated crowd;
+	# `--no-people` keeps the old crowd.
+	if not "--no-people" in OS.get_cmdline_user_args():
+		WalkPeople.attach(self)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 

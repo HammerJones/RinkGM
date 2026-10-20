@@ -103,6 +103,29 @@ func _fallbacks() -> void:
 	if not places.has("stands"):
 		for s in seats:
 			_add("stands", s[0])
+	var wings: bool = venue != null and venue.has_method("has_wings") and venue.has_wings()
+	if not places.has("vending"):
+		# in front of the lobby's two machines by the rink doors (and the rec lobby's)
+		_add("vending", [Vector3(-35.6, 0, 11.45), Vector3(-35.6, 0, 12.45)])
+		if wings:
+			_add("vending", Vector3(-36.0, 0, -29.7))
+	if not places.has("hall"):
+		# somewhere to wander: the lobby, the walkways along the boards, the rec hall
+		for p in places.get("lobby", []).slice(0, 4):
+			_add("hall", p)
+		var g: Array = places.get("glass", [])
+		for i in range(0, g.size(), 3):
+			_add("hall", g[i])
+		if wings:
+			for x in [-30.0, -18.0, -6.0, 6.0, 18.0]:
+				_add("hall", Vector3(x, 0, -42.0))
+	if wings and not places.has("parking"):
+		# the stalls nearest the arena's front doors, both sides of the lane
+		for z in [7.5, 10.5, 13.5, 16.5, 19.5, -7.5, -10.5, -13.5, -16.5, -19.5, 22.5, -22.5]:
+			_add("parking", Vector3(-58.5, 0, z))
+	if wings and not places.has("street"):
+		# where people on foot come round the building from the road
+		_add("street", [Vector3(-51.5, 0, 26.0), Vector3(-51.5, 0, -26.0), Vector3(-74.0, 0, 1.5)])
 
 
 ## A point for `place`, picked by `i` (so people spread out), or Vector3.INF.

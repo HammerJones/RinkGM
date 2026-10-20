@@ -31,6 +31,21 @@ var dislikes: Array = []
 var voice := ""
 var bio := ""
 var generated := false
+## Work: "job" is what the cast record says ("Owner, Bev's Edge & Tape");
+## generated people get one from data/world/jobs.json (Townsfolk). `work`:
+## {"title", "employer", "days", "from", "to", "flex" (0..1, how easily they
+## swap a shift), "boss"}; empty for kids at school, retirees and anyone
+## whose job the record doesn't say.
+var job := ""
+var work := {}
+var home := ""
+var commute := "car"       # car, foot, ride (a lift from family) or bike
+## A short life story: the cast's bio, or assembled for townsfolk.
+var backstory := ""
+## How they're related to the people in `family`: id -> "partner", "child",
+## "parent", "sibling", "grandparent", "grandchild".
+var kin := {}
+var friends: Array = []    # ids of friends (teammates, classmates)
 
 # state
 var mood := 0.7            # how they feel about the rink, 0..1
@@ -52,7 +67,11 @@ static func from_record(d: Dictionary, generated_ := false) -> Person:
 	p.look = d.get("look", {})
 	p.traits = d.get("traits", {})
 	p.interests = d.get("interests", {})
-	p.schedule = d.get("schedule", [])
+	p.schedule = []
+	for e in d.get("schedule", []):
+		var e2: Dictionary = e.duplicate()
+		e2.days = int_days(e.get("days", []))
+		p.schedule.append(e2)
 	p.rel = d.get("rel", {}).duplicate()
 	p.family = d.get("family", [])
 	p.dialogue = str(d.get("dialogue", ""))
@@ -62,7 +81,61 @@ static func from_record(d: Dictionary, generated_ := false) -> Person:
 	p.voice = str(d.get("voice", ""))
 	p.bio = str(d.get("bio", ""))
 	p.generated = generated_
+	p.job = str(d.get("job", ""))
+	p.home = str(d.get("home", ""))
+	p.work = d.get("work", {}).duplicate()
+	if p.work.has("days"):
+		p.work.days = int_days(p.work.days)
+	p.commute = str(d.get("commute", "ride" if p.age < 16 else "car"))
+	p.backstory = str(d.get("backstory", p.bio))
+	p.kin = d.get("kin", {}).duplicate()
+	p.friends = d.get("friends", []).duplicate()
+	if p.work.is_empty() and p.job != "":
+		p.work = _work_from_schedule(p)
 	return p
+
+
+## Weekdays as ints: JSON hands them over as floats, and `3 in [3.0]` is
+## false in GDScript, so a schedule read straight from data never matched.
+static func int_days(days: Array) -> Array:
+	var out: Array = []
+	for d in days:
+		out.append(int(d))
+	return out
+
+
+## A named person's working hours, from the schedule blocks marked "work".
+static func _work_from_schedule(p: Person) -> Dictionary:
+	for e in p.schedule:
+		if str(e.get("doing", "")) == "work":
+			var parts := p.job.split(",", false, 1)
+			return {"title": p.job, "employer": parts[1].strip_edges() if parts.size() > 1 else "",
+				"days": e.get("days", []), "from": float(e.get("from", 9.0)), "to": float(e.get("to", 17.0)),
+				"place": str(e.get("place", "away")), "flex": 0.5, "boss": ""}
+	return {}
+
+
+## How `other` is related to them ("partner", "child"...), or "".
+func kin_of(other: String) -> String:
+	return str(kin.get(other, ""))
+
+
+## Their work blocks the rink can't have: away from the rink, on the clock.
+## Kids' school counts too (they don't negotiate it).
+func busy_with(weekday: int, hour: float) -> Dictionary:
+	var e := entry_at(weekday, hour)
+	if e.is_empty() or str(e.get("place", "away")) != "away":
+		return {}
+	return e
+
+
+## True when what keeps them away is a job they could ask to swap.
+func job_block(weekday: int, hour: float) -> bool:
+	var e := busy_with(weekday, hour)
+	if e.is_empty():
+		return false
+	var doing := str(e.get("doing", ""))
+	return doing in ["work", "night shift", "afternoon shift", "day job", "the shop", "school or work"] and not is_kid()
 
 
 func trait_value(key: String) -> float:

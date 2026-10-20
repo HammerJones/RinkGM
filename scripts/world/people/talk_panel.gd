@@ -3,6 +3,9 @@ extends PanelContainer
 ## The conversation box: who's talking, what they said, and your options.
 ## Number keys (or up/down and Enter, or the d-pad and A) pick an option.
 ## Uses the project's RinkOS theme; the UI thread owns the final look.
+## With the optional local model on (WorldSettings "ai_dialogue", F2 here
+## toggles it), an extra line from AiDialogue appears under theirs when it
+## arrives; the offline line never waits for it.
 ##
 ##   var panel := TalkPanel.new(); canvas_layer.add_child(panel)
 ##   panel.show_conversation(people.talk(agent, me))
@@ -14,6 +17,9 @@ var conv: Conversation
 var _who: Label
 var _line: Label
 var _opts: VBoxContainer
+var _ai_text: Label
+var _foot: Label
+var _ai: AiDialogue
 var _sel := 0
 
 
@@ -30,9 +36,18 @@ func _ready() -> void:
 	_line = Label.new()
 	_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_line)
+	_ai_text = Label.new()
+	_ai_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_ai_text.add_theme_color_override("font_color", Color("b8c4cc"))
+	box.add_child(_ai_text)
 	box.add_child(HSeparator.new())
 	_opts = VBoxContainer.new()
 	box.add_child(_opts)
+	_foot = Label.new()
+	_foot.add_theme_color_override("font_color", Color("6f7a82"))
+	box.add_child(_foot)
+	_ai = AiDialogue.new()
+	add_child(_ai)
 	hide()
 
 
@@ -41,6 +56,17 @@ func show_conversation(c: Conversation) -> void:
 	_sel = 0
 	show()
 	_refresh()
+	_ask_ai()
+
+
+func _ask_ai() -> void:
+	if conv == null:
+		return
+	var asked := conv
+	_ai.ask(conv, func(line: String) -> void:
+		if conv == asked and is_instance_valid(self):
+			conv.ai_line = line
+			_refresh())
 
 
 func _refresh() -> void:
@@ -52,6 +78,9 @@ func _refresh() -> void:
 	var p := conv.speaker
 	_who.text = "// %s%s" % [p.known_as.to_upper(), "  ----  " + p.name if p.known_as != p.name else ""]
 	_line.text = conv.line
+	_ai_text.text = conv.ai_line
+	_ai_text.visible = conv.ai_line != ""
+	_foot.text = "[F2] local AI lines: %s" % ("ON" if WorldSettings.get_bool("ai_dialogue") else "OFF")
 	for c in _opts.get_children():
 		c.queue_free()
 	for i in conv.choices.size():
@@ -64,6 +93,7 @@ func pick(i: int) -> void:
 	if conv == null:
 		return
 	conv.choose(i)
+	conv.ai_line = ""
 	_sel = 0
 	_refresh()
 
@@ -82,6 +112,10 @@ func _unhandled_input(e: InputEvent) -> void:
 			_refresh()
 		elif e.keycode in [KEY_ENTER, KEY_SPACE]:
 			pick(_sel)
+		elif e.keycode == KEY_F2:
+			WorldSettings.set_value("ai_dialogue", not WorldSettings.get_bool("ai_dialogue"))
+			_refresh()
+			_ask_ai()
 		elif e.keycode == KEY_ESCAPE:
 			conv = null
 			_refresh()

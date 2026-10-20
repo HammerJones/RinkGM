@@ -97,6 +97,19 @@ The same keys for cast and townsfolk. Townsfolk fill fewer of them.
 | `schedule` | where they are when they are not at an event. Hours of the day, weekdays 0 = Sunday. `place` is a venue place (section 7) or `away` |
 | `rel` | how they feel about other people, -100..100. `owner` is the player |
 | `dialogue` | id of a tree in `data/world/dialogue/<id>.json` |
+| `job` | one line: "Nurse, Valley Regional Hospital", "In school", "Retired" |
+| `work` | the job's hours: `{title, employer, days, from, to, flex, boss, id}`. `flex` 0..1 is how easily they swap a shift. Named people without it get one from their schedule's `work` block |
+| `commute` | how they get to the rink: `car`, `foot`, `ride` (a parent drives) |
+| `kin` | `{person id: relation}`: `partner`, `child`, `parent`, `sibling`, `grandparent`, `grandchild` |
+| `friends` | person ids they come to watch or sit with |
+| `backstory` | a few sentences; named people use `bio`, townsfolk get a generated one |
+
+Townsfolk jobs come from `data/world/jobs.json` (templates by archetype
+and town, with hour options, a boss and a commute); the job's hours
+replace the archetype's stand-in work block, so rink time fits around
+work. Backstories are built from `data/world/backstory.json` (who they
+are, their work, their family, what the rink is to them), warm and a
+little wry; lines whose tokens can't be filled are skipped.
 
 ## 4. Attendance
 
@@ -116,6 +129,20 @@ come if rng < want
 Families come together: a minor hockey player brings a parent, and maybe a
 sibling and a grandparent. A participant who comes brings their gear and
 goes to a dressing room; a spectator heads for the stands.
+
+**Everyone has a reason.** Each entry is `{person, as, reason, arrive,
+group}`; `reason` is `{why, for, for_name, group, until, negotiated,
+place, doing}`. `why` is one of `player`, `parent`, `sibling`,
+`grandparent`, `partner`, `child`, `grandchild`, `friend`, `date`,
+`scout`, `next_student` (the figure coach's next lesson, early), `zamboni`
+(a kid who came for the machine), `autograph`, `fan`, `drop_in`, `work`.
+`for` is the person they came for. A group arrives together (players 15
+to 40 minutes early, their family with them) and leaves when its player
+leaves; parents wait in the lobby while kids change. A parent whose job
+covers the event may swap a shift for one that matters (`negotiated`, a
+line from `jobs.json` "negotiate"); the higher the stakes and the boss's
+`flex`, the likelier. People talk about all this through `@why_here`,
+`@work`, `@with` and `@about`, with lines from `data/world/dialogue/_life.json`.
 
 ## 5. Archetypes
 
@@ -192,7 +219,7 @@ People move between named places. The venue provides them (Rink
 environment); `scripts/world/people/place_map.gd` builds a walk graph from
 the venue's rooms and doors and adds named spots.
 
-`entrance`, `lobby`, `canteen` (queue), `pro_shop`, `washroom`, `stands`
+`entrance`, `lobby`, `canteen` (queue), `pro_shop`, `washroom`, `vending`, `hall`, `stands`
 (seats), `glass` (standing at the boards), `bench`, `penalty_box`,
 `dressing_room`, `ice`, `office`, `zamboni_bay`, `plant_room`, `skate_rental`,
 `community_room`, `parking`, `away` (not in the building).
@@ -231,7 +258,65 @@ to talk to someone other than the giver, that person opens with it.
 `kind`: `side` (a story), `favour` (a small ask, repeatable, from templates),
 `chain` (several quests that unlock in order, `"after": "quest_id"`).
 
-## 9. Code
+## 9. Life in the building
+
+`RinkLife.attach_live(people)` puts a live `RinkPeople` on the sim: each
+session of today and tomorrow is booked about 50 minutes ahead
+(`Attendance.who_comes`), its phase (`before`, `on`, `after`) follows the
+clock, staff come for their shifts and drop-ins (rink rats, coffee
+retirees) every half hour. On the venue walk `WalkPeople` does this in
+place of the seated crowd (`--no-people` keeps the old crowd; hockey
+matches still use `VenueCrowd`).
+
+In the building people fidget (sip, phone, stretch, lean), watch their
+person, cheer and clap, gasp at falls, wander to the halls, the canteen,
+the washrooms and the vending machines, and trade two-line small talk
+over their heads (`_life.json` "small_talk"). They come and go through
+the parking lot or the street, by car or on foot.
+
+**Signals for sound** (`RinkPeople`): `barked(person, text, at)`,
+`chatter(level 0..1)`, `cheered(at, strength)`, `reacted(what, at,
+strength)` (`gasp`, `clap`, `zamboni`), `person_arrived(person, how)`
+(`car`, `foot`), `person_left(person)`, `agent_arrived(agent)`.
+
+**For other systems** (on-ice events, drills): `claim(agent, owner)`,
+`release(agent)`, `is_claimed`, `move_to(agent, pos, speed)`, `place(agent, pos, yaw)`,
+`set_pose(agent, pose)`, `on_ice(session)` (who is skating), `agent_of(person_id)`,
+`present(pred)`, `nearest(pos)`, `session_phase` (session key to phase), `send_home(agent)`,
+`send_group_home(group)`, `fell(person_id)`, `goal(scorer)`. A claimed
+agent's brain stops deciding until it's released.
+
+**Sharing the ice**: set `RinkPeople.ice_controller` to the system drawing
+the ice (OnIceSession). While it's set, players walk to the dressing room
+(or the skate rental) and hand off there, `ice_controller.take(person)`
+when it has that method, and aren't drawn; spectators keep watching and
+face the ice. Clearing it gives the players back. The venue walk creates
+`OnIceSession.for_sim(sim, venue, {came})` when a session goes on (if the
+events code is in the build) and frees it after.
+
+**Performance**: brains think in slices (near every 0.25 s, far every
+1.2 s), paths are searched in batches on worker threads, only moving or
+changed agents rewrite their MultiMesh slots, far agents every third
+frame, and small parts (items, heads) drop out with distance. 400 people
+update in about 4 ms a frame (headless).
+
+**Local AI lines** (optional, off by default): `WorldSettings`
+(`user://world_settings.cfg`, section `people`) holds `ai_dialogue`,
+`ai_endpoint` (an Ollama-compatible `/api/generate`), `ai_model`,
+`ai_timeout`. F2 in the talk panel toggles it. `AiDialogue` asks for one
+extra line, async with a timeout; any failure is silent and the offline
+line stands. No keys, no accounts; tests set `AiDialogue.blocked`.
+
+**Gus's handoff** (`data/world/tutorial.json`, `TutorialGuide`): on the
+first morning Gus, flying to Florida that afternoon, offers to show the
+owner round. Yes runs the steps (plant round, ice check, the office,
+Doris, the first flood, the first public skate); no turns the tutorial
+off and the choice is saved (career flags, or the settings file on a
+free walk). Other systems add steps with `add_step(step, after_id)` and
+report progress with `notify(kind, data)` (`job`, `screen`, `talk`,
+`signal`).
+
+## 10. Code
 
 | File | What |
 | --- | --- |
@@ -248,6 +333,10 @@ to talk to someone other than the giver, that person opens with it.
 | `scripts/world/people/npc_brain.gd` | `NpcBrain`: needs and activities in the building (pure logic) |
 | `scripts/world/people/place_map.gd` | `PlaceMap`: the walk graph from the venue |
 | `scripts/world/people/rink_people.gd` | `RinkPeople`: the node that runs and draws everyone in the building |
+| `scripts/world/people/walk_people.gd` | `WalkPeople`: people, talk and the tutorial on a venue walk |
+| `scripts/world/people/tutorial_guide.gd` | `TutorialGuide`: Gus's first-day walkthrough |
+| `scripts/world/people/ai_dialogue.gd` | `AiDialogue`: the optional local AI line |
+| `scripts/world/people/world_settings.gd` | `WorldSettings`: player settings for the world (AI lines, tutorial) |
 | `scripts/art/people.gd` | voxel bodies for every role and age |
 
-Tests: `tools/tests/test_people.gd`.
+Tests: `tools/tests/test_people.gd`, `tools/tests/test_npc_life.gd`.
