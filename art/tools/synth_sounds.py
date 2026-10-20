@@ -581,24 +581,54 @@ def stop_spray():
 
 
 def puck_sounds():
-	"""The puck off a stick blade, the boards, a post, a pad and the twine."""
+	"""The puck off a stick blade, the boards, a post, the glass, a pad and the twine."""
 	rng = np.random.default_rng(1003)
 	# stick: a sharp clack of hard rubber on composite
 	n = secs(0.25)
 	x = modes(n, secs(0.003), [(1750, 0.016, 1.0), (3300, 0.01, 0.55), (820, 0.03, 0.35)], rng, 0.05)
 	x += 0.8 * burst(rng, n, secs(0.003), 0.003, 1500, 9000)
 	write("puck_stick", fade_ends(reverb(rng, x, 0.9, 0.3, 4000, 0.9), r=0.2), 0.8)
-	# boards: the dasher's hollow boom and the glass shaking in its frame
+	# boards: a 1970s dasher, plywood behind a plastic kick plate on a
+	# steel frame. The puck's crack on the face, the panel's hollow thud
+	# (its first plate modes, damped fast by the frame), the frame's knock,
+	# and the plexi above it shivering a little in its channel.
 	n = secs(0.9)
-	x = modes(n, secs(0.004), [(92, 0.13, 1.0), (176, 0.09, 0.7), (338, 0.05, 0.4), (1250, 0.015, 0.3)], rng, 0.04)
-	x += 0.9 * burst(rng, n, secs(0.004), 0.006, 400, 6000)
-	x += 0.25 * modes(n, secs(0.02), [(2230, 0.08, 1.0), (3170, 0.05, 0.7)], rng, 0.05)
-	write("puck_boards", fade_ends(reverb(rng, x, 1.2, 0.4, 3000, 1.4), r=0.3))
-	# post: the ping off the iron
-	n = secs(1.1)
-	x = modes(n, secs(0.002), [(1180, 0.45, 1.0), (2810, 0.28, 0.6), (4150, 0.16, 0.4), (640, 0.2, 0.3)], rng, 0.02)
-	x += 0.7 * burst(rng, n, secs(0.002), 0.002, 2000, 9000)
-	write("puck_post", fade_ends(reverb(rng, x, 1.2, 0.35, 4000, 1.4), r=0.3))
+	x = 1.1 * burst(rng, n, secs(0.003), 0.0025, 900, 8000)          # crack of rubber on the face
+	x += modes(n, secs(0.004), [(78, 0.075, 1.0), (124, 0.055, 0.8), (205, 0.04, 0.55),
+			(310, 0.028, 0.4), (470, 0.018, 0.3)], rng, 0.04)          # the plywood panel
+	x += 0.5 * burst(rng, n, secs(0.004), 0.02, 60, 450)                # the thump of air behind it
+	x += 0.22 * modes(n, secs(0.006), [(690, 0.03, 1.0), (1040, 0.02, 0.6)], rng, 0.05)  # frame knock
+	x += 0.08 * modes(n, secs(0.015), [(1630, 0.09, 1.0), (2480, 0.06, 0.7), (3390, 0.04, 0.5)], rng, 0.05)
+	x = np.tanh(1.4 * x)
+	write("puck_boards", fade_ends(reverb(rng, x, 1.4, 0.38, 2600, 1.6), r=0.3))
+	# post: the ping off a goal post, a steel pipe about 5 cm across.
+	# A pipe rings like a free bar (partials at 1 : 2.76 : 5.40 : 8.93), long
+	# and bright; the clank of the hit and the frame's lower hum under it.
+	n = secs(1.5)
+	f0 = 1040.0
+	x = modes(n, secs(0.002), [(f0, 0.62, 1.0), (f0 * 2.756, 0.38, 0.7), (f0 * 5.404, 0.2, 0.45),
+			(f0 * 8.933, 0.1, 0.25), (f0 * 1.007, 0.6, 0.35)], rng, 0.004)  # the near-twin gives the beat
+	x += 0.3 * modes(n, secs(0.003), [(212, 0.25, 1.0), (585, 0.14, 0.6)], rng, 0.03)  # the frame
+	x += 0.9 * burst(rng, n, secs(0.002), 0.0015, 2500, 10000)
+	write("puck_post", fade_ends(reverb(rng, x, 1.4, 0.32, 4500, 1.8), r=0.35))
+	# glass: the puck high off the plexi. A flat slap, the 12 mm panel
+	# flexing (a low wobble), and the panel rattling against its steel
+	# stanchions and the top rail: clacks that come quicker and fainter.
+	n = secs(1.3)
+	t = np.arange(n) / SR
+	x = 1.0 * burst(rng, n, secs(0.003), 0.003, 600, 7000)
+	flex = np.exp(-t / 0.22) * (np.sin(2 * np.pi * 47 * t) + 0.6 * np.sin(2 * np.pi * 113 * t + 1.0))
+	x += 0.5 * flex * np.clip(t / 0.004, 0, 1)
+	x += 0.5 * modes(n, secs(0.004), [(260, 0.06, 1.0), (590, 0.04, 0.6), (1450, 0.025, 0.4)], rng, 0.05)
+	at, gap, amp = 0.035, 0.05, 0.75
+	while at < 0.85 and amp > 0.04:
+		s = secs(at)
+		x += amp * burst(rng, n, s, 0.004, 700, 6500)
+		x += amp * 0.5 * modes(n, s, [(rng.uniform(1700, 2300), 0.02, 1.0), (rng.uniform(3100, 3800), 0.012, 0.6)], rng)
+		at += gap * rng.uniform(0.75, 1.25)
+		gap *= 0.86
+		amp *= rng.uniform(0.7, 0.85)
+	write("glass_rattle", fade_ends(reverb(rng, x, 1.4, 0.4, 3500, 1.6), r=0.3))
 	# pad: a dull thump into foam and leather
 	n = secs(0.35)
 	x = modes(n, secs(0.003), [(140, 0.045, 1.0), (310, 0.025, 0.5)], rng, 0.05)
