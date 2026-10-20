@@ -256,6 +256,10 @@ func _net_storage(k: VenueKit) -> void:
 		{"carry": "large", "note": "net_storage", "verb": "TAKE OR RETURN"}, 2.2)
 	add_spot(k, VenueSpot.Kind.USE, "net_storage_mini", Vector3(x_wall - 1.6, 0.6, m_z), "Small nets",
 		{"carry": "mini", "note": "net_storage", "verb": "TAKE OR RETURN"}, 1.8)
+	# the coffee can of ice crampons on the workbench, with its note (it
+	# stood in KitHud's fallback spots, which go once the venue has these)
+	add_spot(k, VenueSpot.Kind.READ, "crampons_can", Vector3(37.9, 1.0, -4.45), "Coffee can with a note",
+		{"note": "crampons_note", "gives": "crampons"}, 1.4)
 
 
 ## Shows `large` big and `mini` small nets in storage (the rest are out on

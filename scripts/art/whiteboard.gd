@@ -23,6 +23,7 @@ static var day := 0
 static var _taken := {}
 var signature := ""
 var _people_img: Image
+var _ink_mi: MeshInstance3D
 var _people_tex: ImageTexture
 var size := Vector2(2.4, 1.25)
 var marks: Readable
@@ -55,36 +56,46 @@ func _ready() -> void:
 	board.mesh = bm
 	board.position.z = 0.006
 	add_child(board)
+	# the frame and tray as one mesh, the three markers as one (few draws:
+	# a rec wing has a board in every dressing room)
 	var alu := StandardMaterial3D.new()
 	alu.albedo_color = Color("a9adb2")
 	alu.metallic = 0.7
 	alu.roughness = 0.35
+	var st := SurfaceTool.new()
 	for e in [[Vector3(size.x + 0.05, 0.025, 0.02), Vector3(0, size.y * 0.5 + 0.0125, 0.01)],
 			[Vector3(size.x + 0.05, 0.025, 0.02), Vector3(0, -size.y * 0.5 - 0.0125, 0.01)],
 			[Vector3(0.025, size.y, 0.02), Vector3(size.x * 0.5 + 0.0125, 0, 0.01)],
 			[Vector3(0.025, size.y, 0.02), Vector3(-size.x * 0.5 - 0.0125, 0, 0.01)],
 			[Vector3(size.x * 0.6, 0.012, 0.07), Vector3(0, -size.y * 0.5 - 0.03, 0.035)]]:
-		var mi := MeshInstance3D.new()
 		var b := BoxMesh.new()
 		b.size = e[0]
-		b.material = alu
-		mi.mesh = b
-		mi.position = e[1]
-		add_child(mi)
+		st.append_from(b, 0, Transform3D(Basis.IDENTITY, e[1]))
+	var frame := MeshInstance3D.new()
+	frame.mesh = st.commit()
+	frame.material_override = alu
+	add_child(frame)
+	var ms := SurfaceTool.new()
 	for i in 3:
-		var mk := MeshInstance3D.new()
 		var c := CylinderMesh.new()
 		c.top_radius = 0.009
 		c.bottom_radius = 0.009
 		c.height = 0.13
 		c.radial_segments = 6
-		var m := StandardMaterial3D.new()
-		m.albedo_color = [Color("1b2a4a"), Color("b8312f"), Color("2a7a4a")][i]
-		c.material = m
-		mk.mesh = c
-		mk.rotation.z = PI * 0.5
-		mk.position = Vector3(-0.3 + i * 0.2, -size.y * 0.5 - 0.02, 0.04)
-		add_child(mk)
+		var arr := c.get_mesh_arrays()
+		var cols := PackedColorArray()
+		cols.resize((arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).size())
+		cols.fill([Color("1b2a4a"), Color("b8312f"), Color("2a7a4a")][i])
+		arr[Mesh.ARRAY_COLOR] = cols
+		var am := ArrayMesh.new()
+		am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+		ms.append_from(am, 0, Transform3D(Basis(Vector3.FORWARD, PI * 0.5), Vector3(-0.3 + i * 0.2, -size.y * 0.5 - 0.02, 0.04)))
+	var pens := StandardMaterial3D.new()
+	pens.vertex_color_use_as_albedo = true
+	var markers := MeshInstance3D.new()
+	markers.mesh = ms.commit()
+	markers.material_override = pens
+	add_child(markers)
 	# the people's drawings
 	marks = Readable.make(marks_id)
 	marks.position.z = 0.0122
@@ -128,6 +139,8 @@ func _ready() -> void:
 	ink.mesh = q
 	ink.position.z = 0.0135
 	ink.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	ink.visible = false  # until you draw: no draw call for an empty layer
+	_ink_mi = ink
 	add_child(ink)
 	# one pick shape for the whole board: leaning in reads the marks, the
 	# left mouse draws
@@ -193,6 +206,7 @@ func draw_at(p: Vector3) -> void:
 		_dot(Vector2i(q.round()))
 	_last = px
 	_dirty = true
+	_ink_mi.visible = true
 
 
 ## The marker lifted: the next draw starts a new stroke.

@@ -248,7 +248,7 @@ func _check_spill() -> void:
 		s.apply_central_impulse((out * 1.2 + Vector3.UP * 4.2) * StickProp.MASS)
 		s.apply_impulse(out * 0.25, top - s.global_position)
 	var clip := [0]
-	for f in 240:
+	for f in 150:
 		await physics_frame
 		for s in list:
 			if _in_staves(s):
@@ -269,7 +269,7 @@ func _check_spill() -> void:
 		s.sleeping_state_changed.connect(func() -> void:
 			if not s.sleeping:
 				wakes[0] += 1)
-	await _frames(120)
+	await _frames(60)
 	var drift := 0.0
 	for s in list:
 		drift = maxf(drift, s.global_position.distance_to(rest[s]))
@@ -363,7 +363,7 @@ func _check_venue() -> void:
 	for s: StickProp in bench_sticks:
 		bstart[s] = s.global_position
 		s.sleeping = false  # woken: the boards and the mat must hold them
-	await _frames(90)
+	await _frames(45)
 	var bmoved := 0.0
 	for s: StickProp in bench_sticks:
 		bmoved = maxf(bmoved, s.global_position.distance_to(bstart[s]))

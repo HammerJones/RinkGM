@@ -46,7 +46,11 @@ func _run() -> void:
 	await _frames(3)
 	var kit: KitHud = walk.kit
 	var ops: RinkOps = walk.story.sim.ops
-	_expect(kit != null and kit.spots.size() == 3, "the net racks and the crampons can are by the gate")
+	# the venue's own net storage (outside the bay doors) and crampons can
+	# replace KitHud's fallback spots (evening notes W1)
+	_expect(kit != null and kit.spots.is_empty() and walk.venue.spot("net_storage") != null
+		and walk.venue.spot("net_storage_mini") != null and walk.venue.spot("crampons_can") != null,
+		"the net racks and the crampons can are by the gate")
 
 	_key(walk, KEY_Q)
 	_key(walk, KEY_T)
