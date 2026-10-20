@@ -1066,6 +1066,9 @@ func pass_puck() -> void:
 	var n := _face_normal(d, loft)
 	StickPuck.strike(self, puck, _swing(n, spd, PASS_E), n, PASS_E)
 	puck.pass_target = best
+	if SkaterAI.DIAG:
+		game.set("_diag_pass_to", best if best else self)
+		SkaterAI.diag["pass"] = int(SkaterAI.diag.get("pass", 0)) + 1
 
 
 ## The teammate nearest the direction the passer is pushing, inside a 45

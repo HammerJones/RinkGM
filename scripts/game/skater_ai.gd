@@ -159,8 +159,16 @@ static func _chasers(ai: TierAI) -> int:
 	return 1 + int((1.0 - ai.discipline) * 2.5)
 
 
+static var DIAG := "--ai-diag" in OS.get_cmdline_user_args()
+static var diag := {}
+
+
 static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 	var c := s.ctrl
+	if DIAG:
+		var zx: float = s.position.x * g.attack_side(s.team)
+		var zk := "t_oz" if zx > Rink.BLUE_X else ("t_nz" if zx > -Rink.BLUE_X else "t_dz")
+		diag[zk] = float(diag.get(zk, 0.0)) + dt
 	var att: int = g.attack_side(s.team)
 	var me := _v2(s.position)
 	if TeamSystem.is_d(TeamSystem.role_of(s, g)) and me.x * att > Rink.BLUE_X and randf() < ai.discipline * 4.0:
@@ -170,9 +178,13 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 	var ahead := (goal.x - me.x) * att
 	var d := me.distance_to(goal)
 	var sel := ai.shot_selection
-	var open_angle := absf(me.y) < maxf(2.5, ahead * lerpf(1.6, 0.8, sel))
+	var open_angle := absf(me.y) < maxf(3.0, ahead * lerpf(1.6, 0.8, sel))
 	var pressure: float = g.nearest_opponent_distance_to(s.team, me)
+	var in_oz := me.x * att > Rink.BLUE_X
 	s.ai_decide -= dt
+	# a checker closing in the zone: decide now, not on the next look
+	if in_oz and pressure < 2.5:
+		s.ai_decide = minf(s.ai_decide, 0.0)
 	if s.ai_decide <= 0.0 and s.ai_shoot_timer <= 0.0:
 		s.ai_decide = randf_range(ai.decide_min, ai.decide_max)
 		var caller: Skater = null if g.autoplay else g.controller.pass_caller(s)
@@ -185,8 +197,17 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 		# good shot selection means working it in close before letting go
 		var max_d := lerpf(24.0, 13.0, sel)
 		var sure_d := lerpf(8.0, 6.0, sel)
-		if ahead > 1.0 and open_angle and d < max_d and (d < sure_d or randf() < lerpf(0.35, 0.04, sel)) \
-				and (lane_open or randf() < lerpf(0.35, 0.02, sel)):
+		if DIAG:
+			var k := "far" if ahead <= 1.0 else ("angle" if not open_angle else ("dist" if d >= max_d else ("lane" if not lane_open else "ok")))
+			diag[k] = int(diag.get(k, 0)) + 1
+			var dk := "d<6" if d < 6.0 else ("d6-10" if d < 10.0 else ("d10-16" if d < 16.0 else "d16+"))
+			diag[dk] = int(diag.get(dk, 0)) + 1
+		# with a checker on you in the zone, get it to the net through traffic
+		# for a rebound or a tip rather than have it stripped
+		var through := in_oz and pressure < 3.0 and open_angle and ahead > 1.0 and d < lerpf(14.0, 18.0, sel) \
+				and randf() < lerpf(0.3, 0.6, sel)
+		if through or (ahead > 1.0 and open_angle and d < max_d and (d < sure_d or randf() < lerpf(0.35, 0.04, sel)) \
+				and (lane_open or randf() < lerpf(0.35, 0.02, sel))):
 			s.ai_aim = aim
 			s.ai_slap = d > 10.0 and randf() < 0.5
 			s.ai_tilt = 0.0 if randf() < 0.5 else _tilt_for(s, d, randf_range(0.5, 1.0))
@@ -198,6 +219,14 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 		else:
 			# under pressure everyone looks to move it; a side that reads the
 			# ice also moves it early to an open man further up
+			# in the zone, a mate open in front of the net (best across the
+			# slot, so the goalie has to move) is the chance to set up
+			if in_oz:
+				var slot_mate := _slot_option(s, g, me, goal, d)
+				if slot_mate and randf() < lerpf(0.35, 0.8, ai.vision):
+					c.pass_pressed = true
+					c.pass_hint = slot_mate
+					return
 			var mate: Skater = g.best_pass_option(s, ai.vision)
 			if mate:
 				var gain: float = (mate.position.x - s.position.x) * att
@@ -208,13 +237,41 @@ static func _carry(s: Skater, g: Node, ai: TierAI, dt: float) -> void:
 					c.pass_hint = mate
 	# drive to the slot, curling away from the nearest defender
 	var target := goal - Vector2(att * lerpf(8.0, 5.5, sel), 0)
+	var side := signf(me.y if me.y != 0.0 else 1.0)
 	if ahead < 1.0:
-		target = Vector2(goal.x - att * 4.0, signf(me.y if me.y != 0.0 else 1.0) * 3.0)
+		target = Vector2(goal.x - att * 4.0, side * 3.0)
+	elif in_oz:
+		# the slot held by a defender: work it down the half-wall and come to
+		# the net from the side instead of skating into him
+		var guard: Skater = g.nearest_opponent(s.team, target)
+		if guard and _v2(guard.position).distance_to(target) < 3.0 and me.distance_to(target) > 4.0:
+			target = Vector2(goal.x - att * 8.0, side * 6.5)
+			if me.distance_to(target) < 2.5 or absf(me.y) > 6.0:
+				target = Vector2(goal.x - att * 4.0, side * 2.2)
 	var opp: Skater = g.nearest_opponent(s.team, me)
 	if opp and me.distance_to(_v2(opp.position)) < lerpf(2.5, 5.0, ai.vision):
 		target += (me - _v2(opp.position)).normalized() * 3.0
 	_seek(s, ai, target, 1.0, 20.0)
 	c.blade_target = _carry_blade(s, g, ai)
+
+
+## A teammate open in front of the net, nearer it than the carrier, with a
+## clear lane to him; the one furthest across from the carrier wins.
+static func _slot_option(s: Skater, g: Node, me: Vector2, goal: Vector2, my_d: float) -> Skater:
+	var best: Skater = null
+	var best_across := -1.0
+	for m: Skater in g.teammates(s):
+		var mp := _v2(m.position)
+		var md := mp.distance_to(goal)
+		if md > 9.0 or md > my_d - 2.0 or absf(mp.y) > 4.5:
+			continue
+		if not g.lane_clear(s.team, me, mp, 0.8) or g.nearest_opponent_distance_to(s.team, mp) < 1.5:
+			continue
+		var across := absf(mp.y - me.y)
+		if across > best_across:
+			best_across = across
+			best = m
+	return best
 
 
 ## A D with the puck on the point: walks the line rather than going to the

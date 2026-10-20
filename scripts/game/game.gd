@@ -351,10 +351,18 @@ func best_pass_option(s: Skater, vision := 0.5) -> Skater:
 		var dist := from.distance_to(to)
 		if dist > sees:
 			continue
+		# how open the lane is: the room each defender has left once the puck
+		# gets level with him (he closes about 6 m/s and reaches a metre with
+		# his stick). A good reader sees that; a poor one only sees the gap now.
+		var spd := clampf(dist * 0.55 + 7.0, 8.0, 17.0)
 		var open := INF
 		for o in team_skaters(1 - s.team):
-			open = minf(open, Geometry2D.get_closest_point_to_segment(Vector2(o.position.x, o.position.z), from, to).distance_to(Vector2(o.position.x, o.position.z)))
-		if open < needs_open:
+			var op := Vector2(o.position.x, o.position.z)
+			var q := Geometry2D.get_closest_point_to_segment(op, from, to)
+			var gap := q.distance_to(op)
+			var closes := maxf(gap - 1.0 - from.distance_to(q) / spd * 6.0, -2.0)
+			open = minf(open, lerpf(gap, closes, vision))
+		if open < needs_open - 1.2 * vision:
 			continue
 		var sc := to.x * att * vision + minf(open, 4.0) * 2.0 * vision - dist * (1.0 - vision) * 0.5
 		# a mate open in front of their net is the pass a good reader looks for
@@ -561,9 +569,34 @@ func _update_rules(dt: float) -> void:
 # ---------------------------------------------------------------- players
 
 
+var _diag_prev: Skater = null
+var _diag_t := 0.0
+var _diag_shot := "none"
+var _diag_pass_to: Skater = null
+
+
 func on_possession(s: Skater) -> void:
 	_last_played = Vector2(s.position.x, s.position.z)
 	stats.possessions += 1
+	if SkaterAI.DIAG:
+		var d := SkaterAI.diag
+		if _diag_prev:
+			var zx: float = s.position.x * attack_side(_diag_prev.team)
+			var z := "oz" if zx > Rink.BLUE_X else ("nz" if zx > -Rink.BLUE_X else "dz")
+			var k := ("keep_" if s.team == _diag_prev.team else "lost_") + z
+			d[k] = int(d.get(k, 0)) + 1
+			var held := time - _diag_t
+			var hk := "held<0.5" if held < 0.5 else ("held<1.5" if held < 1.5 else ("held<3" if held < 3.0 else "held3+"))
+			d[hk] = int(d.get(hk, 0)) + 1
+		if _diag_pass_to:
+			var pk := "pass_ok" if s == _diag_pass_to else ("pass_self" if s.team == _diag_pass_to.team else "pass_lost")
+			d[pk] = int(d.get(pk, 0)) + 1
+			if pk == "pass_lost":
+				var near := _diag_pass_to.position.distance_to(puck.position) < 1.5
+				d["lost_near_target" if near else "lost_in_lane"] = int(d.get("lost_near_target" if near else "lost_in_lane", 0)) + 1
+			_diag_pass_to = null
+		_diag_prev = s
+		_diag_t = time
 	if s.team != _chain_team:
 		_chain.clear()
 		_chain_team = s.team
@@ -578,6 +611,10 @@ func on_shot(s: Skater, slap: bool) -> void:
 	stats.shots += 1
 	team_shots[s.team] += 1
 	_last_shooter = s
+	if SkaterAI.DIAG:
+		var sd := Vector2(s.position.x, s.position.z).distance_to(Vector2(attack_side(s.team) * Rink.GOAL_X, 0))
+		_diag_shot = "<6" if sd < 6.0 else ("6-10" if sd < 10.0 else ("10-16" if sd < 16.0 else "16+"))
+		SkaterAI.diag["shot" + _diag_shot] = int(SkaterAI.diag.get("shot" + _diag_shot, 0)) + 1
 	events.shot.emit(s.team, s.player, slap)
 
 
@@ -799,6 +836,8 @@ static func nearest_dot(p: Vector2) -> Vector2:
 func _on_goal(side: int) -> void:
 	if state != State.PLAY:
 		return
+	if SkaterAI.DIAG and not practice:
+		SkaterAI.diag["goal" + _diag_shot] = int(SkaterAI.diag.get("goal" + _diag_shot, 0)) + 1
 	if practice:
 		if _practice_reset <= 0.0:
 			hud.show_message("GOAL!", 1.2)
@@ -865,6 +904,8 @@ func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 	if autoplay and settings:
 		print("autoplay stats: ", stats, " score ", score, " period ", period, " clock ", snappedf(clock, 0.1))
+		if SkaterAI.DIAG:
+			print("ai diag: ", SkaterAI.diag)
 		if ice:
 			ice.flush()
 			print("ice after play: gouge %.2f mm, snow %.2f, smooth %.2f" % [ice.mean_gouge_mm(), ice.snow, ice.felt_smoothness()])
