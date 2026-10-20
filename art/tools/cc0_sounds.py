@@ -247,6 +247,48 @@ def skates_ice():
 	return out, [sa, sb]
 
 
+def ref_whistle():
+	x, src = freesound(218318)  # a pea whistle blast in a gym, with the hall ringing after
+	return cut(filt(x, 300.0), 0.08, 2.8, 1.0), [src]
+
+
+def coach_whistle():
+	x, src = freesound(568995)  # a metal whistle; two short tweets
+	return room(filt(cut(x, 3.62, 1.1, 0.15), 300.0), rt60=1.4, wet_db=-12.0, tail=2.2), [src]
+
+
+def crowd_cheer():
+	x, src = freesound(455659)  # a medium crowd cheering and whistling; a community rink's worth
+	y = room(filt(cut(x, 1.0, 5.4, 1.6, pre=0.0), 80.0), rt60=1.6, wet_db=-14.0, tail=5.8)
+	y[: secs(0.25)] *= np.linspace(0.0, 1.0, secs(0.25)) ** 0.5  # swell in, not a hard start
+	return y, [src]
+
+
+def crowd_applause():
+	x, src = freesound(583130)  # medium crowd applause, taken from where it starts to die away
+	return room(filt(cut(x, 6.0, 4.6, 1.5, pre=0.0), 100.0), rt60=1.4, wet_db=-16.0, tail=4.6), [src]
+
+
+def crowd_gasp():
+	x, src = freesound(264376)  # about twenty people gasping
+	return room(filt(cut(x, 0.07, 2.4, 1.0), 100.0), rt60=1.4, wet_db=-14.0, tail=2.7), [src]
+
+
+def crowd_ooh():
+	x, src = freesound(870650)  # a group "ooh"
+	return room(filt(cut(x, 0.3, 2.5, 0.8, pre=0.0), 100.0), rt60=1.6, wet_db=-12.0, tail=3.6), [src]
+
+
+def crowd_murmur():
+	x, src = freesound(637466)  # an indoor audience talking quietly, no footsteps
+	return loop(filt(x, 120.0), 2.5, 8.0), [src]
+
+
+def arena_room():
+	x, src = freesound(451614)  # a big, nearly empty hall: the vents' roar and the room
+	return loop(filt(x, 25.0), 104.0, 8.0, 1.0), [src]
+
+
 RECIPES = {
 	"puck_boards": (puck_boards, "one hit cut out, low rumble filtered, short arena tail added"),
 	"puck_post": (puck_post, "one strike and its ring cut to 3.3 s, rumble filtered"),
@@ -256,6 +298,14 @@ RECIPES = {
 	"blade_carve_3": (blade_carve(2), "one skate stroke cut out, rumble filtered"),
 	"stop_spray": (stop_spray, "the end of a skate-by cut out, rumble filtered, light arena tail added"),
 	"skates_ice": (skates_ice, "the strokes and skate-bys above scattered over a seamless 8 s loop at varied distance"),
+	"ref_whistle": (ref_whistle, "one blast and the hall's ring cut out, rumble filtered"),
+	"coach_whistle": (coach_whistle, "two tweets cut out, rumble filtered, arena tail added"),
+	"crowd_cheer": (crowd_cheer, "5.8 s cut with a swell in and fade out, arena tail added"),
+	"crowd_applause": (crowd_applause, "the dying-away end cut out, arena tail added"),
+	"crowd_gasp": (crowd_gasp, "the gasp cut out, arena tail added"),
+	"crowd_ooh": (crowd_ooh, "the ooh cut out, arena tail added"),
+	"crowd_murmur": (crowd_murmur, "8 s cut into a seamless loop, rumble filtered"),
+	"arena_room": (arena_room, "8 s cut into a seamless loop"),
 	"glass_rattle": (glass_rattle, "the hard-close hit and pane rattle cut out, light arena tail added"),
 }
 GAIN = {}
