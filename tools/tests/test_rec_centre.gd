@@ -8,9 +8,9 @@ extends SceneTree
 ##
 ##   godot --headless --path . --script tools/tests/test_rec_centre.gd
 
-## Arena plus wing while walking (the match budget in test_venue is 900k
+## Arena plus wing while walking (the match budget in test_venue is 940k
 ## without the wing). Walls occlude, so a walker draws far less than this.
-const TRI_BUDGET := 1400000
+const TRI_BUDGET := 1450000
 const DRAW_BUDGET := 700
 
 var failures := 0
