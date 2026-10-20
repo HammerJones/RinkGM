@@ -1,9 +1,10 @@
 name: CI
 
+# Manual only, so pushes and PRs spend no Actions minutes. The merge gate is
+# tools/ci.sh run locally before pushing (docs/ARCHITECTURE.md, Quality gate).
+# Start a run by hand from the Actions tab when a hosted check is wanted.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   godot:

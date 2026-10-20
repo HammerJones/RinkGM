@@ -191,7 +191,8 @@ RinkGM will become a general rink management sim with open-world elements, so:
   `claude/godot-hockey-demo-f8heus` and use it as your PR's base.
 - One topic per PR, small enough to review. Rebase onto the latest base before
   asking for review.
-- Sean reviews and merges. Nothing merges with red CI.
+- Sean reviews and merges. Nothing merges unless `tools/ci.sh` passes locally
+  on the branch being pushed; say so in the PR.
 - Current merge order: demo (#1), then Physics (#5), then Controls (#3) and
   Mechanics (#4), which are both built on Physics. CI and docs (#2) is built on
   the demo. Whoever is later in the
@@ -199,7 +200,9 @@ RinkGM will become a general rink management sim with open-world elements, so:
 
 ## Quality gate
 
-`tools/ci.sh` runs on every PR (`.github/workflows/ci.yml`). It:
+`tools/ci.sh` is the merge gate. It runs locally, before every push: GitHub
+Actions does not run it on PRs, to save Actions minutes
+(`.github/workflows/ci.yml` is manual only, started from the Actions tab). It:
 
 1. imports the project and fails on any script or parse error,
 2. plays a full AI-vs-AI game headless (`-- --autoplay`) and fails on any
@@ -209,7 +212,7 @@ RinkGM will become a general rink management sim with open-world elements, so:
    per line) as `-- --test=<name>` with the full scene and autoloads; each must
    exit 0 and print `<name> test: all passed`.
 
-Run it locally before pushing:
+Run it before pushing, and note the result in the PR:
 
 ```
 GODOT=/path/to/Godot_v4.3-stable_linux.x86_64 tools/ci.sh
