@@ -10,8 +10,20 @@ extends Node3D
 const PX_PER_M := 220.0
 const INK := Color("1b2a4a")
 
-## readables.json id of the people's drawings.
+## readables.json id of the people's drawings (kept as the board's
+## Readable for leaning in to read; what they wrote today is `people`).
 var marks_id := "whiteboard_marks"
+## Which board this is (its room): with the day it picks what the people
+## wrote (BoardMarks), so boards differ from each other and change daily
+## (evening notes W7, W15). Empty: the one shared drawing (marks_id).
+var board_key := ""
+## The day every board shows; set_day() moves them all on.
+static var day := 0
+## signature -> board key, for the current day: no two boards alike.
+static var _taken := {}
+var signature := ""
+var _people_img: Image
+var _people_tex: ImageTexture
 var size := Vector2(2.4, 1.25)
 var marks: Readable
 var _img: Image
@@ -20,10 +32,11 @@ var _last := Vector2i(-1, -1)
 var _dirty := false
 
 
-static func make(marks_id_ := "whiteboard_marks") -> Whiteboard:
+static func make(marks_id_ := "whiteboard_marks", key := "") -> Whiteboard:
 	var w := Whiteboard.new()
 	w.name = "Whiteboard"
 	w.marks_id = marks_id_
+	w.board_key = key
 	var d: Dictionary = Readable.defs().get(marks_id_, {})
 	if d.has("size"):
 		w.size = Vector2(d.size[0], d.size[1])
@@ -76,6 +89,28 @@ func _ready() -> void:
 	marks = Readable.make(marks_id)
 	marks.position.z = 0.0122
 	add_child(marks)
+	if not board_key.is_empty():
+		# today's, drawn for this board, in place of the shared drawing
+		marks.visible = false
+		_people_img = Image.create(int(size.x * PX_PER_M), int(size.y * PX_PER_M), false, Image.FORMAT_RGBA8)
+		_people_tex = ImageTexture.create_from_image(_people_img)
+		var pq := QuadMesh.new()
+		pq.size = size
+		var pm := StandardMaterial3D.new()
+		pm.albedo_texture = _people_tex
+		pm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+		pm.alpha_scissor_threshold = 0.5
+		pm.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		pm.roughness = 0.3
+		pq.material = pm
+		var people := MeshInstance3D.new()
+		people.name = "People"
+		people.mesh = pq
+		people.position.z = 0.0128
+		people.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(people)
+		add_to_group("whiteboards")
+		redraw()
 	# the player's ink, on top
 	_img = Image.create(int(size.x * PX_PER_M), int(size.y * PX_PER_M), false, Image.FORMAT_RGBA8)
 	_img.fill(Color(0, 0, 0, 0))
@@ -110,6 +145,32 @@ func _ready() -> void:
 	add_child(body)
 	marks.set_pickable(false)  # the board's own shape picks it
 	Readable.shadows(self, Look.cast())
+
+
+## Moves every keyed board in `tree` on to day `d` (call it when the rink's
+## day turns over, e.g. on RinkSim.day_ended).
+static func set_day(tree: SceneTree, d: int) -> void:
+	if d != day:
+		_taken.clear()
+	day = d
+	for n in tree.get_nodes_in_group("whiteboards"):
+		(n as Whiteboard).redraw()
+
+
+## Redraws what the people wrote for this board and the current day,
+## salting the pick until no other board shows the same thing today.
+func redraw() -> void:
+	if _people_img == null:
+		return
+	if _taken.get(signature, "") == board_key:
+		_taken.erase(signature)
+	for salt in 16:
+		signature = BoardMarks.draw(_people_img, board_key, day, salt)
+		var owner_key: String = _taken.get(signature, board_key)
+		if owner_key == board_key:
+			break
+	_taken[signature] = board_key
+	_people_tex.update(_people_img)
 
 
 ## The whiteboard a pick ray hit, or null.

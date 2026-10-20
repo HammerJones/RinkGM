@@ -69,7 +69,7 @@ func build(k: VenueKit) -> void:
 		k.block(Vector3(X1 - 0.12, 2.0, hz - 0.06), Vector3(X1, 2.12, hz + 0.06), Color("b8bcc2"), 0.1, 0.0, false)
 	# the coach's whiteboard on the front wall: the U9 coach's practice plan
 	# and the kids' doodles, plus room for yours (Whiteboard)
-	var board := Whiteboard.make()
+	var board := Whiteboard.make("whiteboard_marks", room_id)  # World: its own marks each day (W7)
 	board.transform = Transform3D(Basis(Vector3.UP, PI * 0.5).scaled(Vector3.ONE * 0.8), Vector3(X0 + 0.3, 1.55, s * 8.0))
 	k.add(board)
 	# door plate on the walkway side
