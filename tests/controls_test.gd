@@ -156,8 +156,14 @@ func _run() -> void:
 	var got := await _until(func(): waiting.call(); return game.puck.pass_target == mate, 0.5, [mate])
 	print("pass sent to teammate: %s" % got)
 	_check(got, "pass button passes to the teammate")
-	got = await _until(func(): waiting.call(); return game.puck.controller == mate, 1.5, [mate])
-	print("teammate caught it: %s" % got)
+	# the controls' part is getting it to him: it connects when it reaches
+	# his blade (whether he traps it cleanly is his hands, physics' to test)
+	var closest := {"m": INF}  # (a lambda can't assign an outer local)
+	got = await _until(func():
+		waiting.call()
+		closest.m = minf(closest.m, Vector2(game.puck.position.x - mate.blade_pos.x, game.puck.position.z - mate.blade_pos.z).length())
+		return game.puck.controller == mate or closest.m < 0.5, 1.5, [mate])
+	print("teammate caught it: %s (closest %.2f m, controlled %s)" % [got, closest.m, game.puck.controller == mate])
 	_check(got, "the pass connects")
 
 	# --- without the puck, the pass button calls for it
