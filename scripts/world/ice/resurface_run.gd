@@ -40,6 +40,8 @@ const TROUGH_M3 := 0.03         # what the horizontal auger's trough holds
 const FILL_LPS := 18.0         # the bay's hot standpipe
 const DUMP_SECONDS := 8.0
 const UNJAM_SECONDS := 6.0
+## The conditioner's lift, top to bottom (the 552: about 5 to 6 s).
+const COND_TRAVEL_S := 5.5
 ## The bay, in rink metres (the venue's Zamboni bay, x 34 to 45.5).
 const GATE_HALF := 1.75
 const BAY_X0 := 34.2
@@ -63,7 +65,12 @@ var rpm := 850.0
 var flood_valve := 0.0          # 0..1
 var blade_mm := 0.0             # the blade wheel, 0 .. BLADE_MAX_MM
 var wash_on := false
-var cond_down := false          # conditioner (blade, augers, wash bar)
+var cond_down := false          # the conditioner lever: down (cond_pos follows it)
+var cond_pos := 0.0             # 0 up .. 1 down on the ice; it cuts only fully down
+var gear := 1                   # the F/N/R shifter: 1, 0, -1 (the scene drives through it)
+var auger_v := true             # the vertical auger's lever (lifts snow to the tank)
+var auger_h := true             # the horizontal auger's (carries the cut to the vertical)
+var wash_valve := 1.0           # the wash water T-handle, 0..1 (the pump is wash_on)
 var towel_down := false         # the rag
 var dump := false               # tank raised over the pit
 var plunger := false            # held: clearing the vertical auger
@@ -213,6 +220,7 @@ func mass() -> float:
 ## `brake` 0..1.
 func step(dt: float, throttle: float, steer_in: float, brake := 0.0) -> void:
 	time_s += dt
+	cond_pos = move_toward(cond_pos, 1.0 if cond_down else 0.0, dt / COND_TRAVEL_S)
 	_drive(dt, throttle, steer_in, brake)
 	_tanks(dt)
 	var oi := on_ice()
@@ -324,7 +332,7 @@ func _tanks(dt: float) -> void:
 				jam_risk = 0.2
 				events.append("unjam")
 	# the plunger clears a choked vertical auger (conditioner up)
-	if jammed and plunger and not cond_down and bin_fill() < 0.98:
+	if jammed and plunger and cond_pos <= 0.0 and bin_fill() < 0.98:
 		_unjam_t += dt
 		if _unjam_t >= UNJAM_SECONDS:
 			jammed = false
@@ -342,20 +350,21 @@ func _spill(dt: float) -> void:
 
 ## The conditioner and the towel over the ice this tick.
 func _conditioner(dt: float) -> void:
+	var down := cond_pos >= 1.0
 	var f := fwd()
 	var l := left()
 	var bc := blade_center()
-	var eff := blade_eff_mm() if cond_down else 0.0
+	var eff := blade_eff_mm() if down else 0.0
 	var chatter := doris.chatter()
-	skipping = cond_down and (blade_mm > SKIP_FROM_MM or chatter > 0.15)
+	skipping = down and (blade_mm > SKIP_FROM_MM or chatter > 0.15)
 	var skip_amt := 0.0
 	if skipping:
 		skip_amt = clampf((blade_mm - SKIP_FROM_MM) / 0.8 + chatter, 0.15, 1.0)
-	blade_quality = 1.0 - skip_amt if cond_down and eff > 0.0 else 1.0
+	blade_quality = 1.0 - skip_amt if down and eff > 0.0 else 1.0
 	var snow_m3 := 0.0
 	var n := 9
 	var half := ResurfacerSim.BLADE_W_M * 0.5
-	if cond_down:
+	if down:
 		# the shoes ride the high spots across the blade; it cuts down from there
 		var idx := PackedInt32Array()
 		var lv := PackedFloat32Array()
@@ -398,14 +407,14 @@ func _conditioner(dt: float) -> void:
 				ice.ang[i] = fposmod(heading, PI) / PI
 				ice.stri[i] = clampf(0.3 + skip_amt * 0.7, 0.0, 1.0)
 				ice.r[i] = ice.r[i] * 0.35 + 0.03 + skip_amt * 0.12
-			if jammed:
+			if jammed or not auger_h:
 				# nothing goes up: it's left behind to be flooded into lumps
 				ice.s[i] += snow * 1000.0 / IceSlab.CELL_AREA
 				ice.r[i] = minf(ice.r[i] + 0.25, 1.0)
 				snow_left_m3 += snow
 			else:
 				snow_m3 += snow
-			if wash_on and wash_l > 0.0:
+			if washing():
 				ice.r[i] *= 0.92  # the wash bar lifts the grit
 		ice.touch_around(bc, 1.6)
 	# the augers and the tank: the horizontal auger's trough holds a couple of
@@ -413,7 +422,7 @@ func _conditioner(dt: float) -> void:
 	var rate := snow_m3 / maxf(dt, 0.0001)
 	if not jammed:
 		_trough_m3 += snow_m3
-		var lift := minf(_trough_m3, AUGER_CAP * dt)
+		var lift := minf(_trough_m3, AUGER_CAP * dt) if auger_v else 0.0
 		_trough_m3 -= lift
 		bin_m3 += lift
 		snow_picked_m3 += lift
@@ -425,10 +434,10 @@ func _conditioner(dt: float) -> void:
 			jam_risk += spill / (AUGER_CAP * 0.5) * 0.15
 	elif snow_m3 > 0.0:
 		pass  # left on the ice above
-	snow_rate = lerpf(snow_rate, rate if not jammed else 0.0, clampf(dt * 1.5, 0.0, 1.0))
-	if cond_down and not jammed:
+	snow_rate = lerpf(snow_rate, rate if not jammed and auger_v else 0.0, clampf(dt * 1.5, 0.0, 1.0))
+	if down and not jammed:
 		var flooding := flood_valve > 0.0 and flood_l > 0.0
-		if flooding and not (wash_on and wash_l > 0.0):
+		if flooding and not washing():
 			jam_risk += dt * 0.0035 * clampf(rate / 0.0035, 0.2, 3.0)  # wet slush, no wash to carry it
 		if bin_fill() > 0.92:
 			jam_risk += dt * 0.08
@@ -441,19 +450,19 @@ func _conditioner(dt: float) -> void:
 			jams += 1
 			events.append("jam" if bin_fill() < 0.98 else "bin_full")
 	# wash water: sprayed ahead of the blade and vacuumed back into the tank
-	if wash_on and wash_l > 0.0:
-		var used := minf(WASH_Q * dt, wash_l)
+	if washing():
+		var used := minf(WASH_Q * wash_valve * dt, wash_l)
 		wash_l -= used
 		wash_used_l += used
 		if wash_l <= 0.0:
 			events.append("wash_empty")
-		if not cond_down:
+		if not down:
 			# no squeegee down: cold dirty wash water left on the ice
 			for k in 5:
 				var i := IceSlab.cell_at(bc + l * (-half + (k + 0.5) * (2.0 * half / 5.0)))
 				ice.add_water(i, used / 5.0 / IceSlab.CELL_AREA, 10.0)
 				ice.r[i] = minf(ice.r[i] + 0.02, 1.0)
-		elif cond_down:
+		elif down:
 			ice.cleanliness = minf(ice.cleanliness + used * 0.0012, 1.0)
 	# flood water through the spreader pipe, smoothed by the towel
 	flood_rate = 0.0
@@ -497,6 +506,11 @@ func _conditioner(dt: float) -> void:
 
 ## How the flood sounds: the water per metre against what keeps the sheet
 ## level at the 65% standard.
+## Wash water going down: the pump on, the valve open, water in the tank.
+func washing() -> bool:
+	return wash_on and wash_l > 0.0 and wash_valve > 0.05
+
+
 func _flood_feel() -> void:
 	if flood_rate <= 0.0:
 		flood_state = "off"
