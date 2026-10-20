@@ -28,6 +28,11 @@ extends Node3D
 ## a loose note down and sticks the held one to whatever you click (a wall,
 ## a door, the cork board, another sign), F crumples the held note. On a
 ## whiteboard the left mouse (held) draws and X wipes your own marks.
+##
+## Loose things (PropGrab: cups, bottles, pucks, sticks, cones, boxes, chairs,
+## tools, bins) are picked up the My Summer Car way: hold the left mouse on
+## one under the dot and it floats in front of you on a spring (it still
+## bumps into walls), the wheel turns it, let go and it drops.
 
 ## UI's office screens and anything else listening: the player asked for
 ## screen `id` (log_book, phone, goals, ice_grid, desk) with the sim.
@@ -123,6 +128,7 @@ func _ready() -> void:
 	cam.near = 0.05
 	walker.head.add_child(cam)
 	cam.current = true
+	walker.grab.eye = cam
 	_build_ui()
 	kit = KitHud.new()
 	add_child(kit)
@@ -198,7 +204,11 @@ func _unhandled_input(e: InputEvent) -> void:
 	elif e is InputEventMouseButton:
 		if e.button_index == MOUSE_BUTTON_RIGHT:
 			_lean = e.pressed
+		elif (e.button_index == MOUSE_BUTTON_WHEEL_UP or e.button_index == MOUSE_BUTTON_WHEEL_DOWN) and walker.grab.held:
+			if e.pressed:
+				walker.grab.turn_by(1 if e.button_index == MOUSE_BUTTON_WHEEL_UP else -1)
 		elif e.button_index == MOUSE_BUTTON_LEFT and not e.pressed:
+			walker.grab.drop()
 			if _drawing:
 				_drawing.end_stroke()
 				_drawing = null
@@ -280,6 +290,7 @@ func _process(dt: float) -> void:
 	if _busy():
 		walker.wish = Vector3.ZERO
 		walker.crouch = false
+		walker.grab.drop()
 		_prompt.text = ""
 		return
 	walker.speed_scale = kit.step(dt) if not flying else 1.0
@@ -335,6 +346,8 @@ func _hud_lines() -> Array:
 func _hint() -> String:
 	if kit.status() != "":
 		return kit.status()
+	if walker.grab.held:
+		return "[LMB] LET GO   [WHEEL] TURN IT"
 	var s := _looked_at()
 	var r := _looked_readable(READ_REACH)
 	if _held:
@@ -348,13 +361,22 @@ func _hint() -> String:
 		if r.movable and _looked_readable(HAND_REACH) == r:
 			lean += "   [LMB] TAKE DOWN"
 		return lean
+	var loose := "" if _held else _loose_hint()
 	if s:
-		return "[E] " + s.prompt()
+		return "[E] " + s.prompt() + loose
+	if loose != "":
+		return loose.strip_edges()
 	var hint := kit.hands_hint()
 	var d := walker.nearest_door(venue)
 	if d and not hint.begins_with("[E]"):
 		hint = "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
 	return hint
+
+
+## "   [LMB] PICK UP CUP" when a loose thing is under the dot, else "".
+func _loose_hint() -> String:
+	var b := walker.grab.looked()
+	return "   [LMB] PICK UP " + PropGrab.name_of(b) if b else ""
 
 
 func _looked_at() -> VenueSpot:
@@ -653,6 +675,7 @@ func _hand() -> void:
 		return
 	var r := _looked_readable(HAND_REACH)
 	if r == null or not r.movable:
+		walker.grab.try_pick()  # a loose thing under the dot (PropGrab)
 		return
 	_inspect = null
 	_held = r
@@ -697,11 +720,6 @@ func _stick_held() -> void:
 
 ## F with a note in hand: it's a paper ball now, dropped where you stand.
 func _crumple() -> void:
-	var ball := RigidBody3D.new()
-	ball.name = "CrumpledNote"
-	ball.collision_layer = 0
-	ball.collision_mask = 1 << (VenueKit.VENUE_LAYER - 1)
-	ball.mass = 0.02
 	var mesh := SphereMesh.new()
 	mesh.radius = 0.032
 	mesh.height = 0.055
@@ -711,15 +729,10 @@ func _crumple() -> void:
 	m.albedo_color = Readable.KINDS.get(_held.kind, Readable.KINDS.paper)[1]
 	m.roughness = 0.95
 	mesh.material = m
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	mi.rotation = Vector3(0.6, 1.1, 0.3)
-	ball.add_child(mi)
-	var cs := CollisionShape3D.new()
-	var sh := SphereShape3D.new()
-	sh.radius = 0.03
-	cs.shape = sh
-	ball.add_child(cs)
+	# a loose thing like any other: it can be picked up again (PropGrab)
+	var ball := LooseProp.make("crumpled_note", mesh, AABB(Vector3(-0.03, -0.03, -0.03), Vector3.ONE * 0.06), 0.02, "PAPER BALL")
+	ball.freeze = false
+	ball.sleeping = false
 	venue.add_child(ball)
 	var f := -cam.global_transform.basis.z
 	ball.global_position = cam.global_position + f * 0.3 + Vector3(0, -0.1, 0)

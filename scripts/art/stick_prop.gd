@@ -16,7 +16,10 @@ extends RigidBody3D
 ##   describe()     "Warlock HEX, left curve, senior, black tape"
 ##   take()         picks it up: removes it from the world and returns its
 ##                  variant (Mechanics' inventory decides what that means)
-## Every stick is in the "stick_props" group.
+##   set_held(on)   PropGrab carrying it (true) or letting go: a held stick
+##                  never settles asleep
+## Every stick is in the "stick_props" group, and in "loose_props" with the
+## building's other loose things (LooseProp), which is what PropGrab picks up.
 
 signal knocked(by: Node)
 
@@ -42,6 +45,7 @@ static var _material: PhysicsMaterial
 var variant := {}
 var mesh: ArrayMesh
 var field: StickField
+var held := false
 var _mi: MeshInstance3D
 var _knocked := false
 var _calm := 0
@@ -85,6 +89,7 @@ func _init() -> void:
 	physics_material_override = material()
 	continuous_cd = true
 	add_to_group("stick_props")
+	add_to_group("loose_props")
 	body_entered.connect(_on_body_entered)
 	sleeping_state_changed.connect(_on_sleeping_changed)
 	WorldSound.hook_stick(self)  # the clatter (only when sound is on)
@@ -106,7 +111,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	# W6: a stick lying on the floor or leaning in a barrel can rock on its
 	# box edges for ever, just above the engine's sleep thresholds (the
 	# twitch). Barely moving and touching something for a moment, it sleeps.
-	if state.get_contact_count() > 0 and state.linear_velocity.length() < SETTLE_SPEED and state.angular_velocity.length() < SETTLE_SPIN:
+	if not held and state.get_contact_count() > 0 and state.linear_velocity.length() < SETTLE_SPEED and state.angular_velocity.length() < SETTLE_SPIN:
 		_calm += 1
 		if _calm >= SETTLE_FRAMES:
 			_calm = 0
@@ -120,6 +125,15 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		state.linear_velocity = state.linear_velocity.limit_length(MAX_SPEED)
 	if state.angular_velocity.length() > MAX_SPIN:
 		state.angular_velocity = state.angular_velocity.limit_length(MAX_SPIN)
+
+
+## PropGrab picks it up (true) or lets go (false).
+func set_held(on: bool) -> void:
+	held = on
+	_calm = 0
+	if on:
+		freeze = false
+		sleeping = false
 
 
 func describe() -> String:

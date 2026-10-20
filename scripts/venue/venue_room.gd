@@ -54,6 +54,7 @@ func rebuild() -> void:
 	spots.clear()
 	var kit := VenueKit.new(hash(room_id), age)
 	build(kit)
+	LooseProps.furnish(self, kit)  # the walk's extra loose things (cups, cones, boxes)
 	kit.commit(self)
 	_built = true
 

@@ -40,6 +40,9 @@ var speed_scale := 1.0
 var crouch := false
 var crouched := false
 var head: Node3D
+## The hands for loose things (PropGrab): the walk points `grab.eye` at its
+## camera.
+var grab: PropGrab
 var _shape: CollisionShape3D
 var _jump_queued := false
 var _sprint := 0.0  # 0 walking pace .. 1 full sprint
@@ -69,6 +72,9 @@ func _init() -> void:
 	head = Node3D.new()
 	head.position.y = EYE
 	add_child(head)
+	grab = PropGrab.new()
+	grab.name = "Grab"
+	add_child(grab)
 
 
 ## A jump press: takes off on the next physics tick if standing on a floor.
