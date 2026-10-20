@@ -81,7 +81,12 @@ void fragment() {
 	if (debug_view == 1) { ALBEDO = s.rgb; }
 	if (debug_view == 2) { ALBEDO = c.rgb; }
 	if (debug_view == 3) { ALBEDO = vec3(wet, c.b, snow); }
-	float matte = 0.1 + haze * 0.5 + scratches * 0.3 + stri * 0.35 + sn * 0.6;
+	// gloss by state (Sean, W23): a fresh flood is a mirror (wet), a flood
+	// still settling or just frozen is smooth and only slightly matte (the
+	// 0.12 floor), dry-cut ice sits halfway with its fine lines only where the
+	// blade went (c.g), and snowed-up, gouged ice is fully matte
+	float cut = c.g * (0.22 + 0.14 * stripes);
+	float matte = 0.12 + cut + haze * 0.45 + scratches * 0.25 + sn * 0.85;
 	ROUGHNESS = clamp(mix(matte, 0.03, wet), 0.02, 1.0);
 	SPECULAR = mix(0.4, 0.75, wet);
 	CLEARCOAT = wet * 0.9;

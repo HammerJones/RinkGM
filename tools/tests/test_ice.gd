@@ -26,6 +26,7 @@ func _initialize() -> void:
 	_check_dry(_drive(worn, ResurfaceAutopilot.DRY))
 	_check_flood(_drive(worn, ResurfaceAutopilot.FLOOD))
 	_check_deep(worn)
+	_check_cut_speed(worn)
 	_check_empty_tank(worn)
 	_check_sim_jobs(normal)
 	_check_drive_scene()
@@ -271,6 +272,31 @@ func _check_flood(d: Dictionary) -> void:
 
 ## A blade wound down too far: the snow comes faster than a tank holds, the
 ## bin packs solid and the augers jam.
+## The blade takes up blade depth x forward speed: a parked machine with the
+## blade down cuts nothing, and twice the speed takes up about twice the snow.
+func _check_cut_speed(worn: IceSlab) -> void:
+	var cut_rate := func(v: float) -> float:
+		var run := ResurfaceRun.start(worn, ResurfacerSim.create_doris())
+		run.pos = Vector2(-22.0, 0.0)
+		run.heading = 0.0
+		run.speed = v
+		run.cond_down = true
+		run.blade_mm = 1.0
+		for k in 30:
+			run.step(DT, v / ResurfaceRun.TOP_SPEED, 0.0)
+		var before := run.ice_cut_m3
+		var t0 := run.time_s
+		while run.time_s - t0 < 4.0:
+			run.step(DT, v / ResurfaceRun.TOP_SPEED, 0.0)
+		return (run.ice_cut_m3 - before) / (run.time_s - t0)
+	var parked: float = cut_rate.call(0.0)
+	var slow: float = cut_rate.call(1.0)
+	var fast: float = cut_rate.call(2.0)
+	print("  cut rate: parked %.5f, 1 m/s %.5f, 2 m/s %.5f m3/s" % [parked, slow, fast])
+	_expect(parked == 0.0, "cut: stopping stops the cut")
+	_expect(slow > 0.0 and fast / slow > 1.6 and fast / slow < 2.4, "cut: twice the speed takes up about twice the snow (%.2fx)" % (fast / maxf(slow, 1e-9)))
+
+
 func _check_deep(worn: IceSlab) -> void:
 	var deep := ResurfaceAutopilot.NORMAL.duplicate()
 	deep.kind = "deep"
