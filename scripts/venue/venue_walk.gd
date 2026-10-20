@@ -76,7 +76,8 @@ func _ready() -> void:
 	_sun.rotation_degrees = Vector3(-58.0, -32.0, 0.0)
 	_sun.shadow_enabled = true
 	add_child(_sun)
-	add_child(Rink.new())
+	var rink := Rink.new()
+	add_child(rink)
 	venue = Venue.instantiate_for(Career.exhibition(clampi(tier, 0, LeagueTiers.count() - 1)), true)
 	add_child(venue)
 	venue.apply_lighting(_env, _sun)
@@ -86,6 +87,7 @@ func _ready() -> void:
 		walker.global_position = venue.rooms["lobby"].spawn
 	else:
 		story = WalkStory.start(venue)
+		IceView.attach(rink, story.sim.ice)  # World: the sim's ice, cell by cell, on the sheet
 		var m := story.sim.minute
 		if m < 7 * 60 or m >= 19 * 60:
 			_env.background_color = Color("070a12")  # night outside

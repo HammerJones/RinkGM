@@ -74,6 +74,9 @@ func _m1(k: VenueKit) -> void:
 		{"job": "doris_plugs", "target": "doris_plugs", "readable": "note_doris_dash", "note": "doris_dash", "needs": "spark_plugs", "scene": "res://scenes/world/jobs/doris_plugs.tscn"}, 2.0)
 	add_spot(k, VenueSpot.Kind.JOB, "doris_blade", Vector3(41.9, 0.5, 0.0), "Doris's blade",
 		{"job": "blade_change", "target": "doris_blade", "scene": "res://scenes/world/jobs/doris_blade.tscn"}, 1.6)
+	# World: up into the seat to drive the resurface (docs/world/ICE.md 4)
+	add_spot(k, VenueSpot.Kind.JOB, "doris_drive", Vector3(40.3, 1.9, -0.5), "Drive Doris",
+		{"job": "resurface", "target": "doris_drive", "scene": "res://scenes/world/jobs/doris_drive.tscn"}, 1.8)
 	# the parts cabinet: every drawer labelled DORIS
 	var steel: Color = k.by_age(Color("6f7378"), Color("8a8f94"), Color("50555c"))
 	k.aged_block(Vector3(38.5, 0, 4.3), Vector3(39.6, 1.3, 4.85), steel, 0.3)
@@ -83,6 +86,20 @@ func _m1(k: VenueKit) -> void:
 		k.block(Vector3(38.9, y + 0.07, 4.27), Vector3(39.2, y + 0.13, 4.28), Color("e8e4da"), 0.1, 0.0, false)
 	add_spot(k, VenueSpot.Kind.READ, "plug_drawer", Vector3(39.05, 1.0, 4.25), "Drawer labelled DORIS", {"note": "plug_drawer", "gives": "spark_plugs"}, 1.5)
 	add_spot(k, VenueSpot.Kind.READ, "zambelli_525_manual", Vector3(36.0, 1.0, -4.5), "Zambelli 525 manual", {"readable": "zambelli_525_manual"}, 1.4)
+	# World: the ice kit on the bench: caliper and drill, the survey laser, the tablet (docs/world/ICE.md 3)
+	var ms := "res://scenes/world/jobs/ice_measure.tscn"
+	add_spot(k, VenueSpot.Kind.JOB, "ice_depth", Vector3(36.9, 1.0, -4.5), "Depth plates: caliper and drill", {"job": "ice_depth", "target": "ice_depth", "scene": ms}, 1.2)
+	add_spot(k, VenueSpot.Kind.JOB, "ice_survey", Vector3(37.8, 1.0, -4.5), "Survey laser and rod", {"job": "ice_survey", "target": "ice_survey", "scene": ms}, 1.2)
+	add_spot(k, VenueSpot.Kind.JOB, "ice_lidar", Vector3(38.7, 1.0, -4.5), "Lidar tablet", {"job": "ice_survey", "target": "ice_lidar", "scene": ms}, 1.2)
+	# World: the hand tools: the big hose on its wall spool, the edger, the chipper (docs/world/ICE.md 5)
+	var hs := "res://scenes/world/jobs/ice_hand.tscn"
+	k.block(Vector3(35.85, 0.85, 4.4), Vector3(36.55, 1.55, 4.72), Color("b8312f"), 0.4, 0.03, false)
+	k.block(Vector3(35.95, 0.95, 4.36), Vector3(36.45, 1.45, 4.4), Color("c8a020"), 0.6, 0.02, false)
+	k.block(Vector3(42.2, 0.0, 3.6), Vector3(42.82, 0.5, 4.1), Color("c43c2a"), 0.4, 0.03, false)
+	k.block(Vector3(43.3, 0.05, 4.62), Vector3(43.36, 1.65, 4.68), Color("8a6a40"), 0.6, 0.0, false)
+	add_spot(k, VenueSpot.Kind.JOB, "ice_hose", Vector3(36.2, 1.2, 4.3), "Big hose on the spool", {"job": "hose_flood", "target": "ice_hose", "scene": hs}, 1.4)
+	add_spot(k, VenueSpot.Kind.JOB, "ice_edger", Vector3(42.5, 0.5, 3.5), "Edger", {"job": "edge_ice", "target": "ice_edger", "scene": hs}, 1.3)
+	add_spot(k, VenueSpot.Kind.JOB, "ice_chipper", Vector3(43.33, 1.0, 4.5), "Ice chipper", {"job": "chip_ice", "target": "ice_chipper", "scene": hs}, 1.2)
 	# the pit: a heap of old snow over the grate, and its heater switch
 	var b := VoxelMeshBuilder.new()
 	b.add_box(Transform3D(Basis.IDENTITY, Vector3(0, 0.5, 0)), Color("e9eef2"))

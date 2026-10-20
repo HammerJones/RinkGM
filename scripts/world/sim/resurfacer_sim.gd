@@ -5,8 +5,23 @@ extends RefCounted
 ## snow to the tank, the conditioner washes and the towel lays hot water.
 ## A dull blade, a torn towel or a tired engine all show up on the ice.
 
+## What the quick way (a hired driver, the auto floods) lays per flood, L:
+## about 40% of the tank, which drivers do between periods.
 const FLOOD_LITRES := 450.0
 const RESURFACE_HOURS := 0.25
+## Doris's tanks and tools (docs/world/ICE.md 4; a Zambelli 525 carries an
+## arena-size flood tank like the big Zamboni-class machines).
+const FLOOD_TANK_L := 1100.0     # 290 US gal: a full tank laid evenly is 1/32 in of ice
+const WASH_TANK_L := 270.0       # 72 US gal
+const SNOW_TANK_M3 := 3.5        # 124 cu ft of compacted snow
+const SNOW_PACK := 0.6           # t/m3: the augers pack the shavings in the tank
+const BLADE_W_M := 1.956         # 77 in
+const BLADE_MAX_MM := 3.175      # 1/8 in: the hand wheel's stop
+const WHEEL_MM_PER_TURN := 0.79375  # 1/32 in a turn of the blade wheel
+## Bay hot-water heater: flood water at this temperature by default, C.
+const FLOOD_TEMP_C := 60.0
+## Gas to heat flood water from the 10 C main, $ per MJ (an 80% heater).
+const GAS_PER_MJ := 0.0148
 
 var parts := {}         # id -> SimPart
 var engine_oil := 0.6   # 1 fresh, 0 sludge
@@ -15,6 +30,14 @@ var blade_height_mm := 1.0  # set when the blade is changed; 0.8-1.2 shaves clea
 var blade_level_mm := 0.0   # one end deeper than the other; within 0.1 is level
 var blade_bolts_ok := true  # a loose blade chatters (washboard)
 var choke_stuck := false    # "Unless it's the choke": stuck half closed, she won't fire
+var flood_l := 0.0          # flood (ice-making) water in the tank, L
+var wash_l := 0.0           # wash water, L
+var flood_temp_c := FLOOD_TEMP_C  # the bay heater's setting
+var cuts_driven := 0        # resurfaces the owner has driven (Gus rides the first)
+## The Level-Sense machine (the top ice_level instrument): reads the lidar
+## map and sets the blade and water cell by cell.
+var auto_level := false
+var model := "Zambelli Model 525 (1974)"
 
 
 static func create_doris() -> ResurfacerSim:
@@ -85,7 +108,7 @@ func resurface(ice: IceSlab, skill: float, pattern: PackedFloat64Array = PackedF
 	# a sharp blade at 1.0 mm takes about 0.4 mm and the flood lays back about 0.3:
 	# a set too shallow (or a dull blade) lets the ice thicken, too deep thins it fast
 	var shave := blade_height_mm * (0.15 + 0.25 * part("blade").condition) * engine
-	ice.resurface(q, shave, FLOOD_LITRES * (0.7 + 0.3 * condition), pattern, chatter())
+	ice.resurface(q, shave, FLOOD_LITRES * (0.7 + 0.3 * condition), pattern, chatter(), auto_level, flood_temp_c)
 	_wear(hard)
 	return q
 
@@ -114,7 +137,9 @@ func to_dict() -> Dictionary:
 	for id in parts:
 		ps[id] = parts[id].to_dict()
 	return {"parts": ps, "engine_oil": engine_oil, "fuel": fuel, "blade_height_mm": blade_height_mm,
-		"blade_level_mm": blade_level_mm, "blade_bolts_ok": blade_bolts_ok, "choke_stuck": choke_stuck}
+		"blade_level_mm": blade_level_mm, "blade_bolts_ok": blade_bolts_ok, "choke_stuck": choke_stuck,
+		"flood_l": flood_l, "wash_l": wash_l, "flood_temp_c": flood_temp_c, "cuts_driven": cuts_driven,
+		"auto_level": auto_level, "model": model}
 
 
 func load_dict(d: Dictionary) -> void:
@@ -128,3 +153,14 @@ func load_dict(d: Dictionary) -> void:
 	blade_level_mm = float(d.get("blade_level_mm", blade_level_mm))
 	blade_bolts_ok = bool(d.get("blade_bolts_ok", blade_bolts_ok))
 	choke_stuck = bool(d.get("choke_stuck", choke_stuck))
+	flood_l = float(d.get("flood_l", flood_l))
+	wash_l = float(d.get("wash_l", wash_l))
+	flood_temp_c = float(d.get("flood_temp_c", flood_temp_c))
+	cuts_driven = int(d.get("cuts_driven", cuts_driven))
+	auto_level = bool(d.get("auto_level", auto_level))
+	model = str(d.get("model", model))
+
+
+## Gas to heat `litres` of flood water to `temp_c`, $.
+static func heat_cost(litres: float, temp_c: float) -> float:
+	return litres * IceSlab.C_WATER * maxf(temp_c - 10.0, 0.0) / 1000.0 * GAS_PER_MJ

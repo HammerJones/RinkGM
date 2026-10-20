@@ -91,6 +91,7 @@ func tick(dt: float) -> void:
 	if game_due:
 		return
 	_clock_acc += dt * TIME_SCALE
+	sim.owner_on_site()  # World: the owner's floods wait for them to drive Doris
 	while _clock_acc >= RinkSim.STEP_MIN:
 		_clock_acc -= RinkSim.STEP_MIN
 		advance_minutes(RinkSim.STEP_MIN)
