@@ -27,7 +27,6 @@ var tier := Tier.INSTANCED
 # field handles
 var batch: RefCounted = null  # PropField._Batch
 var slot := -1
-var body := RID()  # the static body while INSTANCED
 var node: RigidBody3D = null  # the body while LIVE
 var cell := Vector3i.ZERO
 

@@ -97,7 +97,7 @@ their tier:
 
 | Tier | Drawn by | Collides by | When |
 | --- | --- | --- | --- |
-| INSTANCED | one `RenderingServer` MultiMesh per mesh per 8 m cell | one `PhysicsServer3D` static body per row, box shapes shared per mesh | the default; thousands at once |
+| INSTANCED | one `RenderingServer` MultiMesh per mesh per 8 m cell | one `PhysicsServer3D` static body per 8 m cell holding every row's box shapes (shapes shared per mesh) | the default; thousands at once |
 | LIVE | its own `RigidBody3D` (Jolt) with a `MeshInstance3D` | the body | while something needs it to move |
 
 ```gdscript
@@ -121,18 +121,28 @@ How the tiers move:
 - `wake()` past the cap demotes the farthest sleeping body first; if every
   live body is still moving it returns null, and the caller treats the
   thing as fixed for that moment.
-- Picking is the physics ray the walker already casts: the static body
-  carries the field's instance id, so `field.row_of(hit)` (or `raycast`)
-  maps a hit back to its row. No node, no spatial hash of its own.
+- Picking is the physics ray the walker already casts: the cell body
+  carries the field's instance id and the hit's shape index names the row,
+  so `field.row_of(hit)` (or `raycast`) maps a hit back to its row. No
+  node, no spatial hash of its own.
+- A cell whose rows changed rebuilds its body once, at the start of the
+  next idle frame, with every shape in place before the body enters the
+  space. Rows are therefore visible to rays on the frame after `add`;
+  `flush()` forces it sooner.
 
 Per-cell MultiMeshes mean frustum culling and `draw_range` work per cell,
 so a far room costs nothing to draw. Leaving the tree drops every server
 object and keeps the rows; re-entering instances them again, which is what
 chunk streaming needs.
 
-Measured in the headless test (10k rows, 3 meshes, Jolt): adding 10,000
-rows takes about 50 ms; idle process plus physics is about 1 ms a frame;
-64 live bodies settle within 2 s and are demoted when the focus leaves.
+Measured in the headless test (10k rows, 3 meshes, Jolt, one physics
+step a frame, `framework/bench/prop_field_bench.gd` for trying it by
+hand): adding 10,000 rows takes about 60 ms plus about 30 ms to build the
+200 cell bodies; a frame with 10,000 resting rows costs under 0.01 ms;
+with 64 live bodies among them about 0.35 ms; the bodies settle within
+2 s and are demoted when the focus leaves. (First measurements used
+Godot's time monitors, which in headless runs hold a stale value; the
+test now measures wall-clock with the idle sleep off.)
 
 ## 4. Streaming: `ChunkStreamer`
 

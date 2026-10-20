@@ -20,11 +20,15 @@ var phase := 0
 var phase_frame := 0
 var frame_usec: Array[int] = []
 var woken: Array[PropRow] = []
+var _last := 0
 
 
 func _initialize() -> void:
 	var engine: String = ProjectSettings.get_setting("physics/3d/physics_engine", "DEFAULT")
 	print("physics engine: %s" % engine)
+	# flat out: the headless loop otherwise sleeps 6.9 ms a frame and hides all work
+	OS.low_processor_usage_mode = false
+	Engine.max_fps = 0
 	_check(engine.begins_with("Jolt"), "project runs on Jolt (got %s)" % engine)
 	var holder := Node3D.new()
 	root.add_child(holder)
@@ -68,19 +72,12 @@ func _initialize() -> void:
 
 
 func _process(_dt: float) -> bool:
-	# the headless loop is paced, so measure the engine's own work per frame
-	# (script process + physics step), not wall time between frames
-	frame_usec.append(
-		int(
-			(
-				(
-					Performance.get_monitor(Performance.TIME_PROCESS)
-					+ Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)
-				)
-				* 1e6
-			)
-		)
-	)
+	# wall-clock per frame; tools/ci.sh runs this script with --fixed-fps 120,
+	# so every frame is exactly one physics step and no real-time pacing
+	var now := Time.get_ticks_usec()
+	if _last > 0 and (phase > 0 or phase_frame > 4):  # the first frames build the cells
+		frame_usec.append(now - _last)
+	_last = now
 	frame += 1
 	phase_frame += 1
 	match phase:
@@ -88,8 +85,8 @@ func _process(_dt: float) -> bool:
 			if phase_frame >= 60:
 				_report("idle")
 				_check(
-					_avg_ms() < 8.0,
-					"idle process + physics under 8 ms with 10k rows (%.2f ms)" % _avg_ms()
+					_avg_ms() < 1.0,
+					"idle frame (one physics step) under 1 ms with 10k rows (%.3f ms)" % _avg_ms()
 				)
 				_pick()
 				_wake()
@@ -97,6 +94,10 @@ func _process(_dt: float) -> bool:
 		1:  # live: 64 bodies dropped from 1 m, let them settle
 			if phase_frame >= 240:
 				_report("live")
+				_check(
+					_avg_ms() < 2.5,
+					"frame under 2.5 ms with 64 live bodies among 10k rows (%.3f ms)" % _avg_ms()
+				)
 				var asleep := 0
 				for r in woken:
 					if r.node and r.node.sleeping:
@@ -146,6 +147,7 @@ func _next() -> void:
 	phase += 1
 	phase_frame = 0
 	frame_usec.clear()
+	_last = 0
 
 
 func _meshes() -> void:
@@ -188,10 +190,7 @@ func _wake() -> void:
 	# the 65th waker is refused while every body is awake
 	var extra := field.wake(near[70])
 	_check(extra == null, "wake past the cap is refused while bodies are awake")
-	_check(
-		field.rows[0].body.is_valid() or field.rows[0].node != null,
-		"rows keep a collider in some tier"
-	)
+	_check(field.stats().cells > 0, "instanced rows sit in cell bodies")
 
 
 func _streaming_in() -> void:
@@ -212,8 +211,16 @@ func _remove() -> void:
 func _report(label: String) -> void:
 	print(
 		(
-			"%s: %d frames, avg %.2f ms, max %.2f ms, field tick %.2f ms"
-			% [label, frame_usec.size(), _avg_ms(), _max_ms(), field.stats().tick_ms]
+			"%s: %d frames, %.3f ms/frame avg, %.3f max, field tick %.2f ms, rebuilds %d (%.1f ms)"
+			% [
+				label,
+				frame_usec.size(),
+				_avg_ms(),
+				_max_ms(),
+				field.stats().tick_ms,
+				field.stats().rebuilds,
+				field.stats().rebuild_ms
+			]
 		)
 	)
 

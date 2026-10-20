@@ -3,13 +3,16 @@ extends Node3D
 ## Thousands of physical props with no node each. Every placed thing is a
 ## PropRow; the field draws rows through RenderingServer MultiMeshes (one per
 ## mesh per CELL-metre cell, so frustum culling and visibility range work
-## per cell) and collides them through PhysicsServer3D static bodies (one
-## per row, so a physics ray reports which row it hit). A row becomes a real
-## RigidBody3D (Jolt) only while something needs it to move: `wake()` on a
-## shove, a pick-up, a drop. When the body sleeps, and is far from `focus`
-## or the live cap is reached, the field writes its resting transform back
-## and the row is instanced again. This generalises StickField / LooseProp
-## to everything in the building.
+## per cell) and collides them through PhysicsServer3D: one static body per
+## cell carrying every row's box shapes (two hundred bodies instead of ten
+## thousand: Jolt's step cost for resting rows is then too small to
+## measure). A physics ray reports the cell body and the shape
+## index, which maps back to the row. A row becomes a real RigidBody3D
+## (Jolt) only while something needs it to move: `wake()` on a shove, a
+## pick-up, a drop. When the body sleeps, and is far from `focus` or the
+## live cap is reached, the field writes its resting transform back and the
+## row is instanced again. This generalises StickField / LooseProp to
+## everything in the building.
 ##
 ##   var row := field.add(&"lobby.cup.17", &"coffee_cup", mesh, boxes, xf, 0.25)
 ##   field.wake(row).apply_central_impulse(Vector3(0, 2, 0))
@@ -25,6 +28,7 @@ signal slept(row: PropRow)
 const CELL := 8.0
 const TICK := 0.5
 const HIDDEN := Transform3D(Basis(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO), Vector3(0, -1000, 0))
+const MIN_BOX := Vector3(0.02, 0.02, 0.02)
 
 ## Most rows that may be rigid bodies at once.
 @export var live_cap := 64
@@ -36,18 +40,24 @@ const HIDDEN := Transform3D(Basis(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO), Vec
 @export var layer := 3
 @export var mask := 0b111
 @export var cast_shadows := true
+## Off: rows collide and pick but are not drawn (a server, a test, a field
+## whose rows are drawn by something else).
+@export var draw := true
 
 var focus := Vector3.ZERO
 var rows: Array[PropRow] = []
 
 var _by_id := {}  # StringName -> PropRow
-var _by_rid := {}  # static body RID -> PropRow
+var _by_rid := {}  # cell body RID -> _Cell
 var _by_node := {}  # RigidBody3D -> PropRow
 var _batches := {}  # "mesh rid id:cx,cy,cz" -> _Batch
-var _cells := {}  # Vector3i -> Array[PropRow]
-var _shapes := {}  # Mesh -> Array[Array[RID, Transform3D]] (shared box shapes)
+var _cells := {}  # Vector3i -> _Cell
+var _shapes := {}  # Mesh -> Array[[RID, Transform3D]] (shared box shapes)
 var _live: Array[PropRow] = []
 var _pending: Array[PropRow] = []  # added before the field entered the tree
+var _dirty := {}  # _Cell -> true: shapes changed, body rebuilt at end of frame
+var _rebuilds := 0
+var _flush_usec := 0
 var _t := 0.0
 var _tick_usec := 0
 var _scenario := RID()
@@ -78,7 +88,11 @@ func _exit_tree() -> void:
 	for b in _batches.values():
 		b.dispose()
 	_batches.clear()
+	for c in _cells.values():
+		c.dispose()
 	_cells.clear()
+	_by_rid.clear()
+	_dirty.clear()
 	for shapes in _shapes.values():
 		for s in shapes:
 			PhysicsServer3D.free_rid(s[0])
@@ -90,9 +104,15 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSFORM_CHANGED and is_inside_tree():
 		for b in _batches.values():
 			RenderingServer.instance_set_transform(b.instance, global_transform)
+		for c in _cells.values():
+			PhysicsServer3D.body_set_state(
+				c.body, PhysicsServer3D.BODY_STATE_TRANSFORM, global_transform
+			)
 
 
 func _process(dt: float) -> void:
+	if not _dirty.is_empty():
+		flush()
 	_t += dt
 	if _t < TICK:
 		return
@@ -168,9 +188,7 @@ func move_row(r: PropRow, xf: Transform3D) -> void:
 		return
 	r.xf = xf
 	r.batch.set_transform(r.slot, xf)
-	PhysicsServer3D.body_set_state(
-		r.body, PhysicsServer3D.BODY_STATE_TRANSFORM, global_transform * xf
-	)
+	_mark(_cells[r.cell])
 
 
 # --- tiers ---------------------------------------------------------------
@@ -194,16 +212,10 @@ func wake(r: PropRow) -> RigidBody3D:
 	b.collision_mask = mask
 	b.can_sleep = true
 	b.continuous_cd = r.mass < 1.0
-	if r.boxes.is_empty():
+	for box in _boxes_of(r):
 		var cs := CollisionShape3D.new()
 		var bs := BoxShape3D.new()
-		bs.size = Vector3(0.1, 0.1, 0.1)
-		cs.shape = bs
-		b.add_child(cs)
-	for box in r.boxes:
-		var cs := CollisionShape3D.new()
-		var bs := BoxShape3D.new()
-		bs.size = box.size.max(Vector3(0.02, 0.02, 0.02))
+		bs.size = box.size.max(MIN_BOX)
 		cs.shape = bs
 		cs.position = box.get_center()
 		b.add_child(cs)
@@ -249,12 +261,14 @@ func is_live(r: PropRow) -> bool:
 # --- queries -------------------------------------------------------------
 
 
-## The row a physics ray hit (its `rid` or `collider`), or null.
+## The row a physics ray hit (its `rid` and `shape`, or `collider`), or null.
 func row_of(hit: Dictionary) -> PropRow:
 	if hit.is_empty():
 		return null
-	if _by_rid.has(hit.get("rid")):
-		return _by_rid[hit.rid]
+	var rid: Variant = hit.get("rid")
+	if rid is RID and _by_rid.has(rid):
+		var c: _Cell = _by_rid[rid]
+		return c.row_at_shape(int(hit.get("shape", -1)))
 	var col: Variant = hit.get("collider")
 	if col is RigidBody3D and _by_node.has(col):
 		return _by_node[col]
@@ -278,8 +292,10 @@ func nearest(pos: Vector3, radius: float) -> Array[PropRow]:
 	for x in range(lo.x, hi.x + 1):
 		for y in range(lo.y, hi.y + 1):
 			for z in range(lo.z, hi.z + 1):
-				var list: Array = _cells.get(Vector3i(x, y, z), [])
-				for r in list:
+				var c: _Cell = _cells.get(Vector3i(x, y, z))
+				if c == null:
+					continue
+				for r in c.rows:
 					if r.xf.origin.distance_squared_to(pos) <= r2:
 						out.append(r)
 	for r in _live:
@@ -299,6 +315,8 @@ func stats() -> Dictionary:
 		"batches": _batches.size(),
 		"cells": _cells.size(),
 		"tick_ms": _tick_usec / 1000.0,
+		"rebuilds": _rebuilds,
+		"rebuild_ms": _flush_usec / 1000.0,
 	}
 
 
@@ -324,16 +342,19 @@ func _instance(r: PropRow) -> void:
 	var key := (
 		"%d:%d,%d,%d" % [r.mesh.get_rid().get_id() if r.mesh else 0, r.cell.x, r.cell.y, r.cell.z]
 	)
-	var b: _Batch = _batches.get(key)
-	if b == null:
-		b = _Batch.new(r.mesh, _scenario, global_transform, draw_range, cast_shadows)
-		_batches[key] = b
-	r.batch = b
-	r.slot = b.add(r)
-	if not _cells.has(r.cell):
-		_cells[r.cell] = []
-	_cells[r.cell].append(r)
-	_make_static(r)
+	if draw:
+		var b: _Batch = _batches.get(key)
+		if b == null:
+			b = _Batch.new(r.mesh, _scenario, global_transform, draw_range, cast_shadows)
+			_batches[key] = b
+		r.batch = b
+		r.slot = b.add(r)
+	var c: _Cell = _cells.get(r.cell)
+	if c == null:
+		c = _Cell.new()
+		_cells[r.cell] = c
+	c.rows.append(r)
+	_mark(c)
 
 
 func _uninstance(r: PropRow) -> void:
@@ -349,34 +370,48 @@ func _uninstance(r: PropRow) -> void:
 			r.batch.dispose()
 		r.batch = null
 		r.slot = -1
-	if _cells.has(r.cell):
-		_cells[r.cell].erase(r)
-		if _cells[r.cell].is_empty():
+	var c: _Cell = _cells.get(r.cell)
+	if c and c.rows.has(r):
+		c.rows.erase(r)
+		if c.rows.is_empty():
 			_cells.erase(r.cell)
-	_free_static(r)
+			_by_rid.erase(c.body)
+			_dirty.erase(c)
+			c.dispose()
+		else:
+			_mark(c)
 
 
-func _make_static(r: PropRow) -> void:
-	var body := PhysicsServer3D.body_create()
-	PhysicsServer3D.body_set_mode(body, PhysicsServer3D.BODY_MODE_STATIC)
-	for s in _shapes_for(r):
-		PhysicsServer3D.body_add_shape(body, s[0], s[1])
-	PhysicsServer3D.body_set_collision_layer(body, 1 << (layer - 1))
-	PhysicsServer3D.body_set_collision_mask(body, mask)
-	PhysicsServer3D.body_attach_object_instance_id(body, get_instance_id())
-	PhysicsServer3D.body_set_space(body, _space)
-	PhysicsServer3D.body_set_state(
-		body, PhysicsServer3D.BODY_STATE_TRANSFORM, global_transform * r.xf
-	)
-	r.body = body
-	_by_rid[body] = r
+## Shape changes are batched: a cell whose rows changed rebuilds its body
+## once, at the start of the next idle frame, with every shape added before
+## the body enters the space (so Jolt builds one static compound; the whole
+## rebuild of ten thousand rows in two hundred cells takes about 30 ms, and
+## a single cell well under a millisecond). Rows show up to rays and bodies
+## on the frame after `add`; `flush()` forces it in the same frame.
+func _mark(c: _Cell) -> void:
+	_dirty[c] = true
 
 
-func _free_static(r: PropRow) -> void:
-	if r.body.is_valid():
-		_by_rid.erase(r.body)
-		PhysicsServer3D.free_rid(r.body)
-		r.body = RID()
+## Applies pending shape changes now (otherwise they apply at the start of
+## the next idle frame).
+func flush() -> void:
+	if not is_inside_tree():
+		return
+	var t0 := Time.get_ticks_usec()
+	for c in _dirty:
+		if c.body.is_valid():
+			_by_rid.erase(c.body)
+		c.rebuild(_space, global_transform, 1 << (layer - 1), mask, get_instance_id(), _shapes_for)
+		_by_rid[c.body] = c
+		_rebuilds += 1
+	_dirty.clear()
+	_flush_usec += Time.get_ticks_usec() - t0
+
+
+func _boxes_of(r: PropRow) -> Array[AABB]:
+	if r.boxes.is_empty():
+		return [AABB(Vector3(-0.05, -0.05, -0.05), Vector3(0.1, 0.1, 0.1))]
+	return r.boxes
 
 
 ## Box shapes are shared by every row of one mesh (the boxes come from the
@@ -386,12 +421,9 @@ func _shapes_for(r: PropRow) -> Array:
 	if _shapes.has(key):
 		return _shapes[key]
 	var out: Array = []
-	var boxes := r.boxes
-	if boxes.is_empty():
-		boxes = [AABB(Vector3(-0.05, -0.05, -0.05), Vector3(0.1, 0.1, 0.1))]
-	for box in boxes:
+	for box in _boxes_of(r):
 		var s := PhysicsServer3D.box_shape_create()
-		PhysicsServer3D.shape_set_data(s, box.size.max(Vector3(0.02, 0.02, 0.02)) * 0.5)
+		PhysicsServer3D.shape_set_data(s, box.size.max(MIN_BOX) * 0.5)
 		out.append([s, Transform3D(Basis.IDENTITY, box.get_center())])
 	_shapes[key] = out
 	return out
@@ -425,6 +457,59 @@ func _farthest_sleeping() -> PropRow:
 				best_d = d
 				best = r
 	return best
+
+
+## One static body for one cell: every instanced row's box shapes, in row
+## order, so a ray's shape index finds its row. The body is rebuilt whole
+## (see PropField._mark) rather than edited in place.
+class _Cell:
+	extends RefCounted
+	var body := RID()
+	var rows: Array[PropRow] = []  # in shape order
+	var _start := {}  # PropRow -> first shape index
+	var _count := {}  # PropRow -> shapes
+
+	func dispose() -> void:
+		if body.is_valid():
+			PhysicsServer3D.free_rid(body)
+		body = RID()
+
+	func rebuild(
+		space: RID,
+		xf: Transform3D,
+		layer_bits: int,
+		mask_bits: int,
+		owner_id: int,
+		shapes_for: Callable
+	) -> void:
+		dispose()
+		_start.clear()
+		_count.clear()
+		body = PhysicsServer3D.body_create()
+		PhysicsServer3D.body_set_mode(body, PhysicsServer3D.BODY_MODE_STATIC)
+		PhysicsServer3D.body_set_collision_layer(body, layer_bits)
+		PhysicsServer3D.body_set_collision_mask(body, mask_bits)
+		PhysicsServer3D.body_attach_object_instance_id(body, owner_id)
+		var total := 0
+		for r in rows:
+			var shapes: Array = shapes_for.call(r)
+			_start[r] = total
+			_count[r] = shapes.size()
+			for s in shapes:
+				PhysicsServer3D.body_add_shape(body, s[0], r.xf * s[1])
+			total += shapes.size()
+		# into the space last, so Jolt builds one static compound
+		PhysicsServer3D.body_set_space(body, space)
+		PhysicsServer3D.body_set_state(body, PhysicsServer3D.BODY_STATE_TRANSFORM, xf)
+
+	func row_at_shape(idx: int) -> PropRow:
+		if idx < 0:
+			return null
+		for r in rows:
+			var s: int = _start.get(r, -1)
+			if s >= 0 and idx >= s and idx < s + _count[r]:
+				return r
+		return null
 
 
 ## One MultiMesh for one mesh in one cell, kept on the RenderingServer.

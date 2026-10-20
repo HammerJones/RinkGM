@@ -46,7 +46,10 @@ fi
 shopt -s nullglob
 for t in tools/tests/test_*.gd; do
 	echo "== $t"
-	if ! timeout 300 "$GODOT" --headless --path . --quit-after 6000 --script "res://$t" >"$LOG/t.txt" 2>&1 || errors "$LOG/t.txt" >/dev/null; then
+	# the budget test wants one physics step per frame and no real-time pacing
+	extra=""
+	case "$t" in *test_framework_props.gd) extra="--fixed-fps 120";; esac
+	if ! timeout 300 "$GODOT" --headless --path . $extra --quit-after 6000 --script "res://$t" >"$LOG/t.txt" 2>&1 || errors "$LOG/t.txt" >/dev/null; then
 		cat "$LOG/t.txt"; fail=1
 	else
 		tail -3 "$LOG/t.txt"
