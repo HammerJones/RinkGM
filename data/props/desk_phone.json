@@ -1,20 +1,20 @@
 {
   "collision_cell": 8,
   "id": "desk_phone",
-  "inspect": "Beige push-button phone. The cord reaches the window if you lean.",
+  "inspect": "AT&T 100, beige, the same one every office had. The cord reaches the window if you lean.",
   "mass_kg": 1.1,
   "mesh": "merged",
   "name": "Desk phone",
   "pivot": [
     57.5,
     0,
-    50.0
+    51.5
   ],
   "shape": [],
   "size_m": [
     0.23,
-    0.12,
-    0.2
+    0.15,
+    0.206
   ],
   "sound": "plastic",
   "source": "tools/propgen/library.py",

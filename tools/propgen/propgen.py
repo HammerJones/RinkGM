@@ -363,6 +363,69 @@ class Scene:
         hit[valid] = mask[row_idx[valid], col_idx[valid]]
         self.colour[hit & (self.colour > 0)] = ink
 
+    # -- parts ---------------------------------------------------------------
+
+    def handset(self, ear, mouth, up, colour: int, dither: int | None = None, amount: float = 0.15,
+                grip=(0.036, 0.030), cup=(0.066, 0.032, 0.060), droop: float = 0.012,
+                hole_colour: int = PAL.ink, ear_holes=(5, 5), mouth_holes=(3, 3)) -> None:
+        """A G-style telephone handset (the AT&T 2500 / Western Electric
+        shape): a bar with a rounded-rectangular section that tapers from the
+        cups to the grip, arching a little in the middle, with two flat-faced
+        cups angled down at the ends and hole grids in their faces.
+
+        `ear` and `mouth` are the cup centres at grip height; `up` is the unit
+        axis the handset's back faces (its cups face the other way). Both the
+        ear-to-mouth line and `up` must lie on the grid's axes."""
+        ear = np.array(ear, dtype=np.float32)
+        mouth = np.array(mouth, dtype=np.float32)
+        up = np.array(up, dtype=np.float32)
+        axis = mouth - ear
+        length = float(np.linalg.norm(axis))
+        d = axis / length
+        along = int(np.argmax(np.abs(d)))
+        upi = int(np.argmax(np.abs(up)))
+        side = [i for i in range(3) if i not in (along, upi)][0]
+        def size(w_side, h_up, l_along):
+            out = [0.0, 0.0, 0.0]
+            out[side] = w_side
+            out[upi] = h_up
+            out[along] = l_along
+            return out
+        # the grip: a sweep of rounded boxes, wide at the ends, narrow in the
+        # middle, arching up a few millimetres
+        steps = max(24, int(length / self.voxel_m / 2))
+        f = None
+        for i in range(steps + 1):
+            t = i / steps
+            edge = min(t, 1.0 - t) / 0.22  # 0 at the cups, 1 past 22% in
+            k = min(1.0, edge)
+            k = k * k * (3 - 2 * k)
+            w = cup[0] * 0.85 * (1 - k) + grip[0] * k
+            h = cup[1] * 1.0 * (1 - k) + grip[1] * k
+            arch = 0.006 * np.sin(np.pi * t) - droop * (1 - k)
+            c = ear + axis * t + up * arch
+            seg = self.rbox(c, size(w, h, length / steps * 3.0), r=min(w, h) * 0.45)
+            f = seg if f is None else (f | seg)
+        self.add(f, colour, dither=dither, amount=amount)
+        # the cups: flat-faced rounded blocks, a little below the grip line
+        for end, holes, tilt in ((ear, ear_holes, 1.0), (mouth, mouth_holes, 1.0)):
+            c = end - up * (droop + cup[1] * 0.25)
+            block = self.rbox(c, size(cup[0], cup[1], cup[2]), r=0.011)
+            self.add(block, colour, dither=dither, amount=amount)
+            # face: the side away from `up`; a shallow recess with the hole grid
+            face_c = c - up * (cup[1] / 2)
+            rim = size(cup[0] - 0.012, self.voxel_m * 2.5, cup[2] - 0.012)
+            self.paint(self.rbox(face_c, rim, r=0.006), colour if dither is None else dither)
+            n_side, n_along = holes
+            pitch = 0.0045
+            for a in range(n_along):
+                for b in range(n_side):
+                    off = [0.0, 0.0, 0.0]
+                    off[along] = (a - (n_along - 1) / 2) * pitch
+                    off[side] = (b - (n_side - 1) / 2) * pitch
+                    hc = face_c + np.array(off, dtype=np.float32)
+                    self.paint(self.rbox(hc, size(0.0018, self.voxel_m * 2.5, 0.0018)), hole_colour)
+
     # -- output --------------------------------------------------------------
 
     def surface(self) -> np.ndarray:

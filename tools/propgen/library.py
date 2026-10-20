@@ -159,40 +159,61 @@ def vhs_tape() -> Scene:
 
 
 def desk_phone() -> Scene:
-    """A push-button desk phone with the handset in the cradle and a coiled
-    cord. 0.23 x 0.11 x 0.20 m at 1.5 mm voxels."""
+    """An AT&T 100 (the 2500 shape), from Sean's photos: a beige wedge with
+    the keypad on the front slope (twelve white keys with letters in a grey
+    bezel, three blue feature keys beside them), two tall cradle uprights
+    around the recessed hookswitch, the G-style handset lying across them,
+    a coiled cord out of the left side. 0.23 x 0.15 x 0.21 m at 2 mm."""
     v = 0.002
-    s = Scene((0.23, 0.12, 0.21), v)
-    W, D = 0.23, 0.20
-    # wedge body: a box cut by a sloping plane
-    body = s.rbox((W / 2, 0.040, D / 2), (W, 0.080, D), r=0.008) & s.plane((0.0, 1.0, -0.45), 0.075)
-    s.add(body, PAL.beige, dither=PAL.beige2, amount=0.18)
-    # keypad on the slope
-    for row in range(4):
-        for col in range(3):
-            kx = W / 2 - 0.024 + col * 0.024
-            kz = 0.060 + row * 0.022
-            ky = 0.075 + 0.45 * kz - 0.45 * 0.0 - 0.45 * kz + 0.45 * kz  # on the plane
-            ky = 0.075 + 0.45 * kz
-            s.add(s.rbox((kx, ky - 0.004, kz), (0.016, 0.010, 0.014), r=0.002), PAL.white, dither=PAL.chrome)
-            digit = "123456789*0#"[row * 3 + col] if row * 3 + col < 12 else "0"
-            s.label(digit if digit != "#" else "-", (kx, ky + 0.0012, kz), face="top", size=v, ink=PAL.ink)
-    # cradle and handset
-    s.add(s.rbox((W / 2, 0.082, 0.165), (0.20, 0.010, 0.040), r=0.004), PAL.beige, dither=PAL.beige2)
-    hand = s.rbox((W / 2, 0.096, 0.165), (0.210, 0.022, 0.034), r=0.010)
-    ear = s.sphere((0.03, 0.098, 0.165), 0.022) | s.sphere((W - 0.03, 0.098, 0.165), 0.022)
-    s.add(hand | ear, PAL.beige, dither=PAL.beige2, amount=0.18)
-    s.grille((0.012, 0.100, 0.150), (0.048, 0.122, 0.180), pitch=0.005, hole=0.002, depth_axis="y", colour=PAL.grey_dark)
-    s.grille((W - 0.048, 0.100, 0.150), (W - 0.012, 0.122, 0.180), pitch=0.005, hole=0.002, depth_axis="y", colour=PAL.grey_dark)
-    # label plate under the keypad and a red hold button
-    s.label("MILLBROOK ARENA", (W / 2, 0.075 + 0.45 * 0.030, 0.030), face="top", size=v, ink=PAL.ink, plate=PAL.cream)
-    s.add(s.rbox((W - 0.030, 0.075 + 0.45 * 0.060 - 0.003, 0.060), (0.018, 0.008, 0.012), r=0.002), PAL.red)
-    # coiled cord along the left side
-    for i in range(14):
-        s.add(s.cylinder((0.010, 0.020 + i * 0.004, 0.030 + i * 0.009), 0.006, 0.003, axis="z"), PAL.beige2)
-    for fx in (0.02, W - 0.02):
-        for fz in (0.02, D - 0.02):
-            s.add(s.cylinder((fx, -0.002, fz), 0.006, 0.006, axis="y"), PAL.rubber)
+    s = Scene((0.23, 0.16, 0.22), v)
+    W, D = 0.225, 0.205
+    beige = dict(colour=PAL.beige, dither=PAL.beige2, amount=0.15)
+    SL, K = 0.034, 0.36  # front slope: y = SL + K z, clamped by the box top
+
+    def slope(off: float):
+        return s.plane((0.0, 1.0, -K), SL + off)
+
+    def top(z: float) -> float:
+        return min(SL + K * z, 0.078)
+
+    s.add(s.rbox((W / 2, 0.039, D / 2), (W, 0.078, D), r=0.010) & slope(0.0), **beige)
+    # cradle: two uprights at the back corners of the deck, the hookswitch recess between
+    for px in (0.045, W - 0.045):
+        s.add(s.rbox((px, 0.078 + 0.024, D - 0.062), (0.030, 0.052, 0.060), r=0.006), **beige)
+        s.add(s.rbox((px, 0.078 + 0.050, D - 0.062), (0.030, 0.012, 0.070), r=0.004), **beige)
+    s.cut(s.rbox((W / 2, 0.078, D - 0.062), (0.110, 0.012, 0.040), r=0.002))
+    s.add(s.rbox((W / 2, 0.078 - 0.002, D - 0.062), (0.100, 0.006, 0.030), r=0.002), PAL.beige2)
+    for px in (W / 2 - 0.030, W / 2 + 0.030):
+        s.add(s.rbox((px, 0.078 + 0.002, D - 0.062), (0.014, 0.008, 0.018), r=0.002), PAL.beige)
+    # keypad bezel on the slope, keys with letters, the three blue feature keys
+    kz0 = 0.052
+    bez_c = (W / 2 - 0.008, top(kz0 + 0.045) + 0.001, kz0 + 0.045)
+    s.paint(s.rbox((bez_c[0], bez_c[1] - 0.004, bez_c[2]), (0.120, 0.016, 0.100), r=0.004) & slope(0.002) - slope(-0.004), PAL.grey)
+    keys = [("1", ""), ("2", "ABC"), ("3", "DEF"), ("4", "GHI"), ("5", "JKL"), ("6", "MNO"),
+            ("7", "PRS"), ("8", "TUV"), ("9", "WXY"), ("*", ""), ("0", "OPER"), ("-", "")]
+    for n, (digit, letters) in enumerate(keys):
+        col, row = n % 3, n // 3
+        kx = W / 2 + 0.022 - col * 0.022  # +X is the viewer's left, so column 0 is at +X
+        kz = kz0 + 0.012 + row * 0.022
+        ky = top(kz)
+        s.add(s.rbox((kx, ky + 0.004, kz), (0.016, 0.010, 0.016), r=0.002) & slope(0.009), PAL.white, dither=PAL.chrome, amount=0.1)
+        s.label(digit, (kx + 0.003, ky + 0.009, kz - 0.003), face="top", size=v, ink=PAL.ink, depth=v * 2)
+    for n, name in enumerate(("REDL", "SAVE", "MUTE")):
+        kx = W / 2 - 0.050
+        kz = kz0 + 0.012 + n * 0.022
+        ky = top(kz)
+        s.add(s.rbox((kx, ky + 0.004, kz), (0.018, 0.010, 0.014), r=0.002) & slope(0.009), PAL.placard_blue, dither=PAL.binder_blue, amount=0.2)
+    s.label("AT T 100", (W / 2 - 0.045, top(0.034) + 0.001, 0.034), face="top", size=v, ink=PAL.grey, depth=v * 2)
+    # the handset across the cradle, cups outside the uprights
+    s.handset((W - 0.026, 0.078 + 0.054, D - 0.062), (0.026, 0.078 + 0.054, D - 0.062), (0.0, 1.0, 0.0), PAL.beige, dither=PAL.beige2, amount=0.15, hole_colour=PAL.grey_dark)
+    # coiled cord out of the left side (+X) of the body, looping forward
+    import math
+    for i in range(36):
+        t = i / 35.0
+        x = W + 0.004 + 0.016 * math.sin(i * 1.5) + 0.010
+        y = 0.030 + 0.030 * t
+        z = D - 0.040 - 0.15 * t
+        s.add(s.cylinder((x, y, z), 0.006, 0.004, axis="z"), PAL.beige2, dither=PAL.chrome2, amount=0.2)
     return s
 
 
@@ -352,16 +373,11 @@ def wall_phone_booth() -> Scene:
             kx = kx0 - 0.012 + col * 0.012
             ky = by0 + 0.072 + row * 0.015
             s.add(s.rbox((kx, ky, bz - 0.002), (0.009, 0.010, 0.006), r=0.002), PAL.chrome, dither=PAL.chrome2, amount=0.15)
-    # the handset hung on the left: earpiece over the hook at the top, mouthpiece at the bottom, a slim grip between
+    # the handset hung on the left: earpiece over the hook at the top, mouthpiece at the bottom
     hx = bx - 0.022
-    hz = bz - 0.028
+    hz = bz - 0.030
     s.add(s.rbox((hx, by0 + bh + 0.006, bz + 0.010), (0.034, 0.012, 0.030), r=0.003), PAL.grey_dark)  # the hook
-    ear = s.rbox((hx, by0 + bh + 0.010, hz), (0.052, 0.046, 0.050), r=0.016)
-    mouth = s.rbox((hx, by0 - 0.012, hz), (0.052, 0.046, 0.050), r=0.016)
-    grip = s.rbox((hx, by0 + bh / 2, hz - 0.004), (0.030, bh, 0.034), r=0.013)
-    s.add(ear | mouth | grip, PAL.cream, dither=PAL.cream2, amount=0.15)
-    s.grille((hx - 0.016, by0 + bh - 0.008, hz - 0.028), (hx + 0.016, by0 + bh + 0.028, hz - 0.022), pitch=0.005, hole=0.002, depth_axis="z", colour=PAL.grey_dark)
-    s.grille((hx - 0.016, by0 - 0.030, hz - 0.028), (hx + 0.016, by0 + 0.004, hz - 0.022), pitch=0.005, hole=0.002, depth_axis="z", colour=PAL.grey_dark)
+    s.handset((hx, by0 + bh + 0.004, hz), (hx, by0 - 0.004, hz), (0.0, 0.0, -1.0), PAL.cream, dither=PAL.cream2, amount=0.15, hole_colour=PAL.grey_dark)
     # the red sticker on the handset
     s.paint(s.rbox((hx, by0 + 0.17, hz - 0.02), (0.028, 0.022, 0.010), r=0.002), PAL.red)
     s.label("911", (hx, by0 + 0.17, hz - 0.02), face="front", size=v, ink=PAL.white)
@@ -443,16 +459,10 @@ def soviet_phone() -> Scene:
     s.add(s.rbox((sx_, top(sz_) + 0.012, sz_), (0.012, 0.018, 0.012), r=0.003), PAL.chrome)
     # VEF badge below the dial
     s.label("VEF", (W / 2, top(0.018) + 0.001, 0.018), face="top", size=v, ink=PAL.chrome, depth=v * 2)
-    # handset lying across the cradle: a bent grip with the two cups
-    hy = 0.128
+    # handset lying across the cradle
+    hy = 0.124
     hz = D - 0.060
-    grip = s.rbox((W / 2, hy + 0.006, hz), (0.150, 0.030, 0.036), r=0.013)
-    cups = (s.cylinder((W / 2 - 0.090, hy - 0.010, hz), 0.032, 0.040, axis="y", r=0.010)
-            | s.cylinder((W / 2 + 0.090, hy - 0.010, hz), 0.032, 0.040, axis="y", r=0.010))
-    s.add(grip | cups, **bake)
-    for cx_ in (W / 2 - 0.090, W / 2 + 0.090):
-        s.paint(s.cylinder((cx_, hy - 0.030, hz), 0.022, 0.004, axis="y"), PAL.bakelite_hi)
-        s.grille((cx_ - 0.014, hy - 0.031, hz - 0.014), (cx_ + 0.014, hy - 0.027, hz + 0.014), pitch=0.005, hole=0.002, depth_axis="y", colour=PAL.ink)
+    s.handset((W / 2 + 0.090, hy, hz), (W / 2 - 0.090, hy, hz), (0.0, 1.0, 0.0), PAL.bakelite, dither=PAL.bakelite2, amount=0.2, hole_colour=PAL.bakelite_hi, cup=(0.058, 0.030, 0.050))
     # coiled cord from the mouthpiece round the back to the body's rear
     for i in range(40):
         t = i / 39.0
@@ -478,7 +488,7 @@ LIBRARY = {
         shape=[[0, 0], [1, 0]]),
     "desk_phone": dict(build=desk_phone, name="Desk phone", mass_kg=1.1, sound="plastic",
         tags=["office", "pro_shop", "electronics"], verbs=["inspect", "push", "use"],
-        inspect="Beige push-button phone. The cord reaches the window if you lean."),
+        inspect="AT&T 100, beige, the same one every office had. The cord reaches the window if you lean."),
     "walkie_talkie": dict(build=walkie_talkie, name="Walkie-talkie", mass_kg=0.35, sound="plastic",
         tags=["rink_ops", "handheld", "electronics"], verbs=["take", "inspect", "push", "use"],
         inspect="Rink ops channel 4. The talk button sticks; everyone knows the click.",
