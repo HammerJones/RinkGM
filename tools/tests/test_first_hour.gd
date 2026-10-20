@@ -85,7 +85,7 @@ func _run() -> void:
 	_expect(a.has("read") and not a.has("job"), "Doris without plugs: just the note on her dash")
 	story.use(_venue.spot("plug_drawer"))
 	a = story.use(_venue.spot("doris"))
-	_expect(a.has("job") and a.job.job == "doris_plugs" and a.job.room == "zamboni_bay", "with the plugs, Doris opens her job (%s)" % a.get("job", {}))
+	_expect(a.has("job") and a.job.job == "doris_plugs" and a.job.room == "zamboni_bay" and a.job.in_place == "doris_hatch", "with the plugs, Doris opens her hatch for the job, in place (%s)" % a.get("job", {}))
 	var r := story.finish_job(a.job, {"quality": 0.8})
 	_expect(r.get("ok", false), "the sim does the plug change (%s)" % r.get("text", ""))
 

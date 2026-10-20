@@ -30,6 +30,8 @@ func _initialize() -> void:
 	_check_empty_tank(worn)
 	_check_sim_jobs(normal)
 	_check_drive_scene()
+	_check_552_controls(worn)
+	_check_cockpit()
 	_check_measure_scene()
 	_check_hand_tools()
 	print("test_ice: %d ms" % (Time.get_ticks_msec() - t0))
@@ -370,6 +372,107 @@ func _check_drive_scene() -> void:
 	sc2.begin({"sim": s2, "job": "resurface", "target": "doris_drive"})
 	_expect(sc2.complete and float(sc2.result.get("coverage", 0.0)) > 0.9, "drive scene: a hired driver's resurface is automatic")
 	sc2.free()
+
+
+## The 552's controls in the run (docs/world/ICE.md 4): the conditioner takes
+## its 5 to 6 s to come down and only cuts once it's down; the augers carry
+## the cut to the tank (off, the snow stays on the ice); the wash valve
+## meters the wash water.
+func _check_552_controls(worn: IceSlab) -> void:
+	var run := ResurfaceRun.start(worn, ResurfacerSim.create_doris())
+	run.pos = Vector2(-20.0, 0.0)
+	run.heading = 0.0
+	run.flood_l = 0.0
+	run.blade_mm = 1.5875
+	run.cond_down = true
+	var t := 0.0
+	while run.cond_pos < 1.0 and t < 10.0:
+		run.step(DT, 0.0, 0.0, 1.0)
+		t += DT
+	_expect(t > 5.0 and t < 6.0, "552: the conditioner takes 5-6 s to come down (%.1f s)" % t)
+	run.cond_down = false
+	run.step(1.0, 0.0, 0.0, 1.0)
+	_expect(run.cond_pos > 0.7 and run.cond_pos < 1.0, "552: and rises the same way (%.2f after 1 s)" % run.cond_pos)
+	# augers off: driven down the middle, nothing reaches the tank
+	var r2 := ResurfaceRun.start(worn, ResurfacerSim.create_doris())
+	r2.pos = Vector2(-24.0, 0.0)
+	r2.heading = 0.0
+	r2.flood_l = 0.0
+	r2.blade_mm = 1.5875
+	r2.cond_down = true
+	r2.cond_pos = 1.0
+	r2.auger_v = false
+	r2.auger_h = false
+	for i in 120:
+		r2.step(DT, ResurfaceRun.CUT_SPEED / ResurfaceRun.TOP_SPEED, 0.0)
+	_expect(r2.ice_cut_m3 > 0.0 and r2.bin_m3 < 0.0001 and r2.snow_left_m3 > 0.0, "552: augers off, the cut stays on the ice (%.3f m3 left, %.4f in the tank)" % [r2.snow_left_m3, r2.bin_m3])
+	r2.auger_v = true
+	r2.auger_h = true
+	var before := r2.bin_m3
+	for i in 120:
+		r2.step(DT, ResurfaceRun.CUT_SPEED / ResurfaceRun.TOP_SPEED, 0.0)
+	_expect(r2.bin_m3 > before, "552: augers on, the snow goes up to the tank")
+	# the wash valve: shut, no wash water goes down; half open, half the flow
+	r2.wash_on = true
+	r2.wash_l = ResurfacerSim.WASH_TANK_L
+	r2.wash_valve = 0.0
+	var w0 := r2.wash_l
+	for i in 40:
+		r2.step(DT, ResurfaceRun.CUT_SPEED / ResurfaceRun.TOP_SPEED, 0.0)
+	_expect(is_equal_approx(r2.wash_l, w0), "552: wash valve shut, no wash water")
+	r2.wash_valve = 0.5
+	for i in 40:
+		r2.step(DT, ResurfaceRun.CUT_SPEED / ResurfaceRun.TOP_SPEED, 0.0)
+	_expect(absf((w0 - r2.wash_l) - ResurfaceRun.WASH_Q * 0.5 * 2.0) < 0.05, "552: half open, half the wash flow (%.2f L in 2 s)" % (w0 - r2.wash_l))
+
+
+## The cockpit: every control in the spec is a part on the model and moves
+## with what it works; the shifter decides the way the pedal drives her.
+func _check_cockpit() -> void:
+	var sim := RinkSim.create_m1()
+	sim.doris.part("spark_plugs").condition = 1.0
+	sim.doris.choke_stuck = false
+	var sc: DorisDrive = load("res://scenes/world/jobs/doris_drive.tscn").instantiate()
+	sc.set_physics_process(false)
+	root.add_child(sc)
+	sc.begin({"sim": sim, "job": "resurface", "target": "doris_drive"})
+	var spec := ["gear", "auger_v", "auger_h", "conditioner", "dump", "valve", "wash_valve", "plunger", "blade", "wash", "key"]
+	var missing: Array = []
+	for id: String in spec:
+		if not DorisModel.control_ids().has(id) or sc.model.get_node_or_null("Ctl_" + id) == null:
+			missing.append(id)
+	_expect(missing.is_empty(), "cockpit: every 552 control is on the model %s" % [missing])
+	for n: String in ["SteeringWheel", "Accelerator", "Brake", "Bin", "Conditioner", "Hatch", "Body"]:
+		_expect(sc.model.find_child(n, true, false) != null, "cockpit: Doris has her %s" % n)
+	_expect(sc.run.gear == 0 and not sc.run.auger_v and sc.run.wash_valve == 0.0, "cockpit: she's parked in neutral, augers off, wash shut")
+	# neutral: the pedal does nothing
+	sc.input.scripted = func(f: JobInput.Frame, _dt: float, _c: int) -> void: f.move = Vector2(0.0, 1.0)
+	for i in 30:
+		sc.tick(DT)
+	_expect(absf(sc.run.speed) < 0.01, "cockpit: in neutral the pedal doesn't move her")
+	var moves := {}
+	for id: String in ["gear", "auger_v", "auger_h", "conditioner", "valve", "wash_valve", "blade", "wash"]:
+		var part: Node3D = sc.model.get_node("Ctl_" + id)
+		var was := part.transform
+		if id == "blade":
+			sc.set_control(id, 1)  # a whole turn would look the same
+		else:
+			sc.toggle_control(id)
+		sc.tick(DT)
+		moves[id] = not part.transform.is_equal_approx(was)
+	var still: Array = moves.keys().filter(func(k: String) -> bool: return not moves[k])
+	_expect(still.is_empty(), "cockpit: each control's part moves when it's worked %s" % [still])
+	sc.run.gear = 1
+	for i in 30:
+		sc.tick(DT)
+	_expect(sc.run.speed > 0.1, "cockpit: in F the pedal drives her forward (%.2f m/s)" % sc.run.speed)
+	var wheel: Node3D = sc.model.find_child("SteeringWheel", true, false)
+	var w0 := wheel.rotation.y
+	sc.input.scripted = func(f: JobInput.Frame, _dt: float, _c: int) -> void: f.move = Vector2(1.0, 0.0)
+	for i in 20:
+		sc.tick(DT)
+	_expect(absf(wheel.rotation.y - w0) > 0.3, "cockpit: the steering wheel turns with her steering")
+	sc.free()
 
 
 ## The measuring scene: a caliper reading at the centre plate, a plate ordered

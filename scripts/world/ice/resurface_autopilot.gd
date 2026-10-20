@@ -58,6 +58,11 @@ func tick(dt: float) -> Dictionary:
 				phase = "out"
 			brake = 1.0
 		"out", "cut", "home":
+			if phase == "out" and run.on_ice() and not run.cond_down:
+				# lower her as she comes onto the ice: the lift takes 5 s
+				run.cond_down = true
+				run.auger_v = true
+				run.auger_h = true
 			if run.jammed and not gave_up:
 				_clear_jam()
 				brake = 1.0
@@ -78,6 +83,8 @@ func tick(dt: float) -> Dictionary:
 		"done":
 			brake = 1.0
 			done = true
+	if absf(throttle) > 0.01:
+		run.gear = 1 if throttle > 0.0 else -1
 	run.step(dt, throttle, steer_in, brake)
 	return {"throttle": throttle, "steer": steer_in, "brake": brake}
 
@@ -91,6 +98,9 @@ func _phase_marks() -> void:
 		run.cond_down = true
 		run.towel_down = bool(settings.towel)
 		run.wash_on = bool(settings.wash)
+		run.wash_valve = 1.0 if bool(settings.wash) else 0.0
+		run.auger_v = true
+		run.auger_h = true
 		run.flood_valve = float(settings.valve)
 		run.blade_mm = float(settings.blade_mm)
 	elif phase == "cut" and idx > cut_end:
@@ -111,6 +121,7 @@ func _end_cut() -> void:
 	run.towel_down = false
 	run.cond_down = false
 	run.blade_mm = 0.0
+	run.wash_valve = 0.0
 	var gate: int = _mark_idx.get("gate", points.size() - 4)
 	idx = maxi(idx, gate - 1) if gave_up else idx
 

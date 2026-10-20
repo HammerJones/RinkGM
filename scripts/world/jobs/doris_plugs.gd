@@ -2,7 +2,11 @@ extends JobScene
 ## Doris won't start: the plug change, the tutorial slice of the engine
 ## tune-up (docs/world/RINK_SIM.md 4.8), job `doris_plugs`. A raised view
 ## into her engine bay with the DORIS parts cabinet beside it and Gus's note
-## on the dash.
+## on the dash. In the venue it plays in place (playtest W2): the walker
+## opens the service hatch on Doris's right side in the bay and the job's
+## parts sit in her motor bay (DorisModel.hatch_frame()); the cabinet and
+## the room hide, Gus's note is taped by the hatch, and the plug is the one
+## already fetched from the bay's DORIS drawer.
 ##
 ## Steps and verbs:
 ##   note     interact: read Gus's note
@@ -55,6 +59,17 @@ const BAY_AT := Vector3(0.0, 0.5, 0.0)
 const CAB_AT := Vector3(-1.05, 0.0, 0.15)
 const CAB_YAW := 28.0
 const RAG_AT := Vector3(0.66, 0.92, -0.32)
+const NOTE_AT := Vector3(0.83, 0.9, -0.03)
+## In place: the rag on its stand toward Doris's nose, the note on her side.
+const RAG_IN_PLACE := Vector3(-0.85, 0.92, -0.55)
+const NOTE_IN_PLACE := Vector3(-0.75, 1.05, -0.21)
+
+var rag_at := RAG_AT
+var note_at := NOTE_AT
+var _rag: MeshInstance3D
+var _rag_stand: MeshInstance3D
+var _note: Label3D
+var _dash: MeshInstance3D
 
 
 func _setup() -> void:
@@ -94,7 +109,7 @@ func _enter_step(i: int) -> void:
 	var well_view := [_well(PLUG) + Vector3(0.1, 0.34, -0.38), _well(PLUG) + Vector3(0, -0.02, 0.02)]
 	match str(steps[i].id):
 		"note":
-			view(Vector3(0.55, 1.3, -0.65), Vector3(0.82, 0.95, 0.0))
+			view(note_at + Vector3(-0.28, 0.4, -0.62), note_at + Vector3(-0.01, 0.05, 0.03))
 			prompt = "Gus: \"She won't start cold if Number 3 plug is fouled. Plugs are in the DORIS drawer, second from the top. Hand tight then a quarter. Do NOT cross-thread her, she remembers. Say good morning first. I mean it.\""
 			hint = "%s read it" % RinkOS.key("E")
 		"find":
@@ -111,8 +126,14 @@ func _enter_step(i: int) -> void:
 			view(CAB_AT + Vector3(0.45, 1.4, -0.95), CAB_AT + Vector3(0, 0.8, 0))
 			prompt = "Black and wet: fouled, like Gus said. New one from the DORIS drawer, second from the top."
 			hint = "%s pick a drawer   %s open it" % [RinkOS.key("W/S"), RinkOS.key("E")]
+			if in_place:
+				# the drawer's across the bay: the plug's in your pocket already
+				selection_y = 1
+				view(well_view[0], well_view[1])
+				prompt = "Black and wet: fouled, like Gus said. The new one's in your pocket, from the DORIS drawer."
+				hint = "%s new plug out" % RinkOS.key("E")
 		"gap":
-			view(RAG_AT + Vector3(-0.12, 0.3, -0.3), RAG_AT + Vector3(0, 0.03, 0))
+			view(rag_at + Vector3(-0.12, 0.3, -0.3), rag_at + Vector3(0, 0.03, 0))
 			prompt = "Out of the box they're never right. Gap it to 0.035 with the gauge: open it up a hair at a time."
 			hint = "HOLD %s + drag RIGHT open / LEFT close   %s done" % [RinkOS.key("LMB"), RinkOS.key("E")]
 		"thread":
@@ -145,7 +166,7 @@ func _on_pick_x(d: int) -> void:
 
 
 func _on_pick_y(d: int) -> void:
-	if step_id() == "drawer":
+	if step_id() == "drawer" and not in_place:
 		selection_y = clampi(selection_y - d, 0, DRAWERS.size() - 1)  # up the screen is up the cabinet
 
 
@@ -175,7 +196,7 @@ func _work(f: JobInput.Frame, dt: float) -> void:
 			if f.interact_pressed:
 				_drawer_open = selection_y
 				if selection_y == 1:
-					advance("New plug from the drawer")
+					advance("New plug from your pocket" if in_place else "New plug from the drawer")
 				else:
 					prompt = str(DRAWER_SAYS[selection_y])
 		"gap":
@@ -296,22 +317,22 @@ func _sync(_dt: float) -> void:
 	# the rag for gapping, then in the well
 	if step >= 3:
 		_plugs[PLUG].visible = true
-		_plugs[PLUG].transform = Transform3D(Basis(Vector3.FORWARD, PI / 2.0), RAG_AT + Vector3(-0.1, 0.012, 0.05))
+		_plugs[PLUG].transform = Transform3D(Basis(Vector3.FORWARD, PI / 2.0), rag_at + Vector3(-0.1, 0.012, 0.05))
 	_new_plug.visible = step >= 4 or (sid == "drawer" and _drawer_open == 1)
 	if step >= 5:
 		var out2 := (plug.thread_turns - plug.run) * PITCH
 		_new_plug.transform = Transform3D(Basis(Vector3.UP, JobScene.spin(plug)), _well(PLUG) + Vector3(0, out2, 0))
 	elif step == 4:
-		_new_plug.transform = Transform3D(Basis(Vector3.FORWARD, PI / 2.0), RAG_AT + Vector3(0.0, 0.012, 0.0))
+		_new_plug.transform = Transform3D(Basis(Vector3.FORWARD, PI / 2.0), rag_at + Vector3(0.0, 0.012, 0.0))
 	else:
 		_new_plug.transform = Transform3D(Basis.IDENTITY, Vector3.ZERO)
-	_tray.visible = _drawer_open >= 0
+	_tray.visible = _drawer_open >= 0 and not in_place
 	if _drawer_open >= 0:
 		var y := JobParts.DRAWER_TOP - _drawer_open * JobParts.DRAWER_STEP - 0.08
 		var cb := Basis(Vector3.UP, deg_to_rad(CAB_YAW))
 		_tray.transform = Transform3D(cb, CAB_AT + cb * Vector3(0, y, -0.3))
 	_gauge.visible = sid == "gap"
-	_gauge.position = RAG_AT + Vector3(0.09, 0.01, -0.02)
+	_gauge.position = rag_at + Vector3(0.09, 0.01, -0.02)
 	_sel_mark.visible = sid == "find"
 	_sel_mark.position = _well(selection) + Vector3(0, 0.15, 0)
 	_tool_node.visible = false
@@ -327,6 +348,7 @@ func _sync(_dt: float) -> void:
 
 func _build() -> void:
 	environment(Color("17181b"), 0.45)
+	var n0 := get_child_count()
 	slab(Vector3(6.0, 0.2, 5.0), Vector3(0, -0.1, 1.0), Color("6a665c"))
 	slab(Vector3(6.0, 3.2, 0.2), Vector3(0, 1.6, 2.4), Wear.OLD_CREAM.darkened(0.15))
 	slab(Vector3(6.0, 1.0, 0.21), Vector3(0, 0.5, 2.39), Color("3d6fb0").darkened(0.2))
@@ -335,6 +357,7 @@ func _build() -> void:
 	# Doris's back end round her engine bay: the chassis under it, the deck
 	slab(Vector3(1.1, 0.5, 0.75), BAY_AT + Vector3(0, -0.25, 0.0), Wear.CHARCOAL)
 	slab(Vector3(1.3, 0.12, 0.25), BAY_AT + Vector3(0, -0.06, -0.48), Wear.OLD_CREAM)
+	_collect(n0)
 	part("engine_bay", BAY_AT)
 	for i in 4:
 		var mi := part("spark_plug_fouled" if i == PLUG else "spark_plug", _well(i))
@@ -343,28 +366,59 @@ func _build() -> void:
 	_new_plug = part("spark_plug", Vector3.ZERO)
 	_sel_mark = slab(Vector3(0.03, 0.012, 0.03), Vector3.ZERO, RinkOS.ACTION, 2.0)
 	# the dash with Gus's note
-	var dash := slab(Vector3(0.36, 0.3, 0.05), Vector3(0.84, 0.88, 0.0), Wear.CHARCOAL)
-	dash.rotation_degrees = Vector3(-25, -20, 0)
-	note("She won't start cold if\nNumber 3 plug is fouled.\nPlugs: DORIS drawer,\nsecond from the top.\nHand tight then a quarter.\nDo NOT cross-thread her,\nshe remembers.\nSay good morning first.\nI mean it.  - G", Vector3(0.83, 0.9, -0.03), -20.0, 0.00075, Color("1b2a4a"), Color("f3e7a2"), 0.24, 0.2).rotation_degrees.x = -25.0
+	_dash = slab(Vector3(0.36, 0.3, 0.05), Vector3(0.84, 0.88, 0.0), Wear.CHARCOAL)
+	_dash.rotation_degrees = Vector3(-25, -20, 0)
+	backdrop.append(_dash)
+	_note = note("She won't start cold if\nNumber 3 plug is fouled.\nPlugs: DORIS drawer,\nsecond from the top.\nHand tight then a quarter.\nDo NOT cross-thread her,\nshe remembers.\nSay good morning first.\nI mean it.  - G", NOTE_AT, -20.0, 0.00075, Color("1b2a4a"), Color("f3e7a2"), 0.24, 0.2)
+	_note.rotation_degrees.x = -25.0
 	# the rag on the deck for the plugs
-	slab(Vector3(0.3, 0.01, 0.2), RAG_AT, Color("b03a2e"))
-	slab(Vector3(0.5, 0.42, 0.45), RAG_AT + Vector3(0, -0.215, 0.05), Wear.OLD_WOOD_DARK)
+	_rag = slab(Vector3(0.3, 0.01, 0.2), RAG_AT, Color("b03a2e"))
+	_rag_stand = slab(Vector3(0.5, 0.42, 0.45), RAG_AT + Vector3(0, -0.215, 0.05), Wear.OLD_WOOD_DARK)
 	_gauge = part("feeler_gauge", Vector3.ZERO)
 	# the DORIS cabinet and its labels
+	var n1 := get_child_count()
 	var cab := part("parts_drawer", CAB_AT, null, Basis(Vector3.UP, deg_to_rad(CAB_YAW)))
 	cab.name = "DorisDrawers"
 	var cb := Basis(Vector3.UP, deg_to_rad(CAB_YAW))
 	for i in DRAWERS.size():
 		var y := JobParts.DRAWER_TOP + 0.04 - i * JobParts.DRAWER_STEP
 		note(str(DRAWERS[i]), CAB_AT + cb * Vector3(0, y, -0.043), CAB_YAW, 0.0011, Color("1a1a1a"))
+	_collect(n1)
 	_tray = part("drawer_tray", Vector3.ZERO)
 	_tool_node = MeshInstance3D.new()
 	add_child(_tool_node)
 	# lights: the drop light hooked on the cowl, the bay's high bay lamp
 	light(Vector3(0.3, 1.25, -0.35), 1.1, 3.0, Color(1.0, 0.9, 0.72))
+	var n2 := get_child_count()
 	light(Vector3(-0.6, 2.8, 0.6), 0.8, 6.0, Wear.SODIUM, false)
 	light(Vector3(-0.9, 1.6, -0.6), 0.5, 2.5, Color(0.9, 0.95, 1.0), false)
 	var key := DirectionalLight3D.new()
 	key.rotation_degrees = Vector3(-60.0, 200.0, 0.0)
 	key.light_energy = 0.2
 	add_child(key)
+	_collect(n2)
+
+
+## The children added since `from` are the diorama's own room.
+func _collect(from: int) -> void:
+	for i in range(from, get_child_count()):
+		var n := get_child(i) as Node3D
+		if n:
+			backdrop.append(n)
+
+
+## In place on Doris: the rag on its stand by her nose, Gus's note taped on
+## her side by the hatch (the cabinet and the room are hidden).
+func _placed() -> void:
+	rag_at = RAG_IN_PLACE
+	note_at = NOTE_IN_PLACE
+	_rag.position = rag_at
+	_rag_stand.position = rag_at + Vector3(0, -0.215, 0.05)
+	_note.position = note_at
+	_note.rotation_degrees = Vector3(0.0, 180.0, 0.0)
+	for c in get_children():
+		# the note's paper backing sits just behind it
+		var mi := c as MeshInstance3D
+		if mi and mi != _dash and mi.position.distance_to(NOTE_AT + Basis(Vector3.UP, deg_to_rad(-20.0)) * Vector3(0, 0, 0.004)) < 0.01:
+			mi.position = note_at + Vector3(0, 0, 0.004)
+			mi.rotation_degrees = Vector3.ZERO

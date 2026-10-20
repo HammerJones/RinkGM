@@ -145,7 +145,10 @@ func use(s: VenueSpot) -> Dictionary:
 	var gives: String = d.get("gives", "")
 	if gives != "":
 		flags[gives] = true
-	match s.kind:
+	var kind := s.kind
+	if kind == VenueSpot.Kind.USE and d.has("job"):
+		kind = VenueSpot.Kind.JOB  # World: a machine opened for its job (Doris's hatch)
+	match kind:
 		VenueSpot.Kind.READ:
 			flags["read:" + s.id] = true
 			var t := spot_text(d, s.id)
@@ -164,7 +167,7 @@ func use(s: VenueSpot) -> Dictionary:
 				return {"toast": "You need %s first." % need.replace("_", " ")}
 			var room := venue.room_at(s.global_position)
 			return {"job": {"job": d.get("job", ""), "args": d.get("args", {}), "target": d.get("target", s.id), "scene": d.get("scene", ""),
-				"room": room.room_id if room else "", "note": d.get("note", ""), "readable": d.get("readable", "")}}
+				"room": room.room_id if room else "", "note": d.get("note", ""), "readable": d.get("readable", ""), "in_place": d.get("in_place", "")}}
 		VenueSpot.Kind.SCREEN:
 			return {"screen": d.get("screen", s.id)}
 		VenueSpot.Kind.SWITCH:

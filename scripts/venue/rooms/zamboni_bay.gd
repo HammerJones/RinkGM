@@ -10,6 +10,8 @@ const X0 := Venue.END_FRONT
 const X1 := Venue.HALF_X - Venue.WALL_T
 const Z := 5.0
 const H := 5.0
+## World: where Doris parks, nose to the rink door.
+const DORIS_AT := Vector3(39.7, 0, 0)
 ## The snow-melt pit under its grate, in venue space.
 const PIT := Rect2(42.8, -4.6, 2.5, 2.2)
 ## The resurfacer gate in the end boards (Shell.GATES "x+").
@@ -52,8 +54,15 @@ func build(k: VenueKit) -> void:
 	k.block(Vector3(42.8, 0.02, -4.6), Vector3(45.3, 0.04, -2.4), Color("2e3033"), 0.25, 0.1, false)  # snow-melt pit grate
 	if k.age != Age.RENOVATED:
 		k.block(Vector3(41.5, 0.02, -4.2), Vector3(42.8, 0.025, -2.2), Color("4d5257"), 0.5, 0.05, false)  # puddle
-	# the Props kit's resurfacer, parked nose-first toward the rink door
-	k.prop("resurfacer", Vector3(39.7, 0, 0), PI * 0.5)
+	# World: Doris herself, parked nose-first toward the rink door: the
+	# working DorisModel (her hatch opens for the repairs, W2), with the
+	# props kit's collision boxes
+	var doris := DorisModel.new(k.age, true)
+	doris.transform = _doris_xf()
+	k.add(doris)
+	for b in Props.collision_boxes("resurfacer", k.age):
+		var wb := _doris_xf() * b
+		k.collider(wb.position, wb.end)
 	# workbench, tool wall, tyres, paint drums
 	var wood: Color = k.by_age(Color("6b5136"), Color("7a5c3c"), Color("3a3d44"))
 	k.aged_block(Vector3(35.0, 0, -4.85), Vector3(38.5, 0.9, -4.15), wood, 0.4)
@@ -88,12 +97,15 @@ func build(k: VenueKit) -> void:
 ## change, the blade), the DORIS parts drawers with the plugs, the manual on
 ## the bench, and the snow pit with Mount Doris out the back.
 func _m1(k: VenueKit) -> void:
-	add_spot(k, VenueSpot.Kind.JOB, "doris", Vector3(40.4, 1.5, 0.55), "Doris",
-		{"job": "doris_plugs", "target": "doris_plugs", "readable": "note_doris_dash", "note": "doris_dash", "needs": "spark_plugs", "scene": "res://scenes/world/jobs/doris_plugs.tscn"}, 2.0)
+	# World: her repairs go through the service hatch on her right side and
+	# play there, in place (W2)
+	var hatch := _doris_xf() * Vector3(DorisModel.HATCH_HINGE.x, (DorisModel.HATCH_Y0 + DorisModel.HATCH_Y1) * 0.5, (DorisModel.HATCH_Z0 + DorisModel.HATCH_Z1) * 0.5)
+	add_spot(k, VenueSpot.Kind.USE, "doris", hatch, "Doris's service hatch",
+		{"verb": "OPEN", "job": "doris_plugs", "target": "doris_plugs", "in_place": "doris_hatch", "readable": "note_doris_dash", "note": "doris_dash", "needs": "spark_plugs", "scene": "res://scenes/world/jobs/doris_plugs.tscn"}, 1.8)
 	add_spot(k, VenueSpot.Kind.JOB, "doris_blade", Vector3(41.9, 0.5, 0.0), "Doris's blade",
 		{"job": "blade_change", "target": "doris_blade", "scene": "res://scenes/world/jobs/doris_blade.tscn"}, 1.6)
 	# World: up into the seat to drive the resurface (docs/world/ICE.md 4)
-	add_spot(k, VenueSpot.Kind.JOB, "doris_drive", Vector3(40.3, 1.9, -0.5), "Drive Doris",
+	add_spot(k, VenueSpot.Kind.JOB, "doris_drive", _doris_xf() * (DorisModel.SEAT - Vector3(0.45, 0.6, 0.0)), "Drive Doris",
 		{"job": "resurface", "target": "doris_drive", "scene": "res://scenes/world/jobs/doris_drive.tscn"}, 1.8)
 	# the parts cabinet: every drawer labelled DORIS
 	var steel: Color = k.by_age(Color("6f7378"), Color("8a8f94"), Color("50555c"))
@@ -337,3 +349,8 @@ func set_snow(level: float) -> void:
 	if _heap and is_instance_valid(_heap):
 		_heap.visible = snow > 0.02
 		_heap.scale = Vector3(PIT.size.x * (0.6 + 0.4 * snow), 0.05 + 0.9 * snow, PIT.size.y * (0.6 + 0.4 * snow))
+
+
+## World: Doris parked, as a transform from her model space to the bay.
+static func _doris_xf() -> Transform3D:
+	return Transform3D(Basis(Vector3.UP, PI * 0.5), DORIS_AT)
