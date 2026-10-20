@@ -229,10 +229,12 @@ func _ticket_booth(k: VenueKit) -> void:
 	var f := Readable.make("cork_public_skate")
 	f.transform = Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(x1 - 0.075, 1.62, (z0 + 1.1 + z1) * 0.5 + 0.5))
 	k.add(f)
-	var s := VenueSign.make([["// TICKETS", VenueSign.CYAN], ["SKATE RENTAL 4.00", VenueSign.CYAN, true]], 17, 2, 0.03)
+	# World: sized and centred to the booth's front (2.5 m) so it no longer
+	# runs 1.2 m through the lobby wall (W12)
+	var s := VenueSign.make([["// TICKETS", VenueSign.CYAN], ["SKATE RENTAL 4.00", VenueSign.CYAN, true]], 17, 2, 0.024)
 	s.name = "TicketSign"
 	s.dead = k.by_age(0.04, 0.0, 0.0)
-	k.sign(s, Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(x1 + 0.02, h - 0.22, (z0 + 1.1 + z1) * 0.5)))
+	k.sign(s, Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(x1 + 0.02, h - 0.22, (z0 + z1) * 0.5)))
 
 
 ## Where the old booth stood, inside by the street wall: the screw holes and

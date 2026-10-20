@@ -65,7 +65,7 @@ func build(k: VenueKit) -> void:
 	_add_lamp_lights(k, mount)
 	if Look.at_least(Look.Quality.MEDIUM):
 		# the glossy ice mirrors the stands and lamps even where the screen
-		# can't (SSR only sees what is on screen)
+		# (no screen-space reflections, see Look)
 		var probe := ReflectionProbe.new()
 		probe.position = Vector3(0, 7.0, 0)
 		probe.size = Vector3(Venue.HALF_X * 2.0, 15.0, 60.0)
@@ -74,7 +74,7 @@ func build(k: VenueKit) -> void:
 		probe.update_mode = ReflectionProbe.UPDATE_ONCE
 		probe.ambient_mode = ReflectionProbe.AMBIENT_DISABLED
 		probe.max_distance = 80.0
-		probe.intensity = 0.7
+		probe.intensity = 0.45
 		k.add(probe)
 
 

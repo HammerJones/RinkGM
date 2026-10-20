@@ -127,13 +127,32 @@ func _edge(k: VenueKit, along: String, at: float, s0: float, s1: float, inward: 
 	if walls == "outer" and not outer:
 		return
 	if not outer:
-		wall_line(k, along, at, at + inward * RecPlan.WALL * 0.5, s0, s1, h, RecPlan.WALL, paint(k))
+		# up to the taller ceiling of the two rooms: the hall builds no skins
+		# of its own, so a lower room's wall left a gap under its ceiling (W22)
+		wall_line(k, along, at, at + inward * RecPlan.WALL * 0.5, s0, s1, maxf(h, _neighbour_h(along, at, s0, s1)), RecPlan.WALL, paint(k))
 		return
 	# brick outside; painted inside unless the room shows its block walls
 	var t := 0.3 if bare_outer() else 0.28
 	wall_line(k, along, at, at + inward * t * 0.5, s0, s1, h + 0.6, t, brick(k))
 	if not bare_outer():
 		wall_line(k, along, at, at + inward * 0.29, s0, s1, h, 0.02, paint(k), false)
+
+
+## The tallest ceiling among the skinless rooms (walls "outer": the hall and
+## the link) that share the edge line `at` over s0..s1 (0 when none does).
+func _neighbour_h(along: String, at: float, s0: float, s1: float) -> float:
+	var best := 0.0
+	for id: String in RecPlan.ROOMS:
+		if id == plan_id or RecPlan.ROOMS[id][4] != "outer":
+			continue
+		var r := RecPlan.rect(id)
+		var lo: float = r.position.y if along == "x" else r.position.x
+		var hi: float = r.end.y if along == "x" else r.end.x
+		var a: float = r.position.x if along == "x" else r.position.y
+		var b: float = r.end.x if along == "x" else r.end.y
+		if (absf(lo - at) < 0.05 or absf(hi - at) < 0.05) and minf(b, s1) - maxf(a, s0) > 0.05:
+			best = maxf(best, float(RecPlan.ROOMS[id][3]))
+	return best
 
 
 ## Doors this room owns through the arena's wall (the shell's, 0.5 m thick
