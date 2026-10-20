@@ -7,12 +7,16 @@ extends VenueRoom
 const RUBBER := Color("34373d")
 const PlantRoom := preload("res://scripts/venue/rooms/plant_room.gd")
 
-## Gaps in the walker's board collider: bench and penalty-box gates on the
-## sides, the Zamboni gate at the +X end. [axis value, from, to, which wall]
+## The doors in the boards (RinkDoors hangs one in each) and the gaps they
+## leave in the walker's board collider: [which wall, from, to]. The four
+## bench gates on the line-change spots (Game.BENCH_GATES, bench_spot,
+## bench_exit), the penalty box doors beside the timekeeper and the two wide
+## rink doors on the far side, and the Zamboni door at the +X end, in front
+## of the resurfacer bay's rink door.
 const GATES := [
 	["z-", -11.4, -10.5], ["z-", -3.5, -2.6], ["z-", 2.6, 3.5], ["z-", 10.5, 11.4],
-	["z+", -2.9, -2.0], ["z+", 2.0, 2.9],
-	["x+", -1.8, 1.8],
+	["z+", -19.9, -18.1], ["z+", -2.9, -2.0], ["z+", 2.0, 2.9], ["z+", 18.1, 19.9],
+	["x+", -2.5, 2.5],
 ]
 
 
@@ -76,48 +80,62 @@ func build(k: VenueKit) -> void:
 
 
 ## Boards and glass: boxes along the board line up to the top of the glass
-## (VenuePhysics), with gaps where the gates are. A walker can't climb them and
-## a puck flying back from the stands bounces off them.
+## (VenuePhysics), with gaps exactly as wide as the gates (a door's leaf
+## fills its gap while it's shut). A walker can't climb them and a puck
+## flying back from the stands bounces off them.
 func _board_colliders(k: VenueKit) -> void:
 	var step := 1.0
 	var sx := Rink.HALF_L - Rink.CORNER_R
 	var sz := Rink.HALF_W - Rink.CORNER_R
-	var samples := []  # [pos, normal]
-	var x := -sx
-	while x < sx:
-		samples.append([Vector2(x + step * 0.5, -Rink.HALF_W), Vector2(0, -1)])
-		samples.append([Vector2(x + step * 0.5, Rink.HALF_W), Vector2(0, 1)])
-		x += step
-	var z := -sz
-	while z < sz:
-		samples.append([Vector2(-Rink.HALF_L, z + step * 0.5), Vector2(-1, 0)])
-		samples.append([Vector2(Rink.HALF_L, z + step * 0.5), Vector2(1, 0)])
-		z += step
+	# the straight runs, cut at the gates and where the glass height changes
+	for wall in ["z-", "z+", "x-", "x+"]:
+		var along_x: bool = wall[0] == "z"
+		var s: float = sx if along_x else sz
+		var sgn := -1.0 if wall[1] == "-" else 1.0
+		var n := Vector2(0, sgn) if along_x else Vector2(sgn, 0)
+		var cuts: Array[float] = [-s, s]
+		if along_x:
+			for g in VenuePhysics.BENCH_GAPS:
+				cuts.append_array([g[0], g[1]])
+			cuts.append_array([-VenuePhysics.BOX_HALF, VenuePhysics.BOX_HALF])
+		for g in GATES:
+			if g[0] == wall:
+				cuts.append_array([g[1], g[2]])
+		cuts.sort()
+		for i in cuts.size() - 1:
+			var a: float = maxf(cuts[i], -s)
+			var b: float = minf(cuts[i + 1], s)
+			if b - a < 0.001 or _gate_at(wall, (a + b) * 0.5):
+				continue
+			var parts := maxi(1, ceili((b - a) / step - 0.001))
+			for j in parts:
+				var u0 := a + (b - a) * j / parts
+				var u1 := a + (b - a) * (j + 1) / parts
+				var mid := (u0 + u1) * 0.5
+				var p := Vector2(mid, sgn * Rink.HALF_W) if along_x else Vector2(sgn * Rink.HALF_L, mid)
+				var top := VenuePhysics.board_top() + VenuePhysics.glass_height(p, n)
+				var o: float = (Rink.HALF_W if along_x else Rink.HALF_L) * sgn
+				if along_x:
+					k.collider(Vector3(u0, 0, o), Vector3(u1, top, o + sgn * 0.32))
+				else:
+					k.collider(Vector3(o, 0, u0), Vector3(o + sgn * 0.32, top, u1))
+	# the corners
 	var arc := int(ceil(Rink.CORNER_R * PI * 0.5 / step))
 	for cx in [-1, 1]:
 		for cz in [-1, 1]:
 			for i in arc:
 				var a := (i + 0.5) / arc * PI * 0.5
 				var dir := Vector2(cx * cos(a), cz * sin(a))
-				samples.append([Vector2(cx * sx, cz * sz) + dir * Rink.CORNER_R, dir])
-	for smp in samples:
-		var p: Vector2 = smp[0]
-		var n: Vector2 = smp[1]
-		if _in_gate(p, n):
-			continue
-		var c := p + n * 0.16
-		var half := Vector2(absf(n.y) * step * 0.5 + absf(n.x) * 0.16, absf(n.x) * step * 0.5 + absf(n.y) * 0.16)
-		k.collider(Vector3(c.x - half.x, 0, c.y - half.y), Vector3(c.x + half.x, VenuePhysics.board_top() + VenuePhysics.glass_height(p, n), c.y + half.y))
+				var p: Vector2 = Vector2(cx * sx, cz * sz) + dir * Rink.CORNER_R
+				var c := p + dir * 0.16
+				var half := Vector2(absf(dir.y) * step * 0.5 + absf(dir.x) * 0.16, absf(dir.x) * step * 0.5 + absf(dir.y) * 0.16)
+				k.collider(Vector3(c.x - half.x, 0, c.y - half.y), Vector3(c.x + half.x, VenuePhysics.board_top() + VenuePhysics.glass_height(p, dir), c.y + half.y))
 
 
-func _in_gate(p: Vector2, n: Vector2) -> bool:
+## True when the point `u` along `wall` is in one of its gates.
+func _gate_at(wall: String, u: float) -> bool:
 	for g in GATES:
-		var wall: String = g[0]
-		if wall == "z-" and n.y < -0.99 and p.x > g[1] and p.x < g[2]:
-			return true
-		if wall == "z+" and n.y > 0.99 and p.x > g[1] and p.x < g[2]:
-			return true
-		if wall == "x+" and n.x > 0.99 and p.y > g[1] and p.y < g[2]:
+		if g[0] == wall and u > g[1] and u < g[2]:
 			return true
 	return false
 
