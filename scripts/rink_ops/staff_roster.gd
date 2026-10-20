@@ -381,3 +381,43 @@ static func week_text(p: Person) -> String:
 	if p.habits.has("punctuality"):
 		out += " | " + str(p.habits.punctuality)
 	return out
+
+
+## Positions whose work includes keeping the building clean.
+const CLEANING := ["custodian", "ice_crew", "night_crew"]
+## Snack bar staff clean up in the last hour of their shift.
+const CLOSING_CLEAN := ["snack_bar_am", "snack_bar_pm"]
+const CLEANING_WORDS := ["janitor", "custodian", "attendant", "icemaker"]
+
+
+## Everyone on the clock at `hour` of weekday `wd`, named cast included:
+## [{"id", "place", "position" ("" for the named cast), "on_break"}].
+static func staff_on(cast: Cast, wd: int, hour: float) -> Array:
+	var out: Array = []
+	for p: Person in cast.people.values():
+		if not p.on_shift(wd, hour):
+			continue
+		var e := p.entry_at(wd, hour)
+		out.append({"id": p.id, "place": str(e.get("place", "")), "position": str(p.habits.get("position", "")),
+			"on_break": bool(e.get("break", false))})
+	return out
+
+
+## How many people on the clock are cleaning up right now (RinkMess): the
+## custodian and the ice crews, snack bar staff closing up, and named staff
+## whose job is the building's upkeep. Nobody cleans on their break.
+static func cleaners_on(cast: Cast, wd: int, hour: float) -> int:
+	var n := 0
+	for s: Dictionary in staff_on(cast, wd, hour):
+		if s.on_break:
+			continue
+		var p: Person = cast.people[s.id]
+		if s.position in CLEANING:
+			n += 1
+		elif s.position in CLOSING_CLEAN:
+			var span := shift_span(p, wd, hour)
+			if float(span[1]) - hour <= 1.0:
+				n += 1
+		elif s.position == "" and CLEANING_WORDS.any(func(w: String) -> bool: return w in p.job.to_lower()):
+			n += 1
+	return n

@@ -98,6 +98,13 @@ func _init() -> void:
 		sim.minute = 9 * 60 + 30
 		_expect(StaffRoster.situation(sim, crew) in ["", "game_tonight"], "mid-shift with nothing on, nothing special")
 
+	# who's on the clock, for the mess (RinkMess reads these once an hour)
+	var on_now := StaffRoster.staff_on(cast, 1, 10.0)
+	_expect(on_now.any(func(s) -> bool: return s.position == "ice_crew"), "the ice crew is on the clock Monday at ten (%d on)" % on_now.size())
+	var cleaning := StaffRoster.cleaners_on(cast, 1, 15.0)
+	_expect(cleaning >= 1, "someone's cleaning on a weekday afternoon (%d)" % cleaning)
+	_expect(StaffRoster.cleaners_on(cast, 1, 3.0) == 0, "and nobody at three in the morning")
+
 	var map := PlaceMap.new()
 	map.places = {"zamboni_bay": [Vector3(1, 0, 0), Vector3(2, 0, 0)]}
 	var a := map.claim("zamboni_bay", "a")
