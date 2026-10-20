@@ -53,6 +53,7 @@ const VOXEL := {
 	"blade": 0.01, "blade_old": 0.01, "blade_guard": 0.01, "conditioner": 0.02,
 	"engine_bay": 0.02, "plug_boot": 0.004, "parts_drawer": 0.02, "drawer_tray": 0.02,
 	"workbench": 0.05, "log_book": 0.01,
+	"engine_bay_open": 0.02, "air_cleaner": 0.01, "carburettor": 0.005, "float_bowl": 0.005, "carb_jet": 0.002,
 }
 
 const IDS := [
@@ -60,10 +61,11 @@ const IDS := [
 	"sight_glass", "oil_pan", "oil_drum", "hand_pump", "pump_handle", "ratchet", "torque_wrench",
 	"plug_socket", "feeler_gauge", "blade", "blade_old", "blade_guard", "conditioner",
 	"engine_bay", "plug_boot", "parts_drawer", "drawer_tray", "workbench", "log_book",
+	"engine_bay_open", "air_cleaner", "carburettor", "float_bowl", "carb_jet",
 ]
 
 ## Pieces with big flat faces: merged even at full detail.
-const MERGED := ["oil_drum", "conditioner", "engine_bay", "parts_drawer", "workbench", "blade", "blade_old", "oil_pan"]
+const MERGED := ["oil_drum", "conditioner", "engine_bay", "engine_bay_open", "parts_drawer", "workbench", "blade", "blade_old", "oil_pan"]
 
 ## The blade is this many voxels (1 cm) long: 77 in.
 const BLADE_LEN := 196
@@ -78,6 +80,17 @@ const BOLT_TOP := 0.2
 ## The engine bay's 4 plug wells (metres from its pivot; the well floor).
 ## Number 1 is at the fan end, on the viewer's left (+X).
 const PLUG_WELLS := [Vector3(0.31, 0.42, -0.05), Vector3(0.11, 0.42, -0.05), Vector3(-0.09, 0.42, -0.05), Vector3(-0.29, 0.42, -0.05)]
+## The engine bay's service points (metres from its pivot): the carburettor's
+## base behind the valve cover (the air cleaner sits on its throat, CARB_TOP
+## above), the oil pan's drain plug on its front face, the spin-on filter's
+## seat under its boss on the block's front face (it hangs down), the
+## dipstick tube's mouth and the oil filler.
+const CARB_AT := Vector3(-0.12, 0.44, 0.16)
+const CARB_TOP := 0.09
+const DRAIN_AT := Vector3(0.1, 0.06, -0.125)
+const FILTER_AT := Vector3(-0.22, 0.2, -0.185)
+const DIPSTICK_AT := Vector3(0.27, 0.13, -0.15)
+const FILLER_AT := Vector3(0.15, 0.54, 0.06)
 ## The parts cabinet's drawers, top first: the face centre of each (metres).
 const DRAWER_COUNT := 6
 const DRAWER_TOP := 1.08
@@ -123,6 +136,11 @@ static func model(id: String) -> VoxelModel:
 		"blade_guard": m = _blade_guard()
 		"conditioner": m = _conditioner()
 		"engine_bay": m = _engine_bay()
+		"engine_bay_open": m = _engine_bay(true)
+		"air_cleaner": m = _air_cleaner()
+		"carburettor": m = _carburettor()
+		"float_bowl": m = _float_bowl()
+		"carb_jet": m = _carb_jet()
 		"plug_boot": m = _plug_boot()
 		"parts_drawer": m = _parts_drawer()
 		"drawer_tray": m = _drawer_tray()
@@ -573,7 +591,9 @@ static func _workbench() -> VoxelModel:
 ## with the valve cover along the back, the four plug wells along the front of
 ## the head (PLUG_WELLS, Number 1 at the fan end on the viewer's left), the
 ## distributor, the air cleaner, the plug wires and the radiator's fan shroud.
-static func _engine_bay() -> VoxelModel:
+## `open`: the air cleaner and the carburettor come out as their own parts
+## (the carb job), the intake riser left where the carb bolts on.
+static func _engine_bay(open := false) -> VoxelModel:
 	var m := VoxelModel.new(0.02)
 	m.jitter = 0.03
 	var w := 48
@@ -589,8 +609,11 @@ static func _engine_bay() -> VoxelModel:
 	m.box(9, 2, -6, 30, 4, 12, ENGINE.darkened(0.2))   # oil pan
 	m.box(8, 6, -7, 32, 10, 14, ENGINE)
 	m.box(8, 16, -6, 32, 6, 12, ENGINE.lightened(0.05))  # the head
-	m.box(9, 22, 0, 30, 3, 6, Color("2a2b2e"))           # valve cover
-	m.box(10, 25, 1, 28, 1, 4, Color("3a3b3e"))
+	# valve cover (opened up: the rocker end in front of the carb is off, so
+	# the carb's bowl shows from the hatch)
+	var vx := 21 if open else 9
+	m.box(vx, 22, 0, 39 - vx, 3, 6, Color("2a2b2e"))
+	m.box(vx + 1, 25, 1, 37 - vx, 1, 4, Color("3a3b3e"))
 	m.box(30, 26, 2, 3, 1, 2, Wear.RUBBER)               # oil filler cap
 	# the plug wells along the front of the head, open so the plugs sit in
 	for pw in PLUG_WELLS:
@@ -613,12 +636,90 @@ static func _engine_bay() -> VoxelModel:
 	_disc_y(m, 5.5, 0.0, 22, 2, 3.2, Color("7a1f1a"))  # the cap
 	m.box(4, 22, -2, 3, 1, 1, Color("101012"))  # the coil lead
 	# the air cleaner: a round pan on the carburettor at the back
-	_disc_y(m, 18.0, 6.0, 26, 3, 6.5, Color("2a2b2e"))
-	_disc_y(m, 18.0, 6.0, 29, 1, 2.0, OLD_STEEL)  # wing nut
-	m.box(16, 26, 12, 4, 2, 1, Wear.PAPER)       # the CHOKE tag
+	if open:
+		m.box(15, 16, 6, 6, 5, 4, ENGINE.darkened(0.1))   # the intake riser
+		m.box(14, 21, 6, 8, 1, 4, OLD_STEEL.darkened(0.2))  # its flange
+	else:
+		_disc_y(m, 18.0, 6.0, 26, 3, 6.5, Color("2a2b2e"))
+		_disc_y(m, 18.0, 6.0, 29, 1, 2.0, OLD_STEEL)  # wing nut
+	m.box(16, 26 if not open else 20, 12, 4, 2, 1, Wear.PAPER)  # the CHOKE tag
 	_speckle(m, ENGINE, ENGINE.darkened(0.3), 0.08, 41)
 	_speckle(m, ENGINE.darkened(0.2), OIL_STAIN, 0.15, 42)
 	return m.set_pivot(c, 0, 0)
+
+
+## The air cleaner lifted off the carb: the round pan, its lid, the wing
+## nut on the stud. Pivot at the centre of its bottom (the carb's throat).
+static func _air_cleaner() -> VoxelModel:
+	var m := VoxelModel.new(0.01)
+	m.jitter = 0.03
+	var c := 12.0
+	_disc_y(m, c, c, 0, 1, 11.5, Color("232427"))
+	_disc_y(m, c, c, 1, 4, 11.5, Color("2a2b2e"), 10.5)
+	_disc_y(m, c, c, 1, 4, 10.4, Color("b8a26a"))      # the oily paper element
+	_disc_y(m, c, c, 5, 1, 12.0, Color("2f3034"))      # the lid
+	_disc_y(m, c, c, 6, 2, 2.0, OLD_STEEL)             # wing nut
+	m.box(9, 7, 11, 6, 1, 2, OLD_STEEL)
+	_speckle(m, Color("2f3034"), OIL_STAIN, 0.12, 61)
+	return m.set_pivot(c, 0, c)
+
+
+## Doris's single-barrel carburettor, its float bowl off: the base flange,
+## the cast body with the throat and choke plate up top, the choke and
+## throttle levers, the bowl's seat on the front face (-Z) with its two
+## screw holes. The jets go in from the front (CARB_JETS). Pivot at the
+## middle of the flange's underside.
+const CARB_JETS := [Vector3(-0.012, 0.03, -0.026), Vector3(0.014, 0.042, -0.026)]
+const CARB_SCREWS := [Vector3(-0.035, 0.012, -0.036), Vector3(0.035, 0.012, -0.036)]
+## Where the float bowl's pivot (the middle of its back) sits on the carb.
+const CARB_BOWL := Vector3(0.0, 0.002, -0.03)
+
+static func _carburettor() -> VoxelModel:
+	var m := VoxelModel.new(0.005)
+	m.jitter = 0.03
+	var body := Color("9d9a8c")       # pot metal, dulled
+	m.box(0, 0, 0, 16, 2, 12, OLD_STEEL.darkened(0.2))    # flange
+	m.box(2, 2, 2, 12, 14, 9, body)
+	m.box(3, 2, 0, 10, 4, 2, body.darkened(0.1))         # the bowl seat
+	_disc_y(m, 8.0, 6.5, 16, 2, 4.2, body.lightened(0.05), 3.0)
+	m.box(5, 17, 6, 6, 1, 1, BRASS)                       # choke plate, half shut
+	m.box(14, 12, 5, 2, 1, 3, OLD_STEEL)                  # choke lever
+	m.box(-1, 6, 5, 3, 1, 3, OLD_STEEL)                   # throttle arm
+	m.box(-1, 6, 3, 1, 4, 1, Color("101012"))             # its return spring
+	m.box(6, 2, 0, 4, 3, 1, Color("6a5a2a"))              # varnish where the bowl sat
+	_speckle(m, body, Color("7a6a3a"), 0.12, 62)
+	return m.set_pivot(8, 0, 6)
+
+
+## The float bowl: an open pot-metal cup with its brass float inside and the
+## varnish ring of old gas (the scene lays a cleaner floor over it), two
+## screw ears. Pivot at the middle of its back (the face against the carb).
+static func _float_bowl() -> VoxelModel:
+	var m := VoxelModel.new(0.005)
+	m.jitter = 0.03
+	var body := Color("9d9a8c")
+	m.box(0, 0, 0, 12, 1, 8, body.darkened(0.08))
+	m.box(0, 1, 0, 12, 6, 1, body)
+	m.box(0, 1, 7, 12, 6, 1, body)
+	m.box(0, 1, 0, 1, 6, 8, body)
+	m.box(11, 1, 0, 1, 6, 8, body)
+	m.box(-2, 1, 7, 2, 2, 1, body)                         # screw ears
+	m.box(12, 1, 7, 2, 2, 1, body)
+	m.box(3, 2, 2, 6, 3, 4, BRASS.darkened(0.15))          # the float
+	m.box(1, 1, 1, 10, 1, 6, Color("6a5a2a"))              # varnish on the floor
+	return m.set_pivot(6, 0, 8)
+
+
+## A carb jet: a little brass screw with a slot, the bore through it. Pivot
+## on its axis at the shoulder; it points into -Y.
+static func _carb_jet() -> VoxelModel:
+	var m := VoxelModel.new(0.002)
+	m.jitter = 0.02
+	_hex_y(m, 3.0, 3.0, 0, 3, 6, BRASS)
+	m.clear_box(2, 2, 2, 2, 1, 2)
+	for y in range(-6, 0):
+		_disc_y(m, 3.0, 3.0, y, 1, 1.8, BRASS.darkened(0.1))
+	return m.set_pivot(3, 0, 3)
 
 
 ## A plug wire's boot (it pushes onto the plug's terminal) with the wire
