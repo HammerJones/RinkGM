@@ -84,13 +84,8 @@ func _benches(k: VenueKit) -> void:
 
 ## Programme boards on the hall walls: what the centre still runs.
 func _boards(k: VenueKit) -> void:
-	var programs := [
-		["// PROGRAMS", VenueSign.AMBER], ["----", VenueSign.DIM],
-		["LEARN TO SKATE   SAT 9AM", VenueSign.CYAN, true], ["PICKLEBALL   MON/WED 6PM", VenueSign.CYAN, true],
-		["YOUTH HOOPS      FRI 7PM", VenueSign.CYAN, true], ["SENIOR FIT       TUE 10AM", VenueSign.CYAN, true],
-		["BINGO           THU 7PM", VenueSign.CYAN, true],
-	]
-	wall_sign(k, programs, 25, 7, 0.02, Vector3(-28.0, 1.9, z0), Vector3(0, 0, 1), "ProgramsBoard")
+	# World: a changeable letter board in an aluminium frame, not a screen (W19)
+	readable(k, "sign_programs", Vector3(-28.0, 1.75, z0), Vector3(0, 0, 1)).name = "ProgramsBoard"
 	var hockey := [
 		["// MINOR HOCKEY", VenueSign.AMBER], ["----", VenueSign.DIM],
 		["U9 TRYOUTS     SEPT 14", VenueSign.CYAN, true], ["REFS WANTED  SEE DESK", VenueSign.WHITE, true],
