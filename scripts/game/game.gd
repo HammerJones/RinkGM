@@ -497,7 +497,7 @@ func _process(dt: float) -> void:
 	hud.set_power(human.windup())
 	# career: hold fast-forward while you're on the bench
 	var ff := career_mode and not human_on_ice and state != State.OVER and not autoplay and _so == null and Input.is_action_pressed("fast_forward")
-	Engine.time_scale = 4.0 if ff else 1.0
+	Engine.time_scale = 4.0 if ff else controller.time_slow
 
 
 func _update_rules(dt: float) -> void:
