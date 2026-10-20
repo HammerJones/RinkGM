@@ -32,6 +32,7 @@ func furnish(k: VenueKit) -> void:
 	for i in 3:
 		_office(k, edges[i] + 0.1, edges[i + 1] - 0.1, names[i], i)
 	_meeting(k)
+	RecDetail.offices(self, k)  # World: detail pass (#23, #27)
 
 
 func _office(k: VenueKit, a: float, b: float, title: String, i: int) -> void:

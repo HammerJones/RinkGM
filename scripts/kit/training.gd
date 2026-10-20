@@ -24,6 +24,9 @@ const MACHINES := {
 	"bike": {"name": "Stationary bike", "xp": {"stamina": 2.4, "agility": 0.4}, "effort": 1.0},
 	"universal": {"name": "Universal machine", "xp": {"hitting": 1.0, "shot_power": 1.0, "toughness": 1.0}, "effort": 1.0},
 	"slide_board": {"name": "Slide board", "xp": {"agility": 2.2, "speed": 1.0, "stamina": 0.8}, "effort": 1.2},
+	"leg_press": {"name": "Leg press", "xp": {"speed": 1.8, "toughness": 1.2, "stamina": 0.4}, "effort": 1.2},
+	"cable_crossover": {"name": "Cable crossover", "xp": {"hitting": 1.2, "shot_power": 1.0, "agility": 0.4}, "effort": 1.0},
+	"lat_pulldown": {"name": "Lat pulldown", "xp": {"shot_power": 1.0, "hitting": 1.0, "stick_handling": 0.4}, "effort": 1.0},
 	"wrist_roller": {"name": "Wrist roller", "xp": {"shot_release": 1.8, "stick_handling": 1.2, "shot_accuracy": 0.6}, "effort": 0.6},
 }
 const WEIGHT_ROOM := ["squat_rack", "bench", "dumbbells", "treadmill", "bike", "universal"]

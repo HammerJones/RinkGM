@@ -57,3 +57,4 @@ func furnish(k: VenueKit) -> void:
 			var c: Color = [home_primary(), home_secondary(), Color("e0b020")][i % 3]
 			var x := x0 + 0.6 + i * 0.75
 			k.block(Vector3(x, h - 1.0 - 0.15 * absf(sin(i * 0.6)), z0 + 4.2), Vector3(x + 0.3, h - 0.8 - 0.15 * absf(sin(i * 0.6)), z0 + 4.23), c, 0.2, 0.0, false)
+	RecDetail.community_room(self, k)  # World: detail pass (#23, #27)

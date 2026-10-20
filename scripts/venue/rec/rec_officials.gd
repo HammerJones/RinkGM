@@ -14,6 +14,7 @@ func furnish(k: VenueKit) -> void:
 	partition(k, "z", SPLIT, z0, z1, paint(k))
 	_refs(k)
 	_first_aid(k)
+	RecDetail.officials(self, k)  # World: detail pass (#23, #27)
 
 
 func _refs(k: VenueKit) -> void:
