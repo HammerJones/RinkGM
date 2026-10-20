@@ -1,7 +1,8 @@
 extends VenueRoom
-## A dressing room at the +X end: stalls around the walls, a bench, the
-## coach's whiteboard, a shower room at the back. Worn rooms have dented
-## metal lockers and cracked tile; renovated ones have wood stalls with
+## A dressing room at the +X end: hockey stalls around the walls (open
+## cubbies with a bench seat, a gear bar and a shelf: DressingStalls), the
+## coach's whiteboard, a shower room at the back. Worn rooms have 70s
+## plywood stalls and cracked tile; renovated ones have maple stalls with
 ## nameplate lights and the club crest on the carpet.
 
 ## -1 = home room (z -14..-5), 1 = visitors (z 5..14).
@@ -10,8 +11,10 @@ extends VenueRoom
 const X0 := Venue.END_FRONT
 const X1 := Venue.HALF_X - Venue.WALL_T
 const H := 3.6
-const BANK := 1.2       # one kit "lockers" bank of three
-const LOCKER_D := 0.46
+## The back wall's stalls start here (|z|), clear of the shower room wall.
+const BACK_Z0 := 8.75
+## The side wall's stalls start here (x), just inside the door.
+const SIDE_X0 := Venue.END_FRONT + 2.0
 
 
 func _ready() -> void:
@@ -46,20 +49,11 @@ func build(k: VenueKit) -> void:
 	k.slab(Vector3(X0, H, s * 5.0), Vector3(X1, H + 0.2, s * Venue.ROOM_Z), Color("8b877e"), 1.0)
 	k.slab(Vector3(X0 + 0.3, H - 0.02, s * 5.15), Vector3(X1, H, z_out), k.by_age(Color("c8c2ae"), Color("d8d3c4"), Color("eceae4")), 0.6, 0.04, true, false)
 	_floor(k, team_col, z_in, z_out)
-	# stalls along the back wall and the outer side wall, bench in front
+	# hockey stalls (W8) along the back wall and the outer side wall: open
+	# cubbies with a bench seat, a bar for gear and a shelf above, all one
+	# mesh (DressingStalls)
 	var back_x := 42.3  # shower room behind (x 42.5..45.5 at the bay side)
-	# kit locker banks (three lockers, 1.2 m) along the back and outer walls
-	var n_back := int(absf(z_out - s * 8.6) / BANK)
-	for i in n_back:
-		var z := s * 8.6 + s * (i + 0.5) * BANK
-		k.prop("lockers", Vector3(X1 - LOCKER_D * 0.5, 0, z), PI * 0.5)
-	var n_side := int((X1 - 0.9 - (X0 + 2.0)) / BANK)
-	for i in n_side:
-		var x := X0 + 2.0 + (i + 0.5) * BANK
-		k.prop("lockers", Vector3(x, 0, z_out - s * LOCKER_D * 0.5), 0.0 if side > 0 else PI)
-	var bench: Color = k.by_age(Color("7a5c3c"), Color("8a6a45"), team_col.darkened(0.15))
-	k.aged_block(Vector3(X1 - 0.95, 0, s * 8.6), Vector3(X1 - 0.55, 0.45, z_out), bench, 0.5)
-	k.aged_block(Vector3(X0 + 2.0, 0, z_out - s * 0.95), Vector3(X1 - 0.95, 0.45, z_out - s * 0.55), bench, 0.5)
+	_stalls(k, team_col, z_out)
 	# shower room at the back by the bay wall
 	var tile: Color = k.by_age(Color("b9c2bb"), Color("cfd8d2"), Color("f0f2f2"))
 	k.wall_z(back_x + 0.1, s * 5.0, s * 8.6, 0, H, 0.2, tile, [{"at": s * 6.8, "w": 1.0, "y0": 0.0, "y1": 2.2}], 0.3)
@@ -84,6 +78,23 @@ func build(k: VenueKit) -> void:
 	for x in [36.5, 39.5, 42.5]:
 		for zz in [7.5, 11.0]:
 			k.glow(Vector3(x - 0.6, H - 0.06, s * zz - 0.15), Vector3(x + 0.6, H - 0.03, s * zz + 0.15), lit if not (k.age == Age.WORN and x == 39.5 and zz == 7.5) else Color("4a4d48"))
+
+
+## Two runs of stalls: up the back (exterior) wall from the shower room to
+## the corner, and along the outer side wall from inside the door to short
+## of the back wall's run. Worn: 70s ply with an avocado (home) or orange
+## (visitors) stripe; repaired: backs repainted; renovated: team colour.
+func _stalls(k: VenueKit, team_col: Color, z_out: float) -> void:
+	var s := float(side)
+	var side_x1 := X1 - DressingStalls.DEPTH - 0.1
+	var n_side := DressingStalls.fit(side_x1 - SIDE_X0)
+	var side_x0 := SIDE_X0 + (side_x1 - SIDE_X0 - n_side * DressingStalls.STALL_W) * 0.5
+	var old: Color = Wear.OLD_AVOCADO if side < 0 else Wear.OLD_ORANGE
+	var look := {"paint": k.by_age(old, old.lerp(team_col, 0.5).lightened(0.1), team_col), "team": team_col}
+	DressingStalls.build(k, [
+		{"start": Vector3(X1, 0, s * BACK_Z0), "along": Vector3(0, 0, s), "out": Vector3(-1, 0, 0), "count": DressingStalls.fit(absf(z_out) - BACK_Z0)},
+		{"start": Vector3(side_x0, 0, z_out), "along": Vector3(1, 0, 0), "out": Vector3(0, 0, -s), "count": n_side},
+	], look, hash(room_id))
 
 
 ## World: stick racks with real sticks along the wall shared with the Zamboni

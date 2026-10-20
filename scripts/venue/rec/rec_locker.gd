@@ -1,7 +1,7 @@
 extends RecRoom
 ## Dressing rooms 3 to 6 off the main hall: the old Athletic Club change
 ## rooms, now used by minor hockey, the beer league and visiting tournament
-## teams. Kit lockers on two walls with a bench in front, a shower room in
+## teams. Hockey stalls on two walls (DressingStalls), a shower room in
 ## the corner by the arena wall, a whiteboard, and a door straight out to
 ## the rink. Each room kept the colour the
 ## club painted it in.
@@ -24,15 +24,19 @@ func paint(k: VenueKit) -> Color:
 
 func furnish(k: VenueKit) -> void:
 	var team: Color = COLOURS[(_number() - 3) % COLOURS.size()]
-	var wood: Color = k.by_age(Color("7a5c3c"), Color("8a6a45"), team.darkened(0.2))
-	# lockers down the east wall and along the arena wall, short of the
-	# door out to the rink
-	for i in 6:
-		k.prop("lockers", Vector3(x1 - 0.15 - 0.23, 0, -38.6 + i * 1.2 + 0.6), PI * 0.5)
-	for i in 3:
-		k.prop("lockers", Vector3(x0 + 3.0 + i * 1.2 + 0.6, 0, -30.0 - 0.23), 0.0)
-	bench(k, Vector3(x1 - 1.05, 0, -38.6), Vector3(x1 - 0.65, 0, -31.4), wood)
-	bench(k, Vector3(x0 + 3.0, 0, -31.05), Vector3(x0 + 6.6, 0, -30.65), wood)
+	# hockey stalls (W8) down the east wall and along the arena wall, short
+	# of the door out to the rink: open cubbies with a bench seat, a bar for
+	# gear and a shelf above, all one mesh (DressingStalls). Worn: the club's
+	# 70s ply with a stripe in the room's colour; repaired: patched and
+	# repainted; renovated: maple with backs in the room's colour.
+	var n_east := DressingStalls.fit(7.2)
+	var n_rink := DressingStalls.fit(3.6)
+	var east_z := -38.6 + (7.2 - n_east * DressingStalls.STALL_W) * 0.5
+	var rink_x := x0 + 3.0 + (3.6 - n_rink * DressingStalls.STALL_W) * 0.5
+	DressingStalls.build(k, [
+		{"start": Vector3(x1 - 0.15, 0, east_z), "along": Vector3(0, 0, 1), "out": Vector3(-1, 0, 0), "count": n_east},
+		{"start": Vector3(rink_x, 0, -30.0), "along": Vector3(1, 0, 0), "out": Vector3(0, 0, -1), "count": n_rink},
+	], {"paint": k.by_age(team.lightened(0.1), team.lerp(Color("d8d3c4"), 0.3), team), "team": team}, hash(plan_id))
 	# the shower room in the corner by the arena wall
 	var tile: Color = k.by_age(Color("b9c2bb"), Color("cfd8d2"), Color("f0f2f2"))
 	var sx := x0 + 2.7
