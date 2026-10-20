@@ -7,12 +7,17 @@ extends RefCounted
 ##
 ## Sound is off with `-- --mute`, and in headless runs (tests, CI) unless
 ## `-- --sound` asks for it, so nothing here touches a headless test.
+## World's scenes play through here too (scripts/world/world_sound.gd).
 
 const DIR := "res://assets/audio/"
 ## Streams that loop: their loop points are set when first loaded.
 const LOOPS := ["arena_room", "plant_room", "fluorescent_buzz", "lobby_room", "crowd_murmur",
-	"skates_ice", "zamboni_idle"]
-const VARIANTS := {"footstep_rubber": 4, "footstep_concrete": 4, "footstep_tile": 3}
+	"skates_ice", "zamboni_idle",
+	# World's (scripts/world/world_sound.gd)
+	"hall_chatter", "blade_scrape", "flood_water", "wash_pump", "auger_grind", "hose_fill", "hose_spray",
+	"edger_motor"]
+const VARIANTS := {"footstep_rubber": 4, "footstep_concrete": 4, "footstep_tile": 3,
+	"blade_carve": 3, "ball_bounce": 3, "sneaker_squeak": 3, "voice_bark": 4, "stick_clatter": 3, "ice_chip": 2}
 
 static var _enabled := -1  # -1 not decided yet, 0 off, 1 on
 

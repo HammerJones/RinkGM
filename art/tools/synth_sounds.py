@@ -542,12 +542,389 @@ def crowd_cheer():
 	write("crowd_cheer", fade_ends(x, r=0.3))
 
 
+# ------------------------------------------------------------- world sounds
+# The people, the ice, the gym and the jobs (scripts/world/world_sound.gd
+# plays them off World's signals).
+
+def wrap_add(x, y, start):
+	"""Adds one-shot y into loop x at `start`, wrapping round the end."""
+	idx = (np.arange(len(y)) + start) % len(x)
+	np.add.at(x, idx, y)
+
+
+def blade_carve():
+	"""One skater's stride: a steel edge carving a crescent in the ice."""
+	rng = np.random.default_rng(1001)
+	for i in range(3):
+		dur = rng.uniform(0.3, 0.45)
+		n = secs(dur + 0.05)
+		t = np.arange(n) / SR
+		env = np.sin(np.pi * np.minimum(t / dur, 1.0)) ** 1.4 * np.exp(-t / (dur * 1.2))
+		lo = rng.uniform(1600, 2500)
+		x = noise(rng, n, mul(bandpass_gain(lo, lo * 3.0), peak_gain(lo * 1.7, 3, 7))) * env
+		x += 0.3 * noise(rng, n, bandpass_gain(5000, 9000)) * env ** 2  # the hiss of the shavings
+		x = reverb(rng, x, 0.9, 0.35, 3500, 1.0)
+		write("blade_carve_%d" % (i + 1), fade_ends(x, r=0.2), 0.8)
+
+
+def stop_spray():
+	"""A hockey stop: both edges sideways, a hard spray of snow."""
+	rng = np.random.default_rng(1002)
+	n = secs(0.8)
+	t = np.arange(n) / SR
+	env = np.minimum(1, t / 0.035) * np.exp(-t / 0.2)
+	x = noise(rng, n, mul(bandpass_gain(800, 8000), peak_gain(3400, 1.5, 6))) * env
+	for _ in range(60):  # grains of snow
+		x += 0.25 * rng.uniform(0.3, 1.0) * burst(rng, n, int(rng.uniform(0.01, 0.3) * SR), 0.002, 2500, 9000)
+	x = reverb(rng, x, 1.1, 0.4, 3500, 1.2)
+	write("stop_spray", fade_ends(x, r=0.3))
+
+
+def puck_sounds():
+	"""The puck off a stick blade, the boards, a post, a pad and the twine."""
+	rng = np.random.default_rng(1003)
+	# stick: a sharp clack of hard rubber on composite
+	n = secs(0.25)
+	x = modes(n, secs(0.003), [(1750, 0.016, 1.0), (3300, 0.01, 0.55), (820, 0.03, 0.35)], rng, 0.05)
+	x += 0.8 * burst(rng, n, secs(0.003), 0.003, 1500, 9000)
+	write("puck_stick", fade_ends(reverb(rng, x, 0.9, 0.3, 4000, 0.9), r=0.2), 0.8)
+	# boards: the dasher's hollow boom and the glass shaking in its frame
+	n = secs(0.9)
+	x = modes(n, secs(0.004), [(92, 0.13, 1.0), (176, 0.09, 0.7), (338, 0.05, 0.4), (1250, 0.015, 0.3)], rng, 0.04)
+	x += 0.9 * burst(rng, n, secs(0.004), 0.006, 400, 6000)
+	x += 0.25 * modes(n, secs(0.02), [(2230, 0.08, 1.0), (3170, 0.05, 0.7)], rng, 0.05)
+	write("puck_boards", fade_ends(reverb(rng, x, 1.2, 0.4, 3000, 1.4), r=0.3))
+	# post: the ping off the iron
+	n = secs(1.1)
+	x = modes(n, secs(0.002), [(1180, 0.45, 1.0), (2810, 0.28, 0.6), (4150, 0.16, 0.4), (640, 0.2, 0.3)], rng, 0.02)
+	x += 0.7 * burst(rng, n, secs(0.002), 0.002, 2000, 9000)
+	write("puck_post", fade_ends(reverb(rng, x, 1.2, 0.35, 4000, 1.4), r=0.3))
+	# pad: a dull thump into foam and leather
+	n = secs(0.35)
+	x = modes(n, secs(0.003), [(140, 0.045, 1.0), (310, 0.025, 0.5)], rng, 0.05)
+	x += 0.8 * burst(rng, n, secs(0.003), 0.01, 0, 900)
+	write("puck_pad", fade_ends(reverb(rng, x, 0.8, 0.25, 2500, 0.8), r=0.2), 0.75)
+	# net: the twine bulges and the frame rattles
+	n = secs(0.6)
+	x = 0.5 * modes(n, secs(0.004), [(210, 0.05, 1.0), (520, 0.03, 0.5)], rng, 0.05)
+	for _ in range(30):
+		x += 0.3 * rng.uniform(0.3, 1.0) * burst(rng, n, int(rng.uniform(0.005, 0.25) * SR), 0.004, 1200, 7000)
+	write("puck_net", fade_ends(reverb(rng, x, 0.9, 0.3, 3500, 0.9), r=0.2), 0.75)
+
+
+def _whistle(rng, n, f0, at, dur, trill=34.0):
+	"""A pea whistle: a bright tone the rattling pea chops into a trill."""
+	t = np.arange(n) / SR
+	m = min(secs(dur), n - at)
+	env = np.zeros(n)
+	tt = np.arange(m) / SR
+	env[at:at + m] = np.minimum(1, tt / 0.015) * np.clip((dur - tt) / 0.03, 0, 1)
+	f = f0 * (1 + 0.02 * np.sin(2 * np.pi * 5.0 * t))
+	ph = 2 * np.pi * np.cumsum(f) / SR
+	pea = 0.55 + 0.45 * np.sign(np.sin(2 * np.pi * trill * t + 2 * np.sin(2 * np.pi * 3 * t)))
+	tonal = np.sin(ph) + 0.25 * np.sin(2 * ph) + 0.08 * np.sin(3 * ph)
+	breath = noise(rng, n, bandpass_gain(f0 * 0.7, f0 * 2.2)) * 0.15
+	return (tonal * pea + breath) * env
+
+
+def ref_whistle():
+	"""The referee: one long blast of a pea whistle across the ice."""
+	rng = np.random.default_rng(1004)
+	n = secs(1.0)
+	x = _whistle(rng, n, 2950, secs(0.01), 0.75)
+	write("ref_whistle", fade_ends(reverb(rng, x, 1.4, 0.45, 5000, 1.8), r=0.4), 0.8)
+
+
+def coach_whistle():
+	"""A coach: two short tweets, a bit lower and lazier than the ref's."""
+	rng = np.random.default_rng(1005)
+	n = secs(0.6)
+	x = _whistle(rng, n, 2620, secs(0.01), 0.14, 28.0) + _whistle(rng, n, 2620, secs(0.24), 0.2, 28.0)
+	write("coach_whistle", fade_ends(reverb(rng, x, 1.3, 0.45, 5000, 1.6), r=0.4), 0.75)
+
+
+def body_fall():
+	"""Somebody goes down: a padded thump, gear clatter, the slide on the ice."""
+	rng = np.random.default_rng(1006)
+	n = secs(1.3)
+	t = np.arange(n) / SR
+	x = modes(n, secs(0.005), [(68, 0.12, 1.0), (128, 0.08, 0.7), (260, 0.04, 0.3)], rng, 0.05)
+	x += 0.9 * burst(rng, n, secs(0.005), 0.02, 0, 700)
+	x += 0.35 * modes(n, secs(0.04), [(1500, 0.02, 1.0), (2900, 0.012, 0.6)], rng, 0.1)  # helmet or blade
+	slide = noise(rng, n, mul(pink, bandpass_gain(500, 5000)))
+	slide *= np.clip((t - 0.06) / 0.05, 0, 1) * np.exp(-np.maximum(0, t - 0.06) / 0.35)
+	x += 0.35 * slide
+	write("body_fall", fade_ends(reverb(rng, x, 1.0, 0.35, 3000, 1.2), r=0.3))
+
+
+def ball_bounce():
+	"""The basketball on the gym's hardwood: a round ping and the floor's thump."""
+	rng = np.random.default_rng(1007)
+	for i in range(3):
+		n = secs(0.5)
+		x = modes(n, secs(0.003), [(rng.uniform(115, 140), 0.05, 1.0), (rng.uniform(230, 290), 0.03, 0.55),
+				(rng.uniform(980, 1150), 0.035, 0.35), (rng.uniform(2100, 2400), 0.012, 0.15)], rng, 0.03)
+		x += 0.7 * burst(rng, n, secs(0.003), 0.005, 0, 1500)
+		x += 0.2 * burst(rng, n, secs(0.003), 0.002, 2000, 7000)
+		write("ball_bounce_%d" % (i + 1), fade_ends(reverb(rng, x, 0.8, 0.35, 4000, 0.9), r=0.2), 0.8)
+
+
+def sneaker_squeak():
+	"""Rubber soles chirping on a varnished floor as a player cuts."""
+	rng = np.random.default_rng(1008)
+	for i in range(3):
+		dur = rng.uniform(0.09, 0.18)
+		n = secs(dur + 0.02)
+		t = np.arange(n) / SR
+		f = np.interp(t, [0, dur * 0.4, dur], [rng.uniform(1100, 1500), rng.uniform(2200, 2800), rng.uniform(1700, 2300)])
+		ph = 2 * np.pi * np.cumsum(f) / SR
+		judder = 0.6 + 0.4 * np.sign(np.sin(2 * np.pi * rng.uniform(70, 110) * t))  # stick-slip
+		env = np.sin(np.pi * np.minimum(t / dur, 1.0)) ** 0.7
+		x = (np.sin(ph) + 0.35 * np.sin(2 * ph) + 0.15 * np.sin(3 * ph)) * judder * env
+		x = reverb(rng, x, 0.8, 0.35, 5000, 0.8)
+		write("sneaker_squeak_%d" % (i + 1), fade_ends(x, r=0.15), 0.7)
+
+
+def hoop_sounds():
+	"""The net's swish, a ball off the iron, a ball off the backboard."""
+	rng = np.random.default_rng(1009)
+	n = secs(0.5)
+	t = np.arange(n) / SR
+	env = np.minimum(1, t / 0.03) * np.exp(-t / 0.09)
+	x = noise(rng, n, mul(bandpass_gain(1500, 9000), peak_gain(4200, 1.2, 5))) * env
+	write("net_swish", fade_ends(reverb(rng, x, 0.8, 0.3, 5000, 0.8), r=0.2), 0.75)
+	n = secs(1.0)
+	x = modes(n, secs(0.002), [(520, 0.32, 1.0), (1370, 0.22, 0.7), (2650, 0.14, 0.45), (3900, 0.08, 0.3)], rng, 0.02)
+	x += 0.6 * modes(n, secs(0.002), [(125, 0.05, 1.0)], rng)  # the ball itself
+	x += 0.6 * burst(rng, n, secs(0.002), 0.003, 1500, 9000)
+	write("rim_clang", fade_ends(reverb(rng, x, 0.9, 0.35, 4000, 1.2), r=0.3))
+	n = secs(0.7)
+	x = modes(n, secs(0.003), [(185, 0.09, 1.0), (430, 0.06, 0.7), (910, 0.035, 0.45), (1800, 0.015, 0.25)], rng, 0.03)
+	x += 0.9 * burst(rng, n, secs(0.003), 0.006, 300, 6000)
+	x += 0.15 * modes(n, secs(0.01), [(520, 0.2, 1.0), (1370, 0.12, 0.6)], rng, 0.02)  # the rim shivers
+	write("backboard_bang", fade_ends(reverb(rng, x, 0.9, 0.35, 3500, 1.0), r=0.3))
+
+
+def _crowd_vowel(rng, n, voices, f1, f2, glide, f0_lo=110, f0_hi=260):
+	"""Many people on one vowel together, their pitch following glide(t)."""
+	t = np.arange(n) / SR
+	x = np.zeros(n)
+	for _ in range(voices):
+		f0 = rng.uniform(f0_lo, f0_hi) * glide(t) * (1 + 0.01 * np.sin(2 * np.pi * rng.uniform(4, 6) * t))
+		ph = 2 * np.pi * np.cumsum(f0) / SR
+		src = sum(np.sin(h * ph) / h for h in range(1, 14)) + 0.3 * rng.standard_normal(n)
+		on = rng.uniform(0.0, 0.12)
+		x += np.clip((t - on) / 0.08, 0, 1) * rng.uniform(0.4, 1.0) * src
+	return shape(x, mul(peak_gain(f1, 4, 16), peak_gain(f2, 5, 12), bandpass_gain(150, 3500)))
+
+
+def crowd_reactions():
+	"""The stands: an "ooh" for a near thing, a gasp for a fall, applause."""
+	rng = np.random.default_rng(1010)
+	n = secs(2.0)
+	t = np.arange(n) / SR
+	x = _crowd_vowel(rng, n, 22, 330, 820, lambda t: 1 + 0.25 * np.sin(np.pi * np.minimum(t / 1.4, 1.0)))
+	x *= np.minimum(1, t / 0.15) * np.exp(-np.maximum(0, t - 0.6) / 0.45)
+	write("crowd_ooh", fade_ends(reverb(rng, x, 1.3, 0.55, 2500, 1.6), r=0.4))
+	n = secs(1.3)
+	t = np.arange(n) / SR
+	breath = noise(rng, n, mul(pink, bandpass_gain(400, 5000))) * np.minimum(1, t / 0.12) * np.exp(-np.maximum(0, t - 0.15) / 0.12)
+	oh = _crowd_vowel(rng, n, 16, 560, 1000, lambda t: 1.15 - 0.15 * t, 150, 320)
+	oh *= np.clip((t - 0.12) / 0.06, 0, 1) * np.exp(-np.maximum(0, t - 0.2) / 0.3)
+	x = 0.8 * breath / np.std(breath) + oh / (np.std(oh) + 1e-9)
+	write("crowd_gasp", fade_ends(reverb(rng, x, 1.3, 0.55, 2500, 1.4), r=0.4))
+	n = secs(3.0)
+	x = np.zeros(n)
+	for _ in range(420):
+		at = rng.uniform(0.0, 2.6)
+		if rng.random() < np.exp(-max(0, at - 0.8) / 0.8):
+			x += rng.uniform(0.3, 1.0) * burst(rng, n, secs(at), 0.005, rng.uniform(700, 1200), 5000)
+	write("crowd_applause", fade_ends(reverb(rng, x, 1.3, 0.5, 3000, 1.6), r=0.4))
+
+
+def voice_bark():
+	"""One person saying something: a few syllables of murmured speech."""
+	rng = np.random.default_rng(1011)
+	for i in range(4):
+		dur = rng.uniform(0.6, 1.1)
+		n = secs(dur)
+		low = i % 2 == 0
+		v = _voice(rng, n, 1.0, rate=rng.uniform(4.0, 5.5), gate_rate=0.1, gate_level=-1.0,
+				f0_lo=90 if low else 170, f0_hi=150 if low else 260)
+		t = np.arange(n) / SR
+		v *= np.minimum(1, t / 0.03) * np.clip((dur - t) / 0.1, 0, 1)
+		write("voice_bark_%d" % (i + 1), fade_ends(reverb(rng, v, 0.5, 0.25, 3000, 0.6), r=0.15), 0.7)
+
+
+def stick_clatter():
+	"""A stick falling over: a hollow composite clack and a couple of bounces."""
+	rng = np.random.default_rng(1012)
+	for i in range(3):
+		n = secs(0.9)
+		x = np.zeros(n)
+		at, amp = 0.005, 1.0
+		for b in range(rng.integers(3, 5)):
+			s = secs(at)
+			x += amp * modes(n, s, [(rng.uniform(820, 980), 0.03, 1.0), (rng.uniform(1900, 2300), 0.018, 0.7),
+					(rng.uniform(3500, 4100), 0.01, 0.4), (rng.uniform(260, 320), 0.04, 0.4)], rng, 0.05)
+			x += amp * 0.6 * burst(rng, n, s, 0.003, 1200, 8000)
+			at += rng.uniform(0.07, 0.16) * amp
+			amp *= rng.uniform(0.4, 0.6)
+		x = reverb(rng, x, 0.4, 0.3, 4000, 0.5)
+		write("stick_clatter_%d" % (i + 1), fade_ends(x, r=0.2), 0.8)
+
+
+def blade_skip():
+	"""Doris's blade set too deep: it chatters across the ice."""
+	rng = np.random.default_rng(1013)
+	n = secs(0.45)
+	x = np.zeros(n)
+	at = 0.0
+	while at < 0.3:
+		x += rng.uniform(0.5, 1.0) * burst(rng, n, secs(at), 0.006, 700, 6000)
+		x += 0.4 * modes(n, secs(at), [(rng.uniform(300, 380), 0.012, 1.0)], rng)
+		at += 1.0 / rng.uniform(32, 40)
+	write("blade_skip", fade_ends(reverb(rng, x, 0.6, 0.3, 3000, 0.6), r=0.15), 0.8)
+
+
+def bin_dump():
+	"""The snow tank tipping at the pit: the ram whines, the slush avalanches out, the tank clunks home."""
+	rng = np.random.default_rng(1014)
+	n = secs(3.2)
+	t = np.arange(n) / SR
+	whine_env = np.clip(t / 0.2, 0, 1) * np.clip((2.4 - t) / 0.2, 0, 1)
+	fw = 300 + 60 * np.minimum(t, 2.0) / 2.0
+	whine = sum(a * np.sin(2 * np.pi * h * np.cumsum(fw) / SR) for h, a in [(1, 1.0), (2, 0.5), (3, 0.2)]) * whine_env
+	slide_env = np.clip((t - 0.6) / 0.5, 0, 1) * np.exp(-np.maximum(0, t - 1.4) / 0.5)
+	slush = noise(rng, n, mul(brown, bandpass_gain(60, 2500))) * slide_env * (0.7 + 0.3 * np.abs(slow(rng, n, 6.0)))
+	x = 0.15 * whine + 0.4 * slush
+	x += 0.8 * modes(n, secs(2.55), [(70, 0.12, 1.0), (160, 0.08, 0.7), (420, 0.04, 0.4)], rng, 0.03)
+	x += 0.5 * burst(rng, n, secs(2.55), 0.01, 0, 800)
+	write("bin_dump", fade_ends(reverb(rng, x, 0.5, 0.3, 3000, 0.8), r=0.3))
+
+
+def ice_chip():
+	"""The long-handled chipper biting into the slush ridge along the boards."""
+	rng = np.random.default_rng(1015)
+	for i in range(2):
+		n = secs(0.5)
+		x = 0.8 * modes(n, secs(0.003), [(rng.uniform(1300, 1600), 0.02, 1.0), (rng.uniform(2700, 3200), 0.012, 0.6), (420, 0.03, 0.4)], rng, 0.04)
+		for _ in range(40):  # the crunch of the slush
+			x += 0.2 * rng.uniform(0.3, 1.0) * burst(rng, n, int(rng.uniform(0.005, 0.2) * SR), 0.003, 1500, 8000)
+		x += 0.3 * burst(rng, n, secs(0.01), 0.08, 300, 3000)
+		write("ice_chip_%d" % (i + 1), fade_ends(reverb(rng, x, 0.6, 0.3, 3500, 0.7), r=0.2), 0.8)
+
+
+def hall_chatter():
+	"""A few people talking nearby: the halls, the lobby, the rail."""
+	rng = np.random.default_rng(1101)
+	n = secs(8.0)
+	x = np.zeros(n)
+	for i in range(9):
+		x += _voice(rng, n, rng.uniform(0.4, 1.0), gate_rate=0.25, gate_level=0.15)
+	x = shape(x, bandpass_gain(130, 3800))
+	x = circ_reverb(rng, x, 0.6, 0.35, 3000)
+	write("hall_chatter", seam(x, 0.1))
+
+
+def blade_scrape():
+	"""Doris's big blade shaving the top off the ice, steady under the tank."""
+	rng = np.random.default_rng(1102)
+	n = secs(4.0)
+	grain = 0.7 + 0.3 * np.abs(slow(rng, n, 18.0))
+	x = noise(rng, n, mul(bandpass_gain(500, 7000), peak_gain(2600, 1.5, 5))) * grain
+	x += 0.5 * noise(rng, n, mul(brown, bandpass_gain(60, 400)))  # the machine's weight on it
+	x = circ_reverb(rng, x, 0.6, 0.3, 3500)
+	write("blade_scrape", seam(x))
+
+
+def flood_water():
+	"""Hot water pouring out of the flood box onto the towel and the ice."""
+	rng = np.random.default_rng(1103)
+	n = secs(4.0)
+	x = noise(rng, n, mul(pink, bandpass_gain(200, 5000))) * (0.85 + 0.15 * slow(rng, n, 3.0))
+	m = secs(0.03)
+	tt = np.arange(m) / SR
+	for _ in range(160):  # bubbles and drips
+		f = rng.uniform(400, 1400)
+		y = np.sin(2 * np.pi * np.cumsum(f * (1 + 2.0 * tt / 0.03)) / SR) * np.exp(-tt / 0.008) * rng.uniform(0.2, 0.7)
+		wrap_add(x, y, rng.integers(0, n))
+	x = circ_reverb(rng, x, 0.5, 0.3, 3000)
+	write("flood_water", seam(x))
+
+
+def wash_pump():
+	"""The wash-water pump: a small electric motor's whine over churning water."""
+	rng = np.random.default_rng(1104)
+	n = secs(4.0)
+	motor = sum(a * tone(n, 118.0 * h, rng.uniform(0, 6.28)) for h, a in [(1, 1.0), (2, 0.6), (3, 0.4), (5, 0.2), (8, 0.1)])
+	whine = 0.15 * tone(n, 1830.0, 0.0, slow(rng, n, 0.5), 4.0)
+	churn = noise(rng, n, mul(pink, bandpass_gain(150, 2500))) * (0.8 + 0.2 * slow(rng, n, 4.0))
+	x = 0.35 * np.tanh(motor) + whine + 0.5 * churn
+	write("wash_pump", seam(circ_reverb(rng, x, 0.3, 0.2, 3000)))
+
+
+def auger_grind():
+	"""The augers choked with slush: the drive labouring, the screws grinding."""
+	rng = np.random.default_rng(1105)
+	n = secs(4.0)
+	t = np.arange(n) / SR
+	drive = sum(a * tone(n, 46.0 * h, rng.uniform(0, 6.28), slow(rng, n, 0.8), 1.5 * h) for h, a in [(1, 1.0), (2, 0.7), (3, 0.5), (4, 0.3)])
+	rate = snap(2.5, n)  # a turn of the screw
+	pulse = np.exp(-((t * rate) % 1.0) / 0.25)
+	grind = noise(rng, n, mul(brown, bandpass_gain(80, 2500))) * (0.4 + 0.6 * pulse)
+	crunch = noise(rng, n, bandpass_gain(1500, 6000)) * np.maximum(0, slow(rng, n, 9.0)) ** 2
+	x = 0.5 * np.tanh(1.5 * drive) + 0.8 * grind + 0.4 * crunch
+	write("auger_grind", seam(circ_reverb(rng, x, 0.4, 0.25, 3000)))
+
+
+def hose_fill():
+	"""The standpipe hose filling Doris's tank: water drumming into a steel box."""
+	rng = np.random.default_rng(1106)
+	n = secs(4.0)
+	rush = noise(rng, n, mul(pink, bandpass_gain(150, 6000), peak_gain(420, 3, 8), peak_gain(910, 4, 5)))
+	x = rush * (0.85 + 0.15 * slow(rng, n, 2.0))
+	x += 0.3 * noise(rng, n, mul(brown, bandpass_gain(40, 200)))
+	write("hose_fill", seam(circ_reverb(rng, x, 0.5, 0.35, 3000)))
+
+
+def hose_spray():
+	"""The hot-water hose on the ice: a nozzle's hiss and the splatter."""
+	rng = np.random.default_rng(1107)
+	n = secs(4.0)
+	x = noise(rng, n, mul(bandpass_gain(900, 9000), peak_gain(3800, 1.5, 4))) * (0.85 + 0.15 * slow(rng, n, 5.0))
+	x += 0.6 * noise(rng, n, mul(pink, bandpass_gain(200, 2500))) * (0.7 + 0.3 * np.abs(slow(rng, n, 12.0)))
+	write("hose_spray", seam(circ_reverb(rng, x, 0.6, 0.3, 4000)))
+
+
+def edger_motor():
+	"""The walk-behind edger: a little two-stroke and its disc biting the ice."""
+	rng = np.random.default_rng(1108)
+	n = secs(4.0)
+	t = np.arange(n) / SR
+	fire = snap(58.0, n)
+	pop = np.exp(-((t * fire) % 1.0) / 0.12) * noise(rng, n, mul(pink, bandpass_gain(80, 3000)))
+	buzz = sum(a * tone(n, fire * h, rng.uniform(0, 6.28)) for h, a in [(1, 1.0), (2, 0.7), (3, 0.5), (4, 0.3), (6, 0.2)])
+	disc = noise(rng, n, mul(bandpass_gain(1500, 8000), peak_gain(3200, 2, 6))) * (0.7 + 0.3 * slow(rng, n, 7.0))
+	x = 0.8 * pop + 0.35 * np.tanh(buzz) + 0.35 * disc
+	write("edger_motor", seam(circ_reverb(rng, x, 0.5, 0.25, 3500)))
+
+
 ALL = {
 	"arena_room": arena_room, "plant_room": plant_room, "fluorescent_buzz": fluorescent_buzz,
 	"lobby_room": lobby_room, "crowd_murmur": crowd_murmur, "crowd_cheer": crowd_cheer,
 	"skates_ice": skates_ice, "zamboni_idle": zamboni_idle, "footsteps": footsteps,
 	"door_creak_open": door_creak_open, "door_close_latch": door_close_latch,
 	"breaker_clunk": breaker_clunk, "lamp_strike": lamp_strike,
+	# World: the ice, the gym, the people, the jobs
+	"blade_carve": blade_carve, "stop_spray": stop_spray, "puck_sounds": puck_sounds,
+	"ref_whistle": ref_whistle, "coach_whistle": coach_whistle, "body_fall": body_fall,
+	"ball_bounce": ball_bounce, "sneaker_squeak": sneaker_squeak, "hoop_sounds": hoop_sounds,
+	"crowd_reactions": crowd_reactions, "voice_bark": voice_bark, "stick_clatter": stick_clatter,
+	"blade_skip": blade_skip, "bin_dump": bin_dump, "ice_chip": ice_chip,
+	"hall_chatter": hall_chatter, "blade_scrape": blade_scrape, "flood_water": flood_water,
+	"wash_pump": wash_pump, "auger_grind": auger_grind, "hose_fill": hose_fill,
+	"hose_spray": hose_spray, "edger_motor": edger_motor,
 }
 
 if __name__ == "__main__":
