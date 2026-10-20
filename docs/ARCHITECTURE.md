@@ -16,6 +16,7 @@ change this file in the same PR and say why.
 | Project manager | `docs/`, `tools/`, `.github/`, `README.md`, the developer menu in `scripts/dev/` |
 | World and asset design | The look and the asset library: art direction and the voxel style guide (`docs/ART.md`), palettes and materials, `scripts/art/` (characters, goalies, equipment, puck, nets, and a props kit of seats, doors, benches, glass, signage, Zamboni and so on), `scripts/voxel/`, `art/` (MagicaVoxel sources). Later, the open-world map and town around the rink (`scenes/world/`, `scripts/world/`) |
 | Rink environment | The building around the ice: `scenes/venue/` and `scripts/venue/`, laid out from the asset kit, plus room layout, collision, walkable floors and doors, lighting, crowd placement, and renovation states (worn, repaired, renovated). `rink.gd` keeps the playing surface, boards and nets |
+| Framework | The layer under the world: `framework/` (`VoxMesher`, `VoxWriter`, `PropField`, `PropRow`, `ChunkStreamer`, the prop studio), `addons/vox_import/` (the `.vox` import plugin and `VoxAsset`), `tools/lint.sh`, `.gdlintrc`, `tests/unit/`, `docs/FRAMEWORK.md`. Owns no game rules: it gives the other workstreams the pipeline, the tiers and the budgets, and they build on it |
 | Animations | How every skater moves: the body poses in `scripts/game/skater_rig.gd` (stride, crossovers, stops, shot and pass follow-throughs, checks, falls, celebrations, and how the hands hold the stick: top hand fixed on the knob, bottom hand sliding, per Sean 2026-10-18), the stick's on-screen size (its real length and reach still come from Physics: `PhysicsProfile`, the 220° arc and `one_hand()`; a longer drawn stick needs Physics' reach to grow with it), every animation number in `scripts/anim/anim_tuning.gd` and its saved values `assets/anim/anim_tuning.tres`, and the animation studio (`scenes/anim/`, `scripts/anim/`). See `docs/ANIMATION.md` |
 
 Editing a file you don't own is fine for a small, clearly commented hook. Tell
@@ -157,7 +158,10 @@ on the tilde key, and a full rink environment that can be explored later.
   high-res display (no glare or bleeding pixels), with terminal signatures such
   as `//` line prefixes and `----` dashed dividers. It is full colour from the
   start: no monochrome green or amber stage that unlocks colour later.
-- Godot 4.3, GDScript, voxel art with oriented voxels. Physics at 120 Hz.
+- Godot 4.6 with Jolt physics, GDScript, voxel art with oriented voxels. Physics at 120 Hz.
+  New world code builds on the framework layer (`docs/FRAMEWORK.md`): `.vox`
+  assets through the import plugin, props through `PropField`, big scenes
+  through `ChunkStreamer`.
 - One `Tuning.blend` value slides between simulation and arcade assists.
 - Controls follow Slapshot Rebound: left stick moves, left-stick press dashes,
   right-stick press stops, right stick places the stick in a ~220° arc around
@@ -201,19 +205,26 @@ RinkGM will become a general rink management sim with open-world elements, so:
 
 `tools/ci.sh` runs on every PR (`.github/workflows/ci.yml`). It:
 
+0. lints and format-checks the framework layer (`tools/lint.sh`: gdlint and
+   gdformat from gdtoolkit, settings in `.gdlintrc`),
 1. imports the project and fails on any script or parse error,
 2. plays a full AI-vs-AI game headless (`-- --autoplay`) and fails on any
    runtime error, or if the game never prints its end-of-game stats,
 3. runs every `tools/tests/test_*.gd` headless; each must exit 0,
+   then the gdUnit4 suites in `tests/unit/`,
 4. runs each in-game test mode named in `tools/tests/game_tests.txt` (one name
    per line) as `-- --test=<name>` with the full scene and autoloads; each must
    exit 0 and print `<name> test: all passed`.
 
-Run it locally before pushing:
+Run it locally before pushing (`pip install "gdtoolkit==4.*"` once for the lint):
 
 ```
-GODOT=/path/to/Godot_v4.3-stable_linux.x86_64 tools/ci.sh
+GODOT=/path/to/Godot_v4.6-stable_linux.x86_64 tools/ci.sh
 ```
+
+Framework code (`framework/`, `addons/vox_import/`) has budget tests too:
+`test_framework_props.gd` keeps ten thousand props under a frame budget and
+fails when the prop or streaming layer gets slower.
 
 Pure logic (season tables, progression, injuries) gets a `tools/tests/test_*.gd`
 script. Those run with `--script`, so they have no autoloads; keep logic that
