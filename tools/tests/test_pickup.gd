@@ -236,9 +236,9 @@ func _check_game() -> void:
 	if trained_calls.size() > 0:
 		var tc: Array = trained_calls[0]
 		var keys: Array = tc[0]
-		_expect(keys == ["agility", "toughness", "shot_accuracy"], "trained names agility, toughness (stamina) and shot accuracy")
+		_expect(keys == ["agility", "stamina", "shot_accuracy"], "trained names agility, stamina and shot accuracy")
 		for k in keys:
-			_expect(k in Skills.SKATER_KEYS, "%s is a canonical Skills key" % k)
+			_expect(k in Skills.SKATER_KEYS or k in Skills.CONDITIONING, "%s is a canonical Skills key" % k)
 		_expect(int(tc[1]) >= 1 and float(tc[2]) > 0.0 and float(tc[2]) <= 1.0, "with minutes and an intensity (%d min, %.2f)" % [int(tc[1]), float(tc[2])])
 	_expect(not game.is_playing() and _npcs_on_court().size() == on_before.size(), "someone from the line took the player's spot")
 	_expect(ball_out == 0, "the ball stayed in the gym all along")

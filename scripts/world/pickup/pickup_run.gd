@@ -53,10 +53,9 @@ signal said(text: String)
 
 ## The Skills keys pickup trains (Mechanics' canonical keys,
 ## scripts/career/skills.gd). Sean asked for agility, stamina and accuracy;
-## Skills has no stamina, and toughness is what recovers fatigue
-## (Progression.rest), so stamina trains toughness.
-const TRAINS := ["agility", "toughness", "shot_accuracy"]
-const STAMINA_KEY := "toughness"
+## Training.PICKUP trains agility, stamina and shot accuracy (#33).
+const TRAINS := ["agility", "stamina", "shot_accuracy"]
+const STAMINA_KEY := "stamina"
 const TO := 11
 const HALF_END := 1          # 3 on 3 runs at the east hoop
 ## Who plays pickup, by archetype, and how keen they are.
