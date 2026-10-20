@@ -7,11 +7,11 @@ extends RefCounted
 ## XP, age curve and potential ceilings as practice and games) and cost the
 ## owner hours and fatigue on the rink sim.
 ##
-## A tired body learns less: the gains fade as the owner's fatigue climbs,
-## and past MAX_SETS sets in one day the rest are only sweat.
+## A tired body learns less: the gains fade as the owner's fatigue climbs.
+## There's no daily cap (W27): every set takes 15 minutes of the owner's
+## day, so the rink's schedule is what limits how much they train.
 
 const SET_MIN := 15
-const MAX_SETS := 8               # sets a day that still build anything
 const SET_FATIGUE := 2.5          # owner fatigue (0..100) per set
 
 ## Machine id -> {name, xp per set by skill, effort}. Ids match the venue's
@@ -36,19 +36,9 @@ const PICKUP := {
 	"basketball": {"name": "Pickup basketball", "xp_per_min": {"agility": 0.16, "stamina": 0.2}, "accuracy_per_make": 1.4, "effort_per_min": 0.2},
 }
 
-var day := -1
-var sets_today := 0
-
-
 ## How much of a set sticks with the owner this tired (0..100), 0..1.
 static func freshness(owner_fatigue: float) -> float:
 	return clampf(1.0 - maxf(owner_fatigue - 30.0, 0.0) / 70.0, 0.15, 1.0)
-
-
-func _roll_day(today: int) -> void:
-	if today != day:
-		day = today
-		sets_today = 0
 
 
 ## One 15-minute set on `machine`: the player's skills grow, the owner's
@@ -58,14 +48,12 @@ func _roll_day(today: int) -> void:
 func do_set(machine: String, player: PlayerProfile, sim: RinkSim, advance: Callable = Callable()) -> Dictionary:
 	if not MACHINES.has(machine):
 		return {"ok": false, "text": "Nothing to train on here."}
-	_roll_day(sim.day)
 	var m: Dictionary = MACHINES[machine]
-	var q := freshness(sim.fatigue) * (1.0 if sets_today < MAX_SETS else 0.0)
+	var q := freshness(sim.fatigue)
 	var xp := {}
 	for k in m.xp:
 		xp[k] = float(m.xp[k]) * q
-	var gains := Progression.apply_xp(player, xp) if q > 0.0 else {}
-	sets_today += 1
+	var gains := Progression.apply_xp(player, xp)
 	sim.owner_trained(SET_MIN, SET_FATIGUE * float(m.effort))
 	if advance.is_valid():
 		advance.call(SET_MIN)
@@ -76,7 +64,7 @@ func do_set(machine: String, player: PlayerProfile, sim: RinkSim, advance: Calla
 
 static func _set_text(name: String, gains: Dictionary, q: float) -> String:
 	if gains.is_empty() or q <= 0.0:
-		return "%s: 15 minutes. Nothing left in the tank today." % name
+		return "%s: 15 minutes. Nothing more sticks." % name
 	var best := ""
 	for k in gains:
 		if best == "" or float(gains[k]) > float(gains[best]):
@@ -90,14 +78,12 @@ static func _set_text(name: String, gains: Dictionary, q: float) -> String:
 ## over the keys at a weight set's rate. Only the clock and fatigue; World's
 ## node decides how long it took. Returns {"gains", "text"}.
 func trained(skill_keys: Array, minutes: int, intensity: float, player: PlayerProfile, sim: RinkSim, advance: Callable = Callable()) -> Dictionary:
-	_roll_day(sim.day)
 	var sets := maxi(1, minutes / SET_MIN)
-	var q := freshness(sim.fatigue) * (1.0 if sets_today < MAX_SETS else 0.0) * clampf(intensity, 0.0, 1.0)
+	var q := freshness(sim.fatigue) * clampf(intensity, 0.0, 1.0)
 	var xp := {}
 	for k in skill_keys:
 		xp[k] = 4.0 / maxf(skill_keys.size(), 1.0) * sets * q
 	var gains := Progression.apply_xp(player, xp) if q > 0.0 else {}
-	sets_today += sets
 	sim.owner_trained(minutes, SET_FATIGUE * sets * clampf(intensity, 0.2, 1.5))
 	if advance.is_valid():
 		advance.call(minutes)
@@ -125,12 +111,10 @@ func pickup(kind: String, minutes: int, shots: int, makes: int, player: PlayerPr
 	return {"gains": gains, "text": "%s: %d minutes, %d of %d shots in." % [spec.name, minutes, makes, shots]}
 
 
+## Training keeps no state of its own now; the save slot stays for later.
 func to_dict() -> Dictionary:
-	return {"day": day, "sets_today": sets_today}
+	return {}
 
 
-static func from_dict(d: Dictionary) -> Training:
-	var t := Training.new()
-	t.day = int(d.get("day", -1))
-	t.sets_today = int(d.get("sets_today", 0))
-	return t
+static func from_dict(_d: Dictionary) -> Training:
+	return Training.new()

@@ -14,9 +14,9 @@ extends RefCounted
 ##   {"toast": text}
 
 const START_MINUTE := RinkSim.WAKE_MIN  # 05:00 on the M1 sim's day 0, a Monday
-## Sim minutes per real second while walking: the first hour of play covers
-## 05:00 to about 06:45, as in the 1.6 table.
-const TIME_SCALE := 1.75 / 60.0
+## Sim minutes per real second while walking: an in-game hour takes about
+## 15 real minutes (W20).
+const TIME_SCALE := 60.0 / (15.0 * 60.0)
 const LOCKED := ["Front doors"]
 const NOTES_PATH := "res://data/venue/notes.json"
 const READABLES_PATH := "res://data/world/readables.json"

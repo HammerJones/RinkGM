@@ -134,11 +134,11 @@ func _training() -> void:
 	var st0: float = p.skills.values.stamina
 	t.do_set("treadmill", p, sim)
 	_expect(float(p.skills.values.stamina) > st0, "the treadmill builds stamina")
-	for i in Training.MAX_SETS:
+	for i in 12:
 		t.do_set("bench", p, sim)
 	var pow0: float = p.skills.values.shot_power
 	var late := t.do_set("bench", p, sim)
-	_expect(late.gains.is_empty() and is_equal_approx(float(p.skills.values.shot_power), pow0), "past %d sets a day nothing more sticks" % Training.MAX_SETS)
+	_expect(not late.gains.is_empty() and float(p.skills.values.shot_power) > pow0, "no daily cap: a 14th set still builds something")
 	_expect(Training.freshness(90.0) < Training.freshness(10.0), "a tired owner gains less")
 	var acc0: float = p.skills.values.shot_accuracy
 	var ag0: float = p.skills.values.agility
