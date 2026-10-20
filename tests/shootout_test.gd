@@ -34,7 +34,10 @@ func _run() -> void:
 	var attempts: Array = []  # [team, shooter, touched the puck]
 	var lone := true
 	var t := 0.0
-	while game.state != game.State.OVER and t < 400.0:
+	# a shootout that reaches MAX_ROUNDS still ends (coin toss), at about ten
+	# seconds an attempt; the cap sits just under ci.sh's 72000-frame (600 s)
+	# limit so a goalless run is decided by the rules, not the clock
+	while game.state != game.State.OVER and t < 590.0:
 		await get_tree().physics_frame
 		t += 1.0 / Engine.physics_ticks_per_second
 		if game.skaters.size() != 1:
