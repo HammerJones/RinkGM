@@ -23,13 +23,13 @@ func _ready() -> void:
 	spawn = Vector3(X0 + 1.5, 0, 0)
 
 
-## The snack bar line (front first), the skate window and the front doors
-## (outside, then just inside).
+## The snack bar line (front first), the staff's spots behind its two
+## counters, the skate window and the front doors (outside, then just inside).
 func places() -> Dictionary:
 	var line: Array[Vector3] = []
 	for i in 5:
 		line.append(Vector3(-39.5, 0, -10.2 + i * 0.8))
-	return {"canteen": line, "skate_rental": [Vector3(BOOTH[2] + 0.9, 0, -14.7)],
+	return {"canteen": line, "canteen_staff": [Vector3(-40.8, 0, -12.35), Vector3(-38.3, 0, -12.35)], "skate_rental": [Vector3(BOOTH[2] + 0.9, 0, -14.7)],
 		"entrance": [Vector3(X0 - 1.4, 0, 0.4), Vector3(X0 + 1.5, 0, 0.4)]}
 
 

@@ -5,7 +5,7 @@ extends SceneTree
 ##
 ##   godot --headless --path . --script tools/tests/test_places.gd
 
-const KEYS := ["canteen", "washroom", "glass", "pro_shop", "skate_rental", "bench", "entrance",
+const KEYS := ["canteen", "canteen_staff", "washroom", "glass", "pro_shop", "skate_rental", "bench", "entrance",
 	"lobby", "office", "plant_room", "zamboni_bay", "dressing_room", "penalty_box"]
 
 var failures := 0

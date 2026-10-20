@@ -903,6 +903,11 @@ func _target(a: Agent) -> Vector3:
 	var place := a.brain.place
 	if place == "stands" and a.seat >= 0:
 		return map.seats[a.seat][0] + _seat_offset(a)
+	if place == "canteen" and a.brain.as_ == "work":
+		# snack bar staff work behind the counter, not in the customers' line
+		var spot := "canteen_staff" if map.places.has("canteen_staff") else "canteen"
+		var at := map.claim(spot, a.person.id)
+		return at if at != Vector3.INF else map.point("hall", a.spot)
 	if place == "canteen":
 		var line := _line()
 		var i := line.find(a)
