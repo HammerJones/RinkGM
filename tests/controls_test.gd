@@ -314,6 +314,7 @@ func _traced_shots() -> void:
 	for kind in [&"wrist_shot", &"snap_shot", &"slapshot", &"toe_drag_shot"]:
 		await _carry(Vector2(-12, 0))
 		var tr := _pattern(kind, 0.25)
+		var dot: Variant = ctl.aim_from_view()
 		_plan = func(f, t):
 			f.tracing = t < 0.3
 			f.trace_done = t >= 0.3 and t < 0.305
@@ -321,7 +322,12 @@ func _traced_shots() -> void:
 				f.trace = tr
 		var shot := await _until(func(): return not ctl.last_shot.is_empty() and ctl.last_shot.get("fired", false), 0.6)
 		_check(shot and ctl.last_shot.kind == kind, "a traced %s fires as one (%s)" % [kind, ctl.last_shot.get("kind", "-")])
-		_check(game.puck.vel.x > 12.0, "and goes at the net (%.1f m/s)" % game.puck.vel.x)
+		# it goes where the centre dot points, not automatically at the net
+		var want: Vector3 = ctl.last_shot.get("target", Vector3.ZERO)
+		var v2 := Vector2(game.puck.vel.x, game.puck.vel.z)
+		var to := Vector2(want.x - h.position.x, want.z - h.position.z).normalized()
+		_check(dot is Vector3 and want.distance_to(dot) < 2.0 and v2.length() > 12.0 and v2.normalized().dot(to) > 0.75,
+				"and goes at the centre dot (%.1f m/s, %.2f on line)" % [v2.length(), v2.normalized().dot(to)])
 		ctl.last_shot = {}
 	# a slow, sloppy wrist shot is weaker and spreads wider than a quick clean one
 	await _carry(Vector2(-12, 0))
