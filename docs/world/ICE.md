@@ -147,7 +147,7 @@ day's floods in `floods_waiting` until the owner is on site. With
 
 ### 4.1 The machine
 
-| | Real (526 / 552 class) | Doris (Zambelli 552 Electric) |
+| | Real (526 / 552 class) | Doris (Zambelli 546, gas) |
 | --- | --- | --- |
 | Ice-making water | 192-195 US gal | 1100 L (290 gal), so a full tank laid evenly is 1/32 in |
 | Wash water | 72 gal | 270 L |
@@ -162,7 +162,7 @@ open) empties it over the standard pattern.
 
 ### 4.2 The controls (the 552's, one for one)
 
-Doris is modelled on Sean's 552 Electric reference (`playtest/zamboni-552/SPEC.md`):
+Doris is a Zambelli 546, the gas machine that looks the same as the 552 Electric (Sean, 2026-10-20), modelled on his 552 reference (`playtest/zamboni-552/SPEC.md`):
 `DorisModel` (`scripts/art/doris_model.gd`) builds her with every control
 as its own moving part, and `DorisModel.CONTROLS` lists them with their
 grip points. The driver sits at the left rear; the dash with the gauges is
@@ -188,7 +188,7 @@ the in-world brand (an original wordmark).
 | Standpipe hose | blue cap on the dash | E | fills both tanks in the bay (18 L/s) |
 | Towel | pull by the seat | E | up for a dry cut |
 
-The speedo and the charge gauge on the dash have needles, the LCD under
+The speedo and the fuel gauge on the dash have needles, the LCD under
 them reads the gear, the speed and the tanks. Look at a control and its
 name shows in the middle of the screen. Mouse wheel adjusts; on a pad the
 d-pad picks and the triggers adjust.

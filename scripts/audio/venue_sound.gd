@@ -59,6 +59,12 @@ var _lap := 0.0
 ## The match puck (watch_puck) and its velocity last physics frame.
 var _puck: Node3D
 var _puck_vel := Vector3.ZERO
+var _puck_boards_signal := false  # the puck reports its own board hits
+## The match skaters (watch_skaters), and the match whose `skaters` list
+## grows as lines take the ice (watch_game).
+var _skaters: Array[Node3D] = []
+var _game: Node
+var _game_skaters := -1
 var _next_contact := 0.0
 
 ## Puck contacts -> sounds (assets/audio, art/tools/synth_sounds.py).
@@ -157,23 +163,61 @@ static func _layers_for(kind: String) -> String:
 	return c
 
 
-## Listens to a match puck (Puck): its `post_hit` and `left_rink` signals,
-## and, since the puck has no boards signal, its velocity turning round at
-## the boards each physics frame (board_hit). Venue.bind_game calls this.
+## Listens to a match puck (Puck): its `boards_hit`, `post_hit` and
+## `left_rink` signals. A puck without `boards_hit` (before the Hockey lane's
+## PR #29) is watched instead: its velocity turning round at the boards each
+## physics frame (board_hit). Venue.bind_game calls this.
 func watch_puck(p: Node3D) -> void:
 	if p == null or _puck == p:
 		return
 	_puck = p
 	_puck_vel = p.get("vel")
+	_puck_boards_signal = p.has_signal("boards_hit")
+	if _puck_boards_signal:
+		p.boards_hit.connect(func(at: Vector3, normal_speed: float) -> void:
+			if normal_speed >= BOARD_MIN_SPEED:
+				puck_contact(board_kind(at), _global(p, at), normal_speed))
 	if p.has_signal("post_hit"):
-		# post_hit() before the Hockey lane's PR #29, post_hit(at, speed) after
-		p.post_hit.connect(func(_at := Vector3.ZERO, _speed := 0.0) -> void:
-			var v: Vector3 = p.get("vel")
-			puck_contact("post", p.global_position, v.length()))
+		p.post_hit.connect(func(at := Vector3.ZERO, speed := -1.0) -> void:
+			if speed < 0.0:  # post_hit() before PR #29
+				var v: Vector3 = p.get("vel")
+				speed = v.length()
+				at = p.position
+			puck_contact("post", _global(p, at), speed))
 	if p.has_signal("left_rink"):
 		p.left_rink.connect(func(_at: Vector3) -> void:
 			var v: Vector3 = p.get("vel")
 			puck_contact("out", p.global_position, v.length()))
+
+
+## Listens to the match skaters (Skater): a light blade scrape for each
+## `stride`, a long spray for each `stop_spray`, through WorldSound's
+## one-shots (rate limited per sound, skipped beyond earshot).
+func watch_skaters(list: Array) -> void:
+	for s in list:
+		if not (s is Node3D) or not s.has_signal("stride") or s in _skaters:
+			continue
+		_skaters.append(s)
+		s.connect("stride", func(at: Vector3, speed: float, _foot: int) -> void:
+			if speed > 0.6:
+				WorldSound.play(self, "blade_carve", _global(s, at), -22.0 + 8.0 * clampf(speed / 9.0, 0.0, 1.0),
+					randf_range(0.92, 1.08), 3.0, 30.0))
+		s.connect("stop_spray", func(at: Vector3, speed: float) -> void:
+			WorldSound.play(self, "stop_spray", _global(s, at), -12.0 + 7.0 * clampf(speed / 9.0, 0.0, 1.0),
+				randf_range(0.95, 1.05), 4.0, 40.0))
+
+
+## Watches `g.skaters` (a match: Game) for skaters joining, each one
+## through watch_skaters.
+func watch_game(g: Node) -> void:
+	_game = g
+	_game_skaters = -1
+
+
+## A point in `n`'s parent space (where the match signals report) -> global.
+static func _global(n: Node3D, at: Vector3) -> Vector3:
+	var parent := n.get_parent() as Node3D
+	return parent.to_global(at) if parent and parent.is_inside_tree() else at
 
 
 ## Normal speed (m/s) of a puck at `pos` (rink space) that hit the boards
@@ -216,10 +260,15 @@ func puck_contact(what: String, at: Vector3, speed: float) -> void:
 
 
 func _physics_process(_dt: float) -> void:
+	if _game and is_instance_valid(_game):
+		var sk = _game.get("skaters")
+		if sk is Array and sk.size() != _game_skaters:
+			_game_skaters = sk.size()
+			watch_skaters(sk)
 	if _puck == null or not is_instance_valid(_puck):
 		return
 	var v: Vector3 = _puck.get("vel")
-	if not bool(_puck.get("frozen")) and not bool(_puck.get("out_of_play")):
+	if not _puck_boards_signal and not bool(_puck.get("frozen")) and not bool(_puck.get("out_of_play")):
 		var sp := board_hit(_puck.position, _puck_vel, v)
 		if sp > 0.0:
 			puck_contact(board_kind(_puck.position), _puck.global_position, sp)
