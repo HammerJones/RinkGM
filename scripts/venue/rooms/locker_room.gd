@@ -67,14 +67,11 @@ func build(k: VenueKit) -> void:
 	for i in 3:
 		var hz := s * (5.6 + i * 1.0)
 		k.block(Vector3(X1 - 0.12, 2.0, hz - 0.06), Vector3(X1, 2.12, hz + 0.06), Color("b8bcc2"), 0.1, 0.0, false)
-	# coach's whiteboard on the front wall
-	var board := VenueSign.make([
-		["// GAME PLAN", Color("1d3f8a")], ["----", Color("8a8f99")],
-		["1. GET PUCKS DEEP", Color("1b1d22")], ["2. SHOOT EARLY", Color("1b1d22")], ["3. NO DUMB PENALTIES", Color("b8312f")],
-	], 20, 5, 0.022)
-	board.name = "Whiteboard"
-	board.background = Color("eef0f2") if k.age != Age.WORN else Color("d8d6cc")
-	k.sign(board, Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(X0 + 0.31, 1.7, s * 8.0)))
+	# the coach's whiteboard on the front wall: the U9 coach's practice plan
+	# and the kids' doodles, plus room for yours (Whiteboard)
+	var board := Whiteboard.make()
+	board.transform = Transform3D(Basis(Vector3.UP, PI * 0.5).scaled(Vector3.ONE * 0.8), Vector3(X0 + 0.3, 1.55, s * 8.0))
+	k.add(board)
 	# door plate on the walkway side
 	var plate := VenueSign.make([["// " + ("HOME" if home else "VISITORS"), VenueSign.CYAN if home else VenueSign.AMBER]], 12, 1, 0.03)
 	plate.name = "DoorPlate"

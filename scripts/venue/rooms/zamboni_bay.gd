@@ -82,6 +82,13 @@ func _m1(k: VenueKit) -> void:
 		k.block(Vector3(38.6, y, 4.28), Vector3(39.5, y + 0.2, 4.3), steel.lightened(0.08), 0.2, 0.02, false)
 		k.block(Vector3(38.9, y + 0.07, 4.27), Vector3(39.2, y + 0.13, 4.28), Color("e8e4da"), 0.1, 0.0, false)
 	add_spot(k, VenueSpot.Kind.READ, "plug_drawer", Vector3(39.05, 1.0, 4.25), "Drawer labelled DORIS", {"note": "plug_drawer", "gives": "spark_plugs"}, 1.5)
+	# a page of the Zambelli manual pinned to the tool wall, Earl's notebook on the bench
+	var page := Readable.make("zambelli_page", true)
+	page.transform = Transform3D(Basis.IDENTITY, Vector3(36.125, 1.8, -4.818))
+	k.add(page)
+	var book := Readable.make("earl_notebook", true)
+	book.transform = Transform3D(Readable.on_table(Vector3.FORWARD) * Basis(Vector3.BACK, 0.12), Vector3(37.7, 0.902, -4.5))
+	k.add(book)
 	add_spot(k, VenueSpot.Kind.READ, "zambelli_525_manual", Vector3(36.0, 1.0, -4.5), "Zambelli 525 manual", {"readable": "zambelli_525_manual"}, 1.4)
 	# the pit: a heap of old snow over the grate, and its heater switch
 	var b := VoxelMeshBuilder.new()

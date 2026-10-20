@@ -264,14 +264,49 @@ obtuse angle of about 133°), and the shaft starts where the hosel ends,
 `art/tools/stick_sheet.gd` renders the stick on its own
 (`--view=full|heel|top`), and `tools/tests/test_stick.gd` checks the heel.
 
-## Text on signs
+## Text on signs: readables
 
-In-world text follows the UI style (`assets/ui/STYLE.md`, PR #6): signs,
-banners and the scoreboard use `RinkOS.sign_3d()`, which puts one font pixel
-on one 0.065 m voxel. Props supply the board and frame. The voxel letters in
-`Props.letters()` are only for the old hand-painted sign, where the worn and
-repaired versions need letters that can fall off or be repainted; the
-renovated sign switches to `RinkOS.sign_3d()` once PR #6 is merged.
+Writing in the world is never UI styled (playtest #3, #17). Every note,
+flyer, sign, plaque, banner and manual page is a `Readable`
+(`scripts/art/readable.gd`): a pixel-art texture on a real object, drawn in
+its author's or publisher's own hand, lit by the scene and read where it
+hangs. Definitions are in `assets/readables/readables.json`: id, texture, size
+in metres, kind (paper, sticky, card, sign, board, plaque, banner, exit, ...),
+an optional back face, and `story`, the world readable
+(data/world/readables.json) it belongs to.
+
+- Textures are made by the generator in
+  `/mnt/project-files/world-literature/source` (HTML pieces → Playwright →
+  4.5 css px per texel, 64 colours, hard alpha) and exported with
+  `export_readables.py`. Keep one author's hand consistent across pieces.
+- Place one with `Readable.make(id, movable)` and `k.add()`; the face looks
+  along local +Z. `Readable.on_wall(normal)` and `on_table(top)` give the
+  basis; rec rooms have `readable(k, id, pos, normal)`. Notes on a door use
+  `VenueDoor.attach()` so they swing with it.
+- In the walk: E leans in, right mouse (held) leans in on anything, left
+  mouse takes a `movable` one down and sticks it to whatever you click, F
+  crumples the held one. `Whiteboard` keeps the people's drawings (a
+  readable) and the player's ink on separate layers.
+- Screens that really are screens (the office terminal, the scoreboard)
+  stay RinkOS. `VenueSign` remains for those and for signs not yet redrawn.
+
+## Lighting
+
+`scripts/art/look.gd` (`Look`) sets one look for the match, the walk and the
+job close-ups: ACES tone mapping, glow only on HDR lamp faces, SSAO and SSR
+(glossy ice) from MEDIUM, SSIL and a thin volumetric haze on HIGH. Light
+comes from fixtures, not a sun: every arena lamp is a spot light
+(`lighting.gd`), rooms use `room_light()`, and every fixture goes through
+`Look.fixture()` so it fades out with distance (the venue test budgets only
+lights that are always on). Quality is LOW / MEDIUM / HIGH, saved in
+`user://look.cfg`, overridden per run with `-- --look=low|medium|high`.
+
+Shadows step up with it (`Look.SHADOWS`): atlas size (2k / 4k / 8k), soft
+filtering, and the top light's cascades (one / two / four). From MEDIUM the
+building's furniture casts shadows (`Look.cast()`: stands, benches, boards,
+props, doors, the crowd, boards and signs); overhead rooms (roof, lamp truss,
+banners) never do, or the roof would black out the ice under the top light.
+Flat paper never casts.
 
 ## Authoring in MagicaVoxel
 

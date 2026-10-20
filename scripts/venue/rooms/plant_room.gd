@@ -34,6 +34,8 @@ static func trench_rect() -> Rect2:
 	return Rect2(Vector2(minf(a.x, b.x), minf(a.z, b.z)), Vector2(absf(a.x - b.x), absf(a.z - b.z)))
 
 
+var _door: VenueDoor
+
 func _ready() -> void:
 	room_id = "plant_room"
 	display_name = "Ice plant"
@@ -142,7 +144,7 @@ func _room(k: VenueKit) -> void:
 	var f0 := PLANT * Vector3(0, 0, -0.15)
 	k.wall_z(f0.x, (PLANT * Vector3(RIGHT, 0, 0)).z, (PLANT * Vector3(LEFT, 0, 0)).z, 0, H, 0.3, k.by_age(high.darkened(0.12), high, high),
 		[{"at": (PLANT * Vector3(DOOR_X, 0, 0)).z, "w": 1.0, "y0": 0.0, "y1": 2.2}], 0.4)
-	add_door(k, PLANT * Vector3(DOOR_X, 0, -0.15), PI * 0.5, VenueDoor.Kind.SWING, 0.95, 2.2, k.by_age(Color("6b6f73"), Color("7d858c"), Wear.CHARCOAL), "Ice plant")
+	_door = add_door(k, PLANT * Vector3(DOOR_X, 0, -0.15), PI * 0.5, VenueDoor.Kind.SWING, 0.95, 2.2, k.by_age(Color("6b6f73"), Color("7d858c"), Wear.CHARCOAL), "Ice plant")
 	for sx in [LEFT, RIGHT]:
 		var s := 1.0 if sx > 0.0 else -1.0
 		var p := PLANT * Vector3(sx + s * 0.1, 0, 0)
@@ -163,11 +165,23 @@ func _room(k: VenueKit) -> void:
 	_block(k, Vector3(-1.9, 1.775, BACK - 0.05), Vector3(-0.9, 2.225, BACK - 0.02), Color("e8b82a"), 0.5, 0.0, false)
 	_block(k, Vector3(-1.8, 2.05, BACK - 0.06), Vector3(-1.0, 2.11, BACK - 0.05), Color("1a1a1a"), 0.5, 0.0, false)
 	_block(k, Vector3(-1.7, 1.91, BACK - 0.06), Vector3(-1.1, 1.97, BACK - 0.05), Color("1a1a1a"), 0.5, 0.0, false)
-	# RINK-OS door plate outside
-	var plate := VenueSign.make([["// ICE PLANT", VenueSign.AMBER], ["AUTHORIZED ONLY", VenueSign.RED]], 15, 2, 0.022)
-	plate.name = "PlantDoorPlate"
-	plate.dead = k.by_age(0.04, 0.0, 0.0)
-	k.sign(plate, Transform3D(Basis(Vector3.UP, -PI * 0.5), PLANT * Vector3(DOOR_X, 2.55, -0.32)))
+	# the engraved phenolic sign over the door (1974), lit by the room
+	# a caged bulkhead lamp over the door, so the notes can be read at 05:00
+	var cage := PLANT * Vector3(DOOR_X, 2.75, -0.42)
+	k.glow(cage - Vector3(0.06, 0.05, 0.06), cage + Vector3(0.06, 0.05, 0.06), Color("ffe3b0") if k.age == Age.WORN else Color("fff3dc"))
+	k.block(cage + Vector3(-0.09, 0.05, -0.09), cage + Vector3(0.09, 0.09, 0.09), Color("3b3d40"), 1.0, 0.0, false)
+	var bulk := OmniLight3D.new()
+	bulk.position = cage + Vector3(-0.15, -0.15, 0)
+	bulk.omni_range = 4.5
+	bulk.omni_attenuation = 1.3
+	bulk.light_energy = k.by_age(0.9, 1.1, 1.2)
+	bulk.light_color = Color("ffd9a0") if k.age == Age.WORN else Color("fff0d8")
+	Look.fixture(bulk)
+	bulk.shadow_enabled = Look.at_least(Look.Quality.MEDIUM)
+	k.add(bulk)
+	var plate := Readable.make("plant_sign")
+	plate.transform = Transform3D(Basis(Vector3.UP, -PI * 0.5), PLANT * Vector3(DOOR_X, 2.45, -0.31))
+	k.add(plate)
 
 
 # ---------------------------------------------------------------- equipment
@@ -249,17 +263,47 @@ func _lights(k: VenueKit) -> void:
 	room_light(k, PLANT * Vector3(0.3, H - 0.5, 4.4), 9.0)
 
 
+## Gus's door of notes (and Marg's replies, and Earl's): real paper stuck
+## to the door's leaf, so they swing open with it. Every one can be taken
+## down and stuck somewhere else.
+const DOOR_NOTES := [
+	# id, door-space x, y, tilt (degrees)
+	["plant_nfpa", 0.0, 1.86, 0.0],
+	["plant_ammonia", 0.0, 1.7, 0.0],
+	["plant_round", -0.2, 1.43, -1.5],
+	["gus_index_card", 0.21, 1.52, 2.0],
+	["gus_breaker", 0.24, 1.36, -5.0],
+	["gus_ticks", -0.24, 1.17, -3.0],
+	["marg_reply", -0.22, 1.05, -2.0],
+	["gus_oil", 0.05, 1.2, 3.0],
+	["earl_strip", 0.04, 0.9, 2.0],
+]
+
+
+func _door_notes(k: VenueKit) -> void:
+	var face := Basis(Vector3.UP, PI)  # readables face +Z; the door's outside is -Z
+	for n in DOOR_NOTES:
+		var r := Readable.make(n[0], not String(n[0]).begins_with("plant_"))
+		_door.attach(r, Transform3D(face * Basis(Vector3.BACK, deg_to_rad(n[3])), Vector3(n[1], n[2], -0.031)))
+	# Gus's binder on its hook, beside the latch
+	var b := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(0.24, 0.31, 0.05)
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color("1e3b6a")
+	m.roughness = 0.6
+	bm.material = m
+	b.mesh = bm
+	b.cast_shadow = Look.cast()
+	_door.attach(b, Transform3D(Basis.IDENTITY, Vector3(0.3, 0.78, -0.06)))
+
+
 ## RINK_SIM M1: the door of notes and the binder outside, the compressors'
 ## oil sight glasses, the blue oil drum, the glycol thermometers and the log
 ## book. Jobs launch World and assets' mini games (scenes/world/jobs/).
 func _spots(k: VenueKit) -> void:
-	var paper := [Color("f2e27a"), Color("eeeae0"), Color("f4c9a0"), Color("cfe3f2")]
-	if k.age != Age.RENOVATED:
-		for i in 14:
-			var px := DOOR_X - 0.38 + (i % 4) * 0.2 + (0.04 if i % 3 == 0 else 0.0)
-			var py := 1.05 + (i / 4) * 0.24 + (0.03 if i % 2 == 0 else 0.0)
-			_block(k, Vector3(px, py, -0.34), Vector3(px + 0.17, py + 0.2, -0.32), paper[i % 4], 0.1, 0.0, false)
-		_block(k, Vector3(DOOR_X + 0.1, 0.95, -0.36), Vector3(DOOR_X + 0.4, 1.3, -0.32), Color("1e3b6a"), 0.1, 0.02, false)  # the binder
+	if k.age != Age.RENOVATED and _door:
+		_door_notes(k)
 	add_spot(k, VenueSpot.Kind.READ, "door_of_notes", PLANT * Vector3(DOOR_X - 0.2, 1.5, -0.4), "Notes on the plant room door", {"readable": "note_door_oil", "note": "door_of_notes"}, 1.6)
 	add_spot(k, VenueSpot.Kind.READ, "screwdriver", PLANT * Vector3(DOOR_X - 0.45, 1.2, -0.4), "Screwdriver with a card", {"readable": "note_screwdriver"}, 1.4)
 	add_spot(k, VenueSpot.Kind.READ, "gus_binder", PLANT * Vector3(DOOR_X + 0.25, 1.1, -0.4), "Gus's binder", {"readable": "gus_binder"}, 1.6)
@@ -276,4 +320,8 @@ func _spots(k: VenueKit) -> void:
 	add_spot(k, VenueSpot.Kind.JOB, "glycol_thermometer", PLANT * Vector3(4.85, 1.5, 3.5), "Glycol thermometers",
 		{"job": "plant_round", "target": "glycol", "note": "glycol_thermometer"}, 1.5)
 	add_spot(k, VenueSpot.Kind.SCREEN, "log_book", PLANT * Vector3(LEFT + 0.15, 1.3, 3.2), "Plant log book", {"screen": "log_book"}, 1.5)
+	# the Nordale page Gus keeps taped up by the log book
+	var nordale := Readable.make("nordale_page", true)
+	nordale.transform = Transform3D(PLANT.basis * Basis(Vector3.UP, PI * 0.5), PLANT * Vector3(LEFT + 0.003, 1.62, 3.2))
+	k.add(nordale)
 	add_spot(k, VenueSpot.Kind.READ, "nordale_manual", PLANT * Vector3(LEFT + 0.15, 1.3, 2.7), "Nordale RC-4 manual", {"readable": "nordale_manual"}, 1.3)

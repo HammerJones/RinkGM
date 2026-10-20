@@ -67,6 +67,9 @@ func _desk(k: VenueKit) -> void:
 	k.aged_block(Vector3(-36.2, 0, -37.4), Vector3(-34.8, 1.9, -36.9), Color("7d8288"), 0.4)
 	k.block(Vector3(-36.0, 0, -40.8), Vector3(-35.5, 0.48, -40.3), Color("2b2d33"), 0.25, 0.05)  # stool
 	k.block(Vector3(-37.25, 1.1, -37.6), Vector3(-36.95, 1.22, -37.2), Color("2b2d33"), 0.15, 0.03, false)  # the bell
+	# the lost and found clipboard and a pile of concussion pamphlets on the counter
+	readable(k, "lost_found_clip", Vector3(-37.72, 1.1, -38.6), Vector3.UP, true, Vector3.RIGHT)
+	readable(k, "moose_pamphlet", Vector3(-37.72, 1.1, -40.4), Vector3.UP, true, Vector3.RIGHT)
 	# a bulkhead over the counter carries the desk sign
 	k.aged_block(Vector3(-38.15, 2.4, -41.1), Vector3(-37.3, h, -35.9), paint(k), 0.6)
 

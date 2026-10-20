@@ -51,6 +51,9 @@ var attendance := 0.05
 var rooms := {}  # room_id -> VenueRoom
 var crowd: VenueCrowd
 var game: Node
+## The building's sound (scripts/audio/venue_sound.gd); null when sound is
+## off (headless runs, `-- --mute`).
+var sound: VenueSound
 
 var _built := false
 var _above_roof := false
@@ -132,14 +135,20 @@ func _ready() -> void:
 	var t0 := Time.get_ticks_usec()
 	_rebuild_all()
 	_built = true
+	if RinkSound.enabled():
+		sound = VenueSound.new(self)
+		add_child(sound)
 	if "--venue-stats" in OS.get_cmdline_user_args():
 		print("venue: built in %.0f ms, %s" % [(Time.get_ticks_usec() - t0) / 1000.0, stats()])
 
 
-## Geometry budget: {draws, triangles, colliders, lights, signs, fans}.
-## A sign is a panel plus one label per line; a MultiMesh is one draw.
+## Geometry budget: {draws, triangles, colliders, lights, faded_lights,
+## signs, fans}. A sign is a panel plus one label per line; a MultiMesh is
+## one draw. `lights` are the ones always drawn; `faded_lights` are fixtures
+## (Look.fixture) that fade out with distance, so only those near the camera
+## cost anything.
 func stats() -> Dictionary:
-	var d := {"draws": 0, "triangles": 0, "colliders": 0, "lights": 0, "signs": 0, "fans": crowd.count() if crowd else 0}
+	var d := {"draws": 0, "triangles": 0, "colliders": 0, "lights": 0, "faded_lights": 0, "signs": 0, "fans": crowd.count() if crowd else 0}
 	var stack: Array = [self]
 	while not stack.is_empty():
 		var n: Node = stack.pop_back()
@@ -157,7 +166,10 @@ func stats() -> Dictionary:
 		elif n is CollisionShape3D:
 			d.colliders += 1
 		elif n is Light3D:
-			d.lights += 1
+			if n.distance_fade_enabled:
+				d.faded_lights += 1
+			else:
+				d.lights += 1
 	return d
 
 
@@ -341,6 +353,8 @@ func bind_game(g: Node) -> void:
 	var events = g.get("events")
 	if events is MatchEvents:
 		events.goal.connect(_on_goal)
+	if sound:
+		sound.set_event("game")
 	for c in g.get_children():
 		if c is WorldEnvironment:
 			apply_lighting(c.environment, null)
@@ -352,6 +366,8 @@ func bind_game(g: Node) -> void:
 func set_ice_lights(on: bool) -> void:
 	var l = rooms.get("lighting")
 	if l and l.has_method("switch"):
+		if sound and l.lights_on != on:
+			sound.lamps_switched(on)
 		l.switch(on)
 
 
@@ -369,10 +385,12 @@ func apply_lighting(env: Environment, sun: DirectionalLight3D) -> void:
 ## A goal by match team `team` (0 = the user's club): the home crowd erupts
 ## for the home side and groans politely for the visitors.
 func _on_goal(team: int, _scorer, _assists) -> void:
-	if crowd == null:
-		return
 	var user_home: bool = _fixture.get("user_home", true)
-	crowd.cheer(1.0 if (team == 0) == user_home else 0.25)
+	var amount := 1.0 if (team == 0) == user_home else 0.25
+	if sound:
+		sound.cheer(amount)
+	if crowd:
+		crowd.cheer(amount)
 
 
 ## Score shown on the boards: [home, away] whatever side the user is on.

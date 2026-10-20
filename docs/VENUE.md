@@ -261,6 +261,53 @@ checks that every place has a floor under it and room to stand.
   Silkscreen for titles, VT323 for numbers, clocks and prices, on a CRT
   panel, crisp and in full colour; only the housing looks worn.
 - Budget, about 0.6M triangles and 180-200 draws (checked by `tools/tests/test_venue.gd`, numbers printed per age):
-  13 lights with no shadows, no venue geometry casts sun shadows, props and
+  at most 13 lights that are always drawn; fixtures (`Look.fixture`) fade out
+  with distance and may cast shadows. Furniture casts shadows from MEDIUM
+  (`Look.cast()`), overhead rooms never (docs/ART.md, Lighting). Props and
   the crowd drawn as MultiMeshes (the crowd's cheers run in its shader), and
   the live scoreboard only changes Label3D text.
+
+## Sound
+
+Playtest note #14 asked for ambience, room sounds, an arena that sounds like
+what's on the ice, footsteps and doors. Every sound is synthesised (no
+samples) by `art/tools/synth_sounds.py` into `assets/audio/` as 16-bit mono
+22.05 kHz WAVs (about 2.9 MB in all). Regenerate with
+`python3 art/tools/synth_sounds.py` (or name sounds: `... plant_room skates_ice`);
+seeds are fixed, so the files come out the same. Loops are built circularly
+(FFT filtering, reverb and tones over exactly the loop length) so they wrap
+without a seam; Godot imports them plainly and `RinkSound.stream()` sets the
+loop points at load.
+
+- `RinkSound` (`scripts/audio/rink_sound.gd`): static helpers. `stream(name)`,
+  `play_at(parent, name, pos, db, pitch)` (a self-freeing 3D one-shot with
+  pitch varied ±6%; `footstep_tile` and the like pick a numbered take),
+  `play_flat`, `emitter`/`start_loop`, and `floor_kind(room_id)`. Sound is
+  off with `-- --mute` and in headless runs unless `-- --sound` is given, so
+  tests and CI create no players.
+- `VenueSound` (`scripts/audio/venue_sound.gd`), the venue's child `Sound`
+  (`Venue.sound`, null when sound is off), in layers:
+  - room tone: `arena_room` (HVAC rumble, roof fans, far ballast buzz) or
+    `lobby_room` (quiet air, vending machine), flat loops crossfaded by the
+    room the camera is in (`Venue.room_at`), so walls keep rooms apart;
+  - point loops: `plant_room` at the two compressors (drone, 10 Hz piston
+    thrum, valve hiss, relay ticks), `fluorescent_buzz` under the old tubes
+    in the lobby and dressing rooms, `crowd_murmur` over the stands (level
+    follows `Venue.attendance`), `skates_ice` on the ice, and `zamboni_idle`
+    lapping the ice while resurfacing;
+  - `set_event(kind)`: "none" (the walk's default), "public_skate",
+    "practice", "game" (set by `Venue.bind_game`), "figure", "broomball",
+    "resurface" choose the crowd and skater levels (`VenueSound.EVENTS`);
+  - `cheer(amount)`: `crowd_cheer` scaled by amount and attendance, with the
+    murmur swelling after it; `Venue._on_goal` calls it with the crowd's cheer;
+  - `lamps_switched(on)`: `breaker_clunk` at the lobby's lighting panel and,
+    switching on, `lamp_strike` at the panel and over the ice;
+    `Venue.set_ice_lights` calls it when the breakers actually change.
+- Footsteps (`VenueWalker`): a step every stride on the floor (0.55 s at a
+  walk, 0.32 s at a sprint, 0.7 s crouched and quiet), `footstep_tile` in the
+  lobbies, office and dressing rooms, `footstep_concrete` in the plant, bay
+  and service rooms, `footstep_rubber` on the matting round the ice; landing
+  from a jump plays a heavier, lower step.
+- Doors (`VenueDoor`): `door_creak_open` on opening (push bar and hinge),
+  `door_close_latch` when the leaf reaches the frame; roll-up doors play
+  them lower and slower.

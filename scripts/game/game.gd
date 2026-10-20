@@ -1229,14 +1229,10 @@ func _credit_goal(team: int) -> void:
 # ---------------------------------------------------------------- scene
 
 func _build_environment() -> void:
-	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
+	var env := Look.make("arena")
 	env.background_color = Color("24252b")
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.86, 0.89, 0.96)
 	env.ambient_light_energy = 0.28
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.ssao_enabled = true
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)

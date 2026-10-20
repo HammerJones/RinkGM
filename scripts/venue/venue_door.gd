@@ -17,6 +17,9 @@ var label := ""
 var is_open := false
 var leaves: Array[Node3D] = []
 var _tween: Tween
+## Things stuck to the (first) leaf, kept until the leaf exists: [node,
+## transform in the door's space].
+var _attached: Array = []
 
 
 static func make(kind_: int, width_: float, height_: float, color_: Color, label_ := "") -> VenueDoor:
@@ -38,6 +41,25 @@ func _ready() -> void:
 			_leaf(width * 0.5, width * 0.5, -1.0)
 		Kind.ROLLUP:
 			_leaf(0.0, width, 0.0)
+	for a in _attached:
+		_put_on_leaf(a[0], a[1])
+	_attached.clear()
+
+
+## Sticks `n` to the door's leaf (notes, a sign, a hook and binder) at `xf`
+## in the door's space, so it swings with the door instead of staying in the
+## air when the door opens. The door's outside face is local -Z at z -0.03.
+func attach(n: Node3D, xf: Transform3D) -> void:
+	if leaves.is_empty():
+		_attached.append([n, xf])
+	else:
+		_put_on_leaf(n, xf)
+
+
+func _put_on_leaf(n: Node3D, xf: Transform3D) -> void:
+	var pivot := leaves[0]
+	n.transform = Transform3D(Basis.IDENTITY, -pivot.position) * xf
+	pivot.add_child(n)
 
 
 ## A leaf hinged at local x `hinge_x`, extending `w` toward +X (dir 1) or -X
@@ -65,7 +87,7 @@ func _leaf(hinge_x: float, w: float, dir: float) -> void:
 		b.add_box(Transform3D(Basis.from_scale(Vector3(0.05, 0.05, t + 0.08)), Vector3(hx, 1.05, 0)), Color("c9ccd1"))
 	var mi := MeshInstance3D.new()
 	mi.mesh = b.commit()
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.cast_shadow = Look.cast()
 	pivot.add_child(mi)
 	var body := AnimatableBody3D.new()
 	body.sync_to_physics = false  # follow the swinging pivot every frame
@@ -111,4 +133,13 @@ func _set_open(v: bool) -> void:
 			_tween.tween_property(pivot, "position:y", height - 0.25 if v else 0.0, 1.6)
 		else:
 			_tween.tween_property(pivot, "rotation:y", (-dir * deg_to_rad(95.0)) if v else 0.0, 0.45)
+	if RinkSound.enabled():
+		# steel doors: the push bar and the hinge's groan, then the closer
+		# pulling it home onto the latch; roll-ups rattle lower and slower
+		var at := global_position + Vector3(0, 1.1, 0)
+		var low := 0.6 if kind == Kind.ROLLUP else 1.0
+		if v:
+			RinkSound.play_at(self, "door_creak_open", at, -10.0, low, 3.0, 30.0)
+		else:
+			_tween.chain().tween_callback(func(): RinkSound.play_at(self, "door_close_latch", at, -8.0, low, 3.0, 35.0))
 	toggled.emit(v)
