@@ -81,6 +81,9 @@ const LCD_AT := Vector3(-0.80, 1.405, 0.15)
 
 ## State. Set these, then apply() (tick() eases the slow ones).
 var age: int = Wear.WORN
+## Parked (the bay's Doris): one merged mesh for the body and one for the
+## cockpit, only the hatch moves. Keeps the building's draw budget.
+var parked := false
 var steer := 0.0              # -1 full right .. 1 full left
 var accel := 0.0              # pedal, 0..1
 var brake := 0.0
@@ -124,8 +127,9 @@ var _plunger_knob: Node3D
 static var _cache := {}
 
 
-func _init(age_: int = Wear.WORN) -> void:
+func _init(age_: int = Wear.WORN, parked_ := false) -> void:
 	age = age_
+	parked = parked_
 	name = "Doris"
 	add_to_group("doris_model")
 	_build()
@@ -261,6 +265,9 @@ func meshes() -> Array[MeshInstance3D]:
 # ---------------------------------------------------------------- build
 
 func _build() -> void:
+	if parked:
+		_build_parked()
+		return
 	body_mesh = _mi(_mesh("body", age), self)
 	body_mesh.name = "Body"
 	# the snow tank on its hinge, with its dump door
@@ -299,6 +306,70 @@ func _build() -> void:
 	# the cockpit's fixed dressing (gates, bezels, columns), then the parts
 	_mi(_mesh("dressing", age), self).name = "Dressing"
 	_build_controls()
+
+
+## Parked: the body, tank, door and conditioner in one mesh, the cockpit's
+## parts at rest in another, the decals, the steering wheel, and the hatch
+## with the motor bay behind it (they still open for a repair).
+func _build_parked() -> void:
+	body_mesh = _mi(_mesh("parked", age), self)
+	body_mesh.name = "Body"
+	for side in [-1, 1]:
+		var dm := _mi(_decal_mesh(), self)
+		dm.position = Vector3(side * ((30 - PX) * V + 0.002), 23.5 * V, -1.05)
+		dm.rotation.y = PI * 0.5 if side < 0 else -PI * 0.5
+		dm.scale = Vector3(1.4, 1.4, 1.0)
+	_mi(_decal_mesh(), self).position = Vector3(0.0, 27.0 * V, (0 - PZ) * V - 0.012)
+	_hatch = _pivot(self, HATCH_HINGE)
+	_hatch.name = "Hatch"
+	_mi(_mesh("hatch", age), _hatch).position = -HATCH_HINGE
+	bay_parts = Node3D.new()
+	bay_parts.name = "MotorBay"
+	add_child(bay_parts)
+	_mi(_mesh("motor_bay", age), bay_parts)
+	_mi(_mesh("cockpit_parked", age), self).name = "Dressing"
+	var tilt := _pivot(self, STEER_AT)
+	tilt.rotation.x = 0.6
+	_steer = _pivot(tilt, Vector3.ZERO)
+	_steer.name = "SteeringWheel"
+	_mi(_part_mesh("steering_wheel"), _steer)
+
+
+## The fine part each control is built from.
+static func _part_ids(id: String) -> Array:
+	match id:
+		"gear": return ["shift_lever"]
+		"auger_v", "auger_h": return ["lever_black"]
+		"conditioner": return ["lever_green"]
+		"dump": return ["lever_amber"]
+		"valve", "wash_valve": return ["t_handle"]
+		"plunger": return ["plunger_rod", "plunger_knob"]
+		"blade": return ["hand_wheel"]
+		"wash": return ["rocker"]
+		"key": return ["key"]
+		"fill": return ["fill_cap"]
+		"towel": return ["pull"]
+	return []
+
+
+## The cockpit dressing with every control at rest, one fine voxel model.
+static func _cockpit_parked(a: int) -> VoxelModel:
+	var m := _dressing(a)
+	for c in CONTROLS:
+		var base: Vector3 = c[2]
+		var off := Vector3i(roundi(base.x / FINE), roundi(base.y / FINE), roundi(base.z / FINE))
+		if c[0] == "blade":
+			off.y += roundi(0.19 / FINE)
+		for pid: String in _part_ids(c[0]):
+			var pm := _part(pid)
+			for v: Vector3i in pm.voxels:
+				m.voxels[v + off] = pm.voxels[v]
+	for at: Vector3 in [ACCEL_AT, BRAKE_AT]:
+		var pm2 := _part("pedal_long" if at == ACCEL_AT else "pedal_square")
+		var off2 := Vector3i(roundi(at.x / FINE), roundi(at.y / FINE) + 3, roundi(at.z / FINE))
+		for v: Vector3i in pm2.voxels:
+			m.voxels[v + off2] = pm2.voxels[v]
+	return m
 
 
 func _build_controls() -> void:
@@ -402,7 +473,9 @@ static func _mesh(id: String, a: int) -> ArrayMesh:
 			"hatch": m = _hatch_model(a)
 			"motor_bay": m = _motor_bay(a)
 			"dressing": m = _dressing(a)
-		_cache[key] = m.build_mesh_merged() if id in ["body", "bin", "cond"] else m.build_mesh()
+			"parked": m = Wear.weather(_parked_model(a), a, 552)
+			"cockpit_parked": m = _cockpit_parked(a)
+		_cache[key] = m.build_mesh_merged() if id in ["body", "bin", "cond", "parked", "cockpit_parked"] else m.build_mesh()
 	return _cache[key]
 
 
@@ -423,8 +496,17 @@ static func _decal_mesh() -> ArrayMesh:
 ## conditioner up, the hatch shut. Props' "resurfacer" (the bay prop, the
 ## blade-change diorama) is this.
 static func static_model(a: int) -> VoxelModel:
+	var m := _parked_model(a)
+	var h := _hatch_model(a)
+	for p in h.voxels:
+		m.voxels[p] = h.voxels[p]
+	return m
+
+
+## The same without the hatch (the parked DorisModel swings its own).
+static func _parked_model(a: int) -> VoxelModel:
 	var m := _body(a)
-	for part in [_bin_model(a), _door_model(a), _cond_model(a), _hatch_model(a)]:
+	for part in [_bin_model(a), _door_model(a), _cond_model(a)]:
 		var pm: VoxelModel = part
 		for p in pm.voxels:
 			m.voxels[p] = pm.voxels[p]

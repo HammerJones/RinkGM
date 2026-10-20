@@ -53,7 +53,7 @@ func build(k: VenueKit) -> void:
 	# World: Doris herself, parked nose-first toward the rink door: the
 	# working DorisModel (her hatch opens for the repairs, W2), with the
 	# props kit's collision boxes
-	var doris := DorisModel.new(k.age)
+	var doris := DorisModel.new(k.age, true)
 	doris.transform = _doris_xf()
 	k.add(doris)
 	for b in Props.collision_boxes("resurfacer", k.age):
