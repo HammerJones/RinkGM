@@ -358,6 +358,7 @@ func bind_game(g: Node) -> void:
 		var puck = g.get("puck")
 		if puck is Node3D:
 			sound.watch_puck(puck)  # World: the boards, the glass, the posts
+		sound.watch_game(g)  # World: blade scrapes and stops, as skaters join
 	for c in g.get_children():
 		if c is WorldEnvironment:
 			apply_lighting(c.environment, null)

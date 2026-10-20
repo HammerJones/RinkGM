@@ -1,7 +1,8 @@
 class_name DorisModel
 extends Node3D
-## Doris as a working machine: a Zambelli 552 Electric, one for one with the
-## real ice resurfacer of that layout (the reference and the control spec:
+## Doris as a working machine: a Zambelli 546, the gas machine the 552
+## Electric grew out of and looks the same as, one for one with the real
+## ice resurfacer of that layout (the reference and the control spec:
 ## Sean's /playtest/zamboni-552/SPEC.md, summarised in docs/world/ICE.md 4).
 ## Voxel body panels at the character voxel size; the controls, gauges and
 ## decals in fine voxels so they read from the seat.
@@ -21,7 +22,7 @@ extends Node3D
 ##   gated plate, the vertical and horizontal auger levers, the conditioner
 ##   lever, the bin lever, the flood and wash T-handle valves, the vertical
 ##   auger plunger, the blade level wheel, the wash pump rocker and the key on
-##   the dash, the speed and charge gauges and the LCD; the snow tank (bin)
+##   the dash, the speed and fuel gauges and the LCD; the snow tank (bin)
 ##   that tilts up to dump, its dump door, the conditioner on its lift, the
 ##   towel, the standpipe fill cap, and the service hatch on the right side
 ##   that opens onto her motor bay (the repair mini games work through it).
@@ -105,7 +106,7 @@ var towel_down := false
 var hatch_open := 0.0         # 0 shut .. 1 swung up
 var hatch_want := false
 var speed := 0.0              # m/s, for the speedo
-var charge := 0.85            # battery, 0..1
+var charge := 0.85            # the fuel gauge (gas tank), 0..1
 
 ## Nodes: the body mesh is always the first child.
 var body_mesh: MeshInstance3D
@@ -899,7 +900,7 @@ static func _part(id: String) -> VoxelModel:
 
 ## The ZAMBELLI wordmark (original to this game): a slanted heavy block face
 ## in cream on black, a red underline stroke rising to the right with a
-## snowflake at its tail, ELECTRIC set small in amber beneath. Reads along
+## snowflake at its tail, the model number 546 set small in amber beneath. Reads along
 ## -X facing -Z (Props.letters' convention); pivot at its centre.
 const _WORD := {
 	"Z": ["111111", "000011", "000110", "001100", "011000", "110000", "111111"],
@@ -914,6 +915,8 @@ const _SMALL := {
 	"E": ["111", "100", "110", "100", "111"], "L": ["100", "100", "100", "100", "111"],
 	"C": ["111", "100", "100", "100", "111"], "T": ["111", "010", "010", "010", "010"],
 	"R": ["110", "101", "110", "101", "101"], "I": ["1", "1", "1", "1", "1"],
+	"5": ["111", "100", "111", "001", "111"], "4": ["101", "101", "111", "001", "001"],
+	"6": ["111", "100", "111", "101", "111"],
 }
 
 
@@ -950,9 +953,9 @@ static func _decal() -> VoxelModel:
 		if absi(d) <= 2:
 			m.set_voxel(sx + d, 4 + d, 0, cream)
 			m.set_voxel(sx + d, 4 - d, 0, cream)
-	# ELECTRIC, small, under the stroke
+	# the model number, small, under the stroke
 	x = 10
-	for ch in "ELECTRIC":
+	for ch in "546":
 		var g2: Array = _SMALL[ch]
 		var gw2: int = (g2[0] as String).length()
 		for row in 5:
