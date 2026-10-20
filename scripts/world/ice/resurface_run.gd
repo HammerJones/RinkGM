@@ -98,7 +98,8 @@ var gas_cost := 0.0
 ## "dump_done", "filled", "on_ice", "off_ice", "slide".
 var events: PackedStringArray = []
 
-var _cut_at := PackedFloat32Array()     # time each fine cell last went under the blade
+var _cut_at := PackedFloat32Array()     # forward travel (m) when each fine cell last went under the blade
+var _travel := 0.0                      # m driven forward; the blade only cuts moving forward
 var _flood_at := PackedFloat32Array()   # ...and under the towel
 var _covered := PackedByteArray()
 var _covered_n := 0
@@ -272,6 +273,7 @@ func _drive(dt: float, throttle: float, steer_in: float, brake: float) -> void:
 	var p := pos + mv
 	if _body_ok(p, h):
 		dist_m += absf(speed) * dt
+		_travel += maxf(speed, 0.0) * dt
 		pos = p
 		heading = wrapf(h, -PI, PI)
 		return
@@ -283,6 +285,8 @@ func _drive(dt: float, throttle: float, steer_in: float, brake: float) -> void:
 	if not square and _body_ok(pos + along, heading):
 		pos += along
 		dist_m += along.length()
+		if speed > 0.0:
+			_travel += along.length()
 		speed *= 0.97
 		return
 	if absf(speed) > 0.6:
@@ -374,9 +378,12 @@ func _conditioner(dt: float) -> void:
 			var i := idx[k]
 			if ice.inside[i] == 0 or ice.board_m[i] < IceSlab.BLADE_REACH:
 				continue
-			if time_s - _cut_at[i] < 2.0:
+			# a cell is cut once as the blade passes over it going forward, so
+			# the snow taken up is blade depth x width x forward speed, and a
+			# parked or reversing machine cuts nothing
+			if speed <= 0.02 or _travel - _cut_at[i] < IceSlab.CX:
 				continue
-			_cut_at[i] = time_s
+			_cut_at[i] = _travel
 			if _covered[i] == 0:
 				_covered[i] = 1
 				_covered_n += 1

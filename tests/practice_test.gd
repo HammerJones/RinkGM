@@ -43,6 +43,20 @@ func _run() -> void:
 	var d := Vector2(game.puck.position.x - h.position.x, game.puck.position.z - h.position.z).length()
 	_check(d < 2.0 and not game.puck.frozen, "Reset puck puts it in front of you (%.1f m)" % d)
 
+	# calling for the puck: the coach on the boards passes it to you, gently
+	h.place(Vector2(-5, 2), Vector3(1, 0, 0))
+	game.puck.reset_at(Vector3(25, 0, -8))
+	game.practice_feed()
+	var feed: float = game.puck.vel.length()
+	var got := false
+	for i in 40:
+		await _wait(0.1)
+		if h.has_puck():
+			got = true
+			break
+	print("coach feed: %.1f m/s, caught %s" % [feed, got])
+	_check(feed > 0.0 and feed <= 11.0 and got, "calling for the puck: the coach passes it to you, gently")
+
 	# a goal: banner, the puck comes back, nothing is counted
 	h.place(Vector2(0, 0), Vector3(1, 0, 0))
 	game.puck.reset_at(Vector3(Rink.GOAL_X - 1.0, 0.0, 0.0))
