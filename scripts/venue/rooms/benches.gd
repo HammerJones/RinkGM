@@ -64,12 +64,8 @@ func build(k: VenueKit) -> void:
 			else:
 				k.aged_block(Vector3(ex - 0.08, 0, z1 - 0.25), Vector3(ex + 0.08, 1.3, z0), wall, 0.5)
 			k.glass(Vector3(ex - 0.03, 1.3, z1 - 0.25), Vector3(ex + 0.03, 2.5, z0))
-		# World: the two gates onto the ice, one at each end (W9, W10)
-		for g: Array in Shell.GATES:
-			var gx0: float = g[1]
-			var gx1: float = g[2]
-			if g[0] == "z-" and gx0 >= x0 - 0.01 and gx1 <= x1 + 0.01:
-				_ice_gate(k, gx0, gx1, leaf, x0)
+		# World: the two gates onto the ice, one at each end (W9, W10), are
+		# swinging doors in the boards (RinkDoors, hung by the glass room)
 		# World: each dressed player's spare stick stood up inside the bench
 		# (evening notes W11; the one in play is in his hands): team-issue
 		# sticks in the club's colours, each player's own curve and tape,
@@ -105,22 +101,3 @@ func build(k: VenueKit) -> void:
 	add_spot(k, VenueSpot.Kind.JOB, "ice_check", Vector3(-3.05, 1.0, z0 - 0.3), "Check the ice",
 		{"job": "ice_check", "target": "ice", "readable": "note_screwdriver"}, 1.6)
 
-
-## World: a gate leaf cut into the boards over the walker's gap (Shell.GATES):
-## seams on both faces, two hinges at the end nearer the bench's own end wall,
-## a drop latch at the other.
-func _ice_gate(k: VenueKit, gx0: float, gx1: float, col: Color, bench_x0: float) -> void:
-	var zi := -Rink.HALF_W
-	var zo := -Venue.BOARD_OUT
-	var top := Rink.BOARD_H
-	var seam := Color("1b1c1f")
-	k.block(Vector3(gx0 + 0.02, 0.05, zo - 0.035), Vector3(gx1 - 0.02, top - 0.04, zo), col, 0.5, 0.03, false)
-	for sx: float in [gx0, gx1]:
-		k.block(Vector3(sx - 0.012, 0.02, zo - 0.04), Vector3(sx + 0.012, top, zo + 0.01), seam, 0.5, 0.0, false)
-		k.block(Vector3(sx - 0.01, 0.02, zi - 0.004), Vector3(sx + 0.01, top - 0.02, zi + 0.002), seam, 0.5, 0.0, false)
-	var near_x0 := absf(gx0 - bench_x0) < 1.5
-	var hx := gx0 + 0.05 if near_x0 else gx1 - 0.05
-	var lx := gx1 - 0.08 if near_x0 else gx0 + 0.08
-	for hy: float in [0.2, top - 0.25]:
-		k.block(Vector3(hx - 0.03, hy, zo - 0.06), Vector3(hx + 0.03, hy + 0.12, zo - 0.03), Color("8a8f96"), 0.5, 0.0, false)
-	k.block(Vector3(lx - 0.025, top - 0.35, zo - 0.08), Vector3(lx + 0.025, top - 0.12, zo - 0.035), Color("b8bcc2"), 0.5, 0.0, false)
