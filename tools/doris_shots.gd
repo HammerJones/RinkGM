@@ -5,6 +5,8 @@ extends SceneTree
 ##   godot --path . --script res://tools/doris_shots.gd -- --out=prefix [--age=worn|repaired|renovated] [--bay]
 ## --bay renders the hatch flow in the venue's resurfacer bay instead: the
 ## walk-up to Doris's hatch, then the plug change playing there in place.
+## --job=doris_oil_change|doris_carb plays that hatch job instead, and
+## --steps=a,b,c renders it at those step ids (default: its second step).
 ## Without scripts/art/doris_model.gd it renders the old Props "resurfacer".
 
 const VIEWS := {
@@ -25,6 +27,13 @@ var _bay := false
 var _venue: Node3D
 var _job: Node3D
 var _walk_cam: Camera3D
+const HATCH_SCENES := {
+	"doris_plugs": "res://scenes/world/jobs/doris_plugs.tscn",
+	"doris_oil_change": "res://scenes/world/jobs/doris_oil.tscn",
+	"doris_carb": "res://scenes/world/jobs/doris_carb.tscn",
+}
+var _job_id := "doris_plugs"
+var _steps: PackedStringArray = []
 
 
 func _initialize() -> void:
@@ -36,6 +45,10 @@ func _initialize() -> void:
 			age = maxi(VenueRoom.AGE_NAMES.find(a.trim_prefix("--age=")), 0)
 		elif a == "--bay":
 			_bay = true
+		elif a.begins_with("--job="):
+			_job_id = a.trim_prefix("--job=")
+		elif a.begins_with("--steps="):
+			_steps = a.trim_prefix("--steps=").split(",")
 	if _bay:
 		_init_bay()
 		return
@@ -106,6 +119,10 @@ func _init_bay() -> void:
 	root.add_child(_walk_cam)
 	_walk_cam.current = true
 	_names = ["bay_walkup", "bay_hatch_job", "bay_hatch_well"]
+	if _job_id != "doris_plugs" or not _steps.is_empty():
+		_names = ["bay_walkup", "bay_%s" % _job_id]
+		for st in _steps:
+			_names.append("bay_%s_%s" % [_job_id, st])
 
 
 func _bay_step() -> void:
@@ -116,14 +133,27 @@ func _bay_step() -> void:
 			_walk_cam.look_at_from_position(stand + Vector3(0.6, 1.65, -1.2), d.global_transform * Vector3(0.9, 0.8, 0.85), Vector3.UP)
 		1:
 			var d2 := _bay_doris()
-			_job = (load("res://scenes/world/jobs/doris_plugs.tscn") as PackedScene).instantiate()
+			_job = (load(HATCH_SCENES[_job_id]) as PackedScene).instantiate()
 			root.add_child(_job)
 			_job.set_physics_process(false)
-			_job.call("begin", {"sim": null, "job": "doris_plugs", "target": "doris_plugs", "room": "zamboni_bay",
+			_job.call("begin", {"sim": null, "job": _job_id, "target": _job_id, "room": "zamboni_bay",
 				"place": d2.global_transform * DorisModel.hatch_frame(), "host": d2, "eye": _walk_cam.global_transform})
 			_job.get("input").set("scripted", func(_f: JobInput.Frame, _dt: float, _c: int) -> void: pass)
-		2:
-			_job.call("advance")
+		_:
+			if _steps.is_empty():
+				_job.call("advance")
+				return
+			# play it with the autopilot up to the step, then hold there
+			var pilot := JobAutopilot.new(_job as JobScene, false)
+			pilot.hold_at = _steps[_i - 2]
+			pilot.hold_ticks = 3
+			_job.get("input").set("scripted", pilot.drive)
+			for k in 4000:
+				if str(_job.call("step_id")) == pilot.hold_at:
+					break
+				_job.call("tick", 1.0 / 30.0)
+			for k in 40:
+				_job.call("tick", 1.0 / 30.0)
 
 
 func _bay_doris() -> DorisModel:

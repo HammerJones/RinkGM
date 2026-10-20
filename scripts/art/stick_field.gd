@@ -1,9 +1,10 @@
 class_name StickField
 extends Node3D
-## The real sticks of one room (StickProp bodies, its children). Keeps them
-## cheap: every resting stick is drawn as part of one merged mesh (one draw
-## for the room, rebuilt only when a stick falls asleep or wakes), and while
-## the camera is more than FAR metres away the resting sticks leave the
+## The real sticks of one room (StickProp bodies, its children), and its
+## other loose things (LooseProp: cups, cones, boxes, chairs). Keeps them
+## cheap: every resting stick and prop is drawn as part of one merged mesh
+## (one draw for the room, rebuilt only when one falls asleep or wakes), and
+## while the camera is more than FAR metres away the resting ones leave the
 ## physics space altogether.
 
 const FAR := 24.0
@@ -13,6 +14,7 @@ const DRAW_RANGE := 45.0  # sticks are not drawn beyond this
 static var _arrays := {}  # ArrayMesh -> [verts, normals, colours]
 
 var sticks: Array[StickProp] = []
+var props: Array[LooseProp] = []
 var _mi: MeshInstance3D
 var _dirty := true
 var _t := 0.0
@@ -29,6 +31,20 @@ func add_stick(s: StickProp) -> void:
 
 func remove_stick(s: StickProp) -> void:
 	sticks.erase(s)
+	_dirty = true
+
+
+func add_prop(p: LooseProp) -> void:
+	p.field = self
+	props.append(p)
+	add_child(p)
+	_dirty = true
+
+
+func remove_prop(p: LooseProp) -> void:
+	props.erase(p)
+	if p.field == self:
+		p.field = null
 	_dirty = true
 
 
@@ -68,16 +84,25 @@ func _rebuild() -> void:
 	var meshes: Array[ArrayMesh] = []
 	var xfs: Array[Transform3D] = []
 	var first := true
-	for s in sticks:
-		if not is_instance_valid(s) or s.is_queued_for_deletion():
+	for b in _bodies():
+		if not is_instance_valid(b) or b.is_queued_for_deletion():
 			continue
+		var s := b as RigidBody3D
 		var p := s.transform.origin
 		_bounds = AABB(p, Vector3.ZERO) if first else _bounds.expand(p)
 		first = false
-		if s.sleeping:
-			meshes.append(s.mesh)
+		var m: ArrayMesh = s.get("mesh") as ArrayMesh
+		if (s.sleeping or s.freeze) and m:  # frozen: placed, not yet let go
+			meshes.append(m)
 			xfs.append(s.transform)
 	_mi.mesh = merge(meshes, xfs)
+
+
+func _bodies() -> Array:
+	var out := []
+	out.append_array(sticks)
+	out.append_array(props)
+	return out
 
 
 ## One mesh of many stick meshes placed by `xfs` (null when empty): a whole
@@ -129,9 +154,10 @@ func _check_distance() -> void:
 	if near == _near:
 		return
 	_near = near
-	for s in sticks:
-		if not is_instance_valid(s):
+	for b in _bodies():
+		if not is_instance_valid(b) or b.get("held") == true:
 			continue
+		var s := b as RigidBody3D
 		if near and s.process_mode == Node.PROCESS_MODE_DISABLED:
 			s.process_mode = Node.PROCESS_MODE_INHERIT
 			s.sleeping = true

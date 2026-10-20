@@ -55,6 +55,10 @@ func drive(f: JobInput.Frame, dt: float, _context: int) -> void:
 			_blade(f, dt, sid)
 		"doris_plugs":
 			_plugs(f, dt, sid)
+		"doris_oil_change":
+			_doris_oil(f, sid)
+		"doris_carb":
+			_carb(f, sid)
 
 
 func _holding_grab(sid: String) -> bool:
@@ -223,3 +227,71 @@ func _plugs(f: JobInput.Frame, _dt: float, sid: String) -> void:
 				f.turn = 0.03
 		"torque":
 			_torque(f, s.wrench, 0)
+
+
+## Doris's oil change: sloppy pours a good half quart past FULL.
+func _doris_oil(f: JobInput.Frame, sid: String) -> void:
+	var s: Variant = scene
+	match sid:
+		"note", "pan", "gasket", "cap", "start":
+			_press(f)
+		"drain":
+			_loosen(f, "ratchet")
+		"filter_off":
+			_loosen(f, "filter_wrench")
+		"plug_in":
+			if _plus_turn(f, s.plug, "ratchet"):
+				_press(f)
+		"filter_on":
+			if _plus_turn(f, s.filter, "filter_wrench"):
+				_press(f)
+		"fill":
+			var want: float = float(s.FULL_QT) + (0.6 if sloppy else 0.0)
+			if float(s.quarts) < want:
+				f.grab = 1.0
+				return
+			_press(f)
+
+
+## Doris's carb clean: sloppy sprays the jets half clear and reuses the
+## old gasket.
+func _carb(f: JobInput.Frame, sid: String) -> void:
+	var s: Variant = scene
+	match sid:
+		"note", "cleaner_on", "start":
+			_press(f)
+		"cleaner":
+			_loosen(f, "hand")
+		"bowl_off":
+			_loosen(f, "screwdriver")
+		"jets":
+			var js: PackedFloat32Array = s.jets
+			var want := 0.5 if sloppy else 1.0
+			for i in js.size():
+				if js[i] < want:
+					if scene.selection != i:
+						if _n % 2 == 0:
+							f.move.x = 1.0
+						return
+					f.grab = 1.0
+					return
+			_press(f)
+		"bowl":
+			if float(s.bowl_clean) < (0.4 if sloppy else 1.0):
+				f.grab = 1.0
+				f.turn = 0.05 if _n % 2 == 0 else -0.05
+				return
+			_press(f)
+		"gasket":
+			if scene.selection != (1 if sloppy else 0):
+				if _n % 2 == 0:
+					f.move.x = 1.0
+				return
+			_press(f)
+		"bowl_on":
+			var sc: Fastener = s.screws[int(s.screw_idx)]
+			if _plus_turn(f, sc, "screwdriver"):
+				_press(f)
+		"choke":
+			f.grab = 1.0
+			f.turn = 0.05 if _n % 2 == 0 else -0.05
