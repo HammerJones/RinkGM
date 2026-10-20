@@ -89,6 +89,26 @@ func tunables() -> Array:
 ## Swing of the free hand when skating one-handed.
 @export_range(0.0, 0.4, 0.005) var stride_arm_swing := 0.12
 
+# ------------------------------------------------------------------- back
+# Skating backwards: C-cuts. Each skate in turn sweeps out and forward on
+# its inside edge, toe turned in, pushing the body back, then glides back in
+# under the hips. The skater sits lower with the back more upright.
+## How far out each C-cut sweeps, and how far forward it reaches.
+@export_range(0.0, 0.5, 0.005) var back_cut_width := 0.2
+@export_range(0.0, 0.6, 0.005) var back_cut_reach := 0.28
+## Toe turned in through the cut (radians).
+@export_range(0.0, 1.0, 0.01) var back_toe_in := 0.45
+## Extra hip sink and less forward lean skating backwards.
+@export_range(0.0, 0.3, 0.005) var back_sit := 0.06
+@export_range(0.0, 1.0, 0.01) var back_upright := 0.25
+## Backwards speed (m/s) that counts as skating backwards.
+@export_range(0.1, 2.0, 0.05) var back_speed := 0.4
+## The turn-around pivot (Skater.backwards toggling): skates apart, toes
+## turned out, hips dropped a little.
+@export_range(0.05, 0.5, 0.005) var back_pivot_width := 0.22
+@export_range(0.0, 1.5, 0.01) var back_pivot_toe_out := 0.7
+@export_range(0.0, 0.2, 0.005) var back_pivot_sink := 0.05
+
 # ------------------------------------------------------------------ stick
 # Real sticks are about 163 cm tall with a 32-39 cm blade 5-9 cm high; the
 # blocky voxel players need a chunkier stick to read at that scale.
@@ -105,7 +125,7 @@ func tunables() -> Array:
 # The top hand (opposite the shooting side) never leaves the knob; the bottom
 # hand slides along the shaft and lets go to reach.
 ## Where the top hand sits across the body (- is its own side).
-@export_range(-0.5, 0.3, 0.01) var grip_top_side := -0.14
+@export_range(-0.5, 0.3, 0.01) var grip_top_side := -0.1
 ## Top hand height above the hips (it stays between grip_top_low and
 ## grip_top_high: hips to chest).
 @export_range(0.0, 0.8, 0.01) var grip_top_height := 0.22
@@ -133,9 +153,8 @@ func tunables() -> Array:
 ## How quickly the bottom hand slides to its new spot.
 @export_range(1.0, 30.0, 0.5) var grip_slide_speed := 10.0
 ## Arm length (shoulder to the middle of the glove), times the model's
-## 0.49 m. The voxel arms are short for a 2 m skater, so both hands
-## can't reach a full-size stick without stretching them.
-@export_range(1.0, 1.8, 0.01) var grip_arm_length := 1.5
+## 0.68 m (World's character sheet). Leave at 1 unless testing.
+@export_range(0.8, 1.5, 0.01) var grip_arm_length := 1.0
 ## Two hands on: the shoulders turn towards the stick (radians) so the
 ## bottom shoulder comes forward to the shaft ...
 @export_range(0.0, 1.0, 0.01) var grip_shoulder_turn := 0.4
@@ -242,3 +261,81 @@ func tunables() -> Array:
 @export_range(0.0, 0.6, 0.01) var celebrate_knee_drop := 0.38
 ## Upper-body lean back on the celebrations.
 @export_range(-0.5, 0.8, 0.01) var celebrate_lean_back := 0.25
+
+# ------------------------------------------------------------------- walk
+# People on foot (PersonRig). The feet stay planted on the floor while they
+# carry weight, so a stride's length always matches the walker's speed.
+## Steps per second at a stroll (VenueWalker.WALK, 1.4 m/s) ...
+@export_range(1.0, 3.0, 0.05) var walk_cadence := 1.8
+## ... and at a run (VenueWalker.RUN, 4 m/s).
+@export_range(1.5, 4.5, 0.05) var walk_cadence_run := 2.9
+## Share of each cycle a foot is on the floor walking (above 0.5: both feet
+## down for a moment) ...
+@export_range(0.5, 0.75, 0.01) var walk_duty := 0.62
+## ... and running (below 0.5: both feet off the floor for a moment).
+@export_range(0.2, 0.5, 0.01) var walk_duty_run := 0.36
+## How high the swinging foot lifts walking / running.
+@export_range(0.0, 0.2, 0.005) var walk_lift := 0.07
+@export_range(0.0, 0.4, 0.005) var walk_lift_run := 0.2
+## Hip rise and fall with each step.
+@export_range(0.0, 0.08, 0.002) var walk_bob := 0.025
+## Hips shift over the foot that carries the weight.
+@export_range(0.0, 0.1, 0.002) var walk_sway := 0.03
+## Hips turn with each stride (radians); the shoulders turn against them.
+@export_range(0.0, 0.4, 0.01) var walk_hip_turn := 0.12
+## How far the arms swing (radians, at a walk; more at a run).
+@export_range(0.0, 1.2, 0.01) var walk_arm_swing := 0.35
+## Forward lean of the upper body at a run.
+@export_range(0.0, 0.6, 0.01) var walk_run_lean := 0.2
+## Feet apart, side to side.
+@export_range(0.05, 0.3, 0.005) var walk_width := 0.11
+## How quickly the body turns to face the way it walks (per second).
+@export_range(1.0, 20.0, 0.5) var walk_turn := 8.0
+## Standing still: slow weight shift side to side.
+@export_range(0.0, 0.06, 0.002) var walk_idle_sway := 0.015
+## Speeds (m/s) where a walk starts turning into a run, is a full run, and
+## is a flat-out sprint (VenueWalker: walk 2.2, sprint 6.5).
+@export_range(1.5, 4.0, 0.05) var walk_run_from := 2.5
+@export_range(2.5, 5.0, 0.05) var walk_run_full := 3.6
+@export_range(4.0, 9.0, 0.1) var walk_sprint_speed := 6.5
+## A sprint: quick steps, short contacts, high knees, more lean.
+@export_range(2.5, 5.5, 0.05) var walk_cadence_sprint := 4.2
+@export_range(0.15, 0.4, 0.01) var walk_duty_sprint := 0.24
+@export_range(0.0, 0.5, 0.005) var walk_lift_sprint := 0.3
+@export_range(0.0, 0.6, 0.01) var walk_sprint_lean := 0.2
+
+# -------------------------------------------------------------------- sit
+## Upper-body lean back when sitting (radians).
+@export_range(-0.4, 0.6, 0.01) var sit_lean := 0.08
+## How far in front of the seat edge the feet rest.
+@export_range(0.1, 0.6, 0.01) var sit_feet := 0.38
+## How quickly a person sits down or gets up (per second).
+@export_range(1.0, 15.0, 0.5) var sit_speed := 5.0
+
+# ------------------------------------------------------------------ crouch
+## Hip height in a squat (metres off the floor).
+@export_range(0.2, 0.7, 0.01) var crouch_hips := 0.38
+## Hip height kneeling on one knee.
+@export_range(0.3, 0.8, 0.01) var crouch_kneel_hips := 0.5
+## Forward lean of the upper body crouched / kneeling (radians).
+@export_range(0.0, 1.2, 0.01) var crouch_lean := 0.45
+## Crouched walking and standing (VenueWalker.crouched): hip height and
+## forward lean.
+@export_range(0.3, 0.8, 0.01) var crouch_walk_hips := 0.52
+@export_range(0.0, 1.0, 0.01) var crouch_walk_lean := 0.35
+
+# ------------------------------------------------------------------- jump
+## How high the feet tuck up under the body in the air.
+@export_range(0.0, 0.5, 0.01) var jump_tuck := 0.25
+## How far the arms swing up in a jump (radians).
+@export_range(0.0, 2.0, 0.01) var jump_arms := 0.8
+## How far the hips dip on landing, and how long the landing takes.
+@export_range(0.0, 0.4, 0.01) var jump_land_dip := 0.16
+@export_range(0.1, 0.8, 0.01) var jump_land_time := 0.32
+
+# ------------------------------------------------------------------ reach
+## How far the upper body bends and turns to bring a hand to a job part
+## (share of what's needed, 1 = all the way).
+@export_range(0.0, 1.0, 0.01) var reach_bend := 0.8
+## How quickly a hand moves onto (or off) its target (per second).
+@export_range(1.0, 30.0, 0.5) var reach_speed := 9.0

@@ -82,7 +82,7 @@ func step(dt: float) -> void:
 	vel = heading * fwd
 	yaw_rate = turn_rate
 	braking = braking and stun_timer <= 0.0
-	ctrl.move = Vector2(heading.x, heading.z) if push and stun_timer <= 0.0 else Vector2.ZERO
+	ctrl.move = Vector2(heading.x, heading.z) * signf(go_speed if go_speed != 0.0 else 1.0) if push and stun_timer <= 0.0 else Vector2.ZERO
 	# the treadmill: the skater stays put, the ice moves
 	position = Vector3.ZERO
 	var a := deg_to_rad(blade_deg)

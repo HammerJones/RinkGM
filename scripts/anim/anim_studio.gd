@@ -13,7 +13,7 @@ extends Node3D
 ##                        printing "SEG <seconds> <id>" at each clip's start
 ##   --loops=<n>          loops of each clip in the reel (default 2)
 ##   --turntable=<deg/s>  spin the skater for the main camera (default 0)
-##   --cam=<name>         three_quarter, side, front, back or top
+##   --cam=<name>         three_quarter, side, front, back, top or rear_quarter
 ##   --no-insets          hide the side and front views
 ##   --test=anim          headless check of every clip (used by tools/ci.sh)
 ## Record a reel with Godot's movie writer:
@@ -26,6 +26,7 @@ const CAMS := {
 	"front": Vector3(0.0, 1.0, 4.6),
 	"back": Vector3(180.0, 1.4, 5.2),
 	"top": Vector3(20.0, 6.0, 3.0),
+	"rear_quarter": Vector3(140.0, 1.5, 4.6),
 }
 const SPEEDS := [1.0, 0.5, 0.25]
 
@@ -39,6 +40,7 @@ class Stats:
 var puck: Puck
 var stats := Stats.new()
 var puppet: AnimPuppet
+var person: AnimPerson
 var tuning := AnimTuning.current()
 
 var _clip := 0
@@ -49,6 +51,7 @@ var _paused := false
 var _speed_i := 0
 var _turntable := 0.0
 var _cam_name := "three_quarter"
+var _cam_picked := false   # C chose a camera; clips' own cameras stop applying
 var _cam: Camera3D
 var _insets: Array[Camera3D] = []
 var _inset_box: Control
@@ -171,6 +174,7 @@ func _build_world() -> void:
 	_cam = Camera3D.new()
 	_cam.fov = 40.0
 	_cam.h_offset = 0.8  # skater left of centre, clear of the side views
+	_cam.cull_mask &= ~(1 << (FirstPersonArms.VIEW_LAYER - 1))
 	add_child(_cam)
 	_cam.make_current()
 
@@ -217,6 +221,11 @@ func _build_puppet() -> void:
 	# middling, fixed ratings so wind-ups play the same every run
 	puppet.setup(self, 0, 9, Models.palette(0), Skills.create(Skills.SKATER_KEYS, 55.0, 0.0, rng))
 	puppet.restart(Vector3.FORWARD)
+	person = AnimPerson.new()
+	add_child(person)
+	person.setup(Models.palette(1))
+	person.restart()
+	person.visible = false
 
 
 # --------------------------------------------------------------------- UI
@@ -266,6 +275,7 @@ func _build_ui() -> void:
 		sv.msaa_3d = Viewport.MSAA_2X
 		var c := Camera3D.new()
 		c.fov = 40.0
+		c.cull_mask &= ~(1 << (FirstPersonArms.VIEW_LAYER - 1))
 		c.set_meta("view", v)
 		sv.add_child(c)
 		svc.add_child(sv)
@@ -367,6 +377,11 @@ func _start_clip(i: int) -> void:
 	puppet.restart(puppet.heading)
 	puppet.rig.celebrate(&"", 0.001)
 	puck.visible = false
+	var on_foot: bool = c.get("person", false)
+	puppet.visible = not on_foot
+	person.visible = on_foot
+	person.restart()
+	_ice_offset = Vector2.ZERO
 	_title.text = "%02d/%02d  %s" % [_clip + 1, AnimClips.LIST.size(), c.title.to_upper()]
 	_note.text = "%s  [tuning: %s]" % [c.note, ", ".join(c.groups)]
 	if _reel:
@@ -385,6 +400,7 @@ func _physics_process(dt: float) -> void:
 		_loops += 1
 		_mem = {}
 		puppet.restart(puppet.heading)
+		person.restart()
 		puck.visible = false
 		if _reel and _loops >= _reel_loops:
 			_test_clip_done(c.id)
@@ -394,6 +410,14 @@ func _physics_process(dt: float) -> void:
 				return
 			_start_clip(_reel_list[_reel_i])
 			c = AnimClips.LIST[_clip]
+	if c.get("person", false):
+		AnimClips.run_person(c.id, person, _t, dt, _mem)
+		person.step(dt)
+		_ice_offset += Vector2(person.vel.x, person.vel.z) * dt
+		_ice_mat.set_shader_parameter("offset", _ice_offset)
+		if _test:
+			_test_person(c.id, dt)
+		return
 	puppet.spin = _turntable
 	AnimClips.run(c.id, puppet, _t, dt, _mem)
 	puppet.step(dt)
@@ -406,9 +430,20 @@ func _physics_process(dt: float) -> void:
 
 func _process(dt: float) -> void:
 	_clock += dt
-	_place_cam(_cam, _cam_name)
+	# the first-person clip looks through the person's own eyes
+	if person.visible and person.first_person:
+		if not person.eye.current:
+			person.eye.make_current()
+	elif not _cam.current:
+		_cam.make_current()
+	_place_cam(_cam, _view())
 	for c in _insets:
 		_place_cam(c, c.get_meta("view"))
+
+
+## The main camera's view: the clip's own ("cam"), unless one was picked.
+func _view() -> String:
+	return _cam_name if _cam_picked else AnimClips.LIST[_clip].get("cam", _cam_name)
 
 
 ## Puts a camera round the skater: angles are measured from the direction
@@ -416,7 +451,7 @@ func _process(dt: float) -> void:
 ## it is off (with it on, the main camera stays still and the skater spins).
 func _place_cam(c: Camera3D, view: String) -> void:
 	var v: Vector3 = CAMS.get(view, CAMS.three_quarter)
-	var face := Vector3.FORWARD if (c == _cam and _turntable != 0.0) else puppet.heading
+	var face := Vector3.FORWARD if (c == _cam and _turntable != 0.0) else (person.heading() if person.visible else puppet.heading)
 	var dir := face.rotated(Vector3.UP, -deg_to_rad(v.x))
 	var look := Vector3(0, 0.8, 0)
 	c.position = look + dir * v.z + Vector3.UP * (v.y - 0.8)
@@ -458,7 +493,8 @@ func _unhandled_input(e: InputEvent) -> void:
 			_turntable = 0.0 if _turntable != 0.0 else 30.0
 		KEY_C:
 			var names := CAMS.keys()
-			_cam_name = names[(names.find(_cam_name) + 1) % names.size()]
+			_cam_name = names[(names.find(_view()) + 1) % names.size()]
+			_cam_picked = true
 		KEY_TAB:
 			# the panel takes the side views' place while it is open
 			_panel.visible = not _panel.visible
@@ -473,11 +509,27 @@ func _finish_reel() -> void:
 			&"check": "check", &"fall_back": "fall", &"fall_forward": "fall",
 			&"cel_arms_up": "celebrate", &"cel_fist_pump": "celebrate", &"cel_knee_slide": "celebrate",
 			&"hockey_stop": "brake", &"cross_left": "cross", &"cross_right": "cross",
-			&"stickhandle": "handled",
+			&"stickhandle": "handled", &"skate_back": "back",
+			&"walk": "planted", &"run": "flight", &"walk_turn": "planted", &"sit": "sat",
+			&"sprint": "flight", &"jump": "air", &"crouch_walk": "low",
+			&"crouch_work": "reached", &"kneel_work": "knelt", &"reach_grab": "reached",
+			&"first_person": "reached",
 		}
 		for id in expect:
+			if not AnimClips.index_of(id) in _reel_list:
+				continue   # not in this run (--clips)
 			if not _test_log.get(id, {}).has(expect[id]):
 				_fail("%s never showed %s" % [id, expect[id]])
+		# the body's reach for the blade: out past the ready blade in front,
+		# much less behind the skater
+		var front := SkaterRig.blade_reach(Vector3.FORWARD)
+		var behind := SkaterRig.blade_reach(Vector3.BACK)
+		var ready := AnimPuppet.READY_BLADE.length()
+		print("anim test: blade reach front %.2f m, behind %.2f m, right %.2f m, left %.2f m" % [front, behind, SkaterRig.blade_reach(Vector3.RIGHT), SkaterRig.blade_reach(Vector3.LEFT)])
+		if front < ready or front > 2.2:
+			_fail("blade reach in front is %.2f m (the ready blade is %.2f m out)" % [front, ready])
+		if behind >= front:
+			_fail("the blade reaches as far behind (%.2f m) as in front (%.2f m)" % [behind, front])
 		for f in _test_fail:
 			printerr("FAIL: ", f)
 		print("anim test: %s" % ("all passed" if _test_fail.is_empty() else "%d failure(s)" % _test_fail.size()))
@@ -508,6 +560,8 @@ func _test_frame(id: StringName) -> void:
 		seen["brake"] = true
 	if r._cross > 0.5:
 		seen["cross"] = true
+	if r._back > 0.8:
+		seen["back"] = true
 	if puppet.position != Vector3.ZERO:
 		_fail("%s: the skater left the treadmill" % id)
 	# the two-handed clips keep the bottom hand on the shaft
@@ -536,6 +590,81 @@ func _test_frame(id: StringName) -> void:
 			if foot.y < -0.05 or foot.y > 0.4:
 				_fail("%s: a skate is at height %.2f" % [id, foot.y])
 				return
+
+
+## The on-foot checks: a sound pose, planted feet that hold still on the
+## floor while they carry weight, and hands that land on what they reach for.
+func _test_person(id: StringName, dt: float) -> void:
+	var r := person.rig
+	if not _test_log.has(id):
+		_test_log[id] = {}
+	var seen: Dictionary = _test_log[id]
+	for part in [r.hips, r.torso, r.head] + Array(r.thighs) + Array(r.shins) + Array(r.uppers) + Array(r.forearms) + Array(person.arms.uppers) + Array(person.arms.forearms):
+		var gt: Transform3D = part.global_transform
+		if not (gt.origin.is_finite() and gt.basis.x.is_finite() and gt.basis.y.is_finite()):
+			_fail("%s: %s has a broken transform" % [id, part.name])
+			return
+	var feet: Array = [r.foot_pos(0), r.foot_pos(1)]
+	var prev: Array = seen.get("feet", feet)
+	seen["feet"] = feet
+	var low := minf(feet[0].y, feet[1].y)
+	# (running, both feet leave the floor between steps)
+	var top := 0.12 if person.vel.length() < 2.5 else 0.4
+	var jumping := person.y > 0.0 or r._land > 0.0
+	if jumping:
+		seen["air"] = true
+		if person.y > 0.3 and low < 0.1:
+			_fail("%s: the feet hang down to the floor at the top of a jump" % id)
+	elif low < -0.03 or (r.pose == PersonRig.Pose.STAND and low > top):
+		_fail("%s: the feet are at height %.2f" % [id, low])
+	# turning, the body pivots over a planted foot, so allow for that
+	var face := person.heading()
+	var turn := absf(face.signed_angle_to(seen.get("face", face), Vector3.UP)) / dt
+	seen["face"] = face
+	if r.crouched and r._low > 0.95:
+		if r.hips.position.y > AnimTuning.current().crouch_walk_hips + 0.02:
+			_fail("%s: crouched, but the hips are up at %.2f" % [id, r.hips.position.y])
+		elif person.vel.length() > 0.5:
+			seen["low"] = true
+	# (steady walking only: starting and stopping blend the feet in and out)
+	var steady: float = seen.get("steady", 0.0) + dt if person.vel.distance_to(person.go) < 0.05 else 0.0
+	seen["steady"] = steady
+	if r._gait > 0.95 and person.vel.length() > 0.5 and steady > 0.8 and not jumping:
+		var down := 0
+		for i in 2:
+			var planted: Array = seen.get("planted_now", [false, false])
+			if r._planted[i] and planted[i]:
+				down += 1
+				# on the treadmill the floor runs backwards under a planted foot
+				var slip: Vector3 = (feet[i] - prev[i]) / dt + person.vel
+				slip.y = 0.0
+				if slip.length() > 0.35 + turn * 0.4:
+					_fail("%s: a planted foot slides at %.2f m/s" % [id, slip.length()])
+				else:
+					seen["planted"] = true
+		if down == 0 and low > 0.02:
+			seen["flight"] = true
+	seen["planted_now"] = r._planted.duplicate()
+	if r.pose == PersonRig.Pose.SIT and r.seat != PersonRig.NONE and r.hips.global_position.distance_to(r.seat) < 0.2:
+		seen["sat"] = true
+	if r.pose == PersonRig.Pose.KNEEL:
+		for th in r.thighs:
+			var knee: Vector3 = th.global_transform * Vector3(0.0, -SkaterRig.THIGH, 0.0)
+			if knee.y < 0.12:
+				seen["knelt"] = true
+	for i in 2:
+		var want: Vector3 = person.arms.reach[i] if person.first_person else r.reach[i]
+		var key := "held_%d" % i
+		if want == PersonRig.NONE or want.distance_to(seen.get("want_%d" % i, want)) > 0.05:
+			seen[key] = 0.0
+		seen["want_%d" % i] = want
+		if want != PersonRig.NONE:
+			var miss := person.hand_pos(i).distance_to(want)
+			if miss < 0.06:
+				seen["reached"] = true
+				seen[key] = seen.get(key, 0.0) + dt
+			elif seen.get(key, 0.0) > 0.4 and miss > 0.15:
+				_fail("%s: hand %d slipped %.2f m off its target" % [id, i, miss])
 
 
 func _fail(msg: String) -> void:
