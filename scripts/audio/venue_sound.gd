@@ -166,7 +166,8 @@ func watch_puck(p: Node3D) -> void:
 	_puck = p
 	_puck_vel = p.get("vel")
 	if p.has_signal("post_hit"):
-		p.post_hit.connect(func() -> void:
+		# post_hit() before the Hockey lane's PR #29, post_hit(at, speed) after
+		p.post_hit.connect(func(_at := Vector3.ZERO, _speed := 0.0) -> void:
 			var v: Vector3 = p.get("vel")
 			puck_contact("post", p.global_position, v.length()))
 	if p.has_signal("left_rink"):

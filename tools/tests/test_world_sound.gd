@@ -186,11 +186,14 @@ func _match_puck(w: Node3D) -> void:
 	w.add_child(vs)
 	var puck = load("res://scripts/game/puck.gd").new()  # loaded late: Puck pulls in the match classes
 	w.add_child(puck)
+	puck.set_physics_process(false)  # the test moves it by hand
+	puck.set_process(false)
+	vs.set_physics_process(false)  # and steps the watch itself
 	vs.watch_puck(puck)
 	var heard := func(name: String) -> bool:
 		return VenueSound.heard.any(func(h: Dictionary) -> bool: return str(h.sound) == name)
 	for c in [[Vector3(Rink.HALF_L - 0.05, 0.0, 1.0), "puck_boards"], [Vector3(Rink.HALF_L - 0.05, 1.7, 1.0), "glass_rattle"]]:
-		await create_timer(0.06).timeout  # past the rate limit
+		vs._next_contact = 0.0  # past the rate limit (the timer runs on game time)
 		VenueSound.heard.clear()
 		puck.position = c[0]
 		puck.vel = Vector3(18, 0, 0)
@@ -199,11 +202,14 @@ func _match_puck(w: Node3D) -> void:
 		vs._physics_process(0.016)
 		_expect(heard.call(c[1]), "a match puck off the %s -> %s" % ["glass" if c[0].y > 1.0 else "boards", c[1]])
 	VenueSound.heard.clear()
-	await create_timer(0.06).timeout
-	puck.post_hit.emit()
+	vs._next_contact = 0.0
+	if _signal_args(puck, "post_hit") == 2:
+		puck.post_hit.emit(puck.position, 12.0)
+	else:
+		puck.post_hit.emit()
 	_expect(heard.call("puck_post"), "Puck.post_hit -> puck_post")
 	VenueSound.heard.clear()
-	await create_timer(0.06).timeout
+	vs._next_contact = 0.0
 	puck.left_rink.emit(puck.position)
 	_expect(heard.call("glass_rattle"), "Puck.left_rink -> glass_rattle")
 	VenueSound.recording = false
@@ -215,3 +221,11 @@ func _collect(n: Node, want: int, odd: Array) -> void:
 		odd.append(n.name)
 	for c in n.get_children():
 		_collect(c, want, odd)
+
+
+func _signal_args(o: Object, sig: String) -> int:
+	for d: Dictionary in o.get_signal_list():
+		if str(d.name) == sig:
+			var a: Array = d.args
+			return a.size()
+	return 0
