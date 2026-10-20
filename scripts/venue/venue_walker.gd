@@ -43,13 +43,13 @@ var head: Node3D
 var _shape: CollisionShape3D
 var _jump_queued := false
 var _sprint := 0.0  # 0 walking pace .. 1 full sprint
-var _step_t := 0.0  # seconds since the last footstep
-var _was_floor := true
-var _venue: Venue
 var _eye := EYE        # standing or crouched eye height
 var _eye_y := 0.0      # the eyes' smoothed height (world) over steps
 var _eye_v := 0.0
 var _air_time := 0.0
+var _step_t := 0.0  # seconds since the last footstep
+var _was_floor := true
+var _venue: Venue
 
 
 func _init() -> void:
@@ -107,8 +107,6 @@ func _physics_process(dt: float) -> void:
 	_step_up(Vector3(velocity.x, 0, velocity.z) * dt)
 	var fall := velocity.y
 	move_and_slide()
-	if RinkSound.enabled():
-		_footsteps(dt, fall)
 	_air_time = 0.0 if is_on_floor() else _air_time + dt
 	# on stairs the body pops up a step at a time (and settles back onto the
 	# tread); the eyes glide after it instead. A jump or a real fall the eyes
@@ -122,6 +120,8 @@ func _physics_process(dt: float) -> void:
 		_eye_y += _eye_v * dt
 	_eye = move_toward(_eye, CROUCH_EYE if crouched else EYE, 4.0 * dt)
 	head.position.y = _eye + _eye_y - y
+	if RinkSound.enabled():
+		_footsteps(dt, fall)
 
 
 ## A footstep every stride while moving on a floor (about 0.55 s apart at

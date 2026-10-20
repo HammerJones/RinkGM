@@ -18,7 +18,7 @@ extends Node3D
 ## when there's nothing in reach, B (held) crouches when no panel is open,
 ## O the office (in an owner career),
 ## Q / LB raise the watch, Tab / Back the bag (R turns what's in hand),
-## Esc / B close a panel, 1 2 3 / D-pad set this room's age,
+## Esc / B close a panel or the office computer, 1 2 3 / D-pad set this room's age,
 ## F / Y fly. On the ice in shoes the mouse or right stick keeps the
 ## owner's balance (KitHud).
 ##
@@ -55,6 +55,7 @@ var flying := false
 var _yaw := -PI * 0.5  # facing +X, toward the front doors and the ice
 var _pitch := 0.0
 var _label: Label
+var _prompt: Label   # the [E] line, under the middle of the screen
 var _toast: Label
 var _toast_t := 0.0
 var _panel: PanelContainer
@@ -141,6 +142,14 @@ func _build_ui() -> void:
 	_label.add_theme_color_override("font_color", RinkOS.READOUT)
 	_label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	layer.add_child(_label)
+	_prompt = Label.new()
+	_prompt.set_anchors_preset(Control.PRESET_CENTER)
+	_prompt.position = Vector2(-300, 28)
+	_prompt.size = Vector2(600, 40)
+	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_prompt.add_theme_color_override("font_color", RinkOS.ACTION)
+	_prompt.add_theme_color_override("font_shadow_color", Color.BLACK)
+	layer.add_child(_prompt)
 	_toast = Label.new()
 	_toast.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_toast.position = Vector2(-300, -120)
@@ -268,6 +277,7 @@ func _process(dt: float) -> void:
 	if _busy():
 		walker.wish = Vector3.ZERO
 		walker.crouch = false
+		_prompt.text = ""
 		return
 	walker.speed_scale = kit.step(dt) if not flying else 1.0
 	_aim(dt)
@@ -305,37 +315,43 @@ func _process(dt: float) -> void:
 		walker.crouch = Input.is_physical_key_pressed(KEY_CTRL) or Input.is_physical_key_pressed(KEY_C) \
 			or Input.is_joy_button_pressed(0, JOY_BUTTON_B)
 	_label.text = "\n".join(_hud_lines())
+	_prompt.text = _hint()
 
 
 func _hud_lines() -> Array:
 	var room := venue.room_at(walker.global_position + Vector3(0, 0.5, 0))
 	var head := "// %s   %s" % [venue.rink_name, story.clock_text() if story else "FREE WALK"]
 	var where := "%s [%s]" % [room.display_name.to_upper() if room else "OUTSIDE", VenueRoom.AGE_NAMES[room.age].to_upper() if room else "-"]
-	var s := _looked_at()
-	var hint := ""
-	var r := _looked_readable(READ_REACH)
-	if _held:
-		hint = "[LMB] STICK IT HERE   [E] %s   [F] CRUMPLE" % ("LOWER" if _held_close else "LOOK CLOSER")
-	elif _inspect:
-		hint = "[E] STEP BACK"
-	elif _looked_whiteboard():
-		hint = "[E] LEAN IN   [LMB] DRAW   [X] WIPE YOUR MARKS"
-	elif r:
-		hint = "[E] LEAN IN"
-		if r.movable and _looked_readable(HAND_REACH) == r:
-			hint += "   [LMB] TAKE DOWN"
-	elif s:
-		hint = "[E] " + s.prompt()
-	else:
-		hint = kit.hands_hint()
-		var d := walker.nearest_door(venue)
-		if d and not hint.begins_with("[E]"):
-			hint = "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
 	if story and story.link:
 		head += "   [O] OFFICE"
+	return [head, where]
+
+
+## The [E] line (shown under the middle of the screen, playtest #20): what
+## you can do with what you're looking at or holding, else the nearest door.
+func _hint() -> String:
 	if kit.status() != "":
-		hint = kit.status()
-	return [head, where, hint]
+		return kit.status()
+	var s := _looked_at()
+	var r := _looked_readable(READ_REACH)
+	if _held:
+		return "[LMB] STICK IT HERE   [E] %s   [F] CRUMPLE" % ("LOWER" if _held_close else "LOOK CLOSER")
+	if _inspect:
+		return "[E] STEP BACK"
+	if _looked_whiteboard():
+		return "[E] LEAN IN   [LMB] DRAW   [X] WIPE YOUR MARKS"
+	if r:
+		var lean := "[E] LEAN IN"
+		if r.movable and _looked_readable(HAND_REACH) == r:
+			lean += "   [LMB] TAKE DOWN"
+		return lean
+	if s:
+		return "[E] " + s.prompt()
+	var hint := kit.hands_hint()
+	var d := walker.nearest_door(venue)
+	if d and not hint.begins_with("[E]"):
+		hint = "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
+	return hint
 
 
 func _looked_at() -> VenueSpot:
@@ -454,7 +470,7 @@ func _start_job(job: Dictionary) -> void:
 	var note := story.spot_text(job)
 	if not note.is_empty():
 		bb += "%s\n\n" % note.text
-	bb += "[color=#%s]The mini game for this one isn't in yet.[/color]\n\n[color=#%s][E] DO IT THE QUICK WAY   [Q] LEAVE IT[/color]" % [RinkOS.DIM.to_html(false), RinkOS.ACTION.to_html(false)]
+	bb += "[color=#%s]The mini game for this one isn't in yet.[/color]\n\n[color=#%s][E] DO IT THE QUICK WAY   [ESC] LEAVE IT[/color]" % [RinkOS.DIM.to_html(false), RinkOS.ACTION.to_html(false)]
 	_open_panel(bb)
 
 

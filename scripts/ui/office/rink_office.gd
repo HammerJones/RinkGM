@@ -10,12 +10,20 @@ extends Control
 ## played to Wednesday afternoon.
 ## `-- --tab=grid|sched|log|pl|jobs|board` opens a screen;
 ## `-- --owner` starts a fresh owner career (unsaved) when none is running;
-## `-- --screenshot=out.png` saves a frame and quits.
+## `-- --screenshot=out.png` saves a frame and quits;
+## `-- --test=office` runs tests/office_test.gd (keyboard menus, Esc).
+##
+## Arrow keys / D-pad move between the buttons and Enter / A presses one
+## (playtest #41); Esc leaves the computer (#2): back to the hub here, or back
+## to walking when the venue walk opened it (the walk closes it).
 
 const TABS := [["grid", "Ice grid"], ["sched", "Schedule"], ["log", "Log book"], ["pl", "P&L"], ["jobs", "Jobs"], ["board", "Corkboard"]]
 const NOTE := Color("f2d16b")   ## sticky note paper
 const CORK := Color("4a3424")   ## the corkboard
 const INK := Color("2a1d08")    ## Gus's pencil
+
+## Leaving the computer for the hub (tests).
+signal leaving
 
 var sim: RinkSim
 var rink: RinkLink  ## null in the standalone demo
@@ -81,10 +89,15 @@ func _ready() -> void:
 
 	_refresh()
 	RinkOS.capture_from_args(self)
+	if "--test=office" in OS.get_cmdline_user_args():
+		var t: Node = load("res://tests/office_test.gd").new()
+		t.set("office", self)
+		get_tree().root.add_child.call_deferred(t)
 
 
 func _find_sim() -> RinkSim:
-	if CareerState.rink == null and "--owner" in OS.get_cmdline_user_args():
+	var args := OS.get_cmdline_user_args()
+	if CareerState.rink == null and ("--owner" in args or "--test=office" in args):
 		CareerState.rink = RinkLink.new_owner("Test", "Owner", "C", 7)
 		CareerState.career = CareerState.rink.career
 	rink = CareerState.rink
@@ -111,6 +124,7 @@ func _walk() -> void:
 
 func _leave() -> void:
 	if rink:
+		leaving.emit()
 		CareerState.career.save()
 		CareerState.back_to_hub()
 
@@ -120,7 +134,17 @@ func open(t: String) -> void:
 	_refresh()
 
 
+func _unhandled_input(e: InputEvent) -> void:
+	if e.is_action_pressed("ui_cancel") and get_tree().current_scene == self and rink:
+		get_viewport().set_input_as_handled()
+		_leave()
+
+
 func _refresh() -> void:
+	# the buttons are rebuilt: keep the keyboard on the same one
+	var had = get_viewport().gui_get_focus_owner()
+	var keep := [had.text, _buttons().filter(func(b): return b.text == had.text).find(had)] \
+		if had is Button and is_ancestor_of(had) else ["", 0]
 	_hud.show_sim(sim)
 	for c in _tabs.get_children():
 		c.queue_free()
@@ -150,6 +174,31 @@ func _refresh() -> void:
 		"sched": _show_schedule()
 		"board": _show_board()
 		_: _show_grid()
+	_focus.call_deferred(keep[0], keep[1])
+
+
+## Focus the `nth` button captioned `caption` if it's still there, else
+## this tab's.
+func _focus(caption: String, nth: int) -> void:
+	var same := _buttons().filter(func(b): return b.text == caption)
+	if caption != "" and not same.is_empty():
+		same[clampi(nth, 0, same.size() - 1)].grab_focus()
+		return
+	for b in _buttons():
+		if b.text == RinkOS.caption(_tab_name(tab)):
+			b.grab_focus()
+			return
+
+
+func _buttons() -> Array:
+	return find_children("*", "Button", true, false).filter(func(b): return not b.is_queued_for_deletion())
+
+
+func _tab_name(t: String) -> String:
+	for x in TABS:
+		if x[0] == t:
+			return x[1]
+	return ""
 
 
 # ------------------------------------------------------------------ ice grid
