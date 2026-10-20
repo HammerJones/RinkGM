@@ -99,6 +99,10 @@ void fragment() {
 """
 
 const UPDATE_EVERY := 0.1  # s between texture uploads at most
+## Rows re-encoded per call at most: a match's skaters dirty most of the sheet
+## every tenth of a second, and encoding all of it in GDScript cost ~10 ms a
+## frame (2026-10-20 optimisation pass). The rest carries to the next calls.
+const ROWS_PER_CALL := 10
 
 var ice: IceSlab:
 	set(v):
@@ -118,6 +122,7 @@ var _buf_b := PackedByteArray()
 var _rev := -1
 var _full := true
 var _acc := 0.0
+var _pending := Rect2i()   # texels changed but not yet encoded
 
 
 ## Puts a view on `rink`'s ice plane (a Rink node, already built) showing
@@ -183,7 +188,7 @@ func _setup() -> void:
 
 func _process(dt: float) -> void:
 	_acc += dt
-	if _acc < UPDATE_EVERY:
+	if _acc < UPDATE_EVERY and _pending.size == Vector2i.ZERO:
 		return
 	_acc = 0.0
 	refresh()
@@ -195,15 +200,24 @@ func refresh(full := false) -> void:
 	if ice == null or material == null:
 		return
 	ice.flush()
-	if not full and not _full and ice.revision == _rev:
+	if not full and not _full and ice.revision == _rev and _pending.size == Vector2i.ZERO:
 		return
-	var r := Rect2i(0, 0, IceSlab.FW, IceSlab.FD) if (full or _full) else ice.dirty
+	var all := full or _full
+	var d := Rect2i(0, 0, IceSlab.FW, IceSlab.FD) if all else ice.dirty
 	_full = false
 	_rev = ice.revision
 	ice.dirty = Rect2i()
-	if r.size == Vector2i.ZERO:
+	if d.size != Vector2i.ZERO:
+		_pending = d if _pending.size == Vector2i.ZERO else _pending.merge(d)
+	_pending = _pending.intersection(Rect2i(0, 0, IceSlab.FW, IceSlab.FD))
+	if _pending.size == Vector2i.ZERO:
 		return
-	r = r.intersection(Rect2i(0, 0, IceSlab.FW, IceSlab.FD))
+	var r := _pending
+	if not full and r.size.y > ROWS_PER_CALL:
+		r.size.y = ROWS_PER_CALL
+		_pending = Rect2i(_pending.position.x, _pending.position.y + ROWS_PER_CALL, _pending.size.x, _pending.size.y - ROWS_PER_CALL)
+	else:
+		_pending = Rect2i()
 	for fz in range(r.position.y, r.end.y):
 		var row := fz * IceSlab.FW
 		for fx in range(r.position.x, r.end.x):
