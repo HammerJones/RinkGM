@@ -114,7 +114,10 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	if not held and state.get_contact_count() > 0 and state.linear_velocity.length() < SETTLE_SPEED and state.angular_velocity.length() < SETTLE_SPIN:
 		_calm += 1
 		if _calm >= SETTLE_FRAMES:
-			_calm = 0
+			# every step from here, not once in 20: Jolt wakes a sleeping body
+			# that an awake one touches, so a pile only settles when every
+			# stick in it asks to sleep in the same step
+			_calm = SETTLE_FRAMES
 			state.linear_velocity = Vector3.ZERO
 			state.angular_velocity = Vector3.ZERO
 			state.sleeping = true
