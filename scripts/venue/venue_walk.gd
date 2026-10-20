@@ -106,6 +106,9 @@ func _ready() -> void:
 	else:
 		story = WalkStory.start(venue)
 		IceView.attach(rink, story.sim.ice)  # World: the sim's ice, cell by cell, on the sheet
+		# World's whiteboards say something new each day
+		Whiteboard.set_day(get_tree(), story.sim.day)
+		story.sim.day_ended.connect(func(d: int): Whiteboard.set_day(get_tree(), d + 1))
 		var m := story.sim.minute
 		if m < 7 * 60 or m >= 19 * 60:
 			_env.background_color = Color("070a12")  # night outside
@@ -458,6 +461,8 @@ func _start_job(job: Dictionary) -> void:
 	if ResourceLoader.exists(path):
 		_job_scene = load(path).instantiate()
 		var ctx := {"sim": story.sim, "job": job.job, "target": job.target, "room": job.room, "args": job.args}
+		if str(job.get("in_place", "")) == "doris_hatch":
+			_doris_hatch_ctx(ctx)
 		if _job_scene.has_signal("finished"):
 			_job_scene.finished.connect(_on_job_finished.bind(job))
 		add_child(_job_scene)
@@ -472,6 +477,24 @@ func _start_job(job: Dictionary) -> void:
 		bb += "%s\n\n" % note.text
 	bb += "[color=#%s]The mini game for this one isn't in yet.[/color]\n\n[color=#%s][E] DO IT THE QUICK WAY   [ESC] LEAVE IT[/color]" % [RinkOS.DIM.to_html(false), RinkOS.ACTION.to_html(false)]
 	_open_panel(bb)
+
+
+## World: a repair through Doris's hatch plays where she's parked, the camera
+## leaning in from the walker's eye (playtest W2; JobScene's in-place ctx).
+func _doris_hatch_ctx(ctx: Dictionary) -> void:
+	var cam := get_viewport().get_camera_3d()
+	var from := cam.global_position if cam else Vector3.ZERO
+	var best: DorisModel = null
+	for n in get_tree().get_nodes_in_group("doris_model"):
+		var d := n as DorisModel
+		if d and d.is_visible_in_tree() and (best == null or d.global_position.distance_to(from) < best.global_position.distance_to(from)):
+			best = d
+	if best == null:
+		return
+	ctx["place"] = best.global_transform * DorisModel.hatch_frame()
+	ctx["host"] = best
+	if cam:
+		ctx["eye"] = cam.global_transform
 
 
 func _quick_job() -> void:

@@ -25,6 +25,9 @@ var schedule: Array = []   # [{"days", "from", "to", "place", "doing"}]
 var rel := {}              # person id (or "owner") -> -100..100
 var family: Array = []     # ids of relatives
 var dialogue := ""
+## Lines of their own by topic ("idle", "bad_ice"...), dealt by StaffRoster
+## so no two staff share one; empty for everyone else.
+var lines := {}
 var quests: Array = []
 var likes: Array = []
 var dislikes: Array = []

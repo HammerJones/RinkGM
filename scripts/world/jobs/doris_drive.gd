@@ -1,8 +1,9 @@
 class_name DorisDrive
 extends JobScene
 ## Driving Doris (playtest #45): the resurface as a mini game the owner has
-## to do until a driver is hired. First person up in the seat of the 1974
-## Zambelli 525, on the real rink: fill the tanks at the standpipe, out
+## to do until a driver is hired. First person up in the seat of Doris, a
+## Zambelli 552 Electric (DorisModel: every control on the real machine is a
+## part here, and moves), on the real rink: fill the tanks at the standpipe, out
 ## through the gate, conditioner down, the controls set, two laps and the
 ## loops, back to the bay and dump the snow at the pit. ResurfaceRun does the
 ## machine and the ice cell by cell; this scene is the cockpit, the input,
@@ -11,7 +12,9 @@ extends JobScene
 ## Controls (look at one: its name shows in the middle of the screen):
 ##   wheel / triggers   adjust the control looked at (d-pad picks on a pad)
 ##   E / A              toggle it (switches, levers, the plunger)
-##   W/S, left stick    throttle and reverse; Space brake; A/D steer
+##   W, stick up        the accelerator pedal, in the shifter's direction
+##                      (F / N / R: look at the shift knob and move it)
+##   S, Space, stick down  the brake pedal; A/D steer
 ##   back               leave before you're on the ice (nothing charged),
 ##                      or stop and take the job as it stands
 ##
@@ -30,28 +33,18 @@ signal auger(jammed: bool)
 signal bin_dump
 signal engine(rpm: float)
 signal hose(on: bool)
+## Any control moved by the driver (a lever's clunk, a valve's squeak): its
+## DorisModel.CONTROLS id.
+signal control_moved(id: String)
 
-## Doris's model: front faces -Z, origin at the pivot 0.75 m ahead of the
-## rear axle. The driver sits up on the left, behind the snow tank.
-const AXLE_Z := 0.75
-const SEAT := Vector3(-0.47, 2.34, 1.0)
-## The console and levers sit up on the tank wall within reach of the seat.
-const COCKPIT_AT := Vector3(0.0, 0.32, 0.06)
+## Doris's model (DorisModel): front faces -Z, origin at the pivot 0.75 m
+## ahead of the rear axle. The driver sits up on the left, behind the tank.
+const AXLE_Z := DorisModel.AXLE_Z
+const SEAT := DorisModel.SEAT
 const LOOK_YAW_MAX := 1.9
 const LOOK_PITCH_MAX := 1.0
 const PICK_ANGLE := 0.16
 const SOUND_EVERY := 0.25
-## The controls round the seat, model space: [id, name, position].
-const CONTROLS := [
-	["dump", "TANK DUMP", Vector3(-0.98, 1.62, 0.62)],
-	["valve", "FLOOD VALVE", Vector3(-0.80, 1.55, 0.54)],
-	["fill", "STANDPIPE HOSE", Vector3(-0.98, 1.42, 0.96)],
-	["blade", "BLADE WHEEL", Vector3(-0.47, 1.50, 0.54)],
-	["wash", "WASH PUMP", Vector3(-0.16, 1.55, 0.54)],
-	["plunger", "AUGER PLUNGER", Vector3(-0.02, 1.48, 0.62)],
-	["conditioner", "CONDITIONER", Vector3(0.06, 1.55, 0.86)],
-	["towel", "TOWEL", Vector3(0.06, 1.42, 1.04)],
-]
 const VALVE_STEP := 0.05
 const WHEEL_STEP := 0.125  # turns of the blade wheel a notch
 
@@ -62,7 +55,7 @@ var preview := ""
 var ice: IceSlab            # the sim's (the run works on a copy)
 var doris_sim: ResurfacerSim
 var body: Node3D
-var cockpit: Node3D
+var model: DorisModel
 var focus := ""
 var gus_on := false
 var gus_text := ""
@@ -89,7 +82,8 @@ var _layer: CanvasLayer
 var _tip: Label
 var _gus_label: Label
 var _bin: Control
-var _bin_level: MeshInstance3D
+var _pedal := 0.0
+var _brake_pedal := 0.0
 var _earl := false
 var _hint_timer := 0.0
 
@@ -97,110 +91,14 @@ var _hint_timer := 0.0
 func _build() -> void:
 	title = "DORIS"
 	environment(Color("0d0f14"), 0.4)
-	body = Node3D.new()
-	body.name = "Doris"
+	model = DorisModel.new(Wear.WORN)
+	body = model
 	add_child(body)
-	var model := MeshInstance3D.new()
-	model.mesh = Props.mesh("resurfacer", Wear.WORN)
-	model.cast_shadow = Look.cast()
-	body.add_child(model)
+	for id: String in DorisModel.control_ids():
+		_ctrl_pos[id] = DorisModel.grip(id)
 	WorldSound.attach(self, body)
-	_build_cockpit()
 	_build_bay_bits()
 	_build_ui()
-
-
-## The console, the levers and the wheel, and the bin window in the tank wall.
-func _build_cockpit() -> void:
-	cockpit = Node3D.new()
-	cockpit.name = "Cockpit"
-	cockpit.position = COCKPIT_AT
-	body.add_child(cockpit)
-	var steel := Color("5b6066")
-	var dark := Color("26282c")
-	# a console across the front of the seat, on the snow tank's back wall
-	slab(Vector3(1.1, 0.08, 0.34), Vector3(-0.47, 1.40, 0.52), dark, 0.0, cockpit)
-	slab(Vector3(1.1, 0.30, 0.04), Vector3(-0.47, 1.27, 0.32), dark, 0.0, cockpit)
-	# side boxes for the levers
-	slab(Vector3(0.14, 0.5, 0.6), Vector3(-1.0, 1.18, 0.8), dark, 0.0, cockpit)
-	slab(Vector3(0.14, 0.42, 0.6), Vector3(0.08, 1.14, 0.9), dark, 0.0, cockpit)
-	for c in CONTROLS:
-		var id: String = c[0]
-		var p: Vector3 = c[2]
-		_ctrl_pos[id] = p + COCKPIT_AT
-		var pivot := Node3D.new()
-		pivot.position = p - Vector3(0, 0.08, 0)
-		cockpit.add_child(pivot)
-		_parts[id] = pivot
-		match id:
-			"blade":
-				# the hand wheel on its column, and its spokes
-				var col := slab(Vector3(0.05, 0.12, 0.05), Vector3(0, 0.0, 0), steel, 0.0, pivot)
-				col.position = Vector3(0, 0.0, 0)
-				# the rim: sixteen blocks round, the voxel way
-				for k in 16:
-					var a := k * TAU / 16.0
-					var seg := slab(Vector3(0.045, 0.022, 0.022), Vector3(cos(a) * 0.112, 0.08, sin(a) * 0.112), Color("a33a2a"), 0.0, pivot)
-					seg.rotation.y = -a + PI * 0.5
-				for k in 3:
-					var sp := slab(Vector3(0.21, 0.015, 0.02), Vector3(0, 0.08, 0), steel, 0.0, pivot)
-					sp.rotation.y = k * PI / 3.0
-				var knob := slab(Vector3(0.025, 0.06, 0.025), Vector3(0.11, 0.12, 0), Color("1d1e21"), 0.0, pivot)
-				knob.name = "Knob"
-			"wash":
-				slab(Vector3(0.10, 0.03, 0.08), Vector3(0, 0.0, 0), Color("1d1e21"), 0.0, pivot)
-				var t := slab(Vector3(0.02, 0.07, 0.02), Vector3(0, 0.04, 0), Color("c9c5bc"), 0.0, pivot)
-				t.name = "Toggle"
-			"plunger":
-				slab(Vector3(0.04, 0.14, 0.04), Vector3(0, 0.02, 0), steel, 0.0, pivot)
-				slab(Vector3(0.07, 0.03, 0.07), Vector3(0, 0.1, 0), Color("b8312f"), 0.0, pivot)
-			"fill":
-				slab(Vector3(0.08, 0.08, 0.08), Vector3(0, 0.0, 0), Color("2f5eb0"), 0.0, pivot)
-			_:
-				# a lever on a pivot, knob on top
-				var arm := slab(Vector3(0.025, 0.24, 0.025), Vector3(0, 0.12, 0), steel, 0.0, pivot)
-				arm.name = "Arm"
-				var col2 := {"valve": Color("2f5eb0"), "dump": Color("d4a83a"), "conditioner": Color("b8312f"), "towel": Color("e8e4da")}
-				slab(Vector3(0.05, 0.05, 0.05), Vector3(0, 0.25, 0), col2.get(id, Color.BLACK), 0.0, pivot)
-		# a stencilled label under each
-		var l := Label3D.new()
-		l.text = str(c[1])
-		l.font = RinkOS.PIXEL_FONT
-		l.font_size = 16
-		l.pixel_size = 0.0011
-		l.modulate = Color("e8e4da")
-		l.shaded = false
-		l.double_sided = true
-		l.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-		l.position = p + Vector3(0, -0.13, 0.04)
-		l.rotation.x = -0.5
-		cockpit.add_child(l)
-	# the bin window: a pane in the tank wall with the snow level behind it
-	slab(Vector3(0.36, 0.26, 0.02), Vector3(0.24, 1.50, 0.34), Color("1d1e21"), 0.0, cockpit)
-	var glass := slab(Vector3(0.30, 0.20, 0.01), Vector3(0.24, 1.50, 0.355), Color("394a5a"), 0.0, cockpit)
-	glass.name = "BinWindow"
-	_bin_level = slab(Vector3(0.28, 0.18, 0.005), Vector3(0.24, 1.42, 0.362), Color("eef3f6"), 0.2, cockpit)
-	var bl := Label3D.new()
-	bl.text = "SNOW TANK"
-	bl.font = RinkOS.PIXEL_FONT
-	bl.font_size = 16
-	bl.pixel_size = 0.0011
-	bl.modulate = Color("d4a83a")
-	bl.shaded = false
-	bl.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	bl.position = Vector3(0.24, 1.66, 0.36)
-	cockpit.add_child(bl)
-	# the gauge cluster: a speedo and the two tank needles on the dash
-	var dash := Label3D.new()
-	dash.name = "Dash"
-	dash.font = RinkOS.TERM_FONT
-	dash.font_size = 32
-	dash.pixel_size = 0.0012
-	dash.modulate = RinkOS.READOUT
-	dash.shaded = false
-	dash.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	dash.position = Vector3(-0.47, 1.28, 0.345)
-	cockpit.add_child(dash)
 
 
 ## The standpipe and its hose by the bay wall (the venue's bay has the pit).
@@ -284,6 +182,11 @@ func begin(ctx: Dictionary) -> void:
 	if doris_sim == null:
 		doris_sim = ResurfacerSim.create_doris()
 	run = ResurfaceRun.start(ice, doris_sim)
+	# parked as Earl leaves her: in neutral, augers off, wash valve shut
+	run.gear = 0
+	run.auger_v = false
+	run.auger_h = false
+	run.wash_valve = 0.0
 	gus_on = doris_sim.cuts_driven == 0 and not autopilot
 	_earl = sim != null and bool(sim.get("earl_hired")) and doris_sim.fault() == ""
 	_attach_world()
@@ -344,6 +247,11 @@ func _attach_world() -> void:
 	# the venue's parked Doris goes out with us
 	var parent := get_parent()
 	var venue: Variant = parent.get("venue") if parent else null
+	for n in get_tree().get_nodes_in_group("doris_model") if is_inside_tree() else []:
+		var dm := n as Node3D
+		if dm != body and dm.visible:
+			dm.visible = false
+			_hidden.append(dm)
 	if venue is Node:
 		var bay: Node = (venue as Node).get("rooms").get("zamboni_bay") if (venue as Node).get("rooms") is Dictionary else null
 		if bay:
@@ -360,8 +268,8 @@ func _preview_cockpit() -> void:
 		ap.tick(1.0 / 20.0)
 	ap = null
 	run.drain_events()
-	_ly = 0.05
-	_lp = -0.78
+	_ly = -1.0
+	_lp = -0.62
 	focus = "blade"
 	started_on_ice = true
 	step = 3
@@ -420,18 +328,28 @@ func tick(dt: float) -> void:
 	_look(f, dt)
 	_pick_focus(dt)
 	_adjust(f, dt)
-	var throttle := clampf(f.move.y, -1.0, 1.0)
-	var brake := f.brake if not _pad() else 0.0
-	if throttle < -0.05 and run.speed > 0.2:
-		brake = maxf(brake, -throttle)  # pulling back on a moving machine brakes first
+	# the pedals: the accelerator drives her the way the shifter points, the
+	# brake pedal (S, Space, stick down) stops her
+	_pedal = clampf(f.move.y, 0.0, 1.0)
+	_brake_pedal = maxf(clampf(-f.move.y, 0.0, 1.0), f.brake if not _pad() else 0.0)
+	var throttle := _pedal * float(run.gear)
+	var brake := _brake_pedal
+	if throttle != 0.0 and absf(run.speed) > 0.2 and signf(throttle) != signf(run.speed):
+		brake = maxf(brake, absf(throttle))  # shifted against her way: she brakes first
 		throttle = 0.0
 	run.step(dt, throttle, clampf(f.move.x, -1.0, 1.0), brake)
 	_after_step(dt)
-	if step_id() == "park" and run.in_bay() and absf(run.speed) < 0.05 and f.interact_pressed and focus == "":
+	if _can_park() and f.interact_pressed and focus == "":
 		_complete("")
 
 
+func _can_park() -> bool:
+	return step_id() == "park" and run.in_bay() and absf(run.speed) < 0.05
+
+
 func _pad() -> bool:
+	if not is_inside_tree():
+		return false
 	var setup := get_node_or_null(^"/root/InputSetup")
 	return setup != null and setup.get("device") == 1
 
@@ -445,9 +363,7 @@ func _look(f: JobInput.Frame, _dt: float) -> void:
 
 ## The control under the crosshair (or picked with the d-pad).
 func _pick_focus(dt: float) -> void:
-	var ids: Array = []
-	for c in CONTROLS:
-		ids.append(c[0])
+	var ids: Array = DorisModel.control_ids()
 	if Input.is_joy_button_pressed(0, JOY_BUTTON_DPAD_RIGHT) or Input.is_joy_button_pressed(0, JOY_BUTTON_DPAD_LEFT):
 		if _pad_t <= 0.0 or _pad_t > 2.6:
 			var d := 1 if Input.is_joy_button_pressed(0, JOY_BUTTON_DPAD_RIGHT) else -1
@@ -515,6 +431,16 @@ func set_control(id: String, notches: int) -> void:
 			_plunger_held = notches < 0
 		"fill":
 			run.fill = notches > 0
+		"gear":
+			run.gear = clampi(run.gear + signi(notches), -1, 1)
+		"auger_v":
+			run.auger_v = notches > 0
+		"auger_h":
+			run.auger_h = notches > 0
+		"wash_valve":
+			run.wash_valve = clampf(snappedf(run.wash_valve + notches * VALVE_STEP, VALVE_STEP), 0.0, 1.0)
+		"key":
+			run.engine_on = notches > 0 and doris_sim.fault() == ""
 	_on_control(id)
 
 
@@ -536,10 +462,25 @@ func toggle_control(id: String) -> void:
 			_plunger_held = not _plunger_held
 		"fill":
 			run.fill = not run.fill
+		"gear":
+			run.gear = run.gear - 1 if run.gear > -1 else 1  # F, N, R, F
+		"auger_v":
+			run.auger_v = not run.auger_v
+		"auger_h":
+			run.auger_h = not run.auger_h
+		"wash_valve":
+			run.wash_valve = 0.0 if run.wash_valve > 0.0 else 1.0
+		"key":
+			if _can_park():
+				run.engine_on = false
+				_complete("")
+				return
+			run.engine_on = not run.engine_on and doris_sim.fault() == ""
 	_on_control(id)
 
 
 func _on_control(id: String) -> void:
+	control_moved.emit(id)
 	if id == "fill":
 		hose.emit(run.fill and run.at_standpipe())
 		if run.fill and not run.at_standpipe():
@@ -568,7 +509,7 @@ func _on_event(e: String) -> void:
 	match e:
 		"on_ice":
 			started_on_ice = true
-			_say_once("on_ice", "Gus: Valve to sixty-five. Blade two turns down, a sixteenth. Wash on, conditioner down, rag down.")
+			_say_once("on_ice", "Gus: Conditioner down, she takes five seconds. Both augers on. Flood valve to sixty-five, blade two turns, wash pump on and its valve open, rag down.")
 		"filled":
 			_say_once("filled", "Gus: That's both tanks. Out through the gate, slow, and swing onto the far boards.")
 		"jam":
@@ -611,7 +552,11 @@ func _gus(dt: float) -> void:
 	if not gus_on:
 		return
 	if run.time_s < 1.0:
-		_say_once("start", "Gus: First thing, water. Pull her up to the standpipe and open the hose, that blue box on your left.")
+		_say_once("start", "Gus: First thing, water. Knob to F, ease on the pedal, pull her up to the standpipe and open the hose, the blue cap on the dash.")
+	if run.cond_pos >= 1.0 and run.on_ice() and not (run.auger_v and run.auger_h):
+		_say_once("augers", "Gus: Augers! Both levers forward, or the snow stays on the ice.")
+	if run.in_bay() and run.gear == 1 and run.bin_m3 > 0.2 and not run.on_ice() and absf(run.speed) < 0.05 and run.coverage() > 0.5:
+		_say_once("reverse", "Gus: Knob back to R to back her over the pit.")
 	if run.skipping and run.cond_down:
 		_say_once("skip", "Gus: Hear her chatter? The blade's skipping. Back the wheel off.")
 	if run.flood_state == "rush" and run.on_ice():
@@ -669,7 +614,7 @@ func _sounds(dt: float) -> void:
 		return
 	_sound_t = SOUND_EVERY
 	engine.emit(run.rpm)
-	if run.cond_down and run.on_ice() and run.blade_mm > 0.0 and absf(run.speed) > 0.1:
+	if run.cond_pos >= 1.0 and run.on_ice() and run.blade_mm > 0.0 and absf(run.speed) > 0.1:
 		blade_scrape.emit(run.blade_quality, run.skipping)
 	if run.flood_rate > 0.0:
 		flood_flow.emit(run.flood_rate, run.flood_state)
@@ -681,7 +626,7 @@ func _update_steps() -> void:
 		s = 1
 	if s == 1 and run.on_ice():
 		s = 2
-	if s == 2 and run.cond_down and run.flood_valve > 0.0 and run.blade_mm > 0.0:
+	if s == 2 and run.cond_down and run.flood_valve > 0.0 and run.blade_mm > 0.0 and run.auger_v and run.auger_h:
 		s = 3
 	if s == 3 and run.coverage() >= 0.9:
 		s = 4
@@ -747,32 +692,33 @@ func _place_camera() -> void:
 
 
 func _sync_parts() -> void:
-	if run == null:
+	if run == null or model == null:
 		return
-	var lever := func(id: String, v: float) -> void:
-		var p: Node3D = _parts.get(id)
-		if p:
-			p.rotation.x = lerpf(0.5, -0.5, clampf(v, 0.0, 1.0))
-	lever.call("valve", run.flood_valve)
-	lever.call("conditioner", 1.0 if run.cond_down else 0.0)
-	lever.call("towel", 1.0 if run.towel_down else 0.0)
-	lever.call("dump", 1.0 if run.dump else 0.0)
-	var w: Node3D = _parts.get("blade")
-	if w:
-		w.rotation.y = -run.blade_mm / ResurfacerSim.WHEEL_MM_PER_TURN * TAU
-	var t: Node3D = _parts.get("wash")
-	if t:
-		t.rotation.z = -0.5 if run.wash_on else 0.5
-	var pl: Node3D = _parts.get("plunger")
-	if pl:
-		pl.position.y = (_ctrl_pos["plunger"] as Vector3).y - COCKPIT_AT.y - 0.08 - (0.06 if run.plunger else 0.0)
-	if _bin_level:
-		var k := clampf(run.bin_fill(), 0.0, 1.0)
-		_bin_level.scale = Vector3(1.0, maxf(k, 0.01), 1.0)
-		_bin_level.position.y = 1.42 - 0.09 + 0.09 * k
-	var dash := cockpit.get_node_or_null("Dash") as Label3D
-	if dash:
-		dash.text = "%4.1f KM/H   FLOOD %4d L   WASH %3d L" % [absf(run.speed) * 3.6, roundi(run.flood_l), roundi(run.wash_l)]
+	var m := model
+	m.steer = run.steer / ResurfaceRun.MAX_STEER
+	m.accel = _pedal if not autopilot else clampf(absf(run.speed) / ResurfaceRun.TOP_SPEED, 0.0, 1.0)
+	m.brake = _brake_pedal
+	m.gear = run.gear
+	m.auger_v = run.auger_v
+	m.auger_h = run.auger_h
+	m.cond_down = run.cond_down
+	m.cond_pos = run.cond_pos
+	m.bin_up = run.dump
+	m.flood = run.flood_valve
+	m.wash_valve = run.wash_valve
+	m.plunger = run.plunger
+	m.blade_turns = run.blade_mm / ResurfacerSim.WHEEL_MM_PER_TURN
+	m.wash_pump = run.wash_on
+	m.key_on = run.engine_on
+	m.fill_open = run.fill
+	m.towel_down = run.towel_down
+	m.speed = run.speed
+	m.charge = clampf(0.92 - run.fuel_used * 3.0, 0.05, 1.0)
+	m.tick(get_physics_process_delta_time() if is_inside_tree() else 1.0 / 60.0)
+	m.apply()
+	if m.lcd:
+		m.lcd.text = "%s %4.1f KM/H\nFLOOD %3d L\nWASH  %3d L" % ["F" if run.gear > 0 else ("R" if run.gear < 0 else "N"), absf(run.speed) * 3.6,
+			roundi(run.flood_l), roundi(run.wash_l)]
 
 
 # ---------------------------------------------------------------- HUD
@@ -788,7 +734,9 @@ func _tool_lines() -> PackedStringArray:
 	out.append(meter_line("SNOW", run.bin_fill(), bcol, "%.1f m3%s" % [run.bin_m3, "  JAMMED" if run.jammed else ""]))
 	out.append(meter_line("BLADE", run.blade_mm / ResurfacerSim.BLADE_MAX_MM, RinkOS.ALERT if run.skipping else RinkOS.READOUT, blade_short(run.blade_mm)))
 	out.append(meter_line("COVERED", run.coverage(), RinkOS.GOOD if run.coverage() > 0.9 else RinkOS.READOUT, "%d%%" % roundi(run.coverage() * 100.0)))
-	out.append("[%s]COND %s   RAG %s   WATER %s[/color]" % [RinkOS.bb(RinkOS.DIM), "DOWN" if run.cond_down else "up",
+	out.append("[%s]%s   COND %s   AUGERS %s   RAG %s   WATER %s[/color]" % [RinkOS.bb(RinkOS.DIM),
+		["R", "N", "F"][run.gear + 1], "DOWN" if run.cond_pos >= 1.0 else ("up" if run.cond_pos <= 0.0 else "moving"),
+		("on" if run.auger_v and run.auger_h else ("half" if run.auger_v or run.auger_h else "off")),
 		"DOWN" if run.towel_down else "up", run.flood_state.to_upper()])
 	return out
 
@@ -826,11 +774,11 @@ func _refresh() -> void:
 		if prompt == "" or s != str(_was.get("step", "")):
 			_was["step"] = s
 			prompt = {"fill": "Drive to the standpipe by the bay wall and open the hose (look at it, %s)." % RinkOS.key("E"),
-				"out": "Out through the gate. %s/%s throttle, %s/%s steer, %s brake." % [RinkOS.key("W"), RinkOS.key("S"), RinkOS.key("A"), RinkOS.key("D"), RinkOS.key("SPACE")],
-				"set": "Set her up: conditioner and rag down, valve open, blade two turns. Look at a control and use the wheel.",
+				"out": "Out through the gate. Knob in F, %s pedal, %s/%s brake, %s/%s steer." % [RinkOS.key("W"), RinkOS.key("S"), RinkOS.key("SPACE"), RinkOS.key("A"), RinkOS.key("D")],
+				"set": "Set her up: conditioner and rag down, both augers on, flood valve open, blade two turns. Look at a control and use the wheel.",
 				"cut": "Two laps round the boards, down the middle, then the loops out to the laps.",
-				"home": "Water off, conditioner up. Back to the bay and dump at the pit.",
-				"park": "Parked? %s to switch her off and finish." % RinkOS.key("E")}.get(s, "")
+				"home": "Water off, conditioner up, augers off. Back to the bay, knob to R, and dump at the pit.",
+				"park": "Parked? Turn the key off (or %s) to finish." % RinkOS.key("E")}.get(s, "")
 		if _hint_timer <= 0.0:
 			hint = "%s adjust   %s toggle   %s leave" % [RinkOS.key("WHEEL"), RinkOS.key("E"), RinkOS.key("X")]
 
@@ -839,27 +787,33 @@ func _refresh() -> void:
 func control_tip(id: String) -> String:
 	var v := ""
 	match id:
+		"gear":
+			v = "%s   wheel: forward / back   E: F N R" % ["REVERSE", "NEUTRAL", "FORWARD"][run.gear + 1]
+		"auger_v", "auger_h":
+			var on: bool = run.auger_v if id == "auger_v" else run.auger_h
+			v = ("ON" if on else "OFF") + "   E: switch"
 		"valve":
 			v = "%d%%   wheel: open / close" % roundi(run.flood_valve * 100.0)
+		"wash_valve":
+			v = "%d%%   wheel: open / close" % roundi(run.wash_valve * 100.0)
 		"blade":
 			v = "%s   wheel: down / up" % blade_text(run.blade_mm)
 		"wash":
 			v = ("ON" if run.wash_on else "OFF") + "   E: switch"
+		"key":
+			v = ("ON" if run.engine_on else "OFF") + ("   E: switch her off, done" if _can_park() else "   E: turn")
 		"conditioner":
-			v = ("DOWN" if run.cond_down else "UP") + "   E: lower / raise"
+			var st := "DOWN" if run.cond_pos >= 1.0 else ("UP" if run.cond_pos <= 0.0 else ("LOWERING" if run.cond_down else "RAISING"))
+			v = st + "   E: lower / raise (5 s)"
 		"towel":
 			v = ("DOWN" if run.towel_down else "UP") + "   E: lower / raise"
 		"dump":
-			v = "%.1f m3 in the tank   E: dump at the pit" % run.bin_m3
+			v = "%.1f m3 in the tank   E: raise the bin over the pit" % run.bin_m3
 		"plunger":
 			v = ("HELD" if run.plunger else "-") + "   E: hold, conditioner up"
 		"fill":
 			v = ("OPEN" if run.fill else "SHUT") + ("" if run.at_standpipe() else "   (park by the standpipe)")
-	var name := ""
-	for c in CONTROLS:
-		if c[0] == id:
-			name = c[1]
-	return "%s\n%s" % [name, v]
+	return "%s\n%s" % [DorisModel.control_name(id), v]
 
 
 ## The snow tank as seen through its window, with the snow coming up the

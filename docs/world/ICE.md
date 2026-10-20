@@ -147,7 +147,7 @@ day's floods in `floods_waiting` until the owner is on site. With
 
 ### 4.1 The machine
 
-| | Real (526 / 552 class) | Doris (Zambelli 525) |
+| | Real (526 / 552 class) | Doris (Zambelli 552 Electric) |
 | --- | --- | --- |
 | Ice-making water | 192-195 US gal | 1100 L (290 gal), so a full tank laid evenly is 1/32 in |
 | Wash water | 72 gal | 270 L |
@@ -160,22 +160,38 @@ The flood tank is bigger than a real 526's so the canvas rule holds: a full
 tank laid perfectly raises the ice 1/32 in, and a 65% valve (3.75 L/s wide
 open) empties it over the standard pattern.
 
-### 4.2 The controls (right of the driver, as on a 552)
+### 4.2 The controls (the 552's, one for one)
 
-| Control | Input | Notes |
-| --- | --- | --- |
-| Flood valve (left) | wheel 5% a notch, 0-100% | too much rushes and pools, too little trickles |
-| Blade wheel (middle) | wheel 1/8 turn a notch; 1/32 in a turn, stop at 1/8 in | past 3/32 in the blade skips and chatters |
-| Wash pump (right) | E toggles | wets the cut so the augers don't jam on a flood |
-| Auger plunger | E | clears a jam (6 s) |
-| Conditioner | E raises / lowers | |
-| Towel | E raises / lowers | up for a dry cut |
-| Tank dump | E | at the snow pit (8 s) |
-| Standpipe hose | E | fills both tanks in the bay (18 L/s) |
+Doris is modelled on Sean's 552 Electric reference (`playtest/zamboni-552/SPEC.md`):
+`DorisModel` (`scripts/art/doris_model.gd`) builds her with every control
+as its own moving part, and `DorisModel.CONTROLS` lists them with their
+grip points. The driver sits at the left rear; the dash with the gauges is
+ahead of the steering wheel, the round auger housing stands in the middle,
+and the control block is to the right of the seat. Decals read ZAMBELLI,
+the in-world brand (an original wordmark).
 
-Look at a control and its name shows in the middle of the screen. Mouse
-wheel adjusts; on a pad the d-pad picks and the triggers adjust. W/S or the
-left stick drive, Space brakes, A/D steer.
+| Control (spec) | Where | Input | In the run |
+| --- | --- | --- | --- |
+| Steering wheel | front left | A/D | `steer` (27 degrees max) |
+| Accelerator, brake pedals | the floor | W, S/Space | the pedal drives her the way the shifter points; shifted against her way she brakes first |
+| Forward / Neutral / Reverse | gated plate, block front left | wheel moves it, E steps F, N, R | `gear` 1, 0, -1; parked in N |
+| Vertical auger | lever, left of the pair | E | `auger_v`: off, nothing lifts to the tank and the trough overflows |
+| Horizontal auger | lever, right of the pair | E | `auger_h`: off, the cut stays on the ice as loose snow |
+| Conditioner up / down | lever (spring centred) | E | `cond_down`; `cond_pos` travels in 5.5 s and the blade cuts only fully down |
+| Bin up / down | lever, block front right | E | `dump`: the bin tilts up over the pit, the dump door swings (8 s) |
+| Flood water | T-handle on the block | wheel 5% a notch | `flood_valve`, 90 degrees back = 100% |
+| Wash water | T-handle by the right wall | wheel 5% a notch | `wash_valve` meters the wash flow |
+| Vertical auger plunger | rod with a ball knob | E holds | clears a jam (6 s, conditioner fully up) |
+| Blade level wheel | hand wheel, right | wheel 1/8 turn a notch; clockwise lower | 1/32 in a turn, stop at 1/8 in; past 3/32 in the blade skips |
+| Wash water pump | rocker on the dash | E | `wash_on` |
+| Key | on the dash | E | the motor on / off; parked in the bay, off finishes the job |
+| Standpipe hose | blue cap on the dash | E | fills both tanks in the bay (18 L/s) |
+| Towel | pull by the seat | E | up for a dry cut |
+
+The speedo and the charge gauge on the dash have needles, the LCD under
+them reads the gear, the speed and the tanks. Look at a control and its
+name shows in the middle of the screen. Mouse wheel adjusts; on a pad the
+d-pad picks and the triggers adjust.
 
 The bin window (inset, top right) shows the snow coming up: the blade
 should fill it about halfway on a normal cut. The augers lift at most
@@ -212,6 +228,19 @@ gas_cost, fuel_used and minutes. `complete` needs 90% coverage, no jams,
 and (on a wet cut) 90% flood coverage. An empty tank leaves the cut
 incomplete.
 
+### 4.5 Repairs through the hatch (playtest W2)
+
+Doris's repairs happen where she's parked, in the resurfacer bay. The bay's
+Doris is the working `DorisModel`; the USE spot "doris" on her right side
+("OPEN DORIS'S SERVICE HATCH") starts the plug change with
+`in_place: "doris_hatch"`. `VenueWalk` passes the job scene
+`place` (`DorisModel.hatch_frame()` on her), `host` (Doris) and `eye` (the
+walker's camera). `JobScene` then plays in place: no teleport, the
+diorama's own room (`backdrop`) hidden, `host.open_for_service(true)`
+swings the hatch up and swaps her motor bay for the job's parts, and the
+camera leans in from the walker's eye to the step's view. Closing the job
+shuts the hatch. Any JobScene can play in place the same way.
+
 ## 5. Hand tools
 
 `IceHand` (`scenes/world/jobs/ice_hand.tscn`), walked from behind on the ice.
@@ -236,6 +265,7 @@ The scenes play nothing; the lead's audio listens to these.
 | `bin_dump` | DorisDrive | the dump starts |
 | `engine(rpm)` | DorisDrive | 4 Hz |
 | `hose(on)` | DorisDrive (standpipe), IceHand (big hose) | on change |
+| `control_moved(id)` | DorisDrive | the driver works a control (`DorisModel.CONTROLS` id): a lever's clunk, a valve's squeak |
 | `hose_flow(rate)` | IceHand | 4 Hz while the hose is out |
 | `edger(on, load)` | IceHand | on change and while cutting |
 | `chipper(hit)` | IceHand | each swing, litres moved |

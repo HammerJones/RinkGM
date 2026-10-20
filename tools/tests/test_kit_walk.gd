@@ -46,7 +46,11 @@ func _run() -> void:
 	await _frames(3)
 	var kit: KitHud = walk.kit
 	var ops: RinkOps = walk.story.sim.ops
-	_expect(kit != null and kit.spots.size() == 3, "the net racks and the crampons can are by the gate")
+	# the venue's own net storage (outside the bay doors) and crampons can
+	# replace KitHud's fallback spots (evening notes W1)
+	_expect(kit != null and kit.spots.is_empty() and walk.venue.spot("net_storage") != null
+		and walk.venue.spot("net_storage_mini") != null and walk.venue.spot("crampons_can") != null,
+		"the net racks and the crampons can are by the gate")
 
 	_key(walk, KEY_Q)
 	_key(walk, KEY_T)
@@ -64,6 +68,8 @@ func _run() -> void:
 	await _frames(2)
 	walk._act({"carry": "large"})
 	_expect(kit.kit.carrying == "large" and kit.kit.in_storage("large", ops) == 3, "a big net comes off the rack")
+	var bay: Node = walk.venue.rooms.get("zamboni_bay")
+	_expect(bay == null or int(bay.stored().large) == 3, "and the bay's rack shows one gone")
 
 	# onto the ice in shoes
 	walk.walker.global_position = Vector3(20.0, 0.05, 0.0)

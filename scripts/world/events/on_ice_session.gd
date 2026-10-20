@@ -385,13 +385,13 @@ func _wear(dt: float) -> void:
 	for s2: IceSkater in skaters:
 		if s2.wear_acc > 0.0:
 			if can:
-				ice.call("wear", s2.pos3(), s2.wear_acc)
+				ice.call("wear", Vector2(s2.pos3().x, s2.pos3().z), s2.wear_acc)
 			s2.wear_acc = 0.0
 
 
 func _ice_mark(at: Vector3, amount: float) -> void:
 	if ice and ice.has_method("wear"):
-		ice.call("wear", at, amount)
+		ice.call("wear", Vector2(at.x, at.z), amount)
 
 
 # ------------------------------------------------------------ events

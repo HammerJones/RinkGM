@@ -98,7 +98,7 @@ func _run() -> void:
 	_expect(boards.size() >= 1, "the locker rooms have real whiteboards (%d)" % boards.size())
 	var wb: Whiteboard = null
 	for b in boards:
-		if b.global_position.z > 0.0:
+		if b.global_position.z > 0.0 and b.global_position.x > 30.0:
 			wb = b
 	w.walker.global_position = wb.global_position + Vector3(1.6, -1.5, 0.0)
 	await _frames(3)
@@ -115,6 +115,24 @@ func _run() -> void:
 	_expect(is_instance_valid(wb.marks) and wb.marks.id == "whiteboard_marks", "the coach's drawings are their own layer")
 	wb.wipe()
 	_expect(wb.ink_coverage() == 0.0 and is_instance_valid(wb.marks), "X wipes only your marks")
+
+	# W7, W15: every board shows its own marks, and they change with the day
+	var keyed := boards.filter(func(b: Whiteboard) -> bool: return not b.board_key.is_empty())
+	var today := {}
+	for b: Whiteboard in keyed:
+		today[b.signature] = b.board_key
+	_expect(keyed.size() >= 4 and today.size() == keyed.size(), "%d whiteboards (pro and rec dressing rooms), no two alike" % keyed.size())
+	var inked := keyed.all(func(b: Whiteboard) -> bool: return b._people_img.get_used_rect().size.x > b._people_img.get_width() * 0.5)
+	_expect(inked, "each board has the people's marks across it")
+	var before := {}
+	for b: Whiteboard in keyed:
+		before[b] = b.signature
+	Whiteboard.set_day(self, Whiteboard.day + 1)
+	var changed := keyed.all(func(b: Whiteboard) -> bool: return b.signature != before[b])
+	var tomorrow := {}
+	for b: Whiteboard in keyed:
+		tomorrow[b.signature] = true
+	_expect(changed and tomorrow.size() == keyed.size(), "the next day every board shows something new, still no two alike")
 
 	print("readables: %s (%d failure%s)" % ["FAILED" if failures else "OK", failures, "" if failures == 1 else "s"])
 	quit(1 if failures else 0)

@@ -78,6 +78,7 @@ func _run() -> void:
 	for d in _venue.all_doors():
 		var gate := d.height < 1.5
 		_expect(d.width >= 0.9 and (gate or d.height >= 2.1), "door %s is %.2f x %.2f m" % [d.label, d.width, d.height])
+	_check_nets()
 	_venue.set_all_ages(VenueRoom.Age.WORN)
 	for d in _venue.all_doors():
 		d.open()
@@ -85,6 +86,28 @@ func _run() -> void:
 	await _walk_tests()
 	print("\n%s (%d failure%s)" % ["FAILED" if failures else "OK", failures, "" if failures == 1 else "s"])
 	quit(1 if failures else 0)
+
+
+## Nets (evening notes W1): 4 big and 8 small, all stored on the walkway
+## outside the bay (never inside it), with the two USE spots there and a
+## working set_stored().
+func _check_nets() -> void:
+	var bay = _venue.rooms["zamboni_bay"]  # untyped: net_slots() is the bay script's
+	var slots: Array = bay.net_slots()
+	var large := slots.filter(func(d: Dictionary) -> bool: return d.kind == "large").size()
+	var mini := slots.filter(func(d: Dictionary) -> bool: return d.kind == "mini").size()
+	_expect(large == RinkOps.NETS_LARGE and mini == RinkOps.NETS_MINI, "net storage holds %d big and %d small nets (RinkOps %d and %d)" % [large, mini, RinkOps.NETS_LARGE, RinkOps.NETS_MINI])
+	var outside := slots.all(func(d: Dictionary) -> bool: return (d.pos as Vector3).x < Venue.END_FRONT and (d.pos as Vector3).x > Rink.HALF_L + 0.32)
+	_expect(outside, "every net is stored on the walkway outside the bay doors")
+	var big := _venue.spot("net_storage")
+	var small := _venue.spot("net_storage_mini")
+	_expect(big != null and small != null and big.global_position.x < Venue.END_FRONT and small.global_position.x < Venue.END_FRONT
+		and str(big.data.get("carry", "")) == "large" and str(small.data.get("carry", "")) == "mini",
+		"the net_storage and net_storage_mini USE spots stand by the stored nets")
+	bay.set_stored(1, 3)
+	var st: Dictionary = bay.stored()
+	_expect(int(st.get("large", -1)) == 1 and int(st.get("mini", -1)) == 3, "set_stored(1, 3) leaves 1 big and 3 small nets in storage (%s)" % st)
+	bay.set_stored(RinkOps.NETS_LARGE, RinkOps.NETS_MINI)
 
 
 ## Fixture lights may cast shadows (they fade them out with distance), the
