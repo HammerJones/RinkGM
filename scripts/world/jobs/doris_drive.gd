@@ -348,6 +348,8 @@ func _can_park() -> bool:
 
 
 func _pad() -> bool:
+	if not is_inside_tree():
+		return false
 	var setup := get_node_or_null(^"/root/InputSetup")
 	return setup != null and setup.get("device") == 1
 
