@@ -381,6 +381,10 @@ func _traced_shots() -> void:
 	var easy: Array = await sweep.call(0.7, 0.6)
 	_check(easy[0] < 1.0 and not easy[1], "slow wide handles stay in the green and keep the puck (%.2f)" % easy[0])
 	_check(easy[2] > 1.0, "the handles carry the puck side to side across the body (%.2f m)" % easy[2])
+	# the meter counts changes of direction, not stick speed: a quick hard
+	# swing that changes direction rarely stays green
+	var swing: Array = await sweep.call(0.6, 1.0)
+	_check(swing[0] < 0.6 and not swing[1], "fast swings with few changes of direction stay green (%.2f)" % swing[0])
 	var frantic: Array = await sweep.call(4.0, 0.6)
 	_check(frantic[1], "frantic handles run past the limit and lose the puck (%.2f)" % frantic[0])
 	_plan = Callable()

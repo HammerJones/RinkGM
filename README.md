@@ -24,7 +24,7 @@ virtual right stick, so both devices drive the same stick model.
 | Dash (push-off burst) | L3 (click left stick) | Shift |
 | Hockey stop | R3 (click right stick) | Space, or push back against the way you're going (S skating forwards, W skating backwards) |
 | Stick blade (220 degree arc, back past each hip) | Right stick | Mouse (cursor is captured; Esc opens the menu and frees it) |
-| Stickhandle | Right stick side to side | Mouse side to side: the blade carries the puck. The HANDS gauge shows how close you are to the fastest rhythm your stickhandling allows; in the red the puck gets away |
+| Stickhandle | Right stick side to side | Mouse side to side: the blade carries the puck. The HANDS gauge counts how quickly you change direction, against the fastest rhythm your stickhandling allows (2 to 7 changes a second); in the red the puck gets away |
 | Shoot | Flick or wind up the right stick (below) | Hold right click and draw a shot pattern, release to shoot (below) |
 | Aim | | Hold left click to look around; the centre dot is the aim. Add right click to lock the view and draw. Right click alone aims at the middle of the net |
 | Shot pattern guide (wrist, snap, slap, toe drag, off) | | V |

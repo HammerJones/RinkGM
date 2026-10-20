@@ -143,18 +143,24 @@ func _follow_eyes(h: Skater, dt: float) -> void:
 const SELF_LAYER := 1 << 19
 
 
+## The parts of your own body the first-person eye would sit inside: head,
+## torso and the shoulders / upper arms (forearms and gloves stay in view).
+func _own_parts(rig: Node3D) -> Array:
+	return [rig.head, rig.torso] + Array(rig.uppers)
+
+
 func _hide_body(rig: Node3D) -> void:
 	if _hidden_rig != rig:
 		_show_body()
 		_hidden_rig = rig
-	for part in [rig.head, rig.torso]:
+	for part in _own_parts(rig):
 		if part:
 			part.layers = SELF_LAYER
 
 
 func _show_body() -> void:
 	if is_instance_valid(_hidden_rig):
-		for part in [_hidden_rig.head, _hidden_rig.torso]:
+		for part in _own_parts(_hidden_rig):
 			if part:
 				part.layers = 1
 	_hidden_rig = null

@@ -112,6 +112,8 @@ var _handle_prev := 0.0
 var _handle_from := 0.0           # blade side (m) at the last reversal
 var _handle_short := 0.0          # 0..1: how much too short the last handle was
 var _handle_hands := 0.0
+var _handle_since := 10.0         # s since the last change of direction
+var _handle_rate := 0.0           # changes of direction per second, from the last interval
 const BACK_SPEED := 0.72     # top speed backwards, of forwards
 const BACK_ACCEL := 0.65     # stride push backwards, of forwards
 const PIVOT_TIME := 0.32     # s a turn-around takes
@@ -856,33 +858,38 @@ func _fire() -> void:
 		shoot(held, slap, puck.horizontal_speed())
 
 
-## The quickest side-to-side the stickhandling rating handles cleanly, in
-## blade metres per second: wide slow sweeps for a beginner, quick small
-## handles for the best.
+## The quickest rhythm the stickhandling rating handles cleanly, in
+## changes of direction per second: slow, wide side-to-sides for a beginner,
+## quick dekes for the best.
 func handle_limit() -> float:
-	return lerpf(2.5, 9.0, skill("stick_handling"))
+	return lerpf(2.0, 7.0, skill("stick_handling"))
 
 
-## Tracks how hard the blade is being swept across the puck. Small handles
-## count for more than their speed at a low rating (the puck needs a wide
-## sweep to follow), and past the limit the puck can squirt away.
+## Tracks how quickly the stick changes direction across the puck (Sean: the
+## hard part is the fast changes of direction, not stick speed). Small
+## handles count for more at a low rating (the puck needs a wide sweep to
+## follow), and past the limit the puck can squirt away.
 func _stickhandle_rhythm(dt: float, able: bool) -> void:
 	# the hands' side-to-side (how fast the stick is being pushed across the
-	# body, m/s), not the blade, which lags behind them. Only the input's own
-	# motion counts: turning the body (or the camera) with the stick held
-	# still moves no hands.
+	# body, m/s). Only the input's own motion counts: turning the body (or
+	# the camera) with the stick held still moves no hands.
 	var side := ctrl.stick_move.dot(Vector2(right_vec().x, right_vec().z)) * REACH_MAX / maxf(dt, 0.001)
 	_handle_hands += side * dt
 	var hands := _handle_hands
-	# a reversal: short handles are hard for a weak stickhandler
-	if signf(side) != signf(_handle_prev) and absf(_handle_prev) > 0.3:
+	_handle_since += dt
+	# a change of direction (a real one, not a tremble of the hand)
+	if absf(side) > 0.3 and signf(side) != signf(_handle_prev) and absf(_handle_prev) > 0.3:
 		var need := lerpf(0.9, 0.25, skill("stick_handling"))
 		var width := absf(hands - _handle_from)
 		_handle_short = maxf(_handle_short, (need - width) / need)
 		_handle_from = hands
-	_handle_prev = side
+		_handle_rate = 1.0 / maxf(_handle_since, 0.05)
+		_handle_since = 0.0
+	if absf(side) > 0.3:
+		_handle_prev = side
 	_handle_short = maxf(0.0, _handle_short - 2.0 * dt)
-	var rate := absf(side) * (1.0 + _handle_short)
+	# the rhythm fades once the changes stop coming
+	var rate := minf(_handle_rate, 1.0 / maxf(_handle_since, 0.05)) * (1.0 + _handle_short)
 	var target := rate / handle_limit() if has_puck() else 0.0
 	handle_load = lerpf(handle_load, target, 1.0 - exp(-8.0 * dt))
 	if able and has_puck() and handle_load > 1.0 and randf() < (handle_load - 1.0) * 4.0 * dt:

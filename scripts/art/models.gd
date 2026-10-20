@@ -336,11 +336,12 @@ static func _heel_sweep(m: VoxelModel, p: Dictionary) -> Vector3:
 	return (Vector3(pos.x, pos.y, 0.5) - BLADE_PIVOT) * STICK_V
 
 
-## A regulation puck: 3 in across, 1 in thick (7.62 x 2.54 cm), in half-inch
-## voxels, rounded. Pivot at the centre of its bottom face.
-const PUCK_DIAMETER := 0.0762
-const PUCK_HEIGHT := 0.0254
-const _PUCK_V := 0.0127
+## The puck: drawn at twice regulation size (15.2 x 5.1 cm) so it reads at
+## game camera distances (Sean, P13). Physics keeps the regulation 3 in x 1 in
+## (Puck.RADIUS). Inch voxels, rounded. Pivot at the centre of its bottom face.
+const PUCK_DIAMETER := 0.1524
+const PUCK_HEIGHT := 0.0508
+const _PUCK_V := 0.0254
 
 
 static func puck() -> VoxelModel:

@@ -100,7 +100,8 @@ func update(dt: float) -> void:
 ## RMB patterns: lock the aim when the drawing starts, shoot on release.
 func _traced(human: Skater, f: PlayerInput.Frame) -> void:
 	if f.tracing and _aim_dot == null:
-		_aim_dot = aim_from_view() if f.looking else false
+		# the shot goes where the centre dot is, not automatically at the net
+		_aim_dot = aim_from_view()
 		if _aim_dot == null:
 			_aim_dot = false
 	var shooter := (human.skill("shot_accuracy") + human.skill("shot_power") + human.skill("shot_release")) / 3.0
@@ -122,8 +123,9 @@ func net_target(human: Skater) -> Vector3:
 	return human.attack_goal() + Vector3(0, 0.45, 0)
 
 
-## Where the centre dot meets the plane of the net you attack (clamped
-## around the net), or null when it points away from it.
+## Where the centre dot points: where it meets the plane of the net you
+## attack (kept on the ice surface, up to the glass), or a point 20 m along
+## the view when it points away from that end. Null only without a view.
 func aim_from_view() -> Variant:
 	var rig: CameraRig = game.camera_rig
 	var vp := rig.get_viewport()
@@ -133,10 +135,11 @@ func aim_from_view() -> Variant:
 	var o := rig.cam.project_ray_origin(mid)
 	var d := rig.cam.project_ray_normal(mid)
 	var gx: float = game.human.attack_goal().x
-	if absf(d.x) < 0.0001 or (gx - o.x) / d.x <= 0.0:
-		return null
-	var p := o + d * ((gx - o.x) / d.x)
-	return Vector3(gx, clampf(p.y, 0.05, 1.8), clampf(p.z, -3.0, 3.0))
+	var p := o + d * 20.0
+	if absf(d.x) > 0.0001 and (gx - o.x) / d.x > 0.0:
+		p = o + d * ((gx - o.x) / d.x)
+	var half := Rink.HALF_W - 0.3
+	return Vector3(p.x, clampf(p.y, 0.05, 3.0), clampf(p.z, -half, half))
 
 
 ## Grades a drawn pattern into a shot: which one, how hard, where it lands.

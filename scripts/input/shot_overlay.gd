@@ -1,7 +1,7 @@
 class_name ShotOverlay
 extends CanvasLayer
 ## What the keyboard + mouse player sees of their own hands:
-##   - the centre dot while looking around (LMB): it's the aim
+##   - the centre dot while looking around (LMB) or drawing: shots go there
 ##   - while drawing a shot (RMB), the chosen pattern as a faint guide with a
 ##     dot where the mouse has got to (V cycles: wrist, snap, slap, toe drag,
 ##     off; wrist by default, per Sean's sketch)
