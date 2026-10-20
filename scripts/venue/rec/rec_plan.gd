@@ -25,6 +25,9 @@ const X_W := -46.0
 const X_E := 46.0
 const WALL := 0.15   # one skin of an interior wall
 const OPEN := -1     # a door kind with no leaf: just an opening
+## The corridor under the bench-side stands from the wing's rink doors out
+## to the arena's north-east corner: x from, x to, z (inner face), height.
+const RINK_CORRIDOR := [-6.3, Venue.STAND_X, -27.4, 2.6]
 
 ## id: [display name, script, Rect (x0, z0, x1, z1), ceiling height, walls]
 ## walls "all" builds every edge but the arena's; "outer" only the building's
@@ -76,6 +79,13 @@ const DOORS := [
 	["Electrical room", 35.0, -40.0, "x", 0.95, 2.2, VenueDoor.Kind.SWING, "rec_electrical"],
 	["Link to hall", 40.0, -40.0, "x", 3.6, 3.0, OPEN, ""],
 	["Boiler room", 44.0, -40.0, "x", 0.95, 2.2, VenueDoor.Kind.SWING, "rec_boiler"],
+	# through the arena wall to the rink: the dressing rooms and the
+	# equipment store (doors on z -30; RINK_CORRIDOR runs under the stands)
+	["Equipment storage rink door", -1.75, -30.0, "x", 1.8, 2.2, VenueDoor.Kind.DOUBLE, "rec_storage"],
+	["Dressing room 3 rink door", 7.2, -30.0, "x", 0.95, 2.2, VenueDoor.Kind.SWING, "locker_3"],
+	["Dressing room 4 rink door", 15.2, -30.0, "x", 0.95, 2.2, VenueDoor.Kind.SWING, "locker_4"],
+	["Dressing room 5 rink door", 23.2, -30.0, "x", 0.95, 2.2, VenueDoor.Kind.SWING, "locker_5"],
+	["Dressing room 6 rink door", 31.2, -30.0, "x", 0.95, 2.2, VenueDoor.Kind.SWING, "locker_6"],
 	# north band, off the hall
 	["Gym west", -25.0, -44.0, "x", 1.9, 2.3, VenueDoor.Kind.DOUBLE, "gym"],
 	["Gym east", -5.0, -44.0, "x", 1.9, 2.3, VenueDoor.Kind.DOUBLE, "gym"],

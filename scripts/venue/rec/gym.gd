@@ -1,7 +1,7 @@
 extends RecRoom
 ## The gymnasium, the heart of the old Athletic Club: a hardwood court with
-## its lines, a hoop at each end on wall arms, folded wooden bleachers along
-## the back wall under the high windows, the club's championship banners,
+## its lines, a hoop at each end on wall arms, plain benches along the back
+## wall under the high windows (the room is too tight for bleachers), the club's championship banners,
 ## exposed roof trusses and high-bay lights. The roof leaks when worn (the
 ## meeting room's whiteboard has it at number one) and a bucket catches it.
 
@@ -37,7 +37,7 @@ func furnish(k: VenueKit) -> void:
 	_lines(k)
 	for end in [-1, 1]:
 		_hoop(k, end)
-	_bleachers(k)
+	_benches(k)
 	_banners(k)
 	_trusses(k)
 	# a ball cart, the volleyball posts and a stack of mats in the east corner
@@ -157,16 +157,17 @@ func _hoop(k: VenueKit, end: int) -> void:
 	k.block(Vector3(wall - end * 0.1, 0.1, CZ - 3.0), Vector3(wall, 2.0, CZ + 3.0), pad, 0.6, 0.04, false)
 
 
-## Two banks of wooden bleachers folded against the back wall, either side
-## of the exit.
-func _bleachers(k: VenueKit) -> void:
+## Two long wooden benches against the back wall, either side of the exit,
+## where the next team waits for winners.
+func _benches(k: VenueKit) -> void:
 	var wood: Color = k.by_age(Wear.OLD_WOOD, Color("b08050"), Color("c9a46a"))
+	var steel := Color("3a3d44")
 	for bank in [[x0 + 2.0, -16.0], [-12.0, x1 - 2.0]]:
-		for i in 8:
-			var y := 0.3 * i
-			var dz := 0.1 * i
-			k.aged_block(Vector3(bank[0], y, z0 + 0.2 + dz), Vector3(bank[1], y + 0.3, z0 + 1.0 - dz * 0.2), wood, 1.0, 0.06)
-		k.block(Vector3(bank[0], 0, z0 + 0.98), Vector3(bank[1], 0.25, z0 + 1.05), Color("3a3d44"), 1.0, 0.0, false)
+		k.aged_block(Vector3(bank[0], 0.42, z0 + 0.25), Vector3(bank[1], 0.47, z0 + 0.65), wood, 1.0, 0.06)
+		var x: float = bank[0] + 0.2
+		while x < bank[1]:
+			k.block(Vector3(x, 0, z0 + 0.3), Vector3(x + 0.06, 0.42, z0 + 0.6), steel, 0.3, 0.0)
+			x += 2.0
 
 
 func _banners(k: VenueKit) -> void:

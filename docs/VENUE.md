@@ -38,7 +38,8 @@ The walk-around playtest is also `scenes/venue/venue_walk.tscn`
 stick look, Shift/L3 sprint, Space jump, Ctrl or C (held) crouch, E/A open a
 door or use a spot (A jumps when nothing is in reach, B held crouches when no
 panel is open), 1 2 3 or the D-pad set the age of the room you're standing
-in, F/Y fly (Space and Ctrl then fly up and down).
+in, F/Y fly (Space and Ctrl then fly up and down). The dev menu's Walk tab has
+the same noclip toggle (`venue_walk.set_noclip`).
 
 Floor plans: `tools/venue_plan.gd` renders straight-down views of the
 building cut at 2.6 m and 8.5 m, plus a JSON list of room bounds and doors.
@@ -52,18 +53,33 @@ It needs a renderer, so run it under xvfb (lavapipe is fine):
   at z −15.2 with gates; walkway; grandstand from z −17.5 (10 rows, 0.85 m
   deep, 0.42 m rise, seven sections with aisles); concourse on top at 5.1 m.
 - Penalty-box side (+Z): home box, timekeeper, away box between x ±5.8, then
-  the same walkway and grandstand mirrored.
-- −X end: lobby (front doors, tickets, snack bar, trophies, viewing window,
-  stairs) under a mezzanine at 4.5 m with the manager's office.
-- +X end: home dressing room (z −14..−5), resurfacer bay (z ±5, roll-up doors
-  to the rink and outside), visitors' dressing room (z 5..14). The old
-  scoreboard hangs on this wall until it is renovated.
+  the same walkway and grandstand mirrored. The boxes open only to the ice
+  (their back wall runs on behind them); the timekeeper has a full-height door
+  from the walkway, a round talk hole in the rink glass and a paper slot
+  through each side glass.
+- Bench-side corridor (walk build only): a low corridor under the bench-side
+  stands (x −6.3..24, z −27.4..−29.5) takes the rink doors from dressing rooms
+  3 to 6 and equipment storage (`RecPlan.RINK_CORRIDOR`) out to the +X
+  corner.
+- −X end: lobby (front doors, snack bar, trophies, viewing window, open
+  stairwell with rails both sides) under a mezzanine at 4.5 m with the
+  manager's office. The ticket booth is a plywood add-on shed outside the
+  lobby's rink wall (x −38.6..−35.2, z −16.6..−14), window facing the ice.
+- +X end: home dressing room (z −14..−5), resurfacer bay (z ±5, roofed, roll-up
+  doors outside, two big gate leaves drawn on the boards), visitors' dressing
+  room (z 5..14). Nets are stored in painted bays along the walkway wall on
+  both sides of the bay (`zamboni_bay.net_slots()` lists them). The
+  scoreboard is a classic bulb light panel (`BulbBoard`, 7-segment bulb
+  digits in one MultiMesh); `scoreboard.mode = "clock"` and `show_time(h, m)`
+  turn it into a wall clock between games.
 - +X/+Z corner: the ice plant room (x 36.7..45.5, z 14.3..28.1), door at
   z 23.7 facing the rink end, with the header in a 0.72 m floor trench
   (`plant_room.gd` places the kit's plant props in the layout of
   `art/tools/plant_room_preview.gd`; the shell leaves the trench out of its
   floor).
-- Corners: open floor with fire exits; clutter changes with the shell's age.
+- Corners: fire exits (the painted wall bands stop short of the signs), two
+  flat skate-on benches on a rubber mat, folding chairs and puck buckets when
+  worn; renovated swaps the chairs for high-top tables.
 
 ## Rooms and renovation
 

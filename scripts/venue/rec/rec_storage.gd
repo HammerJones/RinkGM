@@ -1,6 +1,7 @@
 extends RecRoom
 ## Two closets: the janitor's (mop sink, floor machine, cleaning stock) and
-## the equipment store (pylons, spare nets, puck buckets, ball carts, mats).
+## the equipment store (pylons, spare nets, puck buckets, ball carts, mats),
+## which has double doors out to the rink for the nets.
 
 const SPLIT := -3.5
 
@@ -24,7 +25,7 @@ func furnish(k: VenueKit) -> void:
 	k.block(Vector3(-4.5, 0, -36.5), Vector3(-3.9, 0.35, -35.9), Color("3a3d44"), 0.2, 0.04)  # floor buffer
 	k.block(Vector3(-4.25, 0.35, -36.25), Vector3(-4.15, 1.1, -36.15), Color("6a6e74"), 0.2, 0.0, false)
 	# equipment: shelves of pylons and buckets, nets on their sides, mats
-	shelves(k, Vector3(-3.25, 0, -30.6), Vector3(-0.3, 2.0, -30.15), 4, steel, [Color("e06a1a"), Color("1b1d22"), Color("e0b020"), Color("3f6fa8")])
+	shelves(k, Vector3(-3.25, 0, -39.75), Vector3(-2.7, 2.0, -38.0), 4, steel, [Color("e06a1a"), Color("1b1d22"), Color("e0b020"), Color("3f6fa8")])
 	shelves(k, Vector3(-0.6, 0, -37.8), Vector3(-0.15, 2.0, -31.2), 4, steel, [Color("e06a1a"), Color("eeeeea"), Color("1b1d22")])
 	var red := k.aged(Color("c8191e"), 3)
 	for i in 2:

@@ -121,7 +121,8 @@ func rec_light(k: VenueKit, pos: Vector3, reach: float, energy := 1.0) -> void:
 ## `inward` is the sign toward the room's inside.
 func _edge(k: VenueKit, along: String, at: float, s0: float, s1: float, inward: float, walls: String) -> void:
 	if along == "x" and absf(at - RecPlan.Z_ARENA) < 0.05:
-		return  # the arena's own wall
+		_arena_doors(k, s0, s1)
+		return  # the arena's own wall (the shell cuts its openings)
 	var outer := RecPlan.is_outer(along, at)
 	if walls == "outer" and not outer:
 		return
@@ -133,6 +134,21 @@ func _edge(k: VenueKit, along: String, at: float, s0: float, s1: float, inward: 
 	wall_line(k, along, at, at + inward * t * 0.5, s0, s1, h + 0.6, t, brick(k))
 	if not bare_outer():
 		wall_line(k, along, at, at + inward * 0.29, s0, s1, h, 0.02, paint(k), false)
+
+
+## Doors this room owns through the arena's wall (the shell's, 0.5 m thick
+## at z -30..-29.5), opening onto the corridor under the stands.
+func _arena_doors(k: VenueKit, s0: float, s1: float) -> void:
+	var zc := RecPlan.Z_ARENA + Venue.WALL_T * 0.5
+	for d in RecPlan.doors_on("x", RecPlan.Z_ARENA, s0, s1):
+		if d[7] != plan_id:
+			continue
+		add_door(k, Vector3(d[1], 0, zc), 0.0, d[6], d[4], d[5], door_color(k, d), d[0])
+		var text := "// RINK"
+		var plate := VenueSign.make([[text, plate_color()]], text.length() + 1, 1, 0.018)
+		plate.name = "Plate_%s" % String(d[0]).replace(" ", "_")
+		plate.dead = k.by_age(0.05, 0.0, 0.0)
+		k.sign(plate, Transform3D(Basis(Vector3.UP, PI), Vector3(d[1], d[5] + 0.32, RecPlan.Z_ARENA - 0.02)))
 
 
 ## An interior partition centred on the line `at` (doors listed in the plan

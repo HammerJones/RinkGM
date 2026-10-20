@@ -2,7 +2,8 @@ extends RecRoom
 ## Dressing rooms 3 to 6 off the main hall: the old Athletic Club change
 ## rooms, now used by minor hockey, the beer league and visiting tournament
 ## teams. Kit lockers on two walls with a bench in front, a shower room in
-## the corner by the arena wall, a whiteboard. Each room kept the colour the
+## the corner by the arena wall, a whiteboard, and a door straight out to
+## the rink. Each room kept the colour the
 ## club painted it in.
 
 const COLOURS := [Color("7a2a35"), Color("1d3557"), Color("2a6a4a"), Color("b8862a")]
@@ -24,13 +25,14 @@ func paint(k: VenueKit) -> Color:
 func furnish(k: VenueKit) -> void:
 	var team: Color = COLOURS[(_number() - 3) % COLOURS.size()]
 	var wood: Color = k.by_age(Color("7a5c3c"), Color("8a6a45"), team.darkened(0.2))
-	# lockers down the east wall and along the arena wall
+	# lockers down the east wall and along the arena wall, short of the
+	# door out to the rink
 	for i in 6:
 		k.prop("lockers", Vector3(x1 - 0.15 - 0.23, 0, -38.6 + i * 1.2 + 0.6), PI * 0.5)
-	for i in 4:
+	for i in 3:
 		k.prop("lockers", Vector3(x0 + 3.0 + i * 1.2 + 0.6, 0, -30.0 - 0.23), 0.0)
 	bench(k, Vector3(x1 - 1.05, 0, -38.6), Vector3(x1 - 0.65, 0, -31.4), wood)
-	bench(k, Vector3(x0 + 3.0, 0, -31.05), Vector3(x1 - 1.2, 0, -30.65), wood)
+	bench(k, Vector3(x0 + 3.0, 0, -31.05), Vector3(x0 + 6.6, 0, -30.65), wood)
 	# the shower room in the corner by the arena wall
 	var tile: Color = k.by_age(Color("b9c2bb"), Color("cfd8d2"), Color("f0f2f2"))
 	var sx := x0 + 2.7

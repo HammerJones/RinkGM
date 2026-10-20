@@ -179,7 +179,7 @@ func _build() -> void:
 	_tabs = TabContainer.new()
 	_tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(_tabs)
-	for tab_name in ["Player", "Match", "Career", "Sim"]:
+	for tab_name in ["Player", "Match", "Career", "Sim", "Walk"]:
 		var scroll := ScrollContainer.new()
 		scroll.name = tab_name
 		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -236,6 +236,7 @@ func refresh() -> void:
 		"Match": _build_match()
 		"Career": _build_career()
 		"Sim": _build_sim()
+		"Walk": _build_walk()
 
 
 # ---------------------------------------------------------------- player
@@ -585,6 +586,24 @@ func _build_sim() -> void:
 			c.start_next_season()
 			_maybe_save()
 			_say("season %d started in tier %d" % [c.season_number, c.tier]))
+
+
+# ---------------------------------------------------------------- walk
+
+## Walking the rink on foot (venue_walk.gd): noclip through walls.
+func _build_walk() -> void:
+	var box := _tab_box("Walk")
+	var w := get_tree().current_scene
+	if w == null or not w.has_method("set_noclip"):
+		_note(box, "// Not walking the rink.")
+		return
+	var cb := CheckBox.new()
+	cb.text = "Noclip (fly through walls; Space / Ctrl up and down)"
+	cb.button_pressed = w.get("flying")
+	cb.toggled.connect(func(on: bool) -> void:
+		w.set_noclip(on)
+		_say("noclip %s" % ("on" if on else "off")))
+	box.add_child(cb)
 
 
 ## Plays one round; false once the career has left the season (offseason).
