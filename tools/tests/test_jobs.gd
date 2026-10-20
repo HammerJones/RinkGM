@@ -12,6 +12,8 @@ const SCENES := {
 	"compressor_oil_change": "res://scenes/world/jobs/compressor_oil_service.tscn",
 	"blade_change": "res://scenes/world/jobs/doris_blade.tscn",
 	"doris_plugs": "res://scenes/world/jobs/doris_plugs.tscn",
+	"doris_oil_change": "res://scenes/world/jobs/doris_oil.tscn",
+	"doris_carb": "res://scenes/world/jobs/doris_carb.tscn",
 }
 
 var failures := 0
@@ -22,6 +24,8 @@ func _initialize() -> void:
 	_check_oil()
 	_check_blade()
 	_check_plugs()
+	_check_doris_oil()
+	_check_carb()
 	for job in SCENES:
 		_check_cancel(str(job))
 	if failures:
@@ -126,6 +130,31 @@ func _check_plugs() -> void:
 	_expect(bad.get("cross_threaded", false) == true, "plugs: a wrench at the start cross-threads it")
 	_expect(bad.get("torque_ok", true) == false, "plugs: past the click is not torque_ok")
 	_sim_job("doris_plugs", good)
+
+
+func _check_doris_oil() -> void:
+	var good := _play("doris_oil_change", "doris_oil", false)
+	_expect(_quality(good) > 0.85, "doris oil: perfect quality %.2f should be > 0.85" % _quality(good))
+	_expect(absf(float(good.get("oil_level", 0.0)) - 1.0) < 0.1, "doris oil: filled to the FULL line, got %.2f" % float(good.get("oil_level", 0.0)))
+	_expect(good.get("filter_ok", false) == true and good.get("drain_plug_torque_ok", false) == true, "doris oil: filter and drain plug ok on a perfect run")
+	_expect(_flags(good).is_empty(), "doris oil: a perfect run has no flags, got %s" % [_flags(good)])
+	var bad := _play("doris_oil_change", "doris_oil", true)
+	_expect(_quality(bad) < _quality(good) - 0.2, "doris oil: sloppy quality %.2f should be well under perfect %.2f" % [_quality(bad), _quality(good)])
+	_expect("oil_over" in _flags(bad) and float(bad.get("oil_level", 0.0)) > 1.1, "doris oil: past the FULL line is flagged")
+	_expect(bad.get("filter_ok", true) == false, "doris oil: a crossed filter is not ok")
+	_sim_job("doris_oil_change", good)
+
+
+func _check_carb() -> void:
+	var good := _play("doris_carb", "doris_carb", false)
+	_expect(_quality(good) > 0.85, "carb: perfect quality %.2f should be > 0.85" % _quality(good))
+	_expect(float(good.get("jets_clean", 0.0)) > 0.99 and good.get("gasket_ok", false) == true and good.get("choke_freed", false) == true, "carb: clean jets, a new gasket, the choke free")
+	_expect(_flags(good).is_empty(), "carb: a perfect run has no flags, got %s" % [_flags(good)])
+	var bad := _play("doris_carb", "doris_carb", true)
+	_expect(_quality(bad) < _quality(good) - 0.2, "carb: sloppy quality %.2f should be well under perfect %.2f" % [_quality(bad), _quality(good)])
+	_expect("old_gasket" in _flags(bad) and "jets_varnished" in _flags(bad), "carb: the old gasket and half-clear jets are flagged")
+	_expect("cross_threaded" in _flags(bad), "carb: a screwdriver at the start cross-threads a bowl screw")
+	_sim_job("doris_carb", good)
 
 
 ## Back before the job is done: finished({cancelled: true}), once.

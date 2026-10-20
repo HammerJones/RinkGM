@@ -100,8 +100,14 @@ func _m1(k: VenueKit) -> void:
 	# World: her repairs go through the service hatch on her right side and
 	# play there, in place (W2)
 	var hatch := _doris_xf() * Vector3(DorisModel.HATCH_HINGE.x, (DorisModel.HATCH_Y0 + DorisModel.HATCH_Y1) * 0.5, (DorisModel.HATCH_Z0 + DorisModel.HATCH_Z1) * 0.5)
+	# the hatch opens for whichever of her engine jobs is due
+	# (WalkStory.hatch_job): the plugs, the oil and filter, the carb
 	add_spot(k, VenueSpot.Kind.USE, "doris", hatch, "Doris's service hatch",
-		{"verb": "OPEN", "job": "doris_plugs", "target": "doris_plugs", "in_place": "doris_hatch", "readable": "note_doris_dash", "note": "doris_dash", "needs": "spark_plugs", "scene": "res://scenes/world/jobs/doris_plugs.tscn"}, 1.8)
+		{"verb": "OPEN", "job": "doris_plugs", "target": "doris_plugs", "in_place": "doris_hatch", "readable": "note_doris_dash", "note": "doris_dash", "needs": "spark_plugs", "scene": "res://scenes/world/jobs/doris_plugs.tscn",
+		"jobs": [
+			{"job": "doris_oil_change", "target": "doris_oil", "scene": "res://scenes/world/jobs/doris_oil.tscn"},
+			{"job": "doris_carb", "target": "doris_carb", "scene": "res://scenes/world/jobs/doris_carb.tscn"},
+		]}, 1.8)
 	add_spot(k, VenueSpot.Kind.JOB, "doris_blade", Vector3(41.9, 0.5, 0.0), "Doris's blade",
 		{"job": "blade_change", "target": "doris_blade", "scene": "res://scenes/world/jobs/doris_blade.tscn"}, 1.6)
 	# World: up into the seat to drive the resurface (docs/world/ICE.md 4)

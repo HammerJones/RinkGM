@@ -145,6 +145,8 @@ func use(s: VenueSpot) -> Dictionary:
 	var gives: String = d.get("gives", "")
 	if gives != "":
 		flags[gives] = true
+	if d.has("jobs"):
+		d = hatch_job(d)
 	var kind := s.kind
 	if kind == VenueSpot.Kind.USE and d.has("job"):
 		kind = VenueSpot.Kind.JOB  # World: a machine opened for its job (Doris's hatch)
@@ -190,6 +192,30 @@ func use(s: VenueSpot) -> Dictionary:
 				return {"scorekeep": true}
 	return {"toast": s.label}
 
+
+
+## World: Doris's hatch offers whichever of her engine jobs is due, the most
+## worn first: the plugs (always while she won't start on them), the oil and
+## filter, the carb. `d` is the hatch spot's data: the plug job, with the
+## others in "jobs" ({job, target, scene}); returns the one to open.
+func hatch_job(d: Dictionary) -> Dictionary:
+	var doris := sim.doris
+	var plugs := doris.part("spark_plugs")
+	if plugs.failed():
+		return d
+	var wear := {"doris_plugs": plugs.condition, "doris_oil_change": doris.engine_oil, "doris_carb": doris.carb}
+	var best := d
+	var lowest := float(wear.get(str(d.get("job", "")), 1.0))
+	for alt in d.get("jobs", []):
+		var w := float(wear.get(str(alt.get("job", "")), 1.0))
+		if w < lowest - 0.001:
+			lowest = w
+			best = alt
+	if best == d:
+		return d
+	var out := {"verb": d.get("verb", ""), "in_place": d.get("in_place", "")}
+	out.merge(best, true)
+	return out
 
 
 ## A mini game (or the quick way, when its scene isn't built yet) finished

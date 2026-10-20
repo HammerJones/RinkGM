@@ -22,9 +22,14 @@ const WHEEL_MM_PER_TURN := 0.79375  # 1/32 in a turn of the blade wheel
 const FLOOD_TEMP_C := 60.0
 ## Gas to heat flood water from the 10 C main, $ per MJ (an 80% heater).
 const GAS_PER_MJ := 0.0148
+## Hours of running from a clean carburettor to a varnished one.
+const CARB_LIFE_H := 200.0
 
 var parts := {}         # id -> SimPart
 var engine_oil := 0.6   # 1 fresh, 0 sludge
+## The carburettor's jets and float bowl, 1 clean, 0 varnished shut. It gums
+## up over about 200 h; below half it starves her a little (engine_factor).
+var carb := 0.8
 var fuel := 0.7         # tank fraction
 var blade_height_mm := 1.0  # set when the blade is changed; 0.8-1.2 shaves cleanly
 var blade_level_mm := 0.0   # one end deeper than the other; within 0.1 is level
@@ -91,7 +96,8 @@ func chatter() -> float:
 
 
 func engine_factor() -> float:
-	return 0.7 + 0.3 * minf(part("spark_plugs").condition, 1.0 - 0.5 * (1.0 - part("air_filter").condition))
+	var starve := 1.0 - 0.2 * maxf(0.5 - carb, 0.0)
+	return (0.7 + 0.3 * minf(part("spark_plugs").condition, 1.0 - 0.5 * (1.0 - part("air_filter").condition))) * starve
 
 
 ## Runs one resurface on `ice`. `skill` is the driver (the owner starts around
@@ -129,6 +135,7 @@ func _wear(hard: float) -> void:
 		var stress := 1.0 + (hard * 0.8 if id == "blade" else 0.0)
 		(parts[id] as SimPart).run(RESURFACE_HOURS, stress)
 	engine_oil = maxf(engine_oil - RESURFACE_HOURS / 120.0, 0.0)
+	carb = maxf(carb - RESURFACE_HOURS / CARB_LIFE_H, 0.0)
 	fuel = maxf(fuel - 0.045, 0.0)
 
 
@@ -136,7 +143,7 @@ func to_dict() -> Dictionary:
 	var ps := {}
 	for id in parts:
 		ps[id] = parts[id].to_dict()
-	return {"parts": ps, "engine_oil": engine_oil, "fuel": fuel, "blade_height_mm": blade_height_mm,
+	return {"parts": ps, "engine_oil": engine_oil, "carb": carb, "fuel": fuel, "blade_height_mm": blade_height_mm,
 		"blade_level_mm": blade_level_mm, "blade_bolts_ok": blade_bolts_ok, "choke_stuck": choke_stuck,
 		"flood_l": flood_l, "wash_l": wash_l, "flood_temp_c": flood_temp_c, "cuts_driven": cuts_driven,
 		"auto_level": auto_level, "model": model}
@@ -148,6 +155,7 @@ func load_dict(d: Dictionary) -> void:
 		if parts.has(id):
 			parts[id].load_dict(ps[id])
 	engine_oil = float(d.get("engine_oil", engine_oil))
+	carb = float(d.get("carb", carb))
 	fuel = float(d.get("fuel", fuel))
 	blade_height_mm = float(d.get("blade_height_mm", blade_height_mm))
 	blade_level_mm = float(d.get("blade_level_mm", blade_level_mm))
