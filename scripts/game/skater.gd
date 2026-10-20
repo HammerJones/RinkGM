@@ -658,6 +658,11 @@ func _update_blade(dt: float, blend: float) -> void:
 	_blade_pvel = _blade_pvel.move_toward(want, acc * dt)
 	blade_ang = clampf(blade_ang + _blade_pvel.x / maxf(blade_reach, 0.3) * dt, -ARC_HALF, ARC_HALF)
 	blade_reach = clampf(blade_reach + _blade_pvel.y * dt, REACH_MIN, reach_limit(blade_ang) + _lunge)
+	var walled := _board_reach(blade_ang, blade_reach)
+	if walled < blade_reach:
+		# the boards stop the blade: it can't reach through them
+		blade_reach = maxf(walled, REACH_MIN)
+		_blade_pvel.y = minf(_blade_pvel.y, 0.0)
 	var prev_local := blade_local
 	blade_local = Vector2(cos(blade_ang), sin(blade_ang)) * blade_reach
 	blade_lvel = (blade_local - prev_local) / dt
@@ -1204,6 +1209,28 @@ func _set_blade(local: Vector2) -> void:
 	blade_reach = local.length()
 	blade_lvel = Vector2.ZERO
 	_blade_pvel = Vector2.ZERO
+
+
+## How far out the blade can reach at `ang` before its heel or toe meets the
+## boards (the blade lies along the reach, turned by blade_yaw). A blade
+## lifted over the boards' top is free.
+func _board_reach(ang: float, reach: float) -> float:
+	if blade_height > Rink.BOARD_H:
+		return reach
+	var dir := Vector2(cos(ang), sin(ang))
+	var w := heading * dir.x + right_vec() * dir.y
+	var out := Vector2(w.x, w.z)
+	var ax := out.rotated(blade_yaw)
+	var at := Vector2(position.x, position.z)
+	for i in 4:
+		var c := at + out * reach
+		var over := maxf(Rink.sdf(c + ax * StickPuck.BLADE_HALF), Rink.sdf(c - ax * StickPuck.BLADE_HALF)) + StickPuck.BLADE_THICK
+		if over <= 0.0:
+			break
+		# step back along the reach, by more when it runs nearly along the boards
+		var n := Rink.board_normal(c)
+		reach -= over / maxf(out.dot(n), 0.25)
+	return reach
 
 
 func _blade_world(local: Vector2) -> Vector3:

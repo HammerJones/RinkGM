@@ -79,6 +79,19 @@ func _run() -> void:
 	print("stick pulled 120 deg back sits at %.0f deg" % ang)
 	_check(ang > 95.0 and ang <= 111.0, "the arc stops at 110 degrees each side")
 
+	# --- the boards stop the stick: a skater a metre off the end boards
+	# reaches for them and sweeps along them, and the blade never goes through
+	await _carry(Vector2(Rink.HALF_L - 1.0, 0), false)
+	var deepest := {"d": -INF}
+	_set_plan(func(f, t2): f.stick = Vector2(1, 0).rotated(sin(t2 * 3.0) * 1.2))
+	await _until(func():
+		var b: Array = StickPuck.blade_at(game.human, 1.0)
+		for e in [-1.0, 1.0]:
+			deepest.d = maxf(deepest.d, Rink.sdf(b[0] + b[1] * e * StickPuck.BLADE_HALF))
+		return false, 1.5)
+	print("blade deepest past the boards %.3f m" % deepest.d)
+	_check(deepest.d < 0.0, "the blade stops at the boards")
+
 	# --- learned shots and moves
 	await _moves()
 	await _stickhandling()
