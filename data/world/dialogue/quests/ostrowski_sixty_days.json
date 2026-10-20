@@ -1,0 +1,304 @@
+{
+ "id": "ostrowski_sixty_days",
+ "giver": "bernie_ostrowski",
+ "quest": "ostrowski_sixty_days",
+ "nodes": {
+  "offer": {
+   "say": "Coach Ostrowski, Millbrook High, 2009 Valley High School Champions, you'll have seen the banner. About the ice bill. The board pays in sixty days. It's tradition. Like the banner. I've got a proposal. Hear me out.",
+   "options": [
+    {
+     "text": "I'm listening.",
+     "to": "listen"
+    },
+    {
+     "text": "Mention the 2009 banner one more time.",
+     "do": [
+      {
+       "rel": [
+        "bernie_ostrowski",
+        1
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "Just pay on time, Coach.",
+     "to": "decline"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "2009. The banner. Mallard green and gold. We beat Harlow Falls three to two on a goal off the dead board. Thank you, I needed that. Now, my proposal.",
+   "options": [
+    {
+     "text": "Go on.",
+     "to": "listen"
+    }
+   ]
+  },
+  "listen": {
+   "say": "The shop class needs a project. Your bench needs paint. It says EAR IT, not EARN IT. Let the kids repaint it, or take your broken sticks for the shop, and we call the late fee even. Everybody learns something.",
+   "options": [
+    {
+     "text": "Let's work out the terms after a couple of practices.",
+     "do": [
+      {
+       "quest_start": "ostrowski_sixty_days"
+      },
+      {
+       "rel": [
+        "bernie_ostrowski",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Interesting. Let me see the kids practise first.",
+     "do": [
+      {
+       "quest_start": "ostrowski_sixty_days"
+      },
+      {
+       "rel": [
+        "bernie_ostrowski",
+        2
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "I'll tell the board you said so. The board will nod. The cheque will arrive in sixty days.",
+   "do": [
+    {
+     "rel": [
+      "bernie_ostrowski",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Practice Tuesday. Watch number nine. Number nine's going to be something. Number nine's my nephew. That's not why I'm saying it.",
+   "options": []
+  },
+  "progress": {
+   "say": "Coach Ostrowski. 2009.",
+   "options": [
+    {
+     "text": "How are practices going?",
+     "if": [
+      {
+       "step": [
+        "ostrowski_sixty_days",
+        "practices"
+       ]
+      }
+     ],
+     "to": "p_practices"
+    },
+    {
+     "text": "Let's settle the terms.",
+     "if": [
+      {
+       "step": [
+        "ostrowski_sixty_days",
+        "terms"
+       ]
+      }
+     ],
+     "to": "p_terms"
+    },
+    {
+     "text": "Terms are set. Next home game.",
+     "if": [
+      {
+       "step": [
+        "ostrowski_sixty_days",
+        "game"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_practices": {
+   "say": "Number nine fell over twice. Both times beautifully.",
+   "options": []
+  },
+  "p_terms": {
+   "say": "What'll it be?",
+   "options": [
+    {
+     "text": "The shop class repaints EARN IT on the home bench.",
+     "do": [
+      {
+       "set": "earn_it_repainted"
+      },
+      {
+       "set": "ostrowski_terms_set"
+      },
+      {
+       "rel": [
+        "bernie_ostrowski",
+        3
+       ]
+      }
+     ],
+     "to": "p_paint"
+    },
+    {
+     "text": "The shop class takes the stick barrel for projects.",
+     "do": [
+      {
+       "set": "shop_class_barrel"
+      },
+      {
+       "set": "ostrowski_terms_set"
+      },
+      {
+       "rel": [
+        "bernie_ostrowski",
+        3
+       ]
+      }
+     ],
+     "to": "p_barrel"
+    },
+    {
+     "text": "No trades. The money, on time, with the late fee.",
+     "do": [
+      {
+       "set": "ostrowski_cash"
+      },
+      {
+       "set": "ostrowski_terms_set"
+      },
+      {
+       "money": 330
+      },
+      {
+       "rel": [
+        "bernie_ostrowski",
+        -2
+       ]
+      }
+     ],
+     "to": "p_cash"
+    }
+   ]
+  },
+  "p_paint": {
+   "say": "EARN IT. With the N. I'll have them do it in proper red, not the wrong red. Last volunteer used the wrong red. The 2001 banner's wrong red. Don't get me started.",
+   "options": []
+  },
+  "p_barrel": {
+   "say": "Bottle openers! Coat racks! A kid made a chess set out of a Warlock last year. The rooks are very menacing.",
+   "options": []
+  },
+  "p_cash": {
+   "say": "The money, then. With the fee. I'll walk it to the board office myself. They'll be surprised. I'll be surprised.",
+   "options": []
+  },
+  "complete": {
+   "say": "Mallards won at home. Not 2009, but we're getting there. Books are closed.",
+   "options": [
+    {
+     "text": "How did it turn out?",
+     "to": "c_how"
+    },
+    {
+     "text": "Tell number nine nice game.",
+     "do": [
+      {
+       "rel": [
+        "bernie_ostrowski",
+        2
+       ]
+      }
+     ],
+     "to": "c_nine"
+    },
+    {
+     "text": "2009, Coach.",
+     "do": [
+      {
+       "rel": [
+        "bernie_ostrowski",
+        1
+       ]
+      }
+     ],
+     "to": "c_2009"
+    }
+   ]
+  },
+  "c_how": {
+   "say": "Depends on the deal.",
+   "options": [
+    {
+     "text": "The bench paint?",
+     "if": [
+      {
+       "flag": "earn_it_repainted"
+      }
+     ],
+     "to": "c_paint"
+    },
+    {
+     "text": "The stick barrel?",
+     "if": [
+      {
+       "flag": "shop_class_barrel"
+      }
+     ],
+     "to": "c_barrel"
+    },
+    {
+     "text": "The money?",
+     "if": [
+      {
+       "flag": "ostrowski_cash"
+      }
+     ],
+     "to": "c_cash"
+    }
+   ]
+  },
+  "c_paint": {
+   "say": "EARN IT, in the right red, with the N. One kid painted a tiny duck on the inside of the gate. I told him to paint over it. He didn't. I'm glad.",
+   "options": []
+  },
+  "c_barrel": {
+   "say": "Twenty bottle openers sold at the Christmas fair. A coat rack for the ref room, if they want it. Learning, {owner}. That's what it's about.",
+   "options": []
+  },
+  "c_cash": {
+   "say": "Money's in. On time. The board secretary had to sit down. First time since, well. 2009.",
+   "options": []
+  },
+  "c_nine": {
+   "say": "I'll tell him. He'll pretend he didn't hear. Then he'll tell his mother.",
+   "options": []
+  },
+  "c_2009": {
+   "say": "2009. You're learning.",
+   "options": []
+  },
+  "done": {
+   "say": "Go Mallards. The young ones, I mean.",
+   "options": []
+  }
+ }
+}

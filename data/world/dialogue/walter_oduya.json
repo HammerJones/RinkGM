@@ -1,0 +1,398 @@
+{
+  "id": "walter_oduya",
+  "barks": {
+    "idle": [
+      "Right. Left foot. That's where the trouble is.",
+      "One lap. Someday soon."
+    ],
+    "good_ice": [
+      "Good, even surface. Fewer variables. I appreciate that."
+    ],
+    "bad_ice": [
+      "That rut is a fault. I've traced it to the ice."
+    ],
+    "wet_ice": [
+      "Water on the ice. In my line of work, water was always the problem."
+    ],
+    "cold": [
+      "Cold, but grounded. That's something."
+    ],
+    "hungry": [
+      "A coffee would set things right."
+    ],
+    "long_line": [
+      "Patience. Thirty-five years of waiting for breakers to cool."
+    ],
+    "bored": [
+      "I'll practise standing up. It's harder than it looks."
+    ],
+    "goal": [
+      "Well done! I can't do that. Yet."
+    ],
+    "greet_owner": [
+      "Good to see you. Your lobby wiring is on my mind.",
+      "Morning. Still holding the boards. For now."
+    ],
+    "leaving_happy": [
+      "Two seconds without the boards. Zuri will hear about it."
+    ],
+    "leaving_angry": [
+      "I'll practise on the driveway. It's icy enough."
+    ],
+    "event_specific": {
+      "learn_to_skate": [
+        "Right. Penguin march. I'm a penguin.",
+        "(He writes in a small notebook.) Fall four: left foot. Again."
+      ],
+      "public_skate": [
+        "Zuri skates like a sparrow. I skate like a filing cabinet."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_walter_oduya"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "learn_to_skate"
+        }
+      ],
+      "node": "lesson"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "walter_oduya",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Walter Oduya. I wired half of Kessler Pulp and Paper and I've never been on skates in my life. I'm learning. For my granddaughter.",
+      "do": [
+        {
+          "set": "met_walter_oduya"
+        }
+      ],
+      "options": [
+        {
+          "text": "That's a great reason.",
+          "do": [
+            {
+              "rel": [
+                "walter_oduya",
+                4
+              ]
+            }
+          ],
+          "to": "first_reason"
+        },
+        {
+          "text": "Isn't it a bit late to start?",
+          "do": [
+            {
+              "rel": [
+                "walter_oduya",
+                -3
+              ]
+            }
+          ],
+          "to": "first_late"
+        }
+      ]
+    },
+    "first_reason": {
+      "say": "Zuri's six. She skates like a sparrow. I want one lap with her before she decides grandpas can't.",
+      "options": [
+        {
+          "text": "You'll get your lap.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_late": {
+      "say": "Probably. But a fault doesn't care how old the electrician is. You trace it, you fix it. Left foot, it turns out.",
+      "options": [
+        {
+          "text": "Fair point.",
+          "do": [
+            {
+              "rel": [
+                "walter_oduya",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Walter. I'll trace it and fix it.",
+          "do": [
+            {
+              "rel": [
+                "walter_oduya",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "lesson": {
+      "say": [
+        "Right. Left foot. That's where the trouble is. (He wobbles, and stays up.)",
+        "Penny's got us doing penguins. I'm a very careful penguin."
+      ],
+      "options": [
+        {
+          "text": "You're doing great, Walter.",
+          "do": [
+            {
+              "rel": [
+                "walter_oduya",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Got a minute?",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": "Morning. I let go of the boards for four seconds on Monday. I timed it. Penny wrote me a card.",
+      "options": [
+        {
+          "text": "Four seconds! Well done.",
+          "do": [
+            {
+              "rel": [
+                "walter_oduya",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Morning. What can I do for you?",
+        "Right. Go ahead.",
+        "Yes? I'm just checking my laces. Twice."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What was it like at the mill?",
+          "to": "job"
+        },
+        {
+          "text": "Tell me about Zuri.",
+          "to": "zuri"
+        },
+        {
+          "text": "How's the class going?",
+          "to": "events"
+        },
+        {
+          "text": "Who do you know around here?",
+          "to": "gossip"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "See you, Walter.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Thirty-five years. Paper machines, conveyors, the mill whistle. I never once got a shock I didn't deserve.",
+      "options": [
+        {
+          "text": "Ever been shocked here?",
+          "to": "job_here"
+        },
+        {
+          "text": "Impressive.",
+          "to": "hub"
+        }
+      ]
+    },
+    "job_here": {
+      "say": "Not yet. I won't touch breaker 14. Electricians have a code. We don't ask about breaker 14.",
+      "options": [
+        {
+          "text": "Nobody does.",
+          "to": "hub"
+        }
+      ]
+    },
+    "zuri": {
+      "say": "She's six. She drew me on skates, falling, with a big smile. It's on the fridge. I want to make the drawing out of date.",
+      "options": [
+        {
+          "text": "You will.",
+          "do": [
+            {
+              "rel": [
+                "walter_oduya",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Monday learn-to-skate in a helmet. I take notes. Public skate when Zuri comes. The Lumber Kings, from a seat. Seats are very stable.",
+      "options": [
+        {
+          "text": "Good plan.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Penny's the best teacher I've had, and I've had a few. Marisol Bautista and I are racing to let go of the boards first. Neither of us admits it. And Hank from the night shift. Good man. Says 'Yup'.",
+      "options": [
+        {
+          "text": "Good people.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Good bones. But there's exposed wiring by the lobby doors that keeps me up at night. And rental skate 41 should be retired with honours.",
+      "options": [
+        {
+          "text": "Can you show me the wiring?",
+          "if": [
+            {
+              "not_flag": "walter_wiring_tip"
+            }
+          ],
+          "to": "wiring"
+        },
+        {
+          "text": "I'll pull skate 41.",
+          "if": [
+            {
+              "not_flag": "skate_41_retired"
+            }
+          ],
+          "to": "skate41"
+        },
+        {
+          "text": "Better lately?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "wiring": {
+      "say": "(He points with a pencil.) That junction box, no cover, and a splice someone did with tape in about 1983. Get a cover on it. No charge for the advice. Retired men work for coffee.",
+      "options": [
+        {
+          "text": "Thanks, Walter. I'll get it covered.",
+          "do": [
+            {
+              "set": "walter_wiring_tip"
+            },
+            {
+              "rel": [
+                "walter_oduya",
+                3
+              ]
+            },
+            {
+              "note": "Walter Oduya flagged an uncovered junction box by the lobby doors: a taped splice from about 1983."
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "skate41": {
+      "say": "Retire 41? Oh. That's. Thank you. Put it on a shelf somewhere. It's earned it. I haven't, but it has.",
+      "options": [
+        {
+          "text": "It's on the shelf.",
+          "do": [
+            {
+              "set": "skate_41_retired"
+            },
+            {
+              "rel": [
+                "walter_oduya",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "The lobby's wired properly now. I checked. I check everything. It's a compliment.",
+      "options": [
+        {
+          "text": "I'll take it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Right. Left foot first. See you.",
+        "See you Monday."
+      ],
+      "options": []
+    }
+  }
+}

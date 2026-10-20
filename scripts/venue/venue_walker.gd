@@ -1,0 +1,237 @@
+class_name VenueWalker
+extends CharacterBody3D
+## A person on foot in the venue: 1.8 m capsule, walks at 2.2 m/s and
+## sprints at 6.5 (building up over 0.4 s), hops about 0.45 m,
+## crouches to 1.2 m (eyes at 1.1 m) to get under pipes and machines,
+## climbs steps up to STEP high, and collides only with the venue's physics
+## layer. It drives the walk (venue_walk.gd) and the walkability tests.
+##
+## Drive it with `wish` (a world-space direction), `running`, `crouch` (held)
+## and `jump()` (a press), set by input or a test.
+
+const HEIGHT := 1.8
+const RADIUS := 0.3
+const EYE := 1.65
+const STEP := 0.32
+const WALK := 2.2
+const RUN := 6.5
+const GRAVITY := 9.8
+## Jump apex above the floor, and the take-off speed that reaches it.
+const JUMP_HEIGHT := 0.45
+const JUMP_SPEED := 2.97  # sqrt(2 * GRAVITY * JUMP_HEIGHT)
+## Crouched: capsule height, eye height and speed.
+const CROUCH_HEIGHT := 1.2
+const CROUCH_EYE := 1.1
+const CROUCH_SPEED := 1.0
+## Seconds for a sprint to build from walking pace to full speed. On the
+## ground the walker turns and stops at once; in the air it keeps its
+## momentum and can only steer a little (AIR_ACCEL, m/s^2).
+const SPRINT_RAMP := 0.4
+const AIR_ACCEL := 3.0
+## How stiffly the eyes follow the body over steps (per second): the body
+## pops up each step, the eyes glide after it on a critically damped spring.
+const EYE_FOLLOW := 16.0
+
+var wish := Vector3.ZERO
+var running := false
+## Multiplies every pace: 0.5 on the ice in shoes (IceBalance), 0 while down.
+var speed_scale := 1.0
+## Held to crouch; the walker stays down while there is no room to stand.
+var crouch := false
+var crouched := false
+var head: Node3D
+var _shape: CollisionShape3D
+var _jump_queued := false
+var _sprint := 0.0  # 0 walking pace .. 1 full sprint
+var _eye := EYE        # standing or crouched eye height
+var _eye_y := 0.0      # the eyes' smoothed height (world) over steps
+var _eye_v := 0.0
+var _air_time := 0.0
+var _step_t := 0.0  # seconds since the last footstep
+var _was_floor := true
+var _venue: Venue
+
+
+func _init() -> void:
+	# World: the walker is on the pusher layer, so loose props (StickProp)
+	# get shoved aside instead of blocking it; nothing else collides with it.
+	collision_layer = 1 << (StickProp.PUSH_LAYER - 1)
+	collision_mask = 1 << (VenueKit.VENUE_LAYER - 1)
+	floor_snap_length = STEP + 0.05
+	floor_max_angle = deg_to_rad(50.0)
+	_shape = CollisionShape3D.new()
+	var cap := CapsuleShape3D.new()
+	cap.radius = RADIUS
+	cap.height = HEIGHT
+	_shape.shape = cap
+	_shape.position.y = HEIGHT * 0.5
+	add_child(_shape)
+	head = Node3D.new()
+	head.position.y = EYE
+	add_child(head)
+
+
+## A jump press: takes off on the next physics tick if standing on a floor.
+func jump() -> void:
+	_jump_queued = true
+
+
+func height() -> float:
+	return CROUCH_HEIGHT if crouched else HEIGHT
+
+
+func _physics_process(dt: float) -> void:
+	_update_crouch()
+	var flat := Vector3(wish.x, 0, wish.z)
+	if flat.length() > 1.0:
+		flat = flat.normalized()
+	var sprinting := running and not crouched and flat.length() > 0.1
+	if is_on_floor() or not sprinting:
+		_sprint = move_toward(_sprint, 1.0 if sprinting else 0.0, dt / SPRINT_RAMP)
+	var speed := CROUCH_SPEED if crouched else lerpf(WALK, RUN, _sprint)
+	var target := flat * speed * speed_scale
+	if is_on_floor():
+		velocity.x = target.x
+		velocity.z = target.z
+	else:
+		var h := Vector2(velocity.x, velocity.z).move_toward(Vector2(target.x, target.z), AIR_ACCEL * dt)
+		velocity.x = h.x
+		velocity.z = h.y
+	if is_on_floor():
+		velocity.y = 0.0
+		if _jump_queued and not crouched:
+			velocity.y = JUMP_SPEED
+	else:
+		velocity.y -= GRAVITY * dt
+	_jump_queued = false
+	_step_up(Vector3(velocity.x, 0, velocity.z) * dt)
+	var fall := velocity.y
+	move_and_slide()
+	_air_time = 0.0 if is_on_floor() else _air_time + dt
+	# on stairs the body pops up a step at a time (and settles back onto the
+	# tread); the eyes glide after it instead. A jump or a real fall the eyes
+	# follow exactly.
+	var y := global_position.y
+	if velocity.y > 0.5 or _air_time > 0.35 or absf(_eye_y - y) > 3.0 * STEP:
+		_eye_y = y
+		_eye_v = velocity.y
+	else:
+		_eye_v += (EYE_FOLLOW * EYE_FOLLOW * (y - _eye_y) - 2.0 * EYE_FOLLOW * _eye_v) * dt
+		_eye_y += _eye_v * dt
+	_eye = move_toward(_eye, CROUCH_EYE if crouched else EYE, 4.0 * dt)
+	head.position.y = _eye + _eye_y - y
+	if RinkSound.enabled():
+		_footsteps(dt, fall)
+
+
+## A footstep every stride while moving on a floor (about 0.55 s apart at
+## a walk, 0.32 s at a sprint) on the surface of the room underfoot, and a
+## heavier one on landing from a jump or a drop.
+func _footsteps(dt: float, fall: float) -> void:
+	var on_floor := is_on_floor()
+	var landed := on_floor and not _was_floor and fall < -1.5
+	_was_floor = on_floor
+	var speed := Vector2(velocity.x, velocity.z).length()
+	if landed:
+		_step_sound(-8.0, 0.85)
+		_step_t = 0.0
+		return
+	if not on_floor or speed < 0.4:
+		_step_t = 0.4  # the first step comes soon after setting off
+		return
+	var interval := lerpf(0.55, 0.32, clampf((speed - WALK) / (RUN - WALK), 0.0, 1.0))
+	if crouched:
+		interval = 0.7
+	_step_t += dt
+	if _step_t >= interval:
+		_step_t = 0.0
+		_step_sound(-24.0 if crouched else lerpf(-16.0, -11.0, clampf((speed - WALK) / (RUN - WALK), 0.0, 1.0)), 1.0)
+
+
+func _step_sound(db: float, pitch: float) -> void:
+	if _venue == null or not is_instance_valid(_venue):
+		_venue = null
+		var p := get_parent()
+		if p:
+			for c in p.get_children():
+				if c is Venue:
+					_venue = c
+					break
+	var kind := "rubber"
+	if _venue:
+		var r := _venue.room_at(_venue.to_local(global_position + Vector3(0, 0.1, 0)))
+		if r:
+			kind = RinkSound.floor_kind(r.room_id)
+	RinkSound.play_at(get_parent(), "footstep_" + kind, global_position + Vector3(0, 0.05, 0), db, pitch, 2.0, 25.0)
+
+
+## Crouches at once; stands back up only when the full height fits.
+func _update_crouch() -> void:
+	if crouch == crouched:
+		return
+	if not crouch and test_move(global_transform, Vector3(0, HEIGHT - CROUCH_HEIGHT, 0)):
+		return  # a ceiling, pipe or machine overhead: stay down
+	crouched = crouch
+	var cap := _shape.shape as CapsuleShape3D
+	cap.height = height()
+	_shape.position.y = height() * 0.5
+
+
+## Lifts the walker onto a step when the way ahead is blocked low down but
+## clear STEP higher.
+func _step_up(motion: Vector3) -> void:
+	if motion.length() < 0.0001 or not is_on_floor():
+		return
+	var probe := motion.normalized() * maxf(motion.length(), 0.08)
+	if not test_move(global_transform, probe):
+		return
+	var up := Vector3(0, STEP, 0)
+	if test_move(global_transform, up):
+		return
+	if not test_move(global_transform.translated(up), probe):
+		global_position += up
+
+
+## The nearest door within reach, or null.
+## The spot the walker is looking at: within its reach, in front of the head
+## (within about 50 degrees of `forward`), the closest to the line of sight.
+func nearest_spot(venue: Venue, forward: Vector3, extra: Array[VenueSpot] = []) -> VenueSpot:
+	var eye := head.global_position if head else global_position + Vector3(0, 1.6, 0)
+	var best: VenueSpot = null
+	var best_score := INF
+	for s in venue.all_spots() + extra:
+		if not s.is_inside_tree():
+			continue
+		var to := s.global_position - eye
+		var flat := Vector2(s.global_position.x - global_position.x, s.global_position.z - global_position.z).length()
+		if flat > s.reach or absf(to.y) > 2.2:
+			continue
+		var d := to.length()
+		var cosang := to.dot(forward) / maxf(d, 0.001)
+		if cosang < 0.64:
+			continue
+		var score := d * (2.0 - cosang)
+		if score < best_score:
+			best_score = score
+			best = s
+	return best
+
+
+## `forward` (the eye's look direction) keeps only doors roughly in view, so the
+## prompt names what the player is looking at; ZERO takes any door in reach.
+func nearest_door(venue: Venue, reach := 2.0, forward := Vector3.ZERO) -> VenueDoor:
+	var best: VenueDoor = null
+	var best_d := reach
+	var eye := head.global_position if head else global_position + Vector3(0, 1.6, 0)
+	for d in venue.all_doors():
+		var dist := d.global_position.distance_to(global_position)
+		if forward != Vector3.ZERO:
+			var to := d.global_position - eye
+			to.y = 0.0
+			var f := Vector3(forward.x, 0.0, forward.z)
+			if to.length() > 0.3 and to.normalized().dot(f.normalized()) < 0.5:
+				continue
+		if dist < best_d:
+			best_d = dist
+			best = d
+	return best

@@ -1,0 +1,433 @@
+{
+  "id": "marion_fischer",
+  "barks": {
+    "idle": [
+      "Shhh.",
+      "Three copies of Moose Knows. Nobody needs three.",
+      "Silence in the dressing room, please."
+    ],
+    "good_ice": [
+      "Clean ice. Like a fresh catalogue card."
+    ],
+    "bad_ice": [
+      "This ice is dog-eared."
+    ],
+    "wet_ice": [
+      "Wet ice. Like a book left in the rain. Unforgivable."
+    ],
+    "goal": [
+      "Shhh. Well done.",
+      "Acceptable."
+    ],
+    "cold": [
+      "Cold. Like the stacks in January."
+    ],
+    "hungry": [
+      "Tea. Quietly."
+    ],
+    "long_line": [
+      "Please queue in an orderly fashion."
+    ],
+    "bored": [
+      "I brought a book. I always bring a book."
+    ],
+    "greet_owner": [
+      "Shhh. Hello.",
+      "{owner}. Good evening. Quietly."
+    ],
+    "leaving_happy": [
+      "A satisfying game. Several fines collected."
+    ],
+    "leaving_angry": [
+      "Noisy. Very noisy."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "*hit along the boards* Shhh.",
+        "Overdues. Polite off the ice."
+      ],
+      "figure_show": [
+        "Lovely. Quiet. Graceful. Everything a library should be."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_marion_fischer"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "bl_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "marion_fischer",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Shhh. Marion Fischer. Kessler Public Library. Kessler Overdues, defence. You have a lovely rink. You also have an overdue book.",
+      "do": [
+        {
+          "set": "met_marion_fischer"
+        }
+      ],
+      "options": [
+        {
+          "text": "I have a what?",
+          "do": [
+            {
+              "rel": [
+                "marion_fischer",
+                1
+              ]
+            }
+          ],
+          "to": "fine"
+        },
+        {
+          "text": "Nice to meet you, Marion.",
+          "do": [
+            {
+              "rel": [
+                "marion_fischer",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "fine": {
+      "say": "The penalty box library. A copy of Moose Knows, signed out by 'the rink'. That's you now. Forty-one days. Two dollars.",
+      "options": [
+        {
+          "text": "Fair. Here's two dollars.",
+          "if": [
+            {
+              "not_flag": "paid_marion_fine"
+            }
+          ],
+          "do": [
+            {
+              "money": -2
+            },
+            {
+              "set": "paid_marion_fine"
+            },
+            {
+              "rel": [
+                "marion_fischer",
+                4
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "That was Gus. Not me.",
+          "if": [
+            {
+              "not_flag": "paid_marion_fine"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "marion_fischer",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I paid that already.",
+          "if": [
+            {
+              "flag": "paid_marion_fine"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll correct it, Marion.",
+          "do": [
+            {
+              "rel": [
+                "marion_fischer",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Shhh?",
+          "do": [
+            {
+              "rel": [
+                "marion_fischer",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bl_now": {
+      "say": [
+        "Shhh. Game face.",
+        "Tonight we are quiet. And then we hit."
+      ],
+      "options": [
+        {
+          "text": "Play nice, Marion.",
+          "do": [
+            {
+              "rel": [
+                "marion_fischer",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Good luck. Quietly.",
+          "do": [
+            {
+              "rel": [
+                "marion_fischer",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Shhh. Hello, friend.",
+        "{owner}. I saved you a seat. It's a quiet one."
+      ],
+      "options": [
+        {
+          "text": "Hello, Marion.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Shhh. Yes?",
+        "Hello. Please speak at an indoor volume.",
+        "Marion Fischer. How may I help?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the library?",
+          "to": "job"
+        },
+        {
+          "text": "Why are the Overdues so rough?",
+          "to": "events"
+        },
+        {
+          "text": "What's in the penalty box library?",
+          "to": "library"
+        },
+        {
+          "text": "You know Shauna Reid?",
+          "to": "shauna"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Good night. Quietly.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Head librarian. Thirty years of fines. I have never issued one I did not collect. On or off the ice.",
+      "options": [
+        {
+          "text": "That's a perfect record.",
+          "do": [
+            {
+              "rel": [
+                "marion_fischer",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Rough? We're librarians. All day we say 'shhh'. On the ice, we say 'shhh', and then we finish the check.",
+      "options": [
+        {
+          "text": "Terrifying.",
+          "do": [
+            {
+              "rel": [
+                "marion_fischer",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "library": {
+      "say": "Paperbacks. Mysteries, mostly. Moose left the first one in 1984. Somebody dog-eared the Dickens. If I find them, they serve a five-minute major.",
+      "options": [
+        {
+          "text": "I'll keep an eye out.",
+          "to": "hub"
+        },
+        {
+          "text": "Can I donate a book to it?",
+          "if": [
+            {
+              "not_flag": "owner_donated_box_book"
+            }
+          ],
+          "to": "donate"
+        }
+      ]
+    },
+    "donate": {
+      "say": "A donation. How civilised. Something short. Two minutes is not long. What did you have in mind?",
+      "options": [
+        {
+          "text": "A mystery. The butler did it.",
+          "do": [
+            {
+              "set": "owner_donated_box_book"
+            },
+            {
+              "rel": [
+                "marion_fischer",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "A book of poems.",
+          "do": [
+            {
+              "set": "owner_donated_box_book"
+            },
+            {
+              "rel": [
+                "marion_fischer",
+                4
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "shauna": {
+      "say": "Shauna is fast and loud. I respect one of those things. She brings crullers. I forgive the other.",
+      "options": [
+        {
+          "text": "High praise.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The penalty box is cold and the shelf is crooked. I restock it on my own time. The ice is beside the point.",
+      "options": [
+        {
+          "text": "We fixed up the penalty boxes.",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "I'll get the shelf straightened.",
+          "do": [
+            {
+              "rel": [
+                "marion_fischer",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "A level shelf. A light to read by. You may have saved the Dickens. Thank you.",
+      "options": [
+        {
+          "text": "Shhh. You're welcome.",
+          "do": [
+            {
+              "rel": [
+                "marion_fischer",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

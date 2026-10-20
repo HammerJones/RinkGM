@@ -1,0 +1,241 @@
+{
+  "version": 1,
+  "_doc": "Real hockey drills for practices (docs/world/ON_ICE.md 4). Coordinates are [u, v] in the drill's area: u -1..1 along the ice (+u is the way the drill attacks), v -1..1 across it. 'full' drills want the whole ice, 'zone' an end zone or a pee-wee third, 'station' a quarter of a zone. A path point is [u, v, acts]; v '*' keeps the skater's own start lane. Travel acts: fast, slow, back (skate backwards), cross (crossovers), catch (wants a pass). Arrival acts: stop (hockey stop), pivot (forward/backward switch), mohawk (open-hip turn), shoot, pass_next (to the next lane's skater in the wave), pass_coach, call (the feeder passes them a puck), take (pick up a puck there), wait:N. Types: lanes, battle, game, tag, signal, circles. wave: together (one from every lane at once), alternate (one lane at a time), all (everyone at once).",
+  "drills": [
+    {"id": "two_on_one", "name": "2-on-1 rushes", "type": "lanes", "scope": "full", "levels": ["teen", "high_school", "pro"],
+     "about": "Two forwards with a puck attack one defender skating backwards; pass across the slot, shoot.",
+     "nets": [{"at": [0.89, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true,
+     "pucks": 24, "pile": [-0.86, 0.0], "wave": "together", "interval": 10.0,
+     "lanes": [
+       {"start": [-0.86, -0.55], "queue": [-1, 0], "puck": true, "path": [[-0.4, -0.5, "fast"], [0.05, -0.45, "fast"], [0.38, -0.35, "pass_next"], [0.62, -0.2], [0.72, -0.12, "shoot"], [0.8, -0.55, "stop"]]},
+       {"start": [-0.86, 0.55], "queue": [-1, 0], "path": [[-0.4, 0.5, "fast"], [0.05, 0.45, "fast"], [0.4, 0.3, "catch"], [0.62, 0.12, "catch"], [0.72, 0.06, "shoot"], [0.8, 0.55, "stop"]]},
+       {"start": [-0.05, 0.0], "queue": [0, 1], "path": [[0.25, 0.0, "back"], [0.5, 0.0, "back"], [0.66, -0.05, "back"], [0.72, 0.0, "stop"]]}
+     ]},
+
+    {"id": "three_on_two", "name": "3-on-2 rushes", "type": "lanes", "scope": "full", "levels": ["high_school", "pro"],
+     "about": "Three forwards, one puck, two defenders back-pedalling: drive wide, middle lane drives the net, late man trails.",
+     "nets": [{"at": [0.89, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true,
+     "pucks": 24, "pile": [-0.86, 0.0], "wave": "together", "interval": 12.0,
+     "lanes": [
+       {"start": [-0.86, -0.55], "queue": [-1, 0], "puck": true, "path": [[-0.3, -0.55, "fast"], [0.3, -0.5, "fast"], [0.55, -0.45, "pass_next"], [0.75, -0.5], [0.8, -0.65, "stop"]]},
+       {"start": [-0.86, 0.0], "queue": [-1, 0], "path": [[-0.3, 0.0, "fast"], [0.3, 0.05, "fast"], [0.6, 0.05, "catch"], [0.7, 0.0, "shoot"], [0.82, 0.2, "stop"]]},
+       {"start": [-0.86, 0.55], "queue": [-1, 0], "path": [[-0.3, 0.55, "fast"], [0.3, 0.45], [0.6, 0.3, "catch"], [0.72, 0.2, "shoot"], [0.8, 0.6, "stop"]]},
+       {"start": [-0.05, -0.25], "queue": [0, -1], "path": [[0.3, -0.25, "back"], [0.6, -0.2, "back"], [0.7, -0.15, "stop"]]},
+       {"start": [-0.05, 0.25], "queue": [0, 1], "path": [[0.3, 0.25, "back"], [0.6, 0.2, "back"], [0.7, 0.15, "stop"]]}
+     ]},
+
+    {"id": "three_man_weave", "name": "3-man weave", "type": "lanes", "scope": "full", "levels": ["high_school", "pro"],
+     "about": "Three skaters weave the length of the ice: pass and go behind the man you passed to, finish with a shot.",
+     "nets": [{"at": [0.89, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true,
+     "pucks": 24, "pile": [-0.86, 0.0], "wave": "together", "interval": 12.0,
+     "lanes": [
+       {"start": [-0.86, -0.5], "queue": [-1, 0], "path": [[-0.6, -0.45], [-0.4, -0.3, "catch"], [-0.2, 0.0, "pass_next"], [0.05, 0.45], [0.3, 0.45, "catch"], [0.5, 0.15, "pass_next"], [0.75, -0.3], [0.85, -0.6, "stop"]]},
+       {"start": [-0.86, 0.0], "queue": [-1, 0], "puck": true, "path": [[-0.65, 0.0, "pass_next"], [-0.45, 0.45], [-0.2, 0.45], [0.05, 0.0, "catch"], [0.3, -0.35, "pass_next"], [0.55, 0.3], [0.7, 0.08, "catch"], [0.74, 0.0, "shoot"], [0.85, 0.5, "stop"]]},
+       {"start": [-0.86, 0.5], "queue": [-1, 0], "path": [[-0.62, 0.45, "catch"], [-0.42, 0.25, "pass_next"], [-0.15, -0.45], [0.1, -0.45], [0.3, -0.3, "catch"], [0.45, 0.0, "pass_next"], [0.75, 0.4], [0.85, 0.65, "stop"]]}
+     ]},
+
+    {"id": "hartford", "name": "Hartford drill", "type": "lanes", "scope": "full", "levels": ["high_school", "pro"],
+     "about": "Regroup: D-to-D pass behind the blue line, the forward swings low, takes the outlet in stride and attacks the far net.",
+     "nets": [{"at": [0.89, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true,
+     "pucks": 24, "pile": [-0.9, -0.3], "wave": "together", "interval": 9.0,
+     "lanes": [
+       {"start": [-0.82, -0.3], "queue": [0, -1], "puck": true, "path": [[-0.78, -0.15, "pass_next"], [-0.8, -0.35, "back"]]},
+       {"start": [-0.82, 0.3], "queue": [0, 1], "path": [[-0.78, 0.2, "catch"], [-0.72, 0.3, "pass_next"], [-0.8, 0.35, "back"]]},
+       {"start": [-0.3, 0.75], "queue": [1, 0], "path": [[-0.5, 0.6], [-0.6, 0.4, "catch"], [-0.3, 0.2, "fast"], [0.3, 0.1, "fast"], [0.66, 0.05, "shoot"], [0.82, 0.5, "stop"]]}
+     ]},
+
+    {"id": "breakouts", "name": "Breakouts", "type": "lanes", "scope": "full", "levels": ["teen", "high_school", "pro"],
+     "about": "D retrieves a puck behind the net, wheels and moves it up the wall to the winger; the centre swings low for support; out of the zone and attack.",
+     "nets": [{"at": [-0.89, 0.0], "face": [1, 0], "size": "full"}, {"at": [0.89, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true,
+     "pucks": 24, "pile": [-0.93, -0.3], "wave": "together", "interval": 11.0,
+     "lanes": [
+       {"start": [-0.7, -0.3], "queue": [1, 0], "path": [[-0.92, -0.28, "take"], [-0.85, -0.6, "pass_next"], [-0.7, -0.4]]},
+       {"start": [-0.55, -0.85], "queue": [1, 0], "path": [[-0.62, -0.82, "catch"], [-0.35, -0.8, "pass_next"], [0.0, -0.65, "fast"], [0.45, -0.4, "catch"], [0.68, -0.15, "shoot"], [0.82, -0.6, "stop"]]},
+       {"start": [-0.55, 0.25], "queue": [1, 0], "path": [[-0.6, -0.2], [-0.4, -0.55, "catch"], [-0.1, -0.55, "pass_next"], [0.3, -0.1, "fast"], [0.7, 0.2], [0.82, 0.45, "stop"]]}
+     ]},
+
+    {"id": "overspeed", "name": "Overspeed", "type": "lanes", "scope": "full", "levels": ["high_school", "pro"],
+     "about": "Sprint from the goal line; the coach leads the pass well ahead so the skater has to reach top speed to take it, then attacks the net.",
+     "nets": [{"at": [0.89, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true, "feeder": [0.0, 0.7],
+     "pucks": 24, "pile": [0.0, 0.76], "wave": "alternate", "interval": 4.5,
+     "lanes": [
+       {"start": [-0.86, -0.6], "queue": [-1, 0], "path": [[-0.5, -0.6, "fast"], [-0.15, -0.5, "fast+call"], [0.3, -0.35, "fast+catch"], [0.68, -0.1, "shoot"], [0.82, -0.6, "stop"]]},
+       {"start": [-0.86, 0.6], "queue": [-1, 0], "path": [[-0.5, 0.55, "fast"], [-0.15, 0.4, "fast+call"], [0.3, 0.3, "fast+catch"], [0.68, 0.1, "shoot"], [0.82, 0.6, "stop"]]}
+     ]},
+
+    {"id": "horseshoe", "name": "Horseshoe", "type": "lanes", "scope": "zone", "levels": ["child", "teen", "high_school"],
+     "about": "Down the wall, round the top of the faceoff circle in a horseshoe, take the coach's pass in the high slot and shoot.",
+     "nets": [{"at": [0.67, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true, "feeder": [-0.6, 0.0],
+     "pucks": 20, "pile": [-0.64, 0.1], "wave": "alternate", "interval": 5.0,
+     "pylons": [[0.1, -0.52], [0.1, 0.52]],
+     "lanes": [
+       {"start": [-0.75, -0.8], "queue": [-1, 0], "path": [[-0.1, -0.85], [0.35, -0.82], [0.5, -0.55], [0.3, -0.3], [0.0, -0.35, "call"], [0.05, -0.12, "catch"], [0.3, -0.05, "shoot"], [0.45, -0.6, "stop"]]},
+       {"start": [-0.75, 0.8], "queue": [-1, 0], "path": [[-0.1, 0.85], [0.35, 0.82], [0.5, 0.55], [0.3, 0.3], [0.0, 0.35, "call"], [0.05, 0.12, "catch"], [0.3, 0.05, "shoot"], [0.45, 0.6, "stop"]]}
+     ]},
+
+    {"id": "oklahoma", "name": "Oklahoma drill", "type": "battle", "scope": "zone", "levels": ["teen", "high_school"],
+     "about": "One-on-one in a narrow lane of pylons: the puck carrier tries to get through the defender to the net. Tough and short.",
+     "nets": [{"at": [0.67, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true,
+     "pucks": 16, "pile": [-0.8, 0.3], "attacker_puck": true,
+     "start_a": [-0.55, 0.0], "start_b": [0.25, 0.0], "queue": [-1, 0],
+     "pylons": [[-0.4, -0.2], [-0.1, -0.2], [0.2, -0.2], [-0.4, 0.2], [-0.1, 0.2], [0.2, 0.2]],
+     "seconds": 9.0},
+
+    {"id": "battle_drill", "name": "Corner battles", "type": "battle", "scope": "zone", "levels": ["teen", "high_school", "pro"],
+     "about": "The coach rims a puck into the corner; two players race for it; whoever comes out with it tries to score.",
+     "nets": [{"at": [0.67, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true, "feeder": [-0.5, 0.0],
+     "pucks": 16, "pile": [-0.56, 0.08], "dump_to": [0.82, 0.62],
+     "start_a": [0.0, 0.35], "start_b": [0.0, 0.55], "queue": [-1, 0],
+     "seconds": 10.0},
+
+    {"id": "small_area_game", "name": "Small-area game (3-on-3)", "type": "game", "scope": "zone", "levels": ["toddler", "child", "teen", "high_school"],
+     "about": "Three-on-three in a small space with two nets: lots of touches, quick decisions, battles.",
+     "nets": [{"at": [-0.75, 0.0], "face": [1, 0], "size": "group"}, {"at": [0.75, 0.0], "face": [-1, 0], "size": "group"}],
+     "pucks": 6, "pile": [0.0, 0.85], "per_side": 3, "shift": 40.0},
+
+    {"id": "cross_ice_four_nets", "name": "Cross-ice games (4 nets)", "type": "game", "scope": "full", "levels": ["high_school", "pro"],
+     "about": "Two cross-ice games at once, one in each end, four full-size nets against the side boards.",
+     "nets": [{"at": [-0.6, -0.8], "face": [0, 1], "size": "full"}, {"at": [-0.6, 0.8], "face": [0, -1], "size": "full"},
+              {"at": [0.6, -0.8], "face": [0, 1], "size": "full"}, {"at": [0.6, 0.8], "face": [0, -1], "size": "full"}],
+     "fields": [{"u": [-0.95, -0.25], "nets": [0, 1]}, {"u": [0.25, 0.95], "nets": [2, 3]}],
+     "pucks": 8, "pile": [0.0, 0.8], "per_side": 4, "shift": 45.0},
+
+    {"id": "edge_work", "name": "Edge work (C-cuts)", "type": "lanes", "scope": "station", "levels": ["toddler", "child", "teen", "high_school"],
+     "about": "Inside and outside edges: C-cuts weaving through a line of pylons, knees bent, then a stop.",
+     "pylons": [[-0.45, 0.0], [-0.15, 0.0], [0.15, 0.0], [0.45, 0.0]],
+     "wave": "alternate", "interval": 3.0,
+     "lanes": [
+       {"start": [-0.8, -0.1], "queue": [0, -1], "path": [[-0.45, 0.28, "slow"], [-0.15, -0.28, "slow"], [0.15, 0.28, "slow"], [0.45, -0.28, "slow"], [0.78, 0.0, "stop"]]}
+     ]},
+
+    {"id": "mohawks", "name": "Mohawk turns", "type": "lanes", "scope": "station", "levels": ["child", "teen", "high_school"],
+     "about": "Skate to the pylon, open the hips heel-to-heel into a mohawk and come out the other way, then back again.",
+     "pylons": [[-0.1, 0.0], [0.55, 0.0]],
+     "wave": "alternate", "interval": 3.5,
+     "lanes": [
+       {"start": [-0.8, -0.4], "queue": [0, -1], "path": [[-0.15, -0.25], [-0.1, 0.2, "mohawk"], [0.35, 0.3, "back"], [0.55, -0.25, "mohawk"], [0.8, -0.3, "stop"]]}
+     ]},
+
+    {"id": "figure_eights", "name": "Figure eights", "type": "lanes", "scope": "station", "levels": ["toddler", "child", "teen"],
+     "about": "Figure eights round two pylons: crossovers one way, then the other.",
+     "pylons": [[-0.35, 0.0], [0.35, 0.0]],
+     "wave": "alternate", "interval": 4.0,
+     "lanes": [
+       {"start": [-0.8, 0.75], "queue": [0, 1], "path": [[-0.35, 0.5, "cross"], [-0.75, 0.0, "cross"], [-0.35, -0.5, "cross"], [0.0, 0.0], [0.35, 0.5, "cross"], [0.75, 0.0, "cross"], [0.35, -0.5, "cross"], [0.0, 0.0], [-0.5, 0.65, "stop"]]}
+     ]},
+
+    {"id": "pivots", "name": "Pivots", "type": "lanes", "scope": "station", "levels": ["child", "teen", "high_school"],
+     "about": "Forward to backward and back to forward at each pylon without losing speed.",
+     "pylons": [[-0.4, 0.0], [0.0, 0.0], [0.4, 0.0]],
+     "wave": "alternate", "interval": 3.0,
+     "lanes": [
+       {"start": [-0.8, 0.0], "queue": [0, 1], "path": [[-0.4, 0.15, "pivot"], [0.0, -0.15, "back+pivot"], [0.4, 0.15, "pivot"], [0.78, 0.0, "back+stop"]]}
+     ]},
+
+    {"id": "stops_and_starts", "name": "Stops and starts (Canadas)", "type": "lanes", "scope": "full", "levels": ["toddler", "child", "teen", "high_school", "pro"],
+     "about": "The bag skate: goal line to the near blue line and stop, back, to the red line and stop, back, far blue, back, far goal line, back. Stop facing the same side every time.",
+     "wave": "all", "interval": 40.0,
+     "lanes": [
+       {"start": [-0.88, 0.0], "spread": 0.75, "queue": [0, 1], "path": [[-0.25, "*", "fast+stop"], [-0.86, "*", "fast+stop"], [0.0, "*", "fast+stop"], [-0.86, "*", "fast+stop"], [0.25, "*", "fast+stop"], [-0.86, "*", "fast+stop"], [0.86, "*", "fast+stop"], [-0.86, "*", "fast+stop"]]}
+     ]},
+
+    {"id": "shooting_gallery", "name": "Shooting gallery", "type": "lanes", "scope": "zone", "levels": ["child", "teen", "high_school", "pro"],
+     "about": "Shooters come off the half-wall one after another; the coach in the corner feeds a pass into the slot; catch and shoot.",
+     "nets": [{"at": [0.67, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true, "feeder": [0.72, 0.7],
+     "pucks": 24, "pile": [0.78, 0.74], "wave": "alternate", "interval": 3.0,
+     "lanes": [
+       {"start": [-0.35, -0.7], "queue": [-1, 0], "path": [[0.0, -0.35, "call"], [0.18, -0.12, "catch"], [0.3, -0.05, "shoot"], [0.05, -0.65]]},
+       {"start": [-0.35, 0.7], "queue": [-1, 0], "path": [[0.0, 0.35, "call"], [0.18, 0.12, "catch"], [0.3, 0.05, "shoot"], [0.05, 0.65]]}
+     ]},
+
+    {"id": "cycling", "name": "Down-low cycle", "type": "lanes", "scope": "zone", "levels": ["teen", "high_school", "pro"],
+     "about": "Three forwards cycle the puck along the boards in the corner, protecting it, then the high man takes it to the net.",
+     "nets": [{"at": [0.67, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true,
+     "pucks": 16, "pile": [0.1, -0.85], "wave": "together", "interval": 12.0,
+     "lanes": [
+       {"start": [0.75, -0.72], "queue": [0, -1], "puck": true, "path": [[0.45, -0.85], [0.25, -0.72, "pass_next"], [0.55, -0.45], [0.78, -0.65]]},
+       {"start": [0.15, -0.6], "queue": [-1, 0], "path": [[0.2, -0.7, "catch"], [0.5, -0.86], [0.7, -0.62, "pass_next"], [0.4, -0.35]]},
+       {"start": [0.35, -0.3], "queue": [-1, 0], "path": [[0.6, -0.6, "catch"], [0.5, -0.25], [0.42, -0.12, "shoot"], [0.2, -0.45, "stop"]]}
+     ]},
+
+    {"id": "goalie_warmup", "name": "Goalie warm-up", "type": "lanes", "scope": "zone", "levels": ["teen", "high_school", "pro"],
+     "about": "Shooters spread round the slot take turns with easy shots: pads, blocker, glove, then rebounds. Warm the goalie up, don't hurt him.",
+     "nets": [{"at": [0.67, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true,
+     "pucks": 24, "pile": [-0.35, 0.0], "wave": "alternate", "interval": 2.5,
+     "lanes": [
+       {"start": [-0.2, -0.6], "queue": [-1, 0], "puck": true, "path": [[0.05, -0.4, "slow+shoot"], [-0.15, -0.65]]},
+       {"start": [-0.3, -0.25], "queue": [-1, 0], "puck": true, "path": [[0.0, -0.15, "slow+shoot"], [-0.3, -0.3]]},
+       {"start": [-0.3, 0.25], "queue": [-1, 0], "puck": true, "path": [[0.0, 0.15, "slow+shoot"], [-0.3, 0.3]]},
+       {"start": [-0.2, 0.6], "queue": [-1, 0], "puck": true, "path": [[0.05, 0.4, "slow+shoot"], [-0.15, 0.65]]}
+     ]},
+
+    {"id": "tight_turns", "name": "Tight turns", "type": "lanes", "scope": "station", "levels": ["toddler", "child", "teen"],
+     "about": "Slalom through staggered pylons with a tight turn round each one: head up, inside knee bent.",
+     "pylons": [[-0.5, -0.3], [-0.1, 0.3], [0.3, -0.3], [0.65, 0.3]],
+     "wave": "alternate", "interval": 4.0,
+     "lanes": [
+       {"start": [-0.8, 0.5], "queue": [0, 1], "path": [[-0.5, -0.6], [-0.3, -0.25], [-0.1, 0.6], [0.1, 0.25], [0.3, -0.6], [0.5, -0.25], [0.65, 0.6], [0.85, 0.3, "stop"]]}
+     ]},
+
+    {"id": "puck_handling_slalom", "name": "Puck-handling slalom", "type": "lanes", "scope": "station", "levels": ["toddler", "child", "teen"],
+     "about": "Stickhandle through a line of pylons with the puck, then shoot into the little net.",
+     "nets": [{"at": [0.9, 0.0], "face": [-1, 0], "size": "mini"}],
+     "pylons": [[-0.45, 0.0], [-0.2, 0.0], [0.05, 0.0], [0.3, 0.0]],
+     "pucks": 12, "pile": [-0.85, 0.35], "wave": "alternate", "interval": 4.0,
+     "lanes": [
+       {"start": [-0.8, -0.3], "queue": [0, -1], "puck": true, "path": [[-0.45, -0.2, "slow"], [-0.2, 0.2, "slow"], [0.05, -0.2, "slow"], [0.3, 0.2, "slow"], [0.55, 0.0, "shoot"], [0.6, -0.5, "stop"]]}
+     ]},
+
+    {"id": "give_and_go", "name": "Give-and-go", "type": "lanes", "scope": "station", "levels": ["toddler", "child", "teen", "high_school"],
+     "about": "Pass to the coach, skate into space, get it right back, shoot.",
+     "nets": [{"at": [0.88, 0.0], "face": [-1, 0], "size": "mini"}], "feeder": [0.0, 0.7],
+     "pucks": 12, "pile": [0.0, 0.8], "wave": "alternate", "interval": 4.5,
+     "lanes": [
+       {"start": [-0.8, -0.4], "queue": [-1, 0], "puck": true, "path": [[-0.4, -0.35, "pass_coach"], [0.0, -0.2], [0.25, -0.1, "call"], [0.45, 0.0, "catch"], [0.6, 0.0, "shoot"], [0.6, -0.6, "stop"]]}
+     ]},
+
+    {"id": "backward_skating", "name": "Backward skating", "type": "lanes", "scope": "station", "levels": ["child", "teen", "high_school"],
+     "about": "Backward C-cuts the length of the station, then backward crossovers on the way back.",
+     "wave": "all", "interval": 20.0,
+     "lanes": [
+       {"start": [-0.8, 0.0], "spread": 0.7, "queue": [0, 1], "path": [[0.8, "*", "back+slow+stop"], [-0.8, "*", "back+cross+stop"]]}
+     ]},
+
+    {"id": "sharks_and_minnows", "name": "Sharks and minnows", "type": "tag", "scope": "station", "levels": ["toddler", "child"],
+     "about": "The minnows skate across; the sharks in the middle try to tag them; tagged minnows become sharks. Mostly giggling.",
+     "seconds": 30.0},
+
+    {"id": "red_light_green_light", "name": "Red light, green light", "type": "signal", "scope": "station", "levels": ["toddler"],
+     "about": "Skate on green, stop on red. The coach calls it. Somebody always falls over.",
+     "seconds": 40.0},
+
+    {"id": "russian_circles", "name": "Russian circles", "type": "circles", "scope": "full", "levels": ["teen", "high_school", "pro"],
+     "about": "Everybody with a puck skates the faceoff circles, crossovers and edges; on the whistle, move to the next circle.",
+     "pucks": 30, "pile": [0.0, 0.0], "puck": true, "move": true,
+     "circles": [[-0.69, -0.52], [-0.69, 0.52], [0.0, 0.0], [0.69, -0.52], [0.69, 0.52]], "radius": 4.0, "switch": 12.0, "seconds": 60.0},
+
+    {"id": "circle_crossovers", "name": "Crossovers round the circles", "type": "circles", "scope": "zone", "levels": ["child", "teen", "high_school", "pro"],
+     "about": "Forward crossovers round the faceoff circles; on the whistle, turn and go the other way.",
+     "circles": [[0.2, -0.52], [0.2, 0.52]], "radius": 4.2, "switch": 10.0, "seconds": 40.0},
+
+    {"id": "net_drive", "name": "Wide drive and net drive", "type": "lanes", "scope": "zone", "levels": ["teen", "high_school", "pro"],
+     "about": "Carry the puck wide round the pylon defender, cut hard to the net, shoot and crash for the rebound.",
+     "nets": [{"at": [0.67, 0.0], "face": [-1, 0], "size": "full"}], "goalie": true,
+     "pucks": 16, "pile": [-0.8, -0.5], "wave": "alternate", "interval": 4.0,
+     "pylons": [[0.0, -0.4], [0.0, 0.4]],
+     "lanes": [
+       {"start": [-0.75, -0.6], "queue": [-1, 0], "puck": true, "path": [[-0.3, -0.6, "fast"], [0.1, -0.75, "fast"], [0.4, -0.3], [0.5, -0.12, "shoot"], [0.62, -0.05, "stop"], [0.3, -0.7]]},
+       {"start": [-0.75, 0.6], "queue": [-1, 0], "puck": true, "path": [[-0.3, 0.6, "fast"], [0.1, 0.75, "fast"], [0.4, 0.3], [0.5, 0.12, "shoot"], [0.62, 0.05, "stop"], [0.3, 0.7]]}
+     ]},
+
+    {"id": "pass_and_follow", "name": "Pass and follow", "type": "lanes", "scope": "station", "levels": ["child", "teen", "high_school"],
+     "about": "Four corners: pass to the next line and skate after your pass to the back of that line.",
+     "pucks": 8, "pile": [-0.7, -0.7], "wave": "together", "interval": 4.0,
+     "lanes": [
+       {"start": [-0.6, -0.6], "queue": [-1, 0], "puck": true, "path": [[-0.4, -0.5, "pass_next"], [0.5, -0.5], [0.6, -0.6, "stop"]]},
+       {"start": [0.6, -0.6], "queue": [1, 0], "path": [[0.5, -0.5, "catch"], [0.5, -0.3, "pass_next"], [0.5, 0.5], [0.6, 0.6, "stop"]]},
+       {"start": [0.6, 0.6], "queue": [1, 0], "path": [[0.5, 0.5, "catch"], [0.3, 0.5, "pass_next"], [-0.5, 0.5], [-0.6, 0.6, "stop"]]},
+       {"start": [-0.6, 0.6], "queue": [-1, 0], "path": [[-0.5, 0.5, "catch"], [-0.55, 0.0], [-0.6, -0.55, "stop"]]}
+     ]}
+  ]
+}

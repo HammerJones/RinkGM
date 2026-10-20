@@ -1,0 +1,273 @@
+{
+  "id": "priya_sandhu",
+  "barks": {
+    "idle": [
+      "I can do you Tuesday at ten past ten, take it or leave it, love.",
+      "Green is paid. Yellow is late. Red is the Mallards."
+    ],
+    "good_ice": [
+      "Good ice sells itself, love. Makes my job easy."
+    ],
+    "bad_ice": [
+      "I'll be on the phone all afternoon about that ice."
+    ],
+    "cold": [
+      "The office heater's on breaker 9. Breaker 9 has opinions."
+    ],
+    "long_line": [
+      "Lovely, a queue. Have your booking number ready."
+    ],
+    "greet_owner": [
+      "{owner}! Just about to ring you.",
+      "Morning, love."
+    ],
+    "leaving_happy": [
+      "Grid's full and nothing's red. Night, love."
+    ],
+    "leaving_angry": [
+      "Three double bookings. I'm going home to colour-code something."
+    ],
+    "event_specific": {
+      "tournament": [
+        "Eighty families, zero double bookings. Touch wood. Touch all the wood."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_priya_sandhu"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Priya Sandhu, bookings. I can do you Tuesday at ten past ten for a proper chat, or now, quickly. Now? Lovely.",
+      "do": [
+        {
+          "set": "met_priya_sandhu"
+        }
+      ],
+      "options": [
+        {
+          "text": "Now's great. Welcome aboard.",
+          "do": [
+            {
+              "rel": [
+                "priya_sandhu",
+                4
+              ]
+            }
+          ],
+          "to": "first_welcome"
+        },
+        {
+          "text": "Can you fix the grid?",
+          "to": "first_grid"
+        },
+        {
+          "text": "Ten past ten is very specific.",
+          "do": [
+            {
+              "rel": [
+                "priya_sandhu",
+                1
+              ]
+            }
+          ],
+          "to": "first_slot"
+        }
+      ]
+    },
+    "first_welcome": {
+      "say": "Thank you, love. Rule one: nothing goes on the grid in pencil except Old Pete.",
+      "options": [
+        {
+          "text": "Rule one.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_grid": {
+      "say": "Three double bookings and a ghost. The ghost is Thursday at 04:00. Who books 04:00?",
+      "options": [
+        {
+          "text": "Hank, probably.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_slot": {
+      "say": "Specific is how you get paid. Vague is how you get the Mallards.",
+      "options": [
+        {
+          "text": "Ha.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Six calls about cancelled ice this week, love. Six. I gave them my nice voice. I'm running out of nice voice."
+      ],
+      "options": [
+        {
+          "text": "I'll stop cancelling.",
+          "do": [
+            {
+              "rel": [
+                "priya_sandhu",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Bookings. Go ahead, love.",
+        "I can do you two minutes. Starting now.",
+        "{owner}! I was just about to ring you. Well, text."
+      ],
+      "options": [
+        {
+          "text": "How's the grid looking?",
+          "to": "job"
+        },
+        {
+          "text": "Who's the worst for paying late?",
+          "to": "bernie"
+        },
+        {
+          "text": "What do you like to watch?",
+          "to": "events"
+        },
+        {
+          "text": "How do clients feel about the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Could you chase the Mallards' invoice?",
+          "if": [
+            {
+              "not_flag": "priya_chasing"
+            }
+          ],
+          "to": "chase"
+        },
+        {
+          "text": "Bye, Priya.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Full Saturdays, gaps on Tuesday afternoons, and Hélène's 06:00 painted on the board in a colour I'm not allowed to touch.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bernie": {
+      "say": "Coach Bernie Ostrowski. Sixty days, every time. His excuses are a genre. My favourite: 'the cheque is on the bus.'",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "The tournament. Eighty families, five towns, and zero double bookings if I'm alive. Public skate with my two, when I can.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Getting easier to sell?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Who's asking for ice?",
+          "to": "rink_ask"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Love, I've got a waiting list. A waiting list! For Millbrook!",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ask": {
+      "say": "Dale wants another late slot. Tracy wants the Old-timers' weekend. Donna wants everything, politely.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "chase": {
+      "say": "Leave it with me. I've a voicemail greeting just for him.",
+      "do": [
+        {
+          "set": "priya_chasing"
+        },
+        {
+          "rel": [
+            "priya_sandhu",
+            2
+          ]
+        },
+        {
+          "note": "Priya is chasing the Mallards' invoice, with the special voicemail."
+        }
+      ],
+      "options": [
+        {
+          "text": "Thank you, Priya.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

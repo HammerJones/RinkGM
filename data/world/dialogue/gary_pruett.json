@@ -1,0 +1,500 @@
+{
+  "id": "gary_pruett",
+  "barks": {
+    "idle": [
+      "Did you see me stop? I stopped.",
+      "It's Pruett. Two Ts, one E. Like a winner.",
+      "Learn-to-skate changed my life. I'm in the pamphlet."
+    ],
+    "good_ice": [
+      "This ice is perfect for stopping. Watch. Watch!",
+      "Smooth as a new parking lot at Valley Foods."
+    ],
+    "bad_ice": [
+      "Ruts! A man could fall mid-stop on that.",
+      "I can't stop on gravel, {owner}. Nobody can. I've checked."
+    ],
+    "wet_ice": [
+      "Wet ice makes my stops longer. Like, much longer. Into the boards longer."
+    ],
+    "goal": [
+      "THAT'S MY BOY!",
+      "Did somebody score? Was it a Wobbly Pop? It was, right?"
+    ],
+    "cold": [
+      "Cold builds character. I have so much character right now."
+    ],
+    "hungry": [
+      "I manage a grocery store and I'm starving. Irony."
+    ],
+    "long_line": [
+      "At Valley Foods we'd open a second till for this."
+    ],
+    "bored": [
+      "Want to see me stop? I can stop on dry land too."
+    ],
+    "greet_owner": [
+      "{owner}! Watch this. Okay, I need ice for this. Picture it.",
+      "Hey hey! The Pruett himself."
+    ],
+    "leaving_happy": [
+      "Stopped four times tonight. Personal best."
+    ],
+    "leaving_angry": [
+      "Couldn't stop once out there. Not my fault. The ice's fault."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Wobbly Pops on three! One, two... where's everybody going?",
+        "I'm going to stop in front of the bench. They love it."
+      ],
+      "minor_hockey": [
+        "GO OWEN! That's my son! He's better than me! It's fine!",
+        "He passed me in a fortnight. A fortnight!"
+      ],
+      "tournament": [
+        "Owen's team is playing Kessler. I've got the cowbell."
+      ],
+      "learn_to_skate": [
+        "Look at them. Like me, eighteen months ago. Beautiful."
+      ],
+      "public_skate": [
+        "Public skate is where my story started. Under that clock."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_gary_pruett"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "bl_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "gary_pruett",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "{owner}! Gary Pruett. Wobbly Pops captain. E-T-T, not the other Pruitts. Did you hear I learned to stop? Last February. Ask anyone.",
+      "do": [
+        {
+          "set": "met_gary_pruett"
+        }
+      ],
+      "options": [
+        {
+          "text": "I heard. Congratulations, Gary.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                4
+              ]
+            }
+          ],
+          "to": "first_stop"
+        },
+        {
+          "text": "Pruitt? Like Dylan and Maddie?",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Show me sometime.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_stop": {
+      "say": "Thank you. It was a journey. Owen and I learned the same winter and he passed me in a fortnight. A fortnight! But I can stop now. In front of benches, mostly.",
+      "options": [
+        {
+          "text": "That's a great story.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll get the ice right for your stops, Gary.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Stopping's about the skater, not the ice.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bl_now": {
+      "say": [
+        "Game night! I'm going to stop in front of the other bench. Psychological warfare.",
+        "Did you see that stop? Second period? I didn't fall."
+      ],
+      "options": [
+        {
+          "text": "Do it, Gary. Show them.",
+          "if": [
+            {
+              "not_flag": "saw_gary_stop"
+            }
+          ],
+          "to": "bl_watch"
+        },
+        {
+          "text": "Another snow stop tonight?",
+          "if": [
+            {
+              "flag": "saw_gary_stop"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Maybe try going backwards tonight?",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                -3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Good luck out there.",
+          "to": "end"
+        }
+      ]
+    },
+    "bl_watch": {
+      "say": "You watched? You WATCHED. That one had snow. Actual snow came off my skates.",
+      "options": [
+        {
+          "text": "I saw the snow. It was real.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                4
+              ]
+            },
+            {
+              "set": "saw_gary_stop"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! My friend! My stopping witness!",
+        "Hey, it's the person who saw the snow!"
+      ],
+      "options": [
+        {
+          "text": "Hey, Gary.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What can the Pruett do for you?",
+        "Gary Pruett, at your service. E-T-T.",
+        "Ask me anything. Except about backwards."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's Valley Foods?",
+          "to": "job"
+        },
+        {
+          "text": "How's Owen's hockey?",
+          "to": "owen"
+        },
+        {
+          "text": "What's the Wobbly Pops' secret?",
+          "to": "events"
+        },
+        {
+          "text": "You get on with Dr. Haverkamp?",
+          "to": "lyle"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Here comes the rival. Ready to lose?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "player"
+        },
+        {
+          "text": "See you, Gary.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Manager, Valley Foods. Aisle six is mine. I once stopped a runaway cart with a hockey stop. In shoes. The staff still talk about it.",
+      "options": [
+        {
+          "text": "A legend in two arenas.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "owen": {
+      "say": "He's ten and better than me at everything. I love it. I hate it. I love it. He won't let me stop in front of his bench. Kids, eh?",
+      "options": [
+        {
+          "text": "He's proud of you. He just won't say it.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                3
+              ]
+            },
+            {
+              "rel": [
+                "owen_pruett",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Maybe stop somewhere else for a while.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Spirit, {owner}. We're dads. We have more spirit than edges. And I still watch learn-to-skate. Colette told me 'knees soft' once. My knees have never been softer.",
+      "options": [
+        {
+          "text": "Colette's the best.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "More spirit than edges. Good motto.",
+          "to": "hub"
+        }
+      ]
+    },
+    "lyle": {
+      "say": "Lyle's great. Bit of a lecturer. He gave me a toothbrush in the handshake line and I said thanks, because I'm not Rick Saucier. Eleven games he's refused it. It's a standoff. With bristles.",
+      "options": [
+        {
+          "text": "Somebody should settle that.",
+          "to": "hub"
+        },
+        {
+          "text": "Sauce settled it, didn't he?",
+          "if": [
+            {
+              "flag": "toothbrush_settled"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "It's where I learned to stop. It'll always be beautiful to me. Even the bathrooms. Okay, not the bathrooms.",
+      "options": [
+        {
+          "text": "And the ice now?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "We redid the bathrooms.",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Working on the bathrooms.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Smooth enough that my stops make a noise now. A tsssk. I had no idea stopping had a noise.",
+      "options": [
+        {
+          "text": "You've earned the tsssk.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "player": {
+      "say": "Ha! I'm going to stop right in front of you, {owner}. On purpose. Every shift. It's my whole game plan.",
+      "options": [
+        {
+          "text": "I'll be ready with a spin move.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Bring it, Gary.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

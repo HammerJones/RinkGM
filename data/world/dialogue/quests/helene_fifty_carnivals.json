@@ -1,0 +1,213 @@
+{
+ "id": "helene_fifty_carnivals",
+ "giver": "helene_arsenault",
+ "quest": "helene_fifty_carnivals",
+ "nodes": {
+  "offer": {
+   "say": "Fifty carnivals. The banner says so, and it is ironed. The fifty-first must not be the one where the rink looked tired. Gus kept my gels upstairs. Coloured light, {owner}. It forgives a great deal.",
+   "options": [
+    {
+     "text": "I'll find the gels and get the lamps ready.",
+     "do": [
+      {
+       "quest_start": "helene_fifty_carnivals"
+      },
+      {
+       "rel": [
+        "helene_arsenault",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why the gels? We could rent LED stage lights.",
+     "to": "why"
+    },
+    {
+     "text": "Is Kessler really not allowed to borrow them?",
+     "to": "kessler"
+    },
+    {
+     "text": "Spring is busy. Can it be a plain show this year?",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Because the mothers in the stands skated under those same colours when they were six. You are not lighting a show. You are lighting their memory. Rent nothing.",
+   "options": [
+    {
+     "text": "Understood. Gels it is.",
+     "do": [
+      {
+       "quest_start": "helene_fifty_carnivals"
+      },
+      {
+       "rel": [
+        "helene_arsenault",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Let me think.",
+     "to": "end"
+    }
+   ]
+  },
+  "kessler": {
+   "say": "In 1998 they borrowed the amber and returned it with a cigarette burn. The burn is shaped like Kessler. I do not believe in coincidences.",
+   "options": [
+    {
+     "text": "Then they'll never see it again. I'm in.",
+     "do": [
+      {
+       "quest_start": "helene_fifty_carnivals"
+      },
+      {
+       "rel": [
+        "helene_arsenault",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "A plain show is a practice with an audience. Very well. I will ask again when the lilacs come.",
+   "do": [
+    {
+     "rel": [
+      "helene_arsenault",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Pink for the little ones. Blue for the solos. Amber for the finale. The green we leave in the box. Nobody knows why we have it.",
+   "options": []
+  },
+  "progress": {
+   "say": "The show.",
+   "options": [
+    {
+     "text": "Where exactly is this shoebox?",
+     "if": [
+      {
+       "step": [
+        "helene_fifty_carnivals",
+        "gels"
+       ]
+      }
+     ],
+     "to": "p_gels"
+    },
+    {
+     "text": "Found the gels. The lamps aren't safe to dress yet.",
+     "if": [
+      {
+       "step": [
+        "helene_fifty_carnivals",
+        "lights"
+       ]
+      }
+     ],
+     "to": "p_lights"
+    },
+    {
+     "text": "Everything's hung. Just the show now.",
+     "if": [
+      {
+       "step": [
+        "helene_fifty_carnivals",
+        "show"
+       ]
+      }
+     ],
+     "to": "p_show"
+    },
+    {
+     "text": "Just checking in.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_gels": {
+   "say": "Upstairs. The cupboard behind the piano that is not the Lindell's piano. Do not tell anyone I said that.",
+   "options": []
+  },
+  "p_lights": {
+   "say": "Then make them safe. I will not have a clamp falling on a seven-year-old in a snowflake costume. The Clarion would never let us forget it.",
+   "options": []
+  },
+  "p_show": {
+   "say": "Then I have nothing to ask you except that the ice is perfect. That is all I ever ask.",
+   "options": []
+  },
+  "complete": {
+   "say": "Pink, blue, amber. The mothers cried. The fathers pretended they had something in their eye, which is a figure skating tradition older than the axel. Thank you. Now, the banner. It is still low. Shall we leave it there for the season?",
+   "options": [
+    {
+     "text": "Leave it low. People should see it.",
+     "do": [
+      {
+       "set": "carnival_banner_low"
+      },
+      {
+       "rel": [
+        "helene_arsenault",
+        3
+       ]
+      }
+     ],
+     "to": "c_low"
+    },
+    {
+     "text": "Back up in the rafters. It's safer there.",
+     "do": [
+      {
+       "set": "carnival_banner_high"
+      }
+     ],
+     "to": "c_high"
+    },
+    {
+     "text": "Only if you iron it again.",
+     "do": [
+      {
+       "rel": [
+        "helene_arsenault",
+        2
+       ]
+      }
+     ],
+     "to": "c_iron"
+    }
+   ]
+  },
+  "c_low": {
+   "say": "Then the hockey players will have to look at it every night. Good. It will teach them something about edges.",
+   "options": []
+  },
+  "c_high": {
+   "say": "Yes. Pucks have no respect for satin.",
+   "options": []
+  },
+  "c_iron": {
+   "say": "I iron it every year. You think it irons itself? Leave it low.",
+   "options": []
+  },
+  "done": {
+   "say": "Next year, fifty-two. Do not lose my shoebox.",
+   "options": []
+  }
+ }
+}

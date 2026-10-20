@@ -1,0 +1,12 @@
+controls
+devmenu
+sticks
+pausemenu
+practice
+nets
+positions
+lines
+shootout
+notes
+anim res://scenes/anim/anim_studio.tscn
+office res://scenes/ui/rink_office.tscn

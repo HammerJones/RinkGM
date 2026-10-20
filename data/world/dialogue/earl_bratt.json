@@ -1,0 +1,687 @@
+{
+  "id": "earl_bratt",
+  "barks": {
+    "idle": [
+      "She runs better when nobody talks to her.",
+      "Water's at 55. Should be 60.",
+      "Nine thousand four hundred and something. I don't count out loud."
+    ],
+    "good_ice": [
+      "That'll do.",
+      "You didn't kill her. Fine.",
+      "Hm. Glass."
+    ],
+    "bad_ice": [
+      "Who flooded this. Don't tell me.",
+      "That's not ice. That's a rumour of ice.",
+      "Bag of marbles. Cold water did that."
+    ],
+    "wet_ice": [
+      "Give it ten minutes. Ice doesn't hurry.",
+      "Wet. Somebody didn't wait."
+    ],
+    "goal": [
+      "Off the dead board. Course it was.",
+      "Hm."
+    ],
+    "cold": [
+      "Cold's good. Cold's the job."
+    ],
+    "bored": [
+      "Could be flooding.",
+      "Nobody watches the flood. They go for fries."
+    ],
+    "greet_owner": [
+      "You.",
+      "Morning. She's warm.",
+      "You again. Fine."
+    ],
+    "leaving_happy": [
+      "Ice held. Night."
+    ],
+    "leaving_angry": [
+      "Call me when you've learned what a squeegee's for."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Flood Crew's on. Get your gear.",
+        "Second intermission flood. Eight minutes. Watch me."
+      ],
+      "stick_and_puck": [
+        "Keep the pucks off my bay door."
+      ],
+      "senior_hockey": [
+        "Kings get a fast sheet. They'll get one."
+      ],
+      "special": [
+        "Doris is in a ribbon. Once. Don't make it a habit."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_earl_bratt"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "earl_flatley_insult"
+        },
+        {
+          "not_flag": "earl_flatley_forgiven"
+        }
+      ],
+      "node": "flatley_sore"
+    },
+    {
+      "if": [
+        {
+          "flag": "doris_day_annual"
+        },
+        {
+          "rel_gte": [
+            "earl_bratt",
+            40
+          ]
+        }
+      ],
+      "node": "warm"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            5.0,
+            6.5
+          ]
+        }
+      ],
+      "node": "dawn"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "beer"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "earl_bratt",
+            30
+          ]
+        }
+      ],
+      "node": "friendly"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "You're the one who bought her for a dollar. The building, I mean. Doris isn't for sale.",
+      "do": [
+        {
+          "set": "met_earl_bratt"
+        }
+      ],
+      "options": [
+        {
+          "text": "I'd love your help with the ice, Earl.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                3
+              ]
+            }
+          ],
+          "to": "first_help"
+        },
+        {
+          "text": "Who's Doris?",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                -5
+              ]
+            }
+          ],
+          "to": "first_doris"
+        },
+        {
+          "text": "The town says you quit.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                -2
+              ]
+            }
+          ],
+          "to": "first_quit"
+        }
+      ]
+    },
+    "first_help": {
+      "say": "I'm retired. I'm only here to check she's warm. Keep the ice over 45 for two weeks and we'll talk.",
+      "options": [
+        {
+          "text": "Fair enough.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_doris": {
+      "say": "The 1974 Zambelli Model 525 in the bay. She was running before you were a rumour. Don't touch her choke.",
+      "options": [
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_quit": {
+      "say": "Took my pension. Different thing. Quitting is when you stop caring.",
+      "options": [
+        {
+          "text": "Then you still care.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Okay.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Ice is {ice_word}. You know what I'm going to say."
+      ],
+      "options": [
+        {
+          "text": "What went wrong?",
+          "to": "grumpy_fix"
+        },
+        {
+          "text": "I know. I'm on it.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy_fix": {
+      "say": "Floods too cold. Ice too fat. Boards never edged. Pick one, you'll be right. Then let her sit between floods.",
+      "options": [
+        {
+          "text": "Thanks, Earl.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dawn": {
+      "say": "Five in the morning. Figure ice at six. Hélène checks it with her blade like a doctor with cold hands.",
+      "options": [
+        {
+          "text": "Can I watch the flood?",
+          "if": [
+            {
+              "not_flag": "earl_watched_flood"
+            }
+          ],
+          "to": "dawn_watch"
+        },
+        {
+          "text": "I'll leave you to it.",
+          "to": "end"
+        }
+      ]
+    },
+    "dawn_watch": {
+      "say": "Stand by the door. Don't talk. Watch the overlap. Six inches, every pass.",
+      "do": [
+        {
+          "set": "earl_watched_flood"
+        },
+        {
+          "rel": [
+            "earl_bratt",
+            3
+          ]
+        },
+        {
+          "note": "Earl let you watch the 05:00 flood. Six inches of overlap, every pass."
+        }
+      ],
+      "options": [
+        {
+          "text": "(Watch in silence.)",
+          "to": "hub"
+        }
+      ]
+    },
+    "beer": {
+      "say": "Flood Crew plays tonight. Defence wins games. Floods win seasons.",
+      "options": [
+        {
+          "text": "Want me out there with you?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "beer_player"
+        },
+        {
+          "text": "Good luck tonight.",
+          "to": "hub"
+        }
+      ]
+    },
+    "beer_player": {
+      "say": "You're my partner. Don't chase. Rim it to the dead board behind the north net and I'll be where it comes out.",
+      "options": [
+        {
+          "text": "Got it.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friendly": {
+      "say": [
+        "Water's at 60. Somebody fixed the heater. Fine.",
+        "You're early. She likes early.",
+        "Tally's at nine thousand four hundred and something. You're in a few of them."
+      ],
+      "options": [
+        {
+          "text": "Morning, Earl.",
+          "to": "hub"
+        }
+      ]
+    },
+    "flatley_sore": {
+      "say": "Still shopping for a Flatley?",
+      "options": [
+        {
+          "text": "No. Never. Doris is the only machine.",
+          "do": [
+            {
+              "set": "earl_flatley_forgiven"
+            },
+            {
+              "rel": [
+                "earl_bratt",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Just keeping my options open.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "warm": {
+      "say": "Doris Day. People watched the flood. Nobody went for fries. Thirty seconds, but I counted.",
+      "options": [
+        {
+          "text": "She earned it.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "What.",
+        "She's warm. What do you need.",
+        "Make it quick. She goes out at the top of the hour.",
+        "Ice is {ice_word}. Ask."
+      ],
+      "options": [
+        {
+          "text": "How's Doris doing?",
+          "to": "doris"
+        },
+        {
+          "text": "What do you watch, when you're not flooding?",
+          "to": "events"
+        },
+        {
+          "text": "What do you make of Dylan?",
+          "to": "gossip_dylan"
+        },
+        {
+          "text": "You and Gus were close.",
+          "to": "gossip_gus"
+        },
+        {
+          "text": "What do you think of the ice?",
+          "to": "opinion"
+        },
+        {
+          "text": "Could I drive Doris sometime?",
+          "if": [
+            {
+              "not_flag": "earl_drive_lessons"
+            }
+          ],
+          "to": "drive"
+        },
+        {
+          "text": "My practices. Any complaints?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "I hear there's a write-in for the club name.",
+          "if": [
+            {
+              "path": "gm"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "See you, Earl.",
+          "to": "end"
+        }
+      ]
+    },
+    "doris": {
+      "say": "Twenty-one thousand hours. Original keys. She pulls left in the cold. So do I.",
+      "options": [
+        {
+          "text": "Ever think about a new machine? A Flatley, say.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                -6
+              ]
+            },
+            {
+              "set": "earl_flatley_insult"
+            }
+          ],
+          "to": "flatley"
+        },
+        {
+          "text": "She's a good machine.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "flatley": {
+      "say": "I'll drive a Flatley when they bury me in one. Walt Flatley walked out on his partner in 1952 and the brand's been lying ever since.",
+      "options": [
+        {
+          "text": "Forget I said it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Beer league. I play it, I flood it, I watch it. Stick and puck, if they keep the pucks out of my bay. And the Kings. Kings get the best sheet in the valley, even when they lose.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip_dylan": {
+      "say": "The new kid. Rushes her. Corners like he's late for a bus.",
+      "options": [
+        {
+          "text": "He looks up to you, you know.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                1
+              ]
+            }
+          ],
+          "to": "gossip_dylan2"
+        },
+        {
+          "text": "I'll keep him off her, then.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                1
+              ]
+            },
+            {
+              "rel": [
+                "dylan_pruitt",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip_dylan2": {
+      "say": "... Twenty supervised floods. Then we'll see. Don't tell him I said that.",
+      "do": [
+        {
+          "set": "earl_dylan_twenty"
+        }
+      ],
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip_gus": {
+      "say": "Gus left a binder. Should've left a phone number. I miss the man. Don't write that down.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "opinion": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "It's getting better, isn't it?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "opinion_good"
+        },
+        {
+          "text": "What would you fix first?",
+          "to": "opinion_fix"
+        },
+        {
+          "text": "And the bay? The rooms?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "opinion_rooms"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "opinion_good": {
+      "say": "Didn't say it wasn't. ... It's good. Don't make a thing of it.",
+      "options": [
+        {
+          "text": "I won't.",
+          "to": "hub"
+        }
+      ]
+    },
+    "opinion_fix": {
+      "say": "Thickness. Ice is fat. Gus says I like it thick. Gus doesn't skate on it.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "opinion_rooms": {
+      "say": "Bay door closes now. Tally wall's still there. You left it. Good.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "drive": {
+      "say": "No.",
+      "options": [
+        {
+          "text": "Fair enough.",
+          "to": "hub"
+        },
+        {
+          "text": "Please?",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                -1
+              ]
+            }
+          ],
+          "to": "drive_no2"
+        }
+      ]
+    },
+    "drive_no2": {
+      "say": "Twenty supervised floods. Same as the kid. Saturday, seven sharp. Late and it's twenty-one.",
+      "do": [
+        {
+          "set": "earl_drive_lessons"
+        },
+        {
+          "note": "Earl agreed to teach you to drive Doris. Saturday, seven sharp."
+        }
+      ],
+      "options": [
+        {
+          "text": "I'll be there.",
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "Your drills chew up the crease. Run your stops at the blue line and I'll forgive you.",
+      "options": [
+        {
+          "text": "Blue line it is.",
+          "do": [
+            {
+              "rel": [
+                "earl_bratt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "Somebody's running a write-in for the name. The Dorises. I'm not saying it's me.",
+      "options": [
+        {
+          "text": "It's you, Earl.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

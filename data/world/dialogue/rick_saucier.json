@@ -1,0 +1,662 @@
+{
+  "id": "rick_saucier",
+  "barks": {
+    "idle": [
+      "1994. Sixty-one goals. Look it up. It's in the window.",
+      "You know what we did in 1994? We WON.",
+      "Second period's a scam. Nobody needs a second period."
+    ],
+    "good_ice": [
+      "Now THAT'S ice. 1994 ice.",
+      "Ice like this, I'd have scored seventy."
+    ],
+    "bad_ice": [
+      "This ice is a crime. In '94 we'd have walked out.",
+      "Who flooded this, a garden hose?"
+    ],
+    "wet_ice": [
+      "Wet ice! My kid can't wire it on wet ice!"
+    ],
+    "goal": [
+      "THAT'S IT! THAT'S A SAUCIER GOAL!",
+      "Shoot it like that every time!"
+    ],
+    "cold": [
+      "Cold? This is nothing. 1994 we played outdoors. Once. It was cold."
+    ],
+    "hungry": [
+      "Fries. Gravy. Like a champion."
+    ],
+    "long_line": [
+      "I've told three stories in this line. Move it!"
+    ],
+    "bored": [
+      "Did I tell you about goal number 40? Backhand. From the boards."
+    ],
+    "greet_owner": [
+      "{owner}! Did I ever tell you about 1994?",
+      "Hey, owner! Front row's mine, right?"
+    ],
+    "leaving_happy": [
+      "Great game. Almost 1994 great."
+    ],
+    "leaving_angry": [
+      "They'd never have done that in 1994. NEVER."
+    ],
+    "event_specific": {
+      "minor_hockey": [
+        "SHOOT! MASON, SHOOT! Why isn't he shooting?",
+        "PASS IT! No! SHOOT IT! Okay that worked."
+      ],
+      "tournament": [
+        "This is a big one. Sixty-one goals big.",
+        "Get him on the power play! Somebody! Anybody!"
+      ],
+      "beer_league": [
+        "Moose Knuckles! Same team as '94! Mostly the same knees!",
+        "I'm gassed. It's the second period. Of course I'm gassed."
+      ],
+      "senior_hockey": [
+        "I'd have made the Kings. I'd have. Knee went in '96."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_rick_saucier"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "minor_hockey"
+        }
+      ],
+      "node": "minor_now"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "bl_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "rick_saucier",
+            35
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Rick Saucier. Sauce. Sixty-one goals, 1994, Millbrook Midget AA. You've seen the photo in my window. Everybody's seen the photo.",
+      "do": [
+        {
+          "set": "met_rick_saucier"
+        }
+      ],
+      "options": [
+        {
+          "text": "Sixty-one! Tell me about it.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                4
+              ]
+            }
+          ],
+          "to": "story"
+        },
+        {
+          "text": "I think I've heard about the tooth, actually.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                -3
+              ]
+            }
+          ],
+          "to": "lyle"
+        },
+        {
+          "text": "Nice to meet you, Sauce.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll make it right, Sauce.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Maybe it's not all the rink's fault, Rick.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "minor_now": {
+      "say": [
+        "SHOOT! SHOOT IT! Sorry. Hi. Mason's on. SHOOT!",
+        "Did you see that? He passed! Why is he passing? I never passed!"
+      ],
+      "options": [
+        {
+          "text": "Maybe let the coach coach, Rick.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                -2
+              ]
+            }
+          ],
+          "to": "minor_quiet"
+        },
+        {
+          "text": "He's playing great. Better than you at twelve, I bet.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll leave you to it.",
+          "to": "end"
+        }
+      ]
+    },
+    "minor_quiet": {
+      "say": "The coach. Right. The coach who 'develops'. You know who developed me? Nobody! And I scored sixty-one!",
+      "options": [
+        {
+          "text": "He can hear you from the bench, you know.",
+          "if": [
+            {
+              "not_flag": "told_sauce_he_hears"
+            }
+          ],
+          "do": [
+            {
+              "set": "told_sauce_he_hears"
+            },
+            {
+              "note": "Told Sauce his son can hear him from the bench."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Remember, Rick. He can hear you.",
+          "if": [
+            {
+              "flag": "told_sauce_he_hears"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Fair enough.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bl_now": {
+      "say": [
+        "Moose Knuckles tonight. Same team as 1994. Same jerseys. Different knees.",
+        "I'm good for one period. Then it's all heart."
+      ],
+      "options": [
+        {
+          "text": "Save some legs for the second.",
+          "to": "hub"
+        },
+        {
+          "text": "Any stories before the game?",
+          "to": "story"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! My buddy! Front row, glass, just like I like it.",
+        "Hey, it's my favourite rink owner! Story?"
+      ],
+      "options": [
+        {
+          "text": "Hey, Sauce.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What's up? Quick, I've got a story loaded.",
+        "Sauce is here. You can relax now.",
+        "You know what this rink needs? More 1994."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "Tell me a 1994 story.",
+          "to": "story"
+        },
+        {
+          "text": "How's Mason doing?",
+          "to": "mason"
+        },
+        {
+          "text": "What's the deal with you and Dr. Haverkamp?",
+          "to": "lyle"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "About Mason and the power play...",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "You called about Mason's ice time again.",
+          "if": [
+            {
+              "path": "gm"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "See you on the ice, Sauce.",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "player"
+        },
+        {
+          "text": "Gotta run, Sauce.",
+          "to": "end"
+        }
+      ]
+    },
+    "story": {
+      "say": [
+        "Story 3 of 61. 1994. I had hair. Look at the window photo. Hair, {owner}.",
+        "Story 7 of 61. 1994, Kessler, triple overtime. I scored with half a stick. The blade was in the corner.",
+        "Story 12 of 61. Sainte-Odile, 1994. Father Gagnon's nephew in net. I scored and he crossed himself. True story.",
+        "Story 23 of 61. The bus broke down at Carrick Junction. We pushed it. Then I scored four.",
+        "Story 31 of 61. August 1994, Ronnie brings the Cup home and I touched it. With this hand. Spiritually I haven't washed it.",
+        "Story 44 of 61. My coach said 'Ricky, you're going places.' I went to Harlow Falls. For a tractor show. Still counts.",
+        "Story 52 of 61. Goal number sixty. Wrist shot, top shelf. The goalie still sends me a Christmas card. It says 'stop telling it.'",
+        "Story 61 of 61. Goal sixty-one. Valley final. I don't even remember it. Everyone else does. Isn't that funny?"
+      ],
+      "options": [
+        {
+          "text": "Another one.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "story"
+        },
+        {
+          "text": "Great story, Sauce.",
+          "to": "hub"
+        },
+        {
+          "text": "You've told me that one.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "mason": {
+      "say": "Kid's a natural. Better than me. Hands like... well, like mine. I just want him to have what I had. Sixty-one. A banner. People remembering.",
+      "options": [
+        {
+          "text": "Does he still have fun out there?",
+          "to": "mason_tender"
+        },
+        {
+          "text": "He'll get there.",
+          "to": "hub"
+        }
+      ]
+    },
+    "mason_tender": {
+      "say": "...He used to sing in the car. On the way TO games. Some song from a cartoon. He stopped last year. I don't know when. Anyway! Where was I? 1994!",
+      "options": [
+        {
+          "text": "Maybe ask him about the song.",
+          "do": [
+            {
+              "set": "sauce_heard_fun"
+            },
+            {
+              "rel": [
+                "rick_saucier",
+                3
+              ]
+            },
+            {
+              "note": "Sauce mentioned that Mason used to sing in the car."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Right. 1994.",
+          "to": "story"
+        }
+      ]
+    },
+    "lyle": {
+      "say": "Haverkamp. That man sent me a bill for my own tooth. A Molars stick took it! Their stick! And now they wave toothbrushes at me in the handshake line.",
+      "options": [
+        {
+          "text": "You could just pay the bill, Rick.",
+          "if": [
+            {
+              "not_flag": "toothbrush_settled"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "It is a good toothbrush, I hear.",
+          "if": [
+            {
+              "not_flag": "toothbrush_settled"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "But it's settled now. Do you use the toothbrush?",
+          "if": [
+            {
+              "flag": "toothbrush_settled"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "This place? Where I scored half of sixty-one? It's sacred. Also the glass is filthy. Front row deserves clean glass.",
+      "options": [
+        {
+          "text": "And the ice now? Better?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "I'll get the glass cleaned.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Better than 1994, and I don't say that. I never say that. Write down that I said that.",
+      "options": [
+        {
+          "text": "Writing it down.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "Power play. First line. And the paper. That's all I'm asking. He's the best one out there, Coach.",
+      "options": [
+        {
+          "text": "He plays where he's ready. Not where you yell.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                -3
+              ]
+            }
+          ],
+          "to": "coach_firm"
+        },
+        {
+          "text": "Rick, does he still have fun out there?",
+          "if": [
+            {
+              "not_flag": "sauce_heard_fun"
+            }
+          ],
+          "to": "mason_tender"
+        },
+        {
+          "text": "Mason told me he'd like a bit less pressure.",
+          "if": [
+            {
+              "flag": "mason_ice_time_talk"
+            },
+            {
+              "not_flag": "sauce_heard_fun"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                -1
+              ]
+            }
+          ],
+          "to": "mason_tender"
+        },
+        {
+          "text": "Did you ask him about the song?",
+          "if": [
+            {
+              "flag": "sauce_heard_fun"
+            }
+          ],
+          "to": "coach_song"
+        }
+      ]
+    },
+    "coach_firm": {
+      "say": "Ready? I was ready at nine! ...Fine. FINE. But if he scores sixty-one for somebody else, that's on you.",
+      "options": [
+        {
+          "text": "I'll take that bet.",
+          "to": "hub"
+        }
+      ]
+    },
+    "coach_song": {
+      "say": "I did. He sang it. In the car. On the way home, even. We lost 4-1 and he sang. I didn't say anything about the game. Not one word. That's a record.",
+      "options": [
+        {
+          "text": "That's the best record you've got, Sauce.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                5
+              ]
+            },
+            {
+              "rel": [
+                "mason_saucier",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "He's a prospect, right? A real prospect? Just tell me he's on your list. In pen. Not pencil. Old Pete uses pencil. I hate the pencil.",
+      "options": [
+        {
+          "text": "He's on the list. In pencil, like everybody.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "He's twelve, Rick. Let him be twelve.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "player": {
+      "say": "You're on the Flood Crew? Ha! Moose Knuckles will eat you alive. For a period. Then we're tired. But for a period!",
+      "options": [
+        {
+          "text": "I'll wait for the second period, then.",
+          "do": [
+            {
+              "rel": [
+                "rick_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

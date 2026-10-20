@@ -1,0 +1,331 @@
+{
+  "id": "midge_kaminski",
+  "barks": {
+    "idle": [
+      "A word, as a friend: nice scarf.",
+      "That's a column. That's definitely a column."
+    ],
+    "good_ice": [
+      "Lovely ice. Kicker: Merv will hate that he likes it."
+    ],
+    "bad_ice": [
+      "A word, as a friend: the ice is a letter to the editor waiting to happen."
+    ],
+    "goal": [
+      "Lede: they scored. Kicker: finally."
+    ],
+    "cold": [
+      "Cold enough for a casserole. It's always cold enough for a casserole."
+    ],
+    "greet_owner": [
+      "A word, as a friend?",
+      "Hello, dear. On the record?"
+    ],
+    "leaving_happy": [
+      "That's a nice column. Page three, under the bake sale."
+    ],
+    "leaving_angry": [
+      "I'll be kind in print. I'll be less kind on the phone."
+    ],
+    "event_specific": {
+      "high_school": [
+        "The band is louder than the team. Headline."
+      ],
+      "figure_show": [
+        "Lede: sequins. Kicker: more sequins."
+      ],
+      "special": [
+        "A night like this writes itself. I'll help it."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_midge_kaminski"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "special"
+        }
+      ],
+      "node": "special"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "midge_kaminski",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "A word, as a friend: renovate whatever you like. Leave the clock alone. Midge Kaminski, Off the Boards. Welcome.",
+      "do": [
+        {
+          "set": "met_midge_kaminski"
+        }
+      ],
+      "options": [
+        {
+          "text": "The clock stays. Promise.",
+          "do": [
+            {
+              "set": "midge_clock_promise"
+            },
+            {
+              "rel": [
+                "midge_kaminski",
+                6
+              ]
+            }
+          ],
+          "to": "first_clock"
+        },
+        {
+          "text": "It doesn't even keep time.",
+          "do": [
+            {
+              "rel": [
+                "midge_kaminski",
+                -4
+              ]
+            }
+          ],
+          "to": "first_time"
+        },
+        {
+          "text": "Are you going to write about me?",
+          "to": "first_write"
+        }
+      ]
+    },
+    "first_clock": {
+      "say": "Then you've a friend at the Clarion and a casserole on Thursday. That's how it works here.",
+      "options": [
+        {
+          "text": "Deal.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_time": {
+      "say": "Neither do I, dear, and they kept me. Eleven letters to the editor. All about that clock.",
+      "options": [
+        {
+          "text": "Point taken.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_write": {
+      "say": "Only if you do something worth a column. Or something worth a correction.",
+      "options": [
+        {
+          "text": "I'll aim for the column.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "A word, as a friend. Three people told me about the ice this week. One of them was Merv. I hate agreeing with Merv."
+      ],
+      "options": [
+        {
+          "text": "I'll fix it before Merv writes it up.",
+          "do": [
+            {
+              "rel": [
+                "midge_kaminski",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "special": {
+      "say": "Big night. I'm here for the column and the bake sale page, in that order. No, the other order.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "A word, as a friend: you're doing well. That's the whole column.",
+        "{owner}! There's a casserole in the car with your name on it. Masking tape."
+      ],
+      "options": [
+        {
+          "text": "Hi, Midge.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "A word, as a friend?",
+        "Off the record or on? I'm always on.",
+        "Hello, dear. What's the story?"
+      ],
+      "options": [
+        {
+          "text": "What's in the column this week?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love covering?",
+          "to": "events"
+        },
+        {
+          "text": "Tell me about Ronnie's memoir.",
+          "to": "ronnie"
+        },
+        {
+          "text": "And Merv Tolliver?",
+          "to": "merv"
+        },
+        {
+          "text": "What will you write about the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Bye, Midge.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Beer league scores next to the church bake sale. That is the correct order. People disagree. People are wrong.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Anything special. The Carnival, the home opener, the Christmas skate. And high school games, where the band is louder than the team.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "ronnie": {
+      "say": "Off the Dead Spot. I ghost-wrote it. He tried to make every chapter about somebody else. Chapter four is about Earl. Best chapter.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "merv": {
+      "say": "Merv reviews rinks in stars and people in adjectives. We agree about the ice and never about anything else.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Good review coming?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "What if I replaced the clock?",
+          "if": [
+            {
+              "not_flag": "midge_clock_promise"
+            }
+          ],
+          "to": "clock_threat"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Headline: 'Arena Smells Like an Arena Again, in the Good Way.' Kicker: 'Clock Still Wrong. Thank Goodness.'",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "clock_threat": {
+      "say": "Then I'd write twelve letters. And the twelfth would be about you.",
+      "options": [
+        {
+          "text": "Kidding. It stays.",
+          "do": [
+            {
+              "set": "midge_clock_promise"
+            },
+            {
+              "rel": [
+                "midge_kaminski",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Just a thought.",
+          "do": [
+            {
+              "rel": [
+                "midge_kaminski",
+                -3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

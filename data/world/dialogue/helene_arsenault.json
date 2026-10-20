@@ -1,0 +1,579 @@
+{
+  "id": "helene_arsenault",
+  "barks": {
+    "idle": [
+      "Again.",
+      "Knees.",
+      "Again. Without the face."
+    ],
+    "good_ice": [
+      "Acceptable.",
+      "(A nod.)"
+    ],
+    "bad_ice": [
+      "A parking lot.",
+      "This is not ice. This is a dispute."
+    ],
+    "wet_ice": [
+      "Wet. We wait. Skaters do not swim."
+    ],
+    "cold": [
+      "Too hard. It rings. Ice should not ring."
+    ],
+    "greet_owner": [
+      "Yes.",
+      "Good morning. Briefly.",
+      "Owner."
+    ],
+    "leaving_happy": [
+      "Good session. Do not let it go to your head."
+    ],
+    "leaving_angry": [
+      "Hockey ice. At 06:00. I will remember this."
+    ],
+    "event_specific": {
+      "figure_practice": [
+        "Again.",
+        "Landing edge, Josée. The landing.",
+        "Lily. Up. Again."
+      ],
+      "figure_show": [
+        "Breathe. Then jump. In that order."
+      ],
+      "learn_to_skate": [
+        "Bend. Bend. That is a knee, not a fence post."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_helene_arsenault"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            5.5,
+            8.5
+          ]
+        },
+        {
+          "event_now": "figure_practice"
+        }
+      ],
+      "node": "six"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_show"
+        }
+      ],
+      "node": "show"
+    },
+    {
+      "if": [
+        {
+          "flag": "helene_nods"
+        },
+        {
+          "rel_gte": [
+            "helene_arsenault",
+            40
+          ]
+        }
+      ],
+      "node": "nods"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "helene_arsenault",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "(She touches the ice with one blade and frowns.) It is like skating on a parking lot. You are the owner?",
+      "do": [
+        {
+          "set": "met_helene_arsenault"
+        }
+      ],
+      "options": [
+        {
+          "text": "I am. I'll make it better.",
+          "do": [
+            {
+              "rel": [
+                "helene_arsenault",
+                3
+              ]
+            }
+          ],
+          "to": "first_better"
+        },
+        {
+          "text": "Nice to meet you, Helen.",
+          "do": [
+            {
+              "rel": [
+                "helene_arsenault",
+                -6
+              ]
+            },
+            {
+              "set": "helene_called_helen"
+            }
+          ],
+          "to": "first_helen"
+        },
+        {
+          "text": "It's not that bad.",
+          "do": [
+            {
+              "rel": [
+                "helene_arsenault",
+                -3
+              ]
+            }
+          ],
+          "to": "first_bad"
+        }
+      ]
+    },
+    "first_better": {
+      "say": "Minus three and a half at the surface. Soft enough to bite, firm enough to land. Then we talk.",
+      "options": [
+        {
+          "text": "Minus three and a half.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_helen": {
+      "say": "Hélène. Three syllables. You have time for three.",
+      "options": [
+        {
+          "text": "Hélène. Sorry.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_bad": {
+      "say": "It is worse. I am being polite.",
+      "options": [
+        {
+          "text": "Okay.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Hockey ice at my session. Ruts at the landings. A child fell. 'Again' is for skaters, not for owners."
+      ],
+      "options": [
+        {
+          "text": "I'm sorry. It won't happen at 06:00 again.",
+          "do": [
+            {
+              "rel": [
+                "helene_arsenault",
+                1
+              ]
+            },
+            {
+              "set": "helene_promised_six"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Hockey pays the bills.",
+          "do": [
+            {
+              "rel": [
+                "helene_arsenault",
+                -6
+              ]
+            }
+          ],
+          "to": "grumpy_bills"
+        }
+      ]
+    },
+    "grumpy_bills": {
+      "say": "Then let hockey iron the banner.",
+      "options": [
+        {
+          "text": "...",
+          "to": "hub"
+        }
+      ]
+    },
+    "six": {
+      "say": "06:00. My ice. Not hockey's. Not yours. Mine.",
+      "options": [
+        {
+          "text": "Is it right this morning?",
+          "to": "six_check"
+        },
+        {
+          "text": "I'll stay out of the way.",
+          "do": [
+            {
+              "rel": [
+                "helene_arsenault",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "six_check": {
+      "say": "Do not ask me. Watch Josée land. That is your answer.",
+      "options": [
+        {
+          "text": "(Watch Josée land.)",
+          "to": "hub"
+        }
+      ]
+    },
+    "show": {
+      "say": "Shh. Watch the landing edge, not the jump. The jump is a lie. The landing is the truth.",
+      "options": [
+        {
+          "text": "The landing.",
+          "to": "hub"
+        }
+      ]
+    },
+    "nods": {
+      "say": "(She looks at the ice. Then at you. She nods. Once.)",
+      "options": [
+        {
+          "text": "(Nod back.)",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Good morning. The ice is acceptable. That is high praise.",
+        "{owner}. Sit. Watch. Learn something."
+      ],
+      "options": [
+        {
+          "text": "Bonjour, Hélène.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Yes?",
+        "Quickly. They are warming up.",
+        "Hélène. What is it."
+      ],
+      "options": [
+        {
+          "text": "Tell me about the club.",
+          "to": "club"
+        },
+        {
+          "text": "What do you love about figure skating?",
+          "to": "events"
+        },
+        {
+          "text": "Would you watch me skate?",
+          "to": "edges"
+        },
+        {
+          "text": "How is Colette doing?",
+          "to": "colette"
+        },
+        {
+          "text": "You and Donna...",
+          "to": "donna"
+        },
+        {
+          "text": "What do you think of the ice now?",
+          "to": "rink"
+        },
+        {
+          "text": "Would you teach my kids edges?",
+          "if": [
+            {
+              "path": "coach"
+            },
+            {
+              "not_flag": "helene_guest_session"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "About the 06:00 slot...",
+          "if": [
+            {
+              "path": "gm"
+            },
+            {
+              "not_flag": "helene_six_guaranteed"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "Merci, Hélène.",
+          "to": "end"
+        }
+      ]
+    },
+    "club": {
+      "say": "Fifty carnivals. Twelve skaters. One boy. One banner, which I iron.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Practice at 06:00, the hour nobody lies. The show, the hour everybody lies, beautifully. Learn to skate: the first time, which only happens once.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "edges": {
+      "say": "Skate. ... Stop. Your edges are agricultural. You plough.",
+      "options": [
+        {
+          "text": "Again?",
+          "do": [
+            {
+              "rel": [
+                "helene_arsenault",
+                2
+              ]
+            }
+          ],
+          "to": "edges2"
+        },
+        {
+          "text": "Agricultural?",
+          "to": "edges3"
+        }
+      ]
+    },
+    "edges2": {
+      "say": "Better. Still a tractor. A smaller tractor.",
+      "do": [
+        {
+          "set": "helene_watched_skate"
+        }
+      ],
+      "options": [
+        {
+          "text": "I'll take it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "edges3": {
+      "say": "You turn like a man planting potatoes. Bend the knee. Again.",
+      "options": [
+        {
+          "text": "(Again.)",
+          "to": "edges2"
+        }
+      ]
+    },
+    "colette": {
+      "say": "My best student. She still skates for me. I still skate for Madame Lacombe. It is a long line of disappointed women.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "donna": {
+      "say": "Madame Pettigrew wants my hour for hockey. She cannot have it. We are polite. Very polite.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Better for jumps now?",
+          "if": [
+            {
+              "ice_gte": 70
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "What does figure ice need?",
+          "to": "rink_need"
+        },
+        {
+          "text": "The banner has a proper place to hang now.",
+          "if": [
+            {
+              "rooms_gte": 55
+            },
+            {
+              "not_flag": "helene_banner_thanks"
+            }
+          ],
+          "to": "rink_banner"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Josée landed the double without a wobble. That is the ice, not only Josée. Do not tell Josée.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_need": {
+      "say": "Minus three to minus four at the surface. Soft. Flood before me, not hockey after me.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_banner": {
+      "say": "Fifty Carnivals. Ironed. Hung straight. ... Thank you.",
+      "do": [
+        {
+          "set": "helene_banner_thanks"
+        },
+        {
+          "rel": [
+            "helene_arsenault",
+            3
+          ]
+        }
+      ],
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "Your children skate like they are chasing a bus. One session. Edges only. Seven o'clock, after my girls.",
+      "do": [
+        {
+          "set": "helene_guest_session"
+        },
+        {
+          "rel": [
+            "helene_arsenault",
+            2
+          ]
+        },
+        {
+          "note": "Hélène will give your team one edges session at 07:00."
+        }
+      ],
+      "options": [
+        {
+          "text": "Thank you, Hélène.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "06:00 is sacred. Sell anything else. Sell the canteen. Not 06:00.",
+      "options": [
+        {
+          "text": "06:00 is yours. Always.",
+          "do": [
+            {
+              "set": "helene_six_guaranteed"
+            },
+            {
+              "rel": [
+                "helene_arsenault",
+                6
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "If someone pays more...",
+          "do": [
+            {
+              "rel": [
+                "helene_arsenault",
+                -8
+              ]
+            },
+            {
+              "set": "helene_six_threatened"
+            }
+          ],
+          "to": "gm_bad"
+        }
+      ]
+    },
+    "gm_bad": {
+      "say": "Then I will skate in Harlow Falls, and so will twelve families. Think.",
+      "options": [
+        {
+          "text": "I'll think.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

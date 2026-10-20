@@ -1,0 +1,186 @@
+{
+ "id": "tommy_twelve_signatures",
+ "giver": "tommy_bellweather",
+ "quest": "tommy_twelve_signatures",
+ "nodes": {
+  "offer": {
+   "say": "The Dukes are practising HERE. Here! At my rink! Our rink. Your rink. Can I stand at the glass? I won't bang on it. I'll only bang on it once. Quietly. With respect.",
+   "options": [
+    {
+     "text": "Stand at the glass. No banging.",
+     "do": [
+      {
+       "quest_start": "tommy_twelve_signatures"
+      },
+      {
+       "rel": [
+        "tommy_bellweather",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "What's the puck for?",
+     "to": "why"
+    },
+    {
+     "text": "Shouldn't you be in school?",
+     "to": "school"
+    },
+    {
+     "text": "Pro practice is closed, Tommy.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Twelve signatures. That's the goal. Six is good. Twelve is legendary. Nobody at school has twelve. Jordan has three and one of them is his uncle.",
+   "options": [
+    {
+     "text": "Twelve it is. Go stand at the glass.",
+     "do": [
+      {
+       "quest_start": "tommy_twelve_signatures"
+      },
+      {
+       "rel": [
+        "tommy_bellweather",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "school": {
+   "say": "Practice is at ten. Ten is recess. Recess is basically school. Mom said I could if you said I could. Can you say I could?",
+   "options": [
+    {
+     "text": "You could. After you show me your homework.",
+     "do": [
+      {
+       "quest_start": "tommy_twelve_signatures"
+      },
+      {
+       "rel": [
+        "tommy_bellweather",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Okay. I'll watch through the lobby window. It's foggy. I'll see very foggy hockey.",
+   "do": [
+    {
+     "rel": [
+      "tommy_bellweather",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "I've got a list of who signs. Number thirty-one never signs. Number thirty-one is going to sign today. I can feel it.",
+   "options": []
+  },
+  "progress": {
+   "say": "Signatures?",
+   "options": [
+    {
+     "text": "Next Dukes practice. Glass is yours.",
+     "if": [
+      {
+       "step": [
+        "tommy_twelve_signatures",
+        "glass"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "I'll ask Réjean about the dressing room.",
+     "if": [
+      {
+       "step": [
+        "tommy_twelve_signatures",
+        "rejean"
+       ]
+      }
+     ],
+     "to": "p_rejean"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_rejean": {
+   "say": "They skated right past me. Number thirty-one waved. A WAVE. That's half a signature.",
+   "options": []
+  },
+  "complete": {
+   "say": "Is that... is that MY puck?",
+   "options": [
+    {
+     "text": "Twelve signatures. Thirty-one's is the small one.",
+     "do": [
+      {
+       "rel": [
+        "tommy_bellweather",
+        3
+       ]
+      }
+     ],
+     "to": "c_give"
+    },
+    {
+     "text": "Réjean got it done. Thank him too.",
+     "do": [
+      {
+       "rel": [
+        "rejean_paquette",
+        2
+       ]
+      }
+     ],
+     "to": "c_rejean"
+    },
+    {
+     "text": "It's yours if you promise to keep trading crests fairly.",
+     "do": [
+      {
+       "set": "tommy_fair_trader"
+      }
+     ],
+     "to": "c_promise"
+    }
+   ]
+  },
+  "c_give": {
+   "say": "THIRTY-ONE SIGNED. Thirty-one never signs! I'm going to sleep with it. Not on it. Next to it.",
+   "options": []
+  },
+  "c_rejean": {
+   "say": "I'm going to make him a card. With a thermometer on it. He likes thermometers. I can tell.",
+   "options": []
+  },
+  "c_promise": {
+   "say": "I always trade fair! Mostly! Okay, I promise. Fair. Every time. Except with Jordan, he knows what he did.",
+   "options": []
+  },
+  "done": {
+   "say": "Twelve. Legendary.",
+   "options": []
+  }
+ }
+}

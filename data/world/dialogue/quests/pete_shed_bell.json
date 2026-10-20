@@ -1,0 +1,225 @@
+{
+ "id": "pete_shed_bell",
+ "giver": "old_pete_vachon",
+ "quest": "pete_shed_bell",
+ "nodes": {
+  "offer": {
+   "say": "Rang it after Saturday. Clunk. Sixty-odd years of ding and now clunk.",
+   "options": [
+    {
+     "text": "Let me have a look at it.",
+     "do": [
+      {
+       "quest_start": "pete_shed_bell"
+      },
+      {
+       "rel": [
+        "old_pete_vachon",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Is that a twist tie?",
+     "to": "tie"
+    },
+    {
+     "text": "Maybe it's time for a new bell.",
+     "do": [
+      {
+       "rel": [
+        "old_pete_vachon",
+        -3
+       ]
+      }
+     ],
+     "to": "new"
+    },
+    {
+     "text": "I'll look when I can, Pete.",
+     "to": "decline"
+    }
+   ]
+  },
+  "tie": {
+   "say": "No.",
+   "options": [
+    {
+     "text": "Pete.",
+     "to": "tie2"
+    }
+   ]
+  },
+  "tie2": {
+   "say": "Might be. It's temporary. Since 2011.",
+   "options": [
+    {
+     "text": "I'll get it fixed properly.",
+     "do": [
+      {
+       "quest_start": "pete_shed_bell"
+      },
+      {
+       "rel": [
+        "old_pete_vachon",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "new": {
+   "say": "A new bell. For the Shed. The Shed's gone, {owner}. The bell's what's left. You don't replace what's left.",
+   "options": [
+    {
+     "text": "Sorry, Pete. I'll fix this one.",
+     "do": [
+      {
+       "quest_start": "pete_shed_bell"
+      },
+      {
+       "rel": [
+        "old_pete_vachon",
+        2
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "It'll clunk till then.",
+   "do": [
+    {
+     "rel": [
+      "old_pete_vachon",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "It's in the case. Bottom shelf. Mind the pike.",
+   "options": []
+  },
+  "progress": {
+   "say": "The bell.",
+   "options": [
+    {
+     "text": "Going to look at it.",
+     "if": [
+      {
+       "step": [
+        "pete_shed_bell",
+        "case"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Taking it to Bev.",
+     "if": [
+      {
+       "step": [
+        "pete_shed_bell",
+        "bev"
+       ]
+      }
+     ],
+     "to": "p_bev"
+    },
+    {
+     "text": "Fixed. We just need a win.",
+     "if": [
+      {
+       "step": [
+        "pete_shed_bell",
+        "win"
+       ]
+      }
+     ],
+     "to": "p_win"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_bev": {
+   "say": "Bev. Good. She sharpened for us in '79. Holding a stone in the team photo. Back row.",
+   "options": []
+  },
+  "p_win": {
+   "say": "Ice has to be good. Bad ice, we lose. Bad bell, we lose quieter.",
+   "options": []
+  },
+  "complete": {
+   "say": "Ding. Like 1979. Like 1956, they tell me. I was a boy.",
+   "options": [
+    {
+     "text": "You should ring it.",
+     "do": [
+      {
+       "rel": [
+        "old_pete_vachon",
+        2
+       ]
+      }
+     ],
+     "to": "c_pete"
+    },
+    {
+     "text": "Can I ring it next time?",
+     "do": [
+      {
+       "set": "owner_rings_bell_once"
+      },
+      {
+       "rel": [
+        "old_pete_vachon",
+        3
+       ]
+      }
+     ],
+     "to": "c_owner"
+    },
+    {
+     "text": "Bev wants the twist tie.",
+     "do": [
+      {
+       "rel": [
+        "bev_kowalchuk",
+        2
+       ]
+      }
+     ],
+     "to": "c_bev"
+    }
+   ]
+  },
+  "c_pete": {
+   "say": "I always ring it.",
+   "options": []
+  },
+  "c_owner": {
+   "say": "Once. After a playoff win. Two hands. Don't swing it at the trophy case.",
+   "options": []
+  },
+  "c_bev": {
+   "say": "She can have it. Tell her it held for fifteen years. She'll say 'barely'.",
+   "options": []
+  },
+  "done": {
+   "say": "Ding.",
+   "options": []
+  }
+ }
+}

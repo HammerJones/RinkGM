@@ -1,0 +1,200 @@
+{
+ "id": "donna_bake_sale",
+ "giver": "donna_pettigrew",
+ "quest": "donna_bake_sale",
+ "nodes": {
+  "offer": {
+   "say": "I'll be brief because I'm always brief. No AED, no kids. That's not my rule, it's the association's, but I'd have made it. I can raise the money in one weekend. I need the hall, two sessions of hungry parents and a wall that won't fall off when you screw a cabinet into it.",
+   "options": [
+    {
+     "text": "You'll have all three.",
+     "do": [
+      {
+       "quest_start": "donna_bake_sale"
+      },
+      {
+       "rel": [
+        "donna_pettigrew",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "The rink should just pay for it.",
+     "to": "pay"
+    },
+    {
+     "text": "Squares? That's the plan?",
+     "to": "cheek"
+    },
+    {
+     "text": "I need a week to think about it.",
+     "to": "decline"
+    }
+   ]
+  },
+  "pay": {
+   "say": "The rink has eight thousand dollars and a compressor that drinks. I've seen your P&L. Everyone has. Gus pinned it up. Let the parents do this. Parents like to fix things they can see.",
+   "options": [
+    {
+     "text": "Fair. Bake sale it is.",
+     "do": [
+      {
+       "quest_start": "donna_bake_sale"
+      },
+      {
+       "rel": [
+        "donna_pettigrew",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "Squares, cookies, two pans of Nanaimo bars and Lorraine's butter tarts, which are not for sale, they're for leverage. I've raised eleven thousand dollars on squares. Don't underestimate a square.",
+   "options": [
+    {
+     "text": "I never will again. Let's do it.",
+     "do": [
+      {
+       "quest_start": "donna_bake_sale"
+      },
+      {
+       "rel": [
+        "donna_pettigrew",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Take a week. I'll ask again Monday. I'll ask twice.",
+   "do": [
+    {
+     "rel": [
+      "donna_pettigrew",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Good. Hall Saturday. I'll bring the tables. You bring the extension cords, the kettle is very old.",
+   "options": []
+  },
+  "progress": {
+   "say": "Report.",
+   "options": [
+    {
+     "text": "I'll get the hall ready.",
+     "if": [
+      {
+       "step": [
+        "donna_bake_sale",
+        "hall"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "How's the sale going?",
+     "if": [
+      {
+       "step": [
+        "donna_bake_sale",
+        "games"
+       ]
+      }
+     ],
+     "to": "p_games"
+    },
+    {
+     "text": "Money's in. The lobby wall's not ready yet.",
+     "if": [
+      {
+       "step": [
+        "donna_bake_sale",
+        "rooms"
+       ]
+      }
+     ],
+     "to": "p_rooms"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_games": {
+   "say": "Four hundred and twelve dollars in the first session. A grandfather bought nine squares and ate them in the car before the game started. I respect him.",
+   "options": []
+  },
+  "p_rooms": {
+   "say": "Then make it ready. The cabinet's in my trunk. It's been in my trunk for two weeks. My husband thinks it's a bomb.",
+   "options": []
+  },
+  "complete": {
+   "say": "Cabinet on the wall, AED in the cabinet, sign on the door. Eleven hundred dollars of squares. Here, the tin. Bring it back full at Christmas or don't bring it back at all.",
+   "options": [
+    {
+     "text": "I'll bring it back full. What do you like?",
+     "do": [
+      {
+       "rel": [
+        "donna_pettigrew",
+        3
+       ]
+      },
+      {
+       "set": "owes_donna_squares"
+      }
+     ],
+     "to": "c_full"
+    },
+    {
+     "text": "Thank you, Donna. Really.",
+     "do": [
+      {
+       "rel": [
+        "donna_pettigrew",
+        2
+       ]
+      }
+     ],
+     "to": "c_thanks"
+    },
+    {
+     "text": "Can I keep it as a trophy?",
+     "to": "c_trophy"
+    }
+   ]
+  },
+  "c_full": {
+   "say": "Lemon. Nobody makes lemon. Everybody makes chocolate. Be the lemon, {owner}.",
+   "options": []
+  },
+  "c_thanks": {
+   "say": "Don't thank me. Thank the grandfather with nine squares. He's the real hero.",
+   "options": []
+  },
+  "c_trophy": {
+   "say": "Over my dead body. It's my mother's tin. Christmas.",
+   "options": []
+  },
+  "done": {
+   "say": "Kids on the ice. AED on the wall. Good.",
+   "options": []
+  }
+ }
+}
