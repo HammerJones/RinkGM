@@ -475,7 +475,7 @@ static func _mesh(id: String, a: int) -> ArrayMesh:
 			"dressing": m = _dressing(a)
 			"parked": m = Wear.weather(_parked_model(a), a, 552)
 			"cockpit_parked": m = _cockpit_parked(a)
-		_cache[key] = m.build_mesh_merged() if id in ["body", "bin", "cond", "parked", "cockpit_parked"] else m.build_mesh()
+		_cache[key] = m.build_mesh_merged() if id in ["body", "bin", "cond", "parked", "cockpit_parked", "motor_bay", "hatch", "door"] else m.build_mesh()
 	return _cache[key]
 
 
@@ -488,7 +488,7 @@ static func _part_mesh(id: String) -> ArrayMesh:
 
 static func _decal_mesh() -> ArrayMesh:
 	if not _cache.has("decal"):
-		_cache["decal"] = _decal().build_mesh()
+		_cache["decal"] = _decal().build_mesh_merged()
 	return _cache["decal"]
 
 
