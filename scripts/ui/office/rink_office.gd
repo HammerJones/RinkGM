@@ -8,7 +8,7 @@ extends Control
 ## time goes through it so the career's calendar keeps up, and it stops for
 ## the owner's own Beer League game), otherwise a demo sim at the start of M1
 ## played to Wednesday afternoon.
-## `-- --tab=grid|sched|log|pl|jobs|board` opens a screen;
+## `-- --tab=grid|sched|log|pl|jobs|staff|board` opens a screen;
 ## `-- --owner` starts a fresh owner career (unsaved) when none is running;
 ## `-- --screenshot=out.png` saves a frame and quits;
 ## `-- --test=office` runs tests/office_test.gd (keyboard menus, Esc).
@@ -17,7 +17,7 @@ extends Control
 ## (playtest #41); Esc leaves the computer (#2): back to the hub here, or back
 ## to walking when the venue walk opened it (the walk closes it).
 
-const TABS := [["grid", "Ice grid"], ["sched", "Schedule"], ["log", "Log book"], ["pl", "P&L"], ["jobs", "Jobs"], ["board", "Corkboard"]]
+const TABS := [["grid", "Ice grid"], ["sched", "Schedule"], ["log", "Log book"], ["pl", "P&L"], ["jobs", "Jobs"], ["staff", "Staff"], ["board", "Corkboard"]]
 const NOTE := Color("f2d16b")   ## sticky note paper
 const CORK := Color("4a3424")   ## the corkboard
 const INK := Color("2a1d08")    ## Gus's pencil
@@ -172,6 +172,7 @@ func _refresh() -> void:
 		"pl": _show_pl()
 		"jobs": _show_jobs()
 		"sched": _show_schedule()
+		"staff": _show_staff()
 		"board": _show_board()
 		_: _show_grid()
 	_focus.call_deferred(keep[0], keep[1])
@@ -199,6 +200,45 @@ func _tab_name(t: String) -> String:
 		if x[0] == t:
 			return x[1]
 	return ""
+
+
+# ------------------------------------------------------------------ staff
+
+## The town's people, for the staff screen; loaded when it's first opened.
+var _cast: Cast
+
+
+## Who works here and when: each staff member's job, their week (shifts,
+## breaks, days off), how they keep time and when they came in today.
+func _show_staff() -> void:
+	if _cast == null:
+		_cast = Cast.load_region(1)
+	_title.text = "Staff // %s" % sim.date_text(sim.day)
+	var wd := sim.weekday()
+	var hour := sim.minute / 60.0
+	var staff: Array = _cast.people.values().filter(func(p: Person) -> bool: return p.role == "staff")
+	staff.sort_custom(func(a: Person, b: Person) -> bool: return a.job < b.job if a.job != b.job else a.name < b.name)
+	var box := _section(_body, "on staff (%d)" % staff.size(), 110)
+	for p: Person in staff:
+		var r := _row(box, 16)
+		var who := _cell(p.name, RinkOS.TEXT)
+		who.custom_minimum_size = Vector2(260, 0)
+		r.add_child(who)
+		var job := _cell(p.job.trim_suffix(", Millbrook Arena"), RinkOS.DIM)
+		job.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		r.add_child(job)
+		var e := p.entry_at(wd, hour)
+		var now := "off"
+		if p.on_shift(wd, hour):
+			now = "on break" if e.get("break", false) else "on shift"
+			if p.habits.has("late"):
+				var span := StaffRoster.shift_span(p, wd, hour)
+				now += ", in at %s" % StaffRoster.clock(float(span[0]) + StaffRoster.late_minutes(p, sim.day) / 60.0)
+		r.add_child(_cell(now, RinkOS.READOUT if now != "off" else RinkOS.DIM))
+		var week := _cell("    " + StaffRoster.week_text(p), RinkOS.DIM)
+		week.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		week.custom_minimum_size = Vector2(1100, 0)
+		box.add_child(week)
 
 
 # ------------------------------------------------------------------ ice grid

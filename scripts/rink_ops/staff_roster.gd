@@ -64,6 +64,101 @@ const POSITIONS := [
 			"Hot chocolate machine's got one setting: lava.", "Napkins are by the mustard. Take two, they're thin."]},
 ]
 
+## What each position says when something's going on (W29): the first and
+## last hour of a shift, a fresh sheet just laid, a hockey game tonight, a
+## machine down. Dealt with the position, so these too have one speaker.
+const WHEN := {
+	"ice_crew": {
+		"start": ["Six o'clock. The ice doesn't care that I'm tired.", "Coffee first. Then the doors. Then the coffee again."],
+		"end": ["Noon. Night crew can have her.", "Logging my floods and going home to sleep sideways."],
+		"resurfaced": ["Fresh sheet. Nobody touch it for five minutes.", "Look at that. Glass. Somebody take a picture."],
+		"game_tonight": ["Game tonight, so I'm leaving them a thin flood at four.", "Night crew's got the game. I'm just making sure they've got ice to give."],
+		"broken": ["She's down. I told them about that hose in August.", "Can't flood with a dead machine. Shovels it is, I guess."]},
+	"front_desk": {
+		"start": ["Morning. Phones are already ringing.", "Unlocking the till. Don't talk to me until it balances."],
+		"end": ["Four o'clock. The weekend kid can take the phone.", "Last call for the lost and found. Then it's mine."],
+		"resurfaced": ["They just flooded, so public skate's a few minutes late. Sorry.", "Ice is fresh if anyone asks. People always ask."],
+		"game_tonight": ["Game tonight. I've had nine calls about parking.", "Visitors' bus parks out back tonight. Not in the fire lane."],
+		"broken": ["If you're here to ask about the machine, join the queue.", "I'm telling people it's 'maintenance'. Sounds better."]},
+	"snack_bar_am": {
+		"start": ["Fryer's warming. Coffee's not. Give me two minutes.", "First pot's brewing. Smell that? That's hope."],
+		"end": ["Wiping down. The afternoon crowd gets what's left.", "Last coffee's on the house. Don't tell Lorraine."],
+		"resurfaced": ["Flood's done, so here comes the rush. Watch.", "Ice crew gets a free coffee after a flood. House rule."],
+		"game_tonight": ["Game tonight. I'm prepping forty hot dogs before I go.", "Big night. I'll leave the night shift the good buns."],
+		"broken": ["Machine's down? Then I'm selling a lot of coffee to worried people.", "Everyone's waiting on the mechanic. Mechanics drink coffee too."]},
+	"skate_rental": {
+		"start": ["Wheel's warming up. First sharpen's ten minutes.", "Counting pairs. Somebody walked off with a size eight again."],
+		"end": ["Last rentals back by six, laced, please.", "Closing the window. Sharpening tomorrow."],
+		"resurfaced": ["Fresh ice. Perfect time to find out your edges are bad.", "They just flooded. Ten minutes and you're out there."],
+		"game_tonight": ["Game tonight. Every player in town wants a sharpen by five.", "I've done twelve pairs of goalie skates today. My wrists hurt."],
+		"broken": ["Ice is closed till they fix it. Rentals are free to look at.", "Nobody's renting skates for ice they can't use."]},
+	"custodian": {
+		"start": ["Two o'clock. The morning left me a mess.", "Mop's wet, bucket's full. Let's see what they did to the washrooms."],
+		"end": ["Lights in the hall go off at ten. That means you.", "Last round. Then I lock up and drive home with the window down."],
+		"resurfaced": ["Fresh ice means wet boots means my floor. Every time.", "Snow pit's full again after that flood. Not my department. Still my mess."],
+		"game_tonight": ["Game tonight. Popcorn everywhere by ten. I can already see it.", "Putting out the extra bins for the crowd tonight."],
+		"broken": ["Something's broken? Not my mop. Everything else, ask Earl.", "Machine's down, so nobody's tracking slush in at least."]},
+	"coach": {
+		"start": ["Morning, skaters. Helmets on before skates on.", "Pylons out. Little ones first, big ones help."],
+		"end": ["Good work today. Same time next week.", "Gloves off the ice, please. I find them for weeks."],
+		"resurfaced": ["Fresh ice. Don't fall on it before I do.", "Clean sheet. Today we do our crossovers properly."],
+		"game_tonight": ["There's a game tonight. Go watch how the big ones stop.", "Watch the game tonight and count the crossovers."],
+		"broken": ["No ice? Then it's dryland. Grab a pylon.", "Lesson's off till they fix the machine. Stretch anyway."]},
+	"front_desk_weekend": {
+		"start": ["Weekend. Birthday parties at ten, eleven and noon.", "Putting the tournament draw up on the board."],
+		"end": ["Four o'clock. Somebody else's birthday party now.", "I'm going home to a quiet room and no cake."],
+		"resurfaced": ["Flood's done, the tournament's back on time. Barely.", "Fresh ice. Tell the coaches, they'll stop asking me."],
+		"game_tonight": ["Game tonight after the tournament. Long day for the ice.", "We've got a game tonight too. Pray for the night crew."],
+		"broken": ["The tournament's behind and the machine's down. Lovely.", "I'm telling the coaches it's a 'short delay'. It's not."]},
+	"night_crew": {
+		"start": ["Four o'clock. Doris and me, all night.", "Checking her oil before the evening rush."],
+		"end": ["Last flood's down. Lights out, I'm gone.", "Logging the night. Day crew can deal with the doors."],
+		"resurfaced": ["That's the one before the game. Nicest ice all day.", "Laid it thin. Let it set. Don't let the beer league near it yet."],
+		"game_tonight": ["Game tonight. I'll do a flood between periods if they let me.", "Two floods tonight with the game. I'll earn my sandwich."],
+		"broken": ["She's down and there's a game tonight. Great.", "No machine, no flood. I'll scrape by hand if I have to."]},
+	"office_clerk": {
+		"start": ["One o'clock. The invoices have been breeding.", "Kettle on, inbox open. Let's see who owes what."],
+		"end": ["Five. Whatever's in the tray is tomorrow's.", "Posting the bills on my way out."],
+		"resurfaced": ["Every flood costs gas and water. I see it in the bills.", "Another flood. I'll put it on the log."],
+		"game_tonight": ["Game tonight. Gate money better beat the hydro bill.", "Printed the game sheets. Somebody tell the scorekeeper."],
+		"broken": ["A repair bill. Wonderful. Which budget line is 'hope'?", "I'm already writing the cheque for the mechanic. Again."]},
+	"ticket_booth": {
+		"start": ["Booth's open. Float's counted. Hand stamps are inked.", "Cash box, roll of tickets, a coffee. Ready."],
+		"end": ["Booth's closing. Late arrivals pay at the door.", "Counted twice. We're up eight dollars. Don't ask me how."],
+		"resurfaced": ["Fresh ice for the game. People notice, you know.", "They flooded just now, so we're starting on time for once."],
+		"game_tonight": ["Big crowd tonight. Visitors brought a bus.", "Game night. Best night of the week, if you ask me."],
+		"broken": ["If the game's off, I'm doing refunds. I hate refunds.", "Machine's down? Then I'm selling tickets on faith."]},
+	"maintenance": {
+		"start": ["Ten o'clock. Work orders on the clipboard, all urgent.", "Rounds first. The boiler, the roof, the door that sticks."],
+		"end": ["Four. If it's still dripping, the bucket's on duty.", "Signing off. Call me if it's actually on fire."],
+		"resurfaced": ["Floods put a lot of hot water through that heater. I'll check it.", "Fresh ice. Means the hot water tank's empty for an hour."],
+		"game_tonight": ["Game tonight. Testing the horn. Sorry, everyone.", "Checking the scoreboard bulbs before the game."],
+		"broken": ["Down again. I'll get my tools.", "Something's broken. That's what they pay me for, I suppose."]},
+	"snack_bar_pm": {
+		"start": ["Afternoon shift. Hot dog roller's on.", "Refilling the ketchup. It's always the ketchup."],
+		"end": ["Fryer's off at seven. I mean it this time.", "Counting the float. Somebody paid in quarters again."],
+		"resurfaced": ["Flood's done, so the parents come for coffee. Every time.", "Fresh ice, fresh fries. That's the deal."],
+		"game_tonight": ["Game tonight. I'm leaving forty dozen hot dogs for the night crew.", "Busy night coming. Restocking the gum."],
+		"broken": ["Machine's down and everyone's hungry while they wait.", "Nothing sells fries like a delay."]},
+}
+
+## How a staff member keeps time, dealt by id: [name, earliest, latest]
+## minutes after the shift starts (negative is early). Each day lands
+## somewhere in the range, so the late ones aren't late the same way twice.
+const PUNCTUALITY := [
+	["early", -15, -5],
+	["on time", 0, 3],
+	["runs late", 0, 20],
+	["late a lot", 10, 40],
+]
+
+## A shift this long gets a break in the middle (hours), taken in the hall.
+const BREAK_AFTER := 5.0
+const BREAK_PLACE := "hall"
+
+## How often a staff member says a situational line instead of an idle one.
+const SITUATION_CHANCE := 0.6
+
 ## The archetypes the rink's generated staff come from.
 const STAFF_ARCHETYPES := ["rink_staff", "canteen_worker"]
 
@@ -97,11 +192,26 @@ static func hire(cast: Cast) -> Dictionary:
 static func _take(p: Person, pos: Dictionary) -> void:
 	p.schedule = p.schedule.filter(func(e) -> bool: return str(e.get("doing", "")) != "work")
 	for s: Array in pos.shifts:
-		p.schedule.append({"days": s[0].duplicate(), "from": float(s[1]), "to": float(s[2]), "place": pos.place, "doing": "work"})
+		var from := float(s[1])
+		var to := float(s[2])
+		var h := posmod(hash(p.id), 5)
+		if to - from >= BREAK_AFTER:
+			# lunch in the middle, give or take half an hour by habit
+			var at := snappedf((from + to) * 0.5 + float(h - 2) * 0.25, 0.25)
+			var rest := 0.5 if to - from >= 7.0 else 0.25
+			p.schedule.append({"days": s[0].duplicate(), "from": from, "to": at, "place": pos.place, "doing": "work"})
+			p.schedule.append({"days": s[0].duplicate(), "from": at, "to": at + rest, "place": BREAK_PLACE, "doing": "work", "break": true})
+			p.schedule.append({"days": s[0].duplicate(), "from": at + rest, "to": to, "place": pos.place, "doing": "work"})
+		else:
+			p.schedule.append({"days": s[0].duplicate(), "from": from, "to": to, "place": pos.place, "doing": "work"})
 	p.job = "%s, Millbrook Arena" % pos.title
 	p.work = {}  # `work` is a day job away from the rink; theirs is here (on_shift)
 	p.look["outfit"] = pos.outfit
 	p.lines = {"idle": (pos.lines as Array).duplicate()}
+	for k: String in WHEN.get(pos.id, {}):
+		p.lines[k] = (WHEN[pos.id][k] as Array).duplicate()
+	var punct: Array = PUNCTUALITY[posmod(hash(p.id + "/clock"), PUNCTUALITY.size())]
+	p.habits = {"position": pos.id, "title": pos.title, "punctuality": punct[0], "late": [punct[1], punct[2]]}
 
 
 ## No position left: they work somewhere else in town and come as anyone.
@@ -132,3 +242,142 @@ static func deal_lines(cast: Cast) -> void:
 				if not p.lines.has(topic):
 					p.lines[topic] = []
 				p.lines[topic].append(lines[i])
+
+
+## Minutes `p` turns up after (negative: before) their shift on day `day`:
+## somewhere in their punctuality range, the same all day.
+static func late_minutes(p: Person, day: int) -> int:
+	var r: Array = p.habits.get("late", [0, 0])
+	var lo := int(r[0])
+	var hi := int(r[1])
+	return lo + posmod(hash("%s/%d" % [p.id, day]), hi - lo + 1)
+
+
+## Whether `p` should be at the rink at `hour`: on shift, and past the time
+## their habit brings them in. `here` is whether they already are; lateness
+## moves arriving, never leaving, and an early bird is wanted before the
+## shift starts.
+static func due(p: Person, wd: int, hour: float, day: int, here: bool) -> bool:
+	var late := late_minutes(p, day) / 60.0
+	if late < 0.0:
+		return p.on_shift(wd, hour) or p.on_shift(wd, hour - late)
+	return p.on_shift(wd, hour) and (here or p.on_shift(wd, hour - late))
+
+
+## The whole shift `p` is on at `hour`, breaks included, as [from, to];
+## empty when they're off.
+static func shift_span(p: Person, wd: int, hour: float) -> Array:
+	if not p.on_shift(wd, hour):
+		return []
+	var from := hour
+	var to := hour
+	var grew := true
+	while grew:
+		grew = false
+		for e: Dictionary in p.schedule:
+			if str(e.get("doing", "")) != "work" or not wd in e.get("days", []):
+				continue
+			var f := float(e.from)
+			var t := float(e.to)
+			if f < from and t >= from:
+				from = f
+				grew = true
+			if t > to and f <= to:
+				to = t
+				grew = true
+	return [from, to]
+
+
+## What's going on for `p` right now, most pressing first: "broken" (Doris
+## won't go or a compressor's out), "resurfaced" (a flood in the last 20
+## minutes), "game_tonight" (hockey on the ice after five), "start" or "end"
+## (the first or last hour of their shift), or "".
+static func situation(sim: RinkSim, p: Person) -> String:
+	if sim == null:
+		return ""
+	if sim.doris and sim.doris.fault() != "":
+		return "broken"
+	if sim.plant:
+		for i in sim.plant.compressors.size():
+			if sim.plant.compressor_health(i) <= 0.0:
+				return "broken"
+	if sim.minutes_since_flood() < 20:
+		return "resurfaced"
+	var hour := sim.minute / 60.0
+	for s: Dictionary in sim.sessions(sim.day):
+		if str(s.get("use", "")) == "hockey" and float(s.start) >= 17.0 and float(s.start) > hour:
+			return "game_tonight"
+	var span := shift_span(p, sim.weekday(), hour)
+	if span.is_empty():
+		return ""
+	if hour - float(span[0]) < 1.0:
+		return "start"
+	if float(span[1]) - hour <= 1.0:
+		return "end"
+	return ""
+
+
+## The topic `p` should speak to when asked for `topic`: an idle staff member
+## with a line for what's going on talks about that instead, most times.
+static func topic_now(w: StoryWorld, p: Person, topic: String) -> String:
+	if topic != "idle" or p.lines.is_empty() or w.sim == null:
+		return topic
+	var now := situation(w.sim, p)
+	if now == "" or not p.lines.has(now) or w.rng.randf() >= SITUATION_CHANCE:
+		return topic
+	return now
+
+
+## `p`'s week for the staff screen: one row per day (0 = Sunday) of
+## {"day", "shifts": [[from, to]], "breaks": [[from, to]], "off"}.
+static func week(p: Person) -> Array:
+	var out: Array = []
+	for wd in 7:
+		var shifts: Array = []
+		var breaks: Array = []
+		for e: Dictionary in p.schedule:
+			if str(e.get("doing", "")) != "work" or not wd in e.get("days", []):
+				continue
+			if e.get("break", false):
+				breaks.append([float(e.from), float(e.to)])
+			var mid := (float(e.from) + float(e.to)) * 0.5
+			var span := shift_span(p, wd, mid)
+			if not span in shifts:
+				shifts.append(span)
+		shifts.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+		out.append({"day": wd, "shifts": shifts, "breaks": breaks, "off": shifts.is_empty()})
+	return out
+
+
+## "6:00", "13:30": an hour of the day as a clock.
+static func clock(h: float) -> String:
+	return "%d:%02d" % [int(h), roundi(fmod(h, 1.0) * 60.0)]
+
+
+## `p`'s week in a line for the staff screen: days with the same hours
+## grouped, then breaks, days off and how they keep time, e.g.
+## "Mon-Fri 6:00-12:00 (break 9:00-9:15) | off Sun, Sat | early".
+static func week_text(p: Person) -> String:
+	var groups: Array = []  # [[days], hours text, breaks text]
+	var off: Array = []
+	for row: Dictionary in week(p):
+		if row.off:
+			off.append(RinkSim.DAY_NAMES[row.day])
+			continue
+		var hours := ", ".join(row.shifts.map(func(s: Array) -> String: return "%s-%s" % [clock(s[0]), clock(s[1])]))
+		var rests := ", ".join(row.breaks.map(func(s: Array) -> String: return "%s-%s" % [clock(s[0]), clock(s[1])]))
+		if not groups.is_empty() and groups[-1][1] == hours and groups[-1][2] == rests and groups[-1][0][-1] == row.day - 1:
+			groups[-1][0].append(row.day)
+		else:
+			groups.append([[row.day], hours, rests])
+	var parts: Array = []
+	for g: Array in groups:
+		var days: Array = g[0]
+		var span: String = RinkSim.DAY_NAMES[days[0]] if days.size() == 1 else "%s-%s" % [RinkSim.DAY_NAMES[days[0]], RinkSim.DAY_NAMES[days[-1]]]
+		parts.append("%s %s%s" % [span, g[1], " (break %s)" % g[2] if g[2] != "" else ""])
+	var out := "; ".join(parts)
+	if not off.is_empty():
+		out += " | off " + ", ".join(off)
+	if p.habits.has("punctuality"):
+		out += " | " + str(p.habits.punctuality)
+	return out

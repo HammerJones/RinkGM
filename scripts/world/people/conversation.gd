@@ -82,6 +82,7 @@ static func tree_for(p: Person) -> Dictionary:
 ## A one-off line for `topic` ("idle", "bad_ice", "goal"...): the person's own
 ## barks first, then their archetype's.
 static func bark(w: StoryWorld, p: Person, topic: String, why := {}) -> String:
+	topic = StaffRoster.topic_now(w, p, topic)  # staff talk about what's going on
 	var lines: Array = _load(p.dialogue).get("barks", {}).get(topic, [])
 	var s := str(lines[w.rng.randi() % lines.size()]) if not lines.is_empty() else w.cast.bark(p, topic, w.rng)
 	if s == "":

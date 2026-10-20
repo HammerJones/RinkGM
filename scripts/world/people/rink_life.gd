@@ -196,12 +196,20 @@ func _staff(p: RinkPeople) -> void:
 	var hour := sim.minute / 60.0
 	var want: Array = []
 	for person: Person in world.cast.people.values():
-		if person.on_shift(wd, hour):
+		if StaffRoster.due(person, wd, hour, sim.day, p.agent_of(person.id) != null):
 			want.append(person)
 	for person: Person in want:
-		if p.agent_of(person.id) == null:
+		var here: RinkPeople.Agent = p.agent_of(person.id)
+		if here:
+			# a break (or the next block) can be somewhere else in the building
+			var at := person.place_at(wd, hour)
+			if here.brain.as_ == "work" and here.session == "" and at != "away" and at != here.brain.place and not p.is_claimed(here):
+				here.brain._go("work", at, NpcBrain.Pose.WALK)
+				p._request_path(here)
+		else:
+			var h := hour if person.on_shift(wd, hour) else hour + 0.25  # an early bird: where the shift starts
 			p.populate([{"person": person, "as": "work", "arrive": 0.0,
-				"reason": {"why": "work", "place": person.place_at(wd, hour), "until": Attendance._shift_end(person, wd, hour), "group": "solo:" + person.id}}],
+				"reason": {"why": "work", "place": person.place_at(wd, h), "until": Attendance._shift_end(person, wd, h), "group": "solo:" + person.id}}],
 				false, "", world.event_now, rng.randf_range(0.0, 8.0))
 	for a: RinkPeople.Agent in p.agents:
 		if a.brain.as_ == "work" and a.session == "" and not a.person in want and not p.is_claimed(a):

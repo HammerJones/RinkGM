@@ -313,6 +313,11 @@ func minutes_to_block_end() -> int:
 	return 25 * 60 - minute
 
 
+## Minutes since the ice was last flooded, by anyone.
+func minutes_since_flood() -> int:
+	return _abs_minute() - _last_flood_abs
+
+
 func _abs_minute() -> int:
 	return day * 24 * 60 + minute
 

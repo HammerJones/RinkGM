@@ -1,7 +1,9 @@
 extends SceneTree
 ## People as characters, first slice (W28): the town's generated rink staff
 ## each hold a position of their own (place, shifts, title, clothes), no two
-## staff share a line, and a work point holds one worker at a time.
+## staff share a line, and a work point holds one worker at a time. Slice
+## two (W29): breaks, days off, lateness habits, and lines that follow the
+## time of day and what's happened.
 ##
 ##   godot --headless --path . --script tools/tests/test_staff_roster.gd
 
@@ -42,6 +44,59 @@ func _init() -> void:
 	var rng := RandomNumberGenerator.new()
 	var someone: Person = gen[0]
 	_expect(str(cast.bark(someone, "idle", rng)) in someone.lines.idle, "a staff bark is one of their own lines")
+
+	# W29: breaks, days off, how they keep time, and lines for what's going on
+	var crew: Person = null
+	var styles := {}
+	var lates := {}
+	for p: Person in gen:
+		styles[p.habits.get("punctuality", "")] = true
+		if p.habits.get("position", "") == "ice_crew":
+			crew = p
+		if p.habits.get("punctuality", "") in ["runs late", "late a lot"]:
+			for d in 14:
+				lates[StaffRoster.late_minutes(p, d)] = true
+	_expect(styles.size() >= 3, "staff keep time their own way (%s)" % ", ".join(styles.keys()))
+	_expect(lates.size() >= 4, "and the late ones aren't late the same way every day (%d)" % lates.size())
+	_expect(crew != null, "someone holds the ice crew job")
+	if crew:
+		var rested := crew.schedule.filter(func(e) -> bool: return e.get("break", false))
+		_expect(not rested.is_empty() and rested.all(func(e) -> bool: return e.place == StaffRoster.BREAK_PLACE), "a six-hour shift has a break in the hall")
+		var mid: float = float(rested[0].from) + 0.1 if not rested.is_empty() else 9.0
+		_expect(crew.on_shift(1, mid), "a break is still on the clock")
+		_expect(StaffRoster.shift_span(crew, 1, mid) == [6.0, 12.0], "the shift spans the break (%s)" % [StaffRoster.shift_span(crew, 1, mid)])
+		_expect(not crew.on_shift(0, 8.0) and not crew.on_shift(6, 8.0), "the weekday crew has the weekend off")
+		var txt := StaffRoster.week_text(crew)
+		_expect(txt.begins_with("Mon-Fri 6:00-12:00 (break ") and "off Sun, Sat" in txt, "the staff screen reads their week: " + txt)
+		crew.habits.late = [20, 20]
+		_expect(not StaffRoster.due(crew, 1, 6.1, 0, false), "a late one isn't in at 6:06")
+		_expect(StaffRoster.due(crew, 1, 6.4, 0, false), "but is by 6:24")
+		_expect(not StaffRoster.due(crew, 1, 12.1, 0, true), "and still leaves at noon")
+		crew.habits.late = [-15, -15]
+		_expect(StaffRoster.due(crew, 1, 5.8, 0, false), "an early bird is wanted at 5:48")
+		crew.habits.late = [0, 0]
+
+		var sim := RinkSim.create()
+		var w := StoryWorld.create(cast, sim)
+		sim.day = 1  # a Monday
+		sim.minute = 6 * 60 + 20
+		sim.doris.choke_stuck = true
+		_expect(StaffRoster.situation(sim, crew) == "broken", "a dead machine is what everyone talks about")
+		sim.doris.choke_stuck = false
+		sim._last_flood_abs = sim._abs_minute() - 5
+		_expect(StaffRoster.situation(sim, crew) == "resurfaced", "then a fresh flood")
+		sim._last_flood_abs = -100000
+		var tonight := sim.sessions(sim.day).any(func(s) -> bool: return str(s.get("use", "")) == "hockey" and float(s.start) >= 17.0)
+		var now := StaffRoster.situation(sim, crew)
+		_expect(now == ("game_tonight" if tonight else "start"), "then a game tonight or the start of the shift (%s)" % now)
+		var heard := {}
+		for i in 40:
+			heard[Conversation.bark(w, crew, "idle")] = true
+		var on_topic: int = crew.lines[now].filter(func(l) -> bool: return heard.has(l)).size()
+		var idle: int = crew.lines.idle.filter(func(l) -> bool: return heard.has(l)).size()
+		_expect(on_topic > 0 and idle > 0, "their idle talk mixes in what's going on (%d topical, %d idle)" % [on_topic, idle])
+		sim.minute = 9 * 60 + 30
+		_expect(StaffRoster.situation(sim, crew) in ["", "game_tonight"], "mid-shift with nothing on, nothing special")
 
 	var map := PlaceMap.new()
 	map.places = {"zamboni_bay": [Vector3(1, 0, 0), Vector3(2, 0, 0)]}

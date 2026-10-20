@@ -28,6 +28,9 @@ var dialogue := ""
 ## Lines of their own by topic ("idle", "bad_ice"...), dealt by StaffRoster
 ## so no two staff share one; empty for everyone else.
 var lines := {}
+## A staff member's working ways ("position", "title", "punctuality",
+## "late": [min, max] minutes), set by StaffRoster; empty for everyone else.
+var habits := {}
 var quests: Array = []
 var likes: Array = []
 var dislikes: Array = []
