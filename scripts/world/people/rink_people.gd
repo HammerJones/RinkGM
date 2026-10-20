@@ -913,6 +913,11 @@ func _target(a: Agent) -> Vector3:
 	if place == "lobby" and a.brain.activity == "wait_for":
 		# the group waits together
 		return map.point("lobby", hash(a.group)) + Vector3(fmod(a.spot * 0.37, 1.2) - 0.6, 0, fmod(a.spot * 0.71, 1.2) - 0.6)
+	if a.brain.as_ == "work" and not place in ["hall", "ice", "stands", "away"]:
+		# one worker per work point; with none free, a round of the hall
+		var w := map.claim(place, a.person.id)
+		return w if w != Vector3.INF else map.point("hall", a.spot)
+	map.release(a.person.id)
 	var p := map.point(place, a.spot)
 	if p == Vector3.INF and place in ["hall", "vending"]:
 		p = map.point("lobby", a.spot)
@@ -1249,6 +1254,8 @@ func _chatter(dt: float) -> void:
 
 
 func _remove(a: Agent) -> void:
+	if map:
+		map.release(a.person.id)
 	if a.seat >= 0:
 		_seat_taken.erase(a.seat)
 	if a.shape:

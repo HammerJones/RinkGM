@@ -20,6 +20,7 @@ var places := {}            # place name -> Array[Vector3] (venue space)
 var seats: Array = []       # [[position, facing], ...] from the stands
 var doors: Array = []       # VenueDoor
 var baked := false
+var _holds := {}            # person id -> [place, point index] (claim)
 var _region: NavigationRegion3D
 
 
@@ -126,6 +127,30 @@ func _fallbacks() -> void:
 	if wings and not places.has("street"):
 		# where people on foot come round the building from the road
 		_add("street", [Vector3(-51.5, 0, 26.0), Vector3(-51.5, 0, -26.0), Vector3(-74.0, 0, 1.5)])
+
+
+## Work-point reservation (W28): `who` takes a free point of `place`, one
+## person per point, giving up any point they held before. Vector3.INF when
+## every point is taken: they find something else to do rather than stack.
+func claim(place: String, who: String) -> Vector3:
+	var held: Array = _holds.get(who, [])
+	if not held.is_empty() and held[0] == place:
+		return point(place, held[1])
+	release(who)
+	var pts: Array = places.get(place, [])
+	var taken := {}
+	for h: Array in _holds.values():
+		if h[0] == place:
+			taken[h[1]] = true
+	for i in pts.size():
+		if not taken.has(i):
+			_holds[who] = [place, i]
+			return pts[i]
+	return Vector3.INF
+
+
+func release(who: String) -> void:
+	_holds.erase(who)
 
 
 ## A point for `place`, picked by `i` (so people spread out), or Vector3.INF.

@@ -39,6 +39,7 @@ static func load_region(seed_ := 1, home_adults := HOME_ADULTS) -> Cast:
 	for d in _json(CAST_PATH).get("people", []):
 		var p := Person.from_record(d)
 		c.people[p.id] = p
+	StaffRoster.hire(c)
 	return c
 
 
@@ -80,6 +81,10 @@ func archetype(id: String) -> Dictionary:
 ## A line for `topic` ("idle", "bad_ice", "goal"...) from the person's
 ## archetype barks, or "" if they have none.
 func bark(p: Person, topic: String, rng: RandomNumberGenerator, kind := "") -> String:
+	if not p.lines.is_empty() and topic != "event_specific":
+		# staff speak only their own dealt lines (StaffRoster)
+		var own: Array = p.lines.get(topic, [])
+		return str(own[rng.randi() % own.size()]) if not own.is_empty() else ""
 	var b: Dictionary = archetype(p.archetype).get("barks", {})
 	var lines: Array = []
 	if kind != "" and topic == "event_specific":
