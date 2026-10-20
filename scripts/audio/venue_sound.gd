@@ -11,7 +11,9 @@ extends Node3D
 ##   tubes in the lobby and dressing rooms, the crowd over the stands
 ##   (louder with attendance), skaters on the ice, Doris resurfacing;
 ## - one-shots: `cheer(amount)` for goals, `lamps_switched(on)` for the
-##   ice lights' breakers.
+##   ice lights' breakers, and the match puck's contacts (`watch_puck`):
+##   the boards' thud, the glass rattling when it's hit high or cleared,
+##   a post's ping.
 ##
 ## `set_event(kind)` says what's on the ice and so which layers play:
 ## "none", "public_skate", "practice", "game", "figure", "broomball",
@@ -54,6 +56,19 @@ var _hype := 0.0
 var _tick := 0.0
 var _age := 0.0
 var _lap := 0.0
+## The match puck (watch_puck) and its velocity last physics frame.
+var _puck: Node3D
+var _puck_vel := Vector3.ZERO
+var _next_contact := 0.0
+
+## Puck contacts -> sounds (assets/audio, art/tools/synth_sounds.py).
+const CONTACTS := {"boards": "puck_boards", "glass": "glass_rattle", "post": "puck_post", "out": "glass_rattle"}
+## Normal speed (m/s) into the boards below which a touch makes no sound
+## (a puck carried along the boards, or nudged off them).
+const BOARD_MIN_SPEED := 1.5
+## Tests: with `recording` on nothing plays and contacts land in `heard`.
+static var recording := false
+static var heard: Array[Dictionary] = []
 
 
 func _init(v: Venue = null) -> void:
@@ -140,6 +155,74 @@ static func _layers_for(kind: String) -> String:
 	if c in ["peewee_practice", "team_practice", "stick_and_puck"]:
 		return "practice"
 	return c
+
+
+## Listens to a match puck (Puck): its `post_hit` and `left_rink` signals,
+## and, since the puck has no boards signal, its velocity turning round at
+## the boards each physics frame (board_hit). Venue.bind_game calls this.
+func watch_puck(p: Node3D) -> void:
+	if p == null or _puck == p:
+		return
+	_puck = p
+	_puck_vel = p.get("vel")
+	if p.has_signal("post_hit"):
+		p.post_hit.connect(func() -> void:
+			var v: Vector3 = p.get("vel")
+			puck_contact("post", p.global_position, v.length()))
+	if p.has_signal("left_rink"):
+		p.left_rink.connect(func(_at: Vector3) -> void:
+			var v: Vector3 = p.get("vel")
+			puck_contact("out", p.global_position, v.length()))
+
+
+## Normal speed (m/s) of a puck at `pos` (rink space) that hit the boards
+## between two frames' velocities, or 0.0: near the boards, it was going
+## out fast enough and is now coming back.
+static func board_hit(pos: Vector3, before: Vector3, after: Vector3) -> float:
+	var p := Vector2(pos.x, pos.z)
+	if Rink.sdf(p) < -0.25:
+		return 0.0
+	var n := Rink.board_normal(p)
+	var n3 := Vector3(n.x, 0.0, n.y)
+	var vin := before.dot(n3)
+	return vin if vin >= BOARD_MIN_SPEED and after.dot(n3) < 0.0 else 0.0
+
+
+## "glass" above the top of the boards at `pos`, else "boards".
+static func board_kind(pos: Vector3) -> String:
+	return "glass" if pos.y > VenuePhysics.board_top() else "boards"
+
+
+## A puck contact `what` (CONTACTS) at `at` (global) at `speed` m/s: louder
+## and a touch lower for a harder hit. Rate limited so a puck chattering in
+## a corner doesn't machine-gun.
+func puck_contact(what: String, at: Vector3, speed: float) -> void:
+	var sound: String = CONTACTS.get(what, "")
+	if sound == "":
+		return
+	var now := Time.get_ticks_msec() / 1000.0
+	if now < _next_contact:
+		return
+	_next_contact = now + 0.05
+	var k := clampf(speed / 30.0, 0.0, 1.0)
+	var db := -14.0 + 14.0 * k - (6.0 if what == "out" else 0.0)
+	if recording:
+		heard.append({"sound": sound, "what": what, "at": at, "db": db})
+		return
+	if _arena == null:
+		return
+	RinkSound.play_at(self, sound, at, db, lerpf(1.06, 0.94, k), 4.0, 50.0)
+
+
+func _physics_process(_dt: float) -> void:
+	if _puck == null or not is_instance_valid(_puck):
+		return
+	var v: Vector3 = _puck.get("vel")
+	if not bool(_puck.get("frozen")) and not bool(_puck.get("out_of_play")):
+		var sp := board_hit(_puck.position, _puck_vel, v)
+		if sp > 0.0:
+			puck_contact(board_kind(_puck.position), _puck.global_position, sp)
+	_puck_vel = v
 
 
 ## A goal or a big moment: the stands roar, `amount` 0..1 (a home goal is
