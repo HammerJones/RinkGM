@@ -56,6 +56,9 @@ func build(k: VenueKit) -> void:
 	_terminal.name = "TimekeeperTerminal"
 	_terminal.dead = k.by_age(0.03, 0.0, 0.0)
 	k.sign(_terminal, Transform3D(Basis.IDENTITY, Vector3(0, 1.22, z0 + 0.505)))
+	# the game sheet: the owner keeps score from here (ScorekeepingView)
+	k.block(Vector3(-1.1, 0.95, z0 + 0.15), Vector3(-0.65, 0.96, z0 + 0.45), Color("e8e4da"), 0.1, 0.0, false)
+	add_spot(k, VenueSpot.Kind.USE, "game_sheet", Vector3(-0.9, 1.0, z0 + 0.3), "Game sheet", {"scorekeep": true, "verb": "KEEP SCORE:"}, 1.6)
 
 
 func show_score(st: Dictionary, home: String, away: String) -> void:

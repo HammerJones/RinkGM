@@ -1,17 +1,18 @@
 extends Control
-## The rink office computer: the ice grid, the plant log book, the week's
-## P&L, the job queue and Gus's corkboard, as RINK-OS screens (see
+## The rink office computer: the ice grid, the schedule (sell, move and
+## cancel ice, the event list, the between-session chores), the plant log
+## book, the week's P&L, the job queue and Gus's corkboard, as RINK-OS screens (see
 ## assets/ui/STYLE.md). Reads the sim only through OfficeData.
 ##
 ## Uses the career's rink when there is one (CareerState.rink, a RinkLink:
 ## time goes through it so the career's calendar keeps up, and it stops for
 ## the owner's own Beer League game), otherwise a demo sim at the start of M1
 ## played to Wednesday afternoon.
-## `-- --tab=grid|log|pl|jobs|board` opens a screen;
+## `-- --tab=grid|sched|log|pl|jobs|board` opens a screen;
 ## `-- --owner` starts a fresh owner career (unsaved) when none is running;
 ## `-- --screenshot=out.png` saves a frame and quits.
 
-const TABS := [["grid", "Ice grid"], ["log", "Log book"], ["pl", "P&L"], ["jobs", "Jobs"], ["board", "Corkboard"]]
+const TABS := [["grid", "Ice grid"], ["sched", "Schedule"], ["log", "Log book"], ["pl", "P&L"], ["jobs", "Jobs"], ["board", "Corkboard"]]
 const NOTE := Color("f2d16b")   ## sticky note paper
 const CORK := Color("4a3424")   ## the corkboard
 const INK := Color("2a1d08")    ## Gus's pencil
@@ -146,6 +147,7 @@ func _refresh() -> void:
 		"log": _show_log()
 		"pl": _show_pl()
 		"jobs": _show_jobs()
+		"sched": _show_schedule()
 		"board": _show_board()
 		_: _show_grid()
 
@@ -184,6 +186,138 @@ func _show_grid() -> void:
 
 func _swatch(col: Color) -> String:
 	return _c(col, "##")
+
+
+# ------------------------------------------------------------------ schedule
+
+## The day the schedule screen shows (sim day), -1 for today.
+var _sched_day := -1
+var _sched_msg := ""
+
+
+func _show_schedule() -> void:
+	var sch := sim.schedule
+	var d := sim.day if _sched_day < sim.day else _sched_day
+	_title.text = "Schedule // %s" % sim.date_text(d)
+	var days := _row(_body, 8)
+	for i in 7:
+		var dd := sim.day + i
+		var b := RinkOS.button("%s %d" % [RinkSim.DAY_NAMES[sim.weekday_of(dd)], int(sim.date_of(dd).dom)], dd == d)
+		b.pressed.connect(func():
+			_sched_day = dd
+			_sched_msg = ""
+			_refresh())
+		days.add_child(b)
+	if _sched_msg != "":
+		var m := RinkOS.label("> " + _sched_msg, RinkOS.TERM)
+		m.add_theme_color_override("font_color", RinkOS.READOUT)
+		_body.add_child(m)
+
+	var row := _row(_body, 16)
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 12)
+	left.custom_minimum_size = Vector2(720, 0)
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(left)
+	var booked := _section(left, "on the ice", 70)
+	var list := sch.bookings(sim, d)
+	if list.is_empty():
+		booked.add_child(_cell("nothing booked", RinkOS.DIM))
+	for b in list:
+		var r := _row(booked, 8)
+		var need := RinkOps.needs(b)
+		var what := "%s  %s" % [_hhmm(float(b.start)), RinkSchedule._name(b)]
+		if b.has("moved_from"):
+			what += "  (moved)"
+		var l := _cell(what, RinkOS.TEXT)
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		r.add_child(l)
+		r.add_child(_cell("%s, nets %d+%d%s" % [need.board, need.nets[0], need.nets[1], ", scorer" if need.scorekeeper else ""], RinkOS.DIM))
+		for step in [-1.0, 1.0]:
+			r.add_child(_btn("-1h" if step < 0.0 else "+1h", _sched_do.bind(func(): return sch.move(sim, b.key, d, d, float(b.start) + step)), false))
+		r.add_child(_btn("Cancel", _sched_do.bind(func(): return sch.cancel(sim, b.key, d)), false))
+
+	var sell := _section(left, "open ice to sell", 70)
+	var wd := sim.weekday_of(d)
+	if not EventCatalog.is_weekend(wd):
+		var gap := RinkOS.label(RinkSchedule.gap_text(), RinkOS.TERM_DIM)
+		gap.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		gap.custom_minimum_size = Vector2(680, 0)
+		sell.add_child(gap)
+	var ideas := sch.suggestions(sim, d)
+	if ideas.is_empty():
+		sell.add_child(_cell("nothing fits the open ice that day", RinkOS.DIM))
+	for idea in ideas.slice(0, 8):
+		var r := _row(sell, 8)
+		var l := _cell("%s  %s" % [_hhmm(float(idea.start)), idea.name], RinkOS.TEXT)
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		r.add_child(l)
+		r.add_child(_cell("about $%d%s" % [int(idea.revenue), "" if idea.prime else ", non-prime"], RinkOS.DIM))
+		r.add_child(_btn("Sell", _sched_do.bind(func(): return sch.sell(sim, idea.kind, d, float(idea.start)))))
+
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override("separation", 12)
+	right.custom_minimum_size = Vector2(500, 0)
+	row.add_child(right)
+	_show_ops(right)
+	var events := _section(right, "event list", 44)
+	var t := _term()
+	var lines := []
+	for id in EventCatalog.KINDS:
+		var k: Dictionary = EventCatalog.KINDS[id]
+		var when := []
+		for w in k.windows:
+			when.append("%s %s-%s" % [w[0], _hhmm(float(w[1])), _hhmm(float(w[2]))])
+		var wants := []
+		if float(k.min_ice) > 0.0:
+			wants.append("ice %d" % int(k.min_ice))
+		if float(k.min_rooms) > 0.0:
+			wants.append("rooms %d" % int(k.min_rooms))
+		lines.append("%s %s" % [_c(RinkOS.ACTION if k.get("sell", false) else RinkOS.TEXT, str(k.name)), _c(RinkOS.DIM, "%s; %sh%s" % [", ".join(when), str(k.hours), ("; " + ", ".join(wants)) if not wants.is_empty() else ""])])
+	t.text = "\n".join(lines)
+	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	t.custom_minimum_size = Vector2(480, 0)
+	events.add_child(t)
+
+
+## The between-session chores: setup, the scoreboard, the nets, the scorekeeper.
+func _show_ops(parent: Control) -> void:
+	var ops := sim.ops
+	var box := _section(parent, "between sessions", 44)
+	var t := _term()
+	var keeper := {"volunteer": "%s, volunteering" % RinkOps.SCOREKEEPER_NAME, "paid": "%s, $%d a game" % [RinkOps.SCOREKEEPER_NAME, int(RinkOps.SCOREKEEPER_PAY)],
+		"owner": "you keep score", "none": _c(RinkOS.ALERT, "nobody")}
+	t.text = "\n".join([
+		RinkOS.dots("setup", "you do it, %d min a change" % RinkOps.SETUP_MIN if ops.auto else "by hand in the walk", 14),
+		RinkOS.dots("scoreboard", ops.board, 14),
+		RinkOS.dots("nets out", "%d large, %d small" % [ops.nets_on[0], ops.nets_on[1]], 14),
+		RinkOS.dots("scorekeeper", keeper.get(ops.scorekeeper, ops.scorekeeper), 14),
+		RinkOS.dots("league rules", LeagueRules.describe(LeagueRules.BEER_LEAGUE).get_slice(":", 1).strip_edges(), 14)])
+	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	t.custom_minimum_size = Vector2(480, 0)
+	box.add_child(t)
+	var r := _row(box, 8)
+	r.add_child(_btn("Setup: %s" % ("auto" if ops.auto else "by hand"), func():
+		ops.auto = not ops.auto
+		_refresh(), false))
+	if ops.scorekeeper != "paid":
+		r.add_child(_btn("Pay %s" % RinkOps.SCOREKEEPER_NAME.get_slice(" ", 0), func():
+			ops.pay_scorekeeper()
+			_refresh(), ops.asked_for_pay))
+	if ops.scorekeeper != "owner":
+		r.add_child(_btn("Keep score", func():
+			ops.keep_score_yourself()
+			_refresh(), false))
+
+
+func _sched_do(action: Callable) -> void:
+	var why: String = action.call()
+	_sched_msg = why if why != "" else "Done."
+	_refresh()
+
+
+static func _hhmm(h: float) -> String:
+	return RinkSchedule._hhmm(h)
 
 
 # ------------------------------------------------------------------ log book

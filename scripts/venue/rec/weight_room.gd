@@ -66,6 +66,17 @@ func furnish(k: VenueKit) -> void:
 	_utility_bench(k, Vector3(13.6, 0, -52.5))
 	_walls(k)
 	k.prop("trash_can", Vector3(x1 - 0.4, 0, z1 - 0.5), PI)
+	# a 15-minute set on each machine (Training, the owner's kit), where a
+	# player stands to use it
+	var spots := machine_spots(k.age)
+	for id: String in spots:
+		var machine := id.trim_prefix("train_")
+		var n := 0
+		for at: Vector3 in spots[id]:
+			n += 1
+			add_spot(k, VenueSpot.Kind.USE, id if n == 1 else "%s_%d" % [id, n], at + Vector3(0, 1.0, 0),
+				str(Training.MACHINES[machine].name) if Training.MACHINES.has(machine) else machine.capitalize(),
+				{"train": machine, "verb": "15 MIN ON THE"}, 1.3)
 	k.prop("fire_extinguisher", Vector3(x1 - 0.2, 0, z1 - 1.3), PI * 0.5)
 
 

@@ -22,5 +22,11 @@
    "noticed": "The ice lights are old metal halides. They take a few minutes to warm up to full."},
   {"id": "snow_pit", "title": "The Snow Pit", "author": "", "location": "zamboni_bay",
    "text": "The melt pit under the grate, where Doris dumps her snow. The heater coil is supposed to melt it down the floor drain.",
-   "noticed": ""}
+   "noticed": ""},
+  {"id": "crampons_note", "title": "Taped to a Coffee Can", "author": "Gus Tremblay", "location": "zamboni_bay",
+   "text": "If you're reading this you went on the ice in your shoes and you're sore. These go over your boots. Straps cross at the back. Do NOT wear them on the rubber mats, the coaches will kill you. And put them BACK in the can.",
+   "noticed": "Inside the coffee can: a pair of strap-on ice cleats, the rubber gone stiff. You take them."},
+  {"id": "net_storage", "title": "Stencilled on the Wall", "author": "Gus Tremblay", "location": "zamboni_bay",
+   "text": "NETS. 4 BIG. 8 SMALL. Count them back in. Pegs go in the holes, not in the bucket. Minor hockey wants the small ones cross-ice and the pads down. Ask the coach, half of them will skate them out themselves.",
+   "noticed": "Lift with your legs. The ice is slick in shoes."}
 ]

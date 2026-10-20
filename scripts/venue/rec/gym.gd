@@ -44,6 +44,14 @@ func furnish(k: VenueKit) -> void:
 	k.block(Vector3(x1 - 1.4, 0, z1 - 1.2), Vector3(x1 - 0.6, 0.9, z1 - 0.5), Color("8f9498"), 0.3, 0.03)
 	for i in 6:
 		k.block(Vector3(x1 - 1.35 + (i % 3) * 0.25, 0.9, z1 - 1.1 + (i / 3) * 0.28), Vector3(x1 - 1.13 + (i % 3) * 0.25, 1.12, z1 - 0.88 + (i / 3) * 0.28), Color("e06a1a"), 0.1, 0.05, false)
+	# shoot around at either hoop (PickupGame, the owner's kit): the rims and
+	# backboards in venue space
+	var rims := []
+	for end in [-1, 1]:
+		var board: float = CX + end * (HALF_L - 1.2)
+		rims.append({"rim": [board - end * 0.38, 3.05, CZ], "board": board, "end": end})
+	add_spot(k, VenueSpot.Kind.USE, "pickup_basketball", Vector3(x1 - 1.0, 1.0, z1 - 0.85), "Ball cart",
+		{"pickup": "basketball", "hoops": rims, "verb": "SHOOT AROUND:"}, 1.6)
 	for i in 2:
 		k.block(Vector3(x1 - 0.5 - i * 0.2, 0, z0 + 1.0), Vector3(x1 - 0.4 - i * 0.2, 2.4, z0 + 1.1), Color("b8bcc2"), 0.3, 0.0)
 	stack(k, Vector3(x0 + 0.4, 0, z1 - 1.6), Vector3(1.8, 0.08, 1.2), 6, Color("1d3557") if k.age != Age.WORN else Color("3a4a6a"))

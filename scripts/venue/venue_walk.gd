@@ -17,8 +17,10 @@ extends Node3D
 ## E / A read, use or work on what you're looking at (or a door); A jumps
 ## when there's nothing in reach, B (held) crouches when no panel is open,
 ## O the office (in an owner career),
+## Q / LB raise the watch, Tab / Back the bag (R turns what's in hand),
 ## Esc / B close a panel, 1 2 3 / D-pad set this room's age,
-## F / Y fly, Tab frees the mouse.
+## F / Y fly. On the ice in shoes the mouse or right stick keeps the
+## owner's balance (KitHud).
 
 ## UI's office screens and anything else listening: the player asked for
 ## screen `id` (log_book, phone, goals, ice_grid, desk) with the sim.
@@ -50,6 +52,7 @@ var _office: CanvasLayer
 var _leaving := false
 var _sun: DirectionalLight3D
 var _env: Environment
+var kit: KitHud
 var pickup_run: PickupRun  # World: the gym's pickup games, null without a gym
 
 
@@ -98,6 +101,10 @@ func _ready() -> void:
 	walker.head.add_child(cam)
 	cam.current = true
 	_build_ui()
+	kit = KitHud.new()
+	add_child(kit)
+	kit.toast.connect(_show_toast)
+	kit.setup(story, walker, cam, venue)
 	pickup_run = PickupRun.attach_to_walk(self)  # World: pickup basketball in the gym (scripts/world/pickup)
 	# World: the building's real people (WalkPeople: RinkPeople on this walk's
 	# sim, T to talk, Gus's first-day offer) instead of the seated crowd;
@@ -140,13 +147,22 @@ func _build_ui() -> void:
 
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _busy():
-		_yaw -= e.relative.x * 0.003
-		_pitch = clampf(_pitch - e.relative.y * 0.003, -1.45, 1.45)
+		# on the ice in shoes the mouse mostly fights for balance
+		var look := 0.35 if kit.balancing else 1.0
+		if kit.balancing:
+			kit.push(e.relative)
+		_yaw -= e.relative.x * 0.003 * look
+		_pitch = clampf(_pitch - e.relative.y * 0.003 * look, -1.45, 1.45)
 	elif e is InputEventMouseButton and e.pressed:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		if not kit.bag_open:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	elif e is InputEventKey and e.pressed and not e.echo:
+		if kit.key(e):
+			return
 		match e.keycode:
-			KEY_TAB: Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			KEY_TAB:
+				if not _busy():
+					kit.toggle_bag()
 			KEY_ESCAPE: _close_panel()
 			KEY_O:
 				if story and story.link and not _busy():
@@ -155,7 +171,11 @@ func _unhandled_input(e: InputEvent) -> void:
 			KEY_SPACE:
 				if not flying and not _busy():
 					walker.jump()
-			KEY_Q: _close_panel()
+			KEY_Q:
+				if _panel.visible or _office:
+					_close_panel()
+				else:
+					kit.toggle_watch()
 			KEY_F: _toggle_fly()
 			KEY_1: _age_here(VenueRoom.Age.WORN)
 			KEY_2: _age_here(VenueRoom.Age.REPAIRED)
@@ -167,7 +187,15 @@ func _unhandled_input(e: InputEvent) -> void:
 					_use()
 				elif not flying:
 					walker.jump()
-			JOY_BUTTON_B: _close_panel()
+			JOY_BUTTON_B:
+				if kit.bag_open:
+					kit.toggle_bag()
+				else:
+					_close_panel()
+			JOY_BUTTON_LEFT_SHOULDER: kit.toggle_watch()
+			JOY_BUTTON_BACK:
+				if kit.bag_open or not _busy():
+					kit.toggle_bag()
 			JOY_BUTTON_Y: _toggle_fly()
 			JOY_BUTTON_DPAD_LEFT: _age_here(VenueRoom.Age.WORN)
 			JOY_BUTTON_DPAD_UP: _age_here(VenueRoom.Age.REPAIRED)
@@ -175,7 +203,7 @@ func _unhandled_input(e: InputEvent) -> void:
 
 
 func _busy() -> bool:
-	return _panel.visible or _job_scene != null or _office != null
+	return _panel.visible or _job_scene != null or _office != null or kit.busy()
 
 
 func _process(dt: float) -> void:
@@ -191,10 +219,12 @@ func _process(dt: float) -> void:
 		walker.wish = Vector3.ZERO
 		walker.crouch = false
 		return
+	walker.speed_scale = kit.step(dt) if not flying else 1.0
 	var look := Vector2(Input.get_joy_axis(0, JOY_AXIS_RIGHT_X), Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y))
 	if look.length() > 0.15:
-		_yaw -= look.x * 2.5 * dt
-		_pitch = clampf(_pitch - look.y * 2.0 * dt, -1.45, 1.45)
+		var k := 0.35 if kit.balancing else 1.0  # the stick is busy balancing
+		_yaw -= look.x * 2.5 * dt * k
+		_pitch = clampf(_pitch - look.y * 2.0 * dt * k, -1.45, 1.45)
 	walker.rotation.y = _yaw
 	walker.head.rotation.x = _pitch
 	var mv := Vector2(
@@ -228,16 +258,19 @@ func _hud_lines() -> Array:
 	if s:
 		hint = "[E] " + s.prompt()
 	else:
+		hint = kit.hands_hint()
 		var d := walker.nearest_door(venue)
-		if d:
+		if d and not hint.begins_with("[E]"):
 			hint = "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
 	if story and story.link:
 		head += "   [O] OFFICE"
+	if kit.status() != "":
+		hint = kit.status()
 	return [head, where, hint]
 
 
 func _looked_at() -> VenueSpot:
-	return walker.nearest_spot(venue, -cam.global_transform.basis.z)
+	return walker.nearest_spot(venue, -cam.global_transform.basis.z, kit.spots)
 
 
 ## E / A: the spot you're looking at, else the nearest door.
@@ -254,6 +287,10 @@ func _use() -> void:
 	if s:
 		_act(story.use(s) if story else {"toast": s.prompt()})
 		return
+	var hands := kit.use_hands()
+	if hands != "":
+		_show_toast(hands)
+		return
 	var d := walker.nearest_door(venue)
 	if d:
 		if story and story.door_locked(d):
@@ -263,7 +300,9 @@ func _use() -> void:
 
 
 func _act(a: Dictionary) -> void:
-	if a.has("read"):
+	if kit.handles(a):
+		_show_toast(kit.act(a))
+	elif a.has("read"):
 		_show_read(a.read)
 	elif a.has("job"):
 		_start_job(a.job)

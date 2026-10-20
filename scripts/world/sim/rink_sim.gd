@@ -111,6 +111,14 @@ var evacuated_day := -1   # a toxic release emptied the building this day
 var league := {"free_until": LEAGUE_FREE_DAYS, "owed": 0.0, "due_day": -1, "benched": false, "paid_through": -1}
 var owner_game_weekday := 2  # the owner's BL-D game is the Tuesday vbl_d slot
 var games: Array = []        # [{"day", "minute", "minutes"}] the owner's own games
+## The owner's changes to the contracts' slots (Mechanics' RinkSchedule).
+var schedule := RinkSchedule.new()
+## Scoreboard, nets and scorekeeper between sessions (Mechanics' RinkOps).
+var ops := RinkOps.new()
+## What's on the ice now, for World's on-ice events: {"large": n, "mini": m}.
+var nets_on_ice: Dictionary:
+	get:
+		return {"large": int(ops.nets_on[0]), "mini": int(ops.nets_on[1])}
 
 ## The building.
 var lights_on := false
@@ -303,8 +311,15 @@ func _abs_minute() -> int:
 
 # ------------------------------------------------------------------ schedule
 
-## The bookings on day `d`, by start time: [{"org", "use", "start", "hours"}].
+## The bookings on day `d`, by start time: [{"org", "use", "start", "hours"}],
+## with the owner's schedule changes (RinkSchedule: one-off sales, moved and
+## cancelled slots; those add "key", "kind" and "sale").
 func sessions(d: int) -> Array:
+	return schedule.bookings(self, d)
+
+
+## The contracts' own weekly slots on day `d`, before any schedule changes.
+func contract_sessions(d: int) -> Array:
 	var wd := weekday_of(d)
 	var out: Array = []
 	for id in contracts:
@@ -652,8 +667,13 @@ func _auto_floods() -> void:
 
 
 func _start_session(s: Dictionary) -> void:
-	var o := RinkContracts.org(s.org)
-	var c: Dictionary = contracts[s.org]
+	# a one-off sale (RinkSchedule) has no contract: its rate and crowd ride on the booking
+	var sale := bool(s.get("sale", false))
+	var o: Dictionary = {"name": s.get("name", "a one-off booking"), "rate": s.get("rate", 0.0)} if sale else RinkContracts.org(s.org)
+	if sale and float(s.get("per_head", 0.0)) > 0.0:
+		o["per_head"] = float(s.per_head)
+		o["heads"] = float(s.heads)
+	var c: Dictionary = contracts[s.org] if contracts.has(s.org) else {"satisfaction": 60.0}
 	var entry := {"day": day, "org": s.org, "start": s.start, "hours": s.hours, "rating": -1.0, "mid_rating": -1.0, "cancelled": false}
 	session_log.append(entry)
 	if session_log.size() > 300:
@@ -691,6 +711,7 @@ func _start_session(s: Dictionary) -> void:
 		session_started.emit(s, -1.0, wet)
 		return
 	c.satisfaction = lerpf(float(c.satisfaction), rating, 0.2)
+	_session_ops(s, c)
 	_rep_sample(rating, float(s.hours) * 0.5)
 	_cur_session = {"key": _session_key, "mid": minute + int(float(s.hours) * 30.0), "use": s.use, "hours": float(s.hours), "log": session_log.size() - 1}
 	var rate := float(c.get("rate", o.get("rate", 0.0)))
@@ -704,6 +725,18 @@ func _start_session(s: Dictionary) -> void:
 	elif s.use == "hockey":
 		book("concessions (net)", 20.0 * 4.0 * 0.5)
 	session_started.emit(s, rating, wet)
+
+
+## The board, the nets and the scorekeeper as the session starts (RinkOps).
+func _session_ops(s: Dictionary, c: Dictionary) -> void:
+	var r := ops.on_session_start(s, day)
+	c.satisfaction = maxf(float(c.satisfaction) - float(r.satisfaction), 0.0)
+	if float(r.hours) > 0.0:
+		_charge_hours(float(r.hours))
+	if float(r.cost) > 0.0:
+		book("scorekeeper", -float(r.cost))
+	for t in r.notes:
+		_note(t, "session")
 
 
 ## The middle-of-session sample for the ice reputation (docs 3.2).
@@ -849,6 +882,14 @@ func owner_played_game(minutes: int) -> bool:
 	games.append({"day": day, "minute": minute, "minutes": minutes})
 	_note("You played %d minutes of Beer League hockey on your own ice." % minutes, "game")
 	return true
+
+
+## The owner spent `minutes` working out (the weight room, a pickup game):
+## owner hours, plus `effort` fatigue on top of any overtime.
+func owner_trained(minutes: int, effort: float) -> void:
+	_maybe_wake()
+	_charge_hours(minutes / 60.0)
+	fatigue = clampf(fatigue + effort, 0.0, 100.0)
 
 
 func _end_week() -> void:
@@ -1451,7 +1492,7 @@ const SAVE_ALIASES := {"kwh_today": "_kwh_today", "session_key": "_session_key",
 func to_dict() -> Dictionary:
 	var d := {"version": 2, "skill": skill.duplicate(), "tools": tools.duplicate(), "rooms": rooms.duplicate(),
 		"league": league.duplicate(), "rng_seed": str(rng.seed), "rng_state": str(rng.state),
-		"plant": plant.to_dict(), "ice": ice.to_dict(), "doris": doris.to_dict()}
+		"plant": plant.to_dict(), "ice": ice.to_dict(), "doris": doris.to_dict(), "schedule": schedule.to_dict(), "ops": ops.to_dict()}
 	for k in SAVE_VARS:
 		var v: Variant = get(k)
 		if v is Array or v is Dictionary:
@@ -1499,6 +1540,8 @@ static func from_dict(d: Dictionary) -> RinkSim:
 	s.plant.load_dict(d.get("plant", {}))
 	s.ice.load_dict(d.get("ice", {}))
 	s.doris.load_dict(d.get("doris", {}))
+	s.schedule = RinkSchedule.from_dict(d.get("schedule", {}))
+	s.ops = RinkOps.from_dict(d.get("ops", {}))
 	if not d.has("_money_day_start"):
 		s._money_day_start = s.money
 	return s
