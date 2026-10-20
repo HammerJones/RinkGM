@@ -276,6 +276,11 @@ func _long_walls(k: VenueKit, wings: bool) -> void:
 		var covered: bool = wings and s < 0    # the wing hides the bottom
 		var x := -HX + PIER_STEP
 		while x < HX - 0.1:
+			# the truss line at x = +-40 falls on the fire exits (S-40, S40):
+			# no pilaster in front of a door
+			if not covered and EXITS.any(func(ex: float) -> bool: return absf(ex - x) < 1.5):
+				x += PIER_STEP
+				continue
 			var y0 := wing_top(x) if covered else 0.0
 			k.aged_block(Vector3(x - 0.45, y0, zf), Vector3(x + 0.45, Venue.ROOF_Y - 0.4, zo + s * 0.1), pier, 0.9, 0.05, not covered)
 			x += PIER_STEP

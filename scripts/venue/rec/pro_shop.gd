@@ -47,10 +47,11 @@ func furnish(k: VenueKit) -> void:
 	_gloves_and_helmets(k, steel)
 	_floor_stock(k, wood, steel)
 	_posters(k)
-	# the shop's painted arrow board over the counter, and Bev's chalkboard:
-	# hollows, prices and her opinions
-	readable(k, "sign_bev_arrow", Vector3(-26.6, 2.75, ARENA), Vector3(0, 0, -1))
-	readable(k, "bev_chalkboard", Vector3(-22.2, 1.9, ARENA), Vector3(0, 0, -1))
+	# the shop's painted arrow board over the counter's photo wall, and Bev's
+	# chalkboard (hollows, prices and her opinions) on the back room
+	# partition by the till, clear of the glove pegboard that hid it
+	readable(k, "sign_bev_arrow", Vector3(-26.6, 2.8, ARENA), Vector3(0, 0, -1))
+	readable(k, "bev_chalkboard", Vector3(BACK_X + 0.07, 1.75, -32.4), Vector3(1, 0, 0))
 
 
 # ---------------------------------------------------------------- back room

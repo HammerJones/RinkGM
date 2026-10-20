@@ -39,7 +39,8 @@ func furnish(k: VenueKit) -> void:
 		var c: Color = [Wear.OLD_ORANGE, Color("3f6fa8"), Wear.OLD_GOLD, Color("6a9a4a")][i % 4]
 		k.block(Vector3(-44.5 + (i % 3) * 0.3, 0.5 + (i / 3) * 0.5, -30.45), Vector3(-44.3 + (i % 3) * 0.3, 0.8 + (i / 3) * 0.5, -30.4), c, 0.2, 0.04, false)
 	k.prop("vending_machine", Vector3(-36.0, 0, -30.55), 0.0)
-	k.prop("trash_can", Vector3(-37.2, 0, -30.4), 0.0)
+	# the bin sits past the drinks machine, out of the way of exit N-40 (W16)
+	k.prop("trash_can", Vector3(-34.9, 0, -30.4), 0.0)
 	# a bank of kit lockers for drop-in players by the arena door
 	k.prop("lockers", Vector3(-38.4, 0, -30.25), 0.0)
 	_signs(k)
