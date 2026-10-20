@@ -351,7 +351,9 @@ func _sync(_dt: float) -> void:
 	if t != "hand" and sid in ["drain", "plug_in"]:
 		_tool_node.visible = true
 		_tool_node.mesh = JobParts.mesh("ratchet")
-		var spinb := Basis(Vector3.UP, -2.7 + 0.25 * sin(JobScene.spin(fp)))
+		# World: the handle swings clockwise with the plug as it tightens (spin
+		# falls), then ratchets back every 30 degrees; a sine swung it both ways.
+		var spinb := Basis(Vector3.UP, -2.45 - fposmod(-JobScene.spin(fp), deg_to_rad(30.0)))
 		_tool_node.transform = Transform3D(DRAIN_AXIS * spinb, _plug_node.position + DRAIN_AXIS * Vector3(0, 0.022, 0))
 	elif t == "filter_wrench" and sid in ["filter_off", "filter_on"]:
 		_tool_node.visible = true
