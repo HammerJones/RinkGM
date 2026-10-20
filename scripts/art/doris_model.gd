@@ -80,7 +80,7 @@ const GAUGE_CHARGE := Vector3(-0.30, 1.625, 0.132)
 const LCD_AT := Vector3(-0.80, 1.405, 0.15)
 
 ## State. Set these, then apply() (tick() eases the slow ones).
-var age := Wear.WORN
+var age: int = Wear.WORN
 var steer := 0.0              # -1 full right .. 1 full left
 var accel := 0.0              # pedal, 0..1
 var brake := 0.0
@@ -124,7 +124,7 @@ var _plunger_knob: Node3D
 static var _cache := {}
 
 
-func _init(age_ := Wear.WORN) -> void:
+func _init(age_: int = Wear.WORN) -> void:
 	age = age_
 	name = "Doris"
 	add_to_group("doris_model")
@@ -170,11 +170,27 @@ static func hatch_stand() -> Vector3:
 	return Vector3((30 - PX) * V + 0.75, 0.0, (HATCH_Z0 + HATCH_Z1) * 0.5)
 
 
-## Eases the conditioner, the bin and the hatch toward what's asked.
+## Eases the conditioner and the bin toward what's asked.
 func tick(dt: float) -> void:
 	cond_pos = move_toward(cond_pos, 1.0 if cond_down else 0.0, dt / COND_TRAVEL_S)
 	bin_pos = move_toward(bin_pos, 1.0 if bin_up else 0.0, dt / BIN_TRAVEL_S)
-	hatch_open = move_toward(hatch_open, 1.0 if hatch_want else 0.0, dt / HATCH_TRAVEL_S)
+
+
+## A repair through the hatch (JobScene in place): the hatch swings up and
+## her own motor bay makes way for the job's parts; false shuts it.
+func open_for_service(on: bool) -> void:
+	hatch_want = on
+	if bay_parts:
+		bay_parts.visible = not on
+
+
+## The hatch swings on its own, parked in the bay or not.
+func _process(dt: float) -> void:
+	var want := 1.0 if hatch_want else 0.0
+	if hatch_open != want:
+		hatch_open = move_toward(hatch_open, want, dt / HATCH_TRAVEL_S)
+		if _hatch:
+			_hatch.rotation.z = hatch_open * HATCH_SWING
 
 
 ## Poses every moving part from the state.

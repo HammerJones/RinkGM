@@ -2,7 +2,9 @@ extends SceneTree
 ## Renders Doris for review: three-quarter views front and back, the cockpit
 ## from the seat, the side with the service hatch open. Needs a renderer
 ## (run under xvfb; lavapipe is fine):
-##   godot --path . --script res://tools/doris_shots.gd -- --out=prefix [--age=worn|repaired|renovated]
+##   godot --path . --script res://tools/doris_shots.gd -- --out=prefix [--age=worn|repaired|renovated] [--bay]
+## --bay renders the hatch flow in the venue's resurfacer bay instead: the
+## walk-up to Doris's hatch, then the plug change playing there in place.
 ## Without scripts/art/doris_model.gd it renders the old Props "resurfacer".
 
 const VIEWS := {
@@ -19,6 +21,10 @@ var _cam: Camera3D
 var _frame := 0
 var _i := 0
 var _doris: Node3D
+var _bay := false
+var _venue: Node3D
+var _job: Node3D
+var _walk_cam: Camera3D
 
 
 func _initialize() -> void:
@@ -28,6 +34,11 @@ func _initialize() -> void:
 			_out = a.trim_prefix("--out=")
 		elif a.begins_with("--age="):
 			age = maxi(VenueRoom.AGE_NAMES.find(a.trim_prefix("--age=")), 0)
+		elif a == "--bay":
+			_bay = true
+	if _bay:
+		_init_bay()
+		return
 	DisplayServer.window_set_size(Vector2i(1280, 720))
 	var env := Look.make("studio")
 	env.background_color = Color("2a2d33")
@@ -59,6 +70,7 @@ func _initialize() -> void:
 		_doris = load(path).new(age)
 		root.add_child(_doris)
 		_doris.set("hatch_open", 1.0)
+		_doris.set("hatch_want", true)
 		_doris.set("cond_pos", 1.0)
 		_doris.set("towel_down", true)
 		_doris.call("apply")
@@ -75,14 +87,64 @@ func _initialize() -> void:
 	_place()
 
 
+func _init_bay() -> void:
+	DisplayServer.window_set_size(Vector2i(1280, 720))
+	var env := Look.make("arena")
+	var we := WorldEnvironment.new()
+	we.environment = env
+	root.add_child(we)
+	var sun := DirectionalLight3D.new()
+	sun.rotation_degrees = Vector3(-58.0, -32.0, 0.0)
+	root.add_child(sun)
+	root.add_child(Rink.new())
+	_venue = Venue.instantiate_for(Career.exhibition(0), false)
+	root.add_child(_venue)
+	(func() -> void: _venue.call("apply_lighting", env, sun)).call_deferred()
+	_walk_cam = Camera3D.new()
+	_walk_cam.fov = 70.0
+	_walk_cam.near = 0.05
+	root.add_child(_walk_cam)
+	_walk_cam.current = true
+	_names = ["bay_walkup", "bay_hatch_job", "bay_hatch_well"]
+
+
+func _bay_step() -> void:
+	match _i:
+		0:
+			var d := _bay_doris()
+			var stand := d.global_transform * DorisModel.hatch_stand()
+			_walk_cam.look_at_from_position(stand + Vector3(0.6, 1.65, -1.2), d.global_transform * Vector3(0.9, 0.8, 0.85), Vector3.UP)
+		1:
+			var d2 := _bay_doris()
+			_job = (load("res://scenes/world/jobs/doris_plugs.tscn") as PackedScene).instantiate()
+			root.add_child(_job)
+			_job.set_physics_process(false)
+			_job.call("begin", {"sim": null, "job": "doris_plugs", "target": "doris_plugs", "room": "zamboni_bay",
+				"place": d2.global_transform * DorisModel.hatch_frame(), "host": d2, "eye": _walk_cam.global_transform})
+			_job.get("input").set("scripted", func(_f: JobInput.Frame, _dt: float, _c: int) -> void: pass)
+		2:
+			_job.call("advance")
+
+
+func _bay_doris() -> DorisModel:
+	for n in root.get_tree().get_nodes_in_group("doris_model"):
+		return n as DorisModel
+	return null
+
+
 func _place() -> void:
 	var v: Array = VIEWS[_names[_i]]
 	_cam.look_at_from_position(v[0], v[1], Vector3.UP)
 
 
-func _process(_dt: float) -> bool:
+func _process(dt: float) -> bool:
+	if _bay:
+		if _frame == 0:
+			_bay_step()
+		if _job:
+			_job.call("tick", dt)
 	_frame += 1
-	if _frame < 30:
+	if _frame < (60 if _bay else 30):
 		return false
 	var p := "%s_%s.png" % [_out, _names[_i]]
 	root.get_texture().get_image().save_png(p)
@@ -91,5 +153,6 @@ func _process(_dt: float) -> bool:
 	_frame = 0
 	if _i >= _names.size():
 		return true
-	_place()
+	if not _bay:
+		_place()
 	return false

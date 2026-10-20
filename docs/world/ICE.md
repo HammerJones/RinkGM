@@ -228,6 +228,19 @@ gas_cost, fuel_used and minutes. `complete` needs 90% coverage, no jams,
 and (on a wet cut) 90% flood coverage. An empty tank leaves the cut
 incomplete.
 
+### 4.5 Repairs through the hatch (playtest W2)
+
+Doris's repairs happen where she's parked, in the resurfacer bay. The bay's
+Doris is the working `DorisModel`; the USE spot "doris" on her right side
+("OPEN DORIS'S SERVICE HATCH") starts the plug change with
+`in_place: "doris_hatch"`. `VenueWalk` passes the job scene
+`place` (`DorisModel.hatch_frame()` on her), `host` (Doris) and `eye` (the
+walker's camera). `JobScene` then plays in place: no teleport, the
+diorama's own room (`backdrop`) hidden, `host.open_for_service(true)`
+swings the hatch up and swaps her motor bay for the job's parts, and the
+camera leans in from the walker's eye to the step's view. Closing the job
+shuts the hatch. Any JobScene can play in place the same way.
+
 ## 5. Hand tools
 
 `IceHand` (`scenes/world/jobs/ice_hand.tscn`), walked from behind on the ice.

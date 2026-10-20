@@ -9,6 +9,12 @@ extends Node3D
 ##   signal finished(result)  result = {quality: 0..1, ...the job's args}, or
 ##               {cancelled: true} if Back is pressed before the job is done
 ##               (nothing is charged). The caller runs sim.job(job, result).
+##   In place (playtest W2): ctx may also carry "place" (Transform3D, global:
+##   where the diorama's origin goes, e.g. DorisModel.hatch_frame() on the
+##   bay's Doris), "host" (the machine: open_for_service(on) is called on
+##   it) and "eye" (the walker's camera, Transform3D). The scene then plays
+##   where it stands: no teleport, its own room (`backdrop`) hidden, and the
+##   camera leans in from the walker's eye to the first view.
 ##
 ## Verbs (JobInput, BENCH context):
 ##   interact     do the step: read, fit, choose, "that's done"
@@ -55,6 +61,11 @@ var complete := false
 var closed := false
 var result := {}
 var log_lines: PackedStringArray = []
+## The diorama's own room (floor, walls, its lamps): subclasses add to it in
+## _build(); it hides when the job plays in place.
+var backdrop: Array[Node3D] = []
+var in_place := false
+var host: Node3D
 
 var _built := false
 var _started := false
@@ -101,6 +112,40 @@ func begin(ctx: Dictionary) -> void:
 			skill = float(sk.get("mechanic", 0.3))
 	_ensure_built()
 	_start()
+	var place: Variant = ctx.get("place", null)
+	if place is Transform3D:
+		_place_in(place, ctx)
+
+
+## Plays the job where it stands in the venue (see the contract above).
+func _place_in(place: Transform3D, ctx: Dictionary) -> void:
+	in_place = true
+	if is_inside_tree():
+		global_transform = place
+	else:
+		transform = place
+	for n in backdrop:
+		if is_instance_valid(n):
+			n.visible = false
+	host = ctx.get("host", null) as Node3D
+	if host and host.has_method("open_for_service"):
+		host.call("open_for_service", true)
+	_placed()
+	_enter_step(step)
+	var eye: Variant = ctx.get("eye", null)
+	if eye is Transform3D:
+		var e: Transform3D = eye
+		var inv := (global_transform if is_inside_tree() else transform).affine_inverse()
+		_cam_eye = inv * e.origin
+		_cam_look = inv * (e.origin - e.basis.z)
+		_snap = false
+	else:
+		snap_camera()
+
+
+## In place: the subclass moves what it keeps (a note onto the machine).
+func _placed() -> void:
+	pass
 
 
 func _ensure_built() -> void:
@@ -252,7 +297,14 @@ func _close(r: Dictionary) -> void:
 	if closed:
 		return
 	closed = true
+	_unplace()
 	finished.emit(r)
+
+
+func _unplace() -> void:
+	if in_place and is_instance_valid(host) and host.has_method("open_for_service"):
+		host.call("open_for_service", false)
+	host = null
 
 
 # ---------------------------------------------------------------- input helpers
@@ -332,7 +384,11 @@ func _camera(f: JobInput.Frame, dt: float) -> void:
 	var side := dir.cross(Vector3.UP).normalized()
 	if side.length() > 0.1:
 		dir = dir.rotated(side, _pitch)
-	cam.look_at_from_position(_cam_eye, _cam_eye + dir, Vector3.UP)
+	if in_place and is_inside_tree():
+		# look_at_from_position works in world space; the views are the scene's
+		cam.look_at_from_position(to_global(_cam_eye), to_global(_cam_eye + dir), Vector3.UP)
+	else:
+		cam.look_at_from_position(_cam_eye, _cam_eye + dir, Vector3.UP)
 
 
 ## Puts the camera straight onto the current view (previews and tests).
@@ -470,5 +526,7 @@ func environment(bg := Color("1a1b1e"), ambient := 0.35) -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_PREDELETE and is_instance_valid(_env) and _env.get_parent() == null:
-		_env.free()
+	if what == NOTIFICATION_PREDELETE:
+		_unplace()
+		if is_instance_valid(_env) and _env.get_parent() == null:
+			_env.free()
