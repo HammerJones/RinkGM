@@ -171,6 +171,31 @@ def room(x, rt60=1.6, wet_db=-16.0, tail=None, seed=1):
 	return y
 
 
+def takes(x, n, dur, lo=80.0, gap=None):
+	"""The `n` cleanest separate events in a recording of many (a footstep
+	sequence, a set of yells): onsets ranked by how far they rise above the
+	noise just before them, at least `gap` s apart, cut `dur` s long, in
+	time order."""
+	y = filt(x, lo)
+	e, floor = env(y, 0.003), env(y, 0.2)
+	thresh = e.max() * 10 ** (-30 / 20.0)
+	on = np.where((e[1:] > thresh) & (e[:-1] <= thresh))[0]
+	scored = []
+	for i in on:
+		pk = e[i:i + secs(0.05)].max()
+		scored.append((pk / (floor[max(0, i - secs(0.15))] + 1e-9), i))
+	scored.sort(reverse=True)
+	gap = gap or dur
+	picked = []
+	for _, i in scored:
+		if all(abs(i - j) >= secs(gap) for j in picked) and i + secs(dur) <= len(y):
+			picked.append(i)
+		if len(picked) == n:
+			break
+	assert len(picked) == n, "only %d clean takes" % len(picked)
+	return [cut(y, i / SR, dur, min(0.3, dur * 0.4), pre=0.01) for i in sorted(picked)]
+
+
 def active_rms(x):
 	e = env(x, 0.05)
 	k = e[e > e.max() * 0.25]
@@ -297,6 +322,31 @@ def steady_loop(sid, lo, start, dur, xf=0.6, hi=0.0, note=""):
 	return build
 
 
+def take(sid, k, n, dur, lo=80.0, gap=None, tail=None):
+	"""Take `k` of the `n` cleanest events in Freesound `sid` (see takes())."""
+	def build():
+		x, src = freesound(sid)
+		y = takes(x, n, dur, lo, gap)[k]
+		return (room(y, rt60=tail, wet_db=-16.0) if tail else y), [src]
+	return build
+
+
+def kenney_one(pack, member, lo=60.0, tail=None):
+	def build():
+		x, src = kenney(pack, member)
+		y = filt(x, lo)
+		return (room(y, rt60=tail, wet_db=-16.0) if tail else y), [src]
+	return build
+
+
+def whole(sid, lo=60.0, start=0.0, dur=None, tail=None):
+	def build():
+		x, src = freesound(sid)
+		y = cut(filt(x, lo), start, dur or len(x) / SR - start, 0.2, pre=0.0)
+		return (room(y, rt60=tail, wet_db=-16.0) if tail else y), [src]
+	return build
+
+
 RECIPES = {
 	"puck_boards": (puck_boards, "one hit cut out, low rumble filtered, short arena tail added"),
 	"puck_post": (puck_post, "one strike and its ring cut to 3.3 s, rumble filtered"),
@@ -327,6 +377,44 @@ RECIPES = {
 	"flood_water": (steady_loop(770039, 80.0, 1.5, 5.0), "water poured out onto a stone floor, 5 s cut into a seamless loop"),
 	"hose_fill": (steady_loop(452663, 60.0, 66.0, 6.0), "a hose filling a bucket, 6 s cut into a seamless loop"),
 	"hose_spray": (steady_loop(754321, 80.0, 1.75, 6.0), "a garden hose spraying, 6 s cut into a seamless loop"),
+	# Doors, footsteps, people, the gym and small one-shots
+	"door_creak_open": (whole(710510, 80.0, tail=1.0), "the whole creak, rumble filtered, short room tail added"),
+	"door_close_latch": (take(385192, 0, 1, 1.4, 50.0, tail=1.0), "the loudest slam cut out, short room tail added"),
+	"breaker_clunk": (take(451933, 0, 1, 0.6, 50.0, tail=0.6), "the loudest throw cut out, short room tail added"),
+	"lamp_strike": (whole(637546, 50.0, 0.0, 3.0), "the first switch-on and buzz cut out"),
+	"footstep_concrete_1": (kenney_one("impact-sounds", "Audio/footstep_concrete_000.ogg"), "used as is, rumble filtered"),
+	"footstep_concrete_2": (kenney_one("impact-sounds", "Audio/footstep_concrete_001.ogg"), "used as is, rumble filtered"),
+	"footstep_concrete_3": (kenney_one("impact-sounds", "Audio/footstep_concrete_002.ogg"), "used as is, rumble filtered"),
+	"footstep_concrete_4": (kenney_one("impact-sounds", "Audio/footstep_concrete_003.ogg"), "used as is, rumble filtered"),
+	"footstep_rubber_1": (kenney_one("impact-sounds", "Audio/footstep_carpet_000.ogg"), "carpet steps standing in for rubber matting, rumble filtered"),
+	"footstep_rubber_2": (kenney_one("impact-sounds", "Audio/footstep_carpet_001.ogg"), "carpet steps standing in for rubber matting, rumble filtered"),
+	"footstep_rubber_3": (kenney_one("impact-sounds", "Audio/footstep_carpet_002.ogg"), "carpet steps standing in for rubber matting, rumble filtered"),
+	"footstep_rubber_4": (kenney_one("impact-sounds", "Audio/footstep_carpet_003.ogg"), "carpet steps standing in for rubber matting, rumble filtered"),
+	"footstep_tile_1": (take(170506, 0, 3, 0.45), "one step cut out of a walk"),
+	"footstep_tile_2": (take(170506, 1, 3, 0.45), "one step cut out of a walk"),
+	"footstep_tile_3": (take(170506, 2, 3, 0.45), "one step cut out of a walk"),
+	"hall_chatter": (steady_loop(260124, 80.0, 2.0, 8.0, 1.0), "8 s cut into a seamless loop"),
+	"ball_bounce_1": (take(453757, 0, 3, 0.5), "one bounce cut out of a dribble"),
+	"ball_bounce_2": (take(453757, 1, 3, 0.5), "one bounce cut out of a dribble"),
+	"ball_bounce_3": (take(453757, 2, 3, 0.5), "one bounce cut out of a dribble"),
+	"sneaker_squeak_1": (take(71224, 0, 3, 0.4, 150.0), "one squeak cut out of thirty"),
+	"sneaker_squeak_2": (take(71224, 1, 3, 0.4, 150.0), "one squeak cut out of thirty"),
+	"sneaker_squeak_3": (take(71224, 2, 3, 0.4, 150.0), "one squeak cut out of thirty"),
+	"voice_bark_1": (take(482801, 0, 4, 0.9, 100.0, tail=1.2), "one short yell cut out, room tail added"),
+	"voice_bark_2": (take(482801, 1, 4, 0.9, 100.0, tail=1.2), "one short yell cut out, room tail added"),
+	"voice_bark_3": (take(482801, 2, 4, 0.9, 100.0, tail=1.2), "one short yell cut out, room tail added"),
+	"voice_bark_4": (take(482801, 3, 4, 0.9, 100.0, tail=1.2), "one short yell cut out, room tail added"),
+	"stick_clatter_1": (take(154778, 0, 3, 0.9), "one drop cut out"),
+	"stick_clatter_2": (take(154778, 1, 3, 0.9), "one drop cut out"),
+	"stick_clatter_3": (take(154778, 2, 3, 0.9), "one drop cut out"),
+	"ice_chip_1": (kenney_one("impact-sounds", "Audio/impactMining_000.ogg", 200.0), "a pick on rock standing in for a scraper chipping ice"),
+	"ice_chip_2": (kenney_one("impact-sounds", "Audio/impactMining_002.ogg", 200.0), "a pick on rock standing in for a scraper chipping ice"),
+	"body_fall": (take(181177, 0, 1, 1.2, 40.0, tail=1.0), "the fall cut out, short room tail added"),
+	"net_swish": (take(518048, 0, 1, 1.0, 150.0), "the swish cut out"),
+	"rim_clang": (kenney_one("impact-sounds", "Audio/impactMetal_heavy_001.ogg", 100.0, tail=1.0), "a heavy metal hit standing in for the rim, short room tail added"),
+	"backboard_bang": (whole(324247, 50.0, tail=1.0), "used whole, short room tail added"),
+	"puck_pad": (kenney_one("impact-sounds", "Audio/impactSoft_heavy_000.ogg", 80.0, tail=0.9), "a soft heavy hit standing in for puck on pad, short arena tail added"),
+	"puck_net": (kenney_one("impact-sounds", "Audio/impactSoft_medium_001.ogg", 80.0, tail=0.9), "a soft hit standing in for puck into the mesh, short arena tail added"),
 	"glass_rattle": (glass_rattle, "the hard-close hit and pane rattle cut out, light arena tail added"),
 }
 GAIN = {}
