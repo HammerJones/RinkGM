@@ -59,7 +59,10 @@ static func glass_spans(wall: String) -> Array:
 ## them on its fixed bone, which saves the room a mesh of its own).
 static func _jambs(k: VenueKit, d: RinkDoor) -> Array:
 	var out := []
-	var steel: Color = k.by_age(Color("6f6a5e"), Color("8a8f96"), Color("3a3f47"))
+	# the glass frame's posts (Props glass_frame) at this age
+	var steel: Color = k.by_age(Wear.OLD_GOLD, Wear.OLD_GOLD.lightened(0.1), Wear.STEEL)
+	if d.glass_h <= 0.0:
+		steel = BOARD.darkened(0.3)  # a bench gate's jamb is just the boards' end
 	var top := VenuePhysics.board_top() + d.glass_h
 	var xf := d.transform
 	for side in [-1.0, 1.0]:
