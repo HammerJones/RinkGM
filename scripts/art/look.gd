@@ -15,8 +15,9 @@ extends RefCounted
 ##
 ##  LOW     glow, filmic tone mapping, depth fog. No screen-space effects,
 ##          no lamp shadows.
-##  MEDIUM  + SSAO, screen-space reflections (the glossy ice), reflection
-##          probe, a few shadowed lamps.
+##  MEDIUM  + SSAO, a reflection probe (the satin ice), a few shadowed lamps.
+##          No screen-space reflections: over the ice they broke up into
+##          grey blocks and hot spots at the bottom of a low third-person view.
 ##  HIGH    + screen-space indirect light, volumetric haze (visible lamp
 ##          cones), more shadowed lamps.
 ##
@@ -170,7 +171,10 @@ static func _apply_effects(env: Environment, kind: String) -> void:
 	env.ssil_enabled = q >= Quality.HIGH
 	env.ssil_radius = 4.0
 	env.ssil_intensity = 0.8
-	env.ssr_enabled = q >= Quality.MEDIUM and kind == "arena"
+	# off at every quality: SSR over the ice smeared the screen's bottom edge
+	# into grey blocks with hot spots (P4); the arena's reflection probe
+	# mirrors the lamps instead
+	env.ssr_enabled = false
 	env.ssr_max_steps = 48 if q == Quality.MEDIUM else 72
 	env.ssr_fade_in = 0.12
 	env.ssr_fade_out = 2.4
@@ -206,7 +210,7 @@ static func shadowed_lamps() -> int:
 ## specular, fades out with distance so a building full of rooms only pays
 ## for the lights near the camera, and lights the haze on HIGH.
 static func fixture(l: Light3D, fade_from := 28.0) -> void:
-	l.light_specular = 0.35
+	l.light_specular = 0.2  # was 0.35: the lamps' highlights glared off the ice
 	l.light_volumetric_fog_energy = 1.0
 	l.distance_fade_enabled = true
 	l.distance_fade_begin = fade_from
