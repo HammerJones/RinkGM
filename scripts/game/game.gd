@@ -1026,6 +1026,23 @@ func practice_reset_puck() -> void:
 	puck.reset_at(Vector3(p.x, 0.0, p.z))
 
 
+## Practice: calling for the puck has the coach on the nearest boards send
+## you a gentle pass, led to where you're skating. Not while a feed is
+## already on its way or you have the puck.
+func practice_feed() -> void:
+	if human.has_puck() or (puck.pass_target == human and puck.vel.length() > 1.0):
+		return
+	var side := -1.0 if human.position.z < 0.0 else 1.0
+	var x := clampf(human.position.x - 4.0 * signf(human.heading.x + 0.001), -Rink.GOAL_X + 2.0, Rink.GOAL_X - 2.0)
+	var from := Vector3(x, 0.0, side * (Rink.HALF_W - 0.6))
+	var dist := from.distance_to(human.position)
+	var spd := clampf(dist * 0.4 + 4.0, 6.0, 11.0)
+	var to := human.blade_pos + human.vel * (dist / spd)
+	puck.reset_at(from)
+	puck.vel = Vector3(to.x - from.x, 0.0, to.z - from.z).normalized() * spd
+	puck.pass_target = human
+
+
 func practice_has_goalie() -> bool:
 	return not goalies.is_empty()
 

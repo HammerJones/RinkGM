@@ -94,6 +94,9 @@ func update(dt: float) -> void:
 		else:
 			_pass_call_until = game.time + 1.2
 			game.hud.show_message("PASS!", 0.6)
+			# in practice there's nobody to pass it: the coach on the boards does
+			if game.practice:
+				game.practice_feed()
 	_traced(human, f)
 
 

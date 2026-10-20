@@ -10,7 +10,7 @@ extends Node3D
 
 const MASS := 90.0
 const ARM := 0.75           # m, how far a hand reaches from its shoulder
-const HAND_SPEED := 4.5     # m/s, the hands' top speed (scaled by skill)
+const HAND_SPEED := 3.8     # m/s, the hands' top speed (scaled by skill)
 const GLOVE_R := 0.17  # an open catcher, about 34 cm across
 ## restitution off each part: pads are lively, the chest soaks it up
 const E_PAD := 0.4
@@ -137,7 +137,7 @@ func physics_update(dt: float) -> void:
 			var t := dist / closing
 			tracked = true
 			if not _tracking:
-				_reaction = lerpf(0.26, 0.13, skill) * ai.goalie_reaction * (SET if _alert else 1.0)
+				_reaction = lerpf(0.32, 0.17, skill) * ai.goalie_reaction * (SET if _alert else 1.0)
 			var hit := p2 + pv * t
 			var hy := maxf(0.0, puck.position.y + puck.vel.y * t - 0.5 * Puck.GRAVITY * t * t)
 			reach_target = Vector2(clampf((hit - pos2).dot(right2()), -1.2, 1.2), clampf(hy, 0.0, 1.5))
