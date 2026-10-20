@@ -6,12 +6,15 @@ extends RefCounted
 ## (addons/vox_import) and the runtime fallback (VoxAsset.load_file), and
 ## replaces the one-model VoxLoader for new code.
 ##
-## Axes: MagicaVoxel is Z-up with +Y toward the model's back. A file voxel
-## (x, y, z) becomes Godot (x, z, -y), so +Y is up and the front faces -Z,
-## the same mapping VoxLoader and VoxWriter use. A one-model file with no
-## scene graph lands with its lowest corner at the origin, like VoxLoader; a
-## scene lands wherever its transforms put it (MagicaVoxel centres each model
-## on its node), which the import's "recentre" option undoes.
+## Axes: MagicaVoxel is Z-up and its models face -Y (the side its default
+## camera looks at). A file voxel (x, y, z) becomes Godot (-x, z, y): a
+## proper rotation, so +Y is up, the front faces -Z and the model's right
+## is +X, the kit's convention. (The older VoxLoader maps (x, z, -y), which
+## leaves a MagicaVoxel model facing +Z; VoxWriter is this reader's inverse,
+## so files it writes open in MagicaVoxel the right way round.) A one-model
+## file with no scene graph lands with its lowest corner at the origin; a
+## scene lands wherever its transforms put it (MagicaVoxel centres each
+## model on its node), which the import's "recentre" option undoes.
 
 const MAX_SIZE := 256
 
@@ -151,11 +154,11 @@ static func _emit(
 	for i in n:
 		var fp := Vector3i(vox[i * 4], vox[i * 4 + 1], vox[i * 4 + 2]) - centre
 		var wp := Vector3i((basis * Vector3(fp)).round()) + origin
-		# file (x, y, z) -> Godot (x, z, -y); a plain file is cornered at the
-		# origin right away (size.y - 1 - y), the way VoxLoader reads it
-		pos[i * 3] = wp.x
+		# file (x, y, z) -> Godot (-x, z, y); a plain file is cornered at the
+		# origin right away (size.x - 1 - x)
+		pos[i * 3] = -wp.x if scene else size.x - 1 - wp.x
 		pos[i * 3 + 1] = wp.z
-		pos[i * 3 + 2] = -wp.y if scene else size.y - 1 - wp.y
+		pos[i * 3 + 2] = wp.y
 		idx[i] = vox[i * 4 + 3]
 	asset.positions.append_array(pos)
 	asset.indices.append_array(idx)

@@ -24,7 +24,13 @@ off the floor, the ice resurfacer about 1.9 x 3.6 m.
 
 ## Conventions
 
-- +Y is up and the front faces -Z, the same as `VoxelModel`.
+- +Y is up and the front faces -Z, the same as `VoxelModel`. A MagicaVoxel
+  file faces -Y in MagicaVoxel; the framework's `VoxReader` (the import
+  plugin) turns it so it faces -Z here, and `VoxWriter` turns it back.
+- Hero props (things the player picks up and looks at) are 1 to 5 mm
+  voxels in the look of the reference electronics in `art/props/`, made
+  with `tools/propgen/` (`docs/FRAMEWORK.md` section 5); kit props stay
+  at 0.065 m.
 - Props have their pivot on the floor, centred. Hanging things (lights) have
   it at the ceiling mount. `tools/tests/test_props.gd` checks this.
 - Grid voxels for anything that sits square; oriented voxels

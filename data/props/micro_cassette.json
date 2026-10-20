@@ -1,0 +1,44 @@
+{
+  "collision_cell": 8,
+  "id": "micro_cassette",
+  "inspect": "A dictation tape. The label says STOP and PLAY and nothing about what is on it.",
+  "mass_kg": 0.02,
+  "mesh": "merged",
+  "name": "Micro cassette",
+  "pivot": [
+    128.0,
+    0,
+    128.0
+  ],
+  "shape": [
+    [
+      0,
+      0
+    ]
+  ],
+  "size_m": [
+    0.0512,
+    0.0512,
+    0.0512
+  ],
+  "sound": "plastic",
+  "source": "third party, see art/props/THIRD_PARTY.md",
+  "tags": [
+    "office",
+    "handheld",
+    "clutter"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "take",
+    "inspect",
+    "push"
+  ],
+  "vox": "art/props/micro_cassette.vox",
+  "voxel_m": 0.0002,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

@@ -161,7 +161,60 @@ A chunk is a `PackedScene` with a bounding box. When `focus` comes within
 between the two radii stops a chunk flapping at the edge. A chunk scene
 that contains a `PropField` brings its rows with it.
 
-## 5. The prop studio
+## 5. Authoring props: the generator and the sheet
+
+Two kinds of prop live in `art/props/`:
+
+- **Kit props** at 0.065 m voxels, built from boxes (`scripts/art/`) or
+  drawn in MagicaVoxel: furniture, architecture, anything seen from a few
+  metres away.
+- **Hero props** at 1 to 5 mm voxels, 100 to 250 voxels across, in the
+  look of the four reference models Sean supplied on 2026-10-20 (a CRT
+  television, an open record player, a micro cassette, a long truck, kept
+  hollowed in `art/props/` with `art/props/THIRD_PARTY.md`): rounded
+  corners, two-tone dithered surfaces, cream label plates with lettering,
+  screws and grilles. Things the player picks up and looks at.
+
+Hero props come from `tools/propgen/`, a Python generator (numpy and
+Pillow only): a prop is a small signed-distance scene voxelised at its
+resolution, with a palette lifted from the references, a 5x7 bitmap font
+for labels (flat faces or wrapped around a cylinder), grilles, vent slots,
+screws and dither. `tools/propgen/library.py` holds the eight-prop
+retro-electronics set (boombox, VCR, VHS tape, desk phone, walkie-talkie,
+coffee mug, microwave, wall clock) and writes each `.vox` with its
+manifest in `data/props/`; `--preview` adds a quick render per prop.
+
+```
+python3 tools/propgen/library.py                 # regenerate everything
+python3 tools/propgen/library.py boombox --preview
+python3 tools/propgen/hollow.py big.vox small.vox   # a solid MagicaVoxel model to surface voxels
+GODOT=... tools/prop_sheet.sh                    # the contact sheet, as the game draws them
+```
+
+The sheet (`framework/studio/prop_sheet.gd`, run under a virtual display
+with the software OpenGL driver) renders every prop with the baked AO mesh,
+a key light, shadows and a floor, and writes `art/props/preview/sheet.png`
+plus one image per prop. That is the review loop: a person opens the
+sheet, Claude reads it, the generator changes, the sheet is rendered again.
+
+Two things the generator settled that apply to every `.vox`:
+
+- **Orientation.** MagicaVoxel models face -Y there. `VoxReader` maps a
+  file's (x, y, z) to Godot's (-x, z, y), a proper rotation, so a model
+  faces -Z with its right at +X, the kit's convention, and `VoxWriter`
+  writes the same rotation back so exported files open in MagicaVoxel the
+  right way round. (The older `VoxLoader` leaves imported models facing
+  +Z; files round-tripped through it and the old writer need no change,
+  they just read the same way they always did through it.)
+- **Mesh baking.** The import plugin stores the greedy AO mesh, a flat
+  low-detail mesh and the collision boxes in the `VoxAsset` (the
+  `bake_mesh` import option), reading `voxel_m` from the prop's manifest.
+  A 100k-voxel prop then loads in milliseconds; meshing it at runtime took
+  1 to 4 s. Hero props are 30k to 150k triangles with AO (the dither is
+  what stops faces merging); the flat low-detail mesh is for distance and
+  big repeats.
+
+## 6. The prop studio
 
 `scenes/dev/prop_studio.tscn` (script `framework/studio/prop_studio.gd`).
 Run it from the editor, or `godot -- res://scenes/dev/prop_studio.tscn`.
@@ -177,7 +230,7 @@ This is the authoring loop for both of us: Sean edits in MagicaVoxel and
 looks here; Claude writes a `.vox`, renders the contact sheet
 (`tools/prop_sheet.gd`), reads the image and adjusts.
 
-## 6. What the port looks like
+## 7. What the port looks like
 
 Nothing is ported yet. The order, each step a PR that keeps CI green:
 
@@ -197,10 +250,11 @@ Nothing is ported yet. The order, each step a PR that keeps CI green:
 6. **The match scene** moves last and mostly unchanged: the skaters, the
    puck and the shot patterns do not touch any of this.
 
-## 7. Rules for building on it
+## 8. Rules for building on it
 
-- A new prop is a `.vox` and a record, never code. A coded builder is a
-  generator that writes a `.vox` (`VoxWriter`) and is then done.
+- A new prop is a `.vox` and a record, never code in the game. A coded
+  builder is a generator that writes a `.vox` (`VoxWriter`, or
+  `tools/propgen/` for hero props) and is then done.
 - Anything placed in the world is a `PropRow` in a `PropField`. Scene nodes
   are for things that are unique and always live (doors, the Zamboni,
   the walker).

@@ -1,0 +1,49 @@
+{
+  "collision_cell": 8,
+  "id": "vhs_tape",
+  "inspect": "Millbrook vs Kessler, 1981. Somebody wrote DO NOT ERASE over an older label.",
+  "mass_kg": 0.22,
+  "mesh": "merged",
+  "name": "VHS tape",
+  "pivot": [
+    78.5,
+    0,
+    43.5
+  ],
+  "shape": [
+    [
+      0,
+      0
+    ],
+    [
+      1,
+      0
+    ]
+  ],
+  "size_m": [
+    0.1884,
+    0.0252,
+    0.1044
+  ],
+  "sound": "plastic",
+  "source": "tools/propgen/library.py",
+  "tags": [
+    "lounge",
+    "office",
+    "handheld",
+    "clutter"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "take",
+    "inspect",
+    "push"
+  ],
+  "vox": "art/props/vhs_tape.vox",
+  "voxel_m": 0.0012,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

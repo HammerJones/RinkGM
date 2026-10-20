@@ -23,6 +23,13 @@ extends Resource
 @export var voxel_m := 0.065
 ## Where the file came from, for error messages and the prop studio.
 @export var source := ""
+## Baked at import when the file's "bake_mesh" option is on: the greedy
+## mesh with ambient occlusion (VoxMesher), its low-detail twin without AO,
+## and the shape-following collision boxes, so a 100k-voxel prop loads in
+## milliseconds instead of meshing for seconds.
+@export var mesh: ArrayMesh
+@export var mesh_lod: ArrayMesh
+@export var boxes: Array[AABB] = []
 
 
 func count() -> int:

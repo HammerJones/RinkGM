@@ -6,11 +6,12 @@ extends RefCounted
 ## MagicaVoxel. Only grid voxels are written: a model with oriented voxels
 ## (VoxelModel.oriented) is refused, since the format has no place for them.
 ##
-## Axes: MagicaVoxel is Z-up with +Y its back; VoxLoader maps a file's
-## (x, y, z) to Godot's (x, z, size.y - 1 - y), and this writes the same
-## mapping back. The model is shifted so its lowest voxel sits at 0 on every
-## axis (the format has no negative coordinates); the shift is returned so a
-## manifest can keep the model's pivot.
+## Axes: MagicaVoxel is Z-up and faces -Y; VoxReader maps a file's (x, y, z)
+## to Godot's (-x, z, y) and this writes the same rotation back, so a prop
+## that faces -Z here opens in MagicaVoxel facing its camera. The model is
+## shifted so its lowest voxel sits at 0 on every axis (the format has no
+## negative coordinates); the shift is returned so a manifest can keep the
+## model's pivot.
 
 const MAX_COLOURS := 255
 const MAX_SIZE := 256
@@ -52,10 +53,10 @@ static func write(m: VoxelModel, path: String) -> Dictionary:
 			palette.append(key)
 			index[key] = palette.size()
 		var q: Vector3i = p - lo
-		# Godot (x, y, z) -> file (x, size_z - 1 - z, y), where the file's y
+		# Godot (x, y, z) -> file (size_x - 1 - x, z, y), where the file's y
 		# extent is the model's z extent
-		voxels.append(q.x)
-		voxels.append(size.z - 1 - q.z)
+		voxels.append(size.x - 1 - q.x)
+		voxels.append(q.z)
 		voxels.append(q.y)
 		voxels.append(index[key])
 	var f := FileAccess.open(path, FileAccess.WRITE)
