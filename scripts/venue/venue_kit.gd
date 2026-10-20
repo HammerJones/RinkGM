@@ -25,6 +25,7 @@ var _shapes: Array[AABB] = []
 var _signs: Array = []  # [VenueSign, Transform3D]
 var _extra: Array[Node3D] = []
 var _instances := {}  # ArrayMesh -> Array[Transform3D]
+var _loose: Array = []  # [id, age, Transform3D]: LooseProps to place at commit
 ## Walls built while this is on also become occluders (one ArrayOccluder3D
 ## per room), so a walker in the recreation wing never draws the rooms
 ## behind the walls around them. Needs occlusion culling in the project.
@@ -217,7 +218,12 @@ func instance(mesh: Mesh, xf: Transform3D) -> void:
 ## A Props kit piece at this room's age, standing on the floor at `pos`
 ## with its front (-Z) turned by `rot_y`. `solid` adds the kit's
 ## shape-following box colliders (Props.collision_boxes).
+## A loose kit piece (LooseProps.KIT: a trash can, the toolbox...) goes to
+## loose() instead: a body a walker can pick up.
 func prop(id: String, pos: Vector3, rot_y := 0.0, solid := true, age_override := -1, lod := 0) -> void:
+	if lod == 0 and LooseProps.is_loose(id):
+		loose(id, pos, rot_y, age_override)
+		return
 	var mesh := Props.mesh(id, age if age_override < 0 else age_override, lod)
 	if mesh == null:
 		return
@@ -227,6 +233,22 @@ func prop(id: String, pos: Vector3, rot_y := 0.0, solid := true, age_override :=
 		# the kit's shape-following boxes (seat, back, legs), not one hull
 		for b in Props.collision_boxes(id, age if age_override < 0 else age_override):
 			_shapes.append(xf * b)
+
+
+## A loose thing (LooseProps: a cup, a cone, a chair, a toolbox) standing at
+## `pos` on whatever is under it, turned by `rot_y`. In a walk it is a
+## LooseProp body a person can pick up (PropGrab), in the room's StickField;
+## in a match a static copy (merged into the room's mesh, or the kit piece's
+## MultiMesh).
+func loose(id: String, pos: Vector3, rot_y := 0.0, age_override := -1) -> void:
+	if not LooseProps.is_loose(id):
+		push_error("VenueKit: '%s' is not a loose prop" % id)
+		return
+	_loose.append([id, age if age_override < 0 else age_override, Transform3D(Basis(Vector3.UP, rot_y), pos)])
+
+
+func loose_count() -> int:
+	return _loose.size()
 
 
 ## Any other node (doors, lights) to add with the room.
@@ -271,6 +293,7 @@ func _faces(b: VoxelMeshBuilder, lo: Vector3, hi: Vector3, col: Color, tile: flo
 func commit(parent: Node3D) -> void:
 	# a room's `overhead`, or a plain holder node marked with the meta
 	var overhead: bool = parent.get("overhead") == true or parent.get_meta("overhead", false) == true
+	_commit_loose(parent)
 	for pair in [[_solid, null], [_glow, glow_material()], [_glass, glass_material()]]:
 		var b: VoxelMeshBuilder = pair[0]
 		if b.is_empty():
@@ -328,6 +351,41 @@ func commit(parent: Node3D) -> void:
 		parent.add_child(s)
 	for n in _extra:
 		parent.add_child(n)
+
+
+## Loose things: bodies in the room's StickField on a walk (the room's own,
+## when it has sticks, else a new one), static copies in a match.
+func _commit_loose(parent: Node3D) -> void:
+	if _loose.is_empty():
+		return
+	var physics := parent is VenueRoom and StickProps.walkable(parent as VenueRoom)
+	var field: StickField = null
+	if physics:
+		for n in _extra:
+			if n is StickField:
+				field = n
+				break
+		if field == null:
+			field = StickField.new()
+			field.name = "Loose"
+			_extra.append(field)
+	for l: Array in _loose:
+		var id: String = l[0]
+		var a: int = l[1]
+		var xf: Transform3D = l[2]
+		if physics:
+			var b := LooseProps.body(id, a)
+			b.transform = xf
+			b.snap = true
+			field.add_prop(b)
+		elif LooseProps.is_small(id):
+			LooseProps.model(id, a).append_to(_solid, xf)
+		else:
+			# a kit piece in a match: as before, a copy with its colliders
+			instance(Props.mesh(id, a), xf)
+			for box in Props.collision_boxes(id, a):
+				_shapes.append(xf * box)
+	_loose.clear()
 
 
 func collider_count() -> int:

@@ -15,22 +15,10 @@ extends RefCounted
 # ---------------------------------------------------------------- shared bits
 
 ## A folding chair: seat, back and legs, its back toward `back_dir` (unit X
-## or Z). Solid as one box.
-static func chair(k: VenueKit, p: Vector3, back_dir: Vector3, col: Color) -> void:
-	var side := Vector3(absf(back_dir.z), 0, absf(back_dir.x)) * 0.21
-	var depth := back_dir * 0.2
-	var lo := p - side - depth
-	var hi := p + side + depth
-	k.block(Vector3(minf(lo.x, hi.x), 0.42, minf(lo.z, hi.z)), Vector3(maxf(lo.x, hi.x), 0.46, maxf(lo.z, hi.z)), col, 1.0, 0.03, false)
-	var b0 := p + back_dir * 0.18 - side
-	var b1 := p + back_dir * 0.22 + side
-	k.block(Vector3(minf(b0.x, b1.x), 0.46, minf(b0.z, b1.z)), Vector3(maxf(b0.x, b1.x), 0.85, maxf(b0.z, b1.z)), col, 1.0, 0.03, false)
-	for c in [lo, hi, Vector3(lo.x, 0, hi.z), Vector3(hi.x, 0, lo.z)]:
-		var q: Vector3 = c
-		var ox := 0.03 if q.x < p.x else -0.03
-		var oz := 0.03 if q.z < p.z else -0.03
-		k.block(Vector3(q.x + ox - 0.012, 0, q.z + oz - 0.012), Vector3(q.x + ox + 0.012, 0.42, q.z + oz + 0.012), Color("3a3d44"), 1.0, 0.0, false)
-	k.collider(Vector3(minf(lo.x, hi.x), 0, minf(lo.z, hi.z)), Vector3(maxf(lo.x, hi.x), 0.85, maxf(lo.z, hi.z)))
+## or Z). A loose thing (LooseProps "folding_chair"): on a walk it can be
+## picked up and carried off (PropGrab); `col` is kept for the call sites.
+static func chair(k: VenueKit, p: Vector3, back_dir: Vector3, _col: Color) -> void:
+	k.loose("folding_chair", p, atan2(back_dir.x, back_dir.z))
 
 
 ## A wall clock on a wall face at `p`, facing `n`.
