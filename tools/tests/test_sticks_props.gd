@@ -7,6 +7,8 @@ extends SceneTree
 ##   - woken, they settle and sleep again without leaving their racks;
 ##   - a walker pushed into a rack knocks a stick over (and `knocked` fires),
 ##     and the stick settles and sleeps;
+##   - sticks knocked out of a barrel tumble out over the rim (never through
+##     its staves), land, stop twitching and sleep (evening notes W6);
 ##   - far from the camera resting sticks leave physics, and come back;
 ##   - the pro shop and its back room build, every dressing room and the
 ##     benches have real sticks on a walk, a match venue has none;
@@ -42,6 +44,7 @@ func _run() -> void:
 	_check_meshes()
 	await _check_racks()
 	await _check_push()
+	await _check_spill()
 	await _check_far()
 	await _check_venue()
 	print("\n%s (%d failure%s)" % ["FAILED" if failures else "OK", failures, "" if failures == 1 else "s"])
@@ -139,7 +142,7 @@ func _rack_of(s: StickProp) -> String:
 
 ## Names of sticks whose (slightly shrunk) collision boxes intersect the
 ## venue's colliders or another stick.
-func _overlaps(list: Array[StickProp]) -> Array:
+func _overlaps(list: Array[StickProp], shrink := SHRINK) -> Array:
 	var out := []
 	if list.is_empty():
 		return out
@@ -151,7 +154,7 @@ func _overlaps(list: Array[StickProp]) -> Array:
 				continue
 			var cs := c as CollisionShape3D
 			var box := BoxShape3D.new()
-			box.size = (cs.shape as BoxShape3D).size - Vector3.ONE * SHRINK * 2.0
+			box.size = (cs.shape as BoxShape3D).size - Vector3.ONE * shrink * 2.0
 			var q := PhysicsShapeQueryParameters3D.new()
 			q.shape = box
 			q.transform = cs.global_transform
@@ -219,6 +222,77 @@ func _check_push() -> void:
 	_expect(floor_ok, "no stick fell through the floor")
 	room.queue_free()
 	await _frames(2)
+
+
+# ---------------------------------------------------------------- spill
+
+## Every stick in a barrel is shoved out over the rim (W6): each one tumbles
+## out, never ends up inside the staves, lies still on the floor and sleeps,
+## and stays asleep (no twitching).
+func _check_spill() -> void:
+	var room := Node3D.new()
+	_root.add_child(room)
+	var k := VenueKit.new(7, Wear.WORN)
+	k.slab(Vector3(-4, -0.3, -4), Vector3(4, 0, 4), Color.GRAY)
+	var vs := []
+	for j in 6:
+		vs.append(StickProps.pick(["shorewood", "kodiak"], 4, j, 0.0))
+	var list := StickProps.fill(k, "stick_barrel", Vector3.ZERO, 0.0, vs, true)
+	k.commit(room)
+	await _frames(4)
+	# lifted and tipped out over the rim, as a hard knock does
+	for s in list:
+		var top := s.global_position
+		var out := Vector3(top.x, 0, top.z).normalized()
+		s.sleeping = false
+		s.apply_central_impulse((out * 1.2 + Vector3.UP * 4.2) * StickProp.MASS)
+		s.apply_impulse(out * 0.25, top - s.global_position)
+	var clip := [0]
+	for f in 240:
+		await physics_frame
+		for s in list:
+			if _in_staves(s):
+				clip[0] += 1
+	_expect(clip[0] == 0, "no stick passes through the barrel's staves while it spills (%d stick-frame(s) inside)" % clip[0])
+	var settled := false
+	for i in 16:
+		await _frames(30)
+		if list.all(func(s: StickProp) -> bool: return s.sleeping):
+			settled = true
+			break
+	_expect(settled, "sticks shoved out of a barrel settle and sleep (%d still awake)" % list.filter(func(s: StickProp) -> bool: return not s.sleeping).size())
+	var rest := {}
+	for s in list:
+		rest[s] = s.global_position
+	var wakes := [0]
+	for s in list:
+		s.sleeping_state_changed.connect(func() -> void:
+			if not s.sleeping:
+				wakes[0] += 1)
+	await _frames(120)
+	var drift := 0.0
+	for s in list:
+		drift = maxf(drift, s.global_position.distance_to(rest[s]))
+	_expect(drift < 0.002 and wakes[0] == 0,
+		"spilled sticks lie still once asleep (drift %.4f m, %d wake(s))" % [drift, wakes[0]])
+	var out_n := list.filter(func(s: StickProp) -> bool: return (s.global_transform * Vector3(0, 0.7, 0)).y < 0.25).size()
+	_expect(out_n >= 3, "at least half tumble out and lie on the floor (%d of %d)" % [out_n, list.size()])
+	var hits := _overlaps(list, 0.012)  # past the engine's 1 cm allowed contact penetration
+	_expect(hits.is_empty(), "no spilled stick is left inside the barrel's staves or another stick%s" % ("" if hits.is_empty() else " (%s)" % ", ".join(hits)))
+	_expect(list.all(func(s: StickProp) -> bool: return s.global_position.y > -0.05), "no spilled stick sinks into the floor")
+	room.queue_free()
+	await _frames(2)
+
+
+## Whether part of the stick's shaft is inside the barrel's wall (a ring of
+## staves 0.21 to 0.29 m from its axis, 0.78 m tall, at the origin).
+func _in_staves(s: StickProp) -> bool:
+	for i in 31:
+		var p := s.global_transform * Vector3(0, 0.05 * i, 0)
+		var r := Vector2(p.x, p.z).length()
+		if p.y < 0.74 and p.y > 0.04 and r > 0.215 and r < 0.285:
+			return true
+	return false
 
 
 # ---------------------------------------------------------------- far

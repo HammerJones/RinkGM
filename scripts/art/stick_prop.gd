@@ -31,6 +31,11 @@ const MASS := 0.45  # kg, a composite stick
 ## solver; these caps keep it a clatter, not a launch.
 const MAX_SPEED := 4.0
 const MAX_SPIN := 14.0
+## A stick touching something and slower than these for SETTLE_FRAMES
+## physics steps is put to sleep (see _integrate_forces).
+const SETTLE_SPEED := 0.12
+const SETTLE_SPIN := 0.8
+const SETTLE_FRAMES := 20
 
 static var _material: PhysicsMaterial
 
@@ -39,6 +44,7 @@ var mesh: ArrayMesh
 var field: StickField
 var _mi: MeshInstance3D
 var _knocked := false
+var _calm := 0
 
 
 static func make(v: Dictionary) -> StickProp:
@@ -97,6 +103,19 @@ func _let_go() -> void:
 
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	# W6: a stick lying on the floor or leaning in a barrel can rock on its
+	# box edges for ever, just above the engine's sleep thresholds (the
+	# twitch). Barely moving and touching something for a moment, it sleeps.
+	if state.get_contact_count() > 0 and state.linear_velocity.length() < SETTLE_SPEED and state.angular_velocity.length() < SETTLE_SPIN:
+		_calm += 1
+		if _calm >= SETTLE_FRAMES:
+			_calm = 0
+			state.linear_velocity = Vector3.ZERO
+			state.angular_velocity = Vector3.ZERO
+			state.sleeping = true
+			return
+	else:
+		_calm = 0
 	if state.linear_velocity.length() > MAX_SPEED:
 		state.linear_velocity = state.linear_velocity.limit_length(MAX_SPEED)
 	if state.angular_velocity.length() > MAX_SPIN:
