@@ -59,9 +59,14 @@ func save_career() -> void:
 		career.save()
 
 
+const GAME_SCRIPT := "res://scripts/game/game.gd"
+
+
 func play_match(m: Dictionary) -> void:
 	fixture = m
 	practice = false
+	# home games are on the owner's own sheet, so their skate marks stay on it
+	load(GAME_SCRIPT).match_ice = rink.sim.ice if rink and rink.sim and bool(m.get("user_home", false)) else null
 	get_tree().change_scene_to_file(RINK_SCENE)
 
 
