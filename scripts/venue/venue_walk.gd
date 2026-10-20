@@ -74,6 +74,7 @@ var _lean := false
 ## The whiteboard the left mouse is drawing on.
 var _drawing: Whiteboard
 var kit: KitHud
+var pickup_run: PickupRun  # World: the gym's pickup games, null without a gym
 
 
 func _ready() -> void:
@@ -92,7 +93,8 @@ func _ready() -> void:
 	_sun.rotation_degrees = Vector3(-58.0, -32.0, 0.0)
 	_sun.shadow_enabled = true
 	add_child(_sun)
-	add_child(Rink.new())
+	var rink := Rink.new()
+	add_child(rink)
 	venue = Venue.instantiate_for(Career.exhibition(clampi(tier, 0, LeagueTiers.count() - 1)), true)
 	add_child(venue)
 	venue.apply_lighting(_env, _sun)
@@ -102,6 +104,7 @@ func _ready() -> void:
 		walker.global_position = venue.rooms["lobby"].spawn
 	else:
 		story = WalkStory.start(venue)
+		IceView.attach(rink, story.sim.ice)  # World: the sim's ice, cell by cell, on the sheet
 		var m := story.sim.minute
 		if m < 7 * 60 or m >= 19 * 60:
 			_env.background_color = Color("070a12")  # night outside
@@ -121,6 +124,12 @@ func _ready() -> void:
 	add_child(kit)
 	kit.toast.connect(_show_toast)
 	kit.setup(story, walker, cam, venue)
+	pickup_run = PickupRun.attach_to_walk(self)  # World: pickup basketball in the gym (scripts/world/pickup)
+	# World: the building's real people (WalkPeople: RinkPeople on this walk's
+	# sim, T to talk, Gus's first-day offer) instead of the seated crowd;
+	# `--no-people` keeps the old crowd.
+	if not "--no-people" in OS.get_cmdline_user_args():
+		WalkPeople.attach(self)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 

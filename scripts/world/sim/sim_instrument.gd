@@ -60,6 +60,12 @@ const CATALOG := {
 		{"id": "tank_glass", "name": "Expansion tank sight glass", "sigma": 150.0, "price": 0,
 			"bands": [[-99999.0, "low"], [8600.0, "about half"], [8950.0, "full"]]},
 	],
+	# the ice's level: where the laser hits the rod, mm (docs/world/ICE.md 3)
+	"ice_level": [
+		{"id": "survey_rod", "name": "Laser and survey rod", "sigma": 0.6, "price": 0},
+		{"id": "lidar_scanner", "name": "Lidar scanner and tablet", "sigma": 0.25, "price": 3400},
+		{"id": "level_sense", "name": "Level-Sense resurfacer", "sigma": 0.1, "price": 149000},
+	],
 	"smoothness": [
 		{"id": "walk", "name": "Walk it and look", "sigma": 0.08, "price": 0,
 			"bands": [[-1.0, "chewed up at the dots"], [0.55, "a bit rough"], [0.75, "smooth"], [0.9, "like glass"]]},

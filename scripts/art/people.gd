@@ -65,8 +65,11 @@ const _LONGISH := ["long", "bun", "ponytail", "curly", "mullet"]
 ## Poses, set per instance. SWEEP is WORK. SIT_* keep the seated legs and
 ## swap the upper body. `moving` in instance_data() puts walking legs under
 ## the standing upper-body poses (TALK, CARRY, QUEUE, WAVE, CLAP).
+## SIP raises the right hand (and its coffee) to the mouth now and then;
+## STRETCH reaches both arms overhead; SIT_PHONE and SIT_SIP are the seated
+## phone and coffee; LEAN rests the forearms on the boards or a rail.
 enum Pose { STAND, WALK, SIT, SKATE, SKATE_WOBBLY, SPIN, CHEER, CLAP, TALK, WAVE, QUEUE,
-	CARRY, WORK, FALL, SIT_CLAP, SIT_CHEER }
+	CARRY, WORK, FALL, SIT_CLAP, SIT_CHEER, SIP, STRETCH, SIT_PHONE, SIT_SIP, LEAN }
 const POSE := Pose
 const SWEEP := Pose.WORK
 
@@ -255,10 +258,10 @@ static func _leg_ratio(look: Dictionary, age: int) -> float:
 ## Everything per instance in one Color for MultiMesh.set_instance_custom_data:
 ## pose, cycle phase (0..1), walking legs, colours, skin, height and a seed.
 ## Each channel is an integer under 2048, exact even as a half float.
-##   r = pose << 7 | moving << 6 | phase (0..63)
+##   r = (pose & 15) << 7 | moving << 6 | phase (0..63)
 ##   g = skates << 10 | primary << 4 | scale step (0..15: 0.70 + 0.04 * step)
 ##   b = secondary << 5 | hair colour << 1 | elder
-##   a = accent << 5 | skin << 3 | run << 2 | seed (0..3)
+##   a = accent << 5 | skin << 3 | run << 2 | pose >> 4 << 1 | seed (0..1)
 ## `phase` is the gait cycle for WALK, SKATE and walking legs: advance it by
 ## walk_phase_rate(speed) or skate_phase_rate(speed) cycles a second. Other
 ## poses animate on their own clock and use it only to stagger people.
@@ -276,15 +279,26 @@ static func instance_data(look: Dictionary, pose: int, phase: float, age := -1, 
 	var skin := clampi(int(look.get("skin", 1)), 0, 3)
 	var step := clampi(roundi((body_scale(look, age) - 0.70) / 0.04), 0, 15)
 	var ph := posmod(roundi(phase * 64.0), 64)
-	var seed := posmod(hash(str(look.get("id", look.get("name", "")))), 4)
+	var seed := posmod(hash(str(look.get("id", look.get("name", "")))), 2)
+	var pz := clampi(pose, 0, 31)
 	var run := 1 if speed > RUN_SPEED else 0
 	var elder := 1 if age >= 70 else 0
 	var skates: int = _norm(look, age).lift
 	return Color(
-		float((clampi(pose, 0, 15) << 7) | ((1 if moving else 0) << 6) | ph),
+		float(((pz & 15) << 7) | ((1 if moving else 0) << 6) | ph),
 		float((skates << 10) | (pri << 4) | step),
 		float((sec << 5) | (hair << 1) | elder),
-		float((acc << 5) | (skin << 3) | (run << 2) | seed))
+		float((acc << 5) | (skin << 3) | (run << 2) | ((pz >> 4) << 1) | seed))
+
+
+## `base` (an instance_data() Color) with a new pose, phase, walking legs and
+## run: what a crowd changes every frame, without recomputing the colours.
+static func with_pose(base: Color, pose: int, phase: float, moving := false, speed := 0.0) -> Color:
+	var pz := clampi(pose, 0, 31)
+	var ph := posmod(roundi(phase * 64.0), 64)
+	var a := roundi(base.a) & ~(1 << 2) & ~(1 << 1)
+	a |= ((1 if speed > RUN_SPEED else 0) << 2) | ((pz >> 4) << 1)
+	return Color(float(((pz & 15) << 7) | ((1 if moving else 0) << 6) | ph), base.g, base.b, float(a))
 
 
 ## Unpacks instance_data() (for tests and debugging).
@@ -294,10 +308,10 @@ static func decode(c: Color) -> Dictionary:
 	var b := roundi(c.b)
 	var a := roundi(c.a)
 	return {
-		"pose": r >> 7, "moving": (r >> 6) & 1 == 1, "phase": float(r & 63) / 64.0,
+		"pose": (r >> 7) | (((a >> 1) & 1) << 4), "moving": (r >> 6) & 1 == 1, "phase": float(r & 63) / 64.0,
 		"skates": (g >> 10) & 1 == 1, "primary": (g >> 4) & 63, "scale": 0.70 + 0.04 * float(g & 15),
 		"secondary": b >> 5, "hair": (b >> 1) & 15, "elder": b & 1 == 1,
-		"accent": a >> 5, "skin": (a >> 3) & 3, "run": (a >> 2) & 1 == 1, "seed": a & 3,
+		"accent": a >> 5, "skin": (a >> 3) & 3, "run": (a >> 2) & 1 == 1, "seed": a & 1,
 	}
 
 
@@ -1332,7 +1346,7 @@ void vertex() {
 	int ig = int(INSTANCE_CUSTOM.g + 0.5);
 	int ib = int(INSTANCE_CUSTOM.b + 0.5);
 	int ia = int(INSTANCE_CUSTOM.a + 0.5);
-	int pose = ir >> 7;
+	int pose = (ir >> 7) | (((ia >> 1) & 1) << 4);
 	bool moving = ((ir >> 6) & 1) == 1;
 	float phase = float(ir & 63) / 64.0;
 	float scale = 0.70 + 0.04 * float(ig & 15);
@@ -1341,7 +1355,7 @@ void vertex() {
 	bool run = ((ia >> 2) & 1) == 1;
 	// per-person randomness for idle motion and cloth tone (not the phase,
 	// which walkers advance every frame)
-	float seed = fract(sin(float(INSTANCE_ID) * 12.9898 + float(ia & 3) * 3.1) * 43758.5453);
+	float seed = fract(sin(float(INSTANCE_ID) * 12.9898 + float(ia & 1) * 3.1) * 43758.5453);
 
 	// ---- colour
 	int slot = int(UV.x + 0.5);
@@ -1376,9 +1390,9 @@ void vertex() {
 	float lean = 0.0, wroll = 0.0, twist = 0.0, nod = 0.0, hyaw = 0.0;
 	vec3 root = vec3(0.0);
 	float spin = 0.0, waddle = 0.0;
-	bool sit = pose == 2 || pose == 14 || pose == 15;
+	bool sit = pose == 2 || pose == 14 || pose == 15 || pose == 18 || pose == 19;
 	bool idle = pose != 5 && pose != 13;
-	bool walk_legs = pose == 1 || (moving && (pose == 0 || pose == 7 || pose == 8 || pose == 9 || pose == 10 || pose == 11));
+	bool walk_legs = pose == 1 || (moving && (pose == 0 || pose == 7 || pose == 8 || pose == 9 || pose == 10 || pose == 11 || pose == 16));
 	bool solve = !sit && pose != 13 && pose != 12 && !walk_legs;
 	float jump = 0.0;
 
@@ -1526,6 +1540,33 @@ void vertex() {
 		syL = (16.0 + 14.0 * wk) * D; syR = (16.0 - 14.0 * wk) * D;
 		eL = 28.0 * D; eR = 28.0 * D;
 		twist = 10.0 * D * wk;
+	} else if (pose == 16 || pose == 19) {  // SIP (SIT_SIP): the right hand brings the cup up now and then
+		float sp = smoothstep(0.55, 0.75, sin(tt * 0.9)) ;
+		spR = mix(26.0, 48.0, sp) * D;
+		eR = mix(62.0, 132.0, sp) * D;
+		syR = mix(14.0, 34.0, sp) * D;
+		nod = mix(nod, -10.0 * D, sp);
+		spL = 8.0 * D;
+	} else if (pose == 17) {  // STRETCH: both arms up, a lean back, then down again
+		float st = smoothstep(-0.2, 0.6, sin(tt * 0.7));
+		spL = mix(10.0, 168.0, st) * D; spR = spL;
+		srL = mix(5.0, -12.0, st) * D; srR = srL;
+		eL = mix(10.0, 4.0, st) * D; eR = eL;
+		lean -= 7.0 * D * st;
+		nod = -12.0 * D * st;
+	} else if (pose == 18) {  // SIT_PHONE: head down over the phone, in the seat
+		float look_up = smoothstep(0.75, 0.95, sin(tt * 0.4));
+		spL = 32.0 * D; eL = 88.0 * D; syL = 28.0 * D;
+		spR = 30.0 * D; eR = 48.0 * D; syR = 12.0 * D;
+		nod = mix(28.0, -2.0, look_up) * D;
+		hyaw *= look_up;
+	} else if (pose == 20) {  // LEAN: forearms on the boards, weight forward
+		lean += 16.0 * D;
+		spL = 62.0 * D; spR = 62.0 * D;
+		eL = 74.0 * D + 4.0 * D * sin(tt * 0.5); eR = 70.0 * D;
+		syL = 22.0 * D; syR = 22.0 * D;
+		srL = 0.0; srR = 0.0;
+		nod -= 6.0 * D;
 	} else if (pose == 13) {  // FALL: sat on the ice
 		hpL = 84.0 * D; hpR = 80.0 * D; kL = 14.0 * D; kR = 55.0 * D;
 		hrL = 10.0 * D; hrR = 10.0 * D;
@@ -1560,8 +1601,8 @@ void vertex() {
 	// ---- pose the vertex
 	vec3 v = VERTEX + vec3(0.0, lift, 0.0);
 	vec3 n = NORMAL;
-	if ((part == 11 && pose != 11) || (part == 12 && pose != 10)) {
-		v = J;  // the CARRY box and QUEUE phone only exist in their poses
+	if ((part == 11 && pose != 11) || (part == 12 && pose != 10 && pose != 18)) {
+		v = J;  // the CARRY box and the phone (QUEUE, SIT_PHONE) only exist in their poses
 	}
 	if (part >= 2 && part <= 5) {
 		bool right = part == 3 || part == 5;

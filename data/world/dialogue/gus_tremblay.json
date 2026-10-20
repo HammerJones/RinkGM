@@ -32,6 +32,36 @@
     {
       "if": [
         {
+          "flag": "gus_here"
+        },
+        {
+          "not_flag": "tutorial_answered"
+        }
+      ],
+      "node": "tutorial_ask"
+    },
+    {
+      "if": [
+        {
+          "flag": "gus_here"
+        },
+        {
+          "flag": "tutorial_running"
+        }
+      ],
+      "node": "tutorial_hub"
+    },
+    {
+      "if": [
+        {
+          "flag": "gus_here"
+        }
+      ],
+      "node": "here_hub"
+    },
+    {
+      "if": [
+        {
           "not_flag": "met_gus_tremblay"
         }
       ],
@@ -402,6 +432,204 @@
         {
           "text": "Something else.",
           "to": "hub"
+        }
+      ]
+    },
+    "tutorial_ask": {
+      "say": "(Gus, in his parka, a coffee in each hand. One is for you.) You found the keys. Good. Gus Tremblay. Forty-nine years in this building, and my flight to Florida is at four. I've got the morning. Want me to walk you through the day? Or do you want to figure it out yourself? Both are fine. One is faster.",
+      "do": [
+        {
+          "set": "met_gus_tremblay"
+        },
+        {
+          "rel": [
+            "gus_tremblay",
+            3
+          ]
+        }
+      ],
+      "options": [
+        {
+          "text": "Yes please. Show me the ropes.",
+          "do": [
+            {
+              "set": "tutorial_yes"
+            },
+            {
+              "set": "tutorial_answered"
+            },
+            {
+              "rel": [
+                "gus_tremblay",
+                4
+              ]
+            }
+          ],
+          "to": "tutorial_yes"
+        },
+        {
+          "text": "I'll figure it out. Enjoy Florida.",
+          "do": [
+            {
+              "set": "tutorial_no"
+            },
+            {
+              "set": "tutorial_answered"
+            }
+          ],
+          "to": "tutorial_no"
+        },
+        {
+          "text": "What's on breaker 14?",
+          "to": "breaker_here"
+        }
+      ]
+    },
+    "breaker_here": {
+      "say": "Not today. Not ever, if you're smart. Now: help, or no help?",
+      "options": [
+        {
+          "text": "Help. Please.",
+          "do": [
+            {
+              "set": "tutorial_yes"
+            },
+            {
+              "set": "tutorial_answered"
+            },
+            {
+              "rel": [
+                "gus_tremblay",
+                4
+              ]
+            }
+          ],
+          "to": "tutorial_yes"
+        },
+        {
+          "text": "No help. I'll manage.",
+          "do": [
+            {
+              "set": "tutorial_no"
+            },
+            {
+              "set": "tutorial_answered"
+            }
+          ],
+          "to": "tutorial_no"
+        }
+      ]
+    },
+    "tutorial_yes": {
+      "say": "Good. Drink your coffee, it's the last good one you'll get before ten. Plant room first. Follow me, and don't touch anything with a red tag.",
+      "options": [
+        {
+          "text": "Lead the way.",
+          "to": "end"
+        }
+      ]
+    },
+    "tutorial_no": {
+      "say": "Suit yourself. The binder's on the plant room door, read it in order. Some of it's wrong on purpose. It'll make sense. I'll call. G.",
+      "do": [
+        {
+          "rel": [
+            "gus_tremblay",
+            -1
+          ]
+        }
+      ],
+      "options": [
+        {
+          "text": "Thanks, Gus.",
+          "to": "end"
+        }
+      ]
+    },
+    "tutorial_hub": {
+      "say": [
+        "Where were we. {tutorial_hint}",
+        "Keep going. {tutorial_hint}",
+        "You're doing fine. Slower than me, faster than Earl. {tutorial_hint}"
+      ],
+      "options": [
+        {
+          "text": "What's next?",
+          "to": "tutorial_next"
+        },
+        {
+          "text": "Can we skip this one?",
+          "do": [
+            {
+              "set": "tutorial_skip"
+            }
+          ],
+          "to": "tutorial_skip"
+        },
+        {
+          "text": "I've got it from here, Gus.",
+          "do": [
+            {
+              "set": "tutorial_stop"
+            }
+          ],
+          "to": "tutorial_stop"
+        },
+        {
+          "text": "Tell me about the binder.",
+          "to": "binder"
+        }
+      ]
+    },
+    "tutorial_next": {
+      "say": "{tutorial_say}",
+      "options": [
+        {
+          "text": "Got it.",
+          "to": "end"
+        }
+      ]
+    },
+    "tutorial_skip": {
+      "say": "Fine. You'll learn it the hard way, which is the way I learned it. Next.",
+      "options": [
+        {
+          "text": "Next.",
+          "to": "end"
+        }
+      ]
+    },
+    "tutorial_stop": {
+      "say": "Then I'm going to the airport. Ice is only as good as the last flood. Call if the plant room makes a noise you don't like. G.",
+      "options": [
+        {
+          "text": "Safe flight, Gus.",
+          "to": "end"
+        }
+      ]
+    },
+    "here_hub": {
+      "hub": true,
+      "say": [
+        "Still here. Taxi's at two. What do you need?",
+        "Ask me now. In Florida I charge long distance."
+      ],
+      "options": [
+        {
+          "text": "About your binder...",
+          "to": "binder"
+        },
+        {
+          "text": "Breaker 14. What is it, really?",
+          "to": "breaker"
+        },
+        {
+          "text": "How's Earl, really?",
+          "to": "earl"
+        },
+        {
+          "text": "Safe flight, Gus.",
+          "to": "end"
         }
       ]
     }

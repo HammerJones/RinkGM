@@ -723,8 +723,10 @@ values: organisations skate on the real ice, not on the player's readings.
 
 Doris is a 1974 gas Model 525 (`ResurfacerSim.create_doris()`): a 2.3 L
 four-cylinder Hawthorne engine with points ignition and a carburettor, a
-hydraulic conditioner, an 840 L water tank (flood and wash water), a 2.5 m3
-snow tank and studded tires. A resurface takes about 15 minutes.
+hydraulic conditioner, a 1100 L flood tank and a 270 L wash tank, a 3.5 m3
+snow tank and studded tires. A resurface takes about 15 minutes. The ice
+model, the driven resurface and the measuring tools are in
+[ICE.md](ICE.md).
 
 #### How a flood works (what the sim models)
 
