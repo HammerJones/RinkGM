@@ -60,7 +60,7 @@ var flying := false
 var _yaw := -PI * 0.5  # facing +X, toward the front doors and the ice
 var _pitch := 0.0
 var _label: Label
-var _prompt: Label   # the [E] line, under the middle of the screen
+var _prompt: Label   # the [E] line, just under the centre dot
 var _toast: Label
 var _toast_t := 0.0
 var _panel: PanelContainer
@@ -153,7 +153,7 @@ func _build_ui() -> void:
 	layer.add_child(_label)
 	_prompt = Label.new()
 	_prompt.set_anchors_preset(Control.PRESET_CENTER)
-	_prompt.position = Vector2(-300, 28)
+	_prompt.position = Vector2(-300, 10)   # right under the dot, playtest 2026-10-20
 	_prompt.size = Vector2(600, 40)
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_prompt.add_theme_color_override("font_color", RinkOS.ACTION)
@@ -341,7 +341,7 @@ func _hud_lines() -> Array:
 	return [head, where]
 
 
-## The [E] line (shown under the middle of the screen, playtest #20): what
+## The [E] line (shown just under the centre dot, playtest #20): what
 ## you can do with what you're looking at or holding, else the nearest door.
 func _hint() -> String:
 	if kit.status() != "":
@@ -367,7 +367,7 @@ func _hint() -> String:
 	if loose != "":
 		return loose.strip_edges()
 	var hint := kit.hands_hint()
-	var d := walker.nearest_door(venue)
+	var d := walker.nearest_door(venue, 2.0, -cam.global_transform.basis.z)
 	if d and not hint.begins_with("[E]"):
 		hint = "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
 	return hint

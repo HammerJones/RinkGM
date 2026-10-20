@@ -223,11 +223,20 @@ func nearest_spot(venue: Venue, forward: Vector3, extra: Array[VenueSpot] = []) 
 	return best
 
 
-func nearest_door(venue: Venue, reach := 2.0) -> VenueDoor:
+## `forward` (the eye's look direction) keeps only doors roughly in view, so the
+## prompt names what the player is looking at; ZERO takes any door in reach.
+func nearest_door(venue: Venue, reach := 2.0, forward := Vector3.ZERO) -> VenueDoor:
 	var best: VenueDoor = null
 	var best_d := reach
+	var eye := head.global_position if head else global_position + Vector3(0, 1.6, 0)
 	for d in venue.all_doors():
 		var dist := d.global_position.distance_to(global_position)
+		if forward != Vector3.ZERO:
+			var to := d.global_position - eye
+			to.y = 0.0
+			var f := Vector3(forward.x, 0.0, forward.z)
+			if to.length() > 0.3 and to.normalized().dot(f.normalized()) < 0.5:
+				continue
 		if dist < best_d:
 			best_d = dist
 			best = d
