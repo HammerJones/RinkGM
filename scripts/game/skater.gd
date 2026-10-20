@@ -1107,7 +1107,7 @@ func one_hand() -> float:
 
 ## The body sets the reach (Sean, 19 Oct): SkaterRig.blade_reach works it
 ## out from the shoulder, arm and stick in the ready stance. The last
-## TWO_HAND_LOSS of it is one-handed (and anything past REACH_MAX); the change
+## TWO_HAND_LOSS of it is one-handed; the change
 ## happens over a 10 cm band past the two-hand reach so the grip doesn't
 ## flicker.
 const TWO_HAND_LOSS := 0.15
@@ -1125,14 +1125,21 @@ static var _reach_table := PackedFloat32Array()
 
 
 static func _one_hand_at(ang: float, reach: float) -> float:
-	var two := two_hand_reach(ang)
+	var two := grip_reach(ang)
 	return smoothstep(two, two + 0.1, reach)
 
 
-## How far the blade goes with both hands on the stick at this angle: as
-## far as REACH_MAX, but never past what the body reaches that way.
+## How far out the bottom hand can stay on the stick at this angle: all but
+## the last TWO_HAND_LOSS of the body's reach.
+static func grip_reach(ang: float) -> float:
+	return maxf(REACH_MIN + 0.05, reach_limit(ang) - TWO_HAND_LOSS)
+
+
+## How far the stick's travel takes the blade at this angle: as far as
+## REACH_MAX, but never past where the bottom hand lets go. Reaching further
+## (a poke, a loose puck) is past the stick's travel.
 static func two_hand_reach(ang: float) -> float:
-	return maxf(REACH_MIN + 0.05, minf(REACH_MAX, reach_limit(ang) - TWO_HAND_LOSS))
+	return minf(REACH_MAX, grip_reach(ang))
 
 
 ## How far the blade can reach at this angle (radians from straight ahead,

@@ -7,7 +7,8 @@ extends RefCounted
 ##
 ##   wrist shot   a short pull back to the forehand, then straight forward
 ##   snap shot    across, a short drop, then straight forward
-##   slap shot    across, a long drop (the backswing), then all the way forward
+##   slap shot    a curve back to the left, a long drop (the backswing),
+##                then all the way forward
 ##   toe drag     pull it in and across, back and forth, then forward
 ##
 ## match(trace) compares the drawn path with every template, size and
@@ -17,12 +18,12 @@ extends RefCounted
 const KINDS: Array[StringName] = [&"wrist_shot", &"snap_shot", &"slapshot", &"toe_drag_shot"]
 const NAMES := {&"wrist_shot": "WRIST SHOT", &"snap_shot": "SNAP SHOT", &"slapshot": "SLAP SHOT", &"toe_drag_shot": "TOE DRAG SHOT"}
 
-## Points in px, y up, from Sean's sketch (the slap shot's backswing drawn a
-## little deeper than sketched, so it reads apart from the snap shot).
+## Points in px, y up, from Sean's sketches (the slap shot redrawn 19 Oct so
+## it reads apart from the snap shot: it hooks the other way).
 const TEMPLATES := {
 	&"wrist_shot": [Vector2(0, 0), Vector2(30, -47), Vector2(15, 103)],
 	&"snap_shot": [Vector2(0, 0), Vector2(55, 0), Vector2(80, -59), Vector2(55, 158)],
-	&"slapshot": [Vector2(0, 0), Vector2(67, 4), Vector2(70, -130), Vector2(70, 172), Vector2(65, 222)],
+	&"slapshot": [Vector2(0, 0), Vector2(-33, 3), Vector2(-68, -12), Vector2(-88, -37), Vector2(-95, -72), Vector2(-98, -187), Vector2(-98, 228)],
 	&"toe_drag_shot": [Vector2(0, 0), Vector2(-22, -16), Vector2(-7, -83), Vector2(11, -86), Vector2(11, -23), Vector2(33, -88), Vector2(33, 202)],
 }
 

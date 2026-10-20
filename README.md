@@ -59,7 +59,7 @@ the patterns are drawn for a right shot (forehand on the right):
 | --- | --- |
 | Wrist shot | a short pull back to the forehand, then straight forward |
 | Snap shot | across to the forehand, a short drop, then straight forward |
-| Slap shot | across, a long drop (the backswing), then all the way forward |
+| Slap shot | a curve back to the left, a long drop (the backswing), then all the way forward |
 | Toe drag shot | pull it in and across, back and forth, then forward |
 
 How fast the forward stroke goes sets the power (shot power lets a slower
