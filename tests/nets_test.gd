@@ -20,7 +20,7 @@ func _ready() -> void:
 	_puck = Puck.new()
 	add_child(_puck)
 	_puck.goal_scored.connect(func(_s): _goals += 1)
-	_puck.post_hit.connect(func(): _rings += 1)
+	_puck.post_hit.connect(func(_at, _speed): _rings += 1)
 	var gx := Rink.GOAL_X
 	_expect(NetPhysics.boxes(1).size() > 4 and NetPhysics.boxes(-1).size() == NetPhysics.boxes(1).size(), "both nets have colliders from the voxel net (%d boxes)" % NetPhysics.boxes(1).size())
 	var front := INF

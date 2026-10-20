@@ -5,7 +5,10 @@ extends Node3D
 ## Stick control is applied by Game as spring forces before integrate().
 
 signal goal_scored(net_side: int)
-signal post_hit
+## Rang off a post or the crossbar: where, and the puck's speed (m/s) coming in.
+signal post_hit(at: Vector3, speed: float)
+## Hit the boards: where, and the speed (m/s) into them (for sound).
+signal boards_hit(at: Vector3, normal_speed: float)
 ## Over the glass and into the building: play is dead (Mechanics whistles).
 signal left_rink(at: Vector3)
 
@@ -120,6 +123,7 @@ func _collide_boards() -> void:
 	var n3 := Vector3(n.x, 0, n.y)
 	var vn := vel.dot(n3)
 	if vn > 0.0:
+		boards_hit.emit(position, vn)
 		vel -= n3 * vn * 1.6  # restitution 0.6
 		vel *= 0.92
 
@@ -128,8 +132,9 @@ func _collide_boards() -> void:
 ## A goal is the whole puck crossing the goal line between the posts and
 ## under the bar.
 func _collide_nets(prev: Vector3) -> void:
+	var speed := vel.length()
 	if NetPhysics.collide(self):
-		post_hit.emit()
+		post_hit.emit(position, speed)
 	if in_net_side != 0:
 		return
 	for side in [-1, 1]:
