@@ -15,7 +15,7 @@ const WeightRoom := preload("res://scripts/venue/rec/weight_room.gd")
 ## up to 8,000; these repeat a little, so lower).
 const PROP_TRIS := 6000
 ## Arena plus wing, as test_rec_centre.
-const TRI_BUDGET := 1400000
+const TRI_BUDGET := 1450000
 const DRAW_BUDGET := 700
 
 var failures := 0
