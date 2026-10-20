@@ -1,0 +1,37 @@
+{
+  "id": "player_bench",
+  "inspect": "Rubber matting over plywood over a lot of history.",
+  "mass_kg": 40,
+  "name": "Players' bench",
+  "offset": [
+    0,
+    0,
+    0
+  ],
+  "pivot": [
+    15.5,
+    0,
+    3
+  ],
+  "size_m": [
+    2.08,
+    0.91,
+    0.455
+  ],
+  "sound": "wood",
+  "source": "props",
+  "tags": [
+    "benches",
+    "furniture"
+  ],
+  "tri_cap": 4000,
+  "verbs": [
+    "inspect",
+    "sit"
+  ],
+  "vox": {
+    "renovated": "art/props/player_bench.renovated.vox",
+    "repaired": "art/props/player_bench.repaired.vox",
+    "worn": "art/props/player_bench.worn.vox"
+  }
+}

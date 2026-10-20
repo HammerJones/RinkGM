@@ -1,0 +1,49 @@
+{
+  "id": "vending_machine",
+  "inspect": "A 1970s drinks machine. The OUT OF ORDER note is older than some of the customers.",
+  "mass_kg": 180,
+  "name": "Vending machine",
+  "offset": {
+    "renovated": [
+      0,
+      0,
+      0
+    ],
+    "repaired": [
+      0,
+      0,
+      0
+    ],
+    "worn": [
+      0,
+      0,
+      1
+    ]
+  },
+  "pivot": [
+    7,
+    0,
+    5.5
+  ],
+  "size_m": [
+    0.91,
+    1.82,
+    0.78
+  ],
+  "sound": "metal",
+  "source": "props",
+  "tags": [
+    "lobby",
+    "canteen",
+    "machine"
+  ],
+  "tri_cap": 4000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": {
+    "renovated": "art/props/vending_machine.renovated.vox",
+    "repaired": "art/props/vending_machine.repaired.vox",
+    "worn": "art/props/vending_machine.worn.vox"
+  }
+}

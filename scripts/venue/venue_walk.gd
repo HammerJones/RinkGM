@@ -14,7 +14,8 @@ extends Node3D
 ##
 ## WASD / left stick walk, mouse / right stick look, Shift / L3 run,
 ## Space jump, Ctrl or C (held) crouch,
-## E / A read, use or work on what you're looking at (or a door); A jumps
+## E / A read, use or work on what you're looking at (or a door), or take
+## or inspect a world object (G drops the last thing taken); A jumps
 ## when there's nothing in reach, B (held) crouches when no panel is open,
 ## O the office (in an owner career),
 ## Q / LB raise the watch, Tab / Back the bag (R turns what's in hand),
@@ -76,6 +77,8 @@ var _lean := false
 var _drawing: Whiteboard
 var kit: KitHud
 var pickup_run: PickupRun  # World: the gym's pickup games, null without a gym
+## World objects: names on look, take (E) and drop (G); scripts/world/objects
+var objects: ObjectWalk
 
 
 func _ready() -> void:
@@ -134,6 +137,7 @@ func _ready() -> void:
 	# `--no-people` keeps the old crowd.
 	if not "--no-people" in OS.get_cmdline_user_args():
 		WalkPeople.attach(self)
+	objects = ObjectWalk.attach(self)  # World objects: rows, look names, take and drop
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
@@ -221,6 +225,9 @@ func _unhandled_input(e: InputEvent) -> void:
 				if story and story.link and not _busy():
 					_leave_to("office")
 			KEY_E: _use()
+			KEY_G:
+				if objects and not _busy():
+					_act(objects.drop_held())  # World objects: drop the last thing taken
 			KEY_SPACE:
 				if not flying and not _busy():
 					walker.jump()
@@ -245,7 +252,7 @@ func _unhandled_input(e: InputEvent) -> void:
 	elif e is InputEventJoypadButton and e.pressed:
 		match e.button_index:
 			JOY_BUTTON_A:
-				if _busy() or _looked_at() or walker.nearest_door(venue):
+				if _busy() or _looked_at() or (objects and objects.looked()) or walker.nearest_door(venue):
 					_use()
 				elif not flying:
 					walker.jump()
@@ -350,10 +357,16 @@ func _hint() -> String:
 		return lean
 	if s:
 		return "[E] " + s.prompt()
+	# World objects: the prop under the look ray, by name (ObjectWalk)
+	var o := objects.hint() if objects else ""
+	if o != "":
+		return o
 	var hint := kit.hands_hint()
 	var d := walker.nearest_door(venue, 2.0, -cam.global_transform.basis.z)
 	if d and not hint.begins_with("[E]"):
 		hint = "[E] %s %s" % ["CLOSE" if d.is_open else "OPEN", d.label.to_upper()]
+	if hint == "" and objects:
+		hint = objects.drop_hint()
 	return hint
 
 
@@ -393,6 +406,12 @@ func _use() -> void:
 	if s:
 		_act(story.use(s) if story else {"toast": s.prompt()})
 		return
+	# World objects: take or inspect the prop you're looking at
+	if objects:
+		var a := objects.use()
+		if not a.is_empty():
+			_act(a)
+			return
 	var hands := kit.use_hands()
 	if hands != "":
 		_show_toast(hands)

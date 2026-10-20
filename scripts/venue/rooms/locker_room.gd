@@ -60,6 +60,8 @@ func build(k: VenueKit) -> void:
 	var bench: Color = k.by_age(Color("7a5c3c"), Color("8a6a45"), team_col.darkened(0.15))
 	k.aged_block(Vector3(X1 - 0.95, 0, s * 8.6), Vector3(X1 - 0.55, 0.45, z_out), bench, 0.5)
 	k.aged_block(Vector3(X0 + 2.0, 0, z_out - s * 0.95), Vector3(X1 - 0.95, 0.45, z_out - s * 0.55), bench, 0.5)
+	if home:
+		k.prop("tape", Vector3(X0 + 4.0, 0.45, z_out - s * 0.75), 0.0, false)  # World objects: tape on the bench
 	# shower room at the back by the bay wall
 	var tile: Color = k.by_age(Color("b9c2bb"), Color("cfd8d2"), Color("f0f2f2"))
 	k.wall_z(back_x + 0.1, s * 5.0, s * 8.6, 0, H, 0.2, tile, [{"at": s * 6.8, "w": 1.0, "y0": 0.0, "y1": 2.2}], 0.3)

@@ -1,0 +1,50 @@
+{
+  "id": "notebook",
+  "inspect": "Readings, phone numbers, lists. Earl's handwriting.",
+  "mass_kg": 0.2,
+  "name": "Notebook",
+  "offset": [
+    0,
+    0,
+    0
+  ],
+  "pivot": [
+    3.5,
+    0,
+    5
+  ],
+  "shape": [
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      1
+    ]
+  ],
+  "size_m": [
+    0.14,
+    0.04,
+    0.2
+  ],
+  "sound": "paper",
+  "tags": [
+    "handheld",
+    "clutter",
+    "office"
+  ],
+  "tri_cap": 600,
+  "verbs": [
+    "take",
+    "inspect",
+    "read"
+  ],
+  "vox": "art/props/notebook.vox",
+  "voxel_m": 0.02,
+  "wear": {
+    "renovated": "palette:new",
+    "repaired": "palette:clean",
+    "worn": "weather"
+  }
+}

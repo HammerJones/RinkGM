@@ -25,6 +25,8 @@ var _shapes: Array[AABB] = []
 var _signs: Array = []  # [VenueSign, Transform3D]
 var _extra: Array[Node3D] = []
 var _instances := {}  # ArrayMesh -> Array[Transform3D]
+## World objects: [id, Transform3D, mesh, age] per prop() call, rows at commit.
+var _props: Array = []
 ## Walls built while this is on also become occluders (one ArrayOccluder3D
 ## per room), so a walker in the recreation wing never draws the rooms
 ## behind the walls around them. Needs occlusion culling in the project.
@@ -218,14 +220,17 @@ func instance(mesh: Mesh, xf: Transform3D) -> void:
 ## with its front (-Z) turned by `rot_y`. `solid` adds the kit's
 ## shape-following box colliders (Props.collision_boxes).
 func prop(id: String, pos: Vector3, rot_y := 0.0, solid := true, age_override := -1, lod := 0) -> void:
-	var mesh := Props.mesh(id, age if age_override < 0 else age_override, lod)
+	# World objects: PropLibrary serves .vox props and falls back to the coded kit
+	var used_age := age if age_override < 0 else age_override
+	var mesh := PropLibrary.mesh(id, used_age, lod)
 	if mesh == null:
 		return
 	var xf := Transform3D(Basis(Vector3.UP, rot_y), pos)
 	instance(mesh, xf)
+	_props.append([id, xf, mesh, used_age])
 	if solid:
 		# the kit's shape-following boxes (seat, back, legs), not one hull
-		for b in Props.collision_boxes(id, age if age_override < 0 else age_override):
+		for b in PropLibrary.collision_boxes(id, used_age):
 			_shapes.append(xf * b)
 
 
@@ -295,6 +300,7 @@ func commit(parent: Node3D) -> void:
 			cs.position = box.get_center()
 			body.add_child(cs)
 		parent.add_child(body)
+	var mm_by_mesh := {}  # World objects: which MultiMesh draws each prop
 	for mesh in _instances:
 		var xfs: Array = _instances[mesh]
 		var mm := MultiMesh.new()
@@ -307,6 +313,7 @@ func commit(parent: Node3D) -> void:
 		mmi.multimesh = mm
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if overhead else Look.cast()
 		parent.add_child(mmi)
+		mm_by_mesh[mesh] = mmi
 	if not _occluders.is_empty():
 		var verts := PackedVector3Array()
 		var idx := PackedInt32Array()
@@ -328,6 +335,9 @@ func commit(parent: Node3D) -> void:
 		parent.add_child(s)
 	for n in _extra:
 		parent.add_child(n)
+	# World objects: every prop placed in a room gets a row (docs/WORLD_OBJECTS.md 2.2)
+	if parent is VenueRoom and parent.venue and parent.venue.get("objects") is WorldObjects:
+		parent.venue.objects.bake(StringName(parent.room_id), _props, mm_by_mesh)
 
 
 func collider_count() -> int:

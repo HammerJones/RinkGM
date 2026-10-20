@@ -1,8 +1,41 @@
 # World objects: the foundation for a dense, interactive rink
 
-**Status:** design, agreed with Sean 2026-10-20. Not built.
-**Owner:** the World objects thread builds the foundation (section 6 for
-ownership once it exists). The integration branch (PR #4) is the base.
+**Status:** P0 (pipeline) and P1 (store and picking) built, 2026-10-20;
+P2 onward not started. 20 props are assets (`data/props/`, `art/props/`),
+every prop a room places has a row, every row has a name on look, handheld
+props can be taken and dropped, and rows ride the owner save as `objects`.
+**Owner:** the World objects thread (section 6 is the row in
+`ARCHITECTURE.md`). The integration branch (PR #4) is the base.
+
+What P0 and P1 built, where it differs from the plan below:
+
+- A prop's three ages can be three `.vox` files (`vox` as a per-age map)
+  when the shapes differ, which every prop converted from the coded kit
+  needs; new props use one model and a `wear` rule (`weather`,
+  `palette:<name>` from `data/props/palettes.json`, `tint:<hex>`).
+  Manifests also carry `offset` (the file's shift off the model's grid,
+  undone on load so ageing and speckle match the kit), `pivot`,
+  `voxel_m` (handhelds use 0.0125 to 0.02 m voxels: a puck is one kit
+  voxel across), `mesh` (`merged` for flat-faced shop props),
+  `collision_cell` and `tri_cap`. `tools/prop_export.gd` writes all of it
+  from a coded builder.
+- Rows: `VenueKit.commit()` calls `WorldObjects.bake()` with every prop
+  the room drew, so a row knows the MultiMesh instance that draws it and a
+  taken thing is hidden without rebuilding the room. Baked rows are named
+  `<room>.<prop>.<n>` in build order and come back from the room build;
+  the save keeps only rows the player placed, moved, took or changed.
+- Picking: the walker's physics ray bounds a segment that
+  `WorldObjects.raycast()` tests against the rows' shape boxes along the
+  hash cells; a small thing wins a near tie with the big thing it sits on.
+- Tiers today: BAKED (the room's MultiMesh, or `ObjectField`'s one merged
+  mesh for loose rows without a node) and LIVE (`LiveProp`, a rigid body on
+  layers 3 and 4). A dropped thing is LIVE until it sleeps; sleeping bodies
+  farther than 24 m from the walker go back to rows, loose rows within 24 m
+  get a sleeping body while the cap (64) allows, nearest first.
+  `ObjectWalk.status()` is on the dev menu's Walk tab. INSTANCED is P2.
+- `take` puts the prop id in the grid bag (`ItemCatalog` reads the shape
+  from the manifest); the row stays in the store flagged `held`, so a
+  dropped cup is the cup that was taken. G drops the last thing taken.
 
 Sean's direction: the world should feel like it exists and is worth exploring.
 Props everywhere, and the things you see are things you can touch. References

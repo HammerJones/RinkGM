@@ -1,0 +1,36 @@
+{
+  "id": "tape_tower",
+  "inspect": "Rolls of tape in a column, black at the bottom, white up top, one roll of lime green.",
+  "mass_kg": 4,
+  "name": "Tape tower",
+  "offset": [
+    0,
+    0,
+    0
+  ],
+  "pivot": [
+    3,
+    0,
+    3
+  ],
+  "size_m": [
+    0.39,
+    1.755,
+    0.39
+  ],
+  "sound": "cloth",
+  "source": "props",
+  "tags": [
+    "pro_shop",
+    "small"
+  ],
+  "tri_cap": 2000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": {
+    "renovated": "art/props/tape_tower.renovated.vox",
+    "repaired": "art/props/tape_tower.repaired.vox",
+    "worn": "art/props/tape_tower.worn.vox"
+  }
+}

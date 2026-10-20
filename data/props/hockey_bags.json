@@ -1,0 +1,38 @@
+{
+  "id": "hockey_bags",
+  "inspect": "Three bags. Two of them smell exactly like you'd think.",
+  "mass_kg": 9,
+  "mesh": "merged",
+  "name": "Hockey bags",
+  "offset": [
+    0,
+    0,
+    1
+  ],
+  "pivot": [
+    6.5,
+    0,
+    6
+  ],
+  "size_m": [
+    0.91,
+    0.715,
+    0.845
+  ],
+  "sound": "cloth",
+  "source": "props",
+  "tags": [
+    "storage",
+    "dressing_room",
+    "clutter"
+  ],
+  "tri_cap": 600,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": {
+    "renovated": "art/props/hockey_bags.renovated.vox",
+    "repaired": "art/props/hockey_bags.repaired.vox",
+    "worn": "art/props/hockey_bags.worn.vox"
+  }
+}

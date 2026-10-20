@@ -1,0 +1,48 @@
+{
+  "id": "foot_measure",
+  "inspect": "A Brannock device. Everyone in the valley is half a size bigger than they think.",
+  "mass_kg": 1.2,
+  "name": "Foot measure",
+  "offset": [
+    0,
+    0,
+    0
+  ],
+  "pivot": [
+    1.5,
+    0,
+    3
+  ],
+  "shape": [
+    [
+      0,
+      0
+    ],
+    [
+      1,
+      0
+    ]
+  ],
+  "size_m": [
+    0.195,
+    0.13,
+    0.39
+  ],
+  "sound": "metal",
+  "source": "props",
+  "tags": [
+    "pro_shop",
+    "small",
+    "handheld"
+  ],
+  "tri_cap": 600,
+  "verbs": [
+    "inspect",
+    "take"
+  ],
+  "vox": {
+    "renovated": "art/props/foot_measure.renovated.vox",
+    "repaired": "art/props/foot_measure.repaired.vox",
+    "worn": "art/props/foot_measure.worn.vox"
+  }
+}

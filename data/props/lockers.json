@@ -1,0 +1,49 @@
+{
+  "id": "lockers",
+  "inspect": "Steel stalls, one door per player. Number 9's door never shut right.",
+  "mass_kg": 70,
+  "name": "Lockers",
+  "offset": {
+    "renovated": [
+      0,
+      0,
+      0
+    ],
+    "repaired": [
+      0,
+      0,
+      2
+    ],
+    "worn": [
+      0,
+      0,
+      6
+    ]
+  },
+  "pivot": [
+    9,
+    0,
+    3.5
+  ],
+  "size_m": [
+    1.17,
+    1.885,
+    0.845
+  ],
+  "sound": "metal",
+  "source": "props",
+  "tags": [
+    "dressing_room",
+    "furniture"
+  ],
+  "tri_cap": 8000,
+  "verbs": [
+    "inspect",
+    "open"
+  ],
+  "vox": {
+    "renovated": "art/props/lockers.renovated.vox",
+    "repaired": "art/props/lockers.repaired.vox",
+    "worn": "art/props/lockers.worn.vox"
+  }
+}

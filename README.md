@@ -256,6 +256,12 @@ project.godot            autoloads: Tuning (feel), InputSetup (input map)
 scenes/main.tscn         root node -> scripts/game/game.gd
 scripts/voxel/           VoxelModel, VoxelMeshBuilder, VoxelPart, VoxLoader
 scripts/art/models.gd    procedural players, goalies, sticks, puck, net
+scripts/world/objects/   PropLibrary (props as .vox + manifest), WorldObjects (a row
+                         for every placed thing), LiveProp, verbs/ (inspect, take, drop)
+data/props/              one JSON record per prop (name, verbs, wear, shape, caps)
+art/props/               the MagicaVoxel models the records point at
+tools/prop_export.gd     writes a coded kit prop out as .vox + manifest
+tools/prop_sheet.gd      every manifest prop at three ages on one PNG (needs xvfb)
 scripts/rink/rink.gd     rink geometry (board SDF, nets) + ice/boards visuals
 scripts/career/skills.gd player ratings (1 to 100); injuries/fatigue as modifiers
 scripts/game/            game rules, skater, goalie, puck, stick-puck contact,

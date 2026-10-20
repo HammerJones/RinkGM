@@ -1,0 +1,39 @@
+{
+  "id": "pylon_stack",
+  "inspect": "Orange pylons, stacked. One is a different orange.",
+  "mass_kg": 3,
+  "mesh": "merged",
+  "name": "Pylon stack",
+  "offset": [
+    0,
+    0,
+    0
+  ],
+  "pivot": [
+    4.5,
+    0,
+    4.5
+  ],
+  "size_m": [
+    0.585,
+    0.65,
+    0.585
+  ],
+  "sound": "plastic",
+  "source": "props",
+  "tags": [
+    "storage",
+    "equipment",
+    "small"
+  ],
+  "tri_cap": 600,
+  "verbs": [
+    "inspect",
+    "push"
+  ],
+  "vox": {
+    "renovated": "art/props/pylon_stack.renovated.vox",
+    "repaired": "art/props/pylon_stack.repaired.vox",
+    "worn": "art/props/pylon_stack.worn.vox"
+  }
+}

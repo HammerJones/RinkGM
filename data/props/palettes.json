@@ -1,0 +1,20 @@
+{
+  "_comment": "Colour remaps for manifest wear rules ('palette:<name>'): old rink colour -> replacement, as hex. 'clean' keeps the old palette; 'new' is the renovated club palette from scripts/art/wear.gd.",
+  "clean": {},
+  "new": {
+    "9a6b3f": "b9c0c6",
+    "6e4a2a": "2b2d33",
+    "8fbfa8": "eeeeea",
+    "d9a62e": "1d3557",
+    "c8642a": "d0202a",
+    "7d8a3a": "1d3557",
+    "5b3a22": "2b2d33",
+    "e3d9bf": "eeeeea",
+    "a8a294": "b9c0c6",
+    "8f9498": "b9c0c6",
+    "8a4a24": "b9c0c6",
+    "5e2f18": "2b2d33",
+    "c9a46a": "b9c0c6",
+    "f1eee4": "eeeeea"
+  }
+}

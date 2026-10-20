@@ -1,0 +1,41 @@
+{
+  "id": "puck",
+  "inspect": "Frozen pucks bounce less. This one isn't frozen.",
+  "mass_kg": 0.17,
+  "name": "Puck",
+  "offset": [
+    0,
+    0,
+    0
+  ],
+  "pivot": [
+    3,
+    0,
+    3
+  ],
+  "shape": [
+    [
+      0,
+      0
+    ]
+  ],
+  "size_m": [
+    0.075,
+    0.025,
+    0.075
+  ],
+  "sound": "rubber",
+  "tags": [
+    "handheld",
+    "equipment",
+    "clutter"
+  ],
+  "tri_cap": 600,
+  "verbs": [
+    "take",
+    "inspect",
+    "push"
+  ],
+  "vox": "art/props/puck.vox",
+  "voxel_m": 0.0125
+}

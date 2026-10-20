@@ -37,6 +37,7 @@ func build(k: VenueKit) -> void:
 	# desk, chair, filing cabinet, the terminal
 	var desk: Color = k.by_age(Color("5c4330"), Color("6b4f38"), Color("2a2e36"))
 	k.aged_block(Vector3(-42.6, Y, -12.0), Vector3(-41.0, Y + 0.75, -9.8), desk, 0.4)
+	k.prop("notebook", Vector3(-41.35, Y + 0.75, -10.1), 0.2, false)  # World objects: a notebook on the desk
 	k.block(Vector3(-43.8, Y, -11.2), Vector3(-43.3, Y + 0.48, -10.7), Color("2b2d33"), 0.25, 0.05)
 	k.block(Vector3(-43.9, Y + 0.48, -11.2), Vector3(-43.8, Y + 1.1, -10.7), Color("2b2d33"), 0.25, 0.05)
 	k.aged_block(Vector3(X0, Y, -13.6), Vector3(X0 + 0.7, Y + 1.35, -13.0), Color("7d8288"), 0.3)

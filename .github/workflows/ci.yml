@@ -27,3 +27,38 @@ jobs:
           unzip -q godot.zip && rm godot.zip
       - name: Import, play a headless game, run tests
         run: GODOT=~/godot/Godot_v${GODOT_VERSION}_linux.x86_64 tools/ci.sh
+
+  # World objects: the prop contact sheet (tools/prop_sheet.gd), every
+  # manifest prop at three ages, as a downloadable artefact. Best effort: it
+  # needs a software GL driver under xvfb and never fails the gate.
+  prop-sheet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    env:
+      GODOT_VERSION: 4.3-stable
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Godot
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}
+      - name: Download Godot
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot && cd ~/godot
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip && rm godot.zip
+      - name: Install xvfb and a software GL driver
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri libegl1 libglx-mesa0
+      - name: Render the prop sheet
+        run: |
+          GODOT=~/godot/Godot_v${GODOT_VERSION}_linux.x86_64
+          $GODOT --headless --path . --import >/dev/null 2>&1 || true
+          xvfb-run -a -s "-screen 0 1280x720x24" $GODOT --path . --rendering-driver opengl3 --script res://tools/prop_sheet.gd -- --out=prop_sheet.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prop-sheet
+          path: prop_sheet.png

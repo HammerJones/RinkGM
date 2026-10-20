@@ -35,11 +35,14 @@ const ITEMS := {
 
 
 static func has(id: String) -> bool:
-	return ITEMS.has(id)
+	# World objects: a prop with the `take` verb is an item too (PropLibrary)
+	return ITEMS.has(id) or not PropLibrary.item_info(id).is_empty()
 
 
 static func info(id: String) -> Dictionary:
-	return ITEMS.get(id, {})
+	if ITEMS.has(id):
+		return ITEMS[id]
+	return PropLibrary.item_info(id)  # World objects: name, shape and desc from the manifest
 
 
 static func display_name(id: String) -> String:

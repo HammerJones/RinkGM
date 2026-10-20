@@ -1,0 +1,38 @@
+{
+  "id": "shop_till",
+  "inspect": "Bev's till. The drawer sticks on the way out, never on the way in.",
+  "mass_kg": 7,
+  "name": "Shop till",
+  "offset": [
+    0,
+    0,
+    0
+  ],
+  "pivot": [
+    3.5,
+    0,
+    3
+  ],
+  "size_m": [
+    0.52,
+    0.325,
+    0.39
+  ],
+  "sound": "metal",
+  "source": "props",
+  "tags": [
+    "pro_shop",
+    "small",
+    "machine"
+  ],
+  "tri_cap": 600,
+  "verbs": [
+    "inspect",
+    "use"
+  ],
+  "vox": {
+    "renovated": "art/props/shop_till.renovated.vox",
+    "repaired": "art/props/shop_till.repaired.vox",
+    "worn": "art/props/shop_till.worn.vox"
+  }
+}

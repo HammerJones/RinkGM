@@ -1,0 +1,61 @@
+{
+  "id": "trash_can",
+  "inspect": "An avocado drum with a dent that matches a Zamboni fender.",
+  "mass_kg": 6,
+  "name": "Trash can",
+  "offset": {
+    "renovated": [
+      0,
+      0,
+      1
+    ],
+    "repaired": [
+      0,
+      0,
+      0
+    ],
+    "worn": [
+      0,
+      0,
+      0
+    ]
+  },
+  "pivot": {
+    "renovated": [
+      7.5,
+      0,
+      3.5
+    ],
+    "repaired": [
+      4,
+      0,
+      4
+    ],
+    "worn": [
+      4,
+      0,
+      4
+    ]
+  },
+  "size_m": [
+    0.975,
+    0.91,
+    0.52
+  ],
+  "sound": "metal",
+  "source": "props",
+  "tags": [
+    "lobby",
+    "clutter"
+  ],
+  "tri_cap": 4000,
+  "verbs": [
+    "inspect",
+    "push"
+  ],
+  "vox": {
+    "renovated": "art/props/trash_can.renovated.vox",
+    "repaired": "art/props/trash_can.repaired.vox",
+    "worn": "art/props/trash_can.worn.vox"
+  }
+}

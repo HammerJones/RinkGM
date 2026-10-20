@@ -1,0 +1,37 @@
+{
+  "id": "goalie_pads",
+  "inspect": "A spare set of pads, leaning. Someone wrote LOANER on the strap.",
+  "mass_kg": 5,
+  "mesh": "merged",
+  "name": "Goalie pads",
+  "offset": [
+    0,
+    0,
+    1
+  ],
+  "pivot": [
+    4.5,
+    0,
+    1.5
+  ],
+  "size_m": [
+    0.585,
+    1.105,
+    0.26
+  ],
+  "sound": "cloth",
+  "source": "props",
+  "tags": [
+    "storage",
+    "equipment"
+  ],
+  "tri_cap": 1000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": {
+    "renovated": "art/props/goalie_pads.renovated.vox",
+    "repaired": "art/props/goalie_pads.repaired.vox",
+    "worn": "art/props/goalie_pads.worn.vox"
+  }
+}

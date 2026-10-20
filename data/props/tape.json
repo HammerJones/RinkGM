@@ -1,0 +1,40 @@
+{
+  "id": "tape",
+  "inspect": "Black cloth tape. About half a roll.",
+  "mass_kg": 0.1,
+  "name": "Hockey tape",
+  "offset": [
+    0,
+    0,
+    0
+  ],
+  "pivot": [
+    4,
+    0,
+    4
+  ],
+  "shape": [
+    [
+      0,
+      0
+    ]
+  ],
+  "size_m": [
+    0.1,
+    0.025,
+    0.1
+  ],
+  "sound": "cloth",
+  "tags": [
+    "handheld",
+    "equipment",
+    "clutter"
+  ],
+  "tri_cap": 600,
+  "verbs": [
+    "take",
+    "inspect"
+  ],
+  "vox": "art/props/tape.vox",
+  "voxel_m": 0.0125
+}

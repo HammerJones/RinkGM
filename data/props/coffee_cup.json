@@ -1,0 +1,46 @@
+{
+  "id": "coffee_cup",
+  "inspect": "Hot Stove mug. Chipped on the handle side.",
+  "mass_kg": 0.25,
+  "name": "Coffee cup",
+  "offset": [
+    0,
+    0,
+    0
+  ],
+  "pivot": [
+    3,
+    0,
+    2
+  ],
+  "shape": [
+    [
+      0,
+      0
+    ]
+  ],
+  "size_m": [
+    0.12,
+    0.1,
+    0.08
+  ],
+  "sound": "ceramic",
+  "tags": [
+    "handheld",
+    "clutter",
+    "canteen"
+  ],
+  "tri_cap": 600,
+  "verbs": [
+    "take",
+    "inspect",
+    "push"
+  ],
+  "vox": "art/props/coffee_cup.vox",
+  "voxel_m": 0.02,
+  "wear": {
+    "renovated": "palette:new",
+    "repaired": "palette:clean",
+    "worn": "weather"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "id": "toolbox",
+  "inspect": "Red steel, two drawers. The top tray is all tape measures.",
+  "mass_kg": 12,
+  "mesh": "merged",
+  "name": "Toolbox",
+  "offset": {
+    "renovated": [
+      1,
+      0,
+      1
+    ],
+    "repaired": [
+      1,
+      0,
+      1
+    ],
+    "worn": [
+      1,
+      0,
+      3
+    ]
+  },
+  "pivot": [
+    5.5,
+    0,
+    3.5
+  ],
+  "size_m": [
+    0.78,
+    1.365,
+    0.65
+  ],
+  "sound": "metal",
+  "source": "props",
+  "tags": [
+    "workshop",
+    "small"
+  ],
+  "tri_cap": 600,
+  "verbs": [
+    "inspect",
+    "open"
+  ],
+  "vox": {
+    "renovated": "art/props/toolbox.renovated.vox",
+    "repaired": "art/props/toolbox.repaired.vox",
+    "worn": "art/props/toolbox.worn.vox"
+  }
+}

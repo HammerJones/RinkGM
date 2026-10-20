@@ -1,0 +1,61 @@
+{
+  "id": "rink_sign",
+  "inspect": "Hand-painted, 1974. The letters fall off in different winters.",
+  "mass_kg": 25,
+  "name": "Rink sign",
+  "offset": {
+    "renovated": [
+      0,
+      0,
+      1
+    ],
+    "repaired": [
+      1,
+      1,
+      0
+    ],
+    "worn": [
+      1,
+      1,
+      0
+    ]
+  },
+  "pivot": {
+    "renovated": [
+      13.5,
+      0,
+      1
+    ],
+    "repaired": [
+      13.5,
+      0,
+      0.5
+    ],
+    "worn": [
+      13.5,
+      0,
+      0.5
+    ]
+  },
+  "size_m": [
+    1.885,
+    0.845,
+    0.195
+  ],
+  "sound": "wood",
+  "source": "props",
+  "tags": [
+    "lobby",
+    "sign"
+  ],
+  "tri_cap": 4000,
+  "verbs": [
+    "inspect",
+    "read"
+  ],
+  "vox": {
+    "renovated": "art/props/rink_sign.renovated.vox",
+    "repaired": "art/props/rink_sign.repaired.vox",
+    "worn": "art/props/rink_sign.worn.vox"
+  }
+}

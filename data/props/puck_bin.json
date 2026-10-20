@@ -1,0 +1,37 @@
+{
+  "id": "puck_bin",
+  "inspect": "A wire bin of pucks. Help yourself; Bev counts them anyway.",
+  "mass_kg": 15,
+  "name": "Puck bin",
+  "offset": [
+    0,
+    0,
+    0
+  ],
+  "pivot": [
+    4,
+    0,
+    4
+  ],
+  "size_m": [
+    0.52,
+    0.65,
+    0.52
+  ],
+  "sound": "metal",
+  "source": "props",
+  "tags": [
+    "pro_shop",
+    "small"
+  ],
+  "tri_cap": 2000,
+  "verbs": [
+    "inspect",
+    "contain"
+  ],
+  "vox": {
+    "renovated": "art/props/puck_bin.renovated.vox",
+    "repaired": "art/props/puck_bin.repaired.vox",
+    "worn": "art/props/puck_bin.worn.vox"
+  }
+}

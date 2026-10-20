@@ -604,6 +604,10 @@ func _build_walk() -> void:
 		w.set_noclip(on)
 		_say("noclip %s" % ("on" if on else "off")))
 	box.add_child(cb)
+	# World objects: the LIVE node counter and row counts (ObjectWalk.status)
+	var ow: Variant = w.get("objects")
+	if ow is ObjectWalk:
+		_note(box, "// World objects: %s" % ow.status())
 
 
 ## Plays one round; false once the career has left the season (offseason).

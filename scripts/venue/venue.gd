@@ -49,6 +49,8 @@ var away_short := "AWAY"
 var tier := 0
 var attendance := 0.05
 var rooms := {}  # room_id -> VenueRoom
+## World objects: a row for every prop the rooms place (scripts/world/objects).
+var objects := WorldObjects.new()
 var crowd: VenueCrowd
 var game: Node
 ## The building's sound (scripts/audio/venue_sound.gd); null when sound is

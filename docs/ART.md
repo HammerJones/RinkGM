@@ -25,6 +25,15 @@ off the floor, the ice resurfacer about 1.9 x 3.6 m.
 ## Conventions
 
 - +Y is up and the front faces -Z, the same as `VoxelModel`.
+- New props are assets, not code: a MagicaVoxel file in `art/props/` and a
+  record in `data/props/` (`docs/WORLD_OBJECTS.md` 2.1, `PropLibrary`). Keep
+  the kit's 0.065 m voxels; handheld things too small for that (a puck, a
+  cup, a roll of tape) set `voxel_m` in their record, 0.0125 to 0.02 m, the
+  way the puck and net already keep their regulation sizes. One model, with
+  the three ages as `wear` rules (the shared ageing, a palette remap or a
+  tint); three files only when the ages really differ in shape, as the props
+  converted from the coded kit do. `tools/prop_sheet.gd` renders every record
+  at its three ages to one sheet; check it before asking for review.
 - Props have their pivot on the floor, centred. Hanging things (lights) have
   it at the ceiling mount. `tools/tests/test_props.gd` checks this.
 - Grid voxels for anything that sits square; oriented voxels

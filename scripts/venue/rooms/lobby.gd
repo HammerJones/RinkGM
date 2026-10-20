@@ -195,6 +195,7 @@ func _ticket_booth(k: VenueKit) -> void:
 	k.block(Vector3(x1 - 0.1, h - 0.45, z0 + 1.1), Vector3(x1, h, z1), ply, 0.4)
 	k.block(Vector3(x1 - 0.1, 2.12, z0 + 0.15), Vector3(x1, h, z0 + 1.1), ply, 0.4)
 	k.block(Vector3(x1, 1.0, z0 + 1.1), Vector3(x1 + 0.35, 1.07, z1 - 0.1), trim.lightened(0.15), 0.3)
+	k.prop("puck", Vector3(x1 + 0.18, 1.07, -14.55), 0.0, false)  # World objects: a puck on the counter
 	for z in [z0 + 1.1, (z0 + 1.1 + z1) * 0.5, z1 - 0.05]:
 		k.block(Vector3(x1 - 0.1, 1.05, z - 0.04), Vector3(x1, h - 0.45, z + 0.04), trim, 0.3, 0.03, false)
 	k.glass(Vector3(x1 - 0.07, 1.05, z0 + 1.14), Vector3(x1 - 0.03, h - 0.45, z1 - 0.09))
@@ -251,6 +252,8 @@ func _snack_bar(k: VenueKit) -> void:
 	# two kit counters facing the lobby, with a gap for staff at the end
 	for cx in [-40.8, -38.3]:
 		k.prop("concession_counter", Vector3(cx, 0, -11.25), PI)
+	# World objects: a mug left on the counter (take it, drop it anywhere)
+	k.prop("coffee_cup", Vector3(-40.0, 1.105, -11.1), PI + 0.4, false)
 	# back shelf, a coffee urn, a popcorn machine, a cooler
 	k.aged_block(Vector3(-42.0, 0, -13.7), Vector3(-36.0, 0.95, -13.1), Color("6f6a5e"), 0.4)
 	k.block(Vector3(-41.5, 0.95, -13.7), Vector3(-41.1, 1.45, -13.3), Color("b8bcc2"), 0.2, 0.03)

@@ -1,0 +1,37 @@
+{
+  "id": "concession_counter",
+  "inspect": "The Hot Stove's counter. Fifty years of elbows.",
+  "mass_kg": 90,
+  "name": "Snack bar counter",
+  "offset": [
+    1,
+    0,
+    1
+  ],
+  "pivot": [
+    18.5,
+    0,
+    5.5
+  ],
+  "size_m": [
+    2.535,
+    1.82,
+    0.78
+  ],
+  "sound": "wood",
+  "source": "props",
+  "tags": [
+    "canteen",
+    "lobby",
+    "furniture"
+  ],
+  "tri_cap": 8000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": {
+    "renovated": "art/props/concession_counter.renovated.vox",
+    "repaired": "art/props/concession_counter.repaired.vox",
+    "worn": "art/props/concession_counter.worn.vox"
+  }
+}
