@@ -41,6 +41,8 @@ func _run() -> void:
 	var off := OnIceSession.create("public_skate", {"seed": 5, "fast": true, "count": 4})
 	_expect(off.get_node_or_null("WorldSound") == null, "no hooks attach while sound is off")
 	off.free()
+	var layers := ["minor_hockey", "beer_league", "learn_to_skate", "broomball"].map(VenueSound._layers_for)
+	_expect(layers == ["practice", "game", "figure", "broomball"], "a booking's kind picks the venue's sound layers %s" % [layers])
 	WorldSound.recording = true
 	var w := Node3D.new()
 	root.add_child(w)

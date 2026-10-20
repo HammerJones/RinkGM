@@ -112,6 +112,10 @@ func _point(stream: String, pos: Vector3, db: float, unit: float, reach: float, 
 
 ## What's on the ice: sets which layers play and how loud (see EVENTS).
 func set_event(kind: String) -> void:
+	if kind == "":
+		kind = "none"
+	if not EVENTS.has(kind):
+		kind = _layers_for(kind)
 	if not EVENTS.has(kind):
 		push_warning("VenueSound: unknown event '%s'" % kind)
 		kind = "none"
@@ -125,6 +129,17 @@ func set_event(kind: String) -> void:
 		RinkSound.start_loop(_zamboni)
 	elif _zamboni:
 		_zamboni.stop()
+
+
+## A booking's event kind (RinkContracts: "minor_hockey", "beer_league"...)
+## -> the layers of the on-ice controller that runs it (on_ice.json).
+static func _layers_for(kind: String) -> String:
+	var c := OnIceData.controller_for(kind)
+	if c.begins_with("figure"):
+		return "figure"
+	if c in ["peewee_practice", "team_practice", "stick_and_puck"]:
+		return "practice"
+	return c
 
 
 ## A goal or a big moment: the stands roar, `amount` 0..1 (a home goal is
