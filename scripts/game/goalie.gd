@@ -137,7 +137,9 @@ func physics_update(dt: float) -> void:
 			var t := dist / closing
 			tracked = true
 			if not _tracking:
-				_reaction = lerpf(0.26, 0.13, skill) * ai.goalie_reaction * (SET if _alert else 1.0)
+				# (0.26-0.13 before 2026-10-20: a default goalie then stopped
+				# every picked corner from 10 m and 5v5 ran at ~92% saves)
+				_reaction = lerpf(0.36, 0.24, skill) * ai.goalie_reaction * (SET if _alert else 1.0)
 			var hit := p2 + pv * t
 			var hy := maxf(0.0, puck.position.y + puck.vel.y * t - 0.5 * Puck.GRAVITY * t * t)
 			reach_target = Vector2(clampf((hit - pos2).dot(right2()), -1.2, 1.2), clampf(hy, 0.0, 1.5))
