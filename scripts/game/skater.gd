@@ -1,5 +1,12 @@
 class_name Skater
 extends Node3D
+
+## A skate pushed off the ice (left foot -1, right 1), for the ice's marks
+## and for sound: where the blade was and how fast the skater was going.
+signal stride(at: Vector3, speed: float, foot: int)
+## A hockey stop scraping snow: sent as the stop starts and every
+## STOP_EVERY seconds while it scrapes.
+signal stop_spray(at: Vector3, speed: float)
 ## A skater simulated as a point mass on edges:
 ##  * thrust only along the direction the skates point, so you carve turns
 ##  * lateral velocity bleeds off through edge grip (part of it is kept as
@@ -37,6 +44,7 @@ const CROSS_AWAY := 0.12                   # moving the blade this far away from
 const STICK_LIFTED_TIME := 0.55
 const LIFT_REACH := 0.3      # m: your blade has to be this close under their shaft
 const DASH_PUSH := 0.2       # s the dash's push lasts
+const STOP_EVERY := 0.2       # s between stop_spray signals while a stop scrapes
 const CRUISE := 0.85         # share of top speed that striding alone reaches; dashes take you the rest
 const FLICK_WINDOW := 0.09   # a flick is measured over this much stick history
 const FLICK_TRAVEL := 0.9    # forward stick travel inside the window that counts as a flick
@@ -97,6 +105,9 @@ var heading := Vector3(1, 0, 0)
 var yaw_rate := 0.0
 var turn_load := 0.0   ## m/s^2 of sideways load from turning, hurts balance
 var braking := false
+var _stride_t := 0.0
+var _foot := 1
+var _scrape_t := 0.0
 ## Skating backwards (the turn-around toggle): the skater faces away from
 ## where the left stick points and pushes with backward C-cuts, slower than
 ## forwards. Physics, for now, from the Controls thread.
@@ -388,6 +399,8 @@ func physics_update(dt: float) -> void:
 		vel += push * accel * align * amount * room * dt
 		var room_direct := clampf(1.0 - vel.dot(desired) / (top * CRUISE), 0.0, 1.0)
 		vel += desired * p.accel * 0.35 * blend * amount * room_direct * dt
+
+	_strides(dt, amount, spd, top)
 
 	# dash: a few hard strides toward the stick, a push over DASH_PUSH seconds
 	# up to (never past) top speed
@@ -1222,3 +1235,25 @@ func _make_spray() -> CPUParticles3D:
 	m.material = mat
 	p.mesh = m
 	return p
+
+
+## Stride and stop events: strides come quicker the harder and faster the
+## skater pushes (about 1.4 a second easing along, 2.6 flat out), feet
+## alternating; a stop sprays as it starts and while it scrapes.
+func _strides(dt: float, amount: float, spd: float, top: float) -> void:
+	if braking:
+		_stride_t = 0.0
+		_scrape_t -= dt
+		if _scrape_t <= 0.0 and spd > 1.2:
+			_scrape_t = STOP_EVERY
+			stop_spray.emit(position + vel.normalized() * 0.3, spd)
+		return
+	_scrape_t = 0.0
+	if (amount <= 0.15 and dash_timer <= 0.0) or stun_timer > 0.0:
+		_stride_t = 0.0
+		return
+	_stride_t += dt * lerpf(1.4, 2.6, clampf(maxf(amount, spd / maxf(top, 0.1)), 0.0, 1.0))
+	if _stride_t >= 1.0:
+		_stride_t -= 1.0
+		_foot = -_foot
+		stride.emit(position + right_vec() * 0.18 * _foot, spd, _foot)

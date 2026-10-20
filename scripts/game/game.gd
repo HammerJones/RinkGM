@@ -42,6 +42,17 @@ signal stick_replaced(s: Skater)
 const BRACED := 2.0  # balance multiplier for a skater who sees the hit coming
 
 var rink: Rink
+## The sheet under the game (World's IceSlab, shown by IceView): skate
+## strides and stops cut it and throw snow, so a period leaves it snowed up
+## where the play was. Whoever stages the game can hand in the rink's own
+## ice (`Game.match_ice = sim.ice`) so the marks stay on it; otherwise a
+## fresh, just-resurfaced Millbrook sheet.
+static var match_ice: IceSlab = null
+var ice: IceSlab
+const STRIDE_WEAR := 0.0008   # IceSlab.wear amount per stride at 8 m/s
+const STOP_WEAR := 0.0025     # per stop_spray at 8 m/s
+const STRIDE_SNOW_MM := 0.8   # loose snow a stride shaves up, mm on its cell
+const STOP_SNOW_MM := 4.0     # what a stop_spray throws, mm over the cells ahead
 var venue: Venue
 var puck: Puck
 var skaters: Array[Skater] = []
@@ -142,6 +153,14 @@ func _ready() -> void:
 	_build_environment()
 	rink = Rink.new()
 	add_child(rink)
+	ice = match_ice
+	match_ice = null
+	if ice == null:
+		# a fresh sheet, resurfaced and frozen in before the warm-up
+		ice = IceSlab.create_millbrook()
+		ice.resurface(0.95, 0.4, 600.0)
+		ice.freeze(900.0)
+	IceView.attach(rink, ice)
 	puck = Puck.new()
 	add_child(puck)
 	puck.goal_scored.connect(_on_goal)
@@ -846,6 +865,9 @@ func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 	if autoplay and settings:
 		print("autoplay stats: ", stats, " score ", score, " period ", period, " clock ", snappedf(clock, 0.1))
+		if ice:
+			ice.flush()
+			print("ice after play: gouge %.2f mm, snow %.2f, smooth %.2f" % [ice.mean_gouge_mm(), ice.snow, ice.felt_smoothness()])
 		_print_box()
 		if team_ai[0] or team_ai[1]:
 			print("ai levels: ", team_ai.map(func(a): return a.level if a else -1.0),
@@ -1160,9 +1182,39 @@ func _swap_body(out: Skater, fresh: Skater, at_door: bool) -> void:
 func _make_body(p: PlayerProfile, team: int, pal: Dictionary) -> Skater:
 	var s := Skater.new()
 	s.setup(self, team, p.number, pal)
+	s.stride.connect(_on_stride.bind(s))
+	s.stop_spray.connect(_on_stop_spray.bind(s))
 	add_child(s)
 	_park(s, benches[team].bodies.size())
 	return s
+
+
+## A stride cuts the ice along the way the skater is going.
+func _on_stride(at: Vector3, spd: float, _foot: int, s: Skater) -> void:
+	if absf(at.z) < Rink.HALF_W and absf(at.x) < Rink.HALF_L:
+		var k := clampf(spd / 8.0, 0.3, 1.5)
+		ice.wear(Vector2(at.x, at.z), STRIDE_WEAR * k, fposmod(atan2(s.heading.z, s.heading.x), PI))
+		_throw_snow(Vector2(at.x, at.z), Vector2.ZERO, STRIDE_SNOW_MM * k)
+
+
+## A hockey stop scrapes deeper and throws more snow, along the slide.
+func _on_stop_spray(at: Vector3, spd: float, s: Skater) -> void:
+	if absf(at.z) < Rink.HALF_W and absf(at.x) < Rink.HALF_L:
+		var k := clampf(spd / 8.0, 0.2, 1.5)
+		ice.wear(Vector2(at.x, at.z), STOP_WEAR * k, fposmod(atan2(s.vel.z, s.vel.x), PI))
+		var ahead := Vector2(s.vel.x, s.vel.z).normalized()
+		_throw_snow(Vector2(at.x, at.z), ahead, STOP_SNOW_MM * k)
+
+
+## Loose snow onto the sheet: on one cell, or spread over the three cells
+## ahead along `ahead` (a stop's spray).
+func _throw_snow(at: Vector2, ahead: Vector2, mm: float) -> void:
+	var n := 1 if ahead == Vector2.ZERO else 3
+	for j in n:
+		var i := IceSlab.cell_at(at + ahead * (0.3 + 0.3 * j))
+		if ice.inside[i] != 0:
+			ice.s[i] += mm / n
+	ice.touch_around(at, 1.2)
 
 
 ## Stands a body behind the boards on its team's bench, facing the ice; a

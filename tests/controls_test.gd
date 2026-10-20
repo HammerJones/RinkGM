@@ -108,7 +108,14 @@ func _run() -> void:
 	print("speed after dash %.1f m/s, without %.1f m/s" % [with_dash, without])
 	_check(with_dash > without + 0.5, "dash adds speed")
 
-	# --- hockey stop
+	# --- hockey stop (and the marks strides and stops leave on the ice)
+	var heard := {"stride": 0, "stop": 0}
+	var on_stride := func(_a, _b, _c): heard.stride += 1
+	var on_stop := func(_a, _b): heard.stop += 1
+	game.human.stride.connect(on_stride)
+	game.human.stop_spray.connect(on_stop)
+	var gouge0: float = game.ice.mean_gouge_mm()
+	var snow0: float = game.ice.snow
 	await _carry(Vector2(-15, 0), false)
 	_set_plan(func(f, _t2): f.move = Vector2(1, 0))
 	await _wait(1.0)
@@ -116,6 +123,12 @@ func _run() -> void:
 	_set_plan(func(f, _t2): f.stop = true)
 	await _wait(0.6)
 	print("stop: %.1f -> %.1f m/s" % [cruising, game.human.vel.length()])
+	game.human.stride.disconnect(on_stride)
+	game.human.stop_spray.disconnect(on_stop)
+	game.ice.flush()
+	print("ice marks: %d strides, %d stop sprays, gouge %.4f -> %.4f mm, snow %.4f -> %.4f" % [heard.stride, heard.stop, gouge0, game.ice.mean_gouge_mm(), snow0, game.ice.snow])
+	_check(heard.stride >= 1 and heard.stop >= 1, "strides and stops send their events")
+	_check(game.ice.mean_gouge_mm() > gouge0 and game.ice.snow > snow0, "strides and stops cut the ice and throw snow")
 	_check(game.human.vel.length() < cruising * 0.5, "hockey stop sheds speed")
 
 	# --- defensive stick lift on an opponent carrier
