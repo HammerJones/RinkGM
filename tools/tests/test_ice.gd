@@ -283,6 +283,7 @@ func _check_cut_speed(worn: IceSlab) -> void:
 		run.heading = 0.0
 		run.speed = v
 		run.cond_down = true
+		run.cond_pos = 1.0  # already lowered (the lever takes COND_TRAVEL_S)
 		run.blade_mm = 1.0
 		for k in 30:
 			run.step(DT, v / ResurfaceRun.TOP_SPEED, 0.0)
