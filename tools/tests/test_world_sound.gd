@@ -196,10 +196,13 @@ func _match_puck(w: Node3D) -> void:
 		vs._next_contact = 0.0  # past the rate limit (the timer runs on game time)
 		VenueSound.heard.clear()
 		puck.position = c[0]
-		puck.vel = Vector3(18, 0, 0)
-		vs._physics_process(0.016)
-		puck.vel = Vector3(-10, 0, 0)
-		vs._physics_process(0.016)
+		if puck.has_signal("boards_hit"):
+			puck.boards_hit.emit(c[0], 18.0)
+		else:
+			puck.vel = Vector3(18, 0, 0)
+			vs._physics_process(0.016)
+			puck.vel = Vector3(-10, 0, 0)
+			vs._physics_process(0.016)
 		_expect(heard.call(c[1]), "a match puck off the %s -> %s" % ["glass" if c[0].y > 1.0 else "boards", c[1]])
 	VenueSound.heard.clear()
 	vs._next_contact = 0.0
@@ -212,6 +215,21 @@ func _match_puck(w: Node3D) -> void:
 	vs._next_contact = 0.0
 	puck.left_rink.emit(puck.position)
 	_expect(heard.call("glass_rattle"), "Puck.left_rink -> glass_rattle")
+	# the skaters: a light scrape per stride, a long spray per stop
+	var sk := Node3D.new()
+	sk.add_user_signal("stride", [{"name": "at", "type": TYPE_VECTOR3}, {"name": "speed", "type": TYPE_FLOAT}, {"name": "foot", "type": TYPE_INT}])
+	sk.add_user_signal("stop_spray", [{"name": "at", "type": TYPE_VECTOR3}, {"name": "speed", "type": TYPE_FLOAT}])
+	w.add_child(sk)
+	vs.watch_skaters([sk])
+	WorldSound.recording = true
+	WorldSound.reset()
+	sk.emit_signal("stride", Vector3(0, 0, 2), 6.0, 1)
+	sk.emit_signal("stop_spray", Vector3(0, 0, 2), 8.0)
+	var ws := WorldSound.heard.map(func(h: Dictionary) -> String: return str(h.sound))
+	_expect("blade_carve" in ws, "Skater.stride -> blade_carve")
+	_expect("stop_spray" in ws, "Skater.stop_spray -> stop_spray")
+	WorldSound.recording = false
+	WorldSound.reset()
 	VenueSound.recording = false
 	VenueSound.heard.clear()
 

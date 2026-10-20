@@ -2,7 +2,7 @@ class_name DorisDrive
 extends JobScene
 ## Driving Doris (playtest #45): the resurface as a mini game the owner has
 ## to do until a driver is hired. First person up in the seat of Doris, a
-## Zambelli 552 Electric (DorisModel: every control on the real machine is a
+## Zambelli 546, the gas 552 (DorisModel: every control on the real machine is a
 ## part here, and moves), on the real rink: fill the tanks at the standpipe, out
 ## through the gate, conditioner down, the controls set, two laps and the
 ## loops, back to the bay and dump the snow at the pit. ResurfaceRun does the
