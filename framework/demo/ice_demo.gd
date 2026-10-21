@@ -611,6 +611,28 @@ func _self_test() -> void:
 		ice.crust[si] > 0.5 and ice.snow[si] == 0.0 and ice.water[si] == 0.0,
 		"slush set into a crust (%.2f mm)" % ice.crust[si]
 	)
+	# snow has height: the blade must get under it to touch the ice
+	_set_state(0)
+	ice.flush()
+	var snc := ice.cell_at(Vector2(8.0, 10.0))
+	var sni := ice.index(snc.x, snc.y)
+	var snow0 := ice.snow[sni]
+	var ang0 := ice.ang[sni]
+	ice.resurface(PASS_X0, PASS_X1, 9.0, 11.0, 0.0, 0.0, 2.0, 1.0)
+	check.call(
+		is_equal_approx(ice.snow[sni], snow0) and is_equal_approx(ice.ang[sni], ang0),
+		"a blade above the snow touches nothing"
+	)
+	ice.resurface(PASS_X0, PASS_X1, 9.0, 11.0, 0.0, 0.0, 0.4, 1.0)
+	check.call(
+		ice.snow[sni] < snow0 and ice.snow[sni] > 0.3 and is_equal_approx(ice.ang[sni], ang0),
+		"a blade in the snow shaves only snow (%.2f of %.2f)" % [ice.snow[sni], snow0]
+	)
+	ice.resurface(PASS_X0, PASS_X1, 9.0, 11.0, 0.0, 0.0, 0.0, 1.0)
+	check.call(
+		ice.snow[sni] == 0.0 and is_equal_approx(ice.ang[sni], 1.0),
+		"a blade at the ice takes the snow and cuts"
+	)
 	# water runs into a gouge and fills it: the trench goes, a scar stays
 	_set_state(1)
 	ice.flush()

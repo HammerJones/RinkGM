@@ -250,11 +250,13 @@ func chip(at: Vector2, width: float, depth: float, snow_mm := 0.0) -> void:
 
 
 ## The resurfacer over a band (x range, z range in metres): the blade at
-## `blade_mm` above the base shaves off everything higher (built-up ice,
-## crust peaks, snow; a blade below zero cuts into the base and takes
-## gouge depth with it), and where it touched it leaves a dry cut with
-## striations along `travel`, the blade's direction (radians in the
-## sheet's plane). The shavings go up the auger; a little spills as a
+## `blade_mm` above the base shaves off everything higher. Snow has
+## height: a blade above the snow touches nothing, a blade in the snow
+## shaves only snow, and a blade in the solid (built-up ice, crust peaks)
+## takes the snow with it and cuts the ice; below zero it cuts into the
+## base and takes gouge depth with it. Where it cut the solid it leaves
+## a dry cut with striations along `travel`, the blade's direction
+## (radians in the sheet's plane). The shavings go up the auger; a little spills as a
 ## ridge along the band's sides. In flood mode (`film_mm` > 0) the
 ## conditioner's rag lays the water behind the blade: a new rag
 ## (`rag_wear` 0) an even film, a worn one (1) streaks and a coarser cut.
@@ -277,29 +279,37 @@ func resurface(
 		var streak := 1.0 + rag_wear * 0.6 * sin(z * cell * 41.0) * sin(z * cell * 7.3)
 		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
 			var i := index(x, z)
-			# the column's top: ice, the tallest crust peak, loose snow
-			var top := ice[i] + crust[i] + snow[i]
+			# the column's top: ice, the tallest crust peak, loose snow on it.
+			# Snow has height: a blade above the snow touches nothing, a blade
+			# in the snow shaves only snow, a blade in the solid takes the snow
+			# with it and cuts the ice
+			var solid := ice[i] + crust[i]
+			var top := solid + snow[i]
 			var took := 0.0
-			if snow[i] > 0.0:
-				took += snow[i]  # loose snow goes up the auger whatever the blade
-				snow[i] = 0.0
 			if top > blade_mm:
-				var level := maxf(blade_mm, 0.0)
-				if ice[i] + crust[i] > level:
-					var cut_mm := ice[i] + crust[i] - level
-					took += cut_mm
-					# peaks go first, then the ice under them
-					var from_crust := minf(crust[i], cut_mm)
-					crust[i] -= from_crust
-					ice[i] -= cut_mm - from_crust
-				if blade_mm < 0.0 and gouge[i] > 0.0:
-					# below the base: the blade takes the surface the gouge is in
-					var dig := minf(gouge[i], -blade_mm)
-					gouge[i] -= dig
-					scar[i] = maxf(scar[i] - dig, 0.0)
-				cut[i] = lerpf(0.75, 0.5, rag_wear) if film_mm > 0.0 else 0.75
-				ang[i] = travel
-				touched_z[z] = true
+				if blade_mm > solid:
+					var keep := blade_mm - solid
+					took += snow[i] - keep
+					snow[i] = keep
+				else:
+					took += snow[i]
+					snow[i] = 0.0
+					var level := maxf(blade_mm, 0.0)
+					if solid > level:
+						var cut_mm := solid - level
+						took += cut_mm
+						# peaks go first, then the ice under them
+						var from_crust := minf(crust[i], cut_mm)
+						crust[i] -= from_crust
+						ice[i] -= cut_mm - from_crust
+					if blade_mm < 0.0 and gouge[i] > 0.0:
+						# below the base: the blade takes the surface the gouge is in
+						var dig := minf(gouge[i], -blade_mm)
+						gouge[i] -= dig
+						scar[i] = maxf(scar[i] - dig, 0.0)
+					cut[i] = lerpf(0.75, 0.5, rag_wear) if film_mm > 0.0 else 0.75
+					ang[i] = travel
+					touched_z[z] = true
 			if film_mm > 0.0:
 				water[i] = film_mm * streak
 				frozen[i] = 0.0

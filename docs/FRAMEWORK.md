@@ -493,11 +493,13 @@ time. `set_now()` sets every wet cell at once, for a test rig.
 
 **The blade.** `resurface(x0, x1, z0, z1, film_mm, rag_wear, blade_mm,
 travel)` is the resurfacer over a band: the blade at `blade_mm` above
-the base shaves off everything higher (built-up ice, crust peaks, loose
-snow; a blade below zero cuts into the base and takes gouge depth), and
-where it touched it leaves a dry cut whose striations run along
-`travel`, the blade's direction. Columns below the blade keep their old
-cut. The shavings go up the auger, a little spills as a ridge along the
+the base shaves off everything higher. Snow has height: a blade above
+the snow touches nothing, a blade in the snow shaves only snow, and a
+blade in the solid (built-up ice, crust peaks) takes the snow with it
+and cuts the ice; below zero it cuts into the base and takes gouge
+depth. Where it cut the solid it leaves a dry cut whose striations run
+along `travel`, the blade's direction. Columns below the blade keep
+their old cut. The shavings go up the auger, a little spills as a ridge along the
 band's sides, and the call returns the millimetres taken. With
 `film_mm` > 0 the conditioner's rag lays water behind the blade: a new
 rag (`rag_wear` 0) an even film, a worn one (1) streaks and a coarser
