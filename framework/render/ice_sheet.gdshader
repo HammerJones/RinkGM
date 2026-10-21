@@ -7,8 +7,11 @@ uniform sampler2D cutmap : filter_linear;  // r angle (turns), g gouge, b filled
 uniform sampler2D stria_n : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D snow_n : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D ripple_n : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform sampler2D markings : source_color, filter_linear;  // lines and logos under the ice
+uniform sampler2D depthmap : filter_linear;  // r ice over the paint (0..1 of 64 mm)
+uniform sampler2D markings : source_color, filter_linear;  // lines and logos on the white paint
 uniform bool has_markings = false;
+uniform float clear_mm = 30.0;  // ice this thick lets 37% of the paint through
+uniform vec3 paint_white = vec3(0.86, 0.88, 0.90);
 uniform vec2 sheet = vec2(24.0, 14.0);     // metres
 uniform float striation_m = 1.0;           // striation tiles per metre (the map is one metre)
 uniform float striation_strength = 0.9;
@@ -42,11 +45,21 @@ void fragment() {
 	vec3 n_dry = normalize(mix(n_fresh, n_cut, ct * striation_strength));
 	vec3 n = normalize(mix(n_dry, n_snow, sn));
 	float rough = mix(mix(0.16, 0.55, ct), 1.0, sn);
-	vec3 alb_dry = mix(vec3(0.58, 0.68, 0.76), vec3(0.64, 0.71, 0.76), ct);
+	// the paint is at a fixed depth: the lines sit on the white paint and
+	// show through the ice above them, vivid when it is thin, faded and
+	// blue when it is thick; clear ice (a filled chip) shows more
+	float dep = texture(depthmap, UV).r * 64.0;
+	float gg = clamp(c.g * 4.0, 0.0, 1.0);
+	float sc = clamp(c.b * 4.0, 0.0, 1.0) * (1.0 - gg);
+	float through = exp(-dep / clear_mm);
+	through = mix(through, min(through * 1.8, 1.0), sc);
+	vec3 under = paint_white;
 	if (has_markings) {
 		vec4 m = texture(markings, UV);
-		alb_dry = mix(alb_dry, m.rgb, m.a * 0.85);
+		under = mix(under, m.rgb, m.a);
 	}
+	vec3 body = mix(vec3(0.58, 0.68, 0.76), vec3(0.64, 0.71, 0.76), ct);
+	vec3 alb_dry = mix(body, under, through);
 	vec3 alb = mix(alb_dry, vec3(0.80, 0.82, 0.84), sn);
 	// a crust: slush that set, very rough, grey-white, lumpy
 	float cr = clamp(c.a * 4.0, 0.0, 1.0);
@@ -68,14 +81,13 @@ void fragment() {
 	float set = wt * fz;
 	rough = mix(rough, 0.12, set);
 	alb = mix(alb, vec3(0.74, 0.83, 0.90), set * 0.5);
-	// a gouge: darker trench, rougher; one that water filled is a pale
-	// scar, flush with the surface, still there if you look
-	float gg = clamp(c.g * 4.0, 0.0, 1.0);
+	// a gouge: darker trench, rougher; one that water filled is clear
+	// ice, flush with the surface: glassier, a touch darker, the paint
+	// showing through it more than around it
 	alb *= 1.0 - 0.25 * gg;
 	rough = mix(rough, 0.7, gg);
-	float sc = clamp(c.b * 4.0, 0.0, 1.0) * (1.0 - gg);
-	alb = mix(alb, alb * 1.12 + vec3(0.04), sc * 0.8);
-	rough = mix(rough, 0.3, sc * 0.5);
+	alb = mix(alb, alb * 0.92, sc * 0.6);
+	rough = mix(rough, 0.1, sc * 0.7);
 	ALBEDO = alb;
 	ROUGHNESS = rough;
 	SPECULAR = mix(0.5, 0.1, sn);

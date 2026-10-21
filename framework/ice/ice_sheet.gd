@@ -40,6 +40,10 @@ const FLAT_EPS := 0.00002  # m of height range a chunk may have and still be one
 
 ## Metres per cell.
 var cell := 0.025
+## Ice over the paint at the datum, mm: the lines are painted at a fixed
+## depth and read vivid through thin ice, faded and blue through thick.
+var base_mm := 25.0
+const DEPTH_FULL := 64.0  # mm the depth texel spans
 ## Vertical exaggeration of the heightfield (1 = true millimetres).
 var height_scale := 4.0
 ## How long a frame may spend uploading and re-meshing dirty chunks.
@@ -67,6 +71,9 @@ var _state_img: Image
 var _cut_img: Image
 var _state_bytes := PackedByteArray()
 var _cut_bytes := PackedByteArray()
+var _depth_bytes := PackedByteArray()
+var _depth_img: Image
+var _depth_tex: ImageTexture
 var _state_tex: ImageTexture
 var _cut_tex: ImageTexture
 var _chunks := {}  # Vector2i -> MeshInstance3D
@@ -89,14 +96,18 @@ func setup(size_m: Vector2, cell_m := 0.025) -> void:
 	_cd = ceili(float(d) / CHUNK)
 	_state_bytes.resize(w * d * 4)
 	_cut_bytes.resize(w * d * 4)
+	_depth_bytes.resize(w * d * 4)
 	_state_img = Image.create_from_data(w, d, false, Image.FORMAT_RGBA8, _state_bytes)
 	_cut_img = Image.create_from_data(w, d, false, Image.FORMAT_RGBA8, _cut_bytes)
+	_depth_img = Image.create_from_data(w, d, false, Image.FORMAT_RGBA8, _depth_bytes)
 	_state_tex = ImageTexture.create_from_image(_state_img)
 	_cut_tex = ImageTexture.create_from_image(_cut_img)
+	_depth_tex = ImageTexture.create_from_image(_depth_img)
 	material = ShaderMaterial.new()
 	material.shader = load("res://framework/render/ice_sheet.gdshader")
 	material.set_shader_parameter("state", _state_tex)
 	material.set_shader_parameter("cutmap", _cut_tex)
+	material.set_shader_parameter("depthmap", _depth_tex)
 	material.set_shader_parameter("sheet", size)
 	material.set_shader_parameter("stria_n", striation_normal())
 	material.set_shader_parameter("snow_n", noise_normal(0.12, 2, 5.0, 9))
@@ -109,6 +120,19 @@ func setup(size_m: Vector2, cell_m := 0.025) -> void:
 	_wet_list.resize(0)
 	_wet_next.resize(0)
 	remeshed = 0
+	for cz in _cd:
+		for cx in _cw:
+			_dirty[Vector2i(cx, cz)] = true
+
+
+## Ice over the paint at a column, mm (the datum's base plus what floods
+## built up, less what a gouge took).
+func paint_depth(i: int) -> float:
+	return maxf(base_mm + ice[i] - gouge[i], 0.0)
+
+
+## Re-reads every column (after a change of base_mm).
+func mark_all_dirty() -> void:
 	for cz in _cd:
 		for cx in _cw:
 			_dirty[Vector2i(cx, cz)] = true
@@ -519,8 +543,10 @@ func flush() -> void:
 func _upload() -> void:
 	_state_img.set_data(w, d, false, Image.FORMAT_RGBA8, _state_bytes)
 	_cut_img.set_data(w, d, false, Image.FORMAT_RGBA8, _cut_bytes)
+	_depth_img.set_data(w, d, false, Image.FORMAT_RGBA8, _depth_bytes)
 	_state_tex.update(_state_img)
 	_cut_tex.update(_cut_img)
+	_depth_tex.update(_depth_img)
 
 
 func _build_chunk(key: Vector2i) -> void:
@@ -542,6 +568,10 @@ func _build_chunk(key: Vector2i) -> void:
 			_cut_bytes[b + 1] = int(clampf(gouge[i] / GOUGE_FULL, 0.0, 1.0) * 255.0)
 			_cut_bytes[b + 2] = int(clampf(scar[i] / GOUGE_FULL, 0.0, 1.0) * 255.0)
 			_cut_bytes[b + 3] = int(clampf(crust[i] / GOUGE_FULL, 0.0, 1.0) * 255.0)
+			_depth_bytes[b] = int(clampf(paint_depth(i) / DEPTH_FULL, 0.0, 1.0) * 255.0)
+			_depth_bytes[b + 1] = 0
+			_depth_bytes[b + 2] = 0
+			_depth_bytes[b + 3] = 255
 			var h := _height(x, z)
 			lo = minf(lo, h)
 			hi = maxf(hi, h)

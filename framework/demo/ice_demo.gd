@@ -139,7 +139,7 @@ func _ready() -> void:
 	(
 		hud
 		. legend(
-			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [R] RESURFACER   [M] MODE   [ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   [T] CLOCK   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
+			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [, .] ICE OVER PAINT   [R] RESURFACER   [M] MODE   [ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   [T] CLOCK   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 		)
 	)
 	_machine = _make_machine()
@@ -149,6 +149,9 @@ func _ready() -> void:
 	add_child(_stream)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--base="):
+			ice.base_mm = float(a.trim_prefix("--base="))
+			ice.mark_all_dirty()
 		if a.begins_with("--screenshot="):
 			_screenshot.call_deferred(a.trim_prefix("--screenshot="))
 
@@ -185,7 +188,7 @@ func _process(dt: float) -> void:
 			hud
 			. readout(
 				(
-					"STATE %s   SLAB %.1f C   AIR %.1f C   CLOCK x%d%s   T+%s   WET %d   DIRTY %d / %d\nRESURFACER %s   BLADE %+.2f MM   RAG %s   SHAVED %.0f MM   HOSED %.0f L%s"
+					"STATE %s   PAINT UNDER %.0f MM   SLAB %.1f C   AIR %.1f C   CLOCK x%d%s   T+%s   WET %d   DIRTY %d / %d\nRESURFACER %s   BLADE %+.2f MM   RAG %s   SHAVED %.0f MM   HOSED %.0f L%s"
 					% [
 						STATES[state][0],
 						slab_c,
@@ -378,6 +381,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_BRACKETRIGHT:
 				blade_mm = minf(blade_mm + 0.25, 6.0)
 				hud.toast("BLADE %+.2f MM" % blade_mm)
+			KEY_COMMA:
+				ice.base_mm = maxf(ice.base_mm - 2.0, 4.0)
+				ice.mark_all_dirty()
+				hud.toast("ICE OVER THE PAINT %.0f MM" % ice.base_mm)
+			KEY_PERIOD:
+				ice.base_mm = minf(ice.base_mm + 2.0, 60.0)
+				ice.mark_all_dirty()
+				hud.toast("ICE OVER THE PAINT %.0f MM" % ice.base_mm)
 			KEY_I:
 				instant = not instant
 				hud.toast("INSTANT FREEZE %s" % ("ON" if instant else "OFF"))
@@ -499,18 +510,15 @@ static func _clock(t: float) -> String:
 
 
 func _screenshot(path: String) -> void:
-	# a bump of instant-frozen floods, then a dry pass at +1 mm over it:
-	# the blade leaves striations along its travel and shaves the bump
-	walker.global_position = ice.position + Vector3(5.0, 0.05, 4.0)
-	walker.rotation.y = -PI / 2  # look along +x, down the pass
-	walker.camera.rotation.x = -0.45
-	for again in 4:
-		ice.pour(Vector2(8.0, 4.0), 0.8, 1.2)
-		ice.set_now()
-	_start_pass()
-	blade_mm = 1.0
-	for i in 20:
-		_zamboni_step(0.15)
+	# over the lines: a chip, a filled chip (clear ice) and the paint
+	# showing through whatever ice is over it (--base=)
+	walker.global_position = ice.position + Vector3(10.5, 0.05, 7.5)
+	walker.rotation.y = -PI / 2
+	walker.camera.rotation.x = -0.55
+	ice.chip(Vector2(11.8, 7.2), 0.14, 2.0, 0.3)
+	ice.chip(Vector2(12.2, 7.6), 0.14, 2.0, 0.0)
+	ice.pour(Vector2(12.2, 7.6), 0.4, 2.5)
+	ice.set_now()
 	ice.flush()
 	for i in 6:
 		await get_tree().process_frame
@@ -625,6 +633,19 @@ func _self_test() -> void:
 	check.call(
 		ice.crust[si] > 0.5 and ice.snow[si] == 0.0 and ice.water[si] == 0.0,
 		"slush set into a crust (%.2f mm)" % ice.crust[si]
+	)
+	# the paint is at a fixed depth: thicker ice over it reads deeper
+	var d0 := ice.paint_depth(ice.index(10, 10))
+	ice.base_mm += 10.0
+	check.call(
+		is_equal_approx(ice.paint_depth(ice.index(10, 10)), d0 + 10.0),
+		"more base ice is more over the paint"
+	)
+	ice.base_mm -= 10.0
+	ice.chip(Vector2(2.0, 2.0), 0.12, 2.0, 0.0)
+	var cc := ice.cell_at(Vector2(2.0, 2.0))
+	check.call(
+		ice.paint_depth(ice.index(cc.x, cc.y)) < d0, "a chip brings the paint nearer the surface"
 	)
 	# water flows: a pour spreads into a pool and leaves a film at its rim
 	_set_state(1)

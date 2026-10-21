@@ -460,6 +460,15 @@ depth, built-up ice, filled-gouge scar, and crust. A chunked heightfield
 (64 cells a side) gives all of it real height; a level chunk (dry, or an
 even film, or built-up ice all one height) is two triangles.
 
+**The paint is at a fixed depth.** The lines sit on the white paint
+under `base_mm` of ice at the datum (25 by default); a column's ice
+over the paint is that plus what floods built up, less what a gouge
+took. A third texture carries it, and the shader lets the paint through
+by `exp(-depth / 30 mm)`: vivid lines on thin ice, faded and blue on
+thick. A chip brings the paint nearer; a filled chip is clear ice,
+glassier and a touch darker than the cut around it, with the paint
+showing through it more, not a pale splotch.
+
 **Water is ice when it sets.** Set water joins the column's ice
 thickness (water expands 9%), so flooding one spot again and again makes
 it measurably higher, and the new surface is fresh frozen. Liquid water
@@ -566,7 +575,8 @@ display, and run as headless checks in CI (`--test=<name>`).
   shows the slab and air temperatures, the clock, the litres hosed and
   the column's top and built-up ice under the dot while it sets from the
   edges in; I makes water set the instant it lands; T speeds the clock
-  (x1, x10, x60); holding RMB chips gouges wherever you look. R drives
+  (x1, x10, x60); holding RMB chips gouges wherever you look; , and .
+  set the ice over the paint. R drives
   the resurfacer from the blue line to the red line along your side of
   the sheet: M switches DRY CUT (the blade shaves, striations along the
   travel) and FLOOD (the rag lays a film behind the blade), [ and ] set
