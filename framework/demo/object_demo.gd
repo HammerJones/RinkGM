@@ -306,13 +306,14 @@ func _self_test() -> void:
 	eye.global_position += Vector3(0, 0.8, 0)
 	for f in 60:
 		await get_tree().physics_frame
-	var fwd0 := mug.node.global_transform.basis.z
+	var b0 := mug.node.global_transform.basis.orthonormalized()
 	it.turn_held(PI / 2)
 	for f in 60:
 		await get_tree().physics_frame
-	var fwd1 := mug.node.global_transform.basis.z
-	var turned := absf(Vector2(fwd0.x, fwd0.z).angle_to(Vector2(fwd1.x, fwd1.z)))
-	check.call(turned > 1.2, "wheel turns the held mug (%.2f rad)" % turned)
+	var b1 := mug.node.global_transform.basis.orthonormalized()
+	var turned := (b1 * b0.inverse()).get_rotation_quaternion().get_angle()
+	check.call(turned > 1.2, "wheel tumbles the held mug (%.2f rad)" % turned)
+	check.call(absf(b1.y.y) < 0.4, "top over bottom: its up axis now lies flat (%.2f)" % b1.y.y)
 	var d0: float = it._dist
 	it.nudge_held(0.3)
 	check.call(it._dist > d0, "ctrl+wheel moves the hold point farther")
@@ -321,6 +322,11 @@ func _self_test() -> void:
 	it.nudge_held(5.0)
 	check.call(is_equal_approx(it._dist, Interactor.HOLD_MAX), "nor farther than reach")
 	it.nudge_held(d0 - it._dist)
+	# upright again and back down near the table before letting go
+	it.turn_held(-PI / 2)
+	eye.global_position -= Vector3(0, 0.8, 0)
+	for f in 60:
+		await get_tree().physics_frame
 	it.drop()
 	check.call(it.carrying == null and mug.node != null, "dropped: still live, falling")
 	for f in 180:

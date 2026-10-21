@@ -434,8 +434,8 @@ display, and run as headless checks in CI (`--test=<name>`).
   floor. Walk up to anything, E takes it into your hands (a live body on
   a spring that bumps into things), E drops, F throws or shoves, right
   click inspects, Q opens or uses, F5 saves and reloads the rows. While
-  holding something the wheel turns it and ctrl + wheel brings it nearer
-  or farther (every demo, through the Interactor).
+  holding something the wheel tumbles it top over bottom (four wheel
+  turns for one revolution) and ctrl + wheel brings it nearer or farther (every demo, through the Interactor).
 - **`world_demo`**: five themed rooms in a row (`framework/demo/rooms/`,
   one `DemoRoom` chunk each) that stream in and out as you walk; the HUD
   names the loaded ones. The same verbs, plus T to pocket what you hold,
