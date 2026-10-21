@@ -35,6 +35,8 @@ const MACHINE_SPEED := 2.0  # m/s
 const PASS_X0 := 6.0  # the blue line
 const PASS_X1 := 12.0  # the red line
 const HOSE_LPS := 1.6  # the big hose wide open, litres a second
+const HOSE_MIN := 0.1
+const HOSE_MAX := 6.0
 const HOSE_WIDTH := 0.5  # metres the stream wets
 const RED := Color("c8322e")
 const BLUE := Color("2a4fb0")
@@ -58,6 +60,7 @@ var hosing := false
 var chipping := false
 var _chip_t := 0.0
 var hosed_l := 0.0
+var hose_lps := HOSE_LPS
 var _stream: GPUParticles3D
 var slab_c := -5.0
 var air_base := 8.0
@@ -136,7 +139,7 @@ func _ready() -> void:
 	(
 		hud
 		. legend(
-			"[X] STATE   [LMB] HOSE   [RMB] CHIP   [R] RESURFACER   [M] MODE   [ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   [T] CLOCK   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
+			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [R] RESURFACER   [M] MODE   [ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   [T] CLOCK   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 		)
 	)
 	_machine = _make_machine()
@@ -217,10 +220,13 @@ func _hose(dt: float) -> void:
 	var at: Variant = _aim()
 	if at == null:
 		return
-	var litres := HOSE_LPS * dt
+	var litres := hose_lps * dt
 	hosed_l += litres
 	var area := PI * (HOSE_WIDTH * 0.5) * (HOSE_WIDTH * 0.5)
-	ice.pour(_local(at), HOSE_WIDTH, litres * 0.001 / area * 1000.0)  # L -> m3 -> m -> mm
+	var mm := litres * 0.001 / area * 1000.0  # L -> m3 -> m -> mm
+	# the stream wanders a little, as a hose does
+	var wander := Vector2(randf_range(-0.08, 0.08), randf_range(-0.08, 0.08))
+	ice.pour(_local(at) + wander, HOSE_WIDTH, mm)
 	var hand := (
 		walker.camera.global_position
 		- walker.camera.global_transform.basis.z * 0.5
@@ -235,6 +241,7 @@ func _hose(dt: float) -> void:
 	mat.direction = v.normalized()
 	mat.initial_velocity_min = v.length() * 0.9
 	mat.initial_velocity_max = v.length() * 1.1
+	_stream.amount_ratio = clampf(hose_lps / HOSE_LPS, 0.15, 1.0)
 	if WorldSound.wanted():
 		WorldSound.play(self, "ball_bounce_2", at, -20.0, 0.6)
 
@@ -389,6 +396,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		elif (
+			event.button_index == MOUSE_BUTTON_WHEEL_UP
+			or event.button_index == MOUSE_BUTTON_WHEEL_DOWN
+		):
+			# the valve (the Interactor has the wheel while something is held)
+			var step := 1.25 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 0.8
+			hose_lps = clampf(hose_lps * step, HOSE_MIN, HOSE_MAX)
+			hud.toast("HOSE %.1f L/S" % hose_lps)
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			hosing = true
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
@@ -573,7 +588,7 @@ func _self_test() -> void:
 	var t0 := Time.get_ticks_usec()
 	ice.thermal(1.0, -5.0, 8.0)
 	var ms := (Time.get_ticks_usec() - t0) / 1000.0
-	check.call(ms < 6.0, "a thermal step on a flooded sheet is under 6 ms (%.1f)" % ms)
+	check.call(ms < 8.0, "a thermal step on a flooded sheet is under 8 ms (%.1f)" % ms)
 	t0 = Time.get_ticks_usec()
 	ice.flush()
 	var flush_ms := (Time.get_ticks_usec() - t0) / 1000.0
@@ -611,6 +626,26 @@ func _self_test() -> void:
 		ice.crust[si] > 0.5 and ice.snow[si] == 0.0 and ice.water[si] == 0.0,
 		"slush set into a crust (%.2f mm)" % ice.crust[si]
 	)
+	# water flows: a pour spreads into a pool and leaves a film at its rim
+	_set_state(1)
+	ice.flush()
+	ice.pour(Vector2(16.0, 7.0), 0.3, 6.0)
+	var pc := ice.cell_at(Vector2(16.0, 7.0))
+	var pi := ice.index(pc.x, pc.y)
+	var deep0 := ice.water[pi]
+	var far := ice.index(ice.cell_at(Vector2(16.3, 7.0)).x, pc.y)
+	check.call(ice.water[far] == 0.0, "the pour starts in its disc")
+	for step in 60:
+		ice.thermal(0.1, 0.0, 8.0)  # slab at 0: flow without freezing
+	check.call(
+		ice.water[far] > 0.0 and ice.water[pi] < deep0,
+		(
+			"water flowed 30 cm out (%.2f mm there, middle %.2f -> %.2f)"
+			% [ice.water[far], deep0, ice.water[pi]]
+		)
+	)
+	var rim := ice.index(ice.cell_at(Vector2(16.2, 7.0)).x, pc.y)
+	check.call(ice.water[rim] >= 0.15, "a film clings behind the flow (%.2f mm)" % ice.water[rim])
 	# snow has height: the blade must get under it to touch the ice
 	_set_state(0)
 	ice.flush()

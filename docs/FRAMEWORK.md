@@ -462,10 +462,13 @@ even film, or built-up ice all one height) is two triangles.
 
 **Water is ice when it sets.** Set water joins the column's ice
 thickness (water expands 9%), so flooding one spot again and again makes
-it measurably higher, and the new surface is fresh frozen. While liquid,
-water deeper than 1.5 mm runs to lower neighbours, and a gouge is
-downhill: water fills it, and when it sets the trench is gone but a pale
-scar stays visible. Water on snow is slush, wet grey and half glossy, and
+it measurably higher, and the new surface is fresh frozen. Liquid water
+flows: each visit a wet cell sends part of the head difference (ice plus
+crust plus water minus gouge) to each lower neighbour, all but a 0.2 mm
+film that clings to the ice, and water that has begun to set is slush
+and stays put. So a pour spreads into a pool, runs downhill, fills a
+gouge (when it sets the trench is gone but a pale scar stays visible)
+and pins as a film at its rim. Water on snow is slush, wet grey and half glossy, and
 sets with the snow into a rough crust of peaks.
 
 **The state texture, one texel per cell.** Two RGBA8 images carry the
@@ -557,7 +560,8 @@ display, and run as headless checks in CI (`--test=<name>`).
   pocket it: still gone.
 - **`ice_demo`**: a 24 x 14 m `IceSheet` (section 11b) under arena-style
   lamps. X cycles the whole sheet through the four states; holding LMB
-  runs a hose where you look (1.6 L/s, a stream of drops) and the readout
+  runs a hose where you look (1.6 L/s, the wheel is the valve from 0.1
+  to 6 L/s, a stream of drops to match) and the readout
   shows the slab and air temperatures, the clock, the litres hosed and
   the column's top and built-up ice under the dot while it sets from the
   edges in; I makes water set the instant it lands; T speeds the clock

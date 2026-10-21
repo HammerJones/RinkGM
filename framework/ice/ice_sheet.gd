@@ -22,8 +22,11 @@ extends Node3D
 ## minutes; the sim's IceSlab is the source of those numbers. Water that
 ## has set becomes ice: it joins the column's `ice` thickness (water
 ## expands 9%), so flooding the same spot again and again builds it up,
-## and the new surface is fresh frozen (no cut, no snow). Deep water flows
-## to lower neighbours while it is liquid.
+## and the new surface is fresh frozen (no cut, no snow). Liquid water
+## flows: each visit a wet cell sends part of its head (ice + crust +
+## water - gouge) difference to each lower neighbour, except the last
+## FILM_PIN that clings to the ice, so a pour spreads into a pool, runs
+## downhill, fills gouges and pins as a film at its rim.
 
 const CHUNK := 64  # cells a side
 const SNOW_FULL := 1.0  # mm that reads as fully snowed
@@ -31,7 +34,8 @@ const WATER_FULL := 0.5  # mm that reads as fully wet
 const GOUGE_FULL := 4.0  # mm that reads as the deepest gouge
 const FREEZE_K := 0.00033  # per second per degree below zero at 1 mm
 const ICE_PER_WATER := 1.09
-const FLOW_FROM := 1.5  # mm of water above which it runs to lower cells
+const FILM_PIN := 0.2  # mm of water that clings to the ice and never runs
+const FLOW_K := 0.45  # share of the head difference that moves a visit
 const FLAT_EPS := 0.00002  # m of height range a chunk may have and still be one quad
 
 ## Metres per cell.
@@ -380,11 +384,25 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 			edge += 0.5
 		if water[id] <= 0.0 or frozen[id] >= 0.999:
 			edge += 0.5
-		# liquid above FLOW_FROM runs downhill (a gouge is downhill), a share a visit
+		# liquid runs downhill (a gouge is downhill) by head, all but the film;
+		# water that has started to set is slush and stays put
 		var liquid := wt * (1.0 - fz)
-		if liquid > FLOW_FROM:
-			_flow(i, il, ir, iu, id, liquid)
-			wt = water[i]
+		if liquid > FILM_PIN and fz < 0.4:
+			# only worth the call when a neighbour is actually lower
+			var here := ice[i] + crust[i] + wt - gouge[i]
+			var low := minf(
+				minf(
+					ice[il] + crust[il] + water[il] - gouge[il],
+					ice[ir] + crust[ir] + water[ir] - gouge[ir]
+				),
+				minf(
+					ice[iu] + crust[iu] + water[iu] - gouge[iu],
+					ice[id] + crust[id] + water[id] - gouge[id]
+				)
+			)
+			if here - low > 0.06:
+				_flow(i, il, ir, iu, id, liquid)
+				wt = water[i]
 		var before := int(fz * 255.0)
 		fz += k_air * (1.0 + edge) / maxf(wt, 0.3)
 		if fz >= 1.0:
@@ -419,16 +437,25 @@ func _wet_add(i: int) -> void:
 
 
 func _flow(i: int, il: int, ir: int, iu: int, id: int, liquid: float) -> void:
-	var here := ice[i] + water[i] - gouge[i]
-	var give := minf((liquid - FLOW_FROM) * 0.25, liquid * 0.1)
+	var here := ice[i] + crust[i] + water[i] - gouge[i]
+	var spare := liquid - FILM_PIN
 	for nb in [il, ir, iu, id]:
-		if nb != i and ice[nb] + water[nb] - gouge[nb] < here - 0.05:
-			water[i] -= give
-			var had := water[nb]
-			water[nb] += give
+		if nb == i or spare <= 0.0:
+			continue
+		var diff := here - (ice[nb] + crust[nb] + water[nb] - gouge[nb])
+		if diff <= 0.06:
+			continue  # level enough: it sits (no sloshing back and forth)
+		var give := minf(diff * 0.5 * FLOW_K, spare * 0.25)
+		water[i] -= give
+		spare -= give
+		var had := water[nb]
+		water[nb] += give
+		if had > 0.0:
 			frozen[nb] *= had / (had + give)  # diluted by the new water
-			_wet_add(nb)
-			_touch(nb % w, nb / w)
+		else:
+			frozen[nb] = 0.0
+		_wet_add(nb)
+		_touch(nb % w, nb / w)
 
 
 ## Sets every wet cell at once (a test rig's instant freeze).
