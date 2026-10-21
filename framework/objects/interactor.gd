@@ -10,6 +10,8 @@ extends Node3D
 ##   interactor.prompt()                # "Coffee mug   [E] take   [F] push   [RMB] inspect"
 ##   interactor.act("take")             # the verb on the hovered row (take starts a carry)
 ##   interactor.carrying                # the row in hand, or null
+##   interactor.turn_held(0.3)          # radians about the vertical (the wheel does this)
+##   interactor.nudge_held(0.1)         # metres nearer or farther (ctrl + wheel)
 ##   interactor.drop()
 ##
 ## Carrying is real-time physics, never a freeze: the body keeps simulating
@@ -27,6 +29,9 @@ const REACH := 2.4
 const HOLD_GAP := 0.4
 const HOLD_MIN := 0.55
 const HOLD_MAX := 1.5
+## One wheel notch while carrying: turn, or with ctrl held, nearer or farther.
+const WHEEL_TURN := 0.25
+const WHEEL_NUDGE := 0.1
 const HOLD_DROP := 0.12
 ## The spring (per second) and the most pull it may give.
 const SPRING := 14.0
@@ -69,6 +74,23 @@ func _process(_dt: float) -> void:
 		if hovered:
 			_set_highlight(hovered, HIGHLIGHT)
 		hover_changed.emit(hovered)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if carrying == null or not event is InputEventMouseButton or not event.pressed:
+		return
+	var notch := 0.0
+	if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+		notch = 1.0
+	elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		notch = -1.0
+	if notch == 0.0:
+		return
+	if event.ctrl_pressed:
+		nudge_held(notch * WHEEL_NUDGE)
+	else:
+		turn_held(notch * WHEEL_TURN)
+	get_viewport().set_input_as_handled()
 
 
 func _physics_process(_dt: float) -> void:
@@ -129,7 +151,10 @@ func _look() -> PropRow:
 ## The prompt line for the hovered row (empty when nothing is there).
 func prompt() -> String:
 	if carrying:
-		return "%s   [E] drop   [F] throw" % objects.name_of(carrying).to_upper()
+		return (
+			"%s   [E] drop   [F] throw   [wheel] turn   [ctrl+wheel] near/far"
+			% objects.name_of(carrying).to_upper()
+		)
 	if hovered == null:
 		return ""
 	var parts: Array[String] = [objects.name_of(hovered).to_upper()]
@@ -196,6 +221,20 @@ func carry(row: PropRow) -> bool:
 	_set_highlight(row, 0.0)
 	carried.emit(row)
 	return true
+
+
+## Turns the held thing about the vertical by `angle` (radians); it keeps
+## that turn relative to the view.
+func turn_held(angle: float) -> void:
+	if carrying:
+		_rel = Basis(Vector3.UP, angle) * _rel
+
+
+## Moves the hold point nearer (negative) or farther (positive), within
+## reach.
+func nudge_held(metres: float) -> void:
+	if carrying:
+		_dist = clampf(_dist + metres, HOLD_MIN, HOLD_MAX)
 
 
 ## Lets go where it is; `throw` adds the view's forward push.

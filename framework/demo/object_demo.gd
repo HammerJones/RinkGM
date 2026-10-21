@@ -301,6 +301,26 @@ func _self_test() -> void:
 	check.call(
 		mug.node.global_position.distance_to(it._hold_point()) < 0.35, "the mug follows a move"
 	)
+	# the wheel turns it (lifted clear of the table first, so nothing rubs)
+	# and, with ctrl, brings it nearer or farther
+	eye.global_position += Vector3(0, 0.8, 0)
+	for f in 60:
+		await get_tree().physics_frame
+	var fwd0 := mug.node.global_transform.basis.z
+	it.turn_held(PI / 2)
+	for f in 60:
+		await get_tree().physics_frame
+	var fwd1 := mug.node.global_transform.basis.z
+	var turned := absf(Vector2(fwd0.x, fwd0.z).angle_to(Vector2(fwd1.x, fwd1.z)))
+	check.call(turned > 1.2, "wheel turns the held mug (%.2f rad)" % turned)
+	var d0: float = it._dist
+	it.nudge_held(0.3)
+	check.call(it._dist > d0, "ctrl+wheel moves the hold point farther")
+	it.nudge_held(-5.0)
+	check.call(is_equal_approx(it._dist, Interactor.HOLD_MIN), "and never nearer than the minimum")
+	it.nudge_held(5.0)
+	check.call(is_equal_approx(it._dist, Interactor.HOLD_MAX), "nor farther than reach")
+	it.nudge_held(d0 - it._dist)
 	it.drop()
 	check.call(it.carrying == null and mug.node != null, "dropped: still live, falling")
 	for f in 180:
