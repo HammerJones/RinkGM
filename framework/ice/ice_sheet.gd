@@ -260,8 +260,9 @@ func chip(at: Vector2, width: float, depth: float, snow_mm := 0.0) -> void:
 ## takes the snow with it and cuts the ice; below zero it cuts into the
 ## base and takes gouge depth with it. Where it cut the solid it leaves
 ## a dry cut with striations along `travel`, the blade's direction
-## (radians in the sheet's plane). The shavings go up the auger; a little spills as a
-## ridge along the band's sides. In flood mode (`film_mm` > 0) the
+## (radians in the sheet's plane). The shavings go up the auger into the
+## tank; `spill` (0 by default) leaves that share as a ridge of snow
+## along the band's sides, the mark of a worn or badly set conditioner. In flood mode (`film_mm` > 0) the
 ## conditioner's rag lays the water behind the blade: a new rag
 ## (`rag_wear` 0) an even film, a worn one (1) streaks and a coarser cut.
 ## Returns the millimetres shaved, summed over the band's cells.
@@ -273,7 +274,8 @@ func resurface(
 	film_mm := 0.8,
 	rag_wear := 0.0,
 	blade_mm := 0.0,
-	travel := 0.0
+	travel := 0.0,
+	spill := 0.0
 ) -> float:
 	var c0 := cell_at(Vector2(minf(x0, x1), minf(z0, z1)))
 	var c1 := cell_at(Vector2(maxf(x0, x1), maxf(z0, z1)))
@@ -320,9 +322,10 @@ func resurface(
 				_wet_add(i)
 			shaved += took
 			_touch(x, z)
-	# the spill: a thin ridge of shavings just outside the band's sides
-	if shaved > 0.0:
-		var per := shaved / maxf(float(c1.x - c0.x + 1), 1.0) * 0.08
+	# the shavings go up the auger into the tank; a side spill is a flaw
+	# of a worn or badly set conditioner, so it is off by default
+	if shaved > 0.0 and spill > 0.0:
+		var per := shaved / maxf(float(c1.x - c0.x + 1), 1.0) * spill
 		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
 			for z in [c0.y - 1, c1.y + 1]:
 				if in_bounds(x, z):

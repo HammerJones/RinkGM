@@ -502,8 +502,9 @@ blade in the solid (built-up ice, crust peaks) takes the snow with it
 and cuts the ice; below zero it cuts into the base and takes gouge
 depth. Where it cut the solid it leaves a dry cut whose striations run
 along `travel`, the blade's direction. Columns below the blade keep
-their old cut. The shavings go up the auger, a little spills as a ridge along the
-band's sides, and the call returns the millimetres taken. With
+their old cut. The shavings go up the auger into the tank (a `spill`
+share can be left as a ridge along the sides, off by default: side-by-side
+passes must blend), and the call returns the millimetres taken. With
 `film_mm` > 0 the conditioner's rag lays water behind the blade: a new
 rag (`rag_wear` 0) an even film, a worn one (1) streaks and a coarser
 cut. A dry pass is the one without the film. The
