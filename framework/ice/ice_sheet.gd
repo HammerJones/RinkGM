@@ -37,13 +37,15 @@ const ICE_PER_WATER := 1.09
 const FILM_PIN := 0.2  # mm of water that clings to the ice and never runs
 const FLOW_K := 0.45  # share of the head difference that moves a visit
 const FLAT_EPS := 0.00002  # m of height range a chunk may have and still be one quad
+const DEPTH_FULL := 64.0  # mm the depth texel spans
+
+static var _stria: Texture2D  # the striation map, generated once
 
 ## Metres per cell.
 var cell := 0.025
 ## Ice over the paint at the datum, mm: the lines are painted at a fixed
 ## depth and read vivid through thin ice, faded and blue through thick.
 var base_mm := 25.0
-const DEPTH_FULL := 64.0  # mm the depth texel spans
 ## Vertical exaggeration of the heightfield (1 = true millimetres).
 var height_scale := 4.0
 ## How long a frame may spend uploading and re-meshing dirty chunks.
@@ -677,14 +679,12 @@ static func _mesh(
 
 # --- detail maps (generated once, shared) ----------------------------------
 
-static var _stria: Texture2D
 
-
-static func noise_normal(freq: float, octaves: int, strength: float, seed_: int) -> Texture2D:
+static func noise_normal(freq: float, octaves: int, strength: float, noise_seed: int) -> Texture2D:
 	var n := FastNoiseLite.new()
 	n.frequency = freq
 	n.fractal_octaves = octaves
-	n.seed = seed_
+	n.seed = noise_seed
 	var t := NoiseTexture2D.new()
 	t.noise = n
 	t.as_normal_map = true

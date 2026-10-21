@@ -55,17 +55,17 @@ var blade_mm := 0.0
 var instant := false
 var pass_z := -1.0
 var shaved_mm := 0.0
-var _machine: Node3D
 var hosing := false
 var chipping := false
-var _chip_t := 0.0
 var hosed_l := 0.0
 var hose_lps := HOSE_LPS
-var _stream: GPUParticles3D
 var slab_c := -5.0
 var air_base := 8.0
 var air_c := 8.0
 var sim_t := 0.0
+var _machine: Node3D
+var _chip_t := 0.0
+var _stream: GPUParticles3D
 var _env: WorldEnvironment
 var _sun: DirectionalLight3D
 var _zam := -1.0
@@ -136,10 +136,11 @@ func _ready() -> void:
 	hud = WalkHud.new()
 	add_child(hud)
 	hud.bind(interactor)
-	(
-		hud
-		. legend(
-			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [, .] ICE OVER PAINT   [R] RESURFACER   [M] MODE   [ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   [T] CLOCK   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
+	hud.legend(
+		(
+			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [, .] ICE OVER PAINT   "
+			+ "[R] RESURFACER   [M] MODE   [ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   "
+			+ "[T] CLOCK   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 		)
 	)
 	_machine = _make_machine()
@@ -184,31 +185,26 @@ func _process(dt: float) -> void:
 				"   UNDER THE DOT: TOP +%.1f MM, ICE +%.1f MM"
 				% [ice.top_at(_local(at)), ice.ice_at(_local(at))]
 			)
-		(
-			hud
-			. readout(
-				(
-					"STATE %s   PAINT UNDER %.0f MM   SLAB %.1f C   AIR %.1f C   CLOCK x%d%s   T+%s   WET %d   DIRTY %d / %d\nRESURFACER %s   BLADE %+.2f MM   RAG %s   SHAVED %.0f MM   HOSED %.0f L%s"
-					% [
-						STATES[state][0],
-						slab_c,
-						air_c,
-						int(SCALES[scale_i]),
-						"   INSTANT FREEZE" if instant else "",
-						_clock(sim_t),
-						ice.wet_cells,
-						ice.dirty_count(),
-						ice.chunk_count(),
-						MODES[mode_i],
-						blade_mm,
-						RAGS[rag_i],
-						shaved_mm,
-						hosed_l,
-						under
-					]
-				)
-			)
+		var line1 := (
+			"STATE %s   PAINT UNDER %.0f MM   SLAB %.1f C   AIR %.1f C   CLOCK x%d%s   T+%s   WET %d   DIRTY %d / %d"
+			% [
+				STATES[state][0],
+				ice.base_mm,
+				slab_c,
+				air_c,
+				int(SCALES[scale_i]),
+				"   INSTANT FREEZE" if instant else "",
+				_clock(sim_t),
+				ice.wet_cells,
+				ice.dirty_count(),
+				ice.chunk_count()
+			]
 		)
+		var line2 := (
+			"RESURFACER %s   BLADE %+.2f MM   RAG %s   SHAVED %.0f MM   HOSE %.1f L/S   HOSED %.0f L%s"
+			% [MODES[mode_i], blade_mm, RAGS[rag_i], shaved_mm, hose_lps, hosed_l, under]
+		)
+		hud.readout(line1 + "\n" + line2)
 
 
 func _set_state(k: int) -> void:
