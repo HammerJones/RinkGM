@@ -164,7 +164,8 @@ func _snowball() -> void:
 		for dz in range(-2, 3):
 			if dx * dx + dz * dz <= 4:
 				ice.set_voxel(v.x + dx, TOP + 1, v.z + dz, SNOW)
-	WorldSound.play(self, "ball_bounce_2", at, -10.0, 1.4) if WorldSound.wanted() else null
+	if WorldSound.wanted():
+		WorldSound.play(self, "ball_bounce_2", at, -10.0, 1.4)
 
 
 ## A crater: the top layer gone in a 30 cm disc, the one below chipped in the middle.
@@ -178,7 +179,8 @@ func _chip() -> void:
 			var d := dx * dx + dz * dz
 			if d <= 36:
 				_carve(v.x + dx, v.z + dz, 1 if d <= 6 else 0)
-	WorldSound.play(self, "blade_skip", at, -6.0, 0.9) if WorldSound.wanted() else null
+	if WorldSound.wanted():
+		WorldSound.play(self, "blade_skip", at, -6.0, 0.9)
 
 
 ## Carves at (x, z): `deep` 0 takes the top layer, 1 the one below as well.
