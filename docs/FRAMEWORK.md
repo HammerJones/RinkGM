@@ -541,10 +541,21 @@ spot shadows with the default bias self-shadow in stripes along the
 shadow map's rows. The ice demo's lamps carry the raised bias; the
 arena's lamps need the same when the ice moves into the game.
 
-**Measured here:** a full GDScript pass over every cell costs 0.6 ms at
-25 cm, 15 ms at 5 cm, 63 ms at 2.5 cm, 400 ms at 1 cm; the state texture
-is 10 MB at 2.5 cm and 60 MB at 1 cm. So: sim at 25 cm, columns and
-texture at 2.5 cm, shader below, with a local 5 mm patch an option later.
+**Uniform chunks are free.** A chunk clear of the corners and untouched
+since the last `fill_state` is encoded as three `fill_rect`s and a flat
+quad; anything touched is encoded cell by cell (the hot path, about a
+microsecond a cell). The pass over every cell at a state change is the
+native `fill()`.
+
+**Measured here (the full NHL sheet, headless on the CI box):** the
+scene is up about a second after the engine; `fill_state` is 20 ms and
+the `flush()` after it 0.4 s (639 uniform chunks, mostly mesh and node
+creation); a `resurface()` over the whole sheet is a second, and the
+rebuild of every chunk the slow way after it 2.4 s, which the machine
+never asks for (a pass is one lane, a few chunks a frame within
+`budget_ms`). The state textures are 40 MB at 2.5 cm. So: sim at 25 cm,
+columns and textures at 2.5 cm, shader below, with a local 5 mm patch
+an option later.
 
 **Future, not built:** physical skate gouges, where the skater contact
 model writes blade strokes into the columns and reads the height back,
