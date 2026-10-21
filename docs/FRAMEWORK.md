@@ -446,7 +446,7 @@ whose detail lives at three scales, so it is a grid of columns.
 ```gdscript
 var ice := IceSheet.new()
 add_child(ice)
-ice.setup(Vector2(24, 14), 0.025)          # metres, metres per cell
+ice.setup(Vector2(60.96, 25.9), 0.025, 8.5)  # metres, metres per cell, corner radius
 ice.fill_state(0.0, 0.8, 0.0, 0.0)         # snow mm, cut, water mm, frozen
 ice.pour(Vector2(3, 2), 0.6, 1.2)           # a 1.2 mm puddle 60 cm across
 ice.stroke(a, b, 0.03, 0.9, 1.5, 0.3)       # a blade: width, cut, gouge mm, snow mm
@@ -458,7 +458,14 @@ ice.thermal(dt, slab_c, air_c)              # water sets from the edges in
 much of that water has set, the dry-cut amount and its angle, gouge
 depth, built-up ice, filled-gouge scar, and crust. A chunked heightfield
 (64 cells a side) gives all of it real height; a level chunk (dry, or an
-even film, or built-up ice all one height) is two triangles.
+even film, or built-up ice all one height) is two triangles. A full NHL
+sheet is 2438 x 1036 columns (2.5 million, 90 MB of state) in 639
+chunks.
+
+**The corners.** A corner radius makes the sheet a rink: columns outside
+the arcs are masked, `is_ice(x, z)` is false there, nothing writes them,
+water treats them as a wall, chunks wholly outside are never built, and
+the shader discards their pixels, so the lines run into the arc and stop.
 
 **The paint is at a fixed depth.** The lines sit on the white paint
 under `base_mm` of ice at the datum (25 by default); a column's ice
@@ -480,9 +487,13 @@ gouge (when it sets the trench is gone but a pale scar stays visible)
 and pins as a film at its rim. Water on snow is slush, wet grey and half glossy, and
 sets with the snow into a rough crust of peaks.
 
-**The state texture, one texel per cell.** Two RGBA8 images carry the
-columns to the shader; only dirty chunks are rewritten, and the textures
-upload once per frame within `budget_ms`.
+**The state textures, one texel per cell, in tiles.** Three RGBA8 images
+carry the columns to the shader, as tiles of 256 cells a side (4 chunks)
+with a copy of the material each, so a chunk's rebuild uploads its
+tile's 768 KB rather than the sheet's 30 MB; only dirty chunks are
+rewritten, within `budget_ms` a frame, and only touched tiles upload.
+The chunk meshes keep sheet-wide UV; the tile's material carries where
+it sits (`tile_off`, `tile_scale`) and the markings sample the sheet UV.
 
 **The shader, millimetre detail.** Four surface states blended per pixel:
 snowed up (matte, grainy), dry cut (a sheen with striations at the cut
@@ -499,9 +510,12 @@ slab temperature under it, slower in deep water and warm air, faster next
 to cells already set or dry, so a pool shrinks inward; 1.2 mm at -5 C
 takes about 12 minutes, the sim's number. It walks the wet cells in
 slices of 3000 a frame through an append-only list (no per-cell calls or
-allocations), so a whole flooded sheet of 537k cells costs under 3 ms a
-frame and each cell is visited every three seconds with that much sim
-time. `set_now()` sets every wet cell at once, for a test rig.
+allocations; the wet set is a byte per cell, not a dictionary), so a
+whole flooded sheet costs under 3 ms a frame whatever its size, and each
+cell is visited every size / 3000 frames with that much sim time (14 s
+of sim per visit on a fully flooded NHL sheet at 60 fps, which the
+12-minute freeze does not notice). `set_now()` sets every wet cell at
+once, for a test rig.
 
 **The blade.** `resurface(x0, x1, z0, z1, film_mm, rag_wear, blade_mm,
 travel)` is the resurfacer over a band: the blade at `blade_mm` above
@@ -568,8 +582,15 @@ display, and run as headless checks in CI (`--test=<name>`).
   hold, G to tip a box of mugs at your feet (contact audio), F5 to save,
   F9 to load. Move something, walk two rooms on and back: it is still moved;
   pocket it: still gone.
-- **`ice_demo`**: a 24 x 14 m `IceSheet` (section 11b) under arena-style
-  lamps. X cycles the whole sheet through the four states; holding LMB
+- **`ice_demo`**: a full NHL sheet, 60.96 x 25.9 m with 8.5 m corners
+  (the demo keeps its own copy of the numbers in `scripts/rink/rink.gd`),
+  as an `IceSheet` (section 11b) with the lines painted under it (goal,
+  blue and centre lines, the five circles, nine dots and hash marks, the
+  creases, the trapezoids, the referee's crease, drawn as rows of
+  rectangles into a 1.25 cm texture), boards with a kick plate that
+  follow the corners, two goals, and fourteen arena-style lamps. The
+  sheet's centre is the world origin, as in the game. X cycles the whole
+  sheet through the four states; holding LMB
   runs a hose where you look (1.6 L/s, the wheel is the valve from 0.1
   to 6 L/s, a stream of drops to match) and the readout
   shows the slab and air temperatures, the clock, the litres hosed and
@@ -577,11 +598,13 @@ display, and run as headless checks in CI (`--test=<name>`).
   edges in; I makes water set the instant it lands; T speeds the clock
   (x1, x10, x60); holding RMB chips gouges wherever you look; , and .
   set the ice over the paint. R drives
-  the resurfacer from the blue line to the red line along your side of
-  the sheet: M switches DRY CUT (the blade shaves, striations along the
+  the resurfacer end to end down the sheet along your lane:
+  M switches DRY CUT (the blade shaves, striations along the
   travel) and FLOOD (the rag lays a film behind the blade), [ and ] set
   the blade in quarter millimetres, Y wears the rag. Footsteps leave the
-  ice alone. Mugs on the ice to kick and carry. In every demo Ctrl
+  ice alone. Mugs on the ice to kick and carry. `--screenshot=<png>`
+  frames the blue line; with `--view=wide` it floods four lanes and
+  frames the whole sheet from above one end. In every demo Ctrl
   crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.
 
 ## 14. What the port looks like

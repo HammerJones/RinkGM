@@ -1,6 +1,8 @@
 extends Node3D
-## The ice demo: a sheet of ice as columns (IceSheet), drawn by the ice
-## shader with its four surface states. X cycles the whole sheet through
+## The ice demo: a full NHL sheet of ice (60.96 x 25.9 m, 8.5 m corners,
+## the lines and circles painted under it, boards and goals around it)
+## as columns (IceSheet), drawn by the ice shader with its four surface
+## states. X cycles the whole sheet through
 ## snowed up, dry cut, flooded and fresh frozen. Holding LMB runs a hose
 ## where you look (a stream of drops, water that pools and runs downhill)
 ## and you watch it set from the edges in under the slab and air
@@ -8,8 +10,8 @@ extends Node3D
 ## again and again builds it up, and the readout gives the height under
 ## the dot; I makes water set the instant it lands, for testing the blade
 ## against built-up ice. T speeds the clock up. RMB chips a gouge. R
-## drives the resurfacer from the blue line to the red line along your
-## side of the sheet: in DRY CUT mode the blade shaves everything above
+## drives the resurfacer end to end down the sheet along your lane:
+## in DRY CUT mode the blade shaves everything above
 ## its level and leaves striations along its travel, in FLOOD mode the
 ## rag lays a film behind the blade; M switches mode, [ and ] set the
 ## blade, Y wears the rag. Mugs on the ice to kick and carry. Footsteps
@@ -19,8 +21,35 @@ extends Node3D
 ##
 ## `-- --test=ice_demo` is the headless check.
 
-const RINK := Vector2(24.0, 14.0)  # metres
+# the NHL sheet, as scripts/rink/rink.gd has it (the demo keeps its own
+# copy so the framework layer stays free of the game's scripts)
+const RINK := Vector2(60.96, 25.9)  # metres
+const CORNER_R := 8.5
 const CELL := 0.025
+# the markings, in metres from the sheet's corner
+const PX := 80.0  # markings texels per metre (1.25 cm)
+const LINE_W := 0.3048  # the blue and centre lines, 12 in
+const THIN_W := 0.0508  # every other line, 2 in
+const GOAL_LINE := 3.353  # 11 ft from the end boards
+const BLUE_LINE := 22.86  # 75 ft
+const CIRCLE_R := 4.572  # 15 ft
+const DOT_R := 0.3048  # the face-off dots, 2 ft across
+const DOT_FROM_GOAL := 6.096  # the end-zone dots, 20 ft from the goal line
+const DOT_OFF := 6.706  # all dots 22 ft off the centre line
+const NEUTRAL_DOT := 1.524  # the neutral-zone dots, 5 ft from the blue line
+const HASH_LEN := 0.61  # 2 ft
+const HASH_OFF := 0.851  # the hash marks 5 ft 7 in apart
+const CREASE_R := 1.829  # 6 ft
+const CREASE_HALF_W := 1.219  # 4 ft
+const TRAP_GOAL := 3.353  # the trapezoid, half of 22 ft on the goal line
+const TRAP_BOARDS := 4.267  # half of 28 ft at the boards
+const REF_CREASE_R := 3.048  # 10 ft
+const GOAL_W := 1.829  # 6 ft between the posts
+const GOAL_H := 1.219  # 4 ft
+const GOAL_D := 1.016  # 40 in deep
+const BOARD_H := 1.07  # 42 in
+const KICK_H := 0.2
+const BOARD_T := 0.1
 const STATES := [
 	["SNOWED UP", 1.0, 0.0, 0.0, 0.0],
 	["DRY CUT", 0.0, 0.8, 0.0, 0.0],
@@ -32,14 +61,18 @@ const RAGS := ["NEW", "USED", "WORN"]
 const MODES := ["DRY CUT", "FLOOD"]
 const MACHINE_W := 2.1  # the conditioner's width
 const MACHINE_SPEED := 2.0  # m/s
-const PASS_X0 := 6.0  # the blue line
-const PASS_X1 := 12.0  # the red line
+const PASS_X0 := 2.0  # the pass runs end to end, clear of the end boards
+const PASS_X1 := RINK.x - 2.0
 const HOSE_LPS := 1.6  # the big hose wide open, litres a second
 const HOSE_MIN := 0.1
 const HOSE_MAX := 6.0
 const HOSE_WIDTH := 0.5  # metres the stream wets
 const RED := Color("c8322e")
 const BLUE := Color("2a4fb0")
+const LIGHT_BLUE := Color("9ec9e8")
+const KICK := Color("e8c23a")
+const BOARD := Color("f2f0ea")
+const CONCRETE := Color("7d7f82")
 
 var ice: IceSheet
 var field: PropField
@@ -78,28 +111,20 @@ func _ready() -> void:
 	ice.name = "Ice"
 	ice.position = Vector3(-RINK.x / 2, 0.0, -RINK.y / 2)
 	add_child(ice)
-	ice.setup(RINK, CELL)
+	ice.setup(RINK, CELL, CORNER_R)
 	ice.set_markings(_markings())
 	_set_state(state)
 	ice.flush()
-	# a floor under the ice for the walker and the props; boards around
+	# the concrete under the ice (seen past the corner arcs) for the walker
+	# and the props; boards with curved corners and the goals around it
 	var shell := StaticBody3D.new()
 	shell.collision_layer = Layers.bit(Layers.VENUE)
 	shell.collision_mask = 0
 	add_child(shell)
-	_box(shell, Vector3(0, -0.1, 0), Vector3(RINK.x, 0.2, RINK.y), Color.WHITE, false)
-	for s in [
-		[Vector3(0, 0.6, -RINK.y / 2 - 0.1), Vector3(RINK.x + 0.4, 1.2, 0.2)],
-		[Vector3(0, 0.6, RINK.y / 2 + 0.1), Vector3(RINK.x + 0.4, 1.2, 0.2)],
-		[Vector3(-RINK.x / 2 - 0.1, 0.6, 0), Vector3(0.2, 1.2, RINK.y)],
-		[Vector3(RINK.x / 2 + 0.1, 0.6, 0), Vector3(0.2, 1.2, RINK.y)],
-	]:
-		_box(shell, s[0], s[1], Color("f2f0ea"), true)
-	for s in [
-		[Vector3(0, 0.1, -RINK.y / 2 - 0.1), Vector3(RINK.x + 0.4, 0.2, 0.21)],
-		[Vector3(0, 0.1, RINK.y / 2 + 0.1), Vector3(RINK.x + 0.4, 0.2, 0.21)],
-	]:
-		_box(shell, s[0], s[1], RED, true, false)
+	_box(shell, Vector3(0, -0.103, 0), Vector3(RINK.x + 0.4, 0.2, RINK.y + 0.4), CONCRETE, true)
+	_boards(shell)
+	_goal(shell, GOAL_LINE, 1.0)
+	_goal(shell, RINK.x - GOAL_LINE, -1.0)
 	field = PropField.new()
 	field.name = "Props"
 	add_child(field)
@@ -127,8 +152,9 @@ func _ready() -> void:
 		_self_test.call_deferred()
 		return
 	walker = FirstPerson.new()
-	walker.position = Vector3(-8.0, 0.05, 0.0)
+	walker.position = Vector3(-RINK.x / 2 + BLUE_LINE - 2.0, 0.05, 0.0)
 	add_child(walker)
+	walker.face(-PI / 2)  # down the ice
 	interactor = Interactor.new()
 	interactor.eye = walker.camera
 	interactor.objects = objects
@@ -284,9 +310,9 @@ func _chip() -> void:
 		WorldSound.play(self, "blade_skip", at, -6.0, 0.9)
 
 
-## The resurfacer: from the blue line to the red line along the player's
-## side of the sheet at MACHINE_SPEED, the blade shaving as it goes; in
-## FLOOD mode the rag lays the film behind it.
+## The resurfacer: end to end along the player's lane at MACHINE_SPEED,
+## the blade shaving as it goes; in FLOOD mode the rag lays the film
+## behind it.
 func _start_pass() -> void:
 	if _zam >= 0.0 or walker == null:
 		return
@@ -421,26 +447,204 @@ func _unhandled_input(event: InputEvent) -> void:
 # --- dressing --------------------------------------------------------------
 
 
-## Centre red line, two blue lines, goal lines, as a texture under the ice.
+## The NHL markings as a texture under the ice: goal lines, blue lines,
+## the centre line, the five circles and nine dots with their hash marks,
+## the creases, the trapezoids, the referee's crease. Everything is rows
+## of filled rectangles, so the 4877 x 2072 image draws in a moment.
 func _markings() -> Texture2D:
-	var img := Image.create(960, 560, false, Image.FORMAT_RGBA8)
+	var img := Image.create(int(RINK.x * PX), int(RINK.y * PX), true, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
-	var px_m := 960.0 / RINK.x
-	for l in [
-		[RINK.x / 2, 0.15, RED],
-		[RINK.x / 4, 0.15, BLUE],
-		[RINK.x * 3 / 4, 0.15, BLUE],
-		[1.5, 0.05, RED],
-		[RINK.x - 1.5, 0.05, RED]
-	]:
-		var x0 := int((l[0] - l[1]) * px_m)
-		var x1 := int((l[0] + l[1]) * px_m)
-		img.fill_rect(Rect2i(x0, 0, maxi(x1 - x0, 1), 560), l[2])
+	var mid := RINK.y / 2
+	for gl: float in [GOAL_LINE, RINK.x - GOAL_LINE]:
+		var toward := 1.0 if gl < RINK.x / 2 else -1.0
+		_rect(img, gl - THIN_W / 2, 0.0, gl + THIN_W / 2, RINK.y, RED)
+		_crease(img, gl, toward, CREASE_R, CREASE_HALF_W, RED)
+		_crease(img, gl, toward, CREASE_R - THIN_W, CREASE_HALF_W - THIN_W, LIGHT_BLUE)
+		# the trapezoid behind the goal line, out to the end boards
+		var boards := 0.0 if toward > 0.0 else RINK.x
+		for side: float in [-1.0, 1.0]:
+			_slant(
+				img,
+				Vector2(gl, mid + side * TRAP_GOAL),
+				Vector2(boards, mid + side * TRAP_BOARDS),
+				THIN_W,
+				RED
+			)
+		# the end-zone circles, dots and hash marks
+		var cx := gl + toward * DOT_FROM_GOAL
+		for side: float in [-1.0, 1.0]:
+			var cz := mid + side * DOT_OFF
+			_ring(img, cx, cz, CIRCLE_R, THIN_W, RED)
+			_disc(img, cx, cz, DOT_R, RED)
+			for hx: float in [-1.0, 1.0]:
+				for hz: float in [-1.0, 1.0]:
+					var x := cx + hx * HASH_OFF
+					var z0 := cz + hz * CIRCLE_R
+					_rect(
+						img,
+						x - THIN_W / 2,
+						minf(z0, z0 + hz * HASH_LEN),
+						x + THIN_W / 2,
+						maxf(z0, z0 + hz * HASH_LEN),
+						RED
+					)
+	for bl: float in [BLUE_LINE, RINK.x - BLUE_LINE]:
+		_rect(img, bl - LINE_W / 2, 0.0, bl + LINE_W / 2, RINK.y, BLUE)
+		var toward := 1.0 if bl < RINK.x / 2 else -1.0
+		for side: float in [-1.0, 1.0]:
+			_disc(img, bl + toward * NEUTRAL_DOT, mid + side * DOT_OFF, DOT_R, RED)
+	_rect(img, RINK.x / 2 - LINE_W / 2, 0.0, RINK.x / 2 + LINE_W / 2, RINK.y, RED)
+	_ring(img, RINK.x / 2, mid, CIRCLE_R, THIN_W, BLUE)
+	_disc(img, RINK.x / 2, mid, DOT_R / 2, BLUE)
+	_ring(img, RINK.x / 2, 0.0, REF_CREASE_R, THIN_W, RED)
+	img.generate_mipmaps()
 	return ImageTexture.create_from_image(img)
 
 
+static func _rect(img: Image, x0: float, z0: float, x1: float, z1: float, colour: Color) -> void:
+	var px0 := clampi(int(floor(x0 * PX)), 0, img.get_width())
+	var px1 := clampi(int(ceil(x1 * PX)), 0, img.get_width())
+	var pz0 := clampi(int(floor(z0 * PX)), 0, img.get_height())
+	var pz1 := clampi(int(ceil(z1 * PX)), 0, img.get_height())
+	if px1 > px0 and pz1 > pz0:
+		img.fill_rect(Rect2i(px0, pz0, px1 - px0, pz1 - pz0), colour)
+
+
+## A filled circle, drawn as rows.
+static func _disc(img: Image, cx: float, cz: float, r: float, colour: Color) -> void:
+	var rows := int(ceil(r * PX))
+	for k in range(-rows, rows):
+		var dz := (k + 0.5) / PX
+		if absf(dz) >= r:
+			continue
+		var half := sqrt(r * r - dz * dz)
+		_rect(img, cx - half, cz + k / PX, cx + half, cz + (k + 1) / PX, colour)
+
+
+## A circle outline `wdt` wide, drawn as rows of two rectangles.
+static func _ring(img: Image, cx: float, cz: float, r: float, wdt: float, colour: Color) -> void:
+	var ri := r - wdt
+	var rows := int(ceil(r * PX))
+	for k in range(-rows, rows):
+		var dz := (k + 0.5) / PX
+		if absf(dz) >= r:
+			continue
+		var outer := sqrt(r * r - dz * dz)
+		var inner := sqrt(ri * ri - dz * dz) if absf(dz) < ri else 0.0
+		var z0 := cz + k / PX
+		var z1 := cz + (k + 1) / PX
+		_rect(img, cx - outer, z0, cx - inner, z1, colour)
+		_rect(img, cx + inner, z0, cx + outer, z1, colour)
+
+
+## The goal crease: a disc of radius `r` about the goal line's centre,
+## cut to `half_w` either side and to the side toward centre ice.
+static func _crease(
+	img: Image, gl: float, toward: float, r: float, half_w: float, colour: Color
+) -> void:
+	var mid := RINK.y / 2
+	var rows := int(ceil(half_w * PX))
+	for k in range(-rows, rows):
+		var dz := (k + 0.5) / PX
+		if absf(dz) >= half_w or absf(dz) >= r:
+			continue
+		var reach := sqrt(r * r - dz * dz)
+		var z0 := mid + k / PX
+		var z1 := mid + (k + 1) / PX
+		if toward > 0.0:
+			_rect(img, gl, z0, gl + reach, z1, colour)
+		else:
+			_rect(img, gl - reach, z0, gl, z1, colour)
+
+
+## A slanted line from a to b, `wdt` wide, as a run of small squares.
+static func _slant(img: Image, a: Vector2, b: Vector2, wdt: float, colour: Color) -> void:
+	var steps := int(ceil(a.distance_to(b) * PX))
+	for k in steps + 1:
+		var p := a.lerp(b, float(k) / maxi(steps, 1))
+		_rect(img, p.x - wdt / 2, p.y - wdt / 2, p.x + wdt / 2, p.y + wdt / 2, colour)
+
+
+## The boards: straight runs along the sides and ends, the corners as
+## arcs of short segments, a kick plate along the foot. Positions are in
+## world space (the sheet's centre is the origin).
+func _boards(shell: StaticBody3D) -> void:
+	var hx := RINK.x / 2
+	var hz := RINK.y / 2
+	var t := BOARD_T / 2
+	for s in [
+		[Vector3(0, 0, -hz - t), RINK.x - 2 * CORNER_R, 0.0],
+		[Vector3(0, 0, hz + t), RINK.x - 2 * CORNER_R, 0.0],
+		[Vector3(-hx - t, 0, 0), RINK.y - 2 * CORNER_R, PI / 2],
+		[Vector3(hx + t, 0, 0), RINK.y - 2 * CORNER_R, PI / 2],
+	]:
+		_board(shell, s[0], s[1], s[2])
+	var n := 16
+	var seg := PI / 2 / n
+	var r := CORNER_R + t
+	var length := 2.0 * r * sin(seg / 2) * 1.03  # a hair of overlap closes the joints
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			var centre := Vector3(sx * (hx - CORNER_R), 0, sz * (hz - CORNER_R))
+			for i in n:
+				var a := (i + 0.5) * seg
+				var dir := Vector3(sx * cos(a), 0, sz * sin(a))
+				var tangent := Vector3(-dir.z, 0, dir.x)
+				_board(shell, centre + dir * r, length, atan2(-tangent.z, tangent.x))
+
+
+func _board(shell: StaticBody3D, at: Vector3, length: float, yaw: float) -> void:
+	_box(
+		shell,
+		at + Vector3(0, BOARD_H / 2, 0),
+		Vector3(length, BOARD_H, BOARD_T),
+		BOARD,
+		false,
+		true,
+		yaw
+	)
+	_box(
+		shell,
+		at + Vector3(0, KICK_H / 2, 0),
+		Vector3(length, KICK_H, BOARD_T + 0.01),
+		KICK,
+		true,
+		false,
+		yaw
+	)
+	_box(
+		shell,
+		at + Vector3(0, KICK_H + (BOARD_H - KICK_H) / 2, 0),
+		Vector3(length, BOARD_H - KICK_H, BOARD_T),
+		BOARD,
+		true,
+		false,
+		yaw
+	)
+
+
+## A goal frame on the goal line at sheet x `gl`, its net `toward` the
+## end boards (-1 when the sheet's +x end is behind it).
+func _goal(shell: StaticBody3D, gl: float, toward: float) -> void:
+	var o := ice.position + Vector3(gl, 0, RINK.y / 2)
+	var pipe := 0.05
+	var back := -toward * GOAL_D
+	for z in [-GOAL_W / 2, GOAL_W / 2]:
+		_box(shell, o + Vector3(0, GOAL_H / 2, z), Vector3(pipe, GOAL_H, pipe), RED, true)
+		_box(shell, o + Vector3(back / 2, pipe / 2, z), Vector3(GOAL_D, pipe, pipe), RED, true)
+	_box(shell, o + Vector3(0, GOAL_H, 0), Vector3(pipe, pipe, GOAL_W + pipe), RED, true)
+	_box(shell, o + Vector3(back, pipe / 2, 0), Vector3(pipe, pipe, GOAL_W + pipe), RED, true)
+	_box(shell, o + Vector3(back, GOAL_H * 0.45, 0), Vector3(pipe, pipe, GOAL_W + pipe), RED, true)
+
+
 func _box(
-	body: StaticBody3D, at: Vector3, size: Vector3, colour: Color, draw: bool, collide := true
+	body: StaticBody3D,
+	at: Vector3,
+	size: Vector3,
+	colour: Color,
+	draw: bool,
+	collide := true,
+	yaw := 0.0
 ) -> void:
 	if collide:
 		var cs := CollisionShape3D.new()
@@ -448,6 +652,7 @@ func _box(
 		bs.size = size
 		cs.shape = bs
 		cs.position = at
+		cs.rotation.y = yaw
 		body.add_child(cs)
 	if not draw:
 		return
@@ -456,6 +661,7 @@ func _box(
 	bm.size = size
 	mi.mesh = bm
 	mi.position = at
+	mi.rotation.y = yaw
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = colour
 	mat.roughness = 0.9
@@ -486,15 +692,16 @@ func _lights() -> void:
 	_sun.shadow_bias = 0.1
 	_sun.shadow_normal_bias = 3.0
 	add_child(_sun)
-	for x in [-8.0, 0.0, 8.0]:
-		for z in [-4.0, 4.0]:
+	for i in 7:
+		var x := -24.0 + i * 8.0
+		for z in [-6.5, 6.5]:
 			var l := SpotLight3D.new()
-			l.position = Vector3(x, 7.0, z)
-			l.look_at_from_position(l.position, Vector3(x, 0, z + 0.3), Vector3.UP)
+			l.position = Vector3(x, 8.0, z)
+			l.look_at_from_position(l.position, Vector3(x, 0, z * 0.6), Vector3.UP)
 			l.light_color = Color("fff1dc")
 			l.light_energy = 1.4
-			l.spot_range = 16.0
-			l.spot_angle = 48.0
+			l.spot_range = 20.0
+			l.spot_angle = 50.0
 			l.shadow_enabled = true
 			l.shadow_bias = 0.2
 			l.shadow_normal_bias = 3.0
@@ -508,13 +715,24 @@ static func _clock(t: float) -> String:
 func _screenshot(path: String) -> void:
 	# over the lines: a chip, a filled chip (clear ice) and the paint
 	# showing through whatever ice is over it (--base=)
-	walker.global_position = ice.position + Vector3(10.5, 0.05, 7.5)
-	walker.rotation.y = -PI / 2
+	walker.global_position = ice.position + Vector3(BLUE_LINE - 1.5, 0.05, RINK.y / 2)
+	walker.face(-PI / 2)
 	walker.camera.rotation.x = -0.55
-	ice.chip(Vector2(11.8, 7.2), 0.14, 2.0, 0.3)
-	ice.chip(Vector2(12.2, 7.6), 0.14, 2.0, 0.0)
-	ice.pour(Vector2(12.2, 7.6), 0.4, 2.5)
+	ice.chip(Vector2(BLUE_LINE - 0.2, RINK.y / 2 - 0.3), 0.14, 2.0, 0.3)
+	ice.chip(Vector2(BLUE_LINE + 0.2, RINK.y / 2 + 0.1), 0.14, 2.0, 0.0)
+	ice.pour(Vector2(BLUE_LINE + 0.2, RINK.y / 2 + 0.1), 0.4, 2.5)
 	ice.set_now()
+	if OS.get_cmdline_user_args().has("--view=wide"):
+		# the whole sheet from above one end, after a few passes
+		for lane in 4:
+			var z := 3.0 + lane * MACHINE_W
+			ice.resurface(
+				PASS_X0, PASS_X1, z - MACHINE_W / 2, z + MACHINE_W / 2, 0.8, 0.0, 0.0, 0.0
+			)
+		walker.set_noclip(true)
+		walker.global_position = Vector3(-RINK.x / 2 - 6.0, 12.0, 0.0)
+		walker.face(-PI / 2)
+		walker.camera.rotation.x = -0.42
 	ice.flush()
 	for i in 6:
 		await get_tree().process_frame
@@ -530,8 +748,16 @@ func _self_test() -> void:
 			push_error("FAIL: " + what)
 			print("FAIL: " + what)
 	await get_tree().process_frame
-	check.call(ice.chunk_count() == 15 * 9, "the sheet is %d chunks (want 135)" % ice.chunk_count())
+	# 39 x 17 chunks less the ones wholly outside the corner arcs
+	check.call(
+		ice.chunk_count() > 600 and ice.chunk_count() < 39 * 17,
+		"the sheet is %d chunks (want 600..662)" % ice.chunk_count()
+	)
+	check.call(not ice.is_ice(10, 10) and ice.is_ice(400, 400), "the corners are not ice")
 	check.call(ice.dirty_count() == 0, "nothing dirty after the first flush")
+	# a pour into a corner wets nothing outside the arc
+	ice.pour(Vector2(0.4, 0.4), 0.6, 1.2)
+	check.call(ice.wet_cells == 0, "water does not land outside the arc (%d)" % ice.wet_cells)
 	# the four states
 	for k in STATES.size():
 		_set_state(k)
@@ -638,8 +864,8 @@ func _self_test() -> void:
 		"more base ice is more over the paint"
 	)
 	ice.base_mm -= 10.0
-	ice.chip(Vector2(2.0, 2.0), 0.12, 2.0, 0.0)
-	var cc := ice.cell_at(Vector2(2.0, 2.0))
+	ice.chip(Vector2(12.0, 12.0), 0.12, 2.0, 0.0)
+	var cc := ice.cell_at(Vector2(12.0, 12.0))
 	check.call(
 		ice.paint_depth(ice.index(cc.x, cc.y)) < d0, "a chip brings the paint nearer the surface"
 	)
@@ -732,7 +958,7 @@ func _self_test() -> void:
 		"a blade at 0 takes the rest (%.2f)" % ice.top_at(Vector2(8.0, 4.0))
 	)
 	ice.flush()
-	check.call(ice.remeshed > 135, "chunks re-meshed (%d)" % ice.remeshed)
+	check.call(ice.remeshed > 600, "chunks re-meshed (%d)" % ice.remeshed)
 	check.call(objects.count() == 8, "mugs on the ice")
 	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:

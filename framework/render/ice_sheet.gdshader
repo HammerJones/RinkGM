@@ -2,17 +2,22 @@ shader_type spatial;
 render_mode cull_back, diffuse_burley, specular_schlick_ggx;
 // The ice sheet: four surface states per column blended per pixel with
 // millimetre detail maps. See framework/ice/ice_sheet.gd for the textures.
+// The state textures are tiles: each chunk's material carries its tile
+// and where that tile sits in the sheet's UV.
 uniform sampler2D state : filter_linear;   // r snow, g cut, b water (0..1 of 0.5 mm), a frozen
 uniform sampler2D cutmap : filter_linear;  // r angle (turns), g gouge, b filled gouge (scar), a crust (0..1 of 4 mm)
+uniform vec2 tile_off = vec2(0.0);         // the tile's origin in sheet UV
+uniform vec2 tile_scale = vec2(1.0);       // sheet UV to tile UV
 uniform sampler2D stria_n : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D snow_n : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D ripple_n : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D depthmap : filter_linear;  // r ice over the paint (0..1 of 64 mm)
-uniform sampler2D markings : source_color, filter_linear;  // lines and logos on the white paint
+uniform sampler2D markings : source_color, filter_linear_mipmap_anisotropic;  // lines and logos on the white paint
 uniform bool has_markings = false;
 uniform float clear_mm = 30.0;  // ice this thick lets 37% of the paint through
 uniform vec3 paint_white = vec3(0.86, 0.88, 0.90);
 uniform vec2 sheet = vec2(24.0, 14.0);     // metres
+uniform float corner_r = 0.0;              // corner radius, metres: outside the arcs is not ice
 uniform float striation_m = 1.0;           // striation tiles per metre (the map is one metre)
 uniform float striation_strength = 0.9;
 varying vec2 wp;
@@ -28,8 +33,14 @@ mat2 rot(float a) {
 }
 
 void fragment() {
-	vec4 s = texture(state, UV);
-	vec4 c = texture(cutmap, UV);
+	// the rink's corners: nothing is drawn outside the arcs
+	vec2 q = abs(wp - sheet * 0.5) - (sheet * 0.5 - vec2(corner_r));
+	if (q.x > 0.0 && q.y > 0.0 && length(q) > corner_r) {
+		discard;
+	}
+	vec2 tuv = (UV - tile_off) * tile_scale;
+	vec4 s = texture(state, tuv);
+	vec4 c = texture(cutmap, tuv);
 	float sn = clamp(s.r, 0.0, 1.0);
 	float ct = clamp(s.g, 0.0, 1.0);
 	float wt = clamp(s.b, 0.0, 1.0);
@@ -48,7 +59,7 @@ void fragment() {
 	// the paint is at a fixed depth: the lines sit on the white paint and
 	// show through the ice above them, vivid when it is thin, faded and
 	// blue when it is thick; clear ice (a filled chip) shows more
-	float dep = texture(depthmap, UV).r * 64.0;
+	float dep = texture(depthmap, tuv).r * 64.0;
 	float gg = clamp(c.g * 4.0, 0.0, 1.0);
 	float sc = clamp(c.b * 4.0, 0.0, 1.0) * (1.0 - gg);
 	float through = exp(-dep / clear_mm);

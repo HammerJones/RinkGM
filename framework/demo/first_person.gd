@@ -43,6 +43,12 @@ func _ready() -> void:
 	camera.current = true
 
 
+## Turns the body to a heading (radians about Y; 0 looks down -Z).
+func face(yaw: float) -> void:
+	_yaw = yaw
+	rotation.y = yaw
+
+
 func set_noclip(on: bool) -> void:
 	noclip = on
 	collision_mask = 0 if on else _mask

@@ -5,11 +5,15 @@ extends Node3D
 ## its angle, and gouge depth. Two data textures carry the state to the
 ## ice shader (one texel per cell), and a chunked heightfield gives snow,
 ## water and gouges real height. Only dirty chunks are re-uploaded and
-## re-meshed, a few per frame.
+## re-meshed, a few per frame. The textures are tiles of 256 cells a side
+## (4 chunks), each with its own copy of the material, so a change uploads
+## one tile's 768 KB rather than the whole sheet's 30 MB. A corner radius
+## makes the sheet a rink: columns outside the arcs are not ice, nothing
+## writes them, water does not run into them and the shader leaves them out.
 ##
 ##   var ice := IceSheet.new()
 ##   add_child(ice)
-##   ice.setup(Vector2(24, 14), 0.025)
+##   ice.setup(Vector2(60.96, 25.9), 0.025, 8.5)  # metres, per cell, corner radius
 ##   ice.fill_state(0.0, 0.8, 0.0, 0.0)          # snow mm, cut, water mm, frozen
 ##   ice.pour(Vector2(3, 2), 0.4, 1.2)            # a 1.2 mm puddle, 0.4 m across
 ##   ice.stroke(Vector2(1, 1), Vector2(4, 3), 0.03, 0.9, 1.5, 0.3)
@@ -29,6 +33,7 @@ extends Node3D
 ## downhill, fills gouges and pins as a film at its rim.
 
 const CHUNK := 64  # cells a side
+const TILE := 256  # cells a side of one set of state textures (4 chunks)
 const SNOW_FULL := 1.0  # mm that reads as fully snowed
 const WATER_FULL := 0.5  # mm that reads as fully wet
 const GOUGE_FULL := 4.0  # mm that reads as the deepest gouge
@@ -52,6 +57,8 @@ var height_scale := 4.0
 var budget_ms := 3.0
 
 var size := Vector2(24.0, 14.0)
+## Corner radius in metres (0 is a rectangle).
+var corner := 0.0
 var w := 0
 var d := 0
 var snow := PackedFloat32Array()  # mm
@@ -69,48 +76,58 @@ var wet_cells := 0
 
 var _cw := 0
 var _cd := 0
-var _state_img: Image
-var _cut_img: Image
-var _state_bytes := PackedByteArray()
-var _cut_bytes := PackedByteArray()
-var _depth_bytes := PackedByteArray()
-var _depth_img: Image
-var _depth_tex: ImageTexture
-var _state_tex: ImageTexture
-var _cut_tex: ImageTexture
+var _tw := 0
+var _td := 0
+var _mask := PackedByteArray()  # 1 where the column is ice (inside the corner arcs)
+var _outside := PackedInt32Array()  # the columns that are not ice
+var _keys: Array[Vector2i] = []  # the chunks that hold any ice
+var _full := {}  # Vector2i -> true, chunks with no column outside the arcs
+var _uniform := {}  # Vector2i -> true, full chunks untouched since the last fill
+var _tiles := {}  # Vector2i -> Tile
+var _tile_dirty := {}  # Vector2i -> true, tiles with a rebuilt chunk to upload
 var _chunks := {}  # Vector2i -> MeshInstance3D
 var _dirty := {}  # Vector2i -> true
-var _wet := {}  # cell index -> true, cells with liquid water
-var _wet_list := PackedInt32Array()  # the set as a list, walked in slices
+var _wet_flag := PackedByteArray()  # 1 per cell with liquid water
+var _wet_n := 0
+var _wet_list := PackedInt32Array()  # the wet set as a list, walked in slices
 var _wet_next := PackedInt32Array()  # the live cells seen this pass: the next list
 var _thermal_cursor := 0
 
 
-func setup(size_m: Vector2, cell_m := 0.025) -> void:
+## One tile of the state textures (TILE cells a side) and the material
+## that samples them. The images are the store: a cell is a set_pixel, a
+## uniform chunk one fill_rect, an upload one update per image.
+class Tile:
+	var state_img: Image
+	var cut_img: Image
+	var depth_img: Image
+	var state_tex: ImageTexture
+	var cut_tex: ImageTexture
+	var depth_tex: ImageTexture
+	var material: ShaderMaterial
+
+
+func setup(size_m: Vector2, cell_m := 0.025, corner_m := 0.0) -> void:
 	size = size_m
 	cell = cell_m
+	corner = corner_m
 	w = int(round(size.x / cell))
 	d = int(round(size.y / cell))
 	for arr in [snow, water, frozen, cut, ang, gouge, ice, scar, crust]:
 		arr.resize(w * d)
 		arr.fill(0.0)
+	_wet_flag.resize(w * d)
+	_wet_flag.fill(0)
+	_wet_n = 0
+	_build_mask()
 	_cw = ceili(float(w) / CHUNK)
 	_cd = ceili(float(d) / CHUNK)
-	_state_bytes.resize(w * d * 4)
-	_cut_bytes.resize(w * d * 4)
-	_depth_bytes.resize(w * d * 4)
-	_state_img = Image.create_from_data(w, d, false, Image.FORMAT_RGBA8, _state_bytes)
-	_cut_img = Image.create_from_data(w, d, false, Image.FORMAT_RGBA8, _cut_bytes)
-	_depth_img = Image.create_from_data(w, d, false, Image.FORMAT_RGBA8, _depth_bytes)
-	_state_tex = ImageTexture.create_from_image(_state_img)
-	_cut_tex = ImageTexture.create_from_image(_cut_img)
-	_depth_tex = ImageTexture.create_from_image(_depth_img)
+	_tw = ceili(float(_cw) / (TILE / CHUNK))
+	_td = ceili(float(_cd) / (TILE / CHUNK))
 	material = ShaderMaterial.new()
 	material.shader = load("res://framework/render/ice_sheet.gdshader")
-	material.set_shader_parameter("state", _state_tex)
-	material.set_shader_parameter("cutmap", _cut_tex)
-	material.set_shader_parameter("depthmap", _depth_tex)
 	material.set_shader_parameter("sheet", size)
+	material.set_shader_parameter("corner_r", corner)
 	material.set_shader_parameter("stria_n", striation_normal())
 	material.set_shader_parameter("snow_n", noise_normal(0.12, 2, 5.0, 9))
 	material.set_shader_parameter("ripple_n", noise_normal(0.02, 3, 2.0, 4))
@@ -118,13 +135,95 @@ func setup(size_m: Vector2, cell_m := 0.025) -> void:
 		c.queue_free()
 	_chunks.clear()
 	_dirty.clear()
-	_wet.clear()
+	_tiles.clear()
+	_tile_dirty.clear()
 	_wet_list.resize(0)
 	_wet_next.resize(0)
+	_thermal_cursor = 0
 	remeshed = 0
+	for tz in _td:
+		for tx in _tw:
+			_tiles[Vector2i(tx, tz)] = _make_tile(tx, tz)
+	_keys.clear()
+	_full.clear()
+	_uniform.clear()
 	for cz in _cd:
 		for cx in _cw:
-			_dirty[Vector2i(cx, cz)] = true
+			var key := Vector2i(cx, cz)
+			var rows := _chunk_ice(key)
+			if rows.x > 0:
+				_keys.append(key)
+				_dirty[key] = true
+			if rows.y == mini(cz * CHUNK + CHUNK, d) - cz * CHUNK:
+				_full[key] = true
+
+
+## The mask: 1 where the column is inside the corner arcs. The arcs'
+## centres sit `corner` in from each corner.
+func _build_mask() -> void:
+	_mask.resize(w * d)
+	_mask.fill(1)
+	_outside.resize(0)
+	if corner <= 0.0:
+		return
+	var r := corner / cell
+	var rr := r * r
+	var n := int(ceil(r))
+	for cz in n:
+		for cx in n:
+			var dx := r - (cx + 0.5)
+			var dz := r - (cz + 0.5)
+			if dx * dx + dz * dz > rr:
+				for i in [
+					index(cx, cz),
+					index(w - 1 - cx, cz),
+					index(cx, d - 1 - cz),
+					index(w - 1 - cx, d - 1 - cz)
+				]:
+					_mask[i] = 0
+					_outside.append(i)
+
+
+## How many of a chunk's rows hold any ice (x) and how many are ice end
+## to end (y). The ice is convex and the corners are at the sheet's
+## edges, so a row's ice always reaches one end of the chunk.
+func _chunk_ice(key: Vector2i) -> Vector2i:
+	var x0 := key.x * CHUNK
+	var z0 := key.y * CHUNK
+	var x1 := mini(x0 + CHUNK, w) - 1
+	var rows := Vector2i.ZERO
+	for z in range(z0, mini(z0 + CHUNK, d)):
+		var a := _mask[z * w + x0] == 1
+		var b := _mask[z * w + x1] == 1
+		if a or b:
+			rows.x += 1
+		if a and b:
+			rows.y += 1
+	return rows
+
+
+func _make_tile(tx: int, tz: int) -> Tile:
+	var t := Tile.new()
+	t.state_img = Image.create_empty(TILE, TILE, false, Image.FORMAT_RGBA8)
+	t.cut_img = Image.create_empty(TILE, TILE, false, Image.FORMAT_RGBA8)
+	t.depth_img = Image.create_empty(TILE, TILE, false, Image.FORMAT_RGBA8)
+	t.state_tex = ImageTexture.create_from_image(t.state_img)
+	t.cut_tex = ImageTexture.create_from_image(t.cut_img)
+	t.depth_tex = ImageTexture.create_from_image(t.depth_img)
+	t.material = material.duplicate()
+	t.material.set_shader_parameter("state", t.state_tex)
+	t.material.set_shader_parameter("cutmap", t.cut_tex)
+	t.material.set_shader_parameter("depthmap", t.depth_tex)
+	t.material.set_shader_parameter("tile_off", Vector2(float(tx * TILE) / w, float(tz * TILE) / d))
+	t.material.set_shader_parameter("tile_scale", Vector2(float(w) / TILE, float(d) / TILE))
+	return t
+
+
+## A shader parameter on the base material and every tile's copy.
+func set_param(name: String, value: Variant) -> void:
+	material.set_shader_parameter(name, value)
+	for t: Tile in _tiles.values():
+		t.material.set_shader_parameter(name, value)
 
 
 ## Ice over the paint at a column, mm (the datum's base plus what floods
@@ -135,15 +234,14 @@ func paint_depth(i: int) -> float:
 
 ## Re-reads every column (after a change of base_mm).
 func mark_all_dirty() -> void:
-	for cz in _cd:
-		for cx in _cw:
-			_dirty[Vector2i(cx, cz)] = true
+	for key in _keys:
+		_dirty[key] = true
 
 
 ## Lines and logos drawn under the ice (a texture over the whole sheet).
 func set_markings(tex: Texture2D) -> void:
-	material.set_shader_parameter("markings", tex)
-	material.set_shader_parameter("has_markings", tex != null)
+	set_param("markings", tex)
+	set_param("has_markings", tex != null)
 
 
 func index(x: int, z: int) -> int:
@@ -156,6 +254,11 @@ func cell_at(p: Vector2) -> Vector2i:
 
 func in_bounds(x: int, z: int) -> bool:
 	return x >= 0 and z >= 0 and x < w and z < d
+
+
+## In the sheet and inside the corner arcs: a column that is ice.
+func is_ice(x: int, z: int) -> bool:
+	return x >= 0 and z >= 0 and x < w and z < d and _mask[z * w + x] == 1
 
 
 func chunk_count() -> int:
@@ -171,32 +274,49 @@ func dirty_count() -> int:
 
 ## Every cell to one state: snow mm, cut amount, water mm, frozen 0..1.
 func fill_state(sn: float, ct: float, wt: float, fz: float, angle := 0.0) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 8
-	for i in w * d:
-		snow[i] = sn * (0.85 + 0.15 * rng.randf()) if sn > 0.0 else 0.0
-		cut[i] = ct
-		ang[i] = angle
-		water[i] = wt
-		frozen[i] = fz
-		gouge[i] = 0.0
-		ice[i] = 0.0
-		scar[i] = 0.0
-		crust[i] = 0.0
-	_wet.clear()
+	cut.fill(ct)
+	ang.fill(angle)
+	water.fill(wt)
+	frozen.fill(fz)
+	for arr in [gouge, ice, scar, crust]:
+		arr.fill(0.0)
+	if sn > 0.0:
+		# a little unevenness in the snow: one band of chunk rows is drawn
+		# once and repeated down the sheet (the shader's grain hides the seam)
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 8
+		var band := PackedFloat32Array()
+		band.resize(w * CHUNK)
+		for i in band.size():
+			band[i] = sn * (0.85 + 0.15 * rng.randf())
+		snow.resize(0)
+		for k in _cd:
+			snow.append_array(band)
+		snow.resize(w * d)
+	else:
+		snow.fill(0.0)
 	_wet_list.resize(0)
 	_wet_next.resize(0)
 	_thermal_cursor = 0
 	if wt > 0.0 and fz < 1.0:
-		_wet_list.resize(w * d)
-		for i in w * d:
-			_wet[i] = true
-			_wet_list[i] = i
-	for key in _chunks.keys():
+		_wet_flag.fill(1)
+		_wet_n = w * d
+		_wet_list = PackedInt32Array(range(w * d))
+	else:
+		_wet_flag.fill(0)
+		_wet_n = 0
+	# the columns outside the corner arcs are not ice: nothing on them
+	for i in _outside:
+		snow[i] = 0.0
+		cut[i] = 0.0
+		water[i] = 0.0
+		frozen[i] = 0.0
+		if _wet_flag[i] == 1:
+			_wet_flag[i] = 0
+			_wet_n -= 1
+	for key in _keys:
 		_dirty[key] = true
-	for cz in _cd:
-		for cx in _cw:
-			_dirty[Vector2i(cx, cz)] = true
+	_uniform = _full.duplicate()
 
 
 ## A puddle: `mm` of water in a disc `width` metres across, deeper in the
@@ -209,7 +329,7 @@ func pour(at: Vector2, width: float, mm: float) -> void:
 		for dx in range(-r, r + 1):
 			var x := c.x + dx
 			var z := c.y + dz
-			if not in_bounds(x, z):
+			if not is_ice(x, z):
 				continue
 			var f := 1.0 - Vector2(dx, dz).length() / r
 			if f <= 0.0:
@@ -243,7 +363,7 @@ func stroke(
 			for dx in range(-r, r + 1):
 				var x := c.x + dx
 				var z := c.y + dz
-				if not in_bounds(x, z):
+				if not is_ice(x, z):
 					continue
 				var dist := Vector2(dx, dz).length() * cell
 				var i := index(x, z)
@@ -266,7 +386,7 @@ func chip(at: Vector2, width: float, depth: float, snow_mm := 0.0) -> void:
 		for dx in range(-r, r + 1):
 			var x := c.x + dx
 			var z := c.y + dz
-			if not in_bounds(x, z):
+			if not is_ice(x, z):
 				continue
 			var dist := Vector2(dx, dz).length() * cell
 			var i := index(x, z)
@@ -311,6 +431,8 @@ func resurface(
 		var streak := 1.0 + rag_wear * 0.6 * sin(z * cell * 41.0) * sin(z * cell * 7.3)
 		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
 			var i := index(x, z)
+			if _mask[i] == 0:
+				continue
 			# the column's top: ice, the tallest crust peak, loose snow on it.
 			# Snow has height: a blade above the snow touches nothing, a blade
 			# in the snow shaves only snow, a blade in the solid takes the snow
@@ -354,7 +476,7 @@ func resurface(
 		var per := shaved / maxf(float(c1.x - c0.x + 1), 1.0) * spill
 		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
 			for z in [c0.y - 1, c1.y + 1]:
-				if in_bounds(x, z):
+				if is_ice(x, z):
 					var i := index(x, z)
 					snow[i] = clampf(snow[i] + per, 0.0, 3.0)
 					_touch(x, z)
@@ -369,7 +491,7 @@ func resurface(
 ## the way. The loop is written flat (no calls, no allocations per cell)
 ## because it is the hot path: about half a microsecond a cell.
 func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
-	if _wet.is_empty():
+	if _wet_n == 0:
 		wet_cells = 0
 		_wet_list.resize(0)
 		_wet_next.resize(0)
@@ -381,8 +503,8 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 		_wet_next = PackedInt32Array()
 		_thermal_cursor = 0
 		if _wet_list.is_empty():
-			_wet_list = PackedInt32Array(_wet.keys())
-	wet_cells = _wet.size()
+			_wet_list = _wet_scan()
+	wet_cells = _wet_n
 	var n := mini(max_cells, _wet_list.size() - _thermal_cursor)
 	var per_pass := float(_wet_list.size()) / maxi(mini(max_cells, _wet_list.size()), 1)
 	var slice_dt := dt * per_pass
@@ -392,18 +514,20 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 	var last := w * d - 1
 	for k in n:
 		var i := _wet_list[_thermal_cursor + k]
-		if not _wet.has(i):
+		if _wet_flag[i] == 0:
 			continue
 		var wt := water[i]
 		if wt <= 0.0:
-			_wet.erase(i)
+			_wet_flag[i] = 0
+			_wet_n -= 1
 			continue
 		var fz := frozen[i]
-		# neighbours (clamped at the rim); an edge that is dry or set pulls heat sideways
-		var il := i - 1 if i % w > 0 else i
-		var ir := i + 1 if i % w < w - 1 else i
-		var iu := i - w if i >= w else i
-		var id := i + w if i + w <= last else i
+		# neighbours (clamped at the rim and at the corner arcs); an edge
+		# that is dry or set pulls heat sideways
+		var il := i - 1 if i % w > 0 and _mask[i - 1] == 1 else i
+		var ir := i + 1 if i % w < w - 1 and _mask[i + 1] == 1 else i
+		var iu := i - w if i >= w and _mask[i - w] == 1 else i
+		var id := i + w if i + w <= last and _mask[i + w] == 1 else i
 		var edge := 0.0
 		if water[il] <= 0.0 or frozen[il] >= 0.999:
 			edge += 0.5
@@ -449,20 +573,31 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 			water[i] = 0.0
 			frozen[i] = 0.0
 			cut[i] = 0.0
-			_wet.erase(i)
-			_dirty[Vector2i((i % w) / CHUNK, (i / w) / CHUNK)] = true
+			_wet_flag[i] = 0
+			_wet_n -= 1
+			_touch(i % w, i / w)
 		else:
 			frozen[i] = fz
 			_wet_next.append(i)
 			if int(fz * 255.0) != before:
-				_dirty[Vector2i((i % w) / CHUNK, (i / w) / CHUNK)] = true
+				_touch(i % w, i / w)
 	_thermal_cursor += n
 
 
 func _wet_add(i: int) -> void:
-	if not _wet.has(i):
-		_wet[i] = true
+	if _wet_flag[i] == 0:
+		_wet_flag[i] = 1
+		_wet_n += 1
 		_wet_list.append(i)
+
+
+## Every wet cell, when the walk list has to be rebuilt.
+func _wet_scan() -> PackedInt32Array:
+	var out := PackedInt32Array()
+	for i in w * d:
+		if _wet_flag[i] == 1:
+			out.append(i)
+	return out
 
 
 func _flow(i: int, il: int, ir: int, iu: int, id: int, liquid: float) -> void:
@@ -489,8 +624,8 @@ func _flow(i: int, il: int, ir: int, iu: int, id: int, liquid: float) -> void:
 
 ## Sets every wet cell at once (a test rig's instant freeze).
 func set_now() -> void:
-	while not _wet.is_empty():
-		thermal(1.0e9, -5.0, 0.0, _wet.size())
+	while _wet_n > 0:
+		thermal(1.0e9, -5.0, 0.0, _wet_n)
 	_wet_list.resize(0)
 	_wet_next.resize(0)
 	_thermal_cursor = 0
@@ -512,7 +647,9 @@ func ice_at(p: Vector2) -> float:
 
 
 func _touch(x: int, z: int) -> void:
-	_dirty[Vector2i(x / CHUNK, z / CHUNK)] = true
+	var key := Vector2i(x / CHUNK, z / CHUNK)
+	_dirty[key] = true
+	_uniform.erase(key)
 
 
 # --- to the GPU, a few chunks a frame --------------------------------------
@@ -542,59 +679,145 @@ func flush() -> void:
 	_upload()
 
 
+## The tiles with a rebuilt chunk go to the GPU (768 KB each).
 func _upload() -> void:
-	_state_img.set_data(w, d, false, Image.FORMAT_RGBA8, _state_bytes)
-	_cut_img.set_data(w, d, false, Image.FORMAT_RGBA8, _cut_bytes)
-	_depth_img.set_data(w, d, false, Image.FORMAT_RGBA8, _depth_bytes)
-	_state_tex.update(_state_img)
-	_cut_tex.update(_cut_img)
-	_depth_tex.update(_depth_img)
+	for tkey in _tile_dirty:
+		var t: Tile = _tiles[tkey]
+		t.state_tex.update(t.state_img)
+		t.cut_tex.update(t.cut_img)
+		t.depth_tex.update(t.depth_img)
+	_tile_dirty.clear()
 
 
+## A chunk's columns into its tile's images and its mesh. A uniform chunk
+## (untouched since the fill) is three fill_rects and a flat quad; any
+## other is encoded cell by cell, the hot path, written flat.
 func _build_chunk(key: Vector2i) -> void:
 	var x0 := key.x * CHUNK
 	var z0 := key.y * CHUNK
 	var x1 := mini(x0 + CHUNK, w)
 	var z1 := mini(z0 + CHUNK, d)
+	var tkey := Vector2i(key.x / (TILE / CHUNK), key.y / (TILE / CHUNK))
+	var t: Tile = _tiles[tkey]
+	var tx0 := tkey.x * TILE
+	var tz0 := tkey.y * TILE
+	var sim := t.state_img
+	var cim := t.cut_img
+	var dim := t.depth_img
 	var lo := INF
 	var hi := -INF
-	for z in range(z0, z1):
-		for x in range(x0, x1):
-			var i := index(x, z)
-			var b := i * 4
-			_state_bytes[b] = int(clampf(snow[i] / SNOW_FULL, 0.0, 1.0) * 255.0)
-			_state_bytes[b + 1] = int(clampf(cut[i], 0.0, 1.0) * 255.0)
-			_state_bytes[b + 2] = int(clampf(water[i] / WATER_FULL, 0.0, 1.0) * 255.0)
-			_state_bytes[b + 3] = int(clampf(frozen[i], 0.0, 1.0) * 255.0)
-			_cut_bytes[b] = int(fposmod(ang[i], TAU) / TAU * 255.0)
-			_cut_bytes[b + 1] = int(clampf(gouge[i] / GOUGE_FULL, 0.0, 1.0) * 255.0)
-			_cut_bytes[b + 2] = int(clampf(scar[i] / GOUGE_FULL, 0.0, 1.0) * 255.0)
-			_cut_bytes[b + 3] = int(clampf(crust[i] / GOUGE_FULL, 0.0, 1.0) * 255.0)
-			_depth_bytes[b] = int(clampf(paint_depth(i) / DEPTH_FULL, 0.0, 1.0) * 255.0)
-			_depth_bytes[b + 1] = 0
-			_depth_bytes[b + 2] = 0
-			_depth_bytes[b + 3] = 255
-			var h := _height(x, z)
+	var flat := _uniform.has(key)
+	if flat:
+		# the border row and column shared with the next chunks must be
+		# level with it too, or the quads would not meet
+		var h := _height(x0, z0)
+		for x in range(x0, x1 + 1):
+			if absf(_height(x, z1) - h) >= FLAT_EPS:
+				flat = false
+				break
+		if flat:
+			for z in range(z0, z1 + 1):
+				if absf(_height(x1, z) - h) >= FLAT_EPS:
+					flat = false
+					break
+		if flat:
+			lo = h
+			hi = h
+			var i := z0 * w + x0
+			var rect := Rect2i(x0 - tx0, z0 - tz0, x1 - x0, z1 - z0)
+			sim.fill_rect(rect, _state_colour(i))
+			cim.fill_rect(rect, _cut_colour(i))
+			dim.fill_rect(rect, _depth_colour(i))
+	if not flat:
+		var scale := 0.001 * height_scale
+		for z in range(z0, z1):
+			var pz := z - tz0
+			var row := z * w
+			for x in range(x0, x1):
+				var i := row + x
+				var px := x - tx0
+				sim.set_pixel(
+					px,
+					pz,
+					Color(
+						clampf(snow[i] / SNOW_FULL, 0.0, 1.0),
+						clampf(cut[i], 0.0, 1.0),
+						clampf(water[i] / WATER_FULL, 0.0, 1.0),
+						clampf(frozen[i], 0.0, 1.0)
+					)
+				)
+				cim.set_pixel(
+					px,
+					pz,
+					Color(
+						fposmod(ang[i], TAU) / TAU,
+						clampf(gouge[i] / GOUGE_FULL, 0.0, 1.0),
+						clampf(scar[i] / GOUGE_FULL, 0.0, 1.0),
+						clampf(crust[i] / GOUGE_FULL, 0.0, 1.0)
+					)
+				)
+				dim.set_pixel(
+					px,
+					pz,
+					Color(
+						clampf((base_mm + ice[i] - gouge[i]) / DEPTH_FULL, 0.0, 1.0), 0.0, 0.0, 1.0
+					)
+				)
+				# the column's height, as _height has it, inline
+				var hs := (((i * 1103515245 + 12345) & 0x7fffffff) >> 8) & 0xffff
+				var h := (
+					(
+						ice[i]
+						+ snow[i]
+						+ crust[i] * (0.4 + 0.6 * hs / 65535.0)
+						+ water[i] * 0.6
+						- gouge[i]
+					)
+					* scale
+				)
+				lo = minf(lo, h)
+				hi = maxf(hi, h)
+		# the border row shared with the next chunk counts too
+		for x in range(x0, x1 + 1):
+			var h := _height(x, z1)
 			lo = minf(lo, h)
 			hi = maxf(hi, h)
-	# the border row shared with the next chunk counts too
-	for x in range(x0, x1 + 1):
-		var h := _height(x, z1)
-		lo = minf(lo, h)
-		hi = maxf(hi, h)
-	for z in range(z0, z1 + 1):
-		var h := _height(x1, z)
-		lo = minf(lo, h)
-		hi = maxf(hi, h)
+		for z in range(z0, z1 + 1):
+			var h := _height(x1, z)
+			lo = minf(lo, h)
+			hi = maxf(hi, h)
+	_tile_dirty[tkey] = true
 	var mi: MeshInstance3D = _chunks.get(key)
 	if mi == null:
 		mi = MeshInstance3D.new()
-		mi.material_override = material
+		mi.material_override = t.material
 		add_child(mi)
 		_chunks[key] = mi
 	# a level chunk (dry, or an even film, or built-up ice all one height) is one quad
 	mi.mesh = _flat_quad(x0, z0, x1, z1, lo) if hi - lo < FLAT_EPS else _heightfield(x0, z0, x1, z1)
 	remeshed += 1
+
+
+func _state_colour(i: int) -> Color:
+	return Color(
+		clampf(snow[i] / SNOW_FULL, 0.0, 1.0),
+		clampf(cut[i], 0.0, 1.0),
+		clampf(water[i] / WATER_FULL, 0.0, 1.0),
+		clampf(frozen[i], 0.0, 1.0)
+	)
+
+
+func _cut_colour(i: int) -> Color:
+	return Color(
+		fposmod(ang[i], TAU) / TAU,
+		clampf(gouge[i] / GOUGE_FULL, 0.0, 1.0),
+		clampf(scar[i] / GOUGE_FULL, 0.0, 1.0),
+		clampf(crust[i] / GOUGE_FULL, 0.0, 1.0)
+	)
+
+
+func _depth_colour(i: int) -> Color:
+	return Color(clampf(paint_depth(i) / DEPTH_FULL, 0.0, 1.0), 0.0, 0.0, 1.0)
 
 
 func _height(x: int, z: int) -> float:
