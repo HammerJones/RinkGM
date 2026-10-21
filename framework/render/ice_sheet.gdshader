@@ -31,7 +31,9 @@ void fragment() {
 	float ct = clamp(s.g, 0.0, 1.0);
 	float wt = clamp(s.b, 0.0, 1.0);
 	float fz = clamp(s.a, 0.0, 1.0);
-	float a = (c.r - 0.5) * 6.2832;
+	// the cut angle is the blade's travel; the grooves run along it (the
+	// map's grooves run along V, so the sample is turned a quarter turn)
+	float a = (c.r - 0.5) * 6.2832 + 1.5708;
 	vec2 su = rot(a) * wp * striation_m;
 	vec3 n_cut = texture(stria_n, su).xyz * 2.0 - 1.0;
 	vec3 n_snow = texture(snow_n, wp * 90.0).xyz * 2.0 - 1.0;
