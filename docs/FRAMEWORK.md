@@ -456,8 +456,17 @@ ice.thermal(dt, slab_c, air_c)              # water sets from the edges in
 
 **Columns, 2.5 cm.** Per cell: loose snow (mm), liquid water (mm), how
 much of that water has set, the dry-cut amount and its angle, gouge
-depth. A chunked heightfield (64 cells a side) gives snow, water and
-gouges real height; a chunk with nothing on it is two triangles.
+depth, built-up ice, filled-gouge scar, and crust. A chunked heightfield
+(64 cells a side) gives all of it real height; a level chunk (dry, or an
+even film, or built-up ice all one height) is two triangles.
+
+**Water is ice when it sets.** Set water joins the column's ice
+thickness (water expands 9%), so flooding one spot again and again makes
+it measurably higher, and the new surface is fresh frozen. While liquid,
+water deeper than 1.5 mm runs to lower neighbours, and a gouge is
+downhill: water fills it, and when it sets the trench is gone but a pale
+scar stays visible. Water on snow is slush, wet grey and half glossy, and
+sets with the snow into a rough crust of peaks.
 
 **The state texture, one texel per cell.** Two RGBA8 images carry the
 columns to the shader; only dirty chunks are rewritten, and the textures
@@ -465,17 +474,23 @@ upload once per frame within `budget_ms`.
 
 **The shader, millimetre detail.** Four surface states blended per pixel:
 snowed up (matte, grainy), dry cut (a sheen with striations at the cut
-angle), flood (a glossy water layer over whichever state is under it,
-which is why flood over snow and flood over a cut look different), and
-dry fresh frozen (hard gloss, a faint freeze ripple). The detail maps
-are generated once and sampled with mipmaps; without them a grazing view
+angle: grooves 5 to 10 mm wide at random spacing and depth, running the
+length with a slow wander, from a one-metre tiling map), flood (a glossy
+water layer over whichever state is under it, which is why flood over
+snow and flood over a cut look different), and dry fresh frozen (hard
+gloss, a faint freeze ripple); plus scars and crust. The detail maps are
+generated once and sampled with mipmaps; without them a grazing view
 turns the striations into moiré.
 
 **Freezing.** `thermal()` sets each wet cell's water at a rate from the
 slab temperature under it, slower in deep water and warm air, faster next
 to cells already set or dry, so a pool shrinks inward; 1.2 mm at -5 C
 takes about 12 minutes, the sim's number. It walks the wet cells in
-slices, so a whole flooded sheet costs a few milliseconds a frame. The
+slices of 3000 a frame through an append-only list (no per-cell calls or
+allocations), so a whole flooded sheet of 537k cells costs under 3 ms a
+frame and each cell is visited every three seconds with that much sim
+time. The resurfacer's rag matters: a new rag lays an even film, a worn
+one leaves streaks and a coarser cut (`resurface(..., rag_wear)`). The
 game's `IceSlab` and `RefrigerationPlant` are where the real heat balance
 lives; this is the surface they will drive, and the sim's 25 cm grid is
 the source the 2.5 cm columns sample.
@@ -528,12 +543,14 @@ display, and run as headless checks in CI (`--test=<name>`).
   F9 to load. Move something, walk two rooms on and back: it is still moved;
   pocket it: still gone.
 - **`ice_demo`**: a 24 x 14 m `IceSheet` (section 11b) under arena-style
-  lamps. Z cycles the whole sheet through the four states; LMB pours a
-  puddle where you look and the readout shows the slab and air
-  temperatures and the clock while it sets from the edges in; T speeds
-  the clock (x1, x10, x60); RMB chips a gouge; R sends the resurfacer
-  across, leaving a fresh cut and a wet film. Footsteps leave the ice
-  alone. Mugs on the ice to kick and carry.
+  lamps. Z cycles the whole sheet through the four states; holding LMB
+  runs a hose where you look (1.6 L/s, a stream of drops) and the readout
+  shows the slab and air temperatures, the clock, the litres hosed and
+  the ice built up under the dot while it sets from the edges in; T
+  speeds the clock (x1, x10, x60); holding RMB chips gouges wherever you
+  look; R sends the resurfacer across with the conditioner's rag, Y wears
+  the rag. Footsteps leave the ice alone. Mugs on the ice to kick and
+  carry.
 
 ## 14. What the port looks like
 

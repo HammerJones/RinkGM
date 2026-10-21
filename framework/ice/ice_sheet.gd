@@ -19,13 +19,20 @@ extends Node3D
 ## a cell's water sets at a rate from the slab temperature under it,
 ## slower in deep water and warm air, faster next to cells already set or
 ## dry, which is why a pool shrinks inward. 1.2 mm at -5 C takes about 12
-## minutes; the sim's IceSlab is the source of those numbers.
+## minutes; the sim's IceSlab is the source of those numbers. Water that
+## has set becomes ice: it joins the column's `ice` thickness (water
+## expands 9%), so flooding the same spot again and again builds it up,
+## and the new surface is fresh frozen (no cut, no snow). Deep water flows
+## to lower neighbours while it is liquid.
 
 const CHUNK := 64  # cells a side
 const SNOW_FULL := 1.0  # mm that reads as fully snowed
 const WATER_FULL := 0.5  # mm that reads as fully wet
 const GOUGE_FULL := 4.0  # mm that reads as the deepest gouge
 const FREEZE_K := 0.00033  # per second per degree below zero at 1 mm
+const ICE_PER_WATER := 1.09
+const FLOW_FROM := 1.5  # mm of water above which it runs to lower cells
+const FLAT_EPS := 0.00002  # m of height range a chunk may have and still be one quad
 
 ## Metres per cell.
 var cell := 0.025
@@ -43,6 +50,9 @@ var frozen := PackedFloat32Array()  # 0..1 of the water that has set
 var cut := PackedFloat32Array()  # 0..1
 var ang := PackedFloat32Array()  # radians
 var gouge := PackedFloat32Array()  # mm
+var ice := PackedFloat32Array()  # mm of ice built up over the base by floods
+var scar := PackedFloat32Array()  # mm of gouge that water filled: faintly visible, no depth
+var crust := PackedFloat32Array()  # mm of slush that set: a rough surface with peaks
 var material: ShaderMaterial
 var remeshed := 0
 var wet_cells := 0
@@ -51,11 +61,15 @@ var _cw := 0
 var _cd := 0
 var _state_img: Image
 var _cut_img: Image
+var _state_bytes := PackedByteArray()
+var _cut_bytes := PackedByteArray()
 var _state_tex: ImageTexture
 var _cut_tex: ImageTexture
 var _chunks := {}  # Vector2i -> MeshInstance3D
 var _dirty := {}  # Vector2i -> true
 var _wet := {}  # cell index -> true, cells with liquid water
+var _wet_list := PackedInt32Array()  # the set as a list, walked in slices
+var _wet_next := PackedInt32Array()  # the live cells seen this pass: the next list
 var _thermal_cursor := 0
 
 
@@ -64,13 +78,15 @@ func setup(size_m: Vector2, cell_m := 0.025) -> void:
 	cell = cell_m
 	w = int(round(size.x / cell))
 	d = int(round(size.y / cell))
-	for arr in [snow, water, frozen, cut, ang, gouge]:
+	for arr in [snow, water, frozen, cut, ang, gouge, ice, scar, crust]:
 		arr.resize(w * d)
 		arr.fill(0.0)
 	_cw = ceili(float(w) / CHUNK)
 	_cd = ceili(float(d) / CHUNK)
-	_state_img = Image.create(w, d, false, Image.FORMAT_RGBA8)
-	_cut_img = Image.create(w, d, false, Image.FORMAT_RGBA8)
+	_state_bytes.resize(w * d * 4)
+	_cut_bytes.resize(w * d * 4)
+	_state_img = Image.create_from_data(w, d, false, Image.FORMAT_RGBA8, _state_bytes)
+	_cut_img = Image.create_from_data(w, d, false, Image.FORMAT_RGBA8, _cut_bytes)
 	_state_tex = ImageTexture.create_from_image(_state_img)
 	_cut_tex = ImageTexture.create_from_image(_cut_img)
 	material = ShaderMaterial.new()
@@ -86,6 +102,8 @@ func setup(size_m: Vector2, cell_m := 0.025) -> void:
 	_chunks.clear()
 	_dirty.clear()
 	_wet.clear()
+	_wet_list.resize(0)
+	_wet_next.resize(0)
 	remeshed = 0
 	for cz in _cd:
 		for cx in _cw:
@@ -132,10 +150,18 @@ func fill_state(sn: float, ct: float, wt: float, fz: float, angle := 0.0) -> voi
 		water[i] = wt
 		frozen[i] = fz
 		gouge[i] = 0.0
+		ice[i] = 0.0
+		scar[i] = 0.0
+		crust[i] = 0.0
 	_wet.clear()
+	_wet_list.resize(0)
+	_wet_next.resize(0)
+	_thermal_cursor = 0
 	if wt > 0.0 and fz < 1.0:
+		_wet_list.resize(w * d)
 		for i in w * d:
 			_wet[i] = true
+			_wet_list[i] = i
 	for key in _chunks.keys():
 		_dirty[key] = true
 	for cz in _cd:
@@ -144,7 +170,8 @@ func fill_state(sn: float, ct: float, wt: float, fz: float, angle := 0.0) -> voi
 
 
 ## A puddle: `mm` of water in a disc `width` metres across, deeper in the
-## middle, taking the snow with it and starting liquid.
+## middle, starting liquid. Snow it lands on stays in the column as slush
+## and sets with the water into a rough crust.
 func pour(at: Vector2, width: float, mm: float) -> void:
 	var c := cell_at(at)
 	var r := int(ceil(width * 0.5 / cell))
@@ -159,16 +186,15 @@ func pour(at: Vector2, width: float, mm: float) -> void:
 				continue
 			var i := index(x, z)
 			var add := mm * clampf(f * 1.5, 0.0, 1.0)
-			# new water over set water: the whole column is liquid again in proportion
+			# new water over water still setting: the column is liquid again in proportion
 			var old_liquid := water[i] * (1.0 - frozen[i])
-			water[i] = minf(water[i] + add, 4.0)
+			water[i] = minf(water[i] + add, 8.0)
 			frozen[i] = (
 				clampf(1.0 - (old_liquid + add) / water[i], 0.0, 1.0) if water[i] > 0.0 else 0.0
 			)
 			if frozen[i] < 0.001:
 				frozen[i] = 0.0
-			snow[i] = 0.0
-			_wet[i] = true
+			_wet_add(i)
 			_touch(x, z)
 
 
@@ -202,60 +228,134 @@ func stroke(
 
 
 ## A resurfacer pass over a band (x range, z range in metres): shaved to a
-## fresh cut along x, gouges and snow gone, `film_mm` of water left wet.
-func resurface(x0: float, x1: float, z0: float, z1: float, film_mm := 0.8) -> void:
+## fresh cut along x, gouges and snow gone, `film_mm` of water spread by
+## the conditioner's rag. A new rag (`rag_wear` 0) lays an even film; a
+## worn one (1) leaves streaks across the band and a coarser cut.
+func resurface(x0: float, x1: float, z0: float, z1: float, film_mm := 0.8, rag_wear := 0.0) -> void:
 	var c0 := cell_at(Vector2(minf(x0, x1), minf(z0, z1)))
 	var c1 := cell_at(Vector2(maxf(x0, x1), maxf(z0, z1)))
 	for z in range(maxi(c0.y, 0), mini(c1.y + 1, d)):
+		var streak := 1.0 + rag_wear * 0.6 * sin(z * cell * 41.0) * sin(z * cell * 7.3)
 		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
 			var i := index(x, z)
-			cut[i] = 0.35
+			cut[i] = lerpf(0.15, 0.5, rag_wear)
 			ang[i] = 0.0
 			snow[i] = 0.0
 			gouge[i] = 0.0
-			water[i] = film_mm
+			water[i] = film_mm * streak
 			frozen[i] = 0.0
 			if film_mm > 0.0:
-				_wet[i] = true
+				_wet_add(i)
 			_touch(x, z)
 
 
 ## The freezing step: `dt` seconds of sim time with the slab at `slab_c`
-## and the air at `air_c`. Walks the wet cells in slices so a whole wet
-## sheet costs a few milliseconds a frame rather than one long stall.
-func thermal(dt: float, slab_c: float, air_c: float, max_cells := 40000) -> void:
+## and the air at `air_c`. Walks the wet cells in slices (`max_cells` a
+## call) so a whole wet sheet costs a couple of milliseconds a frame
+## rather than one long stall; each cell is visited every size/max_cells
+## calls and gets that much time. Deep water runs to lower neighbours on
+## the way. The loop is written flat (no calls, no allocations per cell)
+## because it is the hot path: about half a microsecond a cell.
+func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 	if _wet.is_empty():
 		wet_cells = 0
+		_wet_list.resize(0)
+		_wet_next.resize(0)
+		_thermal_cursor = 0
 		return
-	var keys := _wet.keys()
-	wet_cells = keys.size()
-	var n := mini(max_cells, keys.size())
-	var slice_dt := dt * float(keys.size()) / n  # each cell is visited every size/n calls
+	if _thermal_cursor >= _wet_list.size():
+		# a pass is done: the live cells seen on the way are the next list
+		_wet_list = _wet_next
+		_wet_next = PackedInt32Array()
+		_thermal_cursor = 0
+		if _wet_list.is_empty():
+			_wet_list = PackedInt32Array(_wet.keys())
+	wet_cells = _wet.size()
+	var n := mini(max_cells, _wet_list.size() - _thermal_cursor)
+	var per_pass := float(_wet_list.size()) / maxi(mini(max_cells, _wet_list.size()), 1)
+	var slice_dt := dt * per_pass
 	var cold := maxf(0.0, -slab_c)
 	var air := clampf(1.0 - air_c / 30.0, 0.3, 1.2)
+	var k_air := FREEZE_K * cold * air * slice_dt
+	var last := w * d - 1
 	for k in n:
-		var i: int = keys[(_thermal_cursor + k) % keys.size()]
-		if water[i] <= 0.0 or frozen[i] >= 1.0:
+		var i := _wet_list[_thermal_cursor + k]
+		if not _wet.has(i):
+			continue
+		var wt := water[i]
+		if wt <= 0.0:
 			_wet.erase(i)
 			continue
-		var x := i % w
-		var z := i / w
-		# an edge: a neighbour that is dry or set pulls heat sideways too
+		var fz := frozen[i]
+		# neighbours (clamped at the rim); an edge that is dry or set pulls heat sideways
+		var il := i - 1 if i % w > 0 else i
+		var ir := i + 1 if i % w < w - 1 else i
+		var iu := i - w if i >= w else i
+		var id := i + w if i + w <= last else i
 		var edge := 0.0
-		for nb in [
-			index(maxi(x - 1, 0), z),
-			index(mini(x + 1, w - 1), z),
-			index(x, maxi(z - 1, 0)),
-			index(x, mini(z + 1, d - 1))
-		]:
-			if water[nb] <= 0.0 or frozen[nb] >= 0.999:
-				edge += 0.5
-		var rate := FREEZE_K * cold * air * (1.0 + edge) / maxf(water[i], 0.3)
-		frozen[i] = minf(frozen[i] + rate * slice_dt, 1.0)
-		if frozen[i] >= 1.0:
+		if water[il] <= 0.0 or frozen[il] >= 0.999:
+			edge += 0.5
+		if water[ir] <= 0.0 or frozen[ir] >= 0.999:
+			edge += 0.5
+		if water[iu] <= 0.0 or frozen[iu] >= 0.999:
+			edge += 0.5
+		if water[id] <= 0.0 or frozen[id] >= 0.999:
+			edge += 0.5
+		# liquid above FLOW_FROM runs downhill (a gouge is downhill), a share a visit
+		var liquid := wt * (1.0 - fz)
+		if liquid > FLOW_FROM:
+			_flow(i, il, ir, iu, id, liquid)
+			wt = water[i]
+		var before := int(fz * 255.0)
+		fz += k_air * (1.0 + edge) / maxf(wt, 0.3)
+		if fz >= 1.0:
+			# set through: it fills the gouge first (a scar stays visible,
+			# no depth), the rest is new ice; a fresh frozen surface either way
+			var set_mm := wt * ICE_PER_WATER
+			var filled := minf(gouge[i], set_mm)
+			gouge[i] -= filled
+			scar[i] += filled
+			ice[i] += set_mm - filled
+			if snow[i] > 0.0:
+				# slush: the snow froze in with the water as a rough crust of peaks
+				crust[i] += snow[i] + set_mm * 0.5
+				snow[i] = 0.0
+			water[i] = 0.0
+			frozen[i] = 0.0
+			cut[i] = 0.0
 			_wet.erase(i)
-		_touch(x, z)
-	_thermal_cursor = (_thermal_cursor + n) % maxi(keys.size(), 1)
+			_dirty[Vector2i((i % w) / CHUNK, (i / w) / CHUNK)] = true
+		else:
+			frozen[i] = fz
+			_wet_next.append(i)
+			if int(fz * 255.0) != before:
+				_dirty[Vector2i((i % w) / CHUNK, (i / w) / CHUNK)] = true
+	_thermal_cursor += n
+
+
+func _wet_add(i: int) -> void:
+	if not _wet.has(i):
+		_wet[i] = true
+		_wet_list.append(i)
+
+
+func _flow(i: int, il: int, ir: int, iu: int, id: int, liquid: float) -> void:
+	var here := ice[i] + water[i] - gouge[i]
+	var give := minf((liquid - FLOW_FROM) * 0.25, liquid * 0.1)
+	for nb in [il, ir, iu, id]:
+		if nb != i and ice[nb] + water[nb] - gouge[nb] < here - 0.05:
+			water[i] -= give
+			var had := water[nb]
+			water[nb] += give
+			frozen[nb] *= had / (had + give)  # diluted by the new water
+			_wet_add(nb)
+			_touch(nb % w, nb / w)
+
+
+## Built-up ice (mm) at a point, for a caliper or a test.
+func ice_at(p: Vector2) -> float:
+	var c := cell_at(p)
+	return ice[index(c.x, c.y)] if in_bounds(c.x, c.y) else 0.0
 
 
 func _touch(x: int, z: int) -> void:
@@ -278,8 +378,7 @@ func _process(_dt: float) -> void:
 		if Time.get_ticks_usec() - t0 > limit:
 			break
 	if any:
-		_state_tex.update(_state_img)
-		_cut_tex.update(_cut_img)
+		_upload()
 
 
 ## Everything now (loading, tests).
@@ -287,6 +386,12 @@ func flush() -> void:
 	for key in _dirty.keys():
 		_build_chunk(key)
 	_dirty.clear()
+	_upload()
+
+
+func _upload() -> void:
+	_state_img.set_data(w, d, false, Image.FORMAT_RGBA8, _state_bytes)
+	_cut_img.set_data(w, d, false, Image.FORMAT_RGBA8, _cut_bytes)
 	_state_tex.update(_state_img)
 	_cut_tex.update(_cut_img)
 
@@ -296,49 +401,62 @@ func _build_chunk(key: Vector2i) -> void:
 	var z0 := key.y * CHUNK
 	var x1 := mini(x0 + CHUNK, w)
 	var z1 := mini(z0 + CHUNK, d)
-	var flat := true
+	var lo := INF
+	var hi := -INF
 	for z in range(z0, z1):
 		for x in range(x0, x1):
 			var i := index(x, z)
-			_state_img.set_pixel(
-				x,
-				z,
-				Color(
-					clampf(snow[i] / SNOW_FULL, 0.0, 1.0),
-					cut[i],
-					clampf(water[i] / WATER_FULL, 0.0, 1.0),
-					frozen[i]
-				)
-			)
-			_cut_img.set_pixel(
-				x,
-				z,
-				Color(fposmod(ang[i], TAU) / TAU, clampf(gouge[i] / GOUGE_FULL, 0.0, 1.0), 0.0, 1.0)
-			)
-			if snow[i] > 0.0 or water[i] > 0.0 or gouge[i] > 0.0:
-				flat = false
+			var b := i * 4
+			_state_bytes[b] = int(clampf(snow[i] / SNOW_FULL, 0.0, 1.0) * 255.0)
+			_state_bytes[b + 1] = int(clampf(cut[i], 0.0, 1.0) * 255.0)
+			_state_bytes[b + 2] = int(clampf(water[i] / WATER_FULL, 0.0, 1.0) * 255.0)
+			_state_bytes[b + 3] = int(clampf(frozen[i], 0.0, 1.0) * 255.0)
+			_cut_bytes[b] = int(fposmod(ang[i], TAU) / TAU * 255.0)
+			_cut_bytes[b + 1] = int(clampf(gouge[i] / GOUGE_FULL, 0.0, 1.0) * 255.0)
+			_cut_bytes[b + 2] = int(clampf(scar[i] / GOUGE_FULL, 0.0, 1.0) * 255.0)
+			_cut_bytes[b + 3] = int(clampf(crust[i] / GOUGE_FULL, 0.0, 1.0) * 255.0)
+			var h := _height(x, z)
+			lo = minf(lo, h)
+			hi = maxf(hi, h)
+	# the border row shared with the next chunk counts too
+	for x in range(x0, x1 + 1):
+		var h := _height(x, z1)
+		lo = minf(lo, h)
+		hi = maxf(hi, h)
+	for z in range(z0, z1 + 1):
+		var h := _height(x1, z)
+		lo = minf(lo, h)
+		hi = maxf(hi, h)
 	var mi: MeshInstance3D = _chunks.get(key)
 	if mi == null:
 		mi = MeshInstance3D.new()
 		mi.material_override = material
 		add_child(mi)
 		_chunks[key] = mi
-	mi.mesh = _flat_quad(x0, z0, x1, z1) if flat else _heightfield(x0, z0, x1, z1)
+	# a level chunk (dry, or an even film, or built-up ice all one height) is one quad
+	mi.mesh = _flat_quad(x0, z0, x1, z1, lo) if hi - lo < FLAT_EPS else _heightfield(x0, z0, x1, z1)
 	remeshed += 1
 
 
 func _height(x: int, z: int) -> float:
 	var i := index(mini(x, w - 1), mini(z, d - 1))
-	return (snow[i] + water[i] * 0.6 - gouge[i]) * 0.001 * height_scale
+	# crust is peaks: each column its own height within the crust depth
+	var peak := crust[i] * (0.4 + 0.6 * _hash(i))
+	return (ice[i] + snow[i] + peak + water[i] * 0.6 - gouge[i]) * 0.001 * height_scale
 
 
-func _flat_quad(x0: int, z0: int, x1: int, z1: int) -> ArrayMesh:
+static func _hash(i: int) -> float:
+	var x := (i * 1103515245 + 12345) & 0x7fffffff
+	return float((x >> 8) & 0xffff) / 65535.0
+
+
+func _flat_quad(x0: int, z0: int, x1: int, z1: int, y := 0.0) -> ArrayMesh:
 	var verts := PackedVector3Array(
 		[
-			Vector3(x0 * cell, 0, z0 * cell),
-			Vector3(x1 * cell, 0, z0 * cell),
-			Vector3(x0 * cell, 0, z1 * cell),
-			Vector3(x1 * cell, 0, z1 * cell)
+			Vector3(x0 * cell, y, z0 * cell),
+			Vector3(x1 * cell, y, z0 * cell),
+			Vector3(x0 * cell, y, z1 * cell),
+			Vector3(x1 * cell, y, z1 * cell)
 		]
 	)
 	var uvs := PackedVector2Array(
@@ -420,28 +538,39 @@ static func noise_normal(freq: float, octaves: int, strength: float, seed_: int)
 	return t
 
 
-## Parallel grooves with a little wander, tiling: the blade's striations.
+## The blade's striations as a tiling normal map over one metre: grooves
+## 5 to 10 mm wide at random spacing and depth, running the full length
+## with a slow wander, so a cut reads as long random lines rather than a
+## comb. U runs across the grooves.
 static func striation_normal() -> Texture2D:
 	if _stria:
 		return _stria
-	var size := 256
+	var size := 1024  # 1 mm per texel over the metre
 	var img := Image.create(size, size, false, Image.FORMAT_RGB8)
+	img.fill(Color(0.5, 0.5, 1.0))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2
-	var phase := PackedFloat32Array()
-	phase.resize(size)
-	for v in size:
-		phase[v] = rng.randf() * 0.4
-	var k := TAU / size
-	for v in size:
-		for u in size:
-			var g := (
-				sin(u * k * 37.0 + phase[v])
-				+ 0.6 * sin(u * k * 94.0 + 1.7 * phase[v])
-				+ 0.3 * sin(u * k * 209.0)
-			)
-			var slope := clampf(g * 0.35, -1.0, 1.0)
-			img.set_pixel(u, v, Color(0.5 + 0.35 * slope, 0.5, 1.0))
+	var u := 0.0
+	while u < size:
+		u += rng.randf_range(3.0, 22.0)  # the gap to the next groove
+		var width := rng.randf_range(5.0, 10.0)
+		var depth := rng.randf_range(0.25, 1.0)
+		var wander := rng.randf_range(-6.0, 6.0)
+		var phase := rng.randf() * TAU
+		for v in size:
+			# the groove drifts sideways along its length, back to where it
+			# started at the tile edge so it tiles
+			var drift := wander * sin(float(v) / size * TAU + phase) - wander * sin(phase)
+			var centre := u + drift
+			for k in int(ceil(width)) + 2:
+				var px := int(floor(centre - width * 0.5)) + k
+				var t := (px + 0.5 - centre) / (width * 0.5)  # -1..1 across the groove
+				if t < -1.0 or t > 1.0:
+					continue
+				var slope := -t * depth  # a rounded trough: down on one side, up on the other
+				var pxw := posmod(px, size)
+				var c := img.get_pixel(pxw, v)
+				img.set_pixel(pxw, v, Color(clampf(c.r + 0.4 * slope, 0.0, 1.0), 0.5, 1.0))
 	img.generate_mipmaps()
 	_stria = ImageTexture.create_from_image(img)
 	return _stria
