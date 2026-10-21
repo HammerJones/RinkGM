@@ -10,7 +10,7 @@ test runner, per-room physics. The framework is the thin layer that
 replaces those with the engine's own machinery and a few libraries, so the
 game code only has to do hockey. It is three things:
 
-1. **A development environment.** Godot 4.6 with Jolt as the physics
+1. **A development environment.** Godot 4.7 with Jolt as the physics
    engine, gdUnit4 for tests, gdtoolkit for lint and format, Git LFS for
    binaries, CI pinned to the same engine build, and budget tests that fail
    the build when the frame cost grows.
@@ -28,7 +28,7 @@ the runtime voxel surface and the render benchmark; 13 is the demos.
 
 | Piece | Where | What it does |
 | --- | --- | --- |
-| Godot 4.6 | `project.godot` (`config/features`), `.github/workflows/ci.yml` | The engine build the project and CI run on. The whole gate passed on 4.6 with no script changes. |
+| Godot 4.7.2 | `project.godot` (`config/features`), `.github/workflows/ci.yml` | The engine build the project and CI run on. Moved from 4.6 to 4.7.2 with no script changes; the whole gate passes on both. |
 | Jolt | `project.godot` (`physics/3d/physics_engine`) | The 3D physics engine for everything that is a body: props, loose things, walkers. The on-ice simulation (`Skater`, `Puck`, `Contact`) is its own impulse model and never touched the engine's physics, so it is unaffected. |
 | gdUnit4 | `addons/gdUnit4/`, suites in `tests/unit/` | Unit tests with assertions, a panel in the editor, and a headless runner in CI. New unit tests go here; the end-to-end `tools/tests/test_*.gd` scripts stay. |
 | gdtoolkit | `tools/lint.sh`, `.gdlintrc` | `gdlint` and `gdformat` on the framework layer. `tools/lint.sh --fix` reformats. The older `scripts/` tree is not covered yet; add paths to `tools/lint.sh` as files are brought up to the rules. |

@@ -7,9 +7,9 @@ what, shared interfaces, the CI gate), [docs/FRAMEWORK.md](docs/FRAMEWORK.md)
 (the engine layer: assets, props, streaming, budgets) and
 [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Playable demo (Godot 4.6+)
+## Playable demo (Godot 4.7+)
 
-Open the folder in Godot 4.6 or newer and press Play. It's a 5-on-5 game with
+Open the folder in Godot 4.7 or newer and press Play. It's a 5-on-5 game with
 goalies on an NHL-size rink, three 5-minute periods with rotating lines, in the voxel style of the
 reference renders in `art/reference/`. You play the red team; the yellow ring
 marks the skater you control.

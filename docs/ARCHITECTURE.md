@@ -158,7 +158,7 @@ on the tilde key, and a full rink environment that can be explored later.
   high-res display (no glare or bleeding pixels), with terminal signatures such
   as `//` line prefixes and `----` dashed dividers. It is full colour from the
   start: no monochrome green or amber stage that unlocks colour later.
-- Godot 4.6 with Jolt physics, GDScript, voxel art with oriented voxels. Physics at 120 Hz.
+- Godot 4.7 with Jolt physics, GDScript, voxel art with oriented voxels. Physics at 120 Hz.
   New world code builds on the framework layer (`docs/FRAMEWORK.md`): `.vox`
   assets through the import plugin, props through `PropField`, big scenes
   through `ChunkStreamer`.
@@ -219,7 +219,7 @@ RinkGM will become a general rink management sim with open-world elements, so:
 Run it locally before pushing (`pip install "gdtoolkit==4.*"` once for the lint):
 
 ```
-GODOT=/path/to/Godot_v4.6-stable_linux.x86_64 tools/ci.sh
+GODOT=/path/to/Godot_v4.7.2-stable_linux.x86_64 tools/ci.sh
 ```
 
 Framework code (`framework/`, `addons/vox_import/`) has budget tests too:
