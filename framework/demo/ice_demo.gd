@@ -1,65 +1,62 @@
 extends Node3D
-## The ice demo: a sheet of ice that is voxels, re-meshed only where it
-## changes. Walk on it and your boots carve a trail; LMB on bare ice
-## throws a snowball (a splat of snow on the ice), RMB chips a crater, Z
-## sends the resurfacer across (a bar that wipes the sheet line by line
-## over a few seconds, re-meshing within the frame budget), R resurfaces
-## at once. The lines are painted voxels, the goal light is an emissive
-## one. Mugs on the ice to kick and carry, so the two layers meet.
+## The ice demo: a sheet of ice as columns (IceSheet), drawn by the ice
+## shader with its four surface states. Z cycles the whole sheet through
+## snowed up, dry cut, flooded and fresh frozen. LMB pours water where you
+## look and you watch it set from the edges in under the slab and air
+## temperatures on the readout; T speeds the clock up. RMB chips a gouge.
+## R sends the resurfacer over the sheet. Mugs on the ice to kick and
+## carry. Footsteps leave the ice alone.
 ##
 ##   godot --path . res://scenes/dev/ice_demo.tscn
 ##
-## The HUD shows dirty chunks, chunks re-meshed this frame and the cost.
 ## `-- --test=ice_demo` is the headless check.
 
 const RINK := Vector2(24.0, 14.0)  # metres
-const VOXEL := 0.05
-const LAYERS := 4  # two under layers, the top ice layer, and air above for snow
-const TOP := 2  # the ice layer you walk on; carving it shows the one below
-const ICE := Color("eef4f8")
-const UNDER := Color("5f8fb8")
-const SNOW := Color("ffffff")
+const CELL := 0.025
+const STATES := [
+	["SNOWED UP", 1.0, 0.0, 0.0, 0.0],
+	["DRY CUT", 0.0, 0.8, 0.0, 0.0],
+	["FLOOD", 0.0, 0.8, 1.2, 0.0],
+	["DRY, FRESH, FROZEN", 0.0, 0.0, 1.2, 1.0],
+]
+const SCALES := [1.0, 10.0, 60.0]
 const RED := Color("c8322e")
 const BLUE := Color("2a4fb0")
 
-var ice: VoxelSurface
+var ice: IceSheet
 var field: PropField
 var objects: WorldObjects
 var walker: FirstPerson
 var interactor: Interactor
 var hud: WalkHud
+var state := 1
+var scale_i := 0
+var slab_c := -5.0
+var air_base := 8.0
+var air_c := 8.0
+var sim_t := 0.0
 var _env: WorldEnvironment
 var _sun: DirectionalLight3D
-var _nx := 0
-var _nz := 0
-var _top := 0.0
-var _last_foot := Vector3.ZERO
-var _zam := -1.0  # x of the resurfacer bar, or -1
-var _remesh_ms := 0.0
-var _remeshed_last := 0
+var _zam := -1.0
 var _fails := 0
 
 
 func _ready() -> void:
 	_lights()
-	_nx = int(RINK.x / VOXEL)
-	_nz = int(RINK.y / VOXEL)
-	_top = (TOP + 1) * VOXEL
-	ice = VoxelSurface.new()
+	ice = IceSheet.new()
 	ice.name = "Ice"
 	ice.position = Vector3(-RINK.x / 2, 0.0, -RINK.y / 2)
-	ice.budget_ms = 3.0
 	add_child(ice)
-	ice.setup(Vector3i(_nx, LAYERS, _nz), VOXEL)
-	_resurface()
-	_paint_lines()
-	ice.remesh_now()
+	ice.setup(RINK, CELL)
+	ice.set_markings(_markings())
+	_set_state(state)
+	ice.flush()
 	# a floor under the ice for the walker and the props; boards around
 	var shell := StaticBody3D.new()
 	shell.collision_layer = Layers.bit(Layers.VENUE)
 	shell.collision_mask = 0
 	add_child(shell)
-	_box(shell, Vector3(0, _top - 0.1, 0), Vector3(RINK.x, 0.2, RINK.y), Color("eef4f8"), false)
+	_box(shell, Vector3(0, -0.1, 0), Vector3(RINK.x, 0.2, RINK.y), Color.WHITE, false)
 	for s in [
 		[Vector3(0, 0.6, -RINK.y / 2 - 0.1), Vector3(RINK.x + 0.4, 1.2, 0.2)],
 		[Vector3(0, 0.6, RINK.y / 2 + 0.1), Vector3(RINK.x + 0.4, 1.2, 0.2)],
@@ -67,6 +64,11 @@ func _ready() -> void:
 		[Vector3(RINK.x / 2 + 0.1, 0.6, 0), Vector3(0.2, 1.2, RINK.y)],
 	]:
 		_box(shell, s[0], s[1], Color("f2f0ea"), true)
+	for s in [
+		[Vector3(0, 0.1, -RINK.y / 2 - 0.1), Vector3(RINK.x + 0.4, 0.2, 0.21)],
+		[Vector3(0, 0.1, RINK.y / 2 + 0.1), Vector3(RINK.x + 0.4, 0.2, 0.21)],
+	]:
+		_box(shell, s[0], s[1], RED, true, false)
 	field = PropField.new()
 	field.name = "Props"
 	add_child(field)
@@ -80,7 +82,7 @@ func _ready() -> void:
 		objects.spawn(
 			"coffee_mug",
 			Transform3D(
-				Basis(Vector3.UP, i * 0.8), Vector3(-3.0 + i * 0.9, _top, 2.0 + (i % 2) * 0.6)
+				Basis(Vector3.UP, i * 0.8), Vector3(-3.0 + i * 0.9, 0.0, 2.0 + (i % 2) * 0.6)
 			)
 		)
 	var quality := "medium"
@@ -94,9 +96,8 @@ func _ready() -> void:
 		_self_test.call_deferred()
 		return
 	walker = FirstPerson.new()
-	walker.position = Vector3(-8.0, _top + 0.05, 0.0)
+	walker.position = Vector3(-8.0, 0.05, 0.0)
 	add_child(walker)
-	_last_foot = walker.position
 	interactor = Interactor.new()
 	interactor.eye = walker.camera
 	interactor.objects = objects
@@ -104,7 +105,7 @@ func _ready() -> void:
 	hud = WalkHud.new()
 	add_child(hud)
 	hud.bind(interactor)
-	hud.legend("[WASD] WALK   [LMB] SNOWBALL   [RMB] CHIP   [Z] RESURFACER   [R] RESURFACE NOW")
+	hud.legend("[Z] NEXT STATE   [LMB] POUR WATER   [RMB] CHIP   [R] RESURFACER   [T] CLOCK SPEED")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--screenshot="):
@@ -112,172 +113,149 @@ func _ready() -> void:
 
 
 func _process(dt: float) -> void:
-	var before := ice.remeshed
-	var t0 := Time.get_ticks_usec()
+	var sdt: float = dt * SCALES[scale_i]
+	sim_t += sdt
+	# the building's air drifts over the day; the slab holds its setpoint
+	air_c = air_base + 3.0 * sin(sim_t / 900.0)
+	ice.thermal(sdt, slab_c, air_c)
 	if _zam >= 0.0:
-		_zamboni_step(dt)
+		_zamboni_step(sdt)
 	if walker:
 		field.focus = walker.global_position
-		_tracks()
-	# the surface re-meshes in its own _process; measure what this frame cost it
-	_remeshed_last = ice.remeshed - before
-	_remesh_ms = (Time.get_ticks_usec() - t0) / 1000.0
 	if hud:
-		hud.readout(
-			(
-				"ICE %dx%d VOXELS IN %d CHUNKS   DIRTY %d   RE-MESHED THIS FRAME %d"
-				% [_nx, _nz, ice._chunks.size(), ice.dirty_count(), _remeshed_last]
+		(
+			hud
+			. readout(
+				(
+					"STATE %s   SLAB %.1f C   AIR %.1f C   CLOCK x%d   T+%s   WET %d CELLS   DIRTY %d / %d CHUNKS"
+					% [
+						STATES[state][0],
+						slab_c,
+						air_c,
+						int(SCALES[scale_i]),
+						_clock(sim_t),
+						ice.wet_cells,
+						ice.dirty_count(),
+						ice.chunk_count()
+					]
+				)
 			)
 		)
 
 
-## Two boot trails under the walker, two voxels wide, every 12 cm of travel.
-func _tracks() -> void:
-	var p := walker.global_position
-	if p.distance_to(_last_foot) < 0.12:
-		return
-	_last_foot = p
-	var side := walker.transform.basis.x * 0.14
-	for foot in [p - side, p + side]:
-		var v := _voxel_at(foot)
-		for dx in 2:
-			for dz in 2:
-				_carve(v.x + dx, v.z + dz, 0)
+func _set_state(k: int) -> void:
+	state = k % STATES.size()
+	var s: Array = STATES[state]
+	ice.fill_state(s[1], s[2], s[3], s[4], 0.08 if s[2] > 0.0 else 0.0)
 
 
-## A snowball: a 10 cm splat of snow raised on the surface where you aim.
-func _snowball() -> void:
+## A 1.2 mm puddle 60 cm across where you look.
+func _pour() -> void:
 	var at: Variant = _aim()
 	if at == null:
 		return
-	var v := _voxel_at(at)
-	for dx in range(-2, 3):
-		for dz in range(-2, 3):
-			if dx * dx + dz * dz <= 4:
-				ice.set_voxel(v.x + dx, TOP + 1, v.z + dz, SNOW)
+	ice.pour(_local(at), 0.6, 1.2)
 	if WorldSound.wanted():
-		WorldSound.play(self, "ball_bounce_2", at, -10.0, 1.4)
+		WorldSound.play(self, "ball_bounce_2", at, -14.0, 0.7)
 
 
-## A crater: the top layer gone in a 30 cm disc, the one below chipped in the middle.
+## A chip: a short deep stroke with snow thrown aside.
 func _chip() -> void:
 	var at: Variant = _aim()
 	if at == null:
 		return
-	var v := _voxel_at(at)
-	for dx in range(-6, 7):
-		for dz in range(-6, 7):
-			var d := dx * dx + dz * dz
-			if d <= 36:
-				_carve(v.x + dx, v.z + dz, 1 if d <= 6 else 0)
+	var p := _local(at)
+	var dir := Vector2.from_angle(walker.rotation.y + PI / 2)
+	ice.stroke(p - dir * 0.15, p + dir * 0.15, 0.04, 0.9, 2.0, 0.4)
 	if WorldSound.wanted():
 		WorldSound.play(self, "blade_skip", at, -6.0, 0.9)
 
 
-## Carves at (x, z): `deep` 0 takes the top layer, 1 the one below as well.
-func _carve(x: int, z: int, deep: int) -> void:
-	ice.set_voxel(x, TOP + 1, z, Color(0, 0, 0, 0))  # any snow goes too
-	ice.set_voxel(x, TOP, z, Color(0, 0, 0, 0))
-	if deep > 0:
-		ice.set_voxel(x, TOP - 1, z, Color(0, 0, 0, 0))
-
-
-## The resurfacer: a bar that wipes the sheet from west to east over
-## 6 seconds, filling 1.5 m of it a frame at most, the mesher keeping up
-## within its budget.
-func _zamboni_step(dt: float) -> void:
-	var x0 := int(_zam / VOXEL)
-	_zam += dt * (RINK.x / 6.0)
-	var x1 := mini(int(_zam / VOXEL), _nx)
-	if x1 > x0:
-		ice.fill(Vector3i(x0, 0, 0), Vector3i(x1, TOP, _nz), UNDER)
-		ice.fill(Vector3i(x0, TOP, 0), Vector3i(x1, TOP + 1, _nz), ICE)
-		ice.fill(Vector3i(x0, TOP + 1, 0), Vector3i(x1, LAYERS, _nz), Color(0, 0, 0, 0))
-		_paint_lines(x0, x1)
+## The resurfacer: a bar that sweeps the sheet from west to east over 60 s
+## of sim time, leaving a fresh cut and a wet film behind it.
+func _zamboni_step(sdt: float) -> void:
+	var x0 := _zam
+	_zam += sdt * (RINK.x / 60.0)
+	ice.resurface(x0, minf(_zam, RINK.x), 0.0, RINK.y, 0.8)
 	if _zam >= RINK.x:
 		_zam = -1.0
 
 
-func _resurface() -> void:
-	ice.fill(Vector3i.ZERO, Vector3i(_nx, TOP, _nz), UNDER)
-	ice.fill(Vector3i(0, TOP, 0), Vector3i(_nx, TOP + 1, _nz), ICE)
-	ice.fill(Vector3i(0, TOP + 1, 0), Vector3i(_nx, LAYERS, _nz), Color(0, 0, 0, 0))
-
-
-## Centre red line, two blue lines, a goal line each end, and a glowing
-## goal light voxel strip at one end (emission by alpha).
-func _paint_lines(x0 := 0, x1 := -1) -> void:
-	if x1 < 0:
-		x1 = _nx
-	var lines := [
-		[_nx / 2, 3, RED],
-		[_nx / 4, 3, BLUE],
-		[_nx * 3 / 4, 3, BLUE],
-		[int(1.5 / VOXEL), 1, RED],
-		[_nx - int(1.5 / VOXEL), 1, RED]
-	]
-	for l in lines:
-		var lo: int = l[0] - l[1]
-		var hi: int = l[0] + l[1]
-		if hi < x0 or lo >= x1:
-			continue
-		ice.fill(Vector3i(maxi(lo, x0), TOP, 0), Vector3i(mini(hi, x1), TOP + 1, _nz), l[2])
-	var gx := _nx - int(1.5 / VOXEL)
-	if gx >= x0 and gx < x1:
-		ice.fill(
-			Vector3i(gx - 1, TOP, _nz / 2 - 20),
-			Vector3i(gx + 1, TOP + 1, _nz / 2 + 20),
-			Color(1.0, 0.2, 0.15, 0.2)
-		)
-
-
-func _voxel_at(p: Vector3) -> Vector3i:
-	var l := p - ice.position
-	return Vector3i(int(l.x / VOXEL), 0, int(l.z / VOXEL))
+func _local(p: Vector3) -> Vector2:
+	var l := p - ice.global_position
+	return Vector2(l.x, l.z)
 
 
 ## Where the view line meets the ice plane, or null when it does not.
 func _aim() -> Variant:
 	var cam := walker.camera
 	var o := cam.global_position
-	var d := -cam.global_transform.basis.z
-	if d.y >= -0.01:
+	var dir := -cam.global_transform.basis.z
+	if dir.y >= -0.01:
 		return null
-	var t := (_top - o.y) / d.y
+	var t := -o.y / dir.y
 	if t > 30.0:
 		return null
-	return o + d * t
+	return o + dir * t
 
 
 ## The Interactor takes LMB and RMB when something is looked at or held;
-## on bare ice they are the snowball and the chip.
+## on bare ice they pour and chip.
 func _unhandled_input(event: InputEvent) -> void:
 	if walker == null:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
 			KEY_Z:
+				_set_state(state + 1)
+				hud.toast("STATE: %s" % STATES[state][0])
+			KEY_R:
 				if _zam < 0.0:
 					_zam = 0.0
-			KEY_R:
-				_resurface()
-				_paint_lines()
+					hud.toast("RESURFACER OUT")
+			KEY_T:
+				scale_i = (scale_i + 1) % SCALES.size()
+				hud.toast("CLOCK x%d" % int(SCALES[scale_i]))
 	elif event is InputEventMouseButton and event.pressed:
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		elif event.button_index == MOUSE_BUTTON_LEFT:
-			_snowball()
+			_pour()
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			_chip()
 
 
-func _box(body: StaticBody3D, at: Vector3, size: Vector3, colour: Color, draw: bool) -> void:
-	var cs := CollisionShape3D.new()
-	var bs := BoxShape3D.new()
-	bs.size = size
-	cs.shape = bs
-	cs.position = at
-	body.add_child(cs)
+# --- dressing --------------------------------------------------------------
+
+
+## Centre red line, two blue lines, goal lines, as a texture under the ice.
+func _markings() -> Texture2D:
+	var img := Image.create(960, 560, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var px_m := 960.0 / RINK.x
+	for l in [
+		[RINK.x / 2, 0.15, RED],
+		[RINK.x / 4, 0.15, BLUE],
+		[RINK.x * 3 / 4, 0.15, BLUE],
+		[1.5, 0.05, RED],
+		[RINK.x - 1.5, 0.05, RED]
+	]:
+		var x0 := int((l[0] - l[1]) * px_m)
+		var x1 := int((l[0] + l[1]) * px_m)
+		img.fill_rect(Rect2i(x0, 0, maxi(x1 - x0, 1), 560), l[2])
+	return ImageTexture.create_from_image(img)
+
+
+func _box(
+	body: StaticBody3D, at: Vector3, size: Vector3, colour: Color, draw: bool, collide := true
+) -> void:
+	if collide:
+		var cs := CollisionShape3D.new()
+		var bs := BoxShape3D.new()
+		bs.size = size
+		cs.shape = bs
+		cs.position = at
+		body.add_child(cs)
 	if not draw:
 		return
 	var mi := MeshInstance3D.new()
@@ -292,42 +270,62 @@ func _box(body: StaticBody3D, at: Vector3, size: Vector3, colour: Color, draw: b
 	body.add_child(mi)
 
 
+## Arena-style lamps: a row of warm spots with the shadow bias raised (a
+## flat glossy sheet shows shadow acne as dark bands otherwise) and a dim sun.
 func _lights() -> void:
 	_env = WorldEnvironment.new()
 	var e := Environment.new()
 	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color("1a1d24")
+	e.background_color = Color("0b0d12")
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.55, 0.6, 0.7)
-	e.ambient_light_energy = 0.5
+	e.ambient_light_color = Color(0.42, 0.45, 0.52)
+	e.ambient_light_energy = 0.22
 	e.ssao_enabled = true
-	e.glow_enabled = true
-	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	e.tonemap_mode = Environment.TONE_MAPPER_ACES
+	e.tonemap_exposure = 0.95
+	e.tonemap_white = 5.0
 	_env.environment = e
 	add_child(_env)
 	_sun = DirectionalLight3D.new()
 	_sun.rotation_degrees = Vector3(-62, 20, 0)
-	_sun.light_energy = 1.0
+	_sun.light_energy = 0.1
 	_sun.shadow_enabled = true
+	_sun.shadow_bias = 0.1
+	_sun.shadow_normal_bias = 3.0
 	add_child(_sun)
+	for x in [-8.0, 0.0, 8.0]:
+		for z in [-4.0, 4.0]:
+			var l := SpotLight3D.new()
+			l.position = Vector3(x, 7.0, z)
+			l.look_at_from_position(l.position, Vector3(x, 0, z + 0.3), Vector3.UP)
+			l.light_color = Color("fff1dc")
+			l.light_energy = 0.9
+			l.spot_range = 16.0
+			l.spot_angle = 48.0
+			l.shadow_enabled = true
+			l.shadow_bias = 0.2
+			l.shadow_normal_bias = 3.0
+			add_child(l)
+
+
+static func _clock(t: float) -> String:
+	return "%02d:%02d" % [int(t) / 60, int(t) % 60]
 
 
 func _screenshot(path: String) -> void:
-	# a boot trail, a crater and a snowball in view, seen from the end of the trail
-	for i in 40:
-		walker.position += Vector3(0.12, 0, 0.04 * sin(i * 0.3))
-		_tracks()
-	walker.rotation.y = PI / 2  # look back down the trail (-x)
-	walker.camera.rotation.x = -0.6
-	for i in 12:
+	walker.rotation.y = PI / 2
+	walker.camera.rotation.x = -0.4
+	for i in 8:
+		await get_tree().process_frame
+	_pour()
+	walker.rotation.y = PI / 2 + 0.5
+	for i in 8:
 		await get_tree().process_frame
 	_chip()
-	walker.camera.rotation.x = -0.5
-	for i in 12:
-		await get_tree().process_frame
-	_snowball()
-	walker.camera.rotation.x = -0.55
-	for i in 30:
+	walker.rotation.y = PI / 2 + 0.2
+	walker.camera.rotation.x = -0.35
+	ice.flush()
+	for i in 6:
 		await get_tree().process_frame
 	get_viewport().get_texture().get_image().save_png(path)
 	print("ice demo: screenshot %s" % path)
@@ -341,35 +339,61 @@ func _self_test() -> void:
 			push_error("FAIL: " + what)
 			print("FAIL: " + what)
 	await get_tree().process_frame
-	var chunks := ice._chunks.size()
+	check.call(ice.chunk_count() == 15 * 9, "the sheet is %d chunks (want 135)" % ice.chunk_count())
+	check.call(ice.dirty_count() == 0, "nothing dirty after the first flush")
+	# the four states
+	for k in STATES.size():
+		_set_state(k)
+		var s: Array = STATES[k]
+		var i := ice.index(100, 100)
+		check.call(
+			is_equal_approx(ice.cut[i], s[2]) and is_equal_approx(ice.water[i], s[3]),
+			"state %s fills the sheet" % s[0]
+		)
+	_set_state(1)
+	ice.flush()
+	# a puddle sets from the edges in
+	ice.pour(Vector2(6.0, 7.0), 0.6, 1.2)
+	var c := ice.cell_at(Vector2(6.0, 7.0))
+	var mid := ice.index(c.x, c.y)
+	check.call(ice.water[mid] > 1.0 and ice.frozen[mid] == 0.0, "the pour is liquid in the middle")
 	check.call(
-		chunks == ceili(float(_nx) / 16) * ceili(float(_nz) / 16),
-		"the sheet is meshed in chunks (%d)" % chunks
+		ice.dirty_count() >= 1 and ice.dirty_count() <= 4,
+		"a pour dirties its chunks (%d)" % ice.dirty_count()
 	)
-	check.call(ice.dirty_count() == 0, "nothing dirty after the first mesh")
-	var v := _voxel_at(Vector3(0.0, 0.0, 0.0))
-	_carve(v.x, v.z, 0)
-	check.call(ice.dirty_count() >= 1, "a boot mark dirties its chunk")
 	await get_tree().process_frame
 	await get_tree().process_frame
-	check.call(ice.dirty_count() == 0, "the budget re-meshes it within a frame or two")
-	check.call(ice.get_voxel(v.x, TOP, v.z).a == 0.0, "the top voxel is gone")
-	_zam = 0.0
-	var frames := 0
-	while _zam >= 0.0 and frames < 2000:
-		await get_tree().process_frame
-		frames += 1
-	check.call(_zam < 0.0, "the resurfacer finishes")
-	check.call(ice.get_voxel(v.x, TOP, v.z).a > 0.0, "the resurfacer filled the mark")
-	var settle := 0
-	while ice.dirty_count() > 0 and settle < 600:
-		await get_tree().process_frame
-		settle += 1
+	check.call(ice.dirty_count() == 0, "the budget re-meshes them within a frame or two")
+	var edge := ice.index(c.x + 10, c.y)
+	for minute in 4:
+		ice.thermal(60.0, -5.0, 8.0)
 	check.call(
-		ice.dirty_count() == 0, "the mesher caught up after the pass (%d left)" % ice.dirty_count()
+		ice.frozen[edge] > ice.frozen[mid],
+		(
+			"the shallow edge sets before the deep middle (%.2f vs %.2f)"
+			% [ice.frozen[edge], ice.frozen[mid]]
+		)
 	)
+	for minute in 16:
+		ice.thermal(60.0, -5.0, 8.0)
+	check.call(
+		ice.frozen[mid] >= 1.0, "1.2 mm at -5 C sets in under 20 minutes (%.2f)" % ice.frozen[mid]
+	)
+	ice.thermal(1.0, -5.0, 8.0)
+	check.call(ice.wet_cells == 0, "no wet cells left (%d)" % ice.wet_cells)
+	# a chip gouges; the resurfacer wipes it and leaves a film
+	ice.stroke(Vector2(3.0, 3.0), Vector2(3.3, 3.0), 0.04, 0.9, 2.0, 0.4)
+	var g := ice.index(ice.cell_at(Vector2(3.15, 3.0)).x, ice.cell_at(Vector2(3.15, 3.0)).y)
+	check.call(ice.gouge[g] > 1.0, "a chip gouges (%.2f mm)" % ice.gouge[g])
+	ice.resurface(0.0, RINK.x, 0.0, RINK.y, 0.8)
+	check.call(
+		ice.gouge[g] == 0.0 and is_equal_approx(ice.water[g], 0.8),
+		"the resurfacer wipes it and leaves a film"
+	)
+	ice.flush()
+	check.call(ice.remeshed > 135, "chunks re-meshed (%d)" % ice.remeshed)
 	check.call(objects.count() == 8, "mugs on the ice")
-	print("ice demo: %d chunks, resurfacer pass in %d frames" % [chunks, frames])
+	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:
 		print("ice_demo test: all passed")
 	get_tree().quit(1 if _fails else 0)

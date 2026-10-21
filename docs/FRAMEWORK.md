@@ -437,6 +437,64 @@ chunks re-mesh in about 12 ms. This is the GDScript mesher, fine for
 marks and dents; a native mesher later replaces `_build_chunk` and nothing
 else.
 
+## 11b. The ice: `IceSheet`
+
+`framework/ice/ice_sheet.gd` with `framework/render/ice_sheet.gdshader`.
+The sheet of ice is not cubes: it is a surface a few millimetres thick
+whose detail lives at three scales, so it is a grid of columns.
+
+```gdscript
+var ice := IceSheet.new()
+add_child(ice)
+ice.setup(Vector2(24, 14), 0.025)          # metres, metres per cell
+ice.fill_state(0.0, 0.8, 0.0, 0.0)         # snow mm, cut, water mm, frozen
+ice.pour(Vector2(3, 2), 0.6, 1.2)           # a 1.2 mm puddle 60 cm across
+ice.stroke(a, b, 0.03, 0.9, 1.5, 0.3)       # a blade: width, cut, gouge mm, snow mm
+ice.resurface(x0, x1, z0, z1, 0.8)          # shaved, a 0.8 mm film left wet
+ice.thermal(dt, slab_c, air_c)              # water sets from the edges in
+```
+
+**Columns, 2.5 cm.** Per cell: loose snow (mm), liquid water (mm), how
+much of that water has set, the dry-cut amount and its angle, gouge
+depth. A chunked heightfield (64 cells a side) gives snow, water and
+gouges real height; a chunk with nothing on it is two triangles.
+
+**The state texture, one texel per cell.** Two RGBA8 images carry the
+columns to the shader; only dirty chunks are rewritten, and the textures
+upload once per frame within `budget_ms`.
+
+**The shader, millimetre detail.** Four surface states blended per pixel:
+snowed up (matte, grainy), dry cut (a sheen with striations at the cut
+angle), flood (a glossy water layer over whichever state is under it,
+which is why flood over snow and flood over a cut look different), and
+dry fresh frozen (hard gloss, a faint freeze ripple). The detail maps
+are generated once and sampled with mipmaps; without them a grazing view
+turns the striations into moiré.
+
+**Freezing.** `thermal()` sets each wet cell's water at a rate from the
+slab temperature under it, slower in deep water and warm air, faster next
+to cells already set or dry, so a pool shrinks inward; 1.2 mm at -5 C
+takes about 12 minutes, the sim's number. It walks the wet cells in
+slices, so a whole flooded sheet costs a few milliseconds a frame. The
+game's `IceSlab` and `RefrigerationPlant` are where the real heat balance
+lives; this is the surface they will drive, and the sim's 25 cm grid is
+the source the 2.5 cm columns sample.
+
+**Lighting lesson.** A near-mirror sheet shows two things an ordinary
+floor hides: any light too strong clips the whole surface to white, and
+spot shadows with the default bias self-shadow in stripes along the
+shadow map's rows. The ice demo's lamps carry the raised bias; the
+arena's lamps need the same when the ice moves into the game.
+
+**Measured here:** a full GDScript pass over every cell costs 0.6 ms at
+25 cm, 15 ms at 5 cm, 63 ms at 2.5 cm, 400 ms at 1 cm; the state texture
+is 10 MB at 2.5 cm and 60 MB at 1 cm. So: sim at 25 cm, columns and
+texture at 2.5 cm, shader below, with a local 5 mm patch an option later.
+
+**Future, not built:** physical skate gouges, where the skater contact
+model writes blade strokes into the columns and reads the height back,
+so a rut is felt as well as seen.
+
 ## 12. The render benchmark
 
 `tools/render_bench.sh [--props=200] [--quality=medium]` runs
@@ -469,12 +527,13 @@ display, and run as headless checks in CI (`--test=<name>`).
   hold, G to tip a box of mugs at your feet (contact audio), F5 to save,
   F9 to load. Move something, walk two rooms on and back: it is still moved;
   pocket it: still gone.
-- **`ice_demo`**: a 24 x 14 m sheet of ice that is voxels (`VoxelSurface`
-  in 540 chunks). Walking carves boot marks, LMB on bare ice lands a
-  snowball, RMB chips a crater, Z sends the resurfacer across (a bar that
-  wipes the sheet over six seconds while the mesher keeps up within its
-  budget), R resurfaces at once. The lines are painted voxels and the
-  goal light strip is an emissive one. Mugs on the ice to kick and carry.
+- **`ice_demo`**: a 24 x 14 m `IceSheet` (section 11b) under arena-style
+  lamps. Z cycles the whole sheet through the four states; LMB pours a
+  puddle where you look and the readout shows the slab and air
+  temperatures and the clock while it sets from the edges in; T speeds
+  the clock (x1, x10, x60); RMB chips a gouge; R sends the resurfacer
+  across, leaving a fresh cut and a wet film. Footsteps leave the ice
+  alone. Mugs on the ice to kick and carry.
 
 ## 14. What the port looks like
 
