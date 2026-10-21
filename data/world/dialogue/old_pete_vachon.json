@@ -1,0 +1,445 @@
+{
+  "id": "old_pete_vachon",
+  "barks": {
+    "idle": [
+      "In 1971 we did this with a file and a prayer.",
+      "Pencil. Never pen."
+    ],
+    "good_ice": [
+      "Ice like '79. Don't tell Earl I said so."
+    ],
+    "bad_ice": [
+      "In 1971 the ice was worse. Not much worse."
+    ],
+    "goal": [
+      "Write that one down.",
+      "That's going in the book."
+    ],
+    "cold": [
+      "Cold as '72. That was a cold one."
+    ],
+    "greet_owner": [
+      "Well now.",
+      "Ah. There you are.",
+      "Hello, hello."
+    ],
+    "leaving_happy": [
+      "Good night. I'll write it down."
+    ],
+    "leaving_angry": [
+      "Not a night for the book. Good night anyway."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "Twenty pairs of edges and a bell to polish.",
+        "Ring it if they win. Ring it if they don't. No, only if they win."
+      ],
+      "minor_hockey": [
+        "That one said thank you. Notebook."
+      ],
+      "pro_practice": [
+        "The Dukes' trainer uses Velcro. I've said nothing. I've said a little."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_old_pete_vachon"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "senior_hockey"
+        }
+      ],
+      "node": "gameday"
+    },
+    {
+      "if": [
+        {
+          "flag": "shed_bell_fixed"
+        },
+        {
+          "rel_gte": [
+            "old_pete_vachon",
+            40
+          ]
+        }
+      ],
+      "node": "bell_done"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "old_pete_vachon",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Well. In 1971, the first thing a new man did was say hello to the equipment manager. Hello.",
+      "do": [
+        {
+          "set": "met_old_pete_vachon"
+        }
+      ],
+      "options": [
+        {
+          "text": "Hello, Pete. Thank you for all you do.",
+          "do": [
+            {
+              "rel": [
+                "old_pete_vachon",
+                5
+              ]
+            }
+          ],
+          "to": "first_thanks"
+        },
+        {
+          "text": "What's in the notebook?",
+          "to": "notebook"
+        },
+        {
+          "text": "Sorry, I'm in a rush.",
+          "do": [
+            {
+              "rel": [
+                "old_pete_vachon",
+                -3
+              ]
+            }
+          ],
+          "to": "first_rush"
+        }
+      ]
+    },
+    "first_thanks": {
+      "say": "A body who thanks the equipment manager goes in the good column. You're in the good column.",
+      "do": [
+        {
+          "set": "pete_good_column"
+        }
+      ],
+      "options": [
+        {
+          "text": "I'll try to stay there.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_rush": {
+      "say": "Everybody was in a rush in 1971 too. They're mostly in my notebook now.",
+      "options": [
+        {
+          "text": "Sorry, Pete.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "In 1971 the ice was bad, and they fixed it by 1979. That's eight years. I don't have eight years."
+      ],
+      "options": [
+        {
+          "text": "It won't take eight years.",
+          "do": [
+            {
+              "rel": [
+                "old_pete_vachon",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gameday": {
+      "say": "Game night. Bell's polished and twenty pairs of edges to check. In 1971 it was eighteen pairs.",
+      "options": [
+        {
+          "text": "Need a hand?",
+          "to": "gameday_help"
+        },
+        {
+          "text": "I'll let you work.",
+          "to": "end"
+        }
+      ]
+    },
+    "gameday_help": {
+      "say": "Hold this skate. Not like that. Like a baby bird with a blade. There.",
+      "options": [
+        {
+          "text": "Like a baby bird.",
+          "do": [
+            {
+              "rel": [
+                "old_pete_vachon",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Ah. Sit. I was just in 1979.",
+        "There you are. I wrote you down today. Good things."
+      ],
+      "options": [
+        {
+          "text": "Hi, Pete.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bell_done": {
+      "say": "The bell rings true now. I rang it in the empty lobby to check. Doreen played a chord back from upstairs.",
+      "options": [
+        {
+          "text": "Fifty years, and still in tune.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Well now.",
+        "In 1971... no, go on. You first.",
+        "What can the equipment manager do for you?"
+      ],
+      "options": [
+        {
+          "text": "Tell me about 1979.",
+          "to": "y79"
+        },
+        {
+          "text": "What's in the notebook?",
+          "to": "notebook"
+        },
+        {
+          "text": "What do you like watching here?",
+          "to": "events"
+        },
+        {
+          "text": "How's Doreen?",
+          "to": "doreen"
+        },
+        {
+          "text": "What do you make of Ray?",
+          "to": "ray"
+        },
+        {
+          "text": "How does the rink measure up?",
+          "to": "rink"
+        },
+        {
+          "text": "The final's tomorrow. Would you do my skates?",
+          "if": [
+            {
+              "path": "player"
+            },
+            {
+              "not_flag": "pete_sharpened_final"
+            }
+          ],
+          "to": "player"
+        },
+        {
+          "text": "What's in the sharpener's drawer?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "drawer"
+        },
+        {
+          "text": "Who should I sign? You've got the notebook.",
+          "if": [
+            {
+              "path": "gm"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "Bye, Pete.",
+          "to": "end"
+        }
+      ]
+    },
+    "y79": {
+      "say": "I started in 1971. We won the Aldous Cup in 1979. In between, eight years of losing to Kessler. You need the eight to have the one.",
+      "options": [
+        {
+          "text": "And the photo?",
+          "to": "photo"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "photo": {
+      "say": "In the drawer by the sharpener. People call it old. It isn't old. It's been there a while, like me.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "notebook": {
+      "say": "Pencil, never pen. Names, and what they did when nobody was watching. That's the only scouting that counts.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Kings games, of course. But minor hockey Saturdays tell you who a town is. Who ties the little skates. Who yells.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "doreen": {
+      "say": "Fifty years. She still thinks the 15 card is bad luck. It is. We've never needed it.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "ray": {
+      "say": "Ray's held the Kings together with squares and stubbornness. Don't let him start a toast after nine.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Better than '79?",
+          "if": [
+            {
+              "ice_gte": 80
+            }
+          ],
+          "to": "rink_79"
+        },
+        {
+          "text": "And the dressing rooms?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_79": {
+      "say": "Better than '79. Don't tell Earl. Don't tell Stan, either. He'd cry, and he hates that.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "Hooks that hold. A drain that drains. In 1971 we dreamed of this.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "player": {
+      "say": "The night before a final. Same as 1971. Leave them on the bench. Don't watch me work.",
+      "do": [
+        {
+          "set": "pete_sharpened_final"
+        },
+        {
+          "rel": [
+            "old_pete_vachon",
+            3
+          ]
+        },
+        {
+          "note": "Old Pete sharpened your skates the night before the final. 'Same as 1971.'"
+        }
+      ],
+      "options": [
+        {
+          "text": "Thank you, Pete.",
+          "to": "hub"
+        }
+      ]
+    },
+    "drawer": {
+      "say": "The photo, a roll of tape from 1979, and a list of every kid who ever said thank you. Coaches should read that list.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "Look for the fellow who picks up pucks after practice. Kenny Szabo, for one. Same as 1971.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

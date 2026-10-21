@@ -1,0 +1,204 @@
+{
+ "id": "june_memorial_game",
+ "giver": "june_penner",
+ "quest": "june_memorial_game",
+ "nodes": {
+  "offer": {
+   "say": "Grandpa opened this building. Cut the ribbon, lost the opening game, came back every week anyway and shouted SKATE! from right here. He'd have been a hundred this winter. I'd like one night. Not a big thing. A SKATE! thing.",
+   "options": [
+    {
+     "text": "Harold Penner Night. Let's do it.",
+     "do": [
+      {
+       "quest_start": "june_memorial_game"
+      },
+      {
+       "rel": [
+        "june_penner",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "What was he like?",
+     "to": "why"
+    },
+    {
+     "text": "Did he ever shout anything else?",
+     "to": "else"
+    },
+    {
+     "text": "I'll think about a date.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Loud at games, quiet at home. Ordered anything anybody asked for, even the things we'd never sell. Once ordered a single left skate for a man who'd lost his leg in the mill. Never told anyone. I found the invoice.",
+   "options": [
+    {
+     "text": "Then he gets his night.",
+     "do": [
+      {
+       "quest_start": "june_memorial_game"
+      },
+      {
+       "rel": [
+        "june_penner",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "else": {
+   "say": "'SKATE!' and, one time in 1983, 'THAT'S MY GRANDDAUGHTER'S TEACHER!' at a referee. It was. She failed me that year. Unrelated, she said.",
+   "options": [
+    {
+     "text": "Ha. Let's give him a night.",
+     "do": [
+      {
+       "quest_start": "june_memorial_game"
+      },
+      {
+       "rel": [
+        "june_penner",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Of course. He'd say there's no rush. Then he'd shout at you to hurry up.",
+   "do": [
+    {
+     "rel": [
+      "june_penner",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Thank you. I'll bring a cushion for the seat. He always said the seats were too hard. He was on the committee that chose them.",
+   "options": []
+  },
+  "progress": {
+   "say": "How's Grandpa's night coming?",
+   "options": [
+    {
+     "text": "I'll talk to Ray about the Kings.",
+     "if": [
+      {
+       "step": [
+        "june_memorial_game",
+        "ray"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Going to polish his plaque.",
+     "if": [
+      {
+       "step": [
+        "june_memorial_game",
+        "seat"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Everything's set for the night.",
+     "if": [
+      {
+       "step": [
+        "june_memorial_game",
+        "night"
+       ]
+      }
+     ],
+     "to": "p_night"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_night": {
+   "say": "I've told everyone at the store. The paint counter's coming. The paint counter is a very loyal crowd.",
+   "options": []
+  },
+  "complete": {
+   "say": "Six hundred people and every one of them shouted it at the opening faceoff. I could hear him in it. Here. The cushion. For C-4-7. Somebody should sit there who'll shout. Now, who shouted first?",
+   "options": [
+    {
+     "text": "You did, June. It was always going to be you.",
+     "do": [
+      {
+       "rel": [
+        "june_penner",
+        3
+       ]
+      }
+     ],
+     "to": "c_june"
+    },
+    {
+     "text": "Irene Dubois. She said he still owed her a dance.",
+     "do": [
+      {
+       "rel": [
+        "irene_dubois",
+        3
+       ]
+      },
+      {
+       "set": "irene_shouted_skate"
+      }
+     ],
+     "to": "c_irene"
+    },
+    {
+     "text": "Stan, at the rafters end. Out of nowhere.",
+     "do": [
+      {
+       "rel": [
+        "stan_szymanski",
+        2
+       ]
+      }
+     ],
+     "to": "c_stan"
+    }
+   ]
+  },
+  "c_june": {
+   "say": "I did. I didn't know I was going to. It just came out, like it does in our family.",
+   "options": []
+  },
+  "c_irene": {
+   "say": "Irene! She told me he never did dance with her. She shouted it like she was collecting. I think she was.",
+   "options": []
+  },
+  "c_stan": {
+   "say": "Stan Szymanski. He's never said a word at a game in fifty years. He said SKATE! and then he leaned on the rail, very pleased with himself.",
+   "options": []
+  },
+  "done": {
+   "say": "Every year, then. He'd like that. He'd shout about it.",
+   "options": []
+  }
+ }
+}

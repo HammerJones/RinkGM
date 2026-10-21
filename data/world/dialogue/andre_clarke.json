@@ -1,0 +1,337 @@
+{
+  "id": "andre_clarke",
+  "barks": {
+    "idle": [
+      "Okay. Let's see what she's telling us.",
+      "Where's my 10 mm socket. Where is it."
+    ],
+    "good_ice": [
+      "Building's in a good mood today."
+    ],
+    "bad_ice": [
+      "Ice is complaining. I hear it."
+    ],
+    "cold": [
+      "Lobby heater's on breaker 6. I labelled it. You're welcome."
+    ],
+    "bored": [
+      "Nothing's broken. That makes me nervous."
+    ],
+    "greet_owner": [
+      "Morning.",
+      "Hey, {owner}."
+    ],
+    "leaving_happy": [
+      "Edger started first pull. Good day."
+    ],
+    "leaving_angry": [
+      "Three work orders and a leak. Tomorrow."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "Glass is tight. Lights are up. Go Kings."
+      ],
+      "broomball": [
+        "Sneaker grit in the drain again. Okay."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_andre_clarke"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            7.0,
+            11.0
+          ]
+        }
+      ],
+      "node": "bay"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "andre_clarke",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "André Clarke, maintenance. Okay. Let's see what she's telling us. She being the building.",
+      "do": [
+        {
+          "set": "met_andre_clarke"
+        }
+      ],
+      "options": [
+        {
+          "text": "Welcome. Where do you start?",
+          "do": [
+            {
+              "rel": [
+                "andre_clarke",
+                3
+              ]
+            }
+          ],
+          "to": "first_start"
+        },
+        {
+          "text": "Don't touch breaker 14.",
+          "to": "first_14"
+        },
+        {
+          "text": "It just needs some tape.",
+          "do": [
+            {
+              "rel": [
+                "andre_clarke",
+                -3
+              ]
+            }
+          ],
+          "to": "first_tape"
+        }
+      ]
+    },
+    "first_start": {
+      "say": "Label the panel. You can't treat a patient whose chart says 'misc'.",
+      "options": [
+        {
+          "text": "Makes sense.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_14": {
+      "say": "Gus's note. I read it. I'll respect it. I'm also going to find out what it is.",
+      "options": [
+        {
+          "text": "Good luck.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_tape": {
+      "say": "Gripley's is a fine tape. It is not a structural material. The rafters and Gus disagree.",
+      "options": [
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Three work orders open and the edger quit on the second pull. She's telling us something. We're not listening."
+      ],
+      "options": [
+        {
+          "text": "Let's listen, then.",
+          "do": [
+            {
+              "rel": [
+                "andre_clarke",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bay": {
+      "say": "Morning. Doris and I are discussing her hydraulics. Earl is supervising. Loudly.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Morning, {owner}. Building's in a good mood.",
+        "Hey. Edger started on the first pull. I may frame it."
+      ],
+      "options": [
+        {
+          "text": "Morning, André.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Okay. What's she telling you?",
+        "Morning. Found my 10 mm socket, finally.",
+        "André. What needs looking at?"
+      ],
+      "options": [
+        {
+          "text": "What are you working on?",
+          "to": "job"
+        },
+        {
+          "text": "What do you get up to off shift?",
+          "to": "events"
+        },
+        {
+          "text": "How's Marg to work with?",
+          "to": "marg"
+        },
+        {
+          "text": "And Earl?",
+          "to": "earl"
+        },
+        {
+          "text": "How's the building, honestly?",
+          "to": "rink"
+        },
+        {
+          "text": "Did you ever find out what breaker 14 does?",
+          "if": [
+            {
+              "not_flag": "andre_breaker_labelled"
+            },
+            {
+              "not_flag": "andre_breaker_mystery"
+            }
+          ],
+          "to": "b14"
+        },
+        {
+          "text": "Thanks, André.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Lights, plumbing, boards, glass, the edger and Doris's oil. The edger has a name now. Patience.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Senior hockey on the weekend. Broomball with the Szabos sometimes. Cricket on the radio in summer.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "marg": {
+      "say": "Her red pen is the best thing that ever happened to my logs. Don't tell her I said so. Actually, do.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "earl": {
+      "say": "Earl lets me service Doris if he can watch and comment. The comments are mostly 'no'.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Building's in better shape?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Nothing temporary from 1979 left in the lobby. Okay, one thing. It's holding up the clock. Midge says leave it.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "b14": {
+      "say": "I traced it. The lobby freezer, the marquee, and one outlet in the plant room with a kettle on it. Gus's kettle. Want me to label it?",
+      "options": [
+        {
+          "text": "Label it. 'Gus's kettle.'",
+          "do": [
+            {
+              "set": "andre_breaker_labelled"
+            },
+            {
+              "rel": [
+                "andre_clarke",
+                2
+              ]
+            },
+            {
+              "note": "Breaker 14 is labelled at last: FREEZER / MARQUEE / GUS'S KETTLE."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Leave it a mystery.",
+          "do": [
+            {
+              "set": "andre_breaker_mystery"
+            },
+            {
+              "rel": [
+                "gus_tremblay",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

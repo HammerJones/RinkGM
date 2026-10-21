@@ -1,0 +1,310 @@
+{
+  "id": "agnes_mulroney",
+  "barks": {
+    "idle": [
+      "That banner is crooked. Two out of ten.",
+      "Sit up straight, Dale. Oh, that's not Dale."
+    ],
+    "good_ice": [
+      "Level within three millimetres. Eight out of ten."
+    ],
+    "bad_ice": [
+      "A dip under the far circle. Three out of ten. See me after class."
+    ],
+    "goal": [
+      "Lovely. Nine. The celebration was a four."
+    ],
+    "cold": [
+      "Cold. Bud has the thermos. Bud always has the thermos."
+    ],
+    "greet_owner": [
+      "Hello, dear.",
+      "There you are. Shoulders back."
+    ],
+    "leaving_happy": [
+      "A seven of an evening. Very good."
+    ],
+    "leaving_angry": [
+      "A two. Not a failing grade. Close."
+    ],
+    "event_specific": {
+      "figure_show": [
+        "Knee lower than the hip. Ten if she holds it.",
+        "Lovely line. Nine and a half."
+      ],
+      "public_skate": [
+        "Look at the little ones. Every one a ten."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_agnes_mulroney"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_show"
+        }
+      ],
+      "node": "show"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "agnes_mulroney",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Agnes Mulroney. I taught the class that painted that mural in 1976. Your lobby is a four out of ten. The mural is a nine.",
+      "do": [
+        {
+          "set": "met_agnes_mulroney"
+        }
+      ],
+      "options": [
+        {
+          "text": "What would make it a ten?",
+          "do": [
+            {
+              "rel": [
+                "agnes_mulroney",
+                3
+              ]
+            }
+          ],
+          "to": "first_ten"
+        },
+        {
+          "text": "Why does the skater have three legs?",
+          "to": "legs"
+        },
+        {
+          "text": "A four? That's harsh.",
+          "do": [
+            {
+              "rel": [
+                "agnes_mulroney",
+                -2
+              ]
+            }
+          ],
+          "to": "first_harsh"
+        }
+      ]
+    },
+    "first_ten": {
+      "say": "Light. Clean glass. And nobody 'correcting' my students. The third leg stays.",
+      "options": [
+        {
+          "text": "The third leg stays.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_harsh": {
+      "say": "A four is generous. I added two points because you're new.",
+      "options": [
+        {
+          "text": "Thank you, I think.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "A dip under the far circle. I'd grade it a three. Bud would grade it a seven. Bud grades everything a seven."
+      ],
+      "options": [
+        {
+          "text": "I'll aim for an eight.",
+          "do": [
+            {
+              "rel": [
+                "agnes_mulroney",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "show": {
+      "say": "Watch the sit spin. Knee lower than the hip. Ten out of ten if she holds it. Bev knows why I say that.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Hello, dear. Your lobby's up to a seven.",
+        "{owner}. Sit up straight. There. Better."
+      ],
+      "options": [
+        {
+          "text": "Hi, Agnes.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Yes, dear?",
+        "Agnes. What can I mark for you today?",
+        "Hello. Out of ten, how are you?"
+      ],
+      "options": [
+        {
+          "text": "Tell me about the mural.",
+          "to": "mural"
+        },
+        {
+          "text": "What do you love watching?",
+          "to": "events"
+        },
+        {
+          "text": "How's Bud?",
+          "to": "bud"
+        },
+        {
+          "text": "About the third leg...",
+          "to": "legs"
+        },
+        {
+          "text": "Grade the rink for me.",
+          "to": "rink"
+        },
+        {
+          "text": "Bye, Agnes.",
+          "to": "end"
+        }
+      ]
+    },
+    "mural": {
+      "say": "Winter on the Mill Pond. Twenty-two students and a gallon of red. Bev is the girl in the toque. She denies it. Her knee says otherwise.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "The figure show, always. Public skate, for the grandchildren. And the bonspiel, where curlers notice everything and I notice more.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bud": {
+      "say": "Bud sells the 50/50 and tells a dog story to anyone who stands still. I give him a seven every year. I'm very happy.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "legs": {
+      "say": "One of those legs was painted by a boy who now runs a beer league. I promised not to say which.",
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "do": [
+            {
+              "rel": [
+                "agnes_mulroney",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Dale Huffman?",
+          "do": [
+            {
+              "rel": [
+                "agnes_mulroney",
+                -1
+              ]
+            }
+          ],
+          "to": "legs2"
+        }
+      ]
+    },
+    "legs2": {
+      "say": "I didn't say Dale. You said Dale. Dale, sit up straight, wherever you are.",
+      "do": [
+        {
+          "set": "owner_guessed_dales_leg"
+        }
+      ],
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Better marks now?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Seven. Up from four. Showing improvement. See me after class.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

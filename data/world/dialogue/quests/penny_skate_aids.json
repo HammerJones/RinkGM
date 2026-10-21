@@ -1,0 +1,194 @@
+{
+ "id": "penny_skate_aids",
+ "giver": "penny_marchetti",
+ "quest": "penny_skate_aids",
+ "nodes": {
+  "offer": {
+   "say": "Eleven adults, four metres of boards. They queue for the boards, {owner}. Kids just fall and get up. Grown-ups need something to hold, they just won't say it. Skate aids, the little push frames. We have none.",
+   "options": [
+    {
+     "text": "I'll find you some.",
+     "do": [
+      {
+       "quest_start": "penny_skate_aids"
+      },
+      {
+       "rel": [
+        "penny_marchetti",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Can't they hold on to each other?",
+     "to": "each_other"
+    },
+    {
+     "text": "What about the chairs the kids use?",
+     "to": "chairs"
+    },
+    {
+     "text": "Those frames are pricey. Not this season.",
+     "to": "decline"
+    }
+   ]
+  },
+  "each_other": {
+   "say": "They tried. Gary Pruett's cousin took out three people like a bowling ball. It was very social. It was not safe.",
+   "options": [
+    {
+     "text": "Fair. I'll get frames.",
+     "do": [
+      {
+       "quest_start": "penny_skate_aids"
+      },
+      {
+       "rel": [
+        "penny_marchetti",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "chairs": {
+   "say": "The kids' chairs are small. A grown man pushing a little chair looks like he's chasing it. They're embarrassed and then they don't come back. I want them to come back.",
+   "options": [
+    {
+     "text": "Then they'll have proper frames. Leave it with me.",
+     "do": [
+      {
+       "quest_start": "penny_skate_aids"
+      },
+      {
+       "rel": [
+        "penny_marchetti",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Okay. I'll keep rotating them along the boards like a car wash.",
+   "do": [
+    {
+     "rel": [
+      "penny_marchetti",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Thank you. And if you see the hall's orange chairs, those seven are the sturdy ones. Nobody knows why. I don't ask.",
+   "options": []
+  },
+  "progress": {
+   "say": "How are we doing on things to hold?",
+   "options": [
+    {
+     "text": "I'll grab the orange chairs from upstairs.",
+     "if": [
+      {
+       "step": [
+        "penny_skate_aids",
+        "chairs"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "I've got an idea about the stick barrel.",
+     "if": [
+      {
+       "step": [
+        "penny_skate_aids",
+        "barrel"
+       ]
+      }
+     ],
+     "to": "p_barrel"
+    },
+    {
+     "text": "The frames are here. Next lesson?",
+     "if": [
+      {
+       "step": [
+        "penny_skate_aids",
+        "lesson"
+       ]
+      }
+     ],
+     "to": "p_lesson"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_barrel": {
+   "say": "Broken sticks? Oh, that's clever. Very gym teacher. I'm a little bit annoyed I didn't think of it.",
+   "options": []
+  },
+  "p_lesson": {
+   "say": "Monday. I'll tell them there's new equipment. Adults love new equipment. They'll come just to look at it.",
+   "options": []
+  },
+  "complete": {
+   "say": "Everybody on the ice at once. Nobody on the boards. Walter did a whole lap pushing a frame made of six Honest Hockey shafts and he said, 'It's a frame. It's a little heavy. It will be fine.' He'd read the label.",
+   "options": [
+    {
+     "text": "Lorne made them. He should hear that.",
+     "do": [
+      {
+       "rel": [
+        "lorne_pettipiece",
+        3
+       ]
+      }
+     ],
+     "to": "c_lorne"
+    },
+    {
+     "text": "Can the kids use them too?",
+     "do": [
+      {
+       "set": "skate_aids_for_kids"
+      }
+     ],
+     "to": "c_kids"
+    },
+    {
+     "text": "What happens to the orange chairs?",
+     "to": "c_chairs"
+    }
+   ]
+  },
+  "c_lorne": {
+   "say": "I'll write him a card. Gym teachers write very good cards. We have stickers.",
+   "options": []
+  },
+  "c_kids": {
+   "say": "If they're not too heavy. I'll ask Lorne for a small one. A frame for a four-year-old out of a junior stick. He'll love that.",
+   "options": []
+  },
+  "c_chairs": {
+   "say": "Back upstairs. I counted them. Still seven. Still orange. Still nobody knows.",
+   "options": []
+  },
+  "done": {
+   "say": "Week six is the stop. They're ready. They don't know it yet.",
+   "options": []
+  }
+ }
+}

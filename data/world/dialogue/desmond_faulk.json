@@ -1,0 +1,373 @@
+{
+  "id": "desmond_faulk",
+  "barks": {
+    "idle": [
+      "(He hums the Mallards fight song and conducts with a hot dog.)",
+      "Bum, bum, ba-DUM. Sorry. Habit."
+    ],
+    "good_ice": [
+      "Ice like a freshly tuned piano!"
+    ],
+    "bad_ice": [
+      "That ice is flat. Musically, I mean. Also physically, it isn't."
+    ],
+    "wet_ice": [
+      "Wet ice. A diminuendo nobody asked for."
+    ],
+    "cold": [
+      "Cold valves on a sousaphone. You've never heard a sound like it. Nobody should."
+    ],
+    "hungry": [
+      "Band kids need fries. It's in the budget. The budget is me."
+    ],
+    "long_line": [
+      "A queue. Let's all hum. In C."
+    ],
+    "bored": [
+      "Is it a key change yet? Somebody change keys."
+    ],
+    "goal": [
+      "GOAL! On the downbeat! Beautiful!",
+      "Hit it, band! No, the other song!"
+    ],
+    "greet_owner": [
+      "Maestro! Well, you're the owner. Same thing, roughly.",
+      "Hello! Don't tell me to keep it down."
+    ],
+    "leaving_happy": [
+      "Everyone played in tune! Roughly! Huzzah!"
+    ],
+    "leaving_angry": [
+      "We'll play the gym. The gym has never told us to keep it down. The gym is too polite."
+    ],
+    "event_specific": {
+      "high_school": [
+        "GO MALLARDS! (Sousaphone.)",
+        "From the top, band! Section See, on three!"
+      ],
+      "senior_hockey": [
+        "Doreen's going up a key. Well. Two can play at that."
+      ],
+      "figure_show": [
+        "That music skipped. I felt it in my teeth."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_desmond_faulk"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "pep_band_plays"
+        },
+        {
+          "event_now": "high_school"
+        }
+      ],
+      "node": "band_plays"
+    },
+    {
+      "if": [
+        {
+          "event_now": "high_school"
+        }
+      ],
+      "node": "mallards"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "(A cheerful man carrying a sousaphone case shakes your hand without putting the case down.) Desmond Faulk! Music, Millbrook High. I lead the pep band. And this is the 1971. She's older than the school budget and in better shape.",
+      "do": [
+        {
+          "set": "met_desmond_faulk"
+        }
+      ],
+      "options": [
+        {
+          "text": "Why is there a sousaphone in my lobby?",
+          "do": [
+            {
+              "rel": [
+                "desmond_faulk",
+                2
+              ]
+            }
+          ],
+          "to": "first_tuba"
+        },
+        {
+          "text": "Great to meet you, Mr. Faulk.",
+          "do": [
+            {
+              "rel": [
+                "desmond_faulk",
+                3
+              ]
+            }
+          ],
+          "to": "first_nice"
+        }
+      ]
+    },
+    "first_tuba": {
+      "say": "Because the band room's flooded and the 1971 doesn't like damp. Also because a lobby is just a concert hall that hasn't been told yet.",
+      "options": [
+        {
+          "text": "Fair enough.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_nice": {
+      "say": "Desmond, please. 'Mr. Faulk' is for students and people asking me to keep it down. You look like neither.",
+      "options": [
+        {
+          "text": "Desmond it is.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Desmond. I'll make it right.",
+          "do": [
+            {
+              "rel": [
+                "desmond_faulk",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll fix it before the next game.",
+          "to": "hub"
+        }
+      ]
+    },
+    "mallards": {
+      "say": [
+        "Mallards tonight! The band's warming up. Well, the band is warm. The sousaphone is a different story.",
+        "(He conducts the warm-up with a rolled programme.) And... strong! Strong! Too strong."
+      ],
+      "options": [
+        {
+          "text": "Play them in, Desmond.",
+          "to": "end"
+        },
+        {
+          "text": "Got a minute?",
+          "to": "hub"
+        }
+      ]
+    },
+    "band_plays": {
+      "say": "Listen to that! Section See, full band, every note in roughly the right place! Thank you. The 1971 thanks you. She's never sounded rounder.",
+      "options": [
+        {
+          "text": "Sounds great, Desmond.",
+          "do": [
+            {
+              "rel": [
+                "desmond_faulk",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "(Bum, bum, ba-DUM.) Yes? Sorry. Yes?",
+        "Maestro! What can I do for you?",
+        "Hello! I'm humming in C. Talk in C if you can."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's teaching music?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love about game nights?",
+          "to": "events"
+        },
+        {
+          "text": "You and Doreen have a rivalry?",
+          "to": "gossip"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "About the band's volume...",
+          "if": [
+            {
+              "not_flag": "faulk_volume_set"
+            }
+          ],
+          "to": "volume"
+        },
+        {
+          "text": "See you, Desmond.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Twenty-four teenagers, eleven instruments that work, and a budget that would embarrass a lemonade stand. I love every minute. Most minutes.",
+      "options": [
+        {
+          "text": "Sounds like a good life.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Mallards games, from Section See, the one with no letter. Lumber Kings when Doreen's on the organ. And a figure show, if the music doesn't skip. A goal on the downbeat is the best sound in the world.",
+      "options": [
+        {
+          "text": "Why Section See?",
+          "to": "events_see"
+        },
+        {
+          "text": "Sounds great.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events_see": {
+      "say": "Section C lost its letter years ago. Somebody wrote SEE in pencil, very small. A section that's half a pun is where a pep band belongs.",
+      "options": [
+        {
+          "text": "Fair enough.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Doreen goes up a key, I go up a key. She goes up again, I go up again. Last March we ended in a key that doesn't exist. Bernie Ostrowski calls it 'the arms race'. I call it collegial.",
+      "options": [
+        {
+          "text": "Collegial. Sure.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Wonderful acoustics, if you like echoes, which I do. The stands at Section See are roped off, though. A band can't play standing on a rope.",
+      "options": [
+        {
+          "text": "We've fixed the stands up.",
+          "if": [
+            {
+              "rooms_gte": 30
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll look into it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "Real seats! No rope! The tubas can sit down! Well, tuba. Singular. She's very grateful.",
+      "options": [
+        {
+          "text": "Glad to hear it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "volume": {
+      "say": "(He tenses.) Yes?",
+      "options": [
+        {
+          "text": "Louder, if anything. It's a hockey game.",
+          "do": [
+            {
+              "set": "faulk_volume_set"
+            },
+            {
+              "rel": [
+                "desmond_faulk",
+                4
+              ]
+            }
+          ],
+          "to": "volume_up"
+        },
+        {
+          "text": "Could you keep it down a little?",
+          "do": [
+            {
+              "set": "faulk_volume_set"
+            },
+            {
+              "rel": [
+                "desmond_faulk",
+                -4
+              ]
+            },
+            {
+              "note": "Asked Desmond Faulk to keep the pep band down. He took it hard."
+            }
+          ],
+          "to": "volume_down"
+        }
+      ]
+    },
+    "volume_up": {
+      "say": "LOUDER! (He hugs you, sousaphone case and all.) Nobody has ever said that to me. Not once. Not in twenty-two years.",
+      "options": [
+        {
+          "text": "I meant it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "volume_down": {
+      "say": "Keep it down. Yes. Of course. (He hums the fight song very, very quietly, which is somehow worse.)",
+      "options": [
+        {
+          "text": "Sorry, Desmond.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "From the top, next game! Bye!",
+        "(He conducts you to the door.)"
+      ],
+      "options": []
+    }
+  }
+}

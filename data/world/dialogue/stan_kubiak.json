@@ -1,0 +1,542 @@
+{
+  "id": "stan_kubiak",
+  "barks": {
+    "idle": [
+      "*long sigh*",
+      "Quiet bus. That's all I ask.",
+      "It worked in 1998."
+    ],
+    "good_ice": [
+      "Good ice. That's one less thing.",
+      "Clean sheet. Thanks."
+    ],
+    "bad_ice": [
+      "*sigh* Soft ice. Old legs. Bad combination."
+    ],
+    "wet_ice": [
+      "Wet. Of course it's wet."
+    ],
+    "goal": [
+      "Huh. Good.",
+      "There we go."
+    ],
+    "cold": [
+      "Bench is cold. Coach is colder."
+    ],
+    "hungry": [
+      "My wife packed sandwiches. Egg salad. Best part of the road trip."
+    ],
+    "long_line": [
+      "I'll wait. I'm good at waiting."
+    ],
+    "bored": [
+      "*sigh*"
+    ],
+    "greet_owner": [
+      "{owner}.",
+      "Morning. Or whatever it is."
+    ],
+    "leaving_happy": [
+      "Won one. Nice and quiet on the bus tonight."
+    ],
+    "leaving_angry": [
+      "Second intermission. Always the second intermission."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "Dump it in. Chase it. Like 1998.",
+        "If it's Tollbridge, I'm not talking."
+      ],
+      "stick_and_puck": [
+        "Kids working on their own. That's the best kind of practice."
+      ],
+      "minor_hockey": [
+        "Small kids. Big hearts. Short benches."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_stan_kubiak"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "path": "coach"
+        },
+        {
+          "day_gte": 450
+        },
+        {
+          "not_flag": "stan_scout_talk"
+        }
+      ],
+      "node": "scout"
+    },
+    {
+      "if": [
+        {
+          "weekday": [
+            4
+          ]
+        },
+        {
+          "chance": 0.6
+        }
+      ],
+      "node": "thursday"
+    },
+    {
+      "if": [
+        {
+          "event_now": "senior_hockey"
+        }
+      ],
+      "node": "senior_now"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "*sigh* Stan Kubiak. Lumber Kings. Head coach. For now.",
+      "do": [
+        {
+          "set": "met_stan_kubiak"
+        }
+      ],
+      "options": [
+        {
+          "text": "For now?",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                2
+              ]
+            }
+          ],
+          "to": "first_now"
+        },
+        {
+          "text": "Good to meet you, Coach.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_now": {
+      "say": "Ray's got a deadline. January. Ice and wins. I can't do the ice. That's you. I'm not sure I can do the wins.",
+      "options": [
+        {
+          "text": "We'll get the ice right. Promise.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                3
+              ]
+            },
+            {
+              "set": "promised_stan_ice"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "That's a lot of pressure.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll fix it, Stan.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Long week?",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "thursday": {
+      "say": [
+        "It's Thursday. Joke day. Why did the Zamboni go to therapy? It kept going in circles. *sigh* That's the joke. That's the week.",
+        "Thursday. I've got one. A defenceman walks into a bar. Nobody passes it to him. *sigh* Still good.",
+        "Thursday joke. What's a coach's favourite meal? Whatever's on the bus. *small smile*"
+      ],
+      "options": [
+        {
+          "text": "Ha! That's a good one, Stan.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "That was terrible.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "senior_now": {
+      "say": [
+        "Game night. *sigh* Tollbridge. Or someone like Tollbridge.",
+        "Old legs tonight. We'll dump and chase. Mostly chase."
+      ],
+      "options": [
+        {
+          "text": "Good luck, Coach.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "How's the team?",
+          "to": "team"
+        }
+      ]
+    },
+    "team": {
+      "say": "Good men. Old legs. A system from 1998. It worked in 1998. Kenny would run through a wall for me. I just need him to run through the neutral zone.",
+      "options": [
+        {
+          "text": "Kenny's a good one.",
+          "do": [
+            {
+              "rel": [
+                "kenny_szabo",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "scout": {
+      "say": "Hey, Coach. Feels strange calling you that. I'm scouting now. Turns out I'm better at watching than shouting. I'm good at sitting in cold rinks.",
+      "options": [
+        {
+          "text": "I'm glad you came back, Stan.",
+          "do": [
+            {
+              "set": "stan_scout_talk"
+            },
+            {
+              "rel": [
+                "stan_kubiak",
+                5
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Find me a centre who backchecks.",
+          "do": [
+            {
+              "set": "stan_scout_talk"
+            },
+            {
+              "rel": [
+                "stan_kubiak",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "*sigh* What can I do for you?",
+        "{owner}. Sit down. It's quiet here.",
+        "Hey. Don't mention Tollbridge."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's coaching treating you?",
+          "to": "job"
+        },
+        {
+          "text": "Want half a sandwich? Or, wait, you want to give me half?",
+          "if": [
+            {
+              "not_flag": "ate_stan_sandwich"
+            }
+          ],
+          "to": "sandwich"
+        },
+        {
+          "text": "How are the old-timers? Pete and Ray?",
+          "to": "gossip"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Can I help with the bench?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "Ever thought about scouting?",
+          "if": [
+            {
+              "path": "gm"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "Take care, Stan.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Twenty-two years behind benches. Four on this one. Still in boxes at home. *sigh* My wife says unpack. I say January.",
+      "options": [
+        {
+          "text": "Unpack, Stan.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "January's the deadline?",
+          "to": "first_now"
+        }
+      ]
+    },
+    "sandwich": {
+      "say": "Egg salad. My wife's. She makes two because she knows I give one away. Here. Half. Don't tell her it was the owner. She'll want you over for dinner.",
+      "options": [
+        {
+          "text": "Thanks, Stan. It's great.",
+          "do": [
+            {
+              "set": "ate_stan_sandwich"
+            },
+            {
+              "rel": [
+                "stan_kubiak",
+                4
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I couldn't take your lunch.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Pete's been here since 1971. Knows every skate. Every stick. Ray's a good man with a hard job. He believes in me. I'd like to deserve it.",
+      "options": [
+        {
+          "text": "You do, Stan.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "My bench is cold and my players are old. The rink's not the problem. Mostly.",
+      "options": [
+        {
+          "text": "The ice is better now, right?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "Told you I'd get the ice right, Stan.",
+          "if": [
+            {
+              "ice_gte": 62
+            },
+            {
+              "flag": "promised_stan_ice"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                2
+              ]
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "I'll keep working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "It is. Old legs like hard ice. Thank you. *small sigh* A good sigh, that one.",
+      "options": [
+        {
+          "text": "I'll take a good sigh.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "You'd help? With what, the system? *sigh* Sure. Tell me what you see. Nobody tells me what they see anymore.",
+      "options": [
+        {
+          "text": "I see a team that needs younger legs and fewer dumps.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I see a good coach who's tired.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "Scouting? Me? *sigh* I'm cheap. I'm told I'm cheap. Hundred and fifty a week and gas. I'd sit in any cold rink you like.",
+      "options": [
+        {
+          "text": "I'll keep that in mind.",
+          "do": [
+            {
+              "rel": [
+                "stan_kubiak",
+                2
+              ]
+            },
+            {
+              "note": "Stan Kubiak would scout for $150 a week and gas."
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

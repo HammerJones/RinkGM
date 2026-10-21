@@ -1,0 +1,630 @@
+{
+  "id": "dale_huffman",
+  "barks": {
+    "idle": [
+      "Bylaw 3.1: the visiting team brings pucks. Nobody remembers 3.1.",
+      "The binder is in the car. The car is locked. I checked twice."
+    ],
+    "good_ice": [
+      "Ice meets league standard. I'll note it."
+    ],
+    "bad_ice": [
+      "Bylaw 8.4: playable surface. This is borderline.",
+      "Colin's going to file a complaint. Colin files everything."
+    ],
+    "goal": [
+      "Goal. Assist to be confirmed by the scorekeeper.",
+      "Good goal. Legal goal."
+    ],
+    "cold": [
+      "Stands are cold. Bylaw says nothing about the stands."
+    ],
+    "greet_owner": [
+      "{owner}. On the agenda.",
+      "Ah. Item one: hello."
+    ],
+    "leaving_happy": [
+      "Clean game. Two penalties. Under the league average."
+    ],
+    "leaving_angry": [
+      "I'll be drafting a memo. A firm one."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Late ice. Best hockey in the valley, if you squint.",
+        "Bylaw 7.3: everybody shakes hands."
+      ],
+      "tournament": [
+        "The Peewees have a binder too. It's thinner."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_dale_huffman"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "day_gte": 70
+        },
+        {
+          "not_flag": "dale_dues_paid"
+        }
+      ],
+      "node": "benched"
+    },
+    {
+      "if": [
+        {
+          "day_gte": 56
+        },
+        {
+          "not_flag": "dale_dues_paid"
+        },
+        {
+          "not_flag": "dale_dues_asked"
+        }
+      ],
+      "node": "dues"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "late"
+    },
+    {
+      "if": [
+        {
+          "flag": "dale_handed_binder"
+        },
+        {
+          "rel_gte": [
+            "dale_huffman",
+            40
+          ]
+        }
+      ],
+      "node": "emeritus"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "dale_huffman",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Dale Huffman, Valley Beer League commissioner. Bylaw 1.1: the league welcomes you. Bylaw 1.2: a new player's first eight weeks are on the league.",
+      "do": [
+        {
+          "set": "met_dale_huffman"
+        }
+      ],
+      "options": [
+        {
+          "text": "Free? Thanks, Dale.",
+          "do": [
+            {
+              "rel": [
+                "dale_huffman",
+                3
+              ]
+            }
+          ],
+          "to": "first_free"
+        },
+        {
+          "text": "And after eight weeks?",
+          "to": "first_after",
+          "do": []
+        },
+        {
+          "text": "Is that the binder?",
+          "to": "binder",
+          "do": []
+        }
+      ]
+    },
+    "first_free": {
+      "say": "Learning's free. Playing's $120. We'll talk in eight weeks. I've written it down. Page nine.",
+      "options": [
+        {
+          "text": "Page nine.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "first_after": {
+      "say": "Dues. Same as everybody. Owner or not. But that's two months off, and the binder doesn't nag.",
+      "options": [
+        {
+          "text": "Fair enough.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "dues": {
+      "say": "{owner}. Love what you've done with the place. But owner or not, everybody pays their dues. $120 buys the refs, the scorekeeper, the pucks and the jerseys.",
+      "do": [
+        {
+          "set": "dale_dues_asked"
+        }
+      ],
+      "options": [
+        {
+          "text": "Here's $120.",
+          "if": [
+            {
+              "money_gte": 120
+            }
+          ],
+          "do": [
+            {
+              "pay_dues": true
+            },
+            {
+              "set": "dale_dues_paid"
+            },
+            {
+              "rel": [
+                "dale_huffman",
+                5
+              ]
+            },
+            {
+              "note": "You paid Dale Huffman your $120 Valley Beer League dues. He marked it in pen."
+            }
+          ],
+          "to": "paid"
+        },
+        {
+          "text": "I'll pay next week.",
+          "do": [
+            {
+              "rel": [
+                "dale_huffman",
+                -3
+              ]
+            }
+          ],
+          "to": "dues_later"
+        },
+        {
+          "text": "I own the rink. Doesn't that count?",
+          "do": [
+            {
+              "rel": [
+                "dale_huffman",
+                -2
+              ]
+            }
+          ],
+          "to": "dues_owner"
+        }
+      ]
+    },
+    "dues_later": {
+      "say": "'Next week.' Bylaw 4.2 gives two weeks' grace. I'll give you two weeks. After that, no dues, no game.",
+      "options": [
+        {
+          "text": "Two weeks.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "dues_owner": {
+      "say": "Bylaw 4.4: 'No player shall be exempt by reason of owning the building.' I wrote it this morning. It reflects a long tradition.",
+      "options": [
+        {
+          "text": "Fine. Here's $120.",
+          "if": [
+            {
+              "money_gte": 120
+            }
+          ],
+          "do": [
+            {
+              "pay_dues": true
+            },
+            {
+              "set": "dale_dues_paid"
+            },
+            {
+              "rel": [
+                "dale_huffman",
+                5
+              ]
+            },
+            {
+              "note": "You paid Dale Huffman your $120 Valley Beer League dues. He marked it in pen."
+            }
+          ],
+          "to": "paid"
+        },
+        {
+          "text": "I'll find the money.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "paid": {
+      "say": "Paid in full. I'll mark it in pen. Pen, {owner}. That's how you know it's real.",
+      "options": [
+        {
+          "text": "Thanks, Dale.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "benched": {
+      "say": "No dues, no game. Your sweater's in my trunk when you're ready. I hate this part.",
+      "options": [
+        {
+          "text": "Here's the $120.",
+          "if": [
+            {
+              "money_gte": 120
+            }
+          ],
+          "do": [
+            {
+              "pay_dues": true
+            },
+            {
+              "set": "dale_dues_paid"
+            },
+            {
+              "rel": [
+                "dale_huffman",
+                5
+              ]
+            },
+            {
+              "note": "You paid Dale Huffman your $120 Valley Beer League dues. He marked it in pen."
+            }
+          ],
+          "to": "paid"
+        },
+        {
+          "text": "Not yet, Dale.",
+          "do": [
+            {
+              "rel": [
+                "dale_huffman",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Three teams filed complaints about the ice this week. Colin filed his in a spreadsheet. With a chart."
+      ],
+      "options": [
+        {
+          "text": "I'll sort it out.",
+          "do": [
+            {
+              "rel": [
+                "dale_huffman",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "late": {
+      "say": "Late ice. Best hockey in the valley, if you squint and like penalties.",
+      "options": [
+        {
+          "text": "Who's winning the D?",
+          "to": "late2",
+          "do": []
+        },
+        {
+          "text": "Something else.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "late2": {
+      "say": "The Wobbly Pops are first, which nobody saw coming, least of all the Wobbly Pops.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}. You're in the binder now. Good tab.",
+        "Ah, {owner}. I was just thinking about bylaws. I'm always thinking about bylaws."
+      ],
+      "options": [
+        {
+          "text": "Hi, Dale.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "emeritus": {
+      "say": "Commissioner Emeritus. It's on the mug. The coffee tastes official now.",
+      "options": [
+        {
+          "text": "It suits you.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Dale Huffman, commissioner. What's on the agenda?",
+        "Item one: hello. Item two: what can I do for you?",
+        "{owner}. Keep it under eleven minutes, like the AGM."
+      ],
+      "options": [
+        {
+          "text": "Tell me about the binder.",
+          "to": "binder",
+          "do": []
+        },
+        {
+          "text": "About those dues...",
+          "if": [
+            {
+              "day_gte": 56
+            },
+            {
+              "not_flag": "dale_dues_paid"
+            }
+          ],
+          "to": "dues",
+          "do": []
+        },
+        {
+          "text": "What do you watch, besides beer league?",
+          "to": "events",
+          "do": []
+        },
+        {
+          "text": "Which leg of the mural was yours?",
+          "to": "mural",
+          "do": []
+        },
+        {
+          "text": "How does the league get on with Earl?",
+          "to": "earl",
+          "do": []
+        },
+        {
+          "text": "Thoughts on the rink?",
+          "to": "rink",
+          "do": []
+        },
+        {
+          "text": "Where's my beer league bench on the schedule?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach",
+          "do": []
+        },
+        {
+          "text": "You mentioned handing over the binder.",
+          "if": [
+            {
+              "path": "gm"
+            },
+            {
+              "rel_gte": [
+                "dale_huffman",
+                30
+              ]
+            },
+            {
+              "not_flag": "dale_handed_binder"
+            }
+          ],
+          "to": "gm",
+          "do": []
+        },
+        {
+          "text": "Meeting adjourned, Dale.",
+          "to": "end",
+          "do": []
+        }
+      ]
+    },
+    "binder": {
+      "say": "Every bylaw, every score, every suspension since 1981. One binder. It has never left my sight. Except 2019. We don't talk about 2019.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "events": {
+      "say": "Awards night. The Peewee tournament, if it's close. Senior hockey for the anthem. I stand for the anthem like it's a bylaw.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "mural": {
+      "say": "I don't know what you're talking about. ... Agnes promised. Bylaw zero: we don't discuss the mural.",
+      "options": [
+        {
+          "text": "Sorry, Dale.",
+          "do": [
+            {
+              "rel": [
+                "dale_huffman",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "earl": {
+      "say": "Earl floods between periods in eight minutes and plays defence in the next. Bylaw 9.1 is named for him, informally. It's about icing.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Good enough for the league?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good",
+          "do": []
+        },
+        {
+          "text": "What does the league need?",
+          "to": "rink_need",
+          "do": []
+        },
+        {
+          "text": "Something else.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Good enough that the Frozen Assets stopped filing complaints. Colin's spreadsheet is lonely.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "rink_need": {
+      "say": "A working HOME scoreboard. Pucks that aren't from 1998. And everybody's dues on time. Everybody.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "coach": {
+      "say": "Your bench is the late slot, 21:30. It's in the binder, so it's real.",
+      "options": [
+        {
+          "text": "Thanks, Dale.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "gm": {
+      "say": "Thirty years with this binder. Maybe somebody younger should... no. Yes. When you're ready, it's yours.",
+      "options": [
+        {
+          "text": "I'm ready, Dale.",
+          "do": [
+            {
+              "set": "dale_handed_binder"
+            },
+            {
+              "rel": [
+                "dale_huffman",
+                5
+              ]
+            },
+            {
+              "item": [
+                "vbl_binder",
+                1
+              ]
+            },
+            {
+              "note": "Dale Huffman handed you the Valley Beer League binder."
+            }
+          ],
+          "to": "gm_take"
+        },
+        {
+          "text": "Not yet.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    },
+    "gm_take": {
+      "say": "Page one is the bylaws. Mind the coffee rings. They're historical.",
+      "options": [
+        {
+          "text": "I'll take care of it.",
+          "to": "hub",
+          "do": []
+        }
+      ]
+    }
+  }
+}

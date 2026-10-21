@@ -1,0 +1,379 @@
+{
+  "id": "marcel_thibodeau",
+  "barks": {
+    "idle": [
+      "Noted.",
+      "Thirty seasons. I've heard that one before. Twice in 1998."
+    ],
+    "good_ice": [
+      "Good ice. Nobody will remember the ref tonight. Perfect."
+    ],
+    "bad_ice": [
+      "That rut by the home blue line is going in the book.",
+      "Players will blame me for the bounces. Noted."
+    ],
+    "wet_ice": [
+      "Wet surface. Delayed puck drop. Noted, with the time."
+    ],
+    "cold": [
+      "The ref room is colder than the ice. That's in the book too."
+    ],
+    "hungry": [
+      "Is Shauna here? Shauna usually brings crullers."
+    ],
+    "long_line": [
+      "I've seen faster line changes from the Pallbearers."
+    ],
+    "bored": [
+      "A quiet game is a good game. I'm told this is boredom. I call it craft."
+    ],
+    "goal": [
+      "Good goal. I saw it. Officially."
+    ],
+    "greet_owner": [
+      "Evening. Noted.",
+      "Owner. The incident book says hello."
+    ],
+    "leaving_happy": [
+      "Nobody yelled at me tonight. I'll tell Carol."
+    ],
+    "leaving_angry": [
+      "Every word is in the book. Every word."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Rule 6.2 again, Lindqvist? Two minutes for the tone.",
+        "Line change. Pager or not."
+      ],
+      "figure_show": [
+        "I'm in the lobby. I can't watch. Tell me when she's landed it."
+      ],
+      "minor_hockey": [
+        "Brody's got this one. I'm just here for the coffee."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_marcel_thibodeau"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_show"
+        }
+      ],
+      "node": "test_day"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "game_night"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Marcel Thibodeau. Thirty seasons of valley hockey and most of the incident book. You're the owner. Noted.",
+      "do": [
+        {
+          "set": "met_marcel_thibodeau"
+        }
+      ],
+      "options": [
+        {
+          "text": "Good to meet you, Marcel.",
+          "do": [
+            {
+              "rel": [
+                "marcel_thibodeau",
+                3
+              ]
+            }
+          ],
+          "to": "first_hi"
+        },
+        {
+          "text": "Nice to meet you, Stripes.",
+          "do": [
+            {
+              "rel": [
+                "marcel_thibodeau",
+                -3
+              ]
+            },
+            {
+              "set": "marcel_called_stripes"
+            }
+          ],
+          "to": "first_stripes"
+        }
+      ]
+    },
+    "first_hi": {
+      "say": "Likewise. A word of advice. When a man is yelling at me, he's not yelling at you. Let's keep it that way.",
+      "options": [
+        {
+          "text": "Deal.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_stripes": {
+      "say": "Marcel. Not Stripes. (He takes out a small notebook and writes one line.) Noted.",
+      "options": [
+        {
+          "text": "Sorry. Marcel.",
+          "do": [
+            {
+              "rel": [
+                "marcel_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Marcel. It'll be fixed.",
+          "do": [
+            {
+              "rel": [
+                "marcel_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "test_day": {
+      "say": "Josee's testing today. I'm in the lobby. I've stood on the ice for thirty years while men threw gloves at me and I cannot watch my daughter do a double.",
+      "options": [
+        {
+          "text": "I'll come get you when she lands it.",
+          "do": [
+            {
+              "rel": [
+                "marcel_thibodeau",
+                3
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "You've got this, Marcel.",
+          "to": "hub"
+        }
+      ]
+    },
+    "game_night": {
+      "say": [
+        "Between periods. I have four minutes and, if Shauna was kind, a cruller.",
+        "Evening. If anyone asks, I'm not here until the puck drops."
+      ],
+      "options": [
+        {
+          "text": "I'll let you get ready.",
+          "to": "end"
+        },
+        {
+          "text": "Quick word?",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Noted. Go ahead.",
+        "Marcel Thibodeau, listening.",
+        "Owner. What's the call?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "Thirty seasons. How do you do it?",
+          "to": "job"
+        },
+        {
+          "text": "What games do you like working?",
+          "to": "events"
+        },
+        {
+          "text": "What do you make of Nell and Brody?",
+          "to": "gossip"
+        },
+        {
+          "text": "What's the rink like for officials?",
+          "to": "rink"
+        },
+        {
+          "text": "About calling you Stripes...",
+          "if": [
+            {
+              "flag": "marcel_called_stripes"
+            }
+          ],
+          "to": "stripes_sorry"
+        },
+        {
+          "text": "Will you be reffing my games?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "path_player"
+        },
+        {
+          "text": "See you, Marcel.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Days at Kessler Public Works, nights on the whistle. The trick is to hear everything and remember only what goes in the book.",
+      "options": [
+        {
+          "text": "Sensible.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Beer league, Senior when they'll have me, minor hockey when Brody needs a hand. A good game is one where nobody remembers the ref. I've had about six.",
+      "options": [
+        {
+          "text": "Good answer.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Nell's going to ref the ILHL. She's better than I was at her age, and she organised my coat hook. Brody's fifteen and right. I told him the yelling gets quieter. I lied, kindly.",
+      "options": [
+        {
+          "text": "They're lucky to have you.",
+          "do": [
+            {
+              "rel": [
+                "marcel_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The ref room is a broom closet with one coat hook. It smells of brooms because it is full of brooms. Three officials, one hook. Noted, repeatedly.",
+      "options": [
+        {
+          "text": "It's improved, though?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll look into it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "Hooks, a chair, and a heater that isn't a rumour. I've written a thank-you in the book. In ink. I don't use ink.",
+      "options": [
+        {
+          "text": "I'm honoured.",
+          "to": "hub"
+        }
+      ]
+    },
+    "stripes_sorry": {
+      "say": "Go on.",
+      "options": [
+        {
+          "text": "I'm sorry. It won't happen again, Marcel.",
+          "do": [
+            {
+              "rel": [
+                "marcel_thibodeau",
+                3
+              ]
+            },
+            {
+              "clear": "marcel_called_stripes"
+            }
+          ],
+          "to": "stripes_ok"
+        },
+        {
+          "text": "Never mind.",
+          "to": "hub"
+        }
+      ]
+    },
+    "stripes_ok": {
+      "say": "(He opens the notebook, crosses out one line and closes it.) Noted. Un-noted.",
+      "options": [
+        {
+          "text": "Thanks, Marcel.",
+          "to": "hub"
+        }
+      ]
+    },
+    "path_player": {
+      "say": "If you're playing in my game, I don't know you. Owner or no owner. Two minutes is two minutes.",
+      "options": [
+        {
+          "text": "I'd expect nothing less.",
+          "do": [
+            {
+              "rel": [
+                "marcel_thibodeau",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Noted.",
+        "Evening."
+      ],
+      "options": []
+    }
+  }
+}

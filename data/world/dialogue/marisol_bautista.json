@@ -1,0 +1,476 @@
+{
+  "id": "marisol_bautista",
+  "barks": {
+    "idle": [
+      "I found the glide in week three. I'm keeping it.",
+      "Not brave. Cold. There's a difference.",
+      "My kids are watching. No falling. Okay, a little falling."
+    ],
+    "good_ice": [
+      "Ooh, smooth. Even I could glide on this."
+    ],
+    "bad_ice": [
+      "Ay. Bumps. My knees are not ready for bumps."
+    ],
+    "wet_ice": [
+      "Wet ice? Diyos ko, I'm going to swim."
+    ],
+    "goal": [
+      "GO JOSIE! Was it Josie? It doesn't matter, GO!",
+      "Ay! I can't look! Did it go in?"
+    ],
+    "cold": [
+      "Cold. I grew up in Manila. My blood is not built for this."
+    ],
+    "hungry": [
+      "Hot chocolate. The HOT CHOC LATE one. It's the best name."
+    ],
+    "long_line": [
+      "I can wait. I wait for buses in January."
+    ],
+    "bored": [
+      "I'm watching the Zamboni. Very relaxing."
+    ],
+    "greet_owner": [
+      "{owner}! I stood up for ten seconds today! Ten!",
+      "Hello, hello! Don't call me brave."
+    ],
+    "leaving_happy": [
+      "I didn't touch the boards once! Okay, twice."
+    ],
+    "leaving_angry": [
+      "Skate number 41 again. Again!"
+    ],
+    "event_specific": {
+      "learn_to_skate": [
+        "Walter is ahead of me. I can feel it. Not today, Walter.",
+        "Ay, ay, ay... okay! Okay! I'm up!"
+      ],
+      "public_skate": [
+        "One lap without the boards. One. Watch me."
+      ],
+      "high_school": [
+        "Josie! JOSIE! Hands over eyes. I'm watching. I'm not watching."
+      ],
+      "figure_show": [
+        "How do they spin? I spin when I fall."
+      ],
+      "minor_hockey": [
+        "Such small players. Such big helmets."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_marisol_bautista"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "learn_to_skate"
+        }
+      ],
+      "node": "lts_now"
+    },
+    {
+      "if": [
+        {
+          "event_now": "high_school"
+        }
+      ],
+      "node": "hs_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "marisol_bautista",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hi! Marisol Bautista. Josie's mother. Adult learn-to-skate, Monday nights. Forty-two and I just found the glide. Don't say I'm brave.",
+      "do": [
+        {
+          "set": "met_marisol_bautista"
+        }
+      ],
+      "options": [
+        {
+          "text": "You're brave.",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Found the glide! That's huge.",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                4
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "What made you start?",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                2
+              ]
+            }
+          ],
+          "to": "first_why"
+        }
+      ]
+    },
+    "first_why": {
+      "say": "I grew up in Manila. No ice. Josie skates like she was born on it. I thought, she should not be the only one in this family who can. So. Elbow pads.",
+      "options": [
+        {
+          "text": "That's a great reason.",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Marisol. I'll fix it.",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Was it skate number 41 again?",
+          "to": "skate41"
+        }
+      ]
+    },
+    "lts_now": {
+      "say": [
+        "Ay, Diyos ko... okay. Okay! I'm up. Don't look. Look!",
+        "Walter and I are racing. Silently. To let go of the boards first."
+      ],
+      "options": [
+        {
+          "text": "Who's winning?",
+          "to": "walter"
+        },
+        {
+          "text": "You've got this.",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "walter": {
+      "say": "Walter. But only because his granddaughter is watching. Mine are watching too. Josie is filming. She says it's for 'history'. I think it's for TikTok.",
+      "options": [
+        {
+          "text": "Let go of the boards and beat him.",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hs_now": {
+      "say": [
+        "My hands are over my eyes. Tell me what Josie is doing.",
+        "Josie's on defence. Every hit, I say a little prayer. In Tagalog."
+      ],
+      "options": [
+        {
+          "text": "She's playing great.",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                3
+              ]
+            },
+            {
+              "rel": [
+                "josie_bautista",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "She's fine. She's tough.",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! Look! No elbow pads! Okay, one elbow pad.",
+        "My favourite person who doesn't call me brave."
+      ],
+      "options": [
+        {
+          "text": "Hey, Marisol.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hello! What's new?",
+        "Hi, {owner}. I'm resting. Skating is a lot of standing.",
+        "Ask me something. I'm warming up my toes."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's work?",
+          "to": "job"
+        },
+        {
+          "text": "What's it like learning at forty-two?",
+          "to": "events"
+        },
+        {
+          "text": "What's wrong with skate number 41?",
+          "to": "skate41"
+        },
+        {
+          "text": "How's Josie doing?",
+          "to": "josie"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "See you Monday, Marisol.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Personal support worker. I help people stand up all day. Then I come here and nobody helps me stand up. Except Penny. And the boards.",
+      "options": [
+        {
+          "text": "Penny's a good teacher.",
+          "do": [
+            {
+              "rel": [
+                "penny_marchetti",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Funny. Terrible. Funny again. You fall, you laugh, you get up. Colette says knees soft. My knees are soft. Everything is soft. I'm forty-two.",
+      "options": [
+        {
+          "text": "You're doing it, though.",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "skate41": {
+      "say": "Number 41! The rental skate! It has a lump in the heel and it hates me. Every Monday, the only size 8 left is 41.",
+      "options": [
+        {
+          "text": "Skate 41 is retired. Effective now.",
+          "if": [
+            {
+              "not_flag": "skate_41_retired"
+            }
+          ],
+          "do": [
+            {
+              "set": "skate_41_retired"
+            },
+            {
+              "rel": [
+                "marisol_bautista",
+                5
+              ]
+            },
+            {
+              "mood": 0.05
+            },
+            {
+              "note": "Rental skate number 41 has been retired. Marisol is delighted."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll ask Bev to look at it.",
+          "if": [
+            {
+              "not_flag": "skate_41_retired"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "It's hanging in the office now, retired.",
+          "if": [
+            {
+              "flag": "skate_41_retired"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "josie": {
+      "say": "She works the Hot Stove, plays defence and laughs at Dylan's jokes. I'm not supposed to know about the last one. Mothers know.",
+      "options": [
+        {
+          "text": "I didn't hear anything.",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "I love the mitten tree. And the HOT CHOC LATE sign. Don't fix it. The benches are cold, though. My bottom has opinions.",
+      "options": [
+        {
+          "text": "The rooms are warmer now?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "The sign stays.",
+          "do": [
+            {
+              "rel": [
+                "marisol_bautista",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "Warm! A warm bench! I sat for ten minutes and nothing went numb. A miracle.",
+      "options": [
+        {
+          "text": "Miracles are what we do.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,485 @@
+{
+  "id": "noah_delisle",
+  "barks": {
+    "idle": [
+      "Can you do a spiral? No? Then hush.",
+      "Figure blades in this bag, hockey blades in that one. Don't mix them up.",
+      "Doreen's Organ 2 is my warm-up song."
+    ],
+    "good_ice": [
+      "Good ice. Good edges. Good day."
+    ],
+    "bad_ice": [
+      "Ruts. Hockey practice must've been here. Oh wait, that was me."
+    ],
+    "wet_ice": [
+      "Wet ice. My spiral's going to be a slide."
+    ],
+    "goal": [
+      "Nice!",
+      "That's hockey, baby."
+    ],
+    "cold": [
+      "Cold's fine. Figure costumes are way colder."
+    ],
+    "hungry": [
+      "Fries between practices. Figure, then fries, then hockey."
+    ],
+    "long_line": [
+      "I'll just glide over later."
+    ],
+    "bored": [
+      "*does a spiral in the lobby*"
+    ],
+    "greet_owner": [
+      "Hey {owner}. Figure or hockey today? Trick question. Both.",
+      "Hey. You've got that 'figure skating joke' look. Don't."
+    ],
+    "leaving_happy": [
+      "Landed the axel and scored a goal. Same day. Undefeated."
+    ],
+    "leaving_angry": [
+      "Toe picks at hockey practice. Never again."
+    ],
+    "event_specific": {
+      "figure_practice": [
+        "Edges first. Always edges first.",
+        "Hélène says my spiral is 'acceptable'. That's huge."
+      ],
+      "figure_show": [
+        "Lights down, Organ 2 up. Let's go."
+      ],
+      "high_school": [
+        "Fourth line, fastest skater. Nobody likes to talk about it.",
+        "Coach Bernie keeps saying 'hockey, Noah'. I know, Coach."
+      ],
+      "public_skate": [
+        "Public skate is just a big warm-up."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_noah_delisle"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_practice"
+        }
+      ],
+      "node": "fp_now"
+    },
+    {
+      "if": [
+        {
+          "event_now": "high_school"
+        }
+      ],
+      "node": "hs_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "noah_delisle",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hey. Noah Delisle. Figure club, Senior Bronze. Also Mallards, fourth line. Yes, both. Go ahead, I've heard every joke.",
+      "do": [
+        {
+          "set": "met_noah_delisle"
+        }
+      ],
+      "options": [
+        {
+          "text": "Do you wear sequins in the corners?",
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                -2
+              ]
+            }
+          ],
+          "to": "first_joke"
+        },
+        {
+          "text": "Both? That's impressive.",
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Nice to meet you, Noah.",
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_joke": {
+      "say": "Can you do a spiral? No? Then hush. ...It's okay. That one was at least original.",
+      "options": [
+        {
+          "text": "Fair. Hushing.",
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll fix it, Noah.",
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Both your sports, ruined? Sorry.",
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "fp_now": {
+      "say": [
+        "Edges. Edges. Edges. Hélène's watching my knee.",
+        "If I land this axel, I'm getting fries."
+      ],
+      "options": [
+        {
+          "text": "Go get those fries.",
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Can you teach me a spiral sometime?",
+          "to": "spiral"
+        }
+      ]
+    },
+    "spiral": {
+      "say": "Sure. Leg back, chest up, arms out, don't think about it. Most people fall. Most people laugh. Lily laughs the hardest.",
+      "options": [
+        {
+          "text": "I'll give it a try.",
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                3
+              ]
+            },
+            {
+              "set": "noah_spiral_lesson"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hs_now": {
+      "say": [
+        "Mallards game. Fourth line. Watch how fast the fourth line is.",
+        "Coach Bernie says 'hockey, Noah' like it's a full sentence."
+      ],
+      "options": [
+        {
+          "text": "Go Mallards!",
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Hey, {owner}. You haven't made a figure skating joke in weeks. I'm proud of you.",
+        "Hey. Edges looking good today. Mine, not yours."
+      ],
+      "options": [
+        {
+          "text": "Hey, Noah.",
+          "to": "hub"
+        },
+        {
+          "text": "How was my spiral, honestly?",
+          "if": [
+            {
+              "flag": "noah_spiral_lesson"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hey. What's up?",
+        "Hi. I've got twenty minutes between practices. Talk to me.",
+        "Figure or hockey, what's the question?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How do you do both?",
+          "to": "events"
+        },
+        {
+          "text": "Are you going to have to choose one day?",
+          "to": "choose"
+        },
+        {
+          "text": "You know Josée well?",
+          "to": "josee"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "See you, Noah.",
+          "to": "end"
+        }
+      ]
+    },
+    "events": {
+      "say": "Figure taught me edges. Hockey taught me to use them with someone chasing me. Two blades, two bags. Organ 2 for one, the pep band for the other.",
+      "options": [
+        {
+          "text": "Best of both worlds.",
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "choose": {
+      "say": "Hélène wants me for the club. Coach Bernie wants me for the Mallards. Both of them think I don't notice them campaigning. I notice.",
+      "options": [
+        {
+          "text": "Do both as long as you can.",
+          "if": [
+            {
+              "not_flag": "owner_backed_hockey_for_noah"
+            },
+            {
+              "not_flag": "owner_backed_noah_choice"
+            }
+          ],
+          "do": [
+            {
+              "set": "owner_backed_noah_choice"
+            },
+            {
+              "rel": [
+                "noah_delisle",
+                4
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Coach Bernie told me you're on his side now?",
+          "if": [
+            {
+              "flag": "owner_backed_hockey_for_noah"
+            }
+          ],
+          "to": "choose_bernie"
+        },
+        {
+          "text": "It's your call. Whatever you pick.",
+          "if": [
+            {
+              "flag": "owner_backed_noah_choice"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "choose_bernie": {
+      "say": "Ha. He told me you said hockey's lucky to have me. That's nice. Hélène said the same about figure. Everybody's lucky. Nobody asks what I want.",
+      "options": [
+        {
+          "text": "What do you want, Noah?",
+          "to": "choose_want"
+        }
+      ]
+    },
+    "choose_want": {
+      "say": "...Not to choose yet. Is that allowed?",
+      "options": [
+        {
+          "text": "That's allowed.",
+          "do": [
+            {
+              "set": "owner_backed_noah_choice"
+            },
+            {
+              "rel": [
+                "noah_delisle",
+                4
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "josee": {
+      "say": "Best jumper in the club. She narrates her falls like an opera. 'I have DIED.' She hasn't died. She's fourteen. She's fine.",
+      "options": [
+        {
+          "text": "She is very dramatic.",
+          "to": "hub"
+        },
+        {
+          "text": "She's lucky to have you as a club mate.",
+          "do": [
+            {
+              "rel": [
+                "josee_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Good ice for figure means soft and warm. Good ice for hockey means hard and cold. This rink tries to be both. So do I.",
+      "options": [
+        {
+          "text": "The ice is better now, right?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "We have that in common, then.",
+          "do": [
+            {
+              "rel": [
+                "noah_delisle",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Way better. My edges bite in the morning and they still bite at night. Earl's a wizard.",
+      "options": [
+        {
+          "text": "Earl will never hear that from me.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

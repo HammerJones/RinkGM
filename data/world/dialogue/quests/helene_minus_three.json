@@ -1,0 +1,242 @@
+{
+ "id": "helene_minus_three",
+ "giver": "helene_arsenault",
+ "quest": "helene_minus_three",
+ "nodes": {
+  "offer": {
+   "say": "Your ice at six o'clock is like a cutting board. I do not say this to be unkind. I say it because it is true and you are the one with the thermostat.",
+   "options": [
+    {
+     "text": "Tell me what you need.",
+     "to": "why"
+    },
+    {
+     "text": "Agricultural, you mean?",
+     "do": [
+      {
+       "rel": [
+        "helene_arsenault",
+        1
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "The plant's already eating me alive. Not this month.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Minus three, minus three and a half at the surface. Soft enough to bite, firm enough to land. Hockey wants a parking lot. We are not hockey.",
+   "options": [
+    {
+     "text": "I'll warm it for your mornings.",
+     "do": [
+      {
+       "quest_start": "helene_minus_three"
+      },
+      {
+       "rel": [
+        "helene_arsenault",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Can't hockey and figure both be happy?",
+     "to": "both"
+    },
+    {
+     "text": "Let me think about the power bill.",
+     "to": "decline"
+    }
+   ]
+  },
+  "both": {
+   "say": "At the same hour? No. At different hours, yes, if someone plans the day properly. That someone is you. Gus did it with a pencil.",
+   "options": [
+    {
+     "text": "Then I'll plan it. Your mornings are soft.",
+     "do": [
+      {
+       "quest_start": "helene_minus_three"
+      },
+      {
+       "rel": [
+        "helene_arsenault",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Gus also left me breaker 14.",
+     "to": "both_gus"
+    }
+   ]
+  },
+  "both_gus": {
+   "say": "Gus left you many things. Most of them are good. Will you warm my ice or not?",
+   "options": [
+    {
+     "text": "I will.",
+     "do": [
+      {
+       "quest_start": "helene_minus_three"
+      },
+      {
+       "rel": [
+        "helene_arsenault",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Not yet.",
+     "to": "decline"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "I save 'agricultural' for your edges, {owner}. Do not make me use it on the ice as well.",
+   "options": [
+    {
+     "text": "Fair. What do you need?",
+     "to": "why"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Then this month we skate carefully. Next month I ask again. I am very patient. It is my worst quality.",
+   "do": [
+    {
+     "rel": [
+      "helene_arsenault",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Bon. I will know on the first stroke. I always know.",
+   "options": []
+  },
+  "progress": {
+   "say": "You are here about my ice.",
+   "options": [
+    {
+     "text": "How was it this morning?",
+     "if": [
+      {
+       "step": [
+        "helene_minus_three",
+        "warm"
+       ]
+      }
+     ],
+     "to": "p_warm"
+    },
+    {
+     "text": "Is it holding?",
+     "if": [
+      {
+       "step": [
+        "helene_minus_three",
+        "hold"
+       ]
+      }
+     ],
+     "to": "p_hold"
+    },
+    {
+     "text": "Anything else before I call it done?",
+     "if": [
+      {
+       "step": [
+        "helene_minus_three",
+        "edge"
+       ]
+      }
+     ],
+     "to": "p_edge"
+    },
+    {
+     "text": "Just checking in.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_warm": {
+   "say": "Still hard. The little ones are falling on their waltz jumps and blaming their mothers. Set it warmer before we come and colder after we go.",
+   "options": []
+  },
+  "p_hold": {
+   "say": "Better. Once is luck. Three times is a rink.",
+   "options": []
+  },
+  "p_edge": {
+   "say": "The corners. There is a ridge by the visitors' gate that catches a toe pick. Earl calls it 'character'. I call it a ridge.",
+   "options": []
+  },
+  "complete": {
+   "say": "Three mornings. The little ones landed their waltz jumps and did not know why it was easier. I knew. Here. This was on my first carnival costume, 1975. It should be somewhere warm and seen.",
+   "options": [
+    {
+     "text": "It'll go in the trophy case beside the little white skate.",
+     "do": [
+      {
+       "set": "carnival_pin_in_case"
+      },
+      {
+       "rel": [
+        "helene_arsenault",
+        3
+       ]
+      }
+     ],
+     "to": "c_case"
+    },
+    {
+     "text": "Keep it, Hélène. It's yours.",
+     "to": "c_keep"
+    },
+    {
+     "text": "Was that a smile?",
+     "do": [
+      {
+       "rel": [
+        "helene_arsenault",
+        1
+       ]
+      }
+     ],
+     "to": "c_smile"
+    }
+   ]
+  },
+  "c_case": {
+   "say": "Yes. Beside the skate. That skate was Marie-Claude's. She is a grandmother now and still cannot do a loop.",
+   "options": []
+  },
+  "c_keep": {
+   "say": "No. I am giving it. Taking it back is rude. Accept it or I will be cross with you in French.",
+   "options": []
+  },
+  "c_smile": {
+   "say": "It was a nod. Do not spread rumours. The parents will expect it every week.",
+   "options": []
+  },
+  "done": {
+   "say": "The ice is good. Do not let it go to your head.",
+   "options": []
+  }
+ }
+}

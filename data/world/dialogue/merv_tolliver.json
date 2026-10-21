@@ -1,0 +1,390 @@
+{
+  "id": "merv_tolliver",
+  "barks": {
+    "idle": [
+      "I drove forty minutes so you don't have to.",
+      "This seat has the lumbar support of a park bench. Noted for the column."
+    ],
+    "good_ice": [
+      "The ice is good. I resent it.",
+      "Annoyingly, the sheet is excellent."
+    ],
+    "bad_ice": [
+      "The ice has the texture of a dropped pie.",
+      "Millbrook: where the puck goes to bounce."
+    ],
+    "wet_ice": [
+      "Wet ice. Lede writes itself."
+    ],
+    "cold": [
+      "Cold. Good. A rink should be cold. I still hate it."
+    ],
+    "hungry": [
+      "The hot dog is a metaphor. For what, I'll decide on deadline."
+    ],
+    "long_line": [
+      "A queue at the canteen, which, to be fair, the Frostbank cannot manage. People actually want this food."
+    ],
+    "bored": [
+      "Three stars, then. No. Two. I'm bored."
+    ],
+    "goal": [
+      "A goal. Fine. Fine.",
+      "(He writes something down and does not look pleased about it.)"
+    ],
+    "greet_owner": [
+      "Ah. The proprietor.",
+      "You again. My readers send their regards. Grudgingly."
+    ],
+    "leaving_happy": [
+      "One and a half stars. Possibly two. Don't tell my editor I said possibly."
+    ],
+    "leaving_angry": [
+      "I'll be back. I'm always back. That's the worst part."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "A crowd that knows every player's mother. Repulsive. Wonderful.",
+        "BEAT THE MILL, they cry, as though the mill could hear."
+      ],
+      "special": [
+        "A ceremony. If anyone cries I'm leaving.",
+        "I am not moved. I have a cold."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_merv_tolliver"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "merv_free_hand"
+        },
+        {
+          "ice_gte": 70
+        }
+      ],
+      "node": "free_hand"
+    },
+    {
+      "if": [
+        {
+          "event_now": "senior_hockey"
+        }
+      ],
+      "node": "game"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Merv Tolliver, the Ledger. The Last Word. I review rinks in stars, and your rink has, at present, one. The star is for the parking lot, which has no ambitions. I respect that.",
+      "do": [
+        {
+          "set": "met_merv_tolliver"
+        }
+      ],
+      "options": [
+        {
+          "text": "Write whatever you like. I'll earn the rest.",
+          "do": [
+            {
+              "rel": [
+                "merv_tolliver",
+                4
+              ]
+            },
+            {
+              "set": "merv_free_hand"
+            }
+          ],
+          "to": "first_free"
+        },
+        {
+          "text": "Any chance of a kind review?",
+          "do": [
+            {
+              "rel": [
+                "merv_tolliver",
+                -4
+              ]
+            }
+          ],
+          "to": "first_kind"
+        },
+        {
+          "text": "One? What's wrong with it?",
+          "do": [
+            {
+              "rel": [
+                "merv_tolliver",
+                1
+              ]
+            }
+          ],
+          "to": "first_wrong"
+        }
+      ]
+    },
+    "first_free": {
+      "say": "Oh, don't. Don't be gracious. It makes the column harder. (He writes something down.) That's not going in. Probably.",
+      "options": [
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_kind": {
+      "say": "I'll deduct half a star for asking. Don't worry. Half a star of nothing is still nothing.",
+      "options": [
+        {
+          "text": "Ouch.",
+          "do": [
+            {
+              "note": "Merv Tolliver's Last Word: 'The owner asked for a kind review. I have given it the review it asked for, minus half a star.'"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_wrong": {
+      "say": "Where to begin. The paint. The seats. A coffee machine you have to hit. I've filled six columns on less.",
+      "options": [
+        {
+          "text": "I'll get to work.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "Put it in the column. I deserve it.",
+          "do": [
+            {
+              "rel": [
+                "merv_tolliver",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'm sorry, Merv.",
+          "to": "hub"
+        }
+      ]
+    },
+    "free_hand": {
+      "say": "You said write whatever I liked. I wrote that your ice is good. It's the most painful sentence I've written since I praised a hot dog in 2009.",
+      "options": [
+        {
+          "text": "I'll frame it.",
+          "do": [
+            {
+              "rel": [
+                "merv_tolliver",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "game": {
+      "say": [
+        "Don't talk to me during the second period. Something might happen and I'd have to write about it.",
+        "I've already written the lede. The game can only disappoint it."
+      ],
+      "options": [
+        {
+          "text": "Enjoy the game, Merv.",
+          "to": "end"
+        },
+        {
+          "text": "Just a minute.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Yes. What.",
+        "Speak. Briefly. I'm on deadline, spiritually.",
+        "The proprietor. Go on."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What's the column about this week?",
+          "to": "job"
+        },
+        {
+          "text": "What do you actually like?",
+          "to": "events"
+        },
+        {
+          "text": "You and Midge Kaminski don't get on?",
+          "to": "gossip"
+        },
+        {
+          "text": "How many stars now?",
+          "to": "rink"
+        },
+        {
+          "text": "I've got a quote for you, if you want it.",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "path_player"
+        },
+        {
+          "text": "Safe drive back, Merv.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "The Frostbank's video board. It is the size of a barn and has never once made anybody cry. That's the column. Eight hundred words. Mostly adjectives.",
+      "options": [
+        {
+          "text": "Sounds harsh.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Nothing. (A pause.) Good ice, annoyingly. A crowd that knows every player's mother. A ceremony nobody's rehearsed. Don't print that.",
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "do": [
+            {
+              "rel": [
+                "merv_tolliver",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Midge writes for the Clarion like a woman knitting you a sweater. I write like a man returning one. We agree about the ice and nothing else. And Stan Szymanski, at the rail, is the only man I ever saw cry at a hockey game. I put it in the paper. He's forgiven me. I haven't.",
+      "options": [
+        {
+          "text": "You felt bad about that?",
+          "to": "gossip_stan"
+        },
+        {
+          "text": "Rough business.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip_stan": {
+      "say": "Of course not. (A long pause.) Don't print that either.",
+      "options": [
+        {
+          "text": "I won't.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "One and a half stars. The half is for the woman who sells the hot chocolate. She called me 'hon'. I am not a hon.",
+      "options": [
+        {
+          "text": "And now? The ice is better.",
+          "if": [
+            {
+              "ice_gte": 70
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "We've done the rooms up.",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "I'll keep working.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Two and a half. The ice is excellent, which I resent. I've had to rewrite a paragraph about pie.",
+      "options": [
+        {
+          "text": "Sorry about the pie.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "Three. Three stars. You painted everything and kept the penalty box library. It's the first renovation I've seen that remembered what it was renovating.",
+      "options": [
+        {
+          "text": "That's almost kind, Merv.",
+          "to": "rink_kind"
+        }
+      ]
+    },
+    "rink_kind": {
+      "say": "It is not kind. It is accurate. Kindness is Midge's department. (He blows his nose. He has a cold, he says.)",
+      "options": [
+        {
+          "text": "Of course.",
+          "to": "hub"
+        }
+      ]
+    },
+    "path_player": {
+      "say": "A beer leaguer who owns the rink he plays in. I've already written your lede. 'He skates like he's checking the boards for damage.' You'll love it.",
+      "options": [
+        {
+          "text": "I'm not sure I will.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Drive safe. That's not a compliment, it's traffic advice.",
+        "Until next column."
+      ],
+      "options": []
+    }
+  }
+}

@@ -1,0 +1,412 @@
+{
+  "id": "hank_lavoie",
+  "barks": {
+    "idle": [
+      "Yup.",
+      "(Ping.)",
+      "Hundred pucks. Then bed."
+    ],
+    "good_ice": [
+      "Yup. That'll do.",
+      "Puck sits flat. Good."
+    ],
+    "bad_ice": [
+      "Pucks are hopping like the mill rats.",
+      "Nope."
+    ],
+    "wet_ice": [
+      "Wet. I'll wait. I'm good at waiting."
+    ],
+    "cold": [
+      "Warmer than the loading dock."
+    ],
+    "hungry": [
+      "Breakfast is at two in the afternoon. Don't ask."
+    ],
+    "long_line": [
+      "Yup. Nope."
+    ],
+    "bored": [
+      "Quiet's the point."
+    ],
+    "goal": [
+      "Ha."
+    ],
+    "greet_owner": [
+      "Yup.",
+      "Morning. Or night. Depends who's asking."
+    ],
+    "leaving_happy": [
+      "Sun's up. Bed's calling. Yup."
+    ],
+    "leaving_angry": [
+      "Might shoot at the mill wall instead."
+    ],
+    "event_specific": {
+      "stick_and_puck": [
+        "(Ping. Ping. Ping.)",
+        "Don't talk. Shoot."
+      ],
+      "broomball": [
+        "HA!",
+        "(He laughs once, loudly, at something nobody else saw.)"
+      ],
+      "senior_hockey": [
+        "Beat the Mill. I work at the Mill. Beat it anyway."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_hank_lavoie"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "hank_quiet_dawn"
+        },
+        {
+          "hour_between": [
+            5,
+            8
+          ]
+        }
+      ],
+      "node": "dawn_quiet"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            5,
+            8
+          ]
+        }
+      ],
+      "node": "dawn"
+    },
+    {
+      "if": [
+        {
+          "event_now": "broomball"
+        }
+      ],
+      "node": "broomball"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "(A big man in full gear at six a.m. nods at you.) Hank. Nights at the mill. Came off at five.",
+      "do": [
+        {
+          "set": "met_hank_lavoie"
+        }
+      ],
+      "options": [
+        {
+          "text": "Long shift?",
+          "do": [
+            {
+              "rel": [
+                "hank_lavoie",
+                2
+              ]
+            }
+          ],
+          "to": "first_shift"
+        },
+        {
+          "text": "(Nod back.)",
+          "do": [
+            {
+              "rel": [
+                "hank_lavoie",
+                4
+              ]
+            }
+          ],
+          "to": "first_nod"
+        },
+        {
+          "text": "Want to chat for a bit?",
+          "do": [
+            {
+              "rel": [
+                "hank_lavoie",
+                -1
+              ]
+            }
+          ],
+          "to": "first_chat"
+        }
+      ]
+    },
+    "first_shift": {
+      "say": "Twelve hours. Paper machine. You get used to the noise. Then you need the quiet. That's why I'm here.",
+      "options": [
+        {
+          "text": "Makes sense.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_nod": {
+      "say": "(He nods again. You have had a full conversation, by Kessler standards.) Yup.",
+      "options": [
+        {
+          "text": "Yup.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_chat": {
+      "say": "Not really. No offence. Talking wakes me up.",
+      "options": [
+        {
+          "text": "Fair. Another time.",
+          "to": "end"
+        },
+        {
+          "text": "Just one minute.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "Sorry, Hank. I'll fix it.",
+          "do": [
+            {
+              "rel": [
+                "hank_lavoie",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "dawn": {
+      "say": [
+        "(Ping.) Yup. Morning.",
+        "Hundred pucks. I'm at sixty."
+      ],
+      "options": [
+        {
+          "text": "I'll leave you to it.",
+          "to": "end"
+        },
+        {
+          "text": "Quick word?",
+          "to": "hub"
+        }
+      ]
+    },
+    "dawn_quiet": {
+      "say": "No music. No talking. Fresh ice. (He shoots. Ping.) Yup. Good.",
+      "options": [
+        {
+          "text": "(Leave him to it.)",
+          "do": [
+            {
+              "rel": [
+                "hank_lavoie",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Quick word?",
+          "to": "hub"
+        }
+      ]
+    },
+    "broomball": {
+      "say": "Wednesday. Broomball. Best show in the valley. (He laughs once, loudly.) You missed it.",
+      "options": [
+        {
+          "text": "Enjoy.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Yup?",
+        "(He leans on his stick.) Go ahead.",
+        "Mm."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What's the night shift like?",
+          "to": "job"
+        },
+        {
+          "text": "Why stick and puck at dawn?",
+          "to": "events"
+        },
+        {
+          "text": "Who do you see out here?",
+          "to": "gossip"
+        },
+        {
+          "text": "How's the ice for you?",
+          "to": "rink"
+        },
+        {
+          "text": "What would make the dawn hour better?",
+          "if": [
+            {
+              "not_flag": "hank_quiet_dawn"
+            }
+          ],
+          "to": "quiet"
+        },
+        {
+          "text": "See you, Hank.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Paper machine tender. It hisses all night. I like it, oddly. The mill whistle, too. Don't tell anybody.",
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Shoot pucks to get sleepy. Broomball Wednesdays, from the stands. Lumber Kings when I'm off. That's my whole calendar.",
+      "options": [
+        {
+          "text": "Sounds like a good one.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Walter Oduya wired half the mill. Good man. Can't skate. Learning. And there's a baker who comes some mornings.",
+      "options": [
+        {
+          "text": "A baker?",
+          "to": "gossip_donnie"
+        },
+        {
+          "text": "Small valley.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip_donnie": {
+      "say": "Doesn't talk. Better than me there. Did a thing with a puck once. I stopped shooting. Never seen it before. Never asked.",
+      "options": [
+        {
+          "text": "Huh.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Ice is {ice_word}. Pucks know.",
+      "options": [
+        {
+          "text": "Better lately?",
+          "if": [
+            {
+              "ice_gte": 60
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'm on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "Puck sits flat now. Doesn't hop. That's all I want from life before nine a.m.",
+      "options": [
+        {
+          "text": "Glad to hear it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "quiet": {
+      "say": "Quiet. No music, no lights flashing, nobody talking. Just the ice.",
+      "options": [
+        {
+          "text": "Done. Dawn hour stays quiet.",
+          "do": [
+            {
+              "set": "hank_quiet_dawn"
+            },
+            {
+              "rel": [
+                "hank_lavoie",
+                4
+              ]
+            },
+            {
+              "note": "Promised Hank Lavoie a quiet dawn hour at stick and puck: no music."
+            }
+          ],
+          "to": "quiet_yes"
+        },
+        {
+          "text": "Somebody always wants music.",
+          "do": [
+            {
+              "rel": [
+                "hank_lavoie",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "quiet_yes": {
+      "say": "(He nods twice. For Hank, that is a speech.) Yup.",
+      "options": [
+        {
+          "text": "Yup.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Yup.",
+        "Bed. Yup."
+      ],
+      "options": []
+    }
+  }
+}

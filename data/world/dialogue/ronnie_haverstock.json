@@ -1,0 +1,466 @@
+{
+  "id": "ronnie_haverstock",
+  "barks": {
+    "idle": [
+      "Nice night for it.",
+      "The other guy did the work. He always does."
+    ],
+    "good_ice": [
+      "Puck's sitting down tonight.",
+      "Earl's been at it. You can tell."
+    ],
+    "bad_ice": [
+      "Bit bumpy. Keep your head up, fellas.",
+      "Puck's bouncing like it's nervous."
+    ],
+    "goal": [
+      "Nice pass. Who made the pass?",
+      "What did the puck do there? Right."
+    ],
+    "cold": [
+      "Cold barn, warm hands. That's hockey."
+    ],
+    "greet_owner": [
+      "Hello there.",
+      "Evening.",
+      "Good to see you."
+    ],
+    "leaving_happy": [
+      "Good skate. Thanks for the ice."
+    ],
+    "leaving_angry": [
+      "Rough one tonight. We'll come back Thursday anyway."
+    ],
+    "event_specific": {
+      "stick_and_puck": [
+        "Nobody's watching. Best time to try something."
+      ],
+      "minor_hockey": [
+        "Look at that little one. Keeps his feet moving."
+      ],
+      "pro_practice": [
+        "Watch the Dukes' D. They never rush it."
+      ],
+      "special": [
+        "They want me to drop the puck. I'll drop the puck. No speech."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_ronnie_haverstock"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "weekday": 4
+        },
+        {
+          "hour_between": [
+            19.5,
+            22.5
+          ]
+        }
+      ],
+      "node": "oldtimers"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "ronnie_haverstock",
+            30
+          ]
+        }
+      ],
+      "node": "named"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "You'd be the new owner. Ronnie. Thank you for keeping the lights on.",
+      "do": [
+        {
+          "set": "met_ronnie_haverstock"
+        }
+      ],
+      "options": [
+        {
+          "text": "It's an honour, Mr. Haverstock.",
+          "do": [
+            {
+              "rel": [
+                "ronnie_haverstock",
+                -1
+              ]
+            }
+          ],
+          "to": "first_mr"
+        },
+        {
+          "text": "Ronnie, any advice?",
+          "do": [
+            {
+              "rel": [
+                "ronnie_haverstock",
+                3
+              ]
+            }
+          ],
+          "to": "first_advice"
+        },
+        {
+          "text": "Can I get a photo?",
+          "do": [
+            {
+              "rel": [
+                "ronnie_haverstock",
+                -2
+              ]
+            }
+          ],
+          "to": "first_photo"
+        }
+      ]
+    },
+    "first_mr": {
+      "say": "Ronnie, please. Mr. Haverstock was my dad, and he hated it too.",
+      "options": [
+        {
+          "text": "Ronnie, then.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_advice": {
+      "say": "Don't fix the north boards. That's all I've got. The rest you'll learn.",
+      "options": [
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_photo": {
+      "say": "Sure. Get Earl in it, though. He did the work.",
+      "options": [
+        {
+          "text": "Deal.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Ice was rough Thursday. The guys didn't say much. That's how you know."
+      ],
+      "options": [
+        {
+          "text": "I'll make it right.",
+          "do": [
+            {
+              "rel": [
+                "ronnie_haverstock",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "oldtimers": {
+      "say": "Thursday. Best night of the week. You lace up, you pass, nobody keeps score. Well, Doreen keeps score.",
+      "options": [
+        {
+          "text": "Room for one more?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "join"
+        },
+        {
+          "text": "Enjoy it, Ronnie.",
+          "to": "end"
+        }
+      ]
+    },
+    "join": {
+      "say": "Bring your stick. Put it in the dead spot and see what happens.",
+      "options": [
+        {
+          "text": "See you out there.",
+          "do": [
+            {
+              "rel": [
+                "ronnie_haverstock",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "named": {
+      "say": [
+        "{owner}. Good to see you.",
+        "Hey, {owner}. Ice is {ice_word} tonight."
+      ],
+      "options": [
+        {
+          "text": "Hi, Ronnie.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Hello there.",
+        "Evening. What can I do for you?",
+        "Hi. Pull up a bench."
+      ],
+      "options": [
+        {
+          "text": "Tell me about the dead spot.",
+          "to": "deadspot"
+        },
+        {
+          "text": "What do you like to watch here?",
+          "to": "events"
+        },
+        {
+          "text": "What was the GNHL like?",
+          "to": "career"
+        },
+        {
+          "text": "How's Tracy doing?",
+          "to": "tracy"
+        },
+        {
+          "text": "Kenny Szabo says you taught him everything.",
+          "to": "kenny"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Can you teach me the Millbrook bank?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "bank"
+        },
+        {
+          "text": "Would you run a clinic for the Sawdust?",
+          "if": [
+            {
+              "path": "coach"
+            },
+            {
+              "not_flag": "ronnie_clinic"
+            }
+          ],
+          "to": "clinic"
+        },
+        {
+          "text": "The expansion campaign could use a face.",
+          "if": [
+            {
+              "path": "gm"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "Good night, Ronnie.",
+          "to": "end"
+        }
+      ]
+    },
+    "deadspot": {
+      "say": "Behind the north net. Puck goes in soft and comes out slow. Everybody shoots hard at it. I just wait.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Kids, mostly. Minor hockey Saturdays. Stick and puck when it's quiet. The Dukes, when they come. I like watching young fellas figure things out.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "career": {
+      "say": "Seventeen seasons. Two Cups. A lot of buses. The other guys were better. I got lucky with a scout and a snowstorm.",
+      "options": [
+        {
+          "text": "That's a bit modest.",
+          "to": "career2"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "career2": {
+      "say": "Ask Earl about '79. He'll say the ice did it. He's right.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "tracy": {
+      "say": "She does everything. I say no and she books it anyway. Best thing that ever happened to me, after her mother.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "kenny": {
+      "say": "Kenny? I told him to keep his feet moving. He did the rest. Advice is free. He keeps trying to pay me in wings.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "It's better now, isn't it?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Anything you'd change?",
+          "to": "rink_change"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "It is. The puck sits down now. Except off the dead spot. You kept the dead spot.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_change": {
+      "say": "That photo of me from '79. I look eager. Maybe hang it somewhere darker.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bank": {
+      "say": "What did the puck do the last time you rimmed it? ... Right. So next time, go where it's going, not where it is.",
+      "do": [
+        {
+          "set": "ronnie_bank_lesson"
+        },
+        {
+          "rel": [
+            "ronnie_haverstock",
+            2
+          ]
+        },
+        {
+          "note": "Ronnie Haverstock showed you the Millbrook bank. 'What did the puck do?'"
+        }
+      ],
+      "options": [
+        {
+          "text": "Where it's going. Got it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "clinic": {
+      "say": "Thursday, before the old-timers. Small kids, small games. No speeches.",
+      "do": [
+        {
+          "set": "ronnie_clinic"
+        },
+        {
+          "rel": [
+            "ronnie_haverstock",
+            3
+          ]
+        },
+        {
+          "note": "Ronnie will run a Thursday clinic for the Sawdust."
+        }
+      ],
+      "options": [
+        {
+          "text": "No speeches. Promise.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "I'll stand where you need me. I won't give a speech. You can give the speech.",
+      "options": [
+        {
+          "text": "Thanks, Ronnie.",
+          "do": [
+            {
+              "rel": [
+                "ronnie_haverstock",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

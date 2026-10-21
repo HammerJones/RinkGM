@@ -1,0 +1,438 @@
+{
+  "id": "paolo_marchetti",
+  "barks": {
+    "idle": [
+      "And Lily takes the ice, folks, look at that confidence!",
+      "Three angles. Wide, close, and the emotional one.",
+      "Sequin repair after this. Always sequin repair."
+    ],
+    "good_ice": [
+      "Look at that shine! Gorgeous for video!"
+    ],
+    "bad_ice": [
+      "Ruts! On camera! In 4K! Tragedy!"
+    ],
+    "wet_ice": [
+      "Wet ice glares on the lens. I'm suffering."
+    ],
+    "goal": [
+      "A goal! Not my department, but beautiful!"
+    ],
+    "cold": [
+      "Cold hands, warm heart, dead battery. The cold kills batteries."
+    ],
+    "hungry": [
+      "A coffee and a cannoli. They don't have cannoli. A coffee."
+    ],
+    "long_line": [
+      "Can I film the line? It's very dramatic."
+    ],
+    "bored": [
+      "I'm editing in my head. It's very good."
+    ],
+    "greet_owner": [
+      "{owner}! Did you see Lily's spin? I have it from three angles!",
+      "Hello! The lights, {owner}. Can we talk about the lights?"
+    ],
+    "leaving_happy": [
+      "I'm going to cry when I edit this. I'm already crying."
+    ],
+    "leaving_angry": [
+      "Too dark. Blurry. Unwatchable. My heart."
+    ],
+    "event_specific": {
+      "figure_practice": [
+        "And here she comes, folks! The spin! THE SPIN!",
+        "Carol's in my spot. Our spot. The spot."
+      ],
+      "figure_show": [
+        "I'm crying already. It hasn't started.",
+        "Lights down, music up, cameras rolling! Mamma mia!"
+      ],
+      "public_skate": [
+        "Even public skate is cinema with the right angle."
+      ],
+      "special": [
+        "Big event! Big lens! Bigger feelings!"
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_paolo_marchetti"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_practice"
+        }
+      ],
+      "node": "fp_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "paolo_marchetti",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Paolo Marchetti! Marchetti's Shoe Repair, Main Street! Lily's father! You have seen her skate? No? I have it from three angles. I'll send you a link.",
+      "do": [
+        {
+          "set": "met_paolo_marchetti"
+        }
+      ],
+      "options": [
+        {
+          "text": "I'd love to see it.",
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                4
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Maybe just one angle.",
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "You're the one who stretches boots? Bev mentioned you.",
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                -1
+              ]
+            }
+          ],
+          "to": "boots"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll fix it, Paolo.",
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "We'll get the lights sorted.",
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "fp_now": {
+      "say": [
+        "And Lily takes the ice! Look at the speed! The fearlessness! The fall! Beautiful fall!",
+        "Shh, she's spinning. Wide angle. Close angle. Emotional angle."
+      ],
+      "options": [
+        {
+          "text": "Great shot, Paolo.",
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Maybe put one camera down?",
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! My producer! My friend!",
+        "I put you in the Sunday edit! You're in the background! You look great!"
+      ],
+      "options": [
+        {
+          "text": "Hey, Paolo.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What can I do for you? Need your shoes fixed? Your boots stretched?",
+        "Paolo, at your service!",
+        "Ah! {owner}! Did you see the spin?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the shoe repair business?",
+          "to": "job"
+        },
+        {
+          "text": "Can you stretch my skates?",
+          "to": "boots"
+        },
+        {
+          "text": "What's going on with you and Carol?",
+          "to": "carol"
+        },
+        {
+          "text": "Tell me about Lily's skating.",
+          "to": "lily"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Ciao, Paolo.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Shoes, boots, purses, sequins. Mostly sequins. On Sunday nights I edit Lily's practices with music. Opera, mostly. The falls go best with opera.",
+      "options": [
+        {
+          "text": "I'd watch that.",
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "boots": {
+      "say": "I stretch skate boots! Heat, a little press, a little love. Bev says it's a 'hostile act'. Bev is wrong. Let me do yours. Free!",
+      "options": [
+        {
+          "text": "Go on, then.",
+          "if": [
+            {
+              "not_flag": "paolo_stretched_boots"
+            }
+          ],
+          "do": [
+            {
+              "set": "paolo_stretched_boots"
+            },
+            {
+              "rel": [
+                "paolo_marchetti",
+                4
+              ]
+            },
+            {
+              "rel": [
+                "bev_kowalchuk",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'd better not. Bev would know.",
+          "if": [
+            {
+              "not_flag": "paolo_stretched_boots"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                -1
+              ]
+            },
+            {
+              "rel": [
+                "bev_kowalchuk",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "My boots feel great, by the way.",
+          "if": [
+            {
+              "flag": "paolo_stretched_boots"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "carol": {
+      "say": "Carol has a tripod. I have a tripod. There is one good spot. It is a war, {owner}. A very polite, silent war.",
+      "options": [
+        {
+          "text": "Didn't we split it? Tuesdays and Thursdays?",
+          "if": [
+            {
+              "flag": "filming_spot_split"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "First come, first served still working?",
+          "if": [
+            {
+              "flag": "filming_spot_first_come"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Maybe try sharing.",
+          "if": [
+            {
+              "not_flag": "filming_spot_decided"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "lily": {
+      "say": "She falls more than anyone in the club and she loves it more than anyone in the club! Hélène says she has a gift for momentum! I'm going to put that on a shirt.",
+      "options": [
+        {
+          "text": "Put it on a shirt.",
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The lights, {owner}. The lights. Dim lights are bad for video. Everything looks like 1987. Which is when the lights are from.",
+      "options": [
+        {
+          "text": "We redid the lighting.",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_lights"
+        },
+        {
+          "text": "I'll put lights on the list.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_lights": {
+      "say": "Bellissimo! Lily sparkles now! The sequins! I wept. On camera. It's in the edit.",
+      "options": [
+        {
+          "text": "Of course it is.",
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

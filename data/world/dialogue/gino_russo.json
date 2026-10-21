@@ -1,0 +1,376 @@
+{
+  "id": "gino_russo",
+  "barks": {
+    "idle": [
+      "Back in under two. Periods, I mean.",
+      "Pepperoni mask, hand-painted. My cousin did it.",
+      "Pizza's hot, goalie's hot. Well. The pizza's hot."
+    ],
+    "good_ice": [
+      "Ice is crispy. Like a good crust."
+    ],
+    "bad_ice": [
+      "This ice is like a soggy bottom. Unacceptable."
+    ],
+    "wet_ice": [
+      "Wet ice. Like pizza in the rain. Tragic."
+    ],
+    "goal": [
+      "That's on me. That's on me. Next one's free.",
+      "GOAL! For us? For us!"
+    ],
+    "cold": [
+      "Cold? I've got a pizza bag. Want to hold it?"
+    ],
+    "hungry": [
+      "You know what this rink needs? More pizza. I'm biased."
+    ],
+    "long_line": [
+      "I can get a pie here faster than this line moves."
+    ],
+    "bored": [
+      "Anybody want to order? I'm just asking."
+    ],
+    "greet_owner": [
+      "{owner}! Large pepperoni for the office? No? Next time.",
+      "Hey hey! Gino's here, pizza's here."
+    ],
+    "leaving_happy": [
+      "Great game. Delivered."
+    ],
+    "leaving_angry": [
+      "Seven goals against. And the pizza was cold. Worst night."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Puckheads! Expansion! We borrowed skates and we're having fun!",
+        "Don't call me pizza guy. Okay, call me pizza guy."
+      ],
+      "special": [
+        "Big crowd! I brought forty slices. Hot Stove's got them."
+      ],
+      "senior_hockey": [
+        "Kings game! I'm delivering to section C at the second intermission. Don't tell the league."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_gino_russo"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "bl_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "gino_russo",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Gino Russo! Junior. Puckhead Pizza, night manager. Puckheads, goalie. Pepperoni mask. You've seen the mask. Everyone's seen the mask.",
+      "do": [
+        {
+          "set": "met_gino_russo"
+        }
+      ],
+      "options": [
+        {
+          "text": "Love the mask.",
+          "do": [
+            {
+              "rel": [
+                "gino_russo",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "The pizza guy!",
+          "do": [
+            {
+              "rel": [
+                "gino_russo",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Good to meet you, Gino.",
+          "do": [
+            {
+              "rel": [
+                "gino_russo",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll fix it. Fast. Under two periods.",
+          "do": [
+            {
+              "rel": [
+                "gino_russo",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I hear you, Gino.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bl_now": {
+      "say": [
+        "Puckheads tonight! Half of us have our own skates now. Progress!",
+        "I've got a delivery at the second intermission. Kidding. Mostly."
+      ],
+      "options": [
+        {
+          "text": "Do NOT deliver mid-game, Gino.",
+          "do": [
+            {
+              "rel": [
+                "gino_russo",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Good luck in net!",
+          "do": [
+            {
+              "rel": [
+                "gino_russo",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! My best customer!",
+        "Hey, there's my favourite rink! I mean owner. Both."
+      ],
+      "options": [
+        {
+          "text": "Hey, Gino.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What can I get you? Kidding. Unless.",
+        "Gino, at your service. Back in under two.",
+        "Talk fast, the oven's on."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the pizza business?",
+          "to": "job"
+        },
+        {
+          "text": "Can you deliver pizza for the staff?",
+          "to": "order"
+        },
+        {
+          "text": "What's going on with you and the Pallbearers?",
+          "to": "morley"
+        },
+        {
+          "text": "What's the league's letter about?",
+          "to": "letter"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Later, Gino.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Night manager. Dad's recipe, my oven. Dough rises at four, pies go out at six. I can get anything in town hot in under two periods.",
+      "options": [
+        {
+          "text": "That's a great slogan.",
+          "do": [
+            {
+              "rel": [
+                "gino_russo",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "order": {
+      "say": "For the staff? Earl, Dylan, the whole crew? Three larges, twenty bucks, and one gets extra gravy on the side for Earl. Trust me.",
+      "options": [
+        {
+          "text": "Deal. Twenty bucks.",
+          "do": [
+            {
+              "money": -20
+            },
+            {
+              "rel": [
+                "gino_russo",
+                3
+              ]
+            },
+            {
+              "rel": [
+                "dylan_pruitt",
+                1
+              ]
+            },
+            {
+              "rel": [
+                "earl_bratt",
+                1
+              ]
+            },
+            {
+              "note": "Gino delivered three pizzas for the rink staff."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Maybe next week.",
+          "to": "hub"
+        }
+      ]
+    },
+    "morley": {
+      "say": "Morley calls me 'pizza guy'. Every game. Very softly. Like he's sorry about it. I'm a GOALIE, Morley. Okay, I delivered to their bench once. Once!",
+      "options": [
+        {
+          "text": "He tipped you, though.",
+          "to": "hub"
+        },
+        {
+          "text": "You're a goalie, Gino.",
+          "do": [
+            {
+              "rel": [
+                "gino_russo",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "letter": {
+      "say": "Dale sent a letter. On binder paper. 'Players may not deliver food to the rink during play.' That's very specific. That's about me.",
+      "options": [
+        {
+          "text": "It's definitely about you.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "I love this place. The Hot Stove sells my slices when I'm here. Lorraine's the best. She keeps them warm. Respect.",
+      "options": [
+        {
+          "text": "The ice is better now, right?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "Lorraine's a legend.",
+          "do": [
+            {
+              "rel": [
+                "lorraine_duffy",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Way better. I make saves now. Like, on purpose. The puck goes where I think it's going.",
+      "options": [
+        {
+          "text": "A goalie at last.",
+          "do": [
+            {
+              "rel": [
+                "gino_russo",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

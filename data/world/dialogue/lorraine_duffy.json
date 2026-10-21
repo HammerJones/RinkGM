@@ -1,0 +1,353 @@
+{
+  "id": "lorraine_duffy",
+  "barks": {
+    "idle": [
+      "Fries are up, hon.",
+      "Clock's seven minutes fast. Always has been. Don't touch it."
+    ],
+    "good_ice": [
+      "Ice looks lovely, hon. People stay longer. Buy more fries."
+    ],
+    "bad_ice": [
+      "Everybody's coming off cold and cross, hon. I'm pouring extra gravy."
+    ],
+    "goal": [
+      "Woo! Fries for everybody! No. Not for everybody."
+    ],
+    "cold": [
+      "Hot chocolate's on, hon. Well. HOT CHOC LATE."
+    ],
+    "hungry": [
+      "You look hungry, hon. You always look hungry."
+    ],
+    "long_line": [
+      "Line's moving, hon! Keep it moving! Know your order!",
+      "A long line that moves is a beautiful thing."
+    ],
+    "greet_owner": [
+      "Hi, hon!",
+      "There's my owner. What'll it be?"
+    ],
+    "leaving_happy": [
+      "Good night, hon. Chili's on Thursday."
+    ],
+    "leaving_angry": [
+      "Fryer quit, coffee quit, I'm about to. Night, hon."
+    ],
+    "event_specific": {
+      "broomball": [
+        "Grown people falling down in sneakers. Better than television."
+      ],
+      "tournament": [
+        "My Olympics, hon. Four hundred fries by noon."
+      ],
+      "public_skate": [
+        "Hot chocolate for forty-one. There'll be sixty. HOT CHOC LATE."
+      ],
+      "senior_hockey": [
+        "No fries during the anthem. I mean it."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_lorraine_duffy"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "tournament"
+        }
+      ],
+      "node": "tourney"
+    },
+    {
+      "if": [
+        {
+          "event_now": "public_skate"
+        }
+      ],
+      "node": "public"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "lorraine_duffy",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hi, hon. You're the new owner. Lorraine, Hot Stove, twenty-two years. What'll it be?",
+      "do": [
+        {
+          "set": "met_lorraine_duffy"
+        }
+      ],
+      "options": [
+        {
+          "text": "A coffee, please.",
+          "do": [
+            {
+              "rel": [
+                "lorraine_duffy",
+                2
+              ]
+            }
+          ],
+          "to": "first_coffee"
+        },
+        {
+          "text": "Just a water.",
+          "do": [
+            {
+              "rel": [
+                "lorraine_duffy",
+                -3
+              ]
+            }
+          ],
+          "to": "first_water"
+        },
+        {
+          "text": "Whatever you recommend.",
+          "do": [
+            {
+              "rel": [
+                "lorraine_duffy",
+                3
+              ]
+            }
+          ],
+          "to": "first_rec"
+        }
+      ]
+    },
+    "first_coffee": {
+      "say": "Watch this. (She hits the machine where the dent is.) There. First one's on me, hon.",
+      "options": [
+        {
+          "text": "Thanks, Lorraine.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_water": {
+      "say": "Just a water. Hon. It's a snack bar. Have a fry, at least. On me.",
+      "options": [
+        {
+          "text": "Okay, one fry.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_rec": {
+      "say": "Fries and Earl's gravy. I make it. He takes the credit. Don't tell him I told you.",
+      "do": [
+        {
+          "set": "lorraine_gravy_secret"
+        }
+      ],
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "Line was out the door and the fryer quit, hon. People were nice about it. For a while."
+      ],
+      "options": [
+        {
+          "text": "I'll get the fryer looked at.",
+          "do": [
+            {
+              "rel": [
+                "lorraine_duffy",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "tourney": {
+      "say": "Tournament weekend, hon. My Olympics. Four hundred fries by noon. Keep the line moving or I'll put you on the counter.",
+      "options": [
+        {
+          "text": "Go get 'em, Lorraine.",
+          "to": "hub"
+        }
+      ]
+    },
+    "public": {
+      "say": "Public skate. I've got hot chocolate for exactly forty-one kids. There'll be sixty. HOT CHOC LATE, like the sign says.",
+      "options": [
+        {
+          "text": "Ha.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Hon! Your usual's already poured.",
+        "There's my favourite. Fries are on the house. Don't tell Terry."
+      ],
+      "options": [
+        {
+          "text": "Hi, Lorraine.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "What'll it be, hon?",
+        "Hi, hon. Talk while I work, I never stop.",
+        "Hon. You look hungry. You always look hungry."
+      ],
+      "options": [
+        {
+          "text": "How's the Hot Stove?",
+          "to": "job"
+        },
+        {
+          "text": "What's your favourite thing to watch?",
+          "to": "events"
+        },
+        {
+          "text": "How's Josie doing?",
+          "to": "josie"
+        },
+        {
+          "text": "Earl's gravy...",
+          "if": [
+            {
+              "flag": "lorraine_gravy_secret"
+            }
+          ],
+          "to": "gravy"
+        },
+        {
+          "text": "What's the word on the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "A coffee to go, please.",
+          "to": "coffee"
+        },
+        {
+          "text": "Bye, Lorraine.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Four fryers, one coffee machine, twenty-two years. The machine works if you hit it where the dent is. If the dent moves, we're in trouble.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Broomball. Grown people falling down in sneakers. And the Kings, for the crowd, and the crowd for the fries.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "josie": {
+      "say": "Smartest kid on that counter in twenty years. Saving up for something. Won't say what. I know what.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gravy": {
+      "say": "Flour, drippings, a secret, and Earl standing nearby looking proud. That last part's important.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Are people happier in the line?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "New counter, hon, and nobody's cold in the line. I sold more hot chocolate this week than all last winter.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "coffee": {
+      "say": "(Thunk.) There you go, hon. On the house. You own the house.",
+      "do": [
+        {
+          "item": [
+            "hot_stove_coffee",
+            1
+          ]
+        }
+      ],
+      "options": [
+        {
+          "text": "Thanks, hon.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}
