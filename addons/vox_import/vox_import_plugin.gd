@@ -44,7 +44,7 @@ func _get_priority() -> float:
 ## Bump when the bake changes (the mesher, the options, the asset's fields):
 ## every .vox is then imported again instead of served from the cache.
 func _get_format_version() -> int:
-	return 2
+	return 3
 
 
 func _get_import_order() -> int:
@@ -92,18 +92,26 @@ func _import(
 	var asset := VoxReader.read(source_file)
 	if asset == null:
 		return ERR_FILE_CORRUPT
+	var manifest := _manifest(source_file)
 	asset.voxel_m = float(options.get("voxel_m", 0.0))
 	if asset.voxel_m <= 0.0:
-		asset.voxel_m = _manifest_voxel_m(source_file)
+		asset.voxel_m = float(manifest.get("voxel_m", 0.065))
 	if bool(options.get("recentre", true)):
 		asset.recentre()
 	asset.source = source_file
 	if bool(options.get("bake_mesh", true)):
 		var m := asset.to_model()
 		var b := asset.bounds()
-		m.set_pivot(
-			b.position.x + b.size.x / 2.0 + 0.5, b.position.y, b.position.z + b.size.z / 2.0 + 0.5
-		)
+		var piv: Array = manifest.get("pivot", [])
+		if piv.size() == 3:
+			# the manifest's pivot, in voxels (a wall clock pivots on its mount)
+			m.set_pivot(float(piv[0]), float(piv[1]), float(piv[2]))
+		else:
+			m.set_pivot(
+				b.position.x + b.size.x / 2.0 + 0.5,
+				b.position.y,
+				b.position.z + b.size.z / 2.0 + 0.5
+			)
 		asset.mesh = VoxMesher.build(m, {"greedy": true})
 		# low detail: flat colours, dither collapsed, no AO; a fraction of the faces
 		asset.mesh_lod = VoxMesher.build(m, {"greedy": true, "ao": false, "quantize": 4})
@@ -111,11 +119,11 @@ func _import(
 	return ResourceSaver.save(asset, "%s.%s" % [save_path, _get_save_extension()])
 
 
-## The prop's manifest voxel size, when data/props/<name>.json has one.
-static func _manifest_voxel_m(source_file: String) -> float:
+## The prop's manifest (data/props/<name>.json), or {} when it has none.
+static func _manifest(source_file: String) -> Dictionary:
 	var path := "res://data/props/%s.json" % source_file.get_file().get_basename()
 	if FileAccess.file_exists(path):
 		var rec: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-		if rec is Dictionary and rec.has("voxel_m"):
-			return float(rec.voxel_m)
-	return 0.065
+		if rec is Dictionary:
+			return rec
+	return {}

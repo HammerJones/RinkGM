@@ -37,8 +37,8 @@ const MIN_BOX := Vector3(0.02, 0.02, 0.02)
 ## Rows are not drawn beyond this distance (0 = always).
 @export var draw_range := 60.0
 ## Physics layer bit (1-based) rows and bodies sit on, and what they hit.
-@export var layer := 3
-@export var mask := 0b111
+@export var layer := Layers.PROPS
+@export var mask := Layers.mask([Layers.VENUE, Layers.PROPS, Layers.WALKER])
 @export var cast_shadows := true
 ## Off: rows collide and pick but are not drawn (a server, a test, a field
 ## whose rows are drawn by something else).
@@ -191,6 +191,28 @@ func move_row(r: PropRow, xf: Transform3D) -> void:
 	_mark(_cells[r.cell])
 
 
+## The look-at glow (0..1) on a row, instanced or live.
+func set_highlight(r: PropRow, h: float) -> void:
+	r.highlight = clampf(h, 0.0, 1.0)
+	_restyle(r)
+
+
+## The colour multiplier (the renovation ages) on a row.
+func set_tint(r: PropRow, c: Color) -> void:
+	r.tint = c
+	_restyle(r)
+
+
+func _restyle(r: PropRow) -> void:
+	if r.node:
+		for c in r.node.get_children():
+			if c is MeshInstance3D and c.material_override is ShaderMaterial:
+				c.material_override.set_shader_parameter("inst_tint", r.tint)
+				c.material_override.set_shader_parameter("inst_highlight", r.highlight)
+	elif r.batch and r.slot >= 0:
+		r.batch.set_style(r.slot, r.tint, r.highlight)
+
+
 # --- tiers ---------------------------------------------------------------
 
 
@@ -222,6 +244,7 @@ func wake(r: PropRow) -> RigidBody3D:
 	if r.mesh:
 		var mi := MeshInstance3D.new()
 		mi.mesh = r.mesh
+		mi.material_override = PropMaterial.for_body(r.tint, r.highlight)
 		mi.cast_shadow = (
 			GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 			if cast_shadows
@@ -529,6 +552,9 @@ class _Batch:
 			RenderingServer.multimesh_set_mesh(multimesh, m.get_rid())
 		instance = RenderingServer.instance_create2(multimesh, scenario)
 		RenderingServer.instance_set_transform(instance, xf)
+		RenderingServer.instance_geometry_set_material_override(
+			instance, PropMaterial.shared().get_rid()
+		)
 		RenderingServer.instance_geometry_set_cast_shadows_setting(
 			instance,
 			(
@@ -564,6 +590,9 @@ class _Batch:
 		count += 1
 		RenderingServer.multimesh_set_visible_instances(multimesh, count)
 		RenderingServer.multimesh_instance_set_transform(multimesh, slot, r.xf)
+		RenderingServer.multimesh_instance_set_custom_data(
+			multimesh, slot, PropMaterial.custom(r.tint, r.highlight)
+		)
 		return slot
 
 	## Swap-removes `slot`; returns the row that moved into it (or null).
@@ -574,6 +603,9 @@ class _Batch:
 			moved = rows[last]
 			rows[slot] = moved
 			RenderingServer.multimesh_instance_set_transform(multimesh, slot, moved.xf)
+			RenderingServer.multimesh_instance_set_custom_data(
+				multimesh, slot, PropMaterial.custom(moved.tint, moved.highlight)
+			)
 		rows.resize(last)
 		count = last
 		RenderingServer.multimesh_instance_set_transform(multimesh, last, HIDDEN)
@@ -583,14 +615,26 @@ class _Batch:
 	func set_transform(slot: int, xf: Transform3D) -> void:
 		RenderingServer.multimesh_instance_set_transform(multimesh, slot, xf)
 
+	func set_style(slot: int, tint: Color, highlight: float) -> void:
+		RenderingServer.multimesh_instance_set_custom_data(
+			multimesh, slot, PropMaterial.custom(tint, highlight)
+		)
+
 	## Allocating clears the buffer, so every transform is written again.
 	func _reserve(n: int) -> void:
 		capacity = n
+		# colour on as well as custom data: the Compatibility renderer feeds a
+		# zero instance colour to a MultiMesh that has custom data but no colour
 		RenderingServer.multimesh_allocate_data(
-			multimesh, capacity, RenderingServer.MULTIMESH_TRANSFORM_3D
+			multimesh, capacity, RenderingServer.MULTIMESH_TRANSFORM_3D, true, true
 		)
+		for i in capacity:
+			RenderingServer.multimesh_instance_set_color(multimesh, i, Color.WHITE)
 		for i in count:
 			RenderingServer.multimesh_instance_set_transform(multimesh, i, rows[i].xf)
+			RenderingServer.multimesh_instance_set_custom_data(
+				multimesh, i, PropMaterial.custom(rows[i].tint, rows[i].highlight)
+			)
 		for i in range(count, capacity):
 			RenderingServer.multimesh_instance_set_transform(multimesh, i, HIDDEN)
 		RenderingServer.multimesh_set_visible_instances(multimesh, count)

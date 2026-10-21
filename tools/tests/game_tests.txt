@@ -11,3 +11,4 @@ notes
 anim res://scenes/anim/anim_studio.tscn
 office res://scenes/ui/rink_office.tscn
 studio res://scenes/dev/prop_studio.tscn
+objects res://scenes/dev/object_demo.tscn

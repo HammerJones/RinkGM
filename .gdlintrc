@@ -11,6 +11,7 @@ class-definitions-order:
   - signals
   - enums
   - consts
+  - staticvars
   - exports
   - pubvars
   - prvvars

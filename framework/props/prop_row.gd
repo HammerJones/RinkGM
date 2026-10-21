@@ -23,6 +23,14 @@ var state := {}
 ## Anything the owner wants to hang on the row (an object record, a verb list).
 var user: Variant = null
 
+## Multiplies the prop's colours (the renovation ages); white is as drawn.
+var tint := Color.WHITE
+## 0..1, the look-at glow (Interactor sets it through the field).
+var highlight := 0.0
+## True once the game placed, moved, took or changed this row, so a save
+## keeps it (rows a room laid out and nobody touched are not saved).
+var dirty := false
+
 var tier := Tier.INSTANCED
 # field handles
 var batch: RefCounted = null  # PropField._Batch

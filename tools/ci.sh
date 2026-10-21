@@ -59,7 +59,9 @@ done
 # gdUnit4 suites under tests/unit (the editor runs the same ones from its panel)
 if [ -d tests/unit ]; then
 	echo "== gdUnit4 (tests/unit)"
-	if timeout 600 "$GODOT" --headless --path . -s -d res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a tests/unit --ignoreHeadlessMode >"$LOG/unit.txt" 2>&1; then
+	# --remote-debug to an unbound port keeps a parse error from dropping into
+	# the interactive debugger prompt (which would hang the run)
+	if timeout 600 "$GODOT" --headless --path . -s -d --remote-debug tcp://127.0.0.1:0 res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a tests/unit --ignoreHeadlessMode >"$LOG/unit.txt" 2>&1; then
 		grep -E "Overall Summary|Executed test cases" "$LOG/unit.txt" | sed 's/\x1b\[[0-9;]*m//g'
 	else
 		sed 's/\x1b\[[0-9;]*m//g' "$LOG/unit.txt" | grep -vE "^\[ *[0-9]+%" | tail -40; fail=1

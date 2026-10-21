@@ -220,7 +220,54 @@ Two things the generator settled that apply to every `.vox`:
   other lever: triangles scale with the inverse square of the voxel size,
   and a handheld reads the same at 1.4 mm as at 1 mm.
 
-## 6. The prop studio
+## 6. Objects and interaction
+
+`PropField` rows collide and draw; the object layer makes them things.
+
+**`ObjectCatalog`** (`framework/objects/object_catalog.gd`): every prop
+manifest in `data/props/` (and the coded kit behind them): name, verbs,
+tags, mass, sound, inspect text, the inventory item shape, the baked AO
+mesh and low-detail mesh from the imported `.vox`, the collision boxes.
+Everything that spawns or names a prop reads it here.
+
+**`WorldObjects`** (`framework/objects/world_objects.gd`): a registry over
+one or more fields. `spawn("coffee_mug", xf)` makes a row with a stable id
+(`coffee_mug.1`); `name_of`, `verbs_of` (a thing that is open offers
+close), `get_state` / `set_state`; `act(verb, row, actor)` runs a verb and
+emits `acted`. Built in: inspect, push (wake and shove), take (the row
+leaves, an inventory item comes back with its state), drop (the item
+comes back as a live row with a velocity), open, close, use (`used` is
+emitted for the game). `add_verb` registers more. `to_save()` keeps only
+rows the game placed, moved, took or changed, plus removed ids, so a room
+laid out from code is rebuilt and then patched; `from_save()` applies it.
+
+**`Interactor`** (`framework/objects/interactor.gd`): one ray from the
+eye, blocked by walls; `hovered` is the row under the dot and it glows;
+`prompt()` is the line for the HUD; `act("take")` picks the thing up.
+Carrying is real-time physics, never a freeze: the body keeps simulating
+in the hand, a velocity spring pulls it to the hold point every physics
+step (it bumps into shelves and walls on the way), it turns with the
+view, and a drop keeps its motion as a throw. `InteractPrompt` is the
+centre dot and the prompt line.
+
+**Tint and highlight** ride the field's MultiMeshes as per-instance custom
+data and a live body's instance uniforms, read by one shader
+(`framework/render/voxel_prop.gdshader`, `PropMaterial`): vertex-colour
+albedo times a tint (the renovation ages, no mesh per age), plus the glow.
+
+**`Layers`** (`framework/core/layers.gd`) names the physics layers the game
+already uses (world 1, venue 2, props 3, walker 4, read 5) so new code
+reads them from one place.
+
+The objects demo (`scenes/dev/object_demo.tscn`) is a room with every
+catalog prop on tables and the floor and a first-person body: walk up to
+anything, it names itself, E takes it into your hands, F pushes or throws,
+right click inspects, Q opens or uses, F5 saves and reloads the rows.
+`-- --test=objects` is its headless check (hover, prompt, carry, drop,
+take, push, open, save, load); `tests/unit/test_world_objects.gd` covers
+the catalog and the registry.
+
+## 7. The prop studio
 
 `scenes/dev/prop_studio.tscn` (script `framework/studio/prop_studio.gd`).
 Run it from the editor, or `godot -- res://scenes/dev/prop_studio.tscn`.
@@ -236,27 +283,28 @@ This is the authoring loop for both of us: Sean edits in MagicaVoxel and
 looks here; Claude writes a `.vox`, renders the contact sheet
 (`tools/prop_sheet.gd`), reads the image and adjusts.
 
-## 7. What the port looks like
+## 8. What the port looks like
 
 Nothing is ported yet. The order, each step a PR that keeps CI green:
 
-1. **Props to assets.** The world-objects branch already converts the kit
-   to `.vox` plus manifests. Rebase it on this layer: `PropLibrary` reads
-   `VoxAsset` instead of `VoxLoader`, meshes through `VoxMesher`. The
-   coded fallback stays until the last prop is converted.
+1. **Props to assets.** The world-objects branch converts the kit to
+   `.vox` plus manifests; those files drop into `data/props/` and
+   `art/props/` and `ObjectCatalog` reads them. The coded fallback stays
+   until the last prop is converted.
 2. **Rooms place rows.** `VenueKit.prop()` adds a `PropRow` to the room's
    `PropField` instead of baking into the merged mesh. The merged mesh
    stays for architecture (walls, floors, stands).
 3. **Loose things.** `StickField`, `StickProp`, `LooseProp` and `PropGrab`
-   become `PropField.wake()` and `sleep()`; the grab keeps its joint and
-   its hands.
+   become `WorldObjects` rows, `Interactor.carry()` and `drop()`; the
+   venue walk keeps its own HUD and inventory, fed by `prompt()` and
+   `act("take")` into `ItemCatalog`.
 4. **The building streams.** Rooms become chunk scenes registered with a
    `ChunkStreamer`; occluders are baked per chunk.
 5. **Lighting.** `LightmapGI` for the shell, SDFGI for props, SSAO on.
 6. **The match scene** moves last and mostly unchanged: the skaters, the
    puck and the shot patterns do not touch any of this.
 
-## 8. Rules for building on it
+## 9. Rules for building on it
 
 - A new prop is a `.vox` and a record, never code in the game. A coded
   builder is a generator that writes a `.vox` (`VoxWriter`, or
