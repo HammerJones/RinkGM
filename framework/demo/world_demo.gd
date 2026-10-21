@@ -64,6 +64,7 @@ func _ready() -> void:
 	hud = Label.new()
 	hud.position = Vector2(16, 12)
 	hud.modulate = Color(0.9, 0.95, 1.0)
+	hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	prompt.add_child(hud)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	for a in OS.get_cmdline_user_args():

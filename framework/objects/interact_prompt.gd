@@ -20,12 +20,16 @@ func _ready() -> void:
 	_dot.size = Vector2(4, 4)
 	_dot.set_anchors_preset(Control.PRESET_CENTER)
 	_dot.position = Vector2(-2, -2)
+	# the cursor sits on the dot whenever the mouse is captured: nothing in
+	# this overlay may swallow mouse events or the walker never sees them
+	_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_dot)
 	_line = Label.new()
 	_line.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_line.position = Vector2(-300, -80)
 	_line.size = Vector2(600, 24)
 	_line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_line)
 	_inspect = Label.new()
 	_inspect.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
@@ -34,6 +38,7 @@ func _ready() -> void:
 	_inspect.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_inspect.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_inspect.modulate = Color(1, 0.95, 0.8)
+	_inspect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_inspect)
 
 
