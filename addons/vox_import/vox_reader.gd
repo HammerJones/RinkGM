@@ -38,6 +38,8 @@ static func read_buffer(data: PackedByteArray, label := "") -> VoxAsset:
 	r.u32()  # version (150 or 200)
 	var models: Array = []  # [{size: Vector3i, voxels: PackedByteArray}]
 	var palette := PackedColorArray()
+	var emissive := PackedFloat32Array()
+	emissive.resize(256)
 	var nodes := {}  # id -> {type, children, model_ids, frames}
 	var pending_size := Vector3i.ZERO
 	while r.remaining() >= 12:
@@ -88,8 +90,17 @@ static func read_buffer(data: PackedByteArray, label := "") -> VoxAsset:
 					ids.append(r.u32())
 					r.dict()  # model attributes (_f frame index)
 				nodes[nid] = {"type": "shp", "models": ids}
+			"MATL":
+				# a material per palette slot; only emission is used (the
+				# glow of a screen or a lamp): _emit 0..1, _flux a power step
+				var mid := r.u32()
+				var props := r.dict()
+				if str(props.get("_type", "")) == "_emit" and mid >= 1 and mid < 256:
+					var e := float(props.get("_emit", "0"))
+					var flux := float(props.get("_flux", "0"))
+					emissive[mid] = clampf(e * (1.0 + flux * 0.5), 0.0, 1.0)
 			_:
-				pass  # MATL, LAYR, rOBJ, rCAM, NOTE, IMAP, PACK: not needed
+				pass  # LAYR, rOBJ, rCAM, NOTE, IMAP, PACK: not needed
 		r.pos = end
 	if models.is_empty():
 		push_error("VoxReader: %s has no models" % label)
@@ -98,6 +109,7 @@ static func read_buffer(data: PackedByteArray, label := "") -> VoxAsset:
 		palette = default_palette()
 	var asset := VoxAsset.new()
 	asset.palette = palette
+	asset.emissive = emissive
 	asset.source = label
 	var placed: Array = []  # [model index, Basis (file space), Vector3i translation]
 	if nodes.has(0):

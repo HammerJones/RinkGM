@@ -14,6 +14,7 @@ var failures := 0
 var field: PropField
 var streamer: ChunkStreamer
 var meshes: Array[ArrayMesh] = []
+var lods: Array[ArrayMesh] = []
 var boxes: Array = []
 var frame := 0
 var phase := 0
@@ -57,11 +58,18 @@ func _initialize() -> void:
 			Vector3(rng.randf() * AREA - AREA / 2, 0.0, rng.randf() * AREA - AREA / 2)
 		)
 		field.add(
-			StringName("row.%d" % i), StringName("prop%d" % k), meshes[k], boxes[k], xf, 0.5 + k
+			StringName("row.%d" % i),
+			StringName("prop%d" % k),
+			meshes[k],
+			boxes[k],
+			xf,
+			0.5 + k,
+			lods[k]
 		)
 	var add_ms := (Time.get_ticks_usec() - t0) / 1000.0
 	print("added %d rows in %.0f ms (%s)" % [ROWS, add_ms, field.stats()])
 	_check(field.count() == ROWS, "all rows added")
+	_check(field.rows[0].mesh_lod != null, "rows carry a low-detail mesh")
 	_check(add_ms < 6000.0, "adding 10k rows takes under 6 s (%.0f ms)" % add_ms)
 	streamer = ChunkStreamer.new()
 	streamer.load_radius = 10.0
@@ -159,6 +167,7 @@ func _meshes() -> void:
 		m.box(0, 0, 0, s.x, s.y, s.z, cols[i])
 		m.set_pivot(s.x / 2.0, 0, s.z / 2.0)
 		meshes.append(VoxMesher.build(m, {"greedy": true}))
+		lods.append(VoxMesher.build(m, {"greedy": true, "ao": false, "quantize": 4}))
 		boxes.append(m.collision_boxes())
 
 

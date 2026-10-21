@@ -3,7 +3,8 @@ extends Node3D
 ## Thousands of physical props with no node each. Every placed thing is a
 ## PropRow; the field draws rows through RenderingServer MultiMeshes (one per
 ## mesh per CELL-metre cell, so frustum culling and visibility range work
-## per cell) and collides them through PhysicsServer3D: one static body per
+## per cell; a row with a low-detail mesh has a second batch that takes over
+## beyond lod_distance) and collides them through PhysicsServer3D: one static body per
 ## cell carrying every row's box shapes (two hundred bodies instead of ten
 ## thousand: Jolt's step cost for resting rows is then too small to
 ## measure). A physics ray reports the cell body and the shape
@@ -36,6 +37,9 @@ const MIN_BOX := Vector3(0.02, 0.02, 0.02)
 @export var sleep_radius := 24.0
 ## Rows are not drawn beyond this distance (0 = always).
 @export var draw_range := 60.0
+## Beyond this distance a row with a low-detail mesh draws that instead
+## (per cell, with a short fade; 0 = always full detail).
+@export var lod_distance := 7.0
 ## Physics layer bit (1-based) rows and bodies sit on, and what they hit.
 @export var layer := Layers.PROPS
 @export var mask := Layers.mask([Layers.VENUE, Layers.PROPS, Layers.WALKER])
@@ -128,7 +132,13 @@ func _process(dt: float) -> void:
 ## Adds a row. `boxes` are shape-following boxes in the prop's space (as
 ## VoxelModel.collision_boxes gives), `xf` in this field's space.
 func add(
-	id: StringName, prop: StringName, mesh: Mesh, boxes: Array[AABB], xf: Transform3D, mass := 1.0
+	id: StringName,
+	prop: StringName,
+	mesh: Mesh,
+	boxes: Array[AABB],
+	xf: Transform3D,
+	mass := 1.0,
+	mesh_lod: Mesh = null
 ) -> PropRow:
 	if _by_id.has(id):
 		push_error("PropField: duplicate row id %s" % id)
@@ -137,6 +147,7 @@ func add(
 	r.id = id
 	r.prop = prop
 	r.mesh = mesh
+	r.mesh_lod = mesh_lod if mesh_lod != mesh else null
 	r.boxes = boxes
 	r.xf = xf
 	r.mass = mass
@@ -188,6 +199,8 @@ func move_row(r: PropRow, xf: Transform3D) -> void:
 		return
 	r.xf = xf
 	r.batch.set_transform(r.slot, xf)
+	if r.batch_lod:
+		r.batch_lod.set_transform(r.slot_lod, xf)
 	_mark(_cells[r.cell])
 
 
@@ -211,6 +224,8 @@ func _restyle(r: PropRow) -> void:
 				c.material_override.set_shader_parameter("inst_highlight", r.highlight)
 	elif r.batch and r.slot >= 0:
 		r.batch.set_style(r.slot, r.tint, r.highlight)
+		if r.batch_lod:
+			r.batch_lod.set_style(r.slot_lod, r.tint, r.highlight)
 
 
 # --- tiers ---------------------------------------------------------------
@@ -366,12 +381,24 @@ func _instance(r: PropRow) -> void:
 		"%d:%d,%d,%d" % [r.mesh.get_rid().get_id() if r.mesh else 0, r.cell.x, r.cell.y, r.cell.z]
 	)
 	if draw:
+		var far := draw_range
+		var near := lod_distance if (r.mesh_lod and lod_distance > 0.0) else 0.0
 		var b: _Batch = _batches.get(key)
 		if b == null:
-			b = _Batch.new(r.mesh, _scenario, global_transform, draw_range, cast_shadows)
+			b = _Batch.new(
+				r.mesh, _scenario, global_transform, 0.0, near if near > 0.0 else far, cast_shadows
+			)
 			_batches[key] = b
 		r.batch = b
 		r.slot = b.add(r)
+		if near > 0.0:
+			var lkey := key + ":lod"
+			var bl: _Batch = _batches.get(lkey)
+			if bl == null:
+				bl = _Batch.new(r.mesh_lod, _scenario, global_transform, near, far, cast_shadows)
+				_batches[lkey] = bl
+			r.batch_lod = bl
+			r.slot_lod = bl.add(r)
 	var c: _Cell = _cells.get(r.cell)
 	if c == null:
 		c = _Cell.new()
@@ -385,14 +412,16 @@ func _uninstance(r: PropRow) -> void:
 		var moved: PropRow = r.batch.remove(r.slot)
 		if moved:
 			moved.slot = r.slot
-		if r.batch.count == 0:
-			for key in _batches:
-				if _batches[key] == r.batch:
-					_batches.erase(key)
-					break
-			r.batch.dispose()
+		_drop_empty(r.batch)
 		r.batch = null
 		r.slot = -1
+	if r.batch_lod:
+		var moved_l: PropRow = r.batch_lod.remove(r.slot_lod)
+		if moved_l:
+			moved_l.slot_lod = r.slot_lod
+		_drop_empty(r.batch_lod)
+		r.batch_lod = null
+		r.slot_lod = -1
 	var c: _Cell = _cells.get(r.cell)
 	if c and c.rows.has(r):
 		c.rows.erase(r)
@@ -429,6 +458,16 @@ func flush() -> void:
 		_rebuilds += 1
 	_dirty.clear()
 	_flush_usec += Time.get_ticks_usec() - t0
+
+
+func _drop_empty(b: _Batch) -> void:
+	if b.count > 0:
+		return
+	for key in _batches:
+		if _batches[key] == b:
+			_batches.erase(key)
+			break
+	b.dispose()
 
 
 func _boxes_of(r: PropRow) -> Array[AABB]:
@@ -545,7 +584,9 @@ class _Batch:
 	var count := 0
 	var capacity := 0
 
-	func _init(m: Mesh, scenario: RID, xf: Transform3D, draw_range: float, shadows: bool) -> void:
+	func _init(
+		m: Mesh, scenario: RID, xf: Transform3D, near: float, far: float, shadows: bool
+	) -> void:
 		mesh = m
 		multimesh = RenderingServer.multimesh_create()
 		if m:
@@ -563,14 +604,16 @@ class _Batch:
 				else RenderingServer.SHADOW_CASTING_SETTING_OFF
 			)
 		)
-		if draw_range > 0.0:
+		if near > 0.0 or far > 0.0:
+			# the full-detail batch ends where the low-detail one begins; the
+			# margins overlap a little so the switch is a short cross-fade
 			RenderingServer.instance_geometry_set_visibility_range(
 				instance,
-				0.0,
-				draw_range,
-				0.0,
-				draw_range * 0.1,
-				RenderingServer.VISIBILITY_RANGE_FADE_DISABLED
+				near,
+				far,
+				0.5 if near > 0.0 else 0.0,
+				0.5 if far > 0.0 else 0.0,
+				RenderingServer.VISIBILITY_RANGE_FADE_SELF
 			)
 		_reserve(16)
 

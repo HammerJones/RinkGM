@@ -267,7 +267,40 @@ right click inspects, Q opens or uses, F5 saves and reloads the rows.
 take, push, open, save, load); `tests/unit/test_world_objects.gd` covers
 the catalog and the registry.
 
-## 7. The prop studio
+## 7. Detail, light and culling
+
+**Level of detail.** A row with a low-detail mesh (every imported prop
+has one: flat colours, dither collapsed, no AO) gets a second MultiMesh
+per cell. The full batch is visible out to `lod_distance`, the low one
+from there to `draw_range`, with a short cross-fade (Godot's visibility
+ranges, per cell). A hero prop at 60k triangles costs its 5k low mesh
+from a few metres away.
+
+**Emission.** A `.vox` material of type `_emit` (MagicaVoxel's emissive
+materials; the reference TV's screen and LEDs have them, the generator's
+`EMISSIVE` table writes them) is read into `VoxAsset.emissive`, carried
+through the model and the mesher as vertex alpha below 1, and turned into
+glow by the shader (`emission_strength`). No second attribute, no second
+material; the low-detail mesh glows too. Glass materials are read but not
+yet drawn as glass.
+
+**Quality presets** (`framework/render/quality.gd`): low, medium, high as
+one dictionary each (SSAO, SDFGI, glow, shadow atlas and splits, draw and
+LOD distances, prop shadows, MSAA), applied to an Environment, the key
+light, the fields and the viewport with one call. The look is tuned by
+editing a preset; a settings screen calls `Quality.apply`. SDFGI and SSAO
+act on Forward+ only.
+
+**Occluders** (`framework/render/occluders.gd`): `Occluders.from_boxes`
+turns a room's walls, floors and counters into one `OccluderInstance3D`
+at runtime, so a code-built room (every VenueKit room, the demo) gets
+occlusion culling without an editor bake. Lightmap baking still needs the
+editor (`LightmapGI`), and is the one lighting step left for the port.
+
+The objects demo takes `--quality=low|medium|high` and builds occluders
+from its slabs.
+
+## 8. The prop studio
 
 `scenes/dev/prop_studio.tscn` (script `framework/studio/prop_studio.gd`).
 Run it from the editor, or `godot -- res://scenes/dev/prop_studio.tscn`.
@@ -283,7 +316,7 @@ This is the authoring loop for both of us: Sean edits in MagicaVoxel and
 looks here; Claude writes a `.vox`, renders the contact sheet
 (`tools/prop_sheet.gd`), reads the image and adjusts.
 
-## 8. What the port looks like
+## 9. What the port looks like
 
 Nothing is ported yet. The order, each step a PR that keeps CI green:
 
@@ -300,11 +333,12 @@ Nothing is ported yet. The order, each step a PR that keeps CI green:
    `act("take")` into `ItemCatalog`.
 4. **The building streams.** Rooms become chunk scenes registered with a
    `ChunkStreamer`; occluders are baked per chunk.
-5. **Lighting.** `LightmapGI` for the shell, SDFGI for props, SSAO on.
+5. **Lighting.** `LightmapGI` for the shell (an editor bake), the
+   `Quality` presets for the rest.
 6. **The match scene** moves last and mostly unchanged: the skaters, the
    puck and the shot patterns do not touch any of this.
 
-## 9. Rules for building on it
+## 10. Rules for building on it
 
 - A new prop is a `.vox` and a record, never code in the game. A coded
   builder is a generator that writes a `.vox` (`VoxWriter`, or

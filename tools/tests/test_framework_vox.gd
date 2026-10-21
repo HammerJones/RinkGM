@@ -10,6 +10,7 @@ var failures := 0
 
 func _initialize() -> void:
 	_round_trip()
+	_emissive()
 	_rotation()
 	_default_palette()
 	_mesher()
@@ -54,6 +55,39 @@ func _round_trip() -> void:
 	_check(
 		any != null and any.count() == a.count(), "VoxAsset.load_any reads without the import step"
 	)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func _emissive() -> void:
+	# a colour with alpha below 1 is emission; it survives the file as a MATL
+	var m := VoxelModel.new(0.01)
+	m.box(0, 0, 0, 3, 3, 3, Color("8fbfa8"))
+	m.set_voxel(4, 0, 0, Color(0.5, 1.0, 0.5, 0.2))  # glows at 0.8
+	var path := "user://test_framework_emissive.vox"
+	_check(VoxWriter.write(m, path).ok, "writer accepts an emissive colour")
+	var a := VoxReader.read(path)
+	_check(a != null and a.emissive.size() == 256, "reader fills the emissive table")
+	if a == null:
+		return
+	var glowing := 0
+	for i in a.indices.size():
+		if a.emissive[a.indices[i]] > 0.5:
+			glowing += 1
+	_check(glowing == 1, "one voxel glows (%d)" % glowing)
+	a.voxel_m = 0.01
+	var back := a.to_model()
+	var found := false
+	for p in back.voxels:
+		if back.voxels[p].a < 0.5:
+			found = true
+	_check(found, "emission comes back as vertex alpha below 1")
+	var mesh := VoxMesher.build(back, {"greedy": true, "quantize": 4})
+	var cols: PackedColorArray = mesh.surface_get_arrays(0)[Mesh.ARRAY_COLOR]
+	var low_alpha := 0
+	for c in cols:
+		if c.a < 0.5:
+			low_alpha += 1
+	_check(low_alpha > 0, "the mesh keeps the emissive alpha through quantize")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 

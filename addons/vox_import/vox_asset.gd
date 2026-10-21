@@ -17,6 +17,10 @@ extends Resource
 @export var indices := PackedByteArray()
 ## 256 colours; slot 0 is empty.
 @export var palette := PackedColorArray()
+## Emission per palette slot, 0..1, from the file's materials (a screen, a
+## lamp). Carried into meshes as 1 - vertex alpha, so a plain colour (alpha
+## 1) never glows and the shader reads it without a second attribute.
+@export var emissive := PackedFloat32Array()
 ## Extent of the model in voxels.
 @export var size := Vector3i.ZERO
 ## Metres per voxel. The kit's 0.065 m unless the import says otherwise.
@@ -72,6 +76,8 @@ func to_model(voxel_size := -1.0, offset := Vector3i.ZERO, remap := {}) -> Voxel
 	for i in indices.size():
 		var idx := indices[i]
 		var c: Color = remap[idx] if remap.has(idx) else palette[idx]
+		if idx < emissive.size() and emissive[idx] > 0.0:
+			c.a = 1.0 - emissive[idx]
 		m.voxels[Vector3i(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]) - offset] = c
 	return m
 

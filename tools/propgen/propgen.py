@@ -79,6 +79,16 @@ PALETTE = {
 }
 NAMES = list(PALETTE.keys())  # palette index = position + 1
 
+# Colours that glow (a screen, an LED, a lamp): emission 0..1, written as a
+# MATL chunk the game reads (VoxReader) and MagicaVoxel shows.
+EMISSIVE = {
+    "green_led": 0.8,
+    "amber": 0.5,
+    "screen": 0.35,
+    "red": 0.25,
+    "white": 0.0,
+}
+
 
 class _Pal:
     def __getattr__(self, name: str) -> int:
@@ -473,6 +483,15 @@ class Scene:
         chunks += b"SIZE" + struct.pack("<II", 12, 0) + struct.pack("<III", int(size[0]), int(size[2]), int(size[1]))
         chunks += b"XYZI" + struct.pack("<II", 4 + len(xyzi), 0) + struct.pack("<I", len(xs)) + xyzi
         chunks += b"RGBA" + struct.pack("<II", 1024, 0) + bytes(pal)
+        for i, name in enumerate(NAMES):
+            e = EMISSIVE.get(name, 0.0)
+            if e <= 0.0:
+                continue
+            d = {"_type": "_emit", "_emit": f"{e:.3f}", "_flux": "0"}
+            body = struct.pack("<I", i + 1) + struct.pack("<I", len(d))
+            for k, v in d.items():
+                body += struct.pack("<I", len(k)) + k.encode() + struct.pack("<I", len(v)) + v.encode()
+            chunks += b"MATL" + struct.pack("<II", len(body), 0) + body
         with open(path, "wb") as f:
             f.write(b"VOX " + struct.pack("<I", 150) + b"MAIN" + struct.pack("<II", 0, len(chunks)) + chunks)
         return {

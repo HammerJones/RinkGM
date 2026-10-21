@@ -13,6 +13,8 @@ var id: StringName
 var prop: StringName
 ## The shared mesh every copy draws.
 var mesh: Mesh
+## The low-detail mesh drawn beyond the field's lod_distance (null: the full one).
+var mesh_lod: Mesh
 ## Shape-following boxes in the prop's own space (metres).
 var boxes: Array[AABB] = []
 ## Where it is. The field writes this back when a live body settles.
@@ -33,8 +35,10 @@ var dirty := false
 
 var tier := Tier.INSTANCED
 # field handles
-var batch: RefCounted = null  # PropField._Batch
+var batch: RefCounted = null  # PropField._Batch (full detail)
 var slot := -1
+var batch_lod: RefCounted = null  # PropField._Batch (low detail)
+var slot_lod := -1
 var node: RigidBody3D = null  # the body while LIVE
 var cell := Vector3i.ZERO
 

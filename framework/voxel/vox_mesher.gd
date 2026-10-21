@@ -14,6 +14,9 @@ extends VoxelMeshBuilder
 ## them, so a box keeps its soft corners), jitter (the model's), quantize
 ## (0: colour steps a channel, so dithered tones merge), material.
 ##
+## A voxel colour's alpha below 1 means emission (1 - alpha, see VoxAsset)
+## and passes through untouched; the shader turns it into glow.
+##
 ## AO is the classic voxel kind: each face corner counts its three
 ## neighbouring voxels (two sides and the diagonal) and darkens by how many
 ## are solid, with the quad's diagonal flipped so the shading never shows a
@@ -60,7 +63,7 @@ func append(m: VoxelModel, opts := {}, xf := Transform3D.IDENTITY) -> void:
 			var c: Color = jitter_color(vox[p], p, jitter)
 			if quantize > 0:
 				var q := float(quantize)
-				c = Color(roundf(c.r * q) / q, roundf(c.g * q) / q, roundf(c.b * q) / q)
+				c = Color(roundf(c.r * q) / q, roundf(c.g * q) / q, roundf(c.b * q) / q, c.a)
 			var face: Array = [c, 3, 3, 3, 3]
 			if ao:
 				var o := p + dir

@@ -122,6 +122,7 @@ func _show(id: String) -> void:
 		mesh = VoxMesher.build(m, {"greedy": true})
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
+	mi.material_override = PropMaterial.shared()
 	_holder.add_child(mi)
 	var aabb := mesh.get_aabb()
 	var floor_mi := MeshInstance3D.new()

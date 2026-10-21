@@ -89,7 +89,8 @@ func spawn(
 		ObjectCatalog.mesh(prop),
 		ObjectCatalog.boxes(prop),
 		xf,
-		ObjectCatalog.mass(prop)
+		ObjectCatalog.mass(prop),
+		ObjectCatalog.mesh_lod(prop)
 	)
 	row.state = state.duplicate(true)
 	row.dirty = placed

@@ -195,6 +195,7 @@ func _show() -> void:
 		holder.position.x = x
 		var mi := MeshInstance3D.new()
 		mi.mesh = meshes[age][0]
+		mi.material_override = PropMaterial.shared()
 		holder.add_child(mi)
 		if show_boxes:
 			for b in meshes[age][1]:

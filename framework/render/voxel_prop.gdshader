@@ -14,6 +14,8 @@ render_mode cull_back, depth_draw_opaque;
 
 uniform float roughness : hint_range(0.0, 1.0) = 0.85;
 uniform vec3 highlight_colour : source_color = vec3(1.0, 0.92, 0.6);
+// vertex alpha below 1 is emission (1 - alpha, from the .vox materials)
+uniform float emission_strength : hint_range(0.0, 8.0) = 2.5;
 // A live body gets its own copy of the material with these set (plain
 // uniforms, so the Compatibility renderer works too); batches leave them
 // at the defaults and use the custom data.
@@ -35,9 +37,12 @@ void fragment() {
 	ALBEDO = albedo;
 	ROUGHNESS = roughness;
 	METALLIC = 0.0;
+	float glow = 1.0 - COLOR.a;
+	vec3 emission = albedo * glow * emission_strength;
 	if (v_highlight > 0.0) {
 		// a soft glow plus a rim so the whole outline reads, not just the lit faces
 		float rim = 1.0 - clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);
-		EMISSION = (albedo * 0.35 + highlight_colour * (0.15 + 0.45 * rim * rim)) * v_highlight;
+		emission += (albedo * 0.35 + highlight_colour * (0.15 + 0.45 * rim * rim)) * v_highlight;
 	}
+	EMISSION = emission;
 }

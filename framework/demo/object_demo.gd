@@ -21,12 +21,24 @@ var prompt: InteractPrompt
 var _saved := {}
 var _fails := 0
 
+var _env: WorldEnvironment
+var _sun: DirectionalLight3D
+var _boxes: Array = []
+
 
 func _ready() -> void:
 	_build_room()
 	field = PropField.new()
 	field.name = "Props"
 	add_child(field)
+	var quality := "medium"
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--quality="):
+			quality = a.trim_prefix("--quality=")
+	Quality.apply(
+		quality, {"env": _env, "sun": _sun, "fields": [field], "viewport": get_viewport()}
+	)
+	Occluders.from_boxes(self, _boxes)
 	objects = WorldObjects.new()
 	objects.name = "Objects"
 	objects.field = field
@@ -108,11 +120,13 @@ func _build_room() -> void:
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.environment = e
 	add_child(env)
+	_env = env
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-55, 35, 0)
 	sun.light_energy = 1.2
 	sun.shadow_enabled = true
 	add_child(sun)
+	_sun = sun
 	var lamp := OmniLight3D.new()
 	lamp.position = Vector3(0, 2.7, 0)
 	lamp.light_energy = 2.0
@@ -160,6 +174,7 @@ func _build_room() -> void:
 
 
 func _slab(body: StaticBody3D, at: Vector3, size: Vector3, colour: Color) -> void:
+	_boxes.append(AABB(at - size / 2, size))
 	var cs := CollisionShape3D.new()
 	var bs := BoxShape3D.new()
 	bs.size = size
