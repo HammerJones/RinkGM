@@ -32,8 +32,12 @@ const HOLD_DROP := 0.12
 const SPRING := 14.0
 const MAX_PULL := 7.0
 const TURN_SPRING := 10.0
-## Held this far from the hold point (stuck behind something), it is let go.
+## Once it has reached the hand, held this far from the hold point (stuck
+## behind something) it is let go; before that it has GRACE seconds to
+## arrive (a thing picked off the floor starts well over a metre away).
 const BREAK := 1.0
+const GRACE := 1.5
+const REACHED := 0.3
 const THROW := 4.0
 const HIGHLIGHT := 0.55
 
@@ -52,6 +56,8 @@ var _dist := 1.0
 var _gravity := 1.0
 var _damp := 0.0
 var _mask := 0
+var _reached := false
+var _carry_t := 0.0
 
 
 func _process(_dt: float) -> void:
@@ -73,7 +79,10 @@ func _physics_process(_dt: float) -> void:
 		return
 	var target := _hold_point()
 	var to := target - _body.global_position
-	if to.length() > BREAK:
+	_carry_t += _dt
+	if to.length() < REACHED:
+		_reached = true
+	if to.length() > BREAK and (_reached or _carry_t > GRACE):
 		_let_go()
 		return
 	_body.linear_velocity = (to * SPRING).limit_length(MAX_PULL)
@@ -172,6 +181,8 @@ func carry(row: PropRow) -> bool:
 		drop()
 	carrying = row
 	_body = body
+	_reached = false
+	_carry_t = 0.0
 	var box := row.world_aabb()
 	_dist = clampf(box.size.length() * 0.5 + HOLD_GAP, HOLD_MIN, HOLD_MAX)
 	_rel = _yaw_basis().inverse() * body.global_transform.basis.orthonormalized()
