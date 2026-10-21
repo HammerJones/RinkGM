@@ -20,6 +20,10 @@ game code only has to do hockey. It is three things:
 3. **An authoring layer.** The prop studio for looking at props as the game
    draws them, and the conventions that let MagicaVoxel be the art tool.
 
+Sections 1 to 8 are the pipeline, props, streaming, objects and lighting;
+9 to 12 are the world conventions (chunks that remember), contact audio,
+the runtime voxel surface and the render benchmark.
+
 ## 1. The environment
 
 | Piece | Where | What it does |
@@ -159,7 +163,10 @@ A chunk is a `PackedScene` with a bounding box. When `focus` comes within
 `ResourceLoader.load_threaded_request` (no hitch), instantiated when ready
 (at most `per_check` a tick), and freed past `unload_radius`. The gap
 between the two radii stops a chunk flapping at the edge. A chunk scene
-that contains a `PropField` brings its rows with it.
+that contains a `PropField` brings its rows with it. The scene's scripts
+are loaded on the main thread just before the request (GDScript compiled
+on the loader thread cannot resolve class names it has not seen, and the
+load would never finish); meshes and textures still load in the thread.
 
 ## 5. Authoring props: the generator and the sheet
 
@@ -316,7 +323,107 @@ This is the authoring loop for both of us: Sean edits in MagicaVoxel and
 looks here; Claude writes a `.vox`, renders the contact sheet
 (`tools/prop_sheet.gd`), reads the image and adjusts.
 
-## 9. What the port looks like
+## 9. The world: chunks that remember
+
+`framework/world/world.gd` (`World`) and `world_chunk.gd` (`WorldChunk`)
+are the conventions that tie the streamer, the fields and the registry
+together, so a building made of rooms behaves as one world.
+
+```gdscript
+var world := World.new()
+add_child(world)
+world.register_chunk("res://scenes/venue/chunks/lobby.tscn", AABB(Vector3(0, 0, 0), Vector3(30, 6, 20)))
+world.focus = walker.global_position        # each frame
+world.objects.act("take", row)              # the one registry
+var save := world.to_save()                 # every chunk's rows, loaded or not
+world.from_save(save)
+```
+
+**A chunk scene** has a `WorldChunk` root with a stable `chunk_id`, a
+`bounds` box in world space, and optional `occluder_boxes` (built into an
+`OccluderInstance3D` on enter). It owns one `PropField` named `Props`
+(created if the scene has none). Its layout goes in `populate(objects)`:
+spawn rows through the registry with ids like `lobby.chair.3` and `field`
+as the target. `framework/bench/test_chunk.gd` is the smallest example.
+Anything that must only run while the room is loaded (its people, a
+machine's loop) hangs under the chunk and goes with it.
+
+**What the World does on load:** registers the chunk's field with
+`WorldObjects` under its `chunk_id`, applies any rows that were pending
+for that chunk (a save, or the state from the last time it was loaded),
+connects contact audio, then calls `populate`. A layout spawn whose id
+already has a row is skipped, and one whose id was *taken* (removed) is
+refused, so the cup you moved is still moved and the one you pocketed is
+still gone when the room streams back in. On unload the chunk's changed
+rows (moved, taken, or awake) are kept as pending data and dropped from
+the registry; unchanged layout rows cost nothing to forget.
+
+**The save** (`WorldObjects.to_save`) carries each changed row with its
+chunk, the removed ids with theirs, and the pending data of chunks that
+are not loaded right now. `from_save` applies what it can to loaded
+chunks and parks the rest until those chunks come in. A fresh `World`
+with no chunks loaded yet accepts a save and hands each chunk its part on
+load. `tools/tests/test_framework_world.gd` walks the whole loop: load,
+change, leave, save, return, reload from JSON.
+
+## 10. Contact audio
+
+`framework/audio/contact_audio.gd` (`ContactAudio`). `PropField` emits
+`contact(row, other, speed, at)` when a live body hits something, with the
+closing speed from the step *before* the hit (by the time Godot reports
+the contact the impulse has already taken the speed away) and at most one
+signal per row every 0.12 s. `ContactAudio` listens to every field the
+registry knows (`listen_objects(objects)`; the World does this itself),
+looks up the prop's manifest `sound` (wood, metal, plastic, rubber,
+ceramic, glass, cloth, paper), and plays one of that material's
+recordings from `assets/audio` through `WorldSound`, quieter for a tap and
+full for a throw, with a little pitch spread. Unknown materials sound like
+wood. `audio.log` holds the last 32 hits for tests and the dev menu. New
+materials are a row in `ContactAudio.SOUNDS`; new recordings go through
+`art/tools/synth_sounds.py` like the existing ones.
+
+## 11. Voxels that change: `VoxelSurface`
+
+`framework/voxel/voxel_surface.gd`. The props are static voxels: meshed at
+import, never edited. The ice, a dented wall, a snowbank are voxels that
+change at runtime, and `VoxelSurface` is the runtime mesher for them.
+
+```gdscript
+var ice := VoxelSurface.new()
+add_child(ice)
+ice.setup(Vector3i(640, 2, 300), 0.05)           # voxels, metres per voxel
+ice.fill(Vector3i.ZERO, Vector3i(640, 2, 300), Color.WHITE)
+ice.set_voxel(x, 1, z, Color.TRANSPARENT)        # a skate mark (alpha 0 = empty)
+ice.set_voxel(x, 1, z, Color(1, 0.8, 0.2, 0.3))  # alpha under 1 = glows
+ice.budget_ms = 2.0                              # re-mesh time per frame
+```
+
+The volume is split into 16-voxel chunks, each one `MeshInstance3D` with
+the prop material (AO, emission by alpha, the same look as everything
+else). Changing a voxel dirties its chunk, and its neighbour when it sits
+on a chunk face; dirty chunks are rebuilt in `_process` within
+`budget_ms`, or all at once by `remesh_now()`. Each rebuild meshes the
+chunk's own voxels with a one-voxel skirt of neighbours as occluders
+(`VoxMesher`'s `skip` option), so chunk seams show no faces. Measured on
+this machine: a 64x3x64 slab is 16 chunks in about 60 ms; three edited
+chunks re-mesh in about 12 ms. This is the GDScript mesher, fine for
+marks and dents; a native mesher later replaces `_build_chunk` and nothing
+else.
+
+## 12. The render benchmark
+
+`tools/render_bench.sh [--props=200] [--quality=medium]` runs
+`scenes/dev/render_bench.tscn` under the virtual display: a 24 m room with
+a dividing wall, N catalog props on the floor, and a camera flying one
+loop around it. It prints the average and worst frame time, primitives
+and draw calls per frame, and how many bodies were live. Under the
+software driver the frame times are meaningless (a second a frame); the
+primitive and draw-call counts are real, and the same scene before and
+after a change is the comparison. The first baseline, 200 props at medium:
+159 draw calls, 7.9 M primitives a frame (shadows count twice), 0 live.
+Headless CI runs the scene as `--test=render_bench` to keep it working.
+
+## 13. What the port looks like
 
 Nothing is ported yet. The order, each step a PR that keeps CI green:
 
@@ -338,7 +445,7 @@ Nothing is ported yet. The order, each step a PR that keeps CI green:
 6. **The match scene** moves last and mostly unchanged: the skaters, the
    puck and the shot patterns do not touch any of this.
 
-## 10. Rules for building on it
+## 14. Rules for building on it
 
 - A new prop is a `.vox` and a record, never code in the game. A coded
   builder is a generator that writes a `.vox` (`VoxWriter`, or

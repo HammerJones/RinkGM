@@ -43,6 +43,9 @@ func _ready() -> void:
 	objects.name = "Objects"
 	objects.field = field
 	add_child(objects)
+	var audio := ContactAudio.new()
+	add_child(audio)
+	audio.listen_objects(objects)
 	_place_props()
 	if OS.get_cmdline_user_args().has("--test=objects"):
 		_self_test.call_deferred()

@@ -12,7 +12,8 @@ extends VoxelMeshBuilder
 ## Options: ao (true), ao_strength (0.42: how dark a fully tucked corner
 ## gets), greedy (false: merge same-colour faces; AO edges still split
 ## them, so a box keeps its soft corners), jitter (the model's), quantize
-## (0: colour steps a channel, so dithered tones merge), material.
+## (0: colour steps a channel, so dithered tones merge), skip (voxels that
+## hide faces but get none), material.
 ##
 ## A voxel colour's alpha below 1 means emission (1 - alpha, see VoxAsset)
 ## and passes through untouched; the shader turns it into glow.
@@ -41,6 +42,9 @@ func append(m: VoxelModel, opts := {}, xf := Transform3D.IDENTITY) -> void:
 	# (two close tones) becomes one colour and its faces merge (for a
 	# low-detail mesh; 0 keeps every colour)
 	var quantize: int = opts.get("quantize", 0)
+	# voxels that only hide faces and get none of their own (a chunk's
+	# skirt of neighbours, see VoxelSurface)
+	var skip: Dictionary = opts.get("skip", {})
 	var vox := m.voxels
 	var nb := xf.basis.inverse().transposed()
 	for i in 6:
@@ -58,7 +62,7 @@ func append(m: VoxelModel, opts := {}, xf := Transform3D.IDENTITY) -> void:
 		var layers := {}
 		for key in vox:
 			var p: Vector3i = key
-			if vox.has(p + dir):
+			if vox.has(p + dir) or skip.has(p):
 				continue
 			var c: Color = jitter_color(vox[p], p, jitter)
 			if quantize > 0:

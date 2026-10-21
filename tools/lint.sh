@@ -8,7 +8,7 @@
 # brought up to the rules.
 set -uo pipefail
 cd "$(dirname "$0")/.."
-PATHS=(framework addons/vox_import tests/unit tools/tests/test_framework_vox.gd tools/tests/test_framework_props.gd)
+PATHS=(framework addons/vox_import tests/unit tools/tests/test_framework_vox.gd tools/tests/test_framework_props.gd tools/tests/test_framework_world.gd)
 if ! command -v gdlint >/dev/null; then
 	echo "gdlint not installed (pip install gdtoolkit); skipping lint"
 	exit 0

@@ -25,11 +25,16 @@ extends Node3D
 
 signal woke(row: PropRow, body: RigidBody3D)
 signal slept(row: PropRow)
+## A live row hit something (a wall, the floor, another body): the row, what
+## it hit, the closing speed in m/s and where. Rate limited per row, so a
+## rolling mug does not fire every step; ContactAudio listens to this.
+signal contact(row: PropRow, other: Node, speed: float, at: Vector3)
 
 const CELL := 8.0
 const TICK := 0.5
 const HIDDEN := Transform3D(Basis(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO), Vector3(0, -1000, 0))
 const MIN_BOX := Vector3(0.02, 0.02, 0.02)
+const CONTACT_GAP := 0.12  # s between contact signals from one row
 
 ## Most rows that may be rigid bodies at once.
 @export var live_cap := 64
@@ -66,6 +71,8 @@ var _t := 0.0
 var _tick_usec := 0
 var _scenario := RID()
 var _space := RID()
+var _contact_t := {}  # PropRow -> last contact time (s)
+var _prev_v := {}  # PropRow -> linear velocity before the last physics step
 
 
 func _enter_tree() -> void:
@@ -112,6 +119,14 @@ func _notification(what: int) -> void:
 			PhysicsServer3D.body_set_state(
 				c.body, PhysicsServer3D.BODY_STATE_TRANSFORM, global_transform
 			)
+
+
+func _physics_process(_dt: float) -> void:
+	# the velocity a body had going into the step: by the time body_entered
+	# fires the contact has already taken it away
+	for r in _live:
+		if r.node:
+			_prev_v[r] = r.node.linear_velocity
 
 
 func _process(dt: float) -> void:
@@ -267,8 +282,11 @@ func wake(r: PropRow) -> RigidBody3D:
 		)
 		b.add_child(mi)
 	b.transform = r.xf
+	b.contact_monitor = true
+	b.max_contacts_reported = 4
 	add_child(b)
 	b.sleeping_state_changed.connect(_on_sleep_change.bind(r))
+	b.body_entered.connect(_on_body_entered.bind(r))
 	r.node = b
 	r.tier = PropRow.Tier.LIVE
 	_live.append(r)
@@ -285,6 +303,8 @@ func sleep(r: PropRow) -> void:
 	r.xf = b.transform
 	_live.erase(r)
 	_by_node.erase(b)
+	_prev_v.erase(r)
+	_contact_t.erase(r)
 	r.node = null
 	b.queue_free()
 	r.tier = PropRow.Tier.INSTANCED
@@ -489,6 +509,22 @@ func _shapes_for(r: PropRow) -> Array:
 		out.append([s, Transform3D(Basis.IDENTITY, box.get_center())])
 	_shapes[key] = out
 	return out
+
+
+func _on_body_entered(other: Node, r: PropRow) -> void:
+	var b := r.node
+	if b == null:
+		return
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - float(_contact_t.get(r, -1.0)) < CONTACT_GAP:
+		return
+	_contact_t[r] = now
+	var v: Vector3 = _prev_v.get(r, b.linear_velocity)
+	if other is RigidBody3D:
+		v -= other.linear_velocity
+	elif other is CharacterBody3D:
+		v -= other.velocity
+	contact.emit(r, other, v.length(), b.global_position)
 
 
 func _on_sleep_change(r: PropRow) -> void:

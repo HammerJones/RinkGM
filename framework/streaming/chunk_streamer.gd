@@ -90,7 +90,19 @@ func _process(dt: float) -> void:
 			continue
 		if d <= load_radius:
 			c.loading = true
+			_warm_scripts(path)
 			ResourceLoader.load_threaded_request(path, "PackedScene")
+
+
+## Scripts a chunk scene uses are loaded on the main thread first: GDScript
+## compiled on the loader thread cannot resolve class names that are not
+## loaded yet (the request would then never finish). Scripts are small; the
+## meshes and textures still load in the thread.
+func _warm_scripts(path: String) -> void:
+	for dep in ResourceLoader.get_dependencies(path):
+		var p: String = dep.get_slice("::", 2) if dep.contains("::") else dep
+		if p.ends_with(".gd") and not ResourceLoader.has_cached(p):
+			ResourceLoader.load(p)
 
 
 func _free_chunk(path: String) -> void:

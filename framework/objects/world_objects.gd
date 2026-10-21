@@ -38,6 +38,8 @@ var rows := {}
 var _counts := {}  # prop -> next number for an auto id
 var _removed := {}  # ids of rows a save must forget (placed by a room, then taken)
 var _verbs := {}  # verb -> Callable(row, actor, args) -> Variant
+var _chunk_of := {}  # PropField -> chunk id ("" for the default field)
+var _pending := {}  # chunk id -> {rows: [dict], removed: [id]} waiting for the chunk to load
 
 
 func _ready() -> void:
@@ -52,11 +54,47 @@ func _ready() -> void:
 	_verbs["use"] = _verb_use
 
 
-func add_field(f: PropField) -> void:
+## Registers a field, usually a chunk's, under `chunk` (its id). Save rows
+## waiting for that chunk are applied now.
+func add_field(f: PropField, chunk := "") -> void:
 	if not fields.has(f):
 		fields.append(f)
+	_chunk_of[f] = chunk
 	if field == null:
 		field = f
+	if chunk != "" and _pending.has(chunk):
+		var d: Dictionary = _pending[chunk]
+		_pending.erase(chunk)
+		_apply(d, f)
+
+
+## A chunk is going away: its rows' current state is kept as pending save
+## data (so a moved cup is still moved when the chunk comes back) and the
+## rows are dropped from the registry.
+func remove_field(f: PropField) -> void:
+	var chunk: String = _chunk_of.get(f, "")
+	if chunk != "":
+		var d := {"rows": [], "removed": []}
+		for id in rows.keys():
+			var row: PropRow = rows[id]
+			if _field_of(row) == f:
+				if row.dirty or row.node != null:
+					d.rows.append(row.to_dict())
+				rows.erase(id)
+		for id in _removed.keys():
+			if _removed[id] == chunk:
+				d.removed.append(id)
+				_removed.erase(id)
+		if not d.rows.is_empty() or not d.removed.is_empty():
+			_pending[chunk] = d
+	fields.erase(f)
+	_chunk_of.erase(f)
+	if field == f:
+		field = fields[0] if not fields.is_empty() else null
+
+
+func chunk_of(row: PropRow) -> String:
+	return _chunk_of.get(_field_of(row), "")
 
 
 # --- rows ----------------------------------------------------------------
@@ -75,6 +113,8 @@ func spawn(
 	if not fields.has(f):
 		fields.append(f)
 	var rid := id
+	if rid != "" and not placed and _removed.has(rid):
+		return null  # a room's layout re-placing something that was taken
 	if rid == "":
 		var n: int = _counts.get(prop, 0) + 1
 		_counts[prop] = n
@@ -105,7 +145,7 @@ func remove(row: PropRow) -> void:
 	if row == null:
 		return
 	rows.erase(String(row.id))
-	_removed[String(row.id)] = true
+	_removed[String(row.id)] = chunk_of(row)
 	removed.emit(row)
 	_field_of(row).remove(row)
 
@@ -264,31 +304,78 @@ func to_save() -> Dictionary:
 	for id in rows:
 		var row: PropRow = rows[id]
 		if row.dirty or row.node != null:
-			out.append(row.to_dict())
-	var gone := _removed.keys()
-	gone.sort()
+			var d := row.to_dict()
+			var chunk := chunk_of(row)
+			if chunk != "":
+				d["chunk"] = chunk
+			out.append(d)
+	var gone: Array = []
+	for id in _removed:
+		gone.append({"id": id, "chunk": _removed[id]} if _removed[id] != "" else id)
+	# chunks not loaded right now carry their pending rows through
+	for chunk in _pending:
+		for d in _pending[chunk].rows:
+			d["chunk"] = chunk
+			out.append(d)
+		for id in _pending[chunk].removed:
+			gone.append({"id": id, "chunk": chunk})
 	return {"rows": out, "removed": gone}
 
 
 ## Applies a save: removes the ids it lists, moves or spawns the rows it
 ## carries (a row that exists is moved and given the saved state).
 func from_save(d: Dictionary) -> void:
+	# rows and removals for chunks that are not loaded wait for them
+	var now := {"rows": [], "removed": []}
+	for item in d.get("removed", []):
+		var chunk := str(item.chunk) if item is Dictionary else ""
+		var id := str(item.id) if item is Dictionary else str(item)
+		if chunk == "" or _field_for_chunk(chunk):
+			now.removed.append(id)
+		else:
+			_pending_for(chunk).removed.append(id)
+	for rec in d.get("rows", []):
+		var chunk := str(rec.get("chunk", ""))
+		if chunk == "" or _field_for_chunk(chunk):
+			now.rows.append(rec)
+		else:
+			_pending_for(chunk).rows.append(rec)
+	_apply(now, null)
+
+
+func _apply(d: Dictionary, into: PropField) -> void:
 	for id in d.get("removed", []):
 		var row: PropRow = rows.get(str(id))
 		if row:
 			remove(row)
 		else:
-			_removed[str(id)] = true
+			_removed[str(id)] = _chunk_of.get(into, "") if into else ""
 	for rec in d.get("rows", []):
 		var id := str(rec.get("id", ""))
 		var xf := PropRow.xf_from(rec.get("xf", []))
 		var row: PropRow = rows.get(id)
+		var f := into if into else _field_for_chunk(str(rec.get("chunk", "")))
 		if row:
 			_field_of(row).move_row(row, xf)
 			row.state = rec.get("state", {}).duplicate(true)
 			row.dirty = true
 		else:
-			spawn(str(rec.get("prop", "")), xf, id, null, rec.get("state", {}), true)
+			spawn(str(rec.get("prop", "")), xf, id, f, rec.get("state", {}), true)
+
+
+func _pending_for(chunk: String) -> Dictionary:
+	if not _pending.has(chunk):
+		_pending[chunk] = {"rows": [], "removed": []}
+	return _pending[chunk]
+
+
+func _field_for_chunk(chunk: String) -> PropField:
+	if chunk == "":
+		return field
+	for f in _chunk_of:
+		if _chunk_of[f] == chunk:
+			return f
+	return null
 
 
 func _field_of(row: PropRow) -> PropField:
