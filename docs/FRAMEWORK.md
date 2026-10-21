@@ -619,3 +619,72 @@ Nothing is ported yet. The order, each step a PR that keeps CI green:
   needs a number in the PR saying why.
 - Framework code is linted and formatted; `tools/lint.sh --fix` before
   pushing.
+
+## 16. Merging into the game
+
+The demo branch (`claude/zealous-hamilton-r0xr9p`) stays separate until
+Sean says go. The order then is: the game's own upgrade to Godot 4.7.2
+(one PR, the engine pieces below and nothing else), then this branch,
+then PR #45 (world objects) reconciled on top so there is one prop
+pipeline. This section is the Build lane's checklist for that day.
+
+### Shared files this branch changes, and why
+
+Everything else the branch adds lives in `framework/`, `addons/`,
+`tests/unit/`, `data/props/`, `art/props/`, `scenes/dev/`,
+`tools/propgen/` and this document, which no game script reads.
+
+| File | Change | Why |
+| --- | --- | --- |
+| `project.godot` | `config/features` `4.3` → `4.7`; `physics/3d/physics_engine="Jolt Physics"`; `[editor_plugins] enabled` lists `addons/gdUnit4` and `addons/vox_import` | The engine pin, the body physics the props and walkers run on, the test panel and the `.vox` importer. The editor rewrites this file on open, which is the conflict a 4.3 editor hits on pull: install 4.7.2 first, discard the local copy, then pull. |
+| `.github/workflows/ci.yml` | `GODOT_VERSION` `4.3-stable` → `4.7.2-stable`; a `pip install "gdtoolkit==4.*"` step | CI runs the pinned engine and the lint. |
+| `tools/ci.sh` | step 0 `tools/lint.sh`; `--fixed-fps 120` for the two framework budget tests; step 3b runs the gdUnit4 suites in `tests/unit/` with `--remote-debug` to an unbound port | The gate gains the lint and unit suites (about ten checks, a few minutes longer). The remote-debug flag keeps a parse error from dropping into the interactive debugger and hanging the run. |
+| `tools/tests/game_tests.txt` | five lines: `studio`, `objects`, `render_bench`, `world_demo`, `ice_demo`, each with its `scenes/dev/` scene | The demos' headless checks. |
+| `tools/lint.sh`, `.gdlintrc` | new | gdlint and gdformat on the framework layer only; `scripts/` is not covered, so no existing script starts failing style checks. |
+| `.gitattributes` | new | LF line endings for Godot text formats. No LFS filter on purpose (section 1). |
+| `.gitignore` | `reports/` (gdUnit4), `__pycache__/`, `*.pyc` | Generated output. |
+| `README.md` | "Godot 4.3+" → "4.7+", a link to this document | |
+| `docs/ARCHITECTURE.md`, `docs/ART.md`, `assets/ui/STYLE.md` | a Framework row in the ownership table, the gate's new steps, the first-person overlay rules | Docs only. |
+| `scripts/venue/venue_walk.gd` | the HUD's build and toast code moved onto `WalkHud` (`framework/ui/walk_hud.gd`); 11 lines in, 49 out | One overlay for every first-person scene. The one game script with a real change: a branch that edited the walk's HUD section conflicts here, one that only changed its logic merges clean. |
+| `scripts/art/stick_prop.gd`, `scripts/art/loose_prop.gd` | `_calm = SETTLE_FRAMES` instead of `0` once a body has settled, three lines each | Jolt wakes a sleeping body that an awake one touches, so a pile only settles when every piece asks to sleep in the same step. Without this, piles of sticks never came to rest under Jolt. |
+| `assets/ui/fonts/**/*.import` | 4.6+ adds `modulate_color_glyphs=false` and `keep_rounding_remainders=true` | The engine rewrites these on import; committed so every editor agrees and git stays quiet. |
+| `*.gd.uid` beside every script, game scripts included | new one-line files | See the upgrade steps. Pure additions, never a conflict. |
+
+### Upgrading the game from 4.3 to 4.7.2
+
+What the move needed, and what did not break, from doing it on this
+branch (4.3 → 4.6 in `f3ae0ea`, 4.6 → 4.7.2 in `9d65346`):
+
+1. **Install 4.7.2 everywhere first**: the editor on each machine, the
+   `GODOT_VERSION` in the workflow, the download in any local gate
+   script. Export templates are per version too; a playtest build needs
+   the 4.7.2 templates installed (Editor → Manage Export Templates) or
+   the export fails with a missing-template error rather than a bad build.
+2. **Open the project once in the new editor and commit what it writes.**
+   The editor offers to convert the project; accept. It rewrites
+   `project.godot` (the feature tag), writes a `.gd.uid` file next to
+   every script and a `.uid` next to every shader, and rewrites the font
+   `.import` files. Commit all of it in the upgrade PR. Uncommitted
+   `.uid` files are why a later pull refuses with "untracked files would
+   be overwritten": anyone who opened the editor before pulling deletes
+   the stray `.uid` once and pulls again.
+3. **No script changed for the engine.** GDScript, the scenes, the
+   shaders and the on-ice sim ran unchanged on 4.6 and 4.7.2; the full
+   gate passed on both before the pin moved.
+4. **Jolt is a project-wide switch**, not per scene. The on-ice sim
+   (`Skater`, `Puck`, `Contact`) is its own impulse model and never
+   touched the engine's physics, so it is unaffected. Rigid bodies
+   behave differently in two ways seen so far: sleeping bodies wake when
+   an awake body touches them (the `_calm` fix above), and Godot's
+   physics time monitors report nonsense in headless runs under Jolt
+   (they hold the value of the one frame that built the bodies), so the
+   budget tests measure wall-clock per frame instead.
+5. **gdUnit4 is vendored without its own `test/` folder**: that folder
+   ships a `class_name Person` that collides with the game's `Person`.
+   Re-vendoring a newer gdUnit4 must drop it again.
+6. **Two editor plugins become visible to everyone**: the gdUnit4 panel at
+   the bottom of the editor, and the `.vox` importer, which makes the
+   first import after pulling take a minute or two. Both are harmless.
+7. **Merge with a merge commit, not a squash**, so the ice and object
+   history stays readable, then post one line to every lane: install
+   4.7.2, pull, discard your local `project.godot` if git refuses.

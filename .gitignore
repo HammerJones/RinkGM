@@ -5,3 +5,5 @@ export/
 !assets/ui/fonts/**/*.import
 # gdUnit4 reports
 reports/
+__pycache__/
+*.pyc
