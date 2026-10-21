@@ -113,8 +113,11 @@ func spawn(
 	if not fields.has(f):
 		fields.append(f)
 	var rid := id
-	if rid != "" and not placed and _removed.has(rid):
-		return null  # a room's layout re-placing something that was taken
+	if rid != "" and not placed:
+		if _removed.has(rid):
+			return null  # a room's layout re-placing something that was taken
+		if rows.has(rid):
+			return rows[rid]  # already here from a save: the layout yields to it
 	if rid == "":
 		var n: int = _counts.get(prop, 0) + 1
 		_counts[prop] = n

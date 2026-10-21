@@ -13,3 +13,5 @@ office res://scenes/ui/rink_office.tscn
 studio res://scenes/dev/prop_studio.tscn
 objects res://scenes/dev/object_demo.tscn
 render_bench res://scenes/dev/render_bench.tscn
+world_demo res://scenes/dev/world_demo.tscn
+ice_demo res://scenes/dev/ice_demo.tscn

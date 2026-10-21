@@ -22,7 +22,7 @@ game code only has to do hockey. It is three things:
 
 Sections 1 to 8 are the pipeline, props, streaming, objects and lighting;
 9 to 12 are the world conventions (chunks that remember), contact audio,
-the runtime voxel surface and the render benchmark.
+the runtime voxel surface and the render benchmark; 13 is the demos.
 
 ## 1. The environment
 
@@ -423,7 +423,31 @@ after a change is the comparison. The first baseline, 200 props at medium:
 159 draw calls, 7.9 M primitives a frame (shadows count twice), 0 live.
 Headless CI runs the scene as `--test=render_bench` to keep it working.
 
-## 13. What the port looks like
+## 13. The demos
+
+Three scenes under `scenes/dev/` to get a feel for it, each run from the
+editor or with `godot --path . res://scenes/dev/<name>.tscn`. All take
+`--quality=low|medium|high`, `--screenshot=<png>` for a frame without a
+display, and run as headless checks in CI (`--test=<name>`).
+
+- **`object_demo`**: one room with every catalog prop on tables and the
+  floor. Walk up to anything, E takes it into your hands (a live body on
+  a spring that bumps into things), E drops, F throws or shoves, right
+  click inspects, Q opens or uses, F5 saves and reloads the rows.
+- **`world_demo`**: five themed rooms in a row (`framework/demo/rooms/`,
+  one `DemoRoom` chunk each) that stream in and out as you walk; the HUD
+  names the loaded ones. The same verbs, plus T to pocket what you hold,
+  G to tip a box of mugs at your feet (contact audio), F5 to save, F9 to
+  load. Move something, walk two rooms on and back: it is still moved;
+  pocket it: still gone.
+- **`ice_demo`**: a 24 x 14 m sheet of ice that is voxels (`VoxelSurface`
+  in 540 chunks). Walking carves boot marks, left click lands a snowball,
+  right click chips a crater, Z sends the resurfacer across (a bar that
+  wipes the sheet over six seconds while the mesher keeps up within its
+  budget), R resurfaces at once. The lines are painted voxels and the
+  goal light strip is an emissive one. Mugs on the ice to kick and carry.
+
+## 14. What the port looks like
 
 Nothing is ported yet. The order, each step a PR that keeps CI green:
 
@@ -445,7 +469,7 @@ Nothing is ported yet. The order, each step a PR that keeps CI green:
 6. **The match scene** moves last and mostly unchanged: the skaters, the
    puck and the shot patterns do not touch any of this.
 
-## 14. Rules for building on it
+## 15. Rules for building on it
 
 - A new prop is a `.vox` and a record, never code in the game. A coded
   builder is a generator that writes a `.vox` (`VoxWriter`, or
