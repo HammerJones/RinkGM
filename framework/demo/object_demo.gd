@@ -1,10 +1,10 @@
 extends Node3D
 ## The objects demo: a small room, every catalog prop on tables and the
-## floor, a first-person walker with the Interactor and the prompt. Walk
-## up to anything: it lights up and names itself; E takes it into your
-## hands (a live body on a spring, bumps into things), E again drops it,
-## F throws or shoves, right click inspects, Q does the thing's other verb
-## (open, use). Esc frees the mouse, F5 saves and reloads the rows.
+## floor, a first-person walker with the Interactor and the hud. Walk up
+## to anything: it lights up and names itself; LMB takes it into your
+## hands (a live body on a spring, bumps into things), LMB again drops it,
+## RMB throws or shoves, E opens or uses, Q inspects, the wheel tumbles
+## what you hold. Esc frees the mouse, F5 saves and reloads the rows.
 ##
 ##   godot --path . res://scenes/dev/object_demo.tscn
 ##
@@ -17,7 +17,7 @@ var objects: WorldObjects
 var field: PropField
 var walker: FirstPerson
 var interactor: Interactor
-var prompt: InteractPrompt
+var hud: WalkHud
 var _saved := {}
 var _fails := 0
 
@@ -57,9 +57,10 @@ func _ready() -> void:
 	interactor.eye = walker.camera
 	interactor.objects = objects
 	add_child(interactor)
-	prompt = InteractPrompt.new()
-	add_child(prompt)
-	prompt.bind(interactor)
+	hud = WalkHud.new()
+	add_child(hud)
+	hud.bind(interactor)
+	hud.legend("[WASD] WALK   [SHIFT] RUN   [F5] SAVE / LOAD   [ESC] MENU")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--screenshot="):
@@ -71,41 +72,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
-			KEY_E:
-				interactor.act("take")
-			KEY_F:
-				if interactor.carrying:
-					interactor.act("throw")
-				else:
-					interactor.act("push")
-			KEY_Q:
-				if interactor.hovered:
-					for v in objects.verbs_of(interactor.hovered):
-						if v in ["open", "close", "use", "read"]:
-							interactor.act(v)
-							break
-			KEY_ESCAPE:
-				Input.mouse_mode = (
-					Input.MOUSE_MODE_VISIBLE
-					if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
-					else Input.MOUSE_MODE_CAPTURED
-				)
 			KEY_F5:
 				if _saved.is_empty():
 					_saved = objects.to_save()
-					prompt.show_inspect("saved %d rows" % _saved.rows.size())
+					hud.toast("SAVED %d ROWS" % _saved.rows.size())
 				else:
 					objects.from_save(_saved)
-					prompt.show_inspect("loaded %d rows" % _saved.rows.size())
+					hud.toast("LOADED %d ROWS" % _saved.rows.size())
 					_saved = {}
-	elif event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_RIGHT:
-			interactor.act("inspect")
-		elif (
-			event.button_index == MOUSE_BUTTON_LEFT
-			and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
-		):
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	elif (
+		event is InputEventMouseButton
+		and event.pressed
+		and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
+	):
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 # --- the room ------------------------------------------------------------
@@ -279,7 +259,9 @@ func _self_test() -> void:
 		"looking at the mug hovers it (got %s)" % (it.hovered.id if it.hovered else "nothing")
 	)
 	check.call(mug.highlight > 0.0, "the hovered mug is highlighted")
-	check.call(it.prompt().begins_with("COFFEE MUG"), "prompt names it: %s" % it.prompt())
+	check.call(
+		it.prompt().begins_with("COFFEE MUG   [LMB] TAKE"), "prompt names it: %s" % it.prompt()
+	)
 	var text: Variant = it.act("inspect")
 	check.call(str(text).contains("Hot Stove"), "inspect returns the text")
 	# carry: the body stays live and follows the eye

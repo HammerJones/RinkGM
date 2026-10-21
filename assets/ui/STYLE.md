@@ -34,6 +34,32 @@ the palette, fonts and text helpers, and builds that theme. Run
    `assets/ui/frames/` (4 px notch, 2 px border). Canvas textures use nearest
    filtering project-wide so the frames stay sharp.
 
+## First-person overlay
+
+Every scene walked in first person (the venue walk, the framework demos, a
+job on foot) draws its hints through one node, `WalkHud`
+(`framework/ui/walk_hud.gd`), and nowhere else. It fixes where each kind
+of text lives and what it looks like, so a hint always reads the same:
+
+- **Readout**, top left, `READOUT` cyan: live values. Where you are, what
+  is loaded, counts. Caps.
+- **Prompt**, centred just under the dot, `ACTION` amber: what a press
+  does right now, as `[KEY] VERB` pairs in caps separated by three spaces,
+  the thing's name first: `COFFEE MUG   [LMB] TAKE   [RMB] SHOVE   [Q] INSPECT`.
+  Keys are written `LMB`, `RMB`, `WHEEL`, `CTRL+WHEEL`, `E`, `F5`.
+- **Toast**, lower centre, `ACTION` amber, 3.5 s: what just happened
+  (`SAVED 12 ROWS`, an inspect line).
+- **Legend**, bottom left, `DIM`: the controls that always apply in this
+  scene, the same `[KEY] VERB` form.
+- **Panel**, centred, `PANEL` fill: long text (a notice, a screen), BBCode.
+- **Dot**, 3 px, white at 60%: the centre mark everything aims through.
+
+Nothing in the overlay takes mouse events (the captured cursor sits on the
+dot). The object controls themselves are fixed in the `Interactor` and
+the same everywhere: LMB take/drop, RMB throw/shove, E the thing's own
+verb, Q inspect, wheel tumble, ctrl + wheel nearer/farther. A scene adds
+keys for its own things and lists them in the legend.
+
 ## Signs and screens in the world
 
 Rink signage, the arena scoreboard and any in-world screen use the same fonts,

@@ -59,10 +59,10 @@ var story: WalkStory
 var flying := false
 var _yaw := -PI * 0.5  # facing +X, toward the front doors and the ice
 var _pitch := 0.0
+var _hud: WalkHud
 var _label: Label
 var _prompt: Label   # the [E] line, just under the centre dot
 var _toast: Label
-var _toast_t := 0.0
 var _panel: PanelContainer
 var _panel_text: RichTextLabel
 var _panel_job := {}
@@ -144,50 +144,15 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	var layer := CanvasLayer.new()
-	add_child(layer)
-	_label = Label.new()
-	_label.position = Vector2(16, 12)
-	_label.add_theme_color_override("font_color", RinkOS.READOUT)
-	_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	layer.add_child(_label)
-	_prompt = Label.new()
-	_prompt.set_anchors_preset(Control.PRESET_CENTER)
-	_prompt.position = Vector2(-300, 10)   # right under the dot, playtest 2026-10-20
-	_prompt.size = Vector2(600, 40)
-	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_prompt.add_theme_color_override("font_color", RinkOS.ACTION)
-	_prompt.add_theme_color_override("font_shadow_color", Color.BLACK)
-	layer.add_child(_prompt)
-	_toast = Label.new()
-	_toast.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	_toast.position = Vector2(-300, -120)
-	_toast.size = Vector2(600, 40)
-	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_toast.add_theme_color_override("font_color", RinkOS.ACTION)
-	_toast.add_theme_color_override("font_shadow_color", Color.BLACK)
-	layer.add_child(_toast)
-	# a small dot in the middle of the view: what E, the mouse and leaning aim at
-	var dot := ColorRect.new()
-	dot.color = Color(1, 1, 1, 0.6)
-	dot.set_anchors_preset(Control.PRESET_CENTER)
-	dot.size = Vector2(3, 3)
-	dot.position = Vector2(-1.5, -1.5)
-	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	layer.add_child(dot)
-	_panel = PanelContainer.new()
-	_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_panel.custom_minimum_size = Vector2(720, 420)
-	_panel.position = Vector2(-360, -210)
-	_panel.add_theme_stylebox_override("panel", RinkOS.flat(RinkOS.PANEL, 18.0))
-	_panel_text = RichTextLabel.new()
-	_panel_text.bbcode_enabled = true
-	_panel_text.fit_content = true
-	_panel_text.scroll_active = true
-	_panel_text.custom_minimum_size = Vector2(684, 384)
-	_panel.add_child(_panel_text)
-	_panel.visible = false
-	layer.add_child(_panel)
+	# the one first-person overlay (framework/ui/walk_hud.gd): the same
+	# readout, prompt, toast, dot and panel as every walking scene
+	_hud = WalkHud.new()
+	add_child(_hud)
+	_label = _hud.readout_label
+	_prompt = _hud.prompt_label
+	_toast = _hud.toast_label
+	_panel = _hud.panel
+	_panel_text = _hud.panel_text
 
 
 func _unhandled_input(e: InputEvent) -> void:
@@ -285,8 +250,6 @@ func _process(dt: float) -> void:
 			_leaving = true
 			_show_toast("GAME NIGHT. YOUR TEAM'S IN THE ROOM. BACK TO THE HUB.")
 			get_tree().create_timer(2.5).timeout.connect(_leave_to.bind("hub"))
-	_toast_t -= dt
-	_toast.visible = _toast_t > 0.0
 	if _busy():
 		walker.wish = Vector3.ZERO
 		walker.crouch = false
@@ -441,8 +404,7 @@ func _act(a: Dictionary) -> void:
 
 
 func _show_toast(text: String) -> void:
-	_toast.text = text
-	_toast_t = 3.5
+	_hud.toast(text)
 
 
 func _open_panel(bb: String) -> void:

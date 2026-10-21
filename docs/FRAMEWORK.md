@@ -254,8 +254,35 @@ eye, blocked by walls; `hovered` is the row under the dot and it glows;
 Carrying is real-time physics, never a freeze: the body keeps simulating
 in the hand, a velocity spring pulls it to the hold point every physics
 step (it bumps into shelves and walls on the way), it turns with the
-view, and a drop keeps its motion as a throw. `InteractPrompt` is the
-centre dot and the prompt line.
+view, and a drop keeps its motion as a throw. The controls live here too,
+the same in every scene, so the keyboard stays free for what a game adds:
+
+| Input | Does |
+| --- | --- |
+| LMB | take into the hands; LMB again drops |
+| RMB | throw what is held; shove what is looked at |
+| E | the thing's own verb: open, close, use, read |
+| Q | inspect (the manifest text, as a toast) |
+| wheel | tumble what is held, top over bottom, four turns a revolution |
+| ctrl + wheel | bring what is held nearer or farther |
+
+**What the verbs do today.** `take` and `drop` are real. `push` is a real
+shove. `inspect` shows the manifest text. `open`/`close` and `use` only
+flip the row's `open` and `on` state and emit `state_changed` / `used`:
+nothing yet lights a screen, plays a tape or heats a mug. Those are the
+game's hooks (connect `used`, read the state when drawing). Which prop
+offers what is its manifest's `verbs`; today: mugs, tapes, cassettes,
+walkie-talkies, phones and the boombox can be taken; the microwave and
+record player open; the boombox, phones, microwave, record player, TV,
+VCR, walkie-talkie and pay phone can be used; the clock and the truck
+only inspect. Nothing over 60 kg can be carried.
+
+**`WalkHud`** (`framework/ui/walk_hud.gd`) is the one first-person
+overlay, in the RINK-OS style: readout top left, the prompt as "[KEY]
+VERB" pairs under the centre dot, toasts lower centre, a legend bottom
+left, a centre panel for long text. The venue walk and every demo draw
+through it and nowhere else (see "First-person overlay" in
+`assets/ui/STYLE.md`).
 
 **Tint and highlight** ride the field's MultiMeshes as per-instance custom
 data and a live body's instance uniforms, read by one shader
@@ -268,8 +295,8 @@ reads them from one place.
 
 The objects demo (`scenes/dev/object_demo.tscn`) is a room with every
 catalog prop on tables and the floor and a first-person body: walk up to
-anything, it names itself, E takes it into your hands, F pushes or throws,
-right click inspects, Q opens or uses, F5 saves and reloads the rows.
+anything, it names itself, and the controls above apply; F5 saves and
+reloads the rows.
 `-- --test=objects` is its headless check (hover, prompt, carry, drop,
 take, push, open, save, load); `tests/unit/test_world_objects.gd` covers
 the catalog and the registry.
@@ -438,13 +465,13 @@ display, and run as headless checks in CI (`--test=<name>`).
   turns for one revolution) and ctrl + wheel brings it nearer or farther (every demo, through the Interactor).
 - **`world_demo`**: five themed rooms in a row (`framework/demo/rooms/`,
   one `DemoRoom` chunk each) that stream in and out as you walk; the HUD
-  names the loaded ones. The same verbs, plus T to pocket what you hold,
-  G to tip a box of mugs at your feet (contact audio), F5 to save, F9 to
-  load. Move something, walk two rooms on and back: it is still moved;
+  names the loaded ones. The same controls, plus T to pocket what you
+  hold, G to tip a box of mugs at your feet (contact audio), F5 to save,
+  F9 to load. Move something, walk two rooms on and back: it is still moved;
   pocket it: still gone.
 - **`ice_demo`**: a 24 x 14 m sheet of ice that is voxels (`VoxelSurface`
-  in 540 chunks). Walking carves boot marks, left click lands a snowball,
-  right click chips a crater, Z sends the resurfacer across (a bar that
+  in 540 chunks). Walking carves boot marks, LMB on bare ice lands a
+  snowball, RMB chips a crater, Z sends the resurfacer across (a bar that
   wipes the sheet over six seconds while the mesher keeps up within its
   budget), R resurfaces at once. The lines are painted voxels and the
   goal light strip is an emissive one. Mugs on the ice to kick and carry.

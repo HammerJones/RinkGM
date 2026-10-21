@@ -7,12 +7,19 @@ extends Node3D
 ##   interactor.eye = camera
 ##   interactor.objects = world_objects
 ##   interactor.hovered                 # the PropRow under the dot, or null
-##   interactor.prompt()                # "Coffee mug   [E] take   [F] push   [RMB] inspect"
+##   interactor.prompt()                # "COFFEE MUG   [LMB] TAKE   [RMB] SHOVE   [Q] INSPECT"
 ##   interactor.act("take")             # the verb on the hovered row (take starts a carry)
+##   interactor.handle_input = false    # a game that binds the controls itself
 ##   interactor.carrying                # the row in hand, or null
 ##   interactor.turn_held(0.3)          # radians, top over bottom (the wheel does this)
 ##   interactor.nudge_held(0.1)         # metres nearer or farther (ctrl + wheel)
 ##   interactor.drop()
+##
+## The controls, the same in every scene (`handle_input`): LMB takes and
+## drops, RMB throws what is held or shoves what is looked at, E does the
+## thing's own verb (open, close, use, read), Q inspects, the wheel tumbles
+## what is held and ctrl + wheel brings it nearer or farther. Keys are left
+## free for what a game adds.
 ##
 ## Carrying is real-time physics, never a freeze: the body keeps simulating
 ## while held, a velocity spring pulls it toward the hold point every
@@ -49,6 +56,8 @@ const THROW := 4.0
 const HIGHLIGHT := 0.55
 
 var eye: Node3D
+## Reads LMB, RMB, E, Q and the wheel itself (while the mouse is captured).
+var handle_input := true
 var objects: WorldObjects
 ## Layers that block the look ray (walls, counters) besides props.
 var wall_mask := Layers.mask([Layers.VENUE])
@@ -79,20 +88,50 @@ func _process(_dt: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if carrying == null or not event is InputEventMouseButton or not event.pressed:
+	if not handle_input or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return
-	var notch := 0.0
-	if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-		notch = 1.0
-	elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-		notch = -1.0
-	if notch == 0.0:
-		return
-	if event.ctrl_pressed:
-		nudge_held(notch * WHEEL_NUDGE)
-	else:
-		turn_held(notch * WHEEL_TURN)
-	get_viewport().set_input_as_handled()
+	if event is InputEventMouseButton and event.pressed:
+		match event.button_index:
+			MOUSE_BUTTON_LEFT:
+				if carrying or hovered:
+					act("take")
+					get_viewport().set_input_as_handled()
+			MOUSE_BUTTON_RIGHT:
+				if carrying:
+					act("throw")
+					get_viewport().set_input_as_handled()
+				elif hovered and objects.can(hovered, "push"):
+					act("push")
+					get_viewport().set_input_as_handled()
+			MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN:
+				if carrying:
+					var notch := 1.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1.0
+					if event.ctrl_pressed:
+						nudge_held(notch * WHEEL_NUDGE)
+					else:
+						turn_held(notch * WHEEL_TURN)
+					get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_E:
+				var v := own_verb()
+				if v != "":
+					act(v)
+					get_viewport().set_input_as_handled()
+			KEY_Q:
+				if hovered and objects.can(hovered, "inspect"):
+					act("inspect")
+					get_viewport().set_input_as_handled()
+
+
+## The hovered thing's own verb (open, close, use, read...), or "".
+func own_verb() -> String:
+	if hovered == null or objects == null:
+		return ""
+	for v in objects.verbs_of(hovered):
+		if v in ["open", "close", "use", "read"]:
+			return v
+	return ""
 
 
 func _physics_process(_dt: float) -> void:
@@ -150,26 +189,27 @@ func _look() -> PropRow:
 	return row if row != carrying else null
 
 
-## The prompt line for the hovered row (empty when nothing is there).
+## The prompt line for the hovered row (empty when nothing is there):
+## "[KEY] VERB" pairs in caps, the thing's name first.
 func prompt() -> String:
 	if carrying:
 		return (
-			"%s   [E] drop   [F] throw   [wheel] turn   [ctrl+wheel] near/far"
+			"%s   [LMB] DROP   [RMB] THROW   [WHEEL] TUMBLE   [CTRL+WHEEL] NEAR/FAR"
 			% objects.name_of(carrying).to_upper()
 		)
 	if hovered == null:
 		return ""
 	var parts: Array[String] = [objects.name_of(hovered).to_upper()]
-	for v in objects.verbs_of(hovered):
-		match v:
-			"take":
-				parts.append("[E] take")
-			"inspect":
-				parts.append("[RMB] inspect")
-			"push":
-				parts.append("[F] push")
-			_:
-				parts.append("[Q] %s" % v)
+	var verbs := objects.verbs_of(hovered)
+	if verbs.has("take"):
+		parts.append("[LMB] TAKE")
+	if verbs.has("push"):
+		parts.append("[RMB] SHOVE")
+	var own := own_verb()
+	if own != "":
+		parts.append("[E] %s" % own.to_upper())
+	if verbs.has("inspect"):
+		parts.append("[Q] INSPECT")
 	return "   ".join(parts)
 
 

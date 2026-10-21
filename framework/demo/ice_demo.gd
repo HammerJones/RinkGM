@@ -1,7 +1,7 @@
 extends Node3D
 ## The ice demo: a sheet of ice that is voxels, re-meshed only where it
-## changes. Walk on it and your boots carve a trail; left click throws a
-## snowball (a splat of snow on the ice), right click chips a crater, Z
+## changes. Walk on it and your boots carve a trail; LMB on bare ice
+## throws a snowball (a splat of snow on the ice), RMB chips a crater, Z
 ## sends the resurfacer across (a bar that wipes the sheet line by line
 ## over a few seconds, re-meshing within the frame budget), R resurfaces
 ## at once. The lines are painted voxels, the goal light is an emissive
@@ -27,8 +27,7 @@ var field: PropField
 var objects: WorldObjects
 var walker: FirstPerson
 var interactor: Interactor
-var prompt: InteractPrompt
-var hud: Label
+var hud: WalkHud
 var _env: WorldEnvironment
 var _sun: DirectionalLight3D
 var _nx := 0
@@ -102,14 +101,10 @@ func _ready() -> void:
 	interactor.eye = walker.camera
 	interactor.objects = objects
 	add_child(interactor)
-	prompt = InteractPrompt.new()
-	add_child(prompt)
-	prompt.bind(interactor)
-	hud = Label.new()
-	hud.position = Vector2(16, 12)
-	hud.modulate = Color(0.9, 0.95, 1.0)
-	hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	prompt.add_child(hud)
+	hud = WalkHud.new()
+	add_child(hud)
+	hud.bind(interactor)
+	hud.legend("[WASD] WALK   [LMB] SNOWBALL   [RMB] CHIP   [Z] RESURFACER   [R] RESURFACE NOW")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--screenshot="):
@@ -128,16 +123,11 @@ func _process(dt: float) -> void:
 	_remeshed_last = ice.remeshed - before
 	_remesh_ms = (Time.get_ticks_usec() - t0) / 1000.0
 	if hud:
-		hud.text = (
-			"ice %dx%d voxels in %d chunks   dirty %d   re-meshed this frame %d\n%s"
-			% [
-				_nx,
-				_nz,
-				ice._chunks.size(),
-				ice.dirty_count(),
-				_remeshed_last,
-				"walk to carve   LMB snowball   RMB chip   Z resurfacer   R resurface now   E/F mugs"
-			]
+		hud.readout(
+			(
+				"ICE %dx%d VOXELS IN %d CHUNKS   DIRTY %d   RE-MESHED THIS FRAME %d"
+				% [_nx, _nz, ice._chunks.size(), ice.dirty_count(), _remeshed_last]
+			)
 		)
 
 
@@ -259,27 +249,19 @@ func _aim() -> Variant:
 	return o + d * t
 
 
+## The Interactor takes LMB and RMB when something is looked at or held;
+## on bare ice they are the snowball and the chip.
 func _unhandled_input(event: InputEvent) -> void:
 	if walker == null:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
-			KEY_E:
-				interactor.act("take")
-			KEY_F:
-				interactor.act("throw" if interactor.carrying else "push")
 			KEY_Z:
 				if _zam < 0.0:
 					_zam = 0.0
 			KEY_R:
 				_resurface()
 				_paint_lines()
-			KEY_ESCAPE:
-				Input.mouse_mode = (
-					Input.MOUSE_MODE_VISIBLE
-					if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
-					else Input.MOUSE_MODE_CAPTURED
-				)
 	elif event is InputEventMouseButton and event.pressed:
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

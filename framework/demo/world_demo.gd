@@ -7,9 +7,9 @@ extends Node3D
 ##
 ##   godot --path . res://scenes/dev/world_demo.tscn
 ##
-## WASD walk, Shift run, mouse look. E take / drop, F throw (or shove),
-## RMB inspect, Q open/use, T pocket what you carry, G drop a box of mugs
-## at your feet (contact audio), F5 save, F9 load, Esc frees the mouse.
+## WASD walk, Shift run, mouse look. LMB take / drop, RMB throw (or
+## shove), E open/use, Q inspect, T pocket what you carry, G drop a box of
+## mugs at your feet (contact audio), F5 save, F9 load, Esc frees the mouse.
 ## `-- --test=world_demo` is the headless check.
 
 const ROOMS := 5
@@ -18,8 +18,7 @@ const ROOM_X := 10.0
 var world: World
 var walker: FirstPerson
 var interactor: Interactor
-var prompt: InteractPrompt
-var hud: Label
+var hud: WalkHud
 var _saved := {}
 var _pocket: Array = []
 var _env: WorldEnvironment
@@ -58,14 +57,10 @@ func _ready() -> void:
 	interactor.eye = walker.camera
 	interactor.objects = world.objects
 	add_child(interactor)
-	prompt = InteractPrompt.new()
-	add_child(prompt)
-	prompt.bind(interactor)
-	hud = Label.new()
-	hud.position = Vector2(16, 12)
-	hud.modulate = Color(0.9, 0.95, 1.0)
-	hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	prompt.add_child(hud)
+	hud = WalkHud.new()
+	add_child(hud)
+	hud.bind(interactor)
+	hud.legend("[WASD] WALK   [SHIFT] RUN   [T] POCKET   [G] BOX OF MUGS   [F5] SAVE   [F9] LOAD")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--screenshot="):
@@ -86,17 +81,14 @@ func _process(_dt: float) -> void:
 	var hit := ""
 	if not world.audio.log.is_empty():
 		var h: Array = world.audio.log[-1]
-		hit = "   last hit: %s -> %s at %.1f m/s" % [h[0], h[1], h[2]]
-	hud.text = (
-		"loaded: %s   rows %d   live %d   pocket %d%s\n%s"
-		% [
-			", ".join(names),
-			world.objects.count(),
-			live,
-			_pocket.size(),
-			hit,
-			"E take/drop  F throw/shove  RMB inspect  Q open/use  T pocket  G box of mugs  F5 save  F9 load"
-		]
+		hit = (
+			"   LAST HIT: %s -> %s AT %.1f M/S" % [str(h[0]).to_upper(), str(h[1]).to_upper(), h[2]]
+		)
+	hud.readout(
+		(
+			"LOADED: %s   ROWS %d   LIVE %d   POCKET %d%s"
+			% [", ".join(names).to_upper(), world.objects.count(), live, _pocket.size(), hit]
+		)
 	)
 
 
@@ -105,52 +97,37 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
-			KEY_E:
-				interactor.act("take")
-			KEY_F:
-				interactor.act("throw" if interactor.carrying else "push")
-			KEY_Q:
-				if interactor.hovered:
-					for v in world.objects.verbs_of(interactor.hovered):
-						if v in ["open", "close", "use", "read"]:
-							interactor.act(v)
-							break
 			KEY_T:
 				var row := interactor.carrying if interactor.carrying else interactor.hovered
 				if row:
 					var item: Variant = world.objects.act("take", row)
 					if item is Dictionary:
 						_pocket.append(item)
-						prompt.show_inspect(
-							"pocketed %s (%d in pocket)" % [item.prop, _pocket.size()]
+						hud.toast(
+							(
+								"POCKETED %s (%d IN POCKET)"
+								% [str(item.prop).to_upper(), _pocket.size()]
+							)
 						)
 			KEY_G:
 				_box_of_mugs()
-			KEY_ESCAPE:
-				Input.mouse_mode = (
-					Input.MOUSE_MODE_VISIBLE
-					if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
-					else Input.MOUSE_MODE_CAPTURED
-				)
 			KEY_F5:
 				_saved = world.to_save()
-				prompt.show_inspect(
-					"saved: %d changed rows, %d gone" % [_saved.rows.size(), _saved.removed.size()]
+				hud.toast(
+					"SAVED: %d CHANGED ROWS, %d GONE" % [_saved.rows.size(), _saved.removed.size()]
 				)
 			KEY_F9:
 				if _saved.is_empty():
-					prompt.show_inspect("nothing saved yet (F5)")
+					hud.toast("NOTHING SAVED YET (F5)")
 				else:
 					world.from_save(_saved.duplicate(true))
-					prompt.show_inspect("loaded the save")
-	elif event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_RIGHT:
-			interactor.act("inspect")
-		elif (
-			event.button_index == MOUSE_BUTTON_LEFT
-			and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
-		):
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+					hud.toast("LOADED THE SAVE")
+	elif (
+		event is InputEventMouseButton
+		and event.pressed
+		and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
+	):
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 ## A dozen mugs dropped from waist height in front of you: a pile that
