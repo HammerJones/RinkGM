@@ -7,6 +7,9 @@ extends SceneTree
 
 const A := "res://framework/bench/chunk_test_a.tscn"
 const B := "res://framework/bench/chunk_test_b.tscn"
+## Frames to wait for a threaded load: frames run as fast as the machine
+## allows, the loader thread takes real time, and a loaded CI box is slow.
+const WAIT := 1500
 
 var failures := 0
 var world: World
@@ -46,7 +49,7 @@ func _process(_dt: float) -> bool:
 	phase_frame += 1
 	match phase:
 		0:  # A loads and populates
-			if world.chunk_at(Vector3(8, 0, 8)) or phase_frame > 240:
+			if world.chunk_at(Vector3(8, 0, 8)) or phase_frame > WAIT:
 				var a := world.chunk_at(Vector3(8, 0, 8))
 				_check(a != null and a.chunk_id == "test_a", "chunk A loads around the focus")
 				_check(world.objects.get_row("test_a.mug.0") != null, "A populated its mugs")
@@ -84,7 +87,7 @@ func _process(_dt: float) -> bool:
 		2:
 			if (
 				(world.chunk_at(Vector3(48, 0, 8)) and world.chunk_at(Vector3(8, 0, 8)) == null)
-				or phase_frame > 300
+				or phase_frame > WAIT
 			):
 				_check(world.chunk_at(Vector3(8, 0, 8)) == null, "A unloaded")
 				_check(world.chunk_at(Vector3(48, 0, 8)) != null, "B loaded")
@@ -109,7 +112,7 @@ func _process(_dt: float) -> bool:
 		3:
 			if (
 				(world.chunk_at(Vector3(8, 0, 8)) and world.chunk_at(Vector3(48, 0, 8)) == null)
-				or phase_frame > 300
+				or phase_frame > WAIT
 			):
 				_check(world.chunk_at(Vector3(8, 0, 8)) != null, "A loaded again")
 				_check(world.objects.get_row("test_a.mug.0") == null, "the taken mug stays gone")
