@@ -267,15 +267,13 @@ func _make_stream() -> GPUParticles3D:
 	return ps
 
 
-## A chip (RMB held: one every 0.08 s wherever you look): a short deep
-## stroke across the view with snow thrown aside.
+## A chip (RMB held: one every 0.08 s wherever you look): a small round
+## gouge under the dot, 2 mm deep in the middle, snow thrown around it.
 func _chip() -> void:
 	var at: Variant = _aim()
 	if at == null:
 		return
-	var p := _local(at)
-	var dir := Vector2.from_angle(walker.rotation.y + PI / 2)
-	ice.stroke(p - dir * 0.15, p + dir * 0.15, 0.04, 0.9, 2.0, 0.4)
+	ice.chip(_local(at), 0.12, 2.0, 0.4)
 	if WorldSound.wanted():
 		WorldSound.play(self, "blade_skip", at, -6.0, 0.9)
 

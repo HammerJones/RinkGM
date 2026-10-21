@@ -227,6 +227,28 @@ func stroke(
 					_touch(x, z)
 
 
+## A chip: a round gouge `width` metres across, `depth` mm in the middle
+## and shallowing to the rim, with snow thrown in a ring around it.
+func chip(at: Vector2, width: float, depth: float, snow_mm := 0.0) -> void:
+	var c := cell_at(at)
+	var r := int(ceil(width * 0.5 / cell)) + 1
+	for dz in range(-r, r + 1):
+		for dx in range(-r, r + 1):
+			var x := c.x + dx
+			var z := c.y + dz
+			if not in_bounds(x, z):
+				continue
+			var dist := Vector2(dx, dz).length() * cell
+			var i := index(x, z)
+			if dist <= width * 0.5:
+				gouge[i] = maxf(gouge[i], depth * (1.0 - dist / (width * 0.5)))
+				cut[i] = maxf(cut[i], 0.6)
+				_touch(x, z)
+			elif dist <= width * 0.9 and snow_mm > 0.0:
+				snow[i] = clampf(snow[i] + snow_mm * 0.3, 0.0, 3.0)
+				_touch(x, z)
+
+
 ## The resurfacer over a band (x range, z range in metres): the blade at
 ## `blade_mm` above the base shaves off everything higher (built-up ice,
 ## crust peaks, snow; a blade below zero cuts into the base and takes
