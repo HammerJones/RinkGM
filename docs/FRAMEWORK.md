@@ -489,8 +489,19 @@ takes about 12 minutes, the sim's number. It walks the wet cells in
 slices of 3000 a frame through an append-only list (no per-cell calls or
 allocations), so a whole flooded sheet of 537k cells costs under 3 ms a
 frame and each cell is visited every three seconds with that much sim
-time. The resurfacer's rag matters: a new rag lays an even film, a worn
-one leaves streaks and a coarser cut (`resurface(..., rag_wear)`). The
+time. `set_now()` sets every wet cell at once, for a test rig.
+
+**The blade.** `resurface(x0, x1, z0, z1, film_mm, rag_wear, blade_mm,
+travel)` is the resurfacer over a band: the blade at `blade_mm` above
+the base shaves off everything higher (built-up ice, crust peaks, loose
+snow; a blade below zero cuts into the base and takes gouge depth), and
+where it touched it leaves a dry cut whose striations run along
+`travel`, the blade's direction. Columns below the blade keep their old
+cut. The shavings go up the auger, a little spills as a ridge along the
+band's sides, and the call returns the millimetres taken. With
+`film_mm` > 0 the conditioner's rag lays water behind the blade: a new
+rag (`rag_wear` 0) an even film, a worn one (1) streaks and a coarser
+cut. A dry pass is the one without the film. The
 game's `IceSlab` and `RefrigerationPlant` are where the real heat balance
 lives; this is the surface they will drive, and the sim's 25 cm grid is
 the source the 2.5 cm columns sample.
@@ -543,14 +554,18 @@ display, and run as headless checks in CI (`--test=<name>`).
   F9 to load. Move something, walk two rooms on and back: it is still moved;
   pocket it: still gone.
 - **`ice_demo`**: a 24 x 14 m `IceSheet` (section 11b) under arena-style
-  lamps. Z cycles the whole sheet through the four states; holding LMB
+  lamps. X cycles the whole sheet through the four states; holding LMB
   runs a hose where you look (1.6 L/s, a stream of drops) and the readout
   shows the slab and air temperatures, the clock, the litres hosed and
-  the ice built up under the dot while it sets from the edges in; T
-  speeds the clock (x1, x10, x60); holding RMB chips gouges wherever you
-  look; R sends the resurfacer across with the conditioner's rag, Y wears
-  the rag. Footsteps leave the ice alone. Mugs on the ice to kick and
-  carry.
+  the column's top and built-up ice under the dot while it sets from the
+  edges in; I makes water set the instant it lands; T speeds the clock
+  (x1, x10, x60); holding RMB chips gouges wherever you look. R drives
+  the resurfacer from the blue line to the red line along your side of
+  the sheet: M switches DRY CUT (the blade shaves, striations along the
+  travel) and FLOOD (the rag lays a film behind the blade), [ and ] set
+  the blade in quarter millimetres, Y wears the rag. Footsteps leave the
+  ice alone. Mugs on the ice to kick and carry. In every demo Ctrl
+  crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.
 
 ## 14. What the port looks like
 

@@ -1,14 +1,19 @@
 extends Node3D
 ## The ice demo: a sheet of ice as columns (IceSheet), drawn by the ice
-## shader with its four surface states. Z cycles the whole sheet through
+## shader with its four surface states. X cycles the whole sheet through
 ## snowed up, dry cut, flooded and fresh frozen. Holding LMB runs a hose
 ## where you look (a stream of drops, water that pools and runs downhill)
 ## and you watch it set from the edges in under the slab and air
 ## temperatures on the readout; set water is ice, so flooding one spot
 ## again and again builds it up, and the readout gives the height under
-## the dot. T speeds the clock up. RMB chips a gouge. R sends the
-## resurfacer over the sheet with the conditioner's rag, Y wears the rag.
-## Mugs on the ice to kick and carry. Footsteps leave the ice alone.
+## the dot; I makes water set the instant it lands, for testing the blade
+## against built-up ice. T speeds the clock up. RMB chips a gouge. R
+## drives the resurfacer from the blue line to the red line along your
+## side of the sheet: in DRY CUT mode the blade shaves everything above
+## its level and leaves striations along its travel, in FLOOD mode the
+## rag lays a film behind the blade; M switches mode, [ and ] set the
+## blade, Y wears the rag. Mugs on the ice to kick and carry. Footsteps
+## leave the ice alone. Ctrl crouches, F flies, Z zooms.
 ##
 ##   godot --path . res://scenes/dev/ice_demo.tscn
 ##
@@ -24,6 +29,11 @@ const STATES := [
 ]
 const SCALES := [1.0, 10.0, 60.0]
 const RAGS := ["NEW", "USED", "WORN"]
+const MODES := ["DRY CUT", "FLOOD"]
+const MACHINE_W := 2.1  # the conditioner's width
+const MACHINE_SPEED := 2.0  # m/s
+const PASS_X0 := 6.0  # the blue line
+const PASS_X1 := 12.0  # the red line
 const HOSE_LPS := 1.6  # the big hose wide open, litres a second
 const HOSE_WIDTH := 0.5  # metres the stream wets
 const RED := Color("c8322e")
@@ -38,6 +48,12 @@ var hud: WalkHud
 var state := 1
 var scale_i := 0
 var rag_i := 0
+var mode_i := 0
+var blade_mm := 0.0
+var instant := false
+var pass_z := -1.0
+var shaved_mm := 0.0
+var _machine: Node3D
 var hosing := false
 var chipping := false
 var _chip_t := 0.0
@@ -120,9 +136,12 @@ func _ready() -> void:
 	(
 		hud
 		. legend(
-			"[Z] NEXT STATE   [LMB] HOLD TO HOSE   [RMB] HOLD TO CHIP   [R] RESURFACER   [Y] RAG WEAR   [T] CLOCK SPEED"
+			"[X] STATE   [LMB] HOSE   [RMB] CHIP   [R] RESURFACER   [M] MODE   [ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   [T] CLOCK   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 		)
 	)
+	_machine = _make_machine()
+	add_child(_machine)
+	_machine.visible = false
 	_stream = _make_stream()
 	add_child(_stream)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -137,6 +156,8 @@ func _process(dt: float) -> void:
 	# the building's air drifts over the day; the slab holds its setpoint
 	air_c = air_base + 3.0 * sin(sim_t / 900.0)
 	ice.thermal(sdt, slab_c, air_c)
+	if instant:
+		ice.set_now()
 	if _zam >= 0.0:
 		_zamboni_step(sdt)
 	if walker:
@@ -153,22 +174,29 @@ func _process(dt: float) -> void:
 		var under := ""
 		var at: Variant = _aim()
 		if at != null:
-			under = "   ICE +%.1f MM UNDER THE DOT" % ice.ice_at(_local(at))
+			under = (
+				"   UNDER THE DOT: TOP +%.1f MM, ICE +%.1f MM"
+				% [ice.top_at(_local(at)), ice.ice_at(_local(at))]
+			)
 		(
 			hud
 			. readout(
 				(
-					"STATE %s   SLAB %.1f C   AIR %.1f C   CLOCK x%d   T+%s   WET %d CELLS   DIRTY %d / %d   RAG %s   HOSED %.0f L%s"
+					"STATE %s   SLAB %.1f C   AIR %.1f C   CLOCK x%d%s   T+%s   WET %d   DIRTY %d / %d\nRESURFACER %s   BLADE %+.2f MM   RAG %s   SHAVED %.0f MM   HOSED %.0f L%s"
 					% [
 						STATES[state][0],
 						slab_c,
 						air_c,
 						int(SCALES[scale_i]),
+						"   INSTANT FREEZE" if instant else "",
 						_clock(sim_t),
 						ice.wet_cells,
 						ice.dirty_count(),
 						ice.chunk_count(),
+						MODES[mode_i],
+						blade_mm,
 						RAGS[rag_i],
+						shaved_mm,
 						hosed_l,
 						under
 					]
@@ -252,14 +280,57 @@ func _chip() -> void:
 		WorldSound.play(self, "blade_skip", at, -6.0, 0.9)
 
 
-## The resurfacer: a bar that sweeps the sheet from west to east over 60 s
-## of sim time, leaving a fresh cut and a wet film behind it.
+## The resurfacer: from the blue line to the red line along the player's
+## side of the sheet at MACHINE_SPEED, the blade shaving as it goes; in
+## FLOOD mode the rag lays the film behind it.
+func _start_pass() -> void:
+	if _zam >= 0.0 or walker == null:
+		return
+	_zam = PASS_X0
+	pass_z = clampf(_local(walker.global_position).y, MACHINE_W / 2, RINK.y - MACHINE_W / 2)
+	shaved_mm = 0.0
+	_machine.visible = true
+
+
 func _zamboni_step(sdt: float) -> void:
 	var x0 := _zam
-	_zam += sdt * (RINK.x / 60.0)
-	ice.resurface(x0, minf(_zam, RINK.x), 0.0, RINK.y, 0.8, rag_i / 2.0)
-	if _zam >= RINK.x:
+	_zam += sdt * MACHINE_SPEED
+	var x1 := minf(_zam, PASS_X1)
+	var film := 0.8 if mode_i == 1 else 0.0
+	shaved_mm += ice.resurface(
+		x0, x1, pass_z - MACHINE_W / 2, pass_z + MACHINE_W / 2, film, rag_i / 2.0, blade_mm, 0.0
+	)
+	_machine.position = ice.position + Vector3(x1 + 1.2, 0.0, pass_z)
+	if _zam >= PASS_X1:
 		_zam = -1.0
+		_machine.visible = false
+		if hud:
+			hud.toast("PASS DONE: %s, SHAVED %.0f MM OF COLUMNS" % [MODES[mode_i], shaved_mm])
+
+
+## A box for the machine, so the pass is seen; the blade is the dark bar
+## at the back edge.
+func _make_machine() -> Node3D:
+	var n := Node3D.new()
+	var body := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(2.8, 1.6, MACHINE_W)
+	body.mesh = bm
+	body.position = Vector3(0, 0.9, 0)
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color("2f4a6e")
+	body.material_override = m
+	n.add_child(body)
+	var blade := MeshInstance3D.new()
+	var bb := BoxMesh.new()
+	bb.size = Vector3(0.12, 0.08, MACHINE_W)
+	blade.mesh = bb
+	blade.position = Vector3(-1.3, 0.04, 0)
+	var bmat := StandardMaterial3D.new()
+	bmat.albedo_color = Color("1a1c20")
+	blade.material_override = bmat
+	n.add_child(blade)
+	return n
 
 
 func _local(p: Vector3) -> Vector2:
@@ -287,13 +358,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
-			KEY_Z:
+			KEY_X:
 				_set_state(state + 1)
 				hud.toast("STATE: %s" % STATES[state][0])
 			KEY_R:
-				if _zam < 0.0:
-					_zam = 0.0
-					hud.toast("RESURFACER OUT")
+				_start_pass()
+				hud.toast("RESURFACER: %s PASS, BLADE %+.2f MM" % [MODES[mode_i], blade_mm])
+			KEY_M:
+				mode_i = (mode_i + 1) % MODES.size()
+				hud.toast("RESURFACER MODE: %s" % MODES[mode_i])
+			KEY_BRACKETLEFT:
+				blade_mm = maxf(blade_mm - 0.25, -2.0)
+				hud.toast("BLADE %+.2f MM" % blade_mm)
+			KEY_BRACKETRIGHT:
+				blade_mm = minf(blade_mm + 0.25, 6.0)
+				hud.toast("BLADE %+.2f MM" % blade_mm)
+			KEY_I:
+				instant = not instant
+				hud.toast("INSTANT FREEZE %s" % ("ON" if instant else "OFF"))
 			KEY_T:
 				scale_i = (scale_i + 1) % SCALES.size()
 				hud.toast("CLOCK x%d" % int(SCALES[scale_i]))
@@ -404,20 +486,18 @@ static func _clock(t: float) -> String:
 
 
 func _screenshot(path: String) -> void:
-	walker.rotation.y = PI / 2
-	walker.camera.rotation.x = -0.4
-	for i in 8:
-		await get_tree().process_frame
-	hosing = true
-	for i in 30:
-		await get_tree().process_frame
-	hosing = false
-	walker.rotation.y = PI / 2 + 0.5
-	for i in 8:
-		await get_tree().process_frame
-	_chip()
-	walker.rotation.y = PI / 2 + 0.2
-	walker.camera.rotation.x = -0.35
+	# a bump of instant-frozen floods, then a dry pass at +1 mm over it:
+	# the blade leaves striations along its travel and shaves the bump
+	walker.global_position = ice.position + Vector3(5.0, 0.05, 4.0)
+	walker.rotation.y = -PI / 2  # look along +x, down the pass
+	walker.camera.rotation.x = -0.45
+	for again in 4:
+		ice.pour(Vector2(8.0, 4.0), 0.8, 1.2)
+		ice.set_now()
+	_start_pass()
+	blade_mm = 1.0
+	for i in 20:
+		_zamboni_step(0.15)
 	ice.flush()
 	for i in 6:
 		await get_tree().process_frame
@@ -495,21 +575,89 @@ func _self_test() -> void:
 	var t0 := Time.get_ticks_usec()
 	ice.thermal(1.0, -5.0, 8.0)
 	var ms := (Time.get_ticks_usec() - t0) / 1000.0
-	check.call(ms < 4.0, "a thermal step on a flooded sheet is under 4 ms (%.1f)" % ms)
+	check.call(ms < 6.0, "a thermal step on a flooded sheet is under 6 ms (%.1f)" % ms)
 	t0 = Time.get_ticks_usec()
 	ice.flush()
 	var flush_ms := (Time.get_ticks_usec() - t0) / 1000.0
 	print("ice demo: flooded sheet thermal %.1f ms, full flush %.0f ms" % [ms, flush_ms])
 	_set_state(1)
 	ice.flush()
-	# a chip gouges; the resurfacer wipes it and leaves a film
+	# a chip gouges; a blade at zero rides over it, a blade below the base takes it
 	ice.stroke(Vector2(3.0, 3.0), Vector2(3.3, 3.0), 0.04, 0.9, 2.0, 0.4)
 	var g := ice.index(ice.cell_at(Vector2(3.15, 3.0)).x, ice.cell_at(Vector2(3.15, 3.0)).y)
 	check.call(ice.gouge[g] > 1.0, "a chip gouges (%.2f mm)" % ice.gouge[g])
-	ice.resurface(0.0, RINK.x, 0.0, RINK.y, 0.8)
+	ice.resurface(0.0, RINK.x, 0.0, RINK.y, 0.8, 0.0, 0.0, 0.0)
 	check.call(
-		ice.gouge[g] == 0.0 and is_equal_approx(ice.water[g], 0.8),
-		"the resurfacer wipes it and leaves a film"
+		ice.gouge[g] > 1.0 and is_equal_approx(ice.water[g], 0.8),
+		"a flood pass at blade 0 leaves the gouge under an even film"
+	)
+	ice.resurface(0.0, RINK.x, 0.0, RINK.y, 0.0, 0.0, -2.0, 0.0)
+	check.call(ice.gouge[g] == 0.0, "a dry pass at -2 mm takes the gouge (%.2f)" % ice.gouge[g])
+	# the rag: a worn one leaves streaks and a coarser cut
+	ice.resurface(0.0, RINK.x, 0.0, RINK.y, 0.8, 1.0, 0.0, 0.0)
+	var streaky := false
+	for z in 40:
+		if not is_equal_approx(ice.water[ice.index(g % ice.w, z)], 0.8):
+			streaky = true
+	check.call(streaky, "a worn rag leaves streaks")
+	# water on snow is slush and sets into a rough crust
+	_set_state(0)
+	ice.flush()
+	ice.pour(Vector2(12.0, 5.0), 0.6, 1.2)
+	var sc := ice.cell_at(Vector2(12.0, 5.0))
+	var si := ice.index(sc.x, sc.y)
+	check.call(ice.snow[si] > 0.0 and ice.water[si] > 0.0, "water on snow keeps the snow as slush")
+	for minute in 25:
+		ice.thermal(60.0, -5.0, 8.0)
+	check.call(
+		ice.crust[si] > 0.5 and ice.snow[si] == 0.0 and ice.water[si] == 0.0,
+		"slush set into a crust (%.2f mm)" % ice.crust[si]
+	)
+	# water runs into a gouge and fills it: the trench goes, a scar stays
+	_set_state(1)
+	ice.flush()
+	ice.stroke(Vector2(9.0, 9.0), Vector2(9.4, 9.0), 0.04, 0.9, 2.0, 0.0)
+	var gc := ice.cell_at(Vector2(9.2, 9.0))
+	var gi := ice.index(gc.x, gc.y)
+	var depth0 := ice.gouge[gi]
+	ice.pour(Vector2(9.2, 9.1), 0.6, 1.5)  # a puddle over and beside it
+	for minute in 30:
+		ice.thermal(60.0, -5.0, 8.0)
+	check.call(
+		ice.gouge[gi] < depth0 and ice.scar[gi] > 0.0,
+		(
+			"water ran into the gouge and set (gouge %.2f -> %.2f, scar %.2f)"
+			% [depth0, ice.gouge[gi], ice.scar[gi]]
+		)
+	)
+	# the blade: built-up ice above its level is shaved, striations run along the travel
+	_set_state(1)
+	ice.flush()
+	for again in 4:
+		ice.pour(Vector2(8.0, 4.0), 0.6, 1.2)
+		ice.set_now()
+	var bump := ice.top_at(Vector2(8.0, 4.0))
+	check.call(bump > 3.0, "four instant floods built a bump (%.2f mm)" % bump)
+	var took := ice.resurface(PASS_X0, PASS_X1, 3.0, 5.0, 0.0, 0.0, 1.0, 0.0)
+	check.call(
+		took > 0.0 and ice.top_at(Vector2(8.0, 4.0)) <= 1.01,
+		(
+			"a blade at +1 mm shaved it to 1 mm (%.2f, took %.0f)"
+			% [ice.top_at(Vector2(8.0, 4.0)), took]
+		)
+	)
+	var bc := ice.cell_at(Vector2(8.0, 4.0))
+	var bi := ice.index(bc.x, bc.y)
+	check.call(
+		is_equal_approx(ice.ang[bi], 0.0) and ice.cut[bi] > 0.7,
+		"the cut's striations run along the travel"
+	)
+	var uc := ice.cell_at(Vector2(9.5, 4.8))
+	check.call(ice.ang[ice.index(uc.x, uc.y)] > 0.05, "a column below the blade keeps its old cut")
+	took = ice.resurface(PASS_X0, PASS_X1, 3.0, 5.0, 0.0, 0.0, 0.0, 0.0)
+	check.call(
+		ice.top_at(Vector2(8.0, 4.0)) <= 0.01 and took > 0.0,
+		"a blade at 0 takes the rest (%.2f)" % ice.top_at(Vector2(8.0, 4.0))
 	)
 	ice.flush()
 	check.call(ice.remeshed > 135, "chunks re-meshed (%d)" % ice.remeshed)

@@ -227,26 +227,73 @@ func stroke(
 					_touch(x, z)
 
 
-## A resurfacer pass over a band (x range, z range in metres): shaved to a
-## fresh cut along x, gouges and snow gone, `film_mm` of water spread by
-## the conditioner's rag. A new rag (`rag_wear` 0) lays an even film; a
-## worn one (1) leaves streaks across the band and a coarser cut.
-func resurface(x0: float, x1: float, z0: float, z1: float, film_mm := 0.8, rag_wear := 0.0) -> void:
+## The resurfacer over a band (x range, z range in metres): the blade at
+## `blade_mm` above the base shaves off everything higher (built-up ice,
+## crust peaks, snow; a blade below zero cuts into the base and takes
+## gouge depth with it), and where it touched it leaves a dry cut with
+## striations along `travel`, the blade's direction (radians in the
+## sheet's plane). The shavings go up the auger; a little spills as a
+## ridge along the band's sides. In flood mode (`film_mm` > 0) the
+## conditioner's rag lays the water behind the blade: a new rag
+## (`rag_wear` 0) an even film, a worn one (1) streaks and a coarser cut.
+## Returns the millimetres shaved, summed over the band's cells.
+func resurface(
+	x0: float,
+	x1: float,
+	z0: float,
+	z1: float,
+	film_mm := 0.8,
+	rag_wear := 0.0,
+	blade_mm := 0.0,
+	travel := 0.0
+) -> float:
 	var c0 := cell_at(Vector2(minf(x0, x1), minf(z0, z1)))
 	var c1 := cell_at(Vector2(maxf(x0, x1), maxf(z0, z1)))
+	var shaved := 0.0
+	var touched_z := {}
 	for z in range(maxi(c0.y, 0), mini(c1.y + 1, d)):
 		var streak := 1.0 + rag_wear * 0.6 * sin(z * cell * 41.0) * sin(z * cell * 7.3)
 		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
 			var i := index(x, z)
-			cut[i] = lerpf(0.15, 0.5, rag_wear)
-			ang[i] = 0.0
-			snow[i] = 0.0
-			gouge[i] = 0.0
-			water[i] = film_mm * streak
-			frozen[i] = 0.0
+			# the column's top: ice, the tallest crust peak, loose snow
+			var top := ice[i] + crust[i] + snow[i]
+			var took := 0.0
+			if snow[i] > 0.0:
+				took += snow[i]  # loose snow goes up the auger whatever the blade
+				snow[i] = 0.0
+			if top > blade_mm:
+				var level := maxf(blade_mm, 0.0)
+				if ice[i] + crust[i] > level:
+					var cut_mm := ice[i] + crust[i] - level
+					took += cut_mm
+					# peaks go first, then the ice under them
+					var from_crust := minf(crust[i], cut_mm)
+					crust[i] -= from_crust
+					ice[i] -= cut_mm - from_crust
+				if blade_mm < 0.0 and gouge[i] > 0.0:
+					# below the base: the blade takes the surface the gouge is in
+					var dig := minf(gouge[i], -blade_mm)
+					gouge[i] -= dig
+					scar[i] = maxf(scar[i] - dig, 0.0)
+				cut[i] = lerpf(0.75, 0.5, rag_wear) if film_mm > 0.0 else 0.75
+				ang[i] = travel
+				touched_z[z] = true
 			if film_mm > 0.0:
+				water[i] = film_mm * streak
+				frozen[i] = 0.0
 				_wet_add(i)
+			shaved += took
 			_touch(x, z)
+	# the spill: a thin ridge of shavings just outside the band's sides
+	if shaved > 0.0:
+		var per := shaved / maxf(float(c1.x - c0.x + 1), 1.0) * 0.08
+		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
+			for z in [c0.y - 1, c1.y + 1]:
+				if in_bounds(x, z):
+					var i := index(x, z)
+					snow[i] = clampf(snow[i] + per, 0.0, 3.0)
+					_touch(x, z)
+	return shaved
 
 
 ## The freezing step: `dt` seconds of sim time with the slab at `slab_c`
@@ -350,6 +397,24 @@ func _flow(i: int, il: int, ir: int, iu: int, id: int, liquid: float) -> void:
 			frozen[nb] *= had / (had + give)  # diluted by the new water
 			_wet_add(nb)
 			_touch(nb % w, nb / w)
+
+
+## Sets every wet cell at once (a test rig's instant freeze).
+func set_now() -> void:
+	while not _wet.is_empty():
+		thermal(1.0e9, -5.0, 0.0, _wet.size())
+	_wet_list.resize(0)
+	_wet_next.resize(0)
+	_thermal_cursor = 0
+
+
+## The column's top above the base at a point, mm: ice, crust peaks, snow.
+func top_at(p: Vector2) -> float:
+	var c := cell_at(p)
+	if not in_bounds(c.x, c.y):
+		return 0.0
+	var i := index(c.x, c.y)
+	return ice[i] + crust[i] + snow[i]
 
 
 ## Built-up ice (mm) at a point, for a caliper or a test.
