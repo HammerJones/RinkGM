@@ -4,7 +4,7 @@
   "inspect": "A lever on the resurfacer's console: a chromed shaft with a rubber knob.",
   "mass_kg": 1.2,
   "mesh": "merged",
-  "name": "Console lever",
+  "name": "Auger lever",
   "pivot": [
     6.0,
     0,
@@ -12,7 +12,7 @@
   ],
   "size_m": [
     0.036,
-    0.249,
+    0.246,
     0.075
   ],
   "sound": "metal",

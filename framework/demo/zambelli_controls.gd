@@ -2,13 +2,11 @@ class_name ZambelliControls
 extends Node3D
 ## The Zambelli's operator console: the controls the demo can aim at and
 ## work. Each is a prop from the bought model (tools/propgen/zambelli_lever.py
-## takes a lever out of the GLB at 3 mm) hung on a pivot the machine
-## registers with `add_lever()`; the demo rays at their aim areas, shows
+## takes them out of the GLB at 3 mm) hung on a pivot the machine
+## registers with `add_control()`; the demo rays at their aim areas, shows
 ## `prompt()` for the one under the dot, and calls `toggle()` (E) or
 ## `scroll()` (the wheel). The poses follow the machine's state, so a
 ## pass that switches the augers on throws their levers too.
-##
-## So far: the horizontal auger's lever, the leftmost of the row.
 
 enum Kind { DRIVE, AUGER_H, AUGER_V, COND, BIN, BLADE, FLOOD, WASH }
 
@@ -32,10 +30,13 @@ var hovered := -1
 var _controls: Array[Dictionary] = []
 
 
-## A lever: `pivot` is the node the lever's meshes hang from, placed at
-## the lever's foot, that tilts about its x; `size` and `at` are the aim
-## box in the pivot's frame.
-func add_lever(kind: Kind, label: String, pivot: Node3D, size: Vector3, at: Vector3) -> void:
+## A control: `pivot` is the node its meshes hang from, placed where it
+## turns (a lever's foot, a valve's post, the handwheel's column) and
+## turning about `axis` ("x" tilts, "y" turns); `size` and `at` are the
+## aim box in the pivot's frame.
+func add_control(
+	kind: Kind, label: String, pivot: Node3D, axis: String, size: Vector3, at: Vector3
+) -> void:
 	var meshes: Array[MeshInstance3D] = []
 	for n in pivot.get_children():
 		if n is MeshInstance3D:
@@ -45,7 +46,7 @@ func add_lever(kind: Kind, label: String, pivot: Node3D, size: Vector3, at: Vect
 			"kind": kind,
 			"name": label,
 			"pivot": pivot,
-			"axis": "x",
+			"axis": axis,
 			"meshes": meshes,
 			"area": _area(pivot, size, at),
 			"angle": 0.0,

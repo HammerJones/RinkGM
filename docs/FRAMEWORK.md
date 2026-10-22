@@ -651,19 +651,27 @@ display, and run as headless checks in CI (`--test=<name>`).
   second HUD line reads the blade's setting in turns and millimetres,
   the flood and wash valves, and the column under the dot: ice thickness over
   the paint, snow and water in millimetres. N puts you at the operator's
-  console. The console's controls are being rebuilt one at a time from
-  the bought model (`framework/demo/zambelli_controls.gd` registers
-  them, `tools/propgen/zambelli_lever.py` takes the row of four levers
-  out of the GLB at 3 mm, the augers' as `zambelli_lever` and the
-  conditioner's, which the bin's repeats, as `zambelli_lever_cond`, and
-  clears their 17 mm blobs off the body prop); so far that row: look at
-  a lever and E throws it, the augers' 30 degrees back for on, the
+  console. The console's controls are props taken out of the bought
+  model (`tools/propgen/zambelli_lever.py` takes each out of the GLB
+  at 3 mm and clears its 17 mm blob off the body prop;
+  `framework/demo/zambelli_controls.gd` registers them on pivots from
+  the table in `zambelli.gd`): the row of four levers, the operator's
+  left to right the horizontal auger's, the conditioner's, the vertical
+  auger's and the bin's (the augers' alike, the other two alike), drive
+  select ahead on the left, the blade's handwheel lying on its column
+  at the rear, the flood and wash valves either side of it (a post with
+  a handle each), and the stalk with the ball beside the levers, which
+  does nothing. Look at a control and the HUD names it and its state;
+  E throws a lever (the augers' 30 degrees back for on, the
   conditioner's and the bin's a push forward for up or back for down
-  that springs back to neutral. The rest of the
-  console is still the body prop's blobs, driven from the keyboard: the
-  blade in sixteenths of a turn (a turn is 0.5 mm, +3.0 raised to -3.0
-  lowered, 0 flush with the conditioner's bottom), the flood valve as a
-  percentage (the wash valve is readout only for now). With the flood
+  that springs back to neutral, drive select through F, N and R), the
+  wheel turns the handwheel in sixteenths of a turn (a turn is 0.5 mm,
+  clockwise from above lowers the blade, +3.0 raised to -3.0 lowered,
+  0 flush with the conditioner's bottom, the prompt reads the turns and
+  the millimetres) and the valves in 5 % steps (the flood valve a
+  quarter turn anticlockwise to full, the wash valve clockwise; the
+  prompt reads the
+  percentage; the wash valve is readout only for now). With the flood
   valve open and the conditioner down, water runs from the pipe along
   the top of the conditioner's back wall in streams 2.5 inches apart
   down the wall to the rag, their thickness following the valve, and
@@ -698,7 +706,7 @@ display, and run as headless checks in CI (`--test=<name>`).
   with the whole machine, `--side` from beside it, `--flood` the back wall
   with the flood running, `--cut=<mm>` for the blade's depth);
   `--view=console` stands at the controls (`--above` looks down on them,
-  `--lever` is close on the row of levers). In every demo Ctrl
+  `--lever` is close on the console from the operator's left). In every demo Ctrl
   crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.
 
 ## 14. What the port looks like

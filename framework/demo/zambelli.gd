@@ -28,13 +28,92 @@ const BLADE_Z := 3.519
 const BODY_Y0 := 0.084  # the body's bounding box starts here
 const BODY_PIVOT_Z := 2.142  # the body's bounding box centre
 const BODY_X0 := 0.035  # ... and its centre across, off the machine's
-# the console's row of levers, their feet on the deck, the operator's left to
-# right: the horizontal auger's, the conditioner's, the vertical auger's, the bin's
-const LEVER_FEET: Array[Vector3] = [
-	Vector3(-0.339, 1.657, 0.161),
-	Vector3(-0.285, 1.657, 0.140),
-	Vector3(-0.162, 1.657, 0.161),
-	Vector3(-0.108, 1.657, 0.140),
+# the console, from tools/propgen/zambelli_lever.py: each control's prop, what
+# it is, where it turns in this frame (its foot: a lever's shaft, a valve's
+# post, the handwheel's column), the prop's offset from there, the axis it
+# turns about, and its aim box
+const CONSOLE: Array[Dictionary] = [
+	{
+		"id": "zambelli_lever",
+		"kind": ZambelliControls.Kind.AUGER_H,
+		"name": "HORIZONTAL AUGER",
+		"foot": Vector3(-0.339, 1.660, 0.169),
+		"offset": Vector3(0.0, 0.0, -0.008),
+		"axis": "x",
+		"aim": Vector3(0.1, 0.3, 0.16),
+	},
+	{
+		"id": "zambelli_lever_cond",
+		"kind": ZambelliControls.Kind.COND,
+		"name": "CONDITIONER",
+		"foot": Vector3(-0.285, 1.660, 0.180),
+		"offset": Vector3(0.0, 0.0, -0.039),
+		"axis": "x",
+		"aim": Vector3(0.1, 0.3, 0.16),
+	},
+	{
+		"id": "zambelli_lever",
+		"kind": ZambelliControls.Kind.AUGER_V,
+		"name": "VERTICAL AUGER",
+		"foot": Vector3(-0.161, 1.660, 0.169),
+		"offset": Vector3(0.0, 0.0, -0.008),
+		"axis": "x",
+		"aim": Vector3(0.1, 0.3, 0.16),
+	},
+	{
+		"id": "zambelli_lever_cond",
+		"kind": ZambelliControls.Kind.BIN,
+		"name": "BIN",
+		"foot": Vector3(-0.107, 1.660, 0.180),
+		"offset": Vector3(0.0, 0.0, -0.039),
+		"axis": "x",
+		"aim": Vector3(0.1, 0.3, 0.16),
+	},
+	{
+		"id": "zambelli_drive",
+		"kind": ZambelliControls.Kind.DRIVE,
+		"name": "DRIVE SELECT",
+		"foot": Vector3(-0.341, 1.660, -0.155),
+		"offset": Vector3(0.0, 0.0, 0.056),
+		"axis": "x",
+		"aim": Vector3(0.12, 0.24, 0.2),
+	},
+	{
+		"id": "zambelli_stalk",
+		"kind": -1,
+		"name": "",
+		"foot": Vector3(-0.014, 1.660, 0.180),
+		"offset": Vector3.ZERO,
+		"axis": "",
+		"aim": Vector3.ZERO,
+	},
+	{
+		"id": "zambelli_handwheel",
+		"kind": ZambelliControls.Kind.BLADE,
+		"name": "BLADE",
+		"foot": Vector3(-0.038, 1.660, 0.495),
+		"offset": Vector3(0.0, 0.0, 0.006),
+		"axis": "y",
+		"aim": Vector3(0.3, 0.3, 0.3),
+	},
+	{
+		"id": "zambelli_valve_flood",
+		"kind": ZambelliControls.Kind.FLOOD,
+		"name": "FLOOD WATER",
+		"foot": Vector3(-0.194, 1.660, 0.399),
+		"offset": Vector3(-0.077, 0.0, 0.0),
+		"axis": "y",
+		"aim": Vector3(0.22, 0.4, 0.1),
+	},
+	{
+		"id": "zambelli_valve_wash",
+		"kind": ZambelliControls.Kind.WASH,
+		"name": "WASH WATER",
+		"foot": Vector3(0.123, 1.660, 0.399),
+		"offset": Vector3(0.076, 0.0, 0.0),
+		"axis": "y",
+		"aim": Vector3(0.22, 0.4, 0.1),
+	},
 ]
 const COND_PIVOT_Z := 3.689  # the conditioner's bounding box centre
 const FRONT_AXLE := 0.725
@@ -136,22 +215,19 @@ func _ready() -> void:
 	controls.name = "Controls"
 	controls.machine = self
 	_body.add_child(controls)
-	var kinds: Array = [
-		ZambelliControls.Kind.AUGER_H,
-		ZambelliControls.Kind.COND,
-		ZambelliControls.Kind.AUGER_V,
-		ZambelliControls.Kind.BIN
-	]
-	var labels := ["HORIZONTAL AUGER", "CONDITIONER", "VERTICAL AUGER", "BIN"]
-	for i in 4:
-		var lever_pivot := Node3D.new()
-		lever_pivot.name = "Lever%d" % i
-		lever_pivot.position = LEVER_FEET[i]
-		lever_pivot.add_child(_part("zambelli_lever" if i % 2 == 0 else "zambelli_lever_cond"))
-		_body.add_child(lever_pivot)
-		controls.add_lever(
-			kinds[i], labels[i], lever_pivot, Vector3(0.1, 0.34, 0.2), Vector3(0.0, 0.17, 0.0)
-		)
+	for c in CONSOLE:
+		var pivot := Node3D.new()
+		pivot.name = c.id
+		pivot.position = c.foot
+		var part := _part(c.id)
+		part.position = c.offset
+		pivot.add_child(part)
+		_body.add_child(pivot)
+		if c.kind >= 0:
+			var aim: Vector3 = c.aim
+			controls.add_control(
+				c.kind, c.name, pivot, c.axis, aim, Vector3(c.offset.x, aim.y / 2, c.offset.z)
+			)
 	add_child(_body)
 	_cond = Node3D.new()
 	_cond.name = "Conditioner"

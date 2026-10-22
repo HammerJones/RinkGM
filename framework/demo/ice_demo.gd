@@ -894,12 +894,11 @@ func _screenshot(path: String) -> void:
 			walker.global_position = _machine.to_global(Vector3(0.2, 1.9, 2.1))
 			walker.face(_machine.rotation.y + 0.2)
 			walker.camera.rotation.x = -0.72
-		if args.has("--lever"):  # close on the horizontal auger's lever
+		if args.has("--lever"):  # close on the console from the operator's left
 			_no_aim = true
-			var foot := Zambelli.LEVER_FEET[0]
 			_look_at(
-				_machine.to_global(foot + Vector3(-0.55, 0.42, 0.3)),
-				_machine.to_global(foot + Vector3(0.12, 0.12, 0.0))
+				_machine.to_global(Vector3(-0.95, 2.35, 0.95)),
+				_machine.to_global(Vector3(-0.12, 1.78, 0.25))
 			)
 	if args.has("--view=pool"):
 		# water run into the low spots and left to stand: a scraped trench,
@@ -1219,21 +1218,45 @@ func _self_test() -> void:
 	check.call(
 		_machine.tank_m3 == 0.0 and not _machine.auger_on, "the tank was dumped after the pass"
 	)
-	# the console: the lever drives the machine's state
+	# the console: the levers, the handwheel and the valves drive the machine's state
 	var ctl: ZambelliControls = _machine.controls
 	var k_h := -1
+	var k_blade := -1
+	var k_flood := -1
 	for i in ctl._controls.size():
-		if ctl._controls[i].kind == ZambelliControls.Kind.AUGER_H:
-			k_h = i
-	check.call(k_h >= 0, "the horizontal auger's lever is on the console")
+		match ctl._controls[i].kind:
+			ZambelliControls.Kind.AUGER_H:
+				k_h = i
+			ZambelliControls.Kind.BLADE:
+				k_blade = i
+			ZambelliControls.Kind.FLOOD:
+				k_flood = i
+	check.call(k_h >= 0 and k_blade >= 0 and k_flood >= 0, "the console's controls are registered")
 	ctl.toggle(k_h)
 	check.call(_machine.auger_on, "the horizontal auger's lever switches it on")
 	ctl.toggle(k_h)
 	check.call(not _machine.auger_on, "... and off")
-	check.call(ZambelliControls.turns_text(-0.5) == "1 TURN DOWN", "a turn down reads as one turn")
+	_machine.blade_mm = 0.0
+	ctl.scroll(k_blade, -16.0)
 	check.call(
-		ZambelliControls.turns_text(-0.40625) == "13/16 TURNS DOWN", "the turns read in sixteenths"
+		(
+			is_equal_approx(_machine.blade_mm, -0.5)
+			and ZambelliControls.turns_text(-0.5) == "1 TURN DOWN"
+		),
+		(
+			"sixteen notches down is one turn, half a millimetre (%s)"
+			% ZambelliControls.turns_text(_machine.blade_mm)
+		)
 	)
+	ctl.scroll(k_blade, 3.0)
+	check.call(
+		ZambelliControls.turns_text(_machine.blade_mm) == "13/16 TURNS DOWN",
+		"the turns read in sixteenths (%s)" % ZambelliControls.turns_text(_machine.blade_mm)
+	)
+	ctl.scroll(k_blade, -200.0)
+	check.call(is_equal_approx(_machine.blade_mm, -3.0), "the wheel stops at 3 mm down")
+	ctl.scroll(k_flood, 7.0)
+	check.call(is_equal_approx(_machine.flood, 0.35), "seven notches open the flood valve 35%%")
 	check.call(ZambelliControls.turns_text(0.0) == "FLUSH", "flush reads as flush")
 	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:
