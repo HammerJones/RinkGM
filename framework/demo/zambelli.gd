@@ -110,7 +110,7 @@ func _ready() -> void:
 	add_child(_cond)
 	_auger = Node3D.new()
 	var auger := _part("zambelli_auger")
-	auger.position = Vector3(0.0, -AUGER_R, 0.0)
+	auger.position = Vector3(0.0, -AUGER_R - 0.01, 0.0)  # the shaft on the holder's origin
 	_auger.add_child(auger)
 	_auger.position = Vector3(0.0, AUGER_R + 0.01, AUGER_Z - BLADE_Z)
 	add_child(_auger)
@@ -244,8 +244,10 @@ func _make_rig() -> Node3D:
 	var zc := AUGER_Z - BLADE_Z
 	_lift = Node3D.new()
 	var screw := _part("zambelli_lift")
-	screw.rotation.z = PI / 2  # built along X; stood up
-	screw.position = Vector3(0.0, -LIFT_L / 2, 0.0)
+	# built along X with its pivot under the shaft; stood up, and shifted so
+	# the shaft runs through the holder's origin (what the holder spins about)
+	screw.rotation.z = PI / 2
+	screw.position = Vector3(LIFT_R + 0.01, -LIFT_L / 2, 0.0)
 	_lift.add_child(screw)
 	_lift.position = Vector3(0.0, COND_H + LIFT_L / 2 + 0.05, zc)
 	rig.add_child(_lift)
