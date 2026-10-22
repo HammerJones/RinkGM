@@ -778,6 +778,22 @@ display, and run as headless checks in CI (`--test=<name>`).
   The hull (the collider you bump into) is an AnimatableBody3D with
   `sync_to_physics` off, so it travels with the machine (synced, it stayed
   at the spawn). The demo opens full screen; `--windowed` keeps the window.
+  **The bay** (`framework/demo/zamboni_bay.gd`, `ZamboniBay`) is off the
+  +X end boards, centred on the sheet: a 9 x 8 m concrete pad level with
+  the ice under a roof, walled on three sides with its own lamp, and a
+  pair of board-height doors (3.6 m between the hinges) set in the end
+  boards that swing outward into the bay to 100 degrees in about two
+  seconds. Look at a leaf and E swings both (the prompt reads OPEN or
+  CLOSE); from the seat E only gets you out, so the doors are opened on
+  foot. The boards clamp that slides the machine along the boards knows
+  the doorway: with the doors open it is a throat from the sheet onto
+  the pad, and a machine on the sheet may be in the sheet or the throat
+  while one in the bay may be on the pad or in the throat, so the only
+  way between them is through the doors; shut, the leaves are boards
+  again. The leaves and the bay carry colliders for the walker. The bay
+  is where the edger lives and the fire hose hangs. `--view=bay` frames
+  the open doors with the machine half through them (`--closed`: shut,
+  the machine before them).
   Footsteps leave the ice alone. `--screenshot=<png>`
   frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the
