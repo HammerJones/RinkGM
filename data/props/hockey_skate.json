@@ -1,0 +1,34 @@
+{
+  "collision_cell": 8,
+  "id": "hockey_skate",
+  "inspect": "A hockey skate. Someone's, once.",
+  "mass_kg": 0.9,
+  "mesh": "merged",
+  "name": "Hockey skate",
+  "pivot": [
+    42.5,
+    0,
+    91.0
+  ],
+  "size_m": [
+    0.1354,
+    0.317,
+    0.2899
+  ],
+  "sound": "rubber",
+  "source": "tools/propgen/glb2vox.py (skate.glb)",
+  "tags": [
+    "imported"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/hockey_skate.vox",
+  "voxel_m": 0.00159,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}

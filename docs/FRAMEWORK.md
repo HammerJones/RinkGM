@@ -631,7 +631,7 @@ display, and run as headless checks in CI (`--test=<name>`).
   2 m/s keeps up, a deeper one grows the pile). The third readout line
   shows the trough, the pile, the lift rate and the tank; when the pass
   is over and the augers have cleared the snow, the tank is dumped.
-  Footsteps leave the ice alone. Mugs on the ice to kick and carry. `--screenshot=<png>`
+  Footsteps leave the ice alone. `--screenshot=<png>`
   frames the blue line; with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the
   conditioner nine seconds into a pass over a snowed-up sheet (`--body`
