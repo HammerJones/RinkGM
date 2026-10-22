@@ -63,10 +63,6 @@ const RUNNER_M := 0.8  # the conditioner's runners: how far ahead of the blade t
 const LEVEL_RATE_MM := 1.0  # the most the blade's level moves per metre of travel
 const PASS_X0 := 2.0  # the pass runs end to end, clear of the end boards
 const PASS_X1 := RINK.x - 2.0
-const HOSE_LPS := 1.6  # the big hose wide open, litres a second
-const HOSE_MIN := 0.1
-const HOSE_MAX := 6.0
-const HOSE_WIDTH := 0.5  # metres the stream wets
 const RED := Color("c8322e")
 const BLUE := Color("2a4fb0")
 const LIGHT_BLUE := Color("9ec9e8")
@@ -90,13 +86,13 @@ var snow_level := 0.0  # the [ ] scale, 0..1
 var hosing := false
 var chipping := false
 var hosed_l := 0.0
-var hose_lps := HOSE_LPS
 var slab_c := -5.0
 var air_base := 8.0
 var air_c := 8.0
 var sim_t := 0.0
 var _machine: Zambelli
 var _bay: ZamboniBay
+var _hose: FireHose
 var _aimed := -1  # the machine control under the dot
 var _no_aim := false  # a screenshot of a control, without its glow
 var _aboard := false  # the walker is in the seat and the keys drive the machine
@@ -143,6 +139,11 @@ func _ready() -> void:
 	_bay.name = "Bay"
 	_bay.build(RINK.x / 2 + BOARD_T, BOARD_H, BOARD_T, KICK_H, BOARD, KICK)
 	add_child(_bay)
+	_hose = FireHose.new()
+	_hose.name = "FireHose"
+	# on the bay's -z wall, the reel a metre up, its plate to the wall
+	_hose.build(Vector3(RINK.x / 2 + BOARD_T + 3.0, 0.5, -ZamboniBay.BAY_W / 2 + 0.23), PI)
+	add_child(_hose)
 	field = PropField.new()
 	field.name = "Props"
 	add_child(field)
@@ -181,7 +182,7 @@ func _ready() -> void:
 		hud
 		. legend(
 			(
-				"[X] STATE   [ ] SNOW   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   "
+				"[X] STATE   [ ] SNOW   [E] FIRE HOSE   [LMB] SPRAY   [WHEEL] MIST / JET   [RMB] CHIP   "
 				+ "[E] USE / SEAT / DOORS   [W S] DRIVE   [A D] STEER   [WHEEL] TURN   [T] CLOCK   [B] BODY   "
 				+ "[V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 			)
@@ -240,10 +241,14 @@ func _process(dt: float) -> void:
 				hud.extra_prompt = "[E] GET OUT"
 			elif _aimed < 0 and _bay.aimed(cam.global_position, -cam.global_transform.basis.z):
 				hud.extra_prompt = _bay.prompt()
+			elif _aimed < 0 and _hose.aimed(cam.global_position, -cam.global_transform.basis.z):
+				hud.extra_prompt = _hose.prompt()
+			elif _aimed < 0 and _hose.held:
+				hud.extra_prompt = "[LMB] SPRAY   [WHEEL] MIST .. JET   [E] HANG IT UP"
 
-		if hosing:
-			_hose(dt)
-		_stream.emitting = hosing
+		if hosing and _hose.held:
+			_spray(dt)
+		_stream.emitting = hosing and _hose.held
 		if chipping:
 			_chip_t -= dt
 			if _chip_t <= 0.0:
@@ -274,7 +279,7 @@ func _process(dt: float) -> void:
 			]
 		)
 		var line2 := (
-			"BLADE %s (%+.2f MM)   FLOOD %d%%   WASH %d%%   RAG %s   SHAVED %.0f MM   HOSE %.1f L/S   HOSED %.0f L%s"
+			"BLADE %s (%+.2f MM)   FLOOD %d%%   WASH %d%%   RAG %s   SHAVED %.0f MM   FIRE HOSE %s   HOSED %.0f L%s"
 			% [
 				ZambelliControls.turns_text(_machine.blade_mm),
 				_machine.blade_mm,
@@ -282,7 +287,7 @@ func _process(dt: float) -> void:
 				roundi(_machine.wash * 100.0),
 				RAGS[rag_i],
 				shaved_mm,
-				hose_lps,
+				_hose.pattern_text() if _hose.held else "ON THE REEL",
 				hosed_l,
 				under
 			]
@@ -320,41 +325,56 @@ func _set_state(k: int) -> void:
 	ice.fill_state(s[1], s[2], s[3], s[4], 0.08 if s[2] > 0.0 else 0.0)
 
 
-## The hose, while LMB is held: HOSE_LPS of water a second over a disc
-## HOSE_WIDTH across where you look, and the stream of drops to match.
-func _hose(dt: float) -> void:
-	var at: Variant = _aim()
-	if at == null:
-		return
-	var litres := hose_lps * dt
-	hosed_l += litres
-	var area := PI * (HOSE_WIDTH * 0.5) * (HOSE_WIDTH * 0.5)
-	var mm := litres * 0.001 / area * 1000.0  # L -> m3 -> m -> mm
-	# the stream wanders a little, as a hose does
-	var wander := Vector2(randf_range(-0.08, 0.08), randf_range(-0.08, 0.08))
-	ice.pour(_local(at) + wander, HOSE_WIDTH, mm)
+## The fire hose, while LMB is held with it in hand: FireHose.LPS of
+## water a second, landing where you look within the pattern's reach (a
+## mist falls short and wets a wide disc, a jet carries and wets a small
+## one), and the stream of drops to match.
+func _spray(dt: float, cam: Camera3D = null) -> void:
+	if cam == null:
+		cam = walker.camera
+	var dir := -cam.global_transform.basis.z
 	var hand := (
-		walker.camera.global_position
-		- walker.camera.global_transform.basis.z * 0.5
-		- Vector3(0, 0.35, 0)
+		cam.global_position + dir * 0.45 + cam.global_transform.basis.x * 0.22 - Vector3(0, 0.2, 0)
 	)
+	var reach := _hose.reach()
+	var at: Variant = _aim(cam)
+	if at == null or hand.distance_to(at) > reach:
+		# the water falls short of where you look: down at the end of its carry
+		if dir.y > 0.5:
+			return
+		var land: Vector3 = hand + dir * reach
+		land.y = 0.0
+		at = land
+	var dist: float = hand.distance_to(at)
+	var width := 0.3 + 2.0 * dist * tan(_hose.cone())
+	var litres := FireHose.LPS * dt
+	hosed_l += litres
+	var area := PI * (width * 0.5) * (width * 0.5)
+	var mm := litres * 0.001 / area * 1000.0  # L -> m3 -> m -> mm
+	var wander := Vector2(randf_range(-0.05, 0.05), randf_range(-0.05, 0.05))
+	ice.pour(_local(at) + wander, width, mm)
+	if _stream == null:
+		return
 	_stream.global_position = hand
 	var to: Vector3 = at - hand
 	var mat: ParticleProcessMaterial = _stream.process_material
-	# a drop flies the distance under gravity in about 0.45 s
-	var t := 0.45
+	# a jet crosses in under a second, a mist drifts
+	var t := clampf(dist / 18.0, 0.3, 0.9)
 	var v := Vector3(to.x / t, to.y / t + 0.5 * 9.8 * t, to.z / t)
 	mat.direction = v.normalized()
 	mat.initial_velocity_min = v.length() * 0.9
 	mat.initial_velocity_max = v.length() * 1.1
-	_stream.amount_ratio = clampf(hose_lps / HOSE_LPS, 0.15, 1.0)
+	mat.spread = rad_to_deg(_hose.cone())
+	mat.scale_min = lerpf(0.3, 0.7, _hose.pattern)
+	mat.scale_max = lerpf(0.5, 1.1, _hose.pattern)
+	_stream.amount_ratio = 1.0
 	if WorldSound.wanted():
-		WorldSound.play(self, "ball_bounce_2", at, -20.0, 0.6)
+		WorldSound.play(self, "ball_bounce_2", at, -16.0, 0.6)
 
 
 func _make_stream() -> GPUParticles3D:
 	var ps := GPUParticles3D.new()
-	ps.amount = 240
+	ps.amount = 520
 	ps.lifetime = 0.8
 	ps.emitting = false
 	ps.local_coords = false
@@ -580,13 +600,16 @@ func _along_the_boards() -> bool:
 		return true
 	var fwd := -_machine.global_transform.basis.z
 	var going := Vector2(fwd.x, fwd.z) * signf(_machine.speed)
-	if push.normalized().dot(going) < -0.7:
+	var square := -push.normalized().dot(going)  # 1 head on, 0 brushing along
+	if square > 0.93:
 		_machine.speed = 0.0
 		if hud:
 			hud.toast("THE BOARDS")
 		return false
 	_machine.global_position += Vector3(push.x, 0.0, push.y)
-	_machine.speed *= 0.6
+	# a glancing bump slides and keeps most of its speed; the squarer the
+	# hit the more the boards take, a frame at a time while it leans on them
+	_machine.speed *= lerpf(0.995, 0.88, square)
 	return true
 
 
@@ -696,8 +719,9 @@ func _local(p: Vector3) -> Vector2:
 
 
 ## Where the view line meets the ice plane, or null when it does not.
-func _aim() -> Variant:
-	var cam := walker.camera
+func _aim(cam: Camera3D = null) -> Variant:
+	if cam == null:
+		cam = walker.camera
 	var o := cam.global_position
 	var dir := -cam.global_transform.basis.z
 	if dir.y >= -0.01:
@@ -758,6 +782,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				):
 					_bay.toggle()
 					hud.toast("THE BAY DOORS SWING %s" % ("OPEN" if _bay.want_open else "SHUT"))
+				elif _hose.aimed(
+					walker.camera.global_position, -walker.camera.global_transform.basis.z
+				):
+					_hose.take(walker.camera)
+					hud.toast("THE FIRE HOSE: [LMB] SPRAY   [WHEEL] MIST .. JET")
+				elif _hose.held:
+					_hose.hang()
+					hosing = false
+					hud.toast("THE HOSE IS BACK ON THE REEL")
 			KEY_T:
 				scale_i = (scale_i + 1) % SCALES.size()
 				hud.toast("CLOCK x%d" % int(SCALES[scale_i]))
@@ -779,11 +812,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				# a machine control under the dot: the handwheel or a valve
 				_machine.controls.scroll(_aimed, 1.0 if up else -1.0)
 				hud.toast(_machine.controls.prompt(_aimed).get_slice("   [", 0))
-			else:
-				# the valve (the Interactor has the wheel while something is held)
-				var step := 1.25 if up else 0.8
-				hose_lps = clampf(hose_lps * step, HOSE_MIN, HOSE_MAX)
-				hud.toast("HOSE %.1f L/S" % hose_lps)
+			elif _hose.held:
+				# the nozzle's pattern (the Interactor has the wheel while a prop is held)
+				_hose.scroll(up)
+				hud.toast("FIRE HOSE: %s" % _hose.pattern_text())
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			hosing = true
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
@@ -1307,7 +1339,7 @@ func _self_test() -> void:
 	var t0 := Time.get_ticks_usec()
 	ice.thermal(1.0, -5.0, 8.0)
 	var ms := (Time.get_ticks_usec() - t0) / 1000.0
-	check.call(ms < 8.0, "a thermal step on a flooded sheet is under 8 ms (%.1f)" % ms)
+	check.call(ms < 12.0, "a thermal step on a flooded sheet is under 12 ms (%.1f)" % ms)  # ~6 here, the CI box is slow
 	t0 = Time.get_ticks_usec()
 	ice.flush()
 	var flush_ms := (Time.get_ticks_usec() - t0) / 1000.0
@@ -1782,6 +1814,71 @@ func _self_test() -> void:
 		edge_keys.size() == 2 and edge_keys.has(Vector2i(int(30.0 / ice.cell) / IceSheet.CHUNK, 3)),
 		"a change on a chunk's edge rebuilds the chunk before it too (%s)" % [edge_keys]
 	)
+	ice.flush()
+	# the fire hose: taken off the reel it sprays FireHose.LPS where you
+	# look; a mist wets a wide disc close by, a jet a small one far off
+	_set_state(1)
+	ice.flush()
+	var hcam := Camera3D.new()
+	add_child(hcam)
+	hcam.global_position = ice.position + Vector3(RINK.x - 2.0, 1.6, RINK.y / 2)
+	check.call(not _hose.held, "the hose starts on the reel")
+	var reel_eye: Vector3 = _hose.reel.global_position + Vector3(-2.0, 1.1, 0.0)
+	check.call(
+		_hose.aimed(reel_eye, Vector3(1.0, -0.1, 0.0).normalized()), "the reel is under the dot"
+	)
+	check.call(not _hose.aimed(reel_eye, Vector3(-1.0, 0.0, 0.0)), "... not behind you")
+	_hose.take(hcam)
+	check.call(
+		_hose.held and _hose.nozzle.visible and _hose.nozzle.get_parent() == hcam,
+		"E takes it in hand"
+	)
+	hcam.rotation = Vector3(-0.35, PI / 2, 0.0)  # looking down the sheet toward -X
+	_hose.pattern = 1.0
+	hosing = true
+	var hosed0 := hosed_l
+	for frame in 60:
+		_spray(1.0 / 60.0, hcam)
+	check.call(
+		absf(hosed_l - hosed0 - FireHose.LPS) < 0.05,
+		"a second of jet is %.1f litres (%.1f)" % [FireHose.LPS, hosed_l - hosed0]
+	)
+	var jet_wet := 0
+	var mist_wet := 0
+	for x in range(0, ice.w, 4):
+		for z in range(0, ice.d, 4):
+			if ice.water[ice.index(x, z)] > 0.0:
+				jet_wet += 1
+	check.call(jet_wet > 0, "the jet wets the ice down the sheet (%d samples)" % jet_wet)
+	var jet_far := 0.0
+	for x in range(0, ice.w, 4):
+		for z in range(0, ice.d, 4):
+			if ice.water[ice.index(x, z)] > 0.0:
+				jet_far += ((RINK.x - 2.0) - x * ice.cell) / jet_wet  # the mean reach
+	ice.fill_state(0.0, 0.8, 0.0, 0.0, 0.08)
+	ice.flush()
+	_hose.pattern = 0.0
+	for frame in 60:
+		_spray(1.0 / 60.0, hcam)
+	var mist_far := 0.0
+	for x in range(0, ice.w, 4):
+		for z in range(0, ice.d, 4):
+			if ice.water[ice.index(x, z)] > 0.0:
+				mist_wet += 1
+				mist_far += (RINK.x - 2.0) - x * ice.cell
+	mist_far /= maxi(mist_wet, 1)
+	check.call(
+		mist_wet > jet_wet * 3 and mist_far < jet_far,
+		(
+			"the mist wets a wider disc, closer in (%d vs %d samples, %.1f vs %.1f m)"
+			% [mist_wet, jet_wet, mist_far, jet_far]
+		)
+	)
+	hosing = false
+	_hose.hang()
+	check.call(not _hose.held and not _hose.nozzle.visible, "E hangs it back on the reel")
+	hcam.queue_free()
+	ice.fill_state(0.0, 0.8, 0.0, 0.0, 0.08)
 	ice.flush()
 	# the bay: shut doors are boards, open ones a doorway onto the pad, and
 	# the pad's walls are the end of it

@@ -55,7 +55,9 @@ def load(path: str) -> list[dict]:
             img = getattr(mat, "baseColorTexture", None) or getattr(mat, "image", None)
             if img is not None:
                 image = np.asarray(img.convert("RGB"))
-            fac = getattr(mat, "baseColorFactor", None) or getattr(mat, "diffuse", None)
+            fac = getattr(mat, "baseColorFactor", None)
+            if fac is None:
+                fac = getattr(mat, "diffuse", None)  # an untextured flat colour (numpy: no `or`)
             if fac is not None and image is None:
                 flat = np.array(fac[:3], dtype=np.float64)
                 if flat.max() <= 1.0:

@@ -1,0 +1,34 @@
+{
+  "collision_cell": 8,
+  "id": "fire_hose",
+  "inspect": "A fire hose on its reel, the nozzle hung on the hook.",
+  "mass_kg": 12.0,
+  "mesh": "merged",
+  "name": "Fire hose",
+  "pivot": [
+    41.0,
+    0,
+    25.0
+  ],
+  "size_m": [
+    0.7266,
+    0.7974,
+    0.443
+  ],
+  "sound": "rubber",
+  "source": "tools/propgen/glb2vox.py (hose.glb)",
+  "tags": [
+    "imported"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/fire_hose.vox",
+  "voxel_m": 0.00886,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}
