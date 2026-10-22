@@ -35,6 +35,8 @@ extends Node3D
 const CHUNK := 64  # cells a side
 const TILE := 256  # cells a side of one set of state textures (4 chunks)
 const SNOW_FULL := 1.0  # mm that reads as fully snowed
+const SNOW_SCALED := 3.0  # mm of snow drawn at height_scale; past that it is drawn at true scale
+const SNOW_MAX := 600.0  # mm a column holds: a shovelled pile
 const WATER_FULL := 0.5  # mm that reads as fully wet
 const GOUGE_FULL := 4.0  # mm that reads as the deepest gouge
 # the freeze is heat flow (Sean's ask, 2026-10-22): the water gives its
@@ -296,8 +298,17 @@ func _read_range(key: Vector2i) -> void:
 				continue
 			var hs := (((i * 1103515245 + 12345) & 0x7fffffff) >> 8) & 0xffff
 			var h := (
-				(ice[i] + snow[i] + crust[i] * (0.4 + 0.6 * hs / 65535.0) + water[i] - gouge[i])
-				* scale
+				(
+					(
+						ice[i]
+						+ minf(snow[i], SNOW_SCALED)
+						+ crust[i] * (0.4 + 0.6 * hs / 65535.0)
+						+ water[i]
+						- gouge[i]
+					)
+					* scale
+				)
+				+ maxf(snow[i] - SNOW_SCALED, 0.0) * 0.001
 			)
 			lo = minf(lo, h)
 			hi = maxf(hi, h)
@@ -502,8 +513,62 @@ func add_snow(at: Vector2, width: float, mm: float) -> void:
 			if f <= 0.0:
 				continue
 			var i := index(x, z)
-			snow[i] = clampf(snow[i] + mm * clampf(f * 1.5, 0.0, 1.0), 0.0, 6.0)
+			snow[i] = clampf(snow[i] + mm * clampf(f * 1.5, 0.0, 1.0), 0.0, SNOW_MAX)
 			_touch(x, z)
+
+
+## The snow swept up off the quad a0 a1 b1 b0 (sheet metres, a shovel's
+## blade from its last place to this one): every column's snow comes
+## out. Returns the cubic metres taken.
+func scoop(a0: Vector2, a1: Vector2, b0: Vector2, b1: Vector2) -> float:
+	var cols := PackedInt32Array()
+	var us := PackedFloat32Array()
+	var mm := 0.0
+	if _quad_cols(a0, a1, b0, b1, cols, us):
+		for i in cols:
+			if snow[i] <= 0.0:
+				continue
+			mm += snow[i]
+			snow[i] = 0.0
+			_touch(i % w, i / w)
+	return mm * 0.001 * cell * cell
+
+
+## Snow set down: `m3` of it as a mound `width` across, a cone, at `at`
+## (sheet metres). What falls outside the ice is lost.
+func mound(at: Vector2, width: float, m3: float) -> void:
+	var r := width / 2
+	var peak := 3.0 * m3 / (PI * r * r) * 1000.0  # mm at the middle, the cone's volume
+	var c := cell_at(at)
+	var rc := int(ceil(r / cell))
+	for dz in range(-rc, rc + 1):
+		for dx in range(-rc, rc + 1):
+			var x := c.x + dx
+			var z := c.y + dz
+			if not is_ice(x, z):
+				continue
+			var f := 1.0 - Vector2(dx, dz).length() * cell / r
+			if f <= 0.0:
+				continue
+			var i := index(x, z)
+			snow[i] = clampf(snow[i] + peak * f, 0.0, SNOW_MAX)
+			_touch(x, z)
+
+
+## The snow in a disc `width` across at `at`, cubic metres.
+func snow_in(at: Vector2, width: float) -> float:
+	var r := width / 2
+	var c := cell_at(at)
+	var rc := int(ceil(r / cell))
+	var mm := 0.0
+	for dz in range(-rc, rc + 1):
+		for dx in range(-rc, rc + 1):
+			var x := c.x + dx
+			var z := c.y + dz
+			if not is_ice(x, z) or Vector2(dx, dz).length() * cell > r:
+				continue
+			mm += snow[index(x, z)]
+	return mm * 0.001 * cell * cell
 
 
 ## The edger's disc swept from `a` to `b` (its centre, metres on the
@@ -1329,8 +1394,17 @@ func _build_whole(key: Vector2i, x0: int, z0: int, x1: int, z1: int) -> void:
 				# the column's height, as _height has it, inline
 				var hs := (((i * 1103515245 + 12345) & 0x7fffffff) >> 8) & 0xffff
 				var h := (
-					(ice[i] + snow[i] + crust[i] * (0.4 + 0.6 * hs / 65535.0) + water[i] - gouge[i])
-					* scale
+					(
+						(
+							ice[i]
+							+ minf(snow[i], SNOW_SCALED)
+							+ crust[i] * (0.4 + 0.6 * hs / 65535.0)
+							+ water[i]
+							- gouge[i]
+						)
+						* scale
+					)
+					+ maxf(snow[i] - SNOW_SCALED, 0.0) * 0.001
 				)
 				if _mask[i] == 1:
 					lo = minf(lo, h)
@@ -1517,8 +1591,13 @@ func _height(x: int, z: int) -> float:
 	var i := index(mini(x, w - 1), mini(z, d - 1))
 	# crust is peaks: each column its own height within the crust depth
 	var peak := crust[i] * (0.4 + 0.6 * _hash(i))
-	# water stands at its full depth, so a pool is level across its hollow
-	return (ice[i] + snow[i] + peak + water[i] - gouge[i]) * 0.001 * height_scale
+	# water stands at its full depth, so a pool is level across its hollow;
+	# snow is drawn at the sheet's scale up to a dusting and at true scale
+	# past it, so a shovelled pile is as tall as it is and not four times
+	return (
+		(ice[i] + minf(snow[i], SNOW_SCALED) + peak + water[i] - gouge[i]) * 0.001 * height_scale
+		+ maxf(snow[i] - SNOW_SCALED, 0.0) * 0.001
+	)
 
 
 static func _hash(i: int) -> float:

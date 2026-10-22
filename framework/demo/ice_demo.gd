@@ -30,6 +30,7 @@ const CORNER_R := 8.5
 const HEAT_REFRESH := 2.0  # seconds between the heatmap's range reads
 const BOARDS_TURN := 0.5  # radians of swing toward the boards' line per metre of push
 const BOARDS_TURN_MAX := 0.02  # radians a frame, at most
+const SKATE_START := Vector3(3.0, 0.05, 0.0)  # on the skates: centre ice, clear of the parked machine
 const CELL := 0.025
 # the markings, in metres from the sheet's corner
 const PX := 80.0  # markings texels per metre (1.25 cm)
@@ -105,6 +106,10 @@ var _machine: Zambelli
 var _bay: ZamboniBay
 var _hose: FireHose
 var _edger: IceEdger
+var _pusher: SnowPusher
+var _net: HockeyNet
+var _skater: DemoSkater
+var _skates: Node3D  # the skates and stick on the bay floor
 var _edging := false  # at the edger's handles: the keys push it
 var _spray_strip := 0  # which strip of the hose's cone this frame pours
 var _aimed := -1  # the machine control under the dot
@@ -164,6 +169,21 @@ func _ready() -> void:
 	_edger.position = Vector3(RINK.x / 2 + BOARD_T + 5.5, 0.0, 2.2)
 	_edger.rotation.y = PI / 2
 	add_child(_edger)
+	_pusher = SnowPusher.new()
+	_pusher.name = "SnowPusher"
+	# on the bay's +z wall, across from the hose, its blade's face to the bay
+	_pusher.build(Vector3(RINK.x / 2 + BOARD_T + 3.0, 0.45, ZamboniBay.BAY_W / 2 - 0.3), 0.0)
+	add_child(_pusher)
+	_net = HockeyNet.new()
+	_net.name = "Net"
+	_net.position = Vector3(RINK.x / 2 + BOARD_T + 7.0, 0.0, -2.4)
+	_net.rotation.y = PI / 2  # its mouth toward the doors
+	add_child(_net)
+	_skates = _make_skates(Vector3(RINK.x / 2 + BOARD_T + 7.0, 0.0, -0.6))
+	add_child(_skates)
+	_skater = DemoSkater.new()
+	_skater.name = "Skater"
+	add_child(_skater)
 	field = PropField.new()
 	field.name = "Props"
 	add_child(field)
@@ -236,6 +256,18 @@ func _process(dt: float) -> void:
 		_drive(sdt)
 	elif _edging:
 		_push(sdt)
+	elif _skater.active and walker:
+		_skater.step(
+			sdt,
+			walker,
+			ice,
+			_local,
+			_inside_the_sheet.bind(0.35),
+			Input.is_key_pressed(KEY_W),
+			Input.is_key_pressed(KEY_S)
+		)
+	if _pusher.held and walker:
+		_shovel()
 	if _aboard and walker:
 		walker.global_position = _machine.to_global(Zambelli.SEAT)
 	if _edging and walker:
@@ -286,6 +318,21 @@ func _process(dt: float) -> void:
 				hud.extra_prompt = _hose.prompt()
 			elif _aimed < 0 and _hose.held:
 				hud.extra_prompt = "[LMB] SPRAY   [WHEEL] MIST .. JET   [E] HANG IT UP"
+			elif _aimed < 0 and _pusher.held:
+				hud.extra_prompt = (
+					"[W] PUSH   [LMB] SET THE SNOW DOWN   [RMB] %s   [E] HANG IT UP"
+					% ("LOWER" if _pusher.raised else "LIFT")
+				)
+			elif _aimed < 0 and _pusher.aimed(cam.global_position, -cam.global_transform.basis.z):
+				hud.extra_prompt = _pusher.prompt()
+			elif _aimed < 0 and _net.carried:
+				hud.extra_prompt = "[E] SET THE NET DOWN"
+			elif _aimed < 0 and _net.aimed(cam.global_position, -cam.global_transform.basis.z):
+				hud.extra_prompt = _net.prompt()
+			elif _aimed < 0 and _skater.active:
+				hud.extra_prompt = "[W] STRIDE   [S] STOP   [MOUSE] STEER   [E] SKATES OFF"
+			elif _aimed < 0 and _skates_aimed(cam.global_position, -cam.global_transform.basis.z):
+				hud.extra_prompt = "[E] SKATE"
 
 		if hosing and _hose.held:
 			_spray(dt)
@@ -341,6 +388,10 @@ func _process(dt: float) -> void:
 		var line3 := ""
 		if _machine:
 			line3 = _machine_line()
+		if _pusher.held:
+			line3 += "   SNOW PUSHER %s" % _pusher.load_text()
+		if _skater.active:
+			line3 += "   " + _skater.state_text()
 		if _edging:
 			line3 += "   " + _edger.state_text()
 		hud.readout(line1 + "\n" + line2 + "\n" + line3)
@@ -805,6 +856,124 @@ func _off_the_machine() -> void:
 
 
 ## At the edger's handles: the keys push it, the walker rides behind it.
+## The skates and a stick on the bay floor by the net: the skate prop
+## twice (Sean's skate model) and a stick from primitives.
+func _make_skates(at: Vector3) -> Node3D:
+	var n := Node3D.new()
+	n.name = "Skates"
+	n.position = at
+	for k in 2:
+		var sk := MeshInstance3D.new()
+		sk.mesh = ObjectCatalog.mesh("hockey_skate")
+		sk.material_override = PropMaterial.shared()
+		sk.position = Vector3(0.0, 0.0, -0.1 + 0.2 * k)
+		sk.rotation.y = PI / 2
+		n.add_child(sk)
+	var stick := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.013
+	cyl.bottom_radius = 0.013
+	cyl.height = 1.5
+	stick.mesh = cyl
+	var wood := StandardMaterial3D.new()
+	wood.albedo_color = Color(0.72, 0.56, 0.32)
+	stick.material_override = wood
+	stick.position = Vector3(0.5, 0.03, 0.2)
+	stick.rotation = Vector3(0.0, 0.2, PI / 2)
+	n.add_child(stick)
+	return n
+
+
+func _skates_aimed(origin: Vector3, dir: Vector3) -> bool:
+	if _skater.active or _skates == null:
+		return false
+	var to := _skates.global_position + Vector3(0.3, 0.15, 0.0) - origin
+	var t := to.dot(dir)
+	if t < 0.0 or t > 3.2:
+		return false
+	return (to - dir * t).length() < 0.7
+
+
+## On the skates: out to centre ice, driven by the skater. The net stays
+## wherever it was carried (it is set down first if it is in hand).
+func _skates_on() -> void:
+	if _net.carried:
+		_net.set_down()
+	if _pusher.held:
+		_set_snow_down()
+		_pusher.hang()
+	walker.driven = true
+	walker.set_noclip(false)
+	# centre ice, a stride past the dot so the parked resurfacer is not in the way
+	walker.global_position = SKATE_START
+	walker.face(PI / 2)  # down the ice, toward the bay end
+	walker.camera.rotation.x = -0.15
+	_skater.start(walker)
+
+
+func _skates_off() -> void:
+	_skater.stop_skating()
+	walker.driven = false
+
+
+## The snow pusher pushed: the blade's sweep since last frame scoops the
+## snow in its path into the load; the surplus past the blade's capacity
+## rolls off its ends; pulled back, the load is left where the blade was.
+func _shovel() -> void:
+	var ends := _pusher.blade_ends()
+	var a0 := _local(ends[0])
+	var a1 := _local(ends[1])
+	if _pusher.raised or _pusher.last0 == Vector2.INF:
+		_pusher.last0 = a0
+		_pusher.last1 = a1
+		return
+	var mid := (a0 + a1) / 2
+	var last_mid := (_pusher.last0 + _pusher.last1) / 2
+	var moved := mid - last_mid
+	if moved.length() < 0.003:
+		return
+	var fwd := -walker.global_transform.basis.z
+	var along := moved.dot(Vector2(fwd.x, fwd.z))
+	if along > 0.0:
+		var got := ice.scoop(_pusher.last0, _pusher.last1, a0, a1)
+		var load := _pusher.load + got
+		if load > SnowPusher.CAPACITY:
+			var spill := load - SnowPusher.CAPACITY
+			ice.mound(a0, 0.3, spill / 2)
+			ice.mound(a1, 0.3, spill / 2)
+			load = SnowPusher.CAPACITY
+		_pusher.set_load(load)
+	elif _pusher.load > 0.0:
+		ice.mound(last_mid, SnowPusher.BLADE_W, _pusher.load)
+		_pusher.set_load(0.0)
+	_pusher.last0 = a0
+	_pusher.last1 = a1
+
+
+## The load set down ahead of the blade as a mound.
+func _set_snow_down() -> void:
+	if _pusher.load <= 0.0:
+		return
+	var ends := _pusher.blade_ends()
+	var mid := (_local(ends[0]) + _local(ends[1])) / 2
+	var fwd := -walker.global_transform.basis.z
+	ice.mound(mid + Vector2(fwd.x, fwd.z) * 0.45, SnowPusher.BLADE_W, _pusher.load)
+	_pusher.set_load(0.0)
+	_pusher.last0 = Vector2.INF
+
+
+## Cells with a gouge in a square `size` across at `at` (tests).
+func _count_gouged(at: Vector2, size: float) -> int:
+	var c := ice.cell_at(at)
+	var r := int(size / 2 / ice.cell)
+	var n := 0
+	for dz in range(-r, r + 1):
+		for dx in range(-r, r + 1):
+			if ice.is_ice(c.x + dx, c.y + dz) and ice.gouge[ice.index(c.x + dx, c.y + dz)] > 0.05:
+				n += 1
+	return n
+
+
 func _take_the_handles() -> void:
 	_edging = true
 	walker.set_noclip(true)
@@ -1016,6 +1185,31 @@ func _unhandled_input(event: InputEvent) -> void:
 					_hose.hang()
 					hosing = false
 					hud.toast("THE HOSE IS BACK ON THE REEL")
+				elif _pusher.held:
+					_set_snow_down()
+					_pusher.hang()
+					hud.toast("THE SNOW PUSHER IS BACK ON THE WALL")
+				elif _pusher.aimed(
+					walker.camera.global_position, -walker.camera.global_transform.basis.z
+				):
+					_pusher.take(walker)
+					hud.toast("THE SNOW PUSHER: WALK INTO SNOW, [LMB] SET IT DOWN, [RMB] LIFT")
+				elif _net.carried:
+					_net.set_down()
+					hud.toast("THE NET IS DOWN")
+				elif _net.aimed(
+					walker.camera.global_position, -walker.camera.global_transform.basis.z
+				):
+					_net.carry(walker)
+					hud.toast("CARRYING THE NET: [E] SETS IT DOWN")
+				elif _skater.active:
+					_skates_off()
+					hud.toast("SKATES OFF")
+				elif _skates_aimed(
+					walker.camera.global_position, -walker.camera.global_transform.basis.z
+				):
+					_skates_on()
+					hud.toast("ON THE ICE: [W] STRIDE  [S] STOP  [MOUSE] STEER  [E] SKATES OFF")
 			KEY_TAB:
 				if _edging:
 					_edger.toggle_blade()
@@ -1069,10 +1263,17 @@ func _unhandled_input(event: InputEvent) -> void:
 					)
 				)
 		elif event.button_index == MOUSE_BUTTON_LEFT:
-			hosing = true
+			if _pusher.held:
+				_set_snow_down()
+			else:
+				hosing = true
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			chipping = true
-			_chip_t = 0.0
+			if _pusher.held:
+				_pusher.toggle_raise()
+				hud.toast("THE BLADE IS %s" % ("UP" if _pusher.raised else "ON THE ICE"))
+			else:
+				chipping = true
+				_chip_t = 0.0
 
 
 # --- dressing --------------------------------------------------------------
@@ -1453,6 +1654,54 @@ func _screenshot(path: String) -> void:
 		walker.global_position = _machine.to_global(Vector3(2.6, 1.7, 3.4))
 		walker.face(_machine.rotation.y + 0.6)
 		walker.camera.rotation.x = -0.28
+	if args.has("--view=shovel"):
+		# the snow pusher in hand, pushed through a drift on the ice, the
+		# roll in the blade and the mound it set down, from the pusher's eyes
+		ice.fill_state(0.0, 0.0, 0.0, 0.0, 0.0)
+		ice.mound(Vector2(RINK.x / 2 - 6.0, RINK.y / 2), 1.6, 0.08)
+		ice.mound(Vector2(RINK.x / 2 - 4.5, RINK.y / 2 + 0.4), 1.2, 0.05)
+		ice.flush()
+		walker.global_position = Vector3(-8.5, 0.05, 0.0)
+		walker.face(-PI / 2)
+		_pusher.take(walker)
+		for step in 80:
+			walker.global_position += Vector3(0.03, 0.0, 0.0)
+			_shovel()
+		walker.camera.rotation.x = -0.5
+	if args.has("--view=skate"):
+		# a skater's marks: strides out, a hard turn, a stop, seen from past
+		# the stop looking back along them (the pile, the scrape, the
+		# turn's gouge, the stride chips)
+		_skates_on()
+		for step in 150:
+			_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), true, false)
+		walker.face(walker.rotation.y + 1.3)
+		for step in 70:
+			_skater.step(
+				1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), false, false
+			)
+		var travel := Vector3(_skater.vel.x, 0.0, _skater.vel.y).normalized()
+		for step in 60:
+			_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), false, true)
+		var stop_at := walker.global_position
+		_skates_off()
+		walker.set_noclip(true)
+		walker.global_position = stop_at + Vector3(0.0, 1.2, 0.0) + travel * 1.6
+		walker.face(atan2(travel.x, travel.z))
+		walker.camera.rotation.x = -0.55
+	if args.has("--view=practice"):
+		# the net set down by the goal line and the skater's own view of
+		# it from the slot: the stick and nothing else of you
+		_net.carry(walker)
+		walker.global_position = Vector3(RINK.x / 2 - GOAL_LINE - 1.7, 0.05, 0.0)
+		walker.face(-PI / 2)
+		_net.set_down()
+		_skates_on()
+		walker.global_position = Vector3(RINK.x / 2 - GOAL_LINE - 7.0, 0.05, 1.0)
+		walker.face(-PI / 2 + 0.15)
+		for step in 60:
+			_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), true, false)
+		walker.camera.rotation.x = -0.2
 	if args.has("--view=bay"):
 		# from the ice by the end boards: the doors swung open and the
 		# machine half through them onto the pad (--closed: shut, the machine before them)
@@ -2548,7 +2797,130 @@ func _self_test() -> void:
 		nose_gap >= -0.001 and nose_gap < 0.02,
 		"nosed into a corner the nose's corner meets the arc (%.3f m off)" % nose_gap
 	)
+	# snow with volume: a shovelled mound is as tall as its cubic metres
+	# say, at true scale, and the pusher sweeps it up and sets it down
+	ice.fill_state(0.0, 0.0, 0.0, 0.0, 0.0)
+	ice.flush()
+	var pile_at := Vector2(RINK.x / 2 - 8.0, RINK.y / 2)
+	ice.mound(pile_at, 0.9, 0.03)
+	ice.flush()
+	var in_pile := ice.snow_in(pile_at, 1.2)
+	check.call(
+		in_pile > 0.026 and in_pile < 0.034,
+		"a 30 L mound holds its volume on the sheet (%.1f L)" % (in_pile * 1000.0)
+	)
+	var pile_c := ice.cell_at(pile_at)
+	var pile_h := ice._height(pile_c.x, pile_c.y)
+	check.call(
+		pile_h > 0.10 and pile_h < 0.20,
+		"... and stands at true scale, 14 cm or so at the middle (%.3f m)" % pile_h
+	)
+	walker = FirstPerson.new()  # the tools and the skates want someone holding them
+	add_child(walker)
+	walker.global_position = ice.position + Vector3(pile_at.x - 2.2, 0.05, pile_at.y)
+	walker.face(-PI / 2)  # toward +X, the pile ahead
+	_pusher.take(walker)
+	check.call(_pusher.held, "E takes the snow pusher off the wall")
+	for step in 100:
+		walker.global_position += Vector3(0.03, 0.0, 0.0)
+		_shovel()
+	check.call(
+		_pusher.load > 0.015,
+		"pushed through the mound, the blade carries most of it (%.1f L)" % (_pusher.load * 1000.0)
+	)
+	var left_behind := ice.snow_in(pile_at, 0.8)
+	check.call(
+		left_behind < in_pile * 0.35,
+		"... and the mound is gone from where it was (%.1f L left)" % (left_behind * 1000.0)
+	)
+	var carried := _pusher.load
+	var ahead := _local(walker.global_position) + Vector2(1.6, 0.0)
+	var before_dump := ice.snow_in(ahead, 1.2)
+	_set_snow_down()
+	ice.flush()
+	var after_dump := ice.snow_in(ahead, 1.2)
+	check.call(
+		_pusher.load == 0.0 and after_dump - before_dump > carried * 0.8,
+		"LMB sets the load down ahead as a mound (%.1f L)" % ((after_dump - before_dump) * 1000.0)
+	)
+	_pusher.toggle_raise()
+	check.call(_pusher.raised, "RMB lifts the blade")
+	_pusher.toggle_raise()
+	_pusher.hang()
+	check.call(not _pusher.held, "E hangs it back on the wall")
+	# the net: carried from the bay and set down where you stand
+	var net_eye: Vector3 = _net.to_global(Vector3(0.0, 1.6, -2.0))
+	var net_dir: Vector3 = (_net.to_global(Vector3(0.0, 0.6, 0.5)) - net_eye).normalized()
+	check.call(_net.aimed(net_eye, net_dir), "the net is under the dot from before its mouth")
+	_net.carry(walker)
+	check.call(_net.carried, "E picks it up")
+	walker.global_position = Vector3(10.0, 0.05, 3.0)
+	walker.face(0.0)
+	_net.set_down()
+	check.call(
+		not _net.carried and _net.global_position.distance_to(Vector3(10.0, 0.0, 3.0 - 1.7)) < 0.05,
+		"E sets it down ahead of where you stand (%s)" % _net.global_position
+	)
+	# skating: out to centre ice, strides build speed and mark the ice, a
+	# hard turn gouges, a stop throws snow ahead
+	_skates_on()
+	check.call(
+		_skater.active and walker.global_position.distance_to(SKATE_START) < 0.1,
+		"E on the skates puts you at centre ice on them"
+	)
+	check.call(
+		walker.driven and _skater.stick.visible, "... driven by the skates, the stick in view"
+	)
+	var sk0 := _local(walker.global_position)
+	for step in 240:
+		_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), true, false)
+	var sk_v := _skater.vel.length()
+	var sk1 := _local(walker.global_position)
+	check.call(
+		sk_v > 4.0 and _skater.stride_count >= 5 and sk1.distance_to(sk0) > 8.0,
+		(
+			"four seconds of strides build speed (%.1f m/s, %d strides, %.1f m)"
+			% [sk_v, _skater.stride_count, sk1.distance_to(sk0)]
+		)
+	)
+	var track := ice.cell_at(sk0.lerp(sk1, 0.5) + Vector2(0.0, SkateWear.BLADE_GAP / 2))
+	var lined := 0
+	for dz in range(-2, 3):
+		if ice.cut[ice.index(track.x, track.y + dz)] > 0.0:
+			lined += 1
+	check.call(lined > 0, "the glide leaves a blade line on the ice (%d cells)" % lined)
+	# a hard turn: face well off the travel at speed
+	walker.face(walker.rotation.y + 1.2)
+	var gouged_before := _count_gouged(sk1, 6.0)
+	for step in 90:
+		_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), false, false)
+	var sk2 := _local(walker.global_position)
+	var gouged := _count_gouged(sk1.lerp(sk2, 0.5), 6.0) - gouged_before
+	check.call(
+		gouged > 0, "a hard turn at speed gouges the outside edge's line (%d cells)" % gouged
+	)
+	# a stop: snow thrown ahead, the speed gone
+	var stop_dir := _skater.vel.normalized()
+	var stop_at := _local(walker.global_position)
+	var snow_before := ice.snow_in(stop_at + stop_dir * 1.5, 2.0)
+	for step in 90:
+		_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), false, true)
+	var snow_after := ice.snow_in(stop_at + stop_dir * 1.5, 2.0)
+	check.call(
+		_skater.vel.length() < 0.5 and snow_after > snow_before,
+		(
+			"a hockey stop kills the speed and throws snow ahead (%.2f -> %.2f L)"
+			% [snow_before * 1000.0, snow_after * 1000.0]
+		)
+	)
+	_skates_off()
+	check.call(not _skater.active and not walker.driven, "E again takes the skates off")
+	walker.queue_free()
+	walker = null
+	ice.flush()
 	# the heatmap: H colours the ice by height over the sheet's own range
+	ice.fill_state(0.0, 0.0, 0.0, 0.0, 0.0)  # the piles and marks cleared
+	ice.flush()
 	var range_flat := ice.height_range()
 	ice.pour(Vector2(RINK.x / 2, RINK.y / 2), 1.0, 6.0)  # deeper than the snow the edger threw
 	ice.flush()

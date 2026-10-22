@@ -1,0 +1,36 @@
+{
+  "collision_cell": 8,
+  "id": "snow_pusher",
+  "inspect": "The snow pusher. Three feet of blade, and whoever is holding it.",
+  "mass_kg": 2.4,
+  "mesh": "merged",
+  "name": "Snow pusher",
+  "pivot": [
+    45.5,
+    0,
+    63.0
+  ],
+  "shape": [],
+  "size_m": [
+    0.91,
+    1.09,
+    1.26
+  ],
+  "sound": "plastic",
+  "source": "tools/propgen/snow_pusher.py",
+  "tags": [
+    "tool",
+    "rink"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/snow_pusher.vox",
+  "voxel_m": 0.01,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

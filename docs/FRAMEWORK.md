@@ -579,6 +579,14 @@ much sim time (14 s of sim per visit on a fully flooded NHL sheet at
 is the snowed-up scale: a patchy simplex field (drifts a couple of
 metres across) that the level fills from its hollows outward, so a
 quarter is a few drifts and the full scale covers the sheet.
+Snow has volume: a column holds up to `SNOW_MAX` (600 mm) of it,
+`mound(at, width, m3)` sets cubic metres down as a cone, `scoop(a0, a1,
+b0, b1)` sweeps every column under a quad clean and returns the cubic
+metres, `snow_in(at, width)` counts it, and the heightfield draws snow
+at the sheet's scale only up to `SNOW_SCALED` (3 mm, a dusting) and at
+true scale past that, so a shovelled pile stands as tall as it is, not
+four times (Sean: snow as a thing with volume you can move about; the
+Zambelli's snow handling is to follow).
 `heatmap(on)` draws the sheet by height alone: the lowest column dark
 blue, the midpoint green, the highest red, four even ramps between
 (blue, green, yellow, red). The range is `height_range()`, the low and
@@ -886,6 +894,44 @@ display, and run as headless checks in CI (`--test=<name>`).
   flush on the boards and slides along them, stopping only when pushed
   straight into them. `--view=edger` is a lane cut along the side boards with
   the edger's left side on them, `--view=push` the pusher's own view.
+  **The snow pusher** (`framework/demo/snow_pusher.gd`, `SnowPusher`;
+  art/props/snow_pusher.vox from tools/propgen/snow_pusher.py, Sean's
+  photo: a 3 ft by 1 ft white blade, yellow shaft, black D-grip) hangs
+  on the bay's +z wall across from the hose. E takes it: the blade rides
+  1.15 m ahead of your feet on the ice and walking pushes it, the snow
+  in its path swept into it (`IceSheet.scoop()` over the blade's sweep
+  each frame, `_shovel()`) up to `CAPACITY` (60 L, drawn as a roll in
+  the blade), the surplus rolling off the blade's ends as small mounds;
+  LMB sets the load down ahead as a mound a blade wide
+  (`IceSheet.mound()`), and so does pulling the blade back; RMB lifts
+  the blade to walk over snow without moving it; E hangs it up (setting
+  the load down first). Snow pushed into standing water is slush, which
+  sets as it always did. `--view=shovel` is a drift pushed through from
+  the pusher's eyes.
+  **Skating and practice** (`framework/demo/demo_skater.gd`, `DemoSkater`;
+  `framework/demo/skate_wear.gd`, `SkateWear`; `framework/demo/hockey_net.gd`,
+  `HockeyNet`): a net from primitives (6 by 4 ft, a metre deep) starts in
+  the bay with a pair of skates (Sean's skate model) and a stick on the
+  floor beside it; no net is on the ice until you carry it there. Look at
+  the net and E picks it up (it rides ahead of you), E sets it down where
+  you stand, facing your way, and there it stays. Look at the skates and E
+  puts you on them at centre ice, driven by the skater: the mouse faces
+  you, W strides (a push-off every `STRIDE_S`, 0.55 s, building to `TOP`,
+  9 m/s), S is a hockey stop (`STOP_DEC`, 7.5 m/s2), nothing is a coast
+  (`COAST`); your velocity swings toward where you face as fast as the
+  edges hold (`GRIP`, 7 m/s2 of lateral pull), asking more slides. No
+  body and no hands (Sean: they got in the way), just the stick held low
+  to the right with its blade on the ice; no balance game. E again takes
+  the skates off where you are. What skating does to the ice is
+  `SkateWear`: a glide leaves a faint line per blade (`BLADE_GAP`, 24 cm
+  apart, stronger with speed), a push-off chips the ice where the back
+  foot drives (`STRIDE_CHIP`, `STRIDE_MM`) with a puff of snow, a turn
+  pulling more than `GRIP_G` (4.5 m/s2) gouges the outside blade's line,
+  deeper the harder, and a stop scrapes across both blades and throws
+  the shavings `STOP_THROW` ahead as snow (`STOP_SNOW` per m/s of speed
+  by m/s2 of braking). `--view=skate` is a run with a hard turn and a
+  stop from above under the heatmap, `--view=practice` the net by the
+  goal line from the slot on skates.
   Footsteps leave the ice alone. `--screenshot=<png>`
   frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the
