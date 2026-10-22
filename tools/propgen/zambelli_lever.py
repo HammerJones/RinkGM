@@ -2,8 +2,8 @@
 
 The body prop is voxelised at 17 mm, which turns its controls into blobs.
 This takes each control out of the model at 3 mm as its own prop and
-clears its blob off art/props/zambelli_body.vox, leaving the deck and
-the plates: the row of four levers (the operator's left to right, the
+clears its blob off art/props/zambelli_body.vox, then tidies the deck to
+smooth blue sheet metal (the model's gauges and pads go or turn blue): the row of four levers (the operator's left to right, the
 horizontal auger's, the conditioner's, the vertical auger's and the
 bin's; the augers' alike and the other two alike, so two props), drive
 select ahead on the left, the stalk with the ball at the row's right
@@ -124,6 +124,39 @@ def clear_body(lo: np.ndarray, hi: np.ndarray) -> int:
     return int(inside.sum())
 
 
+# the console's sheet metal, in the grid frame: everything standing on it that
+# is not blue (the model's gauges, the old blobs' leftovers, the white pads
+# and plates) goes or turns blue, so the deck reads as smooth blue sheet
+# metal until the diagrams are drawn on it (Sean's ask)
+CONSOLE_BOX = ((0.74, 1.58, 3.33), (1.46, 2.30, 4.26))
+PANEL_BOX = ((0.70, 1.58, 3.27), (1.46, 2.30, 3.33))  # the gauge panel at the front: turns blue
+BLUE = np.array([38.0, 84.0, 168.0])
+
+
+def tidy_console() -> None:
+    path = os.path.join(VOX_DIR, "zambelli_body.vox")
+    size, vox, pal, chunks = read_vox(path)
+    vm = json.load(open(os.path.join(DATA_DIR, "zambelli_body.json")))["voxel_m"]
+    rgb = pal[:, :3].astype(float)
+    blue_i = int(np.argmin(((rgb - BLUE) ** 2).sum(1))) + 1
+    is_blue = (rgb[:, 2] > rgb[:, 0] + 20) & (rgb[:, 2] > rgb[:, 1])
+    gx = (size[0] - 1 - vox[:, 0].astype(int) + 0.5) * vm
+    gy = (vox[:, 2].astype(int) + 0.5) * vm
+    gz = (vox[:, 1].astype(int) + 0.5) * vm
+    odd = ~is_blue[vox[:, 3].astype(int) - 1]
+
+    def within(box):
+        lo, hi = box
+        return (gx >= lo[0]) & (gx <= hi[0]) & (gy >= lo[1]) & (gy <= hi[1]) & (gz >= lo[2]) & (gz <= hi[2])
+
+    on_deck = within(CONSOLE_BOX)
+    drop = on_deck & odd & (gy > DECK_TOP)
+    paint = odd & ((on_deck & (gy <= DECK_TOP)) | within(PANEL_BOX))
+    vox[paint, 3] = blue_i
+    print(f"zambelli_body: console tidied, {int(drop.sum())} voxels off it, {int(paint.sum())} painted blue")
+    write_vox(path, chunks, vox[~drop])
+
+
 def components(parts: list[dict], clip) -> list[tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """The solid pieces standing on the deck inside the clip, at 3 mm, left
     to right: each a (mask, colour grid, grid-frame origin) over the clip."""
@@ -184,6 +217,7 @@ def main() -> None:
             if args.preview:
                 os.makedirs(PREVIEW_DIR, exist_ok=True)
                 zambelli.views(scene, os.path.join(PREVIEW_DIR, f"{pid}.png"))
+    tidy_console()
     print("\nzambelli.gd: each control's foot in the Zambelli's frame, and the prop's offset from it")
     for pid, foot, off in placed:
         print(f"  {pid:22s} foot Vector3({foot[0] - ext[0] / 2:.3f}, {foot[1]:.3f}, {foot[2] - BLADE_Z:.3f})"

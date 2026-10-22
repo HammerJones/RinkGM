@@ -162,14 +162,15 @@ func toggle(i: int) -> void:
 
 
 ## The wheel on the handwheel or a valve: `notches` up (+) or down (-).
-## Wheel down turns the handwheel clockwise, which lowers the blade.
+## Wheel up turns the handwheel clockwise, which lowers the blade (Sean's
+## ask); on a valve, up opens it.
 func scroll(i: int, notches: float) -> void:
 	if i < 0 or i >= _controls.size() or machine == null:
 		return
 	var c := _controls[i]
 	match c.kind:
 		Kind.BLADE:
-			var turns := snappedf(machine.blade_mm / TURN_MM + notches * NOTCH, NOTCH)
+			var turns := snappedf(machine.blade_mm / TURN_MM - notches * NOTCH, NOTCH)
 			machine.blade_mm = clampf(turns * TURN_MM, -BLADE_MAX, BLADE_MAX)
 		Kind.FLOOD:
 			machine.flood = clampf(

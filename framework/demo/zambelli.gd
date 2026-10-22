@@ -140,11 +140,20 @@ const TANK_M3 := 2.5  # the snow tank
 const TANK_SIZE := Vector3(1.6, 0.9, 1.2)  # the clear tank of the rig
 const TANK_Y := 1.5  # its floor
 const ROLL_R := 0.34  # the roll of snow round the auger grows to this
+const MAX_SPEED := 3.5  # m/s driven, about a resurfacer's flat out
+const ACCEL := 1.4  # m/s² with the pedal down
+const BRAKE := 3.0  # m/s² on the brake
+const COAST := 0.6  # m/s² rolling with the pedal up
+const STEER_MAX := deg_to_rad(32.0)  # the front wheels' lock
+const STEER_RATE := 1.6  # rad/s the wheels turn toward the lock
+const WHEELBASE := REAR_AXLE - FRONT_AXLE
+const SEAT := Vector3(-0.5, 1.23, 0.7)  # where the operator's feet go, seated at the wheel
 # the flood water: a pipe along the top of the conditioner's back wall,
 # holes every two and a half inches, the streams down the wall to the towel
 const WALL_Z := 0.612  # just behind the back wall's rear face, from the blade
 const PIPE_L := 2.1
 const PIPE_R := 0.022
+const PIPE_Y := 0.06  # the pipe's axis over the ice, at the bottom of the back wall
 const STREAM_GAP := 0.0635
 const TOWEL_Z := 0.66  # the towel lies from here to 0.78
 
@@ -163,6 +172,8 @@ var blade_mm := -0.5  # the blade's edge from the conditioner's bottom: - cuts
 var flood := 0.0  # the flood water valve, 0 closed to 1 wide open
 var wash := 0.0  # the wash water valve
 var controls: ZambelliControls
+var steer := 0.0  # the front wheels' angle, + to the left
+var hull: AnimatableBody3D
 var show_body := false:
 	set(v):
 		show_body = v
@@ -188,7 +199,6 @@ var _pile: MeshInstance3D
 var _tank_snow: MeshInstance3D
 var _puffs: MultiMeshInstance3D
 var _streams: MultiMeshInstance3D
-var _sheet: MeshInstance3D
 var _snow_dirty := true
 var _phase := 0.0
 var _ripple := 0.0
@@ -236,6 +246,8 @@ func _ready() -> void:
 	_cond.add_child(cond)
 	_make_flood(_cond)
 	add_child(_cond)
+	hull = _make_hull()
+	add_child(hull)
 	_auger = Node3D.new()
 	var auger := _part("zambelli_auger")
 	auger.position = Vector3(0.0, -AUGER_R - 0.01, 0.0)  # the shaft on the holder's origin
@@ -551,15 +563,15 @@ func _make_flood(parent: Node3D) -> void:
 	pipe.mesh = cyl
 	pipe.material_override = pipe_mat
 	pipe.rotation.z = PI / 2
-	pipe.position = Vector3(0.0, COND_H + PIPE_R + 0.005, WALL_Z + PIPE_R)
+	pipe.position = Vector3(0.0, PIPE_Y, WALL_Z + PIPE_R)
 	parent.add_child(pipe)
 	for x: float in [-PIPE_L / 2 - 0.01, 0.0, PIPE_L / 2 + 0.01]:
 		var br := MeshInstance3D.new()
 		var bm := BoxMesh.new()
-		bm.size = Vector3(0.03, 0.07, 0.05)
+		bm.size = Vector3(0.03, 0.05, 0.05)
 		br.mesh = bm
 		br.material_override = pipe_mat
-		br.position = Vector3(x, COND_H + 0.01, WALL_Z + 0.015)
+		br.position = Vector3(x, PIPE_Y + 0.01, WALL_Z + 0.012)
 		parent.add_child(br)
 	_streams = MultiMeshInstance3D.new()
 	var mm := MultiMesh.new()
@@ -575,14 +587,6 @@ func _make_flood(parent: Node3D) -> void:
 	_streams.multimesh = mm
 	_streams.material_override = water_material()
 	parent.add_child(_streams)
-	_sheet = MeshInstance3D.new()
-	var sb := BoxMesh.new()
-	sb.size = Vector3(PIPE_L + 0.02, COND_H - 0.02, 0.006)
-	_sheet.mesh = sb
-	_sheet.material_override = water_material()
-	_sheet.position = Vector3(0.0, COND_H / 2, WALL_Z + 0.004)
-	_sheet.visible = false
-	parent.add_child(_sheet)
 
 
 ## The streams for the valve's opening: as many holes as the pipe has,
@@ -593,26 +597,24 @@ func _draw_flood(dt: float) -> void:
 	var mm := _streams.multimesh
 	if flood <= 0.0 or not cond_down:
 		mm.visible_instance_count = 0
-		_sheet.visible = false
 		return
 	_ripple = fmod(_ripple + dt * 9.0, TAU)
 	var n := mm.instance_count
 	mm.visible_instance_count = n
-	var top := COND_H + 0.005
-	var bottom := 0.015
-	var r := 0.0025 + 0.004 * flood
+	# each stream sprays down from the pipe's underside to the ice,
+	# thicker and steadier the wider the valve
+	var top := PIPE_Y - PIPE_R + 0.004
+	var bottom := 0.002
+	var r := 0.0025 + 0.005 * flood
 	for i in n:
 		var x := -PIPE_L / 2 + i * STREAM_GAP
 		var waver := 0.004 * sin(_ripple + i * 1.7) * (1.2 - flood)
 		var h := top - bottom
 		var t := Transform3D(
-			Basis.IDENTITY.scaled(Vector3(r, h, r)), Vector3(x + waver, bottom + h / 2, WALL_Z + r)
+			Basis.IDENTITY.scaled(Vector3(r, h, r)),
+			Vector3(x + waver, bottom + h / 2, WALL_Z + PIPE_R)
 		)
 		mm.set_instance_transform(i, t)
-	_sheet.visible = flood > 0.3
-	if _sheet.visible:
-		_sheet.scale = Vector3(1.0, clampf((flood - 0.3) / 0.7, 0.05, 1.0), 1.0)
-		_sheet.position.y = (COND_H - 0.02) * _sheet.scale.y / 2 + 0.01
 
 
 static func water_material() -> StandardMaterial3D:
@@ -649,6 +651,64 @@ static func clear_material() -> StandardMaterial3D:
 		_clear_mat.roughness = 0.1
 		_clear_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	return _clear_mat
+
+
+## The machine as something to walk into: boxes for the body and the
+## conditioner on the props layer, moved with the machine each physics
+## frame so it shoves a walker in its way.
+func _make_hull() -> AnimatableBody3D:
+	var h := AnimatableBody3D.new()
+	h.name = "Hull"
+	h.sync_to_physics = true
+	h.collision_layer = Layers.bit(Layers.PROPS)
+	h.collision_mask = 0
+	for box: Array in [
+		[Vector3(2.3, 2.2, 4.28), Vector3(0.0, BODY_Y0 + 1.1, BODY_PIVOT_Z - BLADE_Z)],
+		[Vector3(2.2, 0.5, 0.9), Vector3(0.0, 0.25, 0.3)],
+	]:
+		var cs := CollisionShape3D.new()
+		var bs := BoxShape3D.new()
+		bs.size = box[0]
+		cs.shape = bs
+		cs.position = box[1]
+		h.add_child(cs)
+	return h
+
+
+## A frame of driving: `pedal` is the accelerator (0..1) and `brake`
+## (0..1) from the operator, `turn` the wheel (-1 right .. +1 left); the
+## drive select lever gives the direction. Moves the machine with a
+## bicycle model pivoting on the rear axle and returns the blade's edge
+## before and after, in the parent's frame, as [a0, a1, b0, b1] (the 0
+## end at the blade's -X), or an empty array when it did not move.
+func drive_step(dt: float, pedal: float, brake: float, turn: float) -> Array[Vector3]:
+	var dir := 1.0 if drive == 0 else (-1.0 if drive == 2 else 0.0)
+	var want := dir * pedal
+	if want != 0.0 and signf(want) == signf(speed) or speed == 0.0:
+		speed = move_toward(speed, want * MAX_SPEED, ACCEL * dt)
+	else:
+		speed = move_toward(speed, 0.0, BRAKE * dt)
+	if brake > 0.0:
+		speed = move_toward(speed, 0.0, BRAKE * brake * dt)
+	elif pedal == 0.0:
+		speed = move_toward(speed, 0.0, COAST * dt)
+	steer = move_toward(steer, turn * STEER_MAX, STEER_RATE * dt)
+	if absf(speed) < 0.001:
+		speed = 0.0
+		return []
+	var a0 := to_global(Vector3(-AUGER_L / 2 - 0.05, 0.0, 0.0))
+	var a1 := to_global(Vector3(AUGER_L / 2 + 0.05, 0.0, 0.0))
+	var fwd := -global_transform.basis.z
+	var rear := global_position + fwd * (BLADE_Z - REAR_AXLE)
+	var ds := speed * dt
+	rear += fwd * ds
+	if steer != 0.0:
+		rotate_y(ds / WHEELBASE * tan(steer))
+	fwd = -global_transform.basis.z
+	global_position = rear - fwd * (BLADE_Z - REAR_AXLE)
+	var b0 := to_global(Vector3(-AUGER_L / 2 - 0.05, 0.0, 0.0))
+	var b1 := to_global(Vector3(AUGER_L / 2 + 0.05, 0.0, 0.0))
+	return [a0, a1, b0, b1]
 
 
 func _part(id: String) -> MeshInstance3D:

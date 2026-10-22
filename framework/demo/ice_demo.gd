@@ -94,6 +94,7 @@ var sim_t := 0.0
 var _machine: Zambelli
 var _aimed := -1  # the machine control under the dot
 var _no_aim := false  # a screenshot of a control, without its glow
+var _aboard := false  # the walker is in the seat and the keys drive the machine
 var _chip_t := 0.0
 var _stream: GPUParticles3D
 var _env: WorldEnvironment
@@ -164,12 +165,15 @@ func _ready() -> void:
 	hud = WalkHud.new()
 	add_child(hud)
 	hud.bind(interactor)
-	hud.legend(
-		(
-			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [, .] ICE OVER PAINT   "
-			+ "[R] RESURFACER   [N] AT THE CONTROLS   [E] USE   [WHEEL] TURN   [M] FLOOD   "
-			+ "[ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   [T] CLOCK   [B] BODY   "
-			+ "[V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
+	(
+		hud
+		. legend(
+			(
+				"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [, .] ICE OVER PAINT   "
+				+ "[R] RESURFACER   [N] SEAT   [W S] PEDAL BRAKE   [A D] STEER   [E] USE   [WHEEL] TURN   [M] FLOOD   "
+				+ "[ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   [T] CLOCK   [B] BODY   "
+				+ "[V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
+			)
 		)
 	)
 	_stream = _make_stream()
@@ -193,11 +197,19 @@ func _process(dt: float) -> void:
 		ice.set_now()
 	if _zam >= 0.0:
 		_zamboni_step(sdt)
-	elif (
-		_machine
-		and _machine.auger_on
-		and _machine.lift_on
-		and _machine.trough_m3() + _machine.pile_m3 < 0.0005
+	elif _aboard:
+		_drive(sdt)
+	if _aboard and walker:
+		walker.global_position = _machine.to_global(Zambelli.SEAT)
+	if (
+		_zam < 0.0
+		and (
+			_machine
+			and _machine.speed == 0.0
+			and _machine.auger_on
+			and _machine.lift_on
+			and _machine.trough_m3() + _machine.pile_m3 < 0.0005
+		)
 	):
 		# the pass is over and the augers have cleared the snow: dump the tank
 		_machine.auger_on = false
@@ -433,6 +445,71 @@ func _shavings_by_bin() -> PackedFloat32Array:
 	return bins
 
 
+## A frame at the wheel: W is the pedal, S the brake, A and D steer, the
+## drive select lever on the console gives the direction. The conditioner
+## resurfaces whatever the blade sweeps, on any heading; the boards stop
+## the machine.
+func _drive(sdt: float) -> void:
+	_drive_with(
+		sdt,
+		1.0 if Input.is_key_pressed(KEY_W) else 0.0,
+		1.0 if Input.is_key_pressed(KEY_S) else 0.0,
+		(
+			(1.0 if Input.is_key_pressed(KEY_A) else 0.0)
+			- (1.0 if Input.is_key_pressed(KEY_D) else 0.0)
+		)
+	)
+
+
+func _drive_with(sdt: float, pedal: float, brake: float, turn: float) -> void:
+	var before := _machine.global_transform
+	var sweep := _machine.drive_step(sdt, pedal, brake, turn)
+	if sweep.is_empty():
+		return
+	if not _on_the_sheet():
+		_machine.global_transform = before
+		_machine.speed = 0.0
+		if hud:
+			hud.toast("THE BOARDS")
+		return
+	if not _machine.is_down():
+		return
+	var film := FLOOD_FULL_MM * _machine.flood
+	var fwd := -_machine.global_transform.basis.z
+	var took := ice.resurface_sweep(
+		_local(sweep[0]),
+		_local(sweep[1]),
+		_local(sweep[2]),
+		_local(sweep[3]),
+		film,
+		rag_i / 2.0,
+		atan2(fwd.z, fwd.x),
+		-_machine.blade_mm,
+		Zambelli.BINS
+	)
+	shaved_mm += took
+	if took > 0.0:
+		var bins := ice.shave_bins.duplicate()
+		var cell_m3 := ice.cell * ice.cell * 0.001
+		for b in bins.size():
+			bins[b] *= cell_m3
+		_machine.feed(bins)
+
+
+## Whether the machine's four corners are on the ice, clear of the boards.
+func _on_the_sheet() -> bool:
+	for c: Vector3 in [
+		Vector3(-1.2, 0.0, -Zambelli.BLADE_Z - 0.1),
+		Vector3(1.2, 0.0, -Zambelli.BLADE_Z - 0.1),
+		Vector3(-1.2, 0.0, 0.85),
+		Vector3(1.2, 0.0, 0.85)
+	]:
+		var p := _local(_machine.to_global(c))
+		if p.x < 0.1 or p.x > RINK.x - 0.1 or p.y < 0.1 or p.y > RINK.y - 0.1:
+			return false
+	return true
+
+
 ## The resurfacer (framework/demo/zambelli.gd), parked by the end boards
 ## with the conditioner up until a pass; it faces +X, the way a pass runs.
 func _make_machine() -> Zambelli:
@@ -451,14 +528,26 @@ func _blade_toast() -> String:
 	)
 
 
-## Over to the operator's station: on the deck behind the console, whole
-## machine shown, looking over the levers (noclip, so the deck holds).
+## Into the operator's seat: the whole machine shown, the keys drive it,
+## the view over the console and the levers in reach.
 func _at_the_controls() -> void:
 	_machine.show_body = true
+	_aboard = true
 	walker.set_noclip(true)
-	walker.global_position = _machine.to_global(Vector3(-0.1, ZambelliControls.DECK_Y, 1.15))
-	walker.face(_machine.rotation.y)  # at the rear, facing forward over the wheel
-	walker.camera.rotation.x = -0.72
+	walker.driven = true
+	walker.global_position = _machine.to_global(Zambelli.SEAT)
+	walker.face(_machine.rotation.y)  # facing forward over the wheel
+	walker.camera.rotation.x = -0.55
+
+
+## Out of the seat, down on the ice beside the machine.
+func _off_the_machine() -> void:
+	_aboard = false
+	walker.driven = false
+	walker.set_noclip(false)
+	walker.global_position = _machine.to_global(Vector3(-2.0, 0.05, 0.3))
+	walker.face(_machine.rotation.y + PI / 2)
+	walker.camera.rotation.x = -0.2
 
 
 ## The walker at `eye`, looking at `target` (noclip).
@@ -511,6 +600,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				hud.toast("MACHINE: %s" % ("WHOLE" if _machine.show_body else "CONDITIONER ONLY"))
 			KEY_V:
 				# over to the machine, whole, from its left side
+				_aboard = false
+				walker.driven = false
 				_machine.show_body = true
 				walker.set_noclip(false)
 				walker.global_position = _machine.global_position + Vector3(-1.5, 0.05, -5.0)
@@ -531,8 +622,12 @@ func _unhandled_input(event: InputEvent) -> void:
 					_machine.controls.toggle(_aimed)
 					hud.toast(_machine.controls.prompt(_aimed).get_slice("   [", 0))
 			KEY_N:
-				_at_the_controls()
-				hud.toast("AT THE CONTROLS")
+				if _aboard:
+					_off_the_machine()
+					hud.toast("OFF THE MACHINE")
+				else:
+					_at_the_controls()
+					hud.toast("IN THE SEAT: [W] PEDAL  [S] BRAKE  [A D] STEER")
 			KEY_COMMA:
 				ice.base_mm = maxf(ice.base_mm - 2.0, 4.0)
 				ice.mark_all_dirty()
@@ -861,13 +956,14 @@ func _screenshot(path: String) -> void:
 		_machine.settle()
 		_machine.show_body = OS.get_cmdline_user_args().has("--body")
 		if OS.get_cmdline_user_args().has("--flood"):
-			# the flood water pouring from the pipe down the back wall, from behind
+			# the flood water spraying from the pipe at the foot of the back
+			# wall onto the ice, from low behind its +X end
 			_machine.flood = 0.65
 			_machine._process(1.0 / 60.0)
-			walker.set_noclip(true)
-			walker.global_position = _machine.to_global(Vector3(1.5, -0.45, 1.3))
-			walker.face(-0.33)  # along the back wall from its +X end
-			walker.camera.rotation.x = -0.5
+			_look_at(
+				_machine.to_global(Vector3(1.6, 0.4, 1.4)),
+				_machine.to_global(Vector3(0.2, 0.05, 0.64))
+			)
 		elif OS.get_cmdline_user_args().has("--side"):  # the whole machine side on
 			walker.global_position = ice.position + Vector3(18.5, 0.05, 16.5)
 			walker.camera.rotation.x = -0.05
@@ -900,6 +996,24 @@ func _screenshot(path: String) -> void:
 				_machine.to_global(Vector3(-0.95, 2.35, 0.95)),
 				_machine.to_global(Vector3(-0.12, 1.78, 0.25))
 			)
+	if args.has("--view=drive"):
+		# from the seat, a dozen seconds into a curving flood pass across the sheet
+		_machine.global_position = ice.position + Vector3(8.0, 0.0, 14.0)
+		_machine.rotation.y = -PI / 2
+		_machine.cond_down = true
+		_machine.lift = 1.0
+		_machine.settle()
+		_machine.auger_on = true
+		_machine.lift_on = true
+		_machine.flood = 0.65
+		_machine.drive = 0
+		_at_the_controls()
+		for step in 720:
+			_drive_with(1.0 / 60.0, 1.0, 0.0, -0.3 if step > 240 else 0.0)
+			_machine._process(1.0 / 60.0)
+		walker.global_position = _machine.to_global(Zambelli.SEAT)
+		walker.face(_machine.rotation.y + 2.9)  # looking back over the left shoulder at the lane
+		walker.camera.rotation.x = -0.62
 	if args.has("--view=pool"):
 		# water run into the low spots and left to stand: a scraped trench,
 		# a few chips, a pour between them, then a while to run downhill
@@ -1237,24 +1351,73 @@ func _self_test() -> void:
 	ctl.toggle(k_h)
 	check.call(not _machine.auger_on, "... and off")
 	_machine.blade_mm = 0.0
-	ctl.scroll(k_blade, -16.0)
+	ctl.scroll(k_blade, 16.0)
 	check.call(
 		(
 			is_equal_approx(_machine.blade_mm, -0.5)
 			and ZambelliControls.turns_text(-0.5) == "1 TURN DOWN"
 		),
 		(
-			"sixteen notches down is one turn, half a millimetre (%s)"
+			"sixteen notches up is one turn clockwise, half a millimetre down (%s)"
 			% ZambelliControls.turns_text(_machine.blade_mm)
 		)
 	)
-	ctl.scroll(k_blade, 3.0)
+	ctl.scroll(k_blade, -3.0)
 	check.call(
 		ZambelliControls.turns_text(_machine.blade_mm) == "13/16 TURNS DOWN",
 		"the turns read in sixteenths (%s)" % ZambelliControls.turns_text(_machine.blade_mm)
 	)
-	ctl.scroll(k_blade, -200.0)
+	ctl.scroll(k_blade, 200.0)
 	check.call(is_equal_approx(_machine.blade_mm, -3.0), "the wheel stops at 3 mm down")
+	# driving: a sweep on a heading off the axes cuts and feeds the auger
+	_machine.global_position = ice.position + Vector3(20.0, 0.0, 12.0)
+	_machine.rotation.y = -PI / 2 + 0.5
+	_machine.cond_down = true
+	_machine.lift = 1.0
+	_machine.blade_mm = -1.0
+	_machine.drive = 0
+	_machine.settle()
+	var before_drive := _machine.global_position
+	var sweep_took := 0.0
+	for step in 240:
+		var sweep := _machine.drive_step(1.0 / 60.0, 1.0, 0.0, 0.3)
+		if sweep.is_empty():
+			continue
+		var fwd := -_machine.global_transform.basis.z
+		sweep_took += ice.resurface_sweep(
+			_local(sweep[0]),
+			_local(sweep[1]),
+			_local(sweep[2]),
+			_local(sweep[3]),
+			0.0,
+			0.0,
+			atan2(fwd.z, fwd.x),
+			1.0,
+			Zambelli.BINS
+		)
+	check.call(
+		_machine.global_position.distance_to(before_drive) > 2.0 and _machine.speed > 1.0,
+		"the pedal moves the machine (%.1f m)" % _machine.global_position.distance_to(before_drive)
+	)
+	check.call(
+		absf(_machine.rotation.y + PI / 2 - 0.5) > 0.1,
+		"the wheel turns it (%.2f)" % _machine.rotation.y
+	)
+	check.call(sweep_took > 1000.0, "the sweep cuts the ice on the way (%.0f mm)" % sweep_took)
+	var fed := 0.0
+	for b in ice.shave_bins.size():
+		fed += ice.shave_bins[b]
+	check.call(
+		fed > 0.0 and ice.shave_bins[0] > 0.0 and ice.shave_bins[41] > 0.0, "... across the blade"
+	)
+	check.call(
+		ice.thickness_at(_local(_machine.to_global(Vector3(0.0, 0.0, 0.5)))) < 24.5,
+		(
+			"the lane behind it is cut (%.2f mm)"
+			% ice.thickness_at(_local(_machine.to_global(Vector3(0.0, 0.0, 0.5))))
+		)
+	)
+	_machine.speed = 0.0
 	ctl.scroll(k_flood, 7.0)
 	check.call(is_equal_approx(_machine.flood, 0.35), "seven notches open the flood valve 35%%")
 	check.call(ZambelliControls.turns_text(0.0) == "FLUSH", "flush reads as flush")

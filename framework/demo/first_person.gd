@@ -19,6 +19,7 @@ const FOV_ZOOM := 24.0
 var camera: Camera3D
 var look_enabled := true
 var noclip := false
+var driven := false  # aboard a machine: the keys drive it, not the walker
 var crouching := false
 var _yaw := 0.0
 var _pitch := 0.0
@@ -75,6 +76,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(dt: float) -> void:
 	var zoom := Input.is_key_pressed(KEY_Z)
 	camera.fov = lerpf(camera.fov, FOV_ZOOM if zoom else FOV, 0.25)
+	if driven:
+		velocity = Vector3.ZERO
+		return
 	var wish := Vector3.ZERO
 	if Input.is_key_pressed(KEY_W):
 		wish -= transform.basis.z

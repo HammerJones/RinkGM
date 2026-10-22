@@ -78,6 +78,8 @@ var remeshed := 0
 ## cells), from `shave_z0` on: what the conditioner's auger has to carry.
 var shave_rows := PackedFloat32Array()
 var shave_z0 := 0
+## resurface_sweep()'s shavings by bin across the blade (mm summed over cells).
+var shave_bins := PackedFloat32Array()
 var wet_cells := 0
 
 var _cw := 0
@@ -448,7 +450,6 @@ func resurface(
 					n += 1
 		blade_mm = (sum / n if n > 0 else 0.0) - cut_mm
 	var shaved := 0.0
-	var touched_z := {}
 	var z_lo := maxi(c0.y, 0)
 	shave_z0 = z_lo
 	shave_rows.resize(maxi(mini(c1.y + 1, d) - z_lo, 0))
@@ -457,45 +458,9 @@ func resurface(
 		var streak := 1.0 + rag_wear * 0.6 * sin(z * cell * 41.0) * sin(z * cell * 7.3)
 		var row_took := 0.0
 		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
-			var i := index(x, z)
-			if _mask[i] == 0:
+			if _mask[index(x, z)] == 0:
 				continue
-			# the column's top: ice, the tallest crust peak, loose snow on it.
-			# Snow has height: a blade above the snow touches nothing, a blade
-			# in the snow shaves only snow, a blade in the solid takes the snow
-			# with it and cuts the ice
-			var solid := ice[i] + crust[i]
-			var top := solid + snow[i]
-			var took := 0.0
-			if top > blade_mm:
-				if blade_mm > solid:
-					var keep := blade_mm - solid
-					took += snow[i] - keep
-					snow[i] = keep
-				else:
-					took += snow[i]
-					snow[i] = 0.0
-					var cut_here := solid - blade_mm
-					if cut_here > 0.0:
-						took += cut_here
-						# peaks go first, then the ice under them
-						var from_crust := minf(crust[i], cut_here)
-						crust[i] -= from_crust
-						ice[i] -= cut_here - from_crust
-						if gouge[i] > 0.0:
-							# the blade takes the surface the gouge is in with it
-							var dig := minf(gouge[i], cut_here)
-							gouge[i] -= dig
-							scar[i] = maxf(scar[i] - dig, 0.0)
-					cut[i] = lerpf(0.75, 0.5, rag_wear) if film_mm > 0.0 else 0.75
-					ang[i] = travel
-					touched_z[z] = true
-			if film_mm > 0.0:
-				water[i] = film_mm * streak
-				frozen[i] = 0.0
-				_wet_add(i)
-			row_took += took
-			_touch(x, z)
+			row_took += _shave(x, z, blade_mm, film_mm, rag_wear, streak, travel)
 		shave_rows[z - z_lo] = row_took
 		shaved += row_took
 	# the shavings go up the auger into the tank; a side spill is a flaw
@@ -508,6 +473,125 @@ func resurface(
 					var i := index(x, z)
 					snow[i] = clampf(snow[i] + per, 0.0, 3.0)
 					_touch(x, z)
+	return shaved
+
+
+## One column under the blade at `blade_mm` over the base, the rag laying
+## `film_mm` of water behind it (times `streak`, a worn rag's unevenness).
+## Returns the millimetres taken off the column.
+func _shave(
+	x: int, z: int, blade_mm: float, film_mm: float, rag_wear: float, streak: float, travel: float
+) -> float:
+	var i := index(x, z)
+	# the column's top: ice, the tallest crust peak, loose snow on it.
+	# Snow has height: a blade above the snow touches nothing, a blade
+	# in the snow shaves only snow, a blade in the solid takes the snow
+	# with it and cuts the ice
+	var solid := ice[i] + crust[i]
+	var top := solid + snow[i]
+	var took := 0.0
+	if top > blade_mm:
+		if blade_mm > solid:
+			var keep := blade_mm - solid
+			took += snow[i] - keep
+			snow[i] = keep
+		else:
+			took += snow[i]
+			snow[i] = 0.0
+			var cut_here := solid - blade_mm
+			if cut_here > 0.0:
+				took += cut_here
+				# peaks go first, then the ice under them
+				var from_crust := minf(crust[i], cut_here)
+				crust[i] -= from_crust
+				ice[i] -= cut_here - from_crust
+				if gouge[i] > 0.0:
+					# the blade takes the surface the gouge is in with it
+					var dig := minf(gouge[i], cut_here)
+					gouge[i] -= dig
+					scar[i] = maxf(scar[i] - dig, 0.0)
+			cut[i] = lerpf(0.75, 0.5, rag_wear) if film_mm > 0.0 else 0.75
+			ang[i] = travel
+	if film_mm > 0.0:
+		water[i] = film_mm * streak
+		frozen[i] = 0.0
+		_wet_add(i)
+	_touch(x, z)
+	return took
+
+
+## The resurfacer driven freely: the blade's edge swept from the segment
+## a0-a1 to b0-b1 (metres on the sheet, the 0 ends on the same side), the
+## blade `cut_mm` below the swept columns' mean solid level (or at
+## `blade_mm` over the base when cut_mm is NO_CUT), the rag laying
+## `film_mm` behind it. The shavings are binned across the blade into
+## `shave_bins` (mm summed over the bin's cells, bin 0 at the 0 end) for
+## the conditioner's auger. Returns the millimetres shaved in all.
+func resurface_sweep(
+	a0: Vector2,
+	a1: Vector2,
+	b0: Vector2,
+	b1: Vector2,
+	film_mm: float,
+	rag_wear: float,
+	travel: float,
+	cut_mm: float,
+	bins: int,
+	blade_mm := 0.0
+) -> float:
+	shave_bins.resize(bins)
+	shave_bins.fill(0.0)
+	var lo := Vector2(
+		minf(minf(a0.x, a1.x), minf(b0.x, b1.x)), minf(minf(a0.y, a1.y), minf(b0.y, b1.y))
+	)
+	var hi := Vector2(
+		maxf(maxf(a0.x, a1.x), maxf(b0.x, b1.x)), maxf(maxf(a0.y, a1.y), maxf(b0.y, b1.y))
+	)
+	var c0 := cell_at(lo)
+	var c1 := cell_at(hi)
+	# the quad a0, a1, b1, b0, whichever way round it turns
+	var q: Array[Vector2] = [a0, a1, b1, b0]
+	var area := 0.0
+	for k in 4:
+		area += q[k].cross(q[(k + 1) % 4])
+	if absf(area) < 1e-9:
+		return 0.0
+	var turn := signf(area)
+	var along := b1 - b0
+	var len2 := maxf(along.length_squared(), 1e-9)
+	var cols := PackedInt32Array()
+	var us := PackedFloat32Array()
+	for z in range(maxi(c0.y, 0), mini(c1.y + 1, d)):
+		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
+			var i := index(x, z)
+			if _mask[i] == 0:
+				continue
+			var p := Vector2((x + 0.5) * cell, (z + 0.5) * cell)
+			var inside := true
+			for k in 4:
+				if (q[(k + 1) % 4] - q[k]).cross(p - q[k]) * turn < 0.0:
+					inside = false
+					break
+			if not inside:
+				continue
+			cols.append(i)
+			us.append(clampf((p - b0).dot(along) / len2, 0.0, 0.9999))
+	if cols.is_empty():
+		return 0.0
+	if cut_mm > NO_CUT:
+		var sum := 0.0
+		for i in cols:
+			sum += ice[i] + crust[i]
+		blade_mm = sum / cols.size() - cut_mm
+	var shaved := 0.0
+	var blade_len := sqrt(len2)
+	for k in cols.size():
+		var i := cols[k]
+		var u := us[k]
+		var streak := 1.0 + rag_wear * 0.6 * sin(u * blade_len * 41.0) * sin(u * blade_len * 7.3)
+		var took := _shave(i % w, i / w, blade_mm, film_mm, rag_wear, streak, travel)
+		shave_bins[int(u * bins)] += took
+		shaved += took
 	return shaved
 
 

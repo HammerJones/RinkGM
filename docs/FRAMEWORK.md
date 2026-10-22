@@ -650,8 +650,17 @@ display, and run as headless checks in CI (`--test=<name>`).
   wears the rag. The
   second HUD line reads the blade's setting in turns and millimetres,
   the flood and wash valves, and the column under the dot: ice thickness over
-  the paint, snow and water in millimetres. N puts you at the operator's
-  console. The console's controls are props taken out of the bought
+  the paint, snow and water in millimetres. N puts you in the operator's
+  seat and N again steps you off beside the machine. In the seat the
+  keys drive it: W is the pedal, S the brake, A and D steer (a bicycle
+  model pivoting on the rear axle, 3.5 m/s flat out, 32 degrees of
+  lock), and the drive select lever gives the direction; with the
+  conditioner down the blade resurfaces whatever it sweeps on any
+  heading (`IceSheet.resurface_sweep()`, the swept quad's columns binned
+  across the blade for the auger), the flood valve laying its film
+  behind it, and the boards stop the machine. The machine is also a
+  body the walker collides with (an `AnimatableBody3D` hull of two
+  boxes on the props layer, carried with it). The console's controls are props taken out of the bought
   model (`tools/propgen/zambelli_lever.py` takes each out of the GLB
   at 3 mm and clears its 17 mm blob off the body prop;
   `framework/demo/zambelli_controls.gd` registers them on pivots from
@@ -661,21 +670,23 @@ display, and run as headless checks in CI (`--test=<name>`).
   select ahead on the left, the blade's handwheel lying on its column
   at the rear, the flood and wash valves either side of it (a post with
   a handle each), and the stalk with the ball beside the levers, which
-  does nothing. Look at a control and the HUD names it and its state;
+  does nothing; the script then tidies the deck to smooth blue sheet
+  metal, the model's gauges and pads gone or painted blue, for the
+  diagrams to come later. Look at a control and the HUD names it and its state;
   E throws a lever (the augers' 30 degrees back for on, the
   conditioner's and the bin's a push forward for up or back for down
   that springs back to neutral, drive select through F, N and R), the
   wheel turns the handwheel in sixteenths of a turn (a turn is 0.5 mm,
   clockwise from above lowers the blade, +3.0 raised to -3.0 lowered,
   0 flush with the conditioner's bottom, the prompt reads the turns and
-  the millimetres) and the valves in 5 % steps (the flood valve a
+  the millimetres; wheel up is clockwise) and the valves in 5 % steps (the flood valve a
   quarter turn anticlockwise to full, the wash valve clockwise; the
   prompt reads the
   percentage; the wash valve is readout only for now). With the flood
-  valve open and the conditioner down, water runs from the pipe along
-  the top of the conditioner's back wall in streams 2.5 inches apart
-  down the wall to the rag, their thickness following the valve, and
-  above 30 % the streams merge into a sheet. The machine is the
+  valve open and the conditioner down, water sprays from the pipe along
+  the foot of the conditioner's back wall onto the ice in streams
+  2.5 inches apart, their thickness following the valve, for the rag
+  behind to smooth. The machine is the
   Zambelli 552 (`framework/demo/zambelli.gd`, five hero props: the body,
   the conditioner and a wheel come from a bought Zamboni model through
   `tools/propgen/zambelli_glb.py`, which voxelises the GLB, splits the
@@ -706,7 +717,9 @@ display, and run as headless checks in CI (`--test=<name>`).
   with the whole machine, `--side` from beside it, `--flood` the back wall
   with the flood running, `--cut=<mm>` for the blade's depth);
   `--view=console` stands at the controls (`--above` looks down on them,
-  `--lever` is close on the console from the operator's left). In every demo Ctrl
+  `--lever` is close on the console from the operator's left);
+  `--view=drive` drives a curving flood pass from the seat and looks back
+  at the lane. In every demo Ctrl
   crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.
 
 ## 14. What the port looks like
