@@ -24,7 +24,7 @@ extends Node3D
 const BLADE_R := 0.23  # a 46 cm disc
 const BLADE_Z := -0.15  # the disc's centre ahead of the machine's middle
 const BLADE_X := -0.40  # ... and to its left: the rim flush with the left wheels (the deck is centred at -0.11, the handle off its right)
-const TILT := deg_to_rad(4.0)
+const TILT := deg_to_rad(2.5)  # the disc leaning left (Sean: 4 was a bit much)
 const ARC_STEP := 0.05  # metres of travel between arcs
 const ARC_W := 0.035
 const ARC_MM := 1.2  # the arc's gouge beyond the set depth

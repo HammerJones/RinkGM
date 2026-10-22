@@ -828,7 +828,7 @@ display, and run as headless checks in CI (`--test=<name>`).
   walk-behind machine (Sean's uploaded mower model's intact parts,
   art/props/ice_edger.vox at 1 cm, turned handle-back and scaled to a
   push edger; its handle is a loop off the right of the deck, kept as
-  it is at Sean's ask) with a 46 cm disc under its deck tilted 4
+  it is at Sean's ask) with a 46 cm disc under its deck tilted 2.5
   degrees to the left, its rim flush with the machine's left side
   (`BLADE_X`), and the crank (primitives) clamped to the right end of
   the handle's grip; it parks in the bay. E on the
