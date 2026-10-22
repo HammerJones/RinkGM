@@ -617,7 +617,7 @@ display, and run as headless checks in CI (`--test=<name>`).
   blue and centre lines, the five circles, nine dots and hash marks, the
   creases, the trapezoids, the referee's crease, drawn as rows of
   rectangles into a 1.25 cm texture), boards with a kick plate that
-  follow the corners, two goals, and fourteen arena-style lamps. The
+  follow the corners, and fourteen arena-style lamps. The
   sheet's centre is the world origin, as in the game. X cycles the whole
   sheet through the four states; holding LMB
   runs a hose where you look (1.6 L/s, the wheel is the valve from 0.1
@@ -641,7 +641,8 @@ display, and run as headless checks in CI (`--test=<name>`).
   not in the repository; the script prints the layout constants the node
   uses. By default only the conditioner is drawn, with
   the vertical auger standing in a clear tube and a clear tank above it,
-  so the snow's path is in view; B shows the whole machine. The snow is
+  so the snow's path is in view; B shows the whole machine, V puts you
+  beside it, whole. The snow is
   simulated: `IceSheet.resurface()` reports the millimetres it shaved per
   row (`shave_rows`), the demo bins those across the 2.1 m blade and feeds
   them to the machine as cubic metres of ice; they land in the trough in

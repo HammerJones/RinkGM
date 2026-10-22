@@ -1,6 +1,6 @@
 extends Node3D
 ## The ice demo: a full NHL sheet of ice (60.96 x 25.9 m, 8.5 m corners,
-## the lines and circles painted under it, boards and goals around it)
+## the lines and circles painted under it, boards around it)
 ## as columns (IceSheet), drawn by the ice shader with its four surface
 ## states. X cycles the whole sheet through
 ## snowed up, dry cut, flooded and fresh frozen. Holding LMB runs a hose
@@ -44,9 +44,6 @@ const CREASE_HALF_W := 1.219  # 4 ft
 const TRAP_GOAL := 3.353  # the trapezoid, half of 22 ft on the goal line
 const TRAP_BOARDS := 4.267  # half of 28 ft at the boards
 const REF_CREASE_R := 3.048  # 10 ft
-const GOAL_W := 1.829  # 6 ft between the posts
-const GOAL_H := 1.219  # 4 ft
-const GOAL_D := 1.016  # 40 in deep
 const BOARD_H := 1.07  # 42 in
 const KICK_H := 0.2
 const BOARD_T := 0.1
@@ -116,15 +113,13 @@ func _ready() -> void:
 	_set_state(state)
 	ice.flush()
 	# the concrete under the ice (seen past the corner arcs) for the walker
-	# and the props; boards with curved corners and the goals around it
+	# and the props; boards with curved corners around it
 	var shell := StaticBody3D.new()
 	shell.collision_layer = Layers.bit(Layers.VENUE)
 	shell.collision_mask = 0
 	add_child(shell)
 	_box(shell, Vector3(0, -0.103, 0), Vector3(RINK.x + 0.4, 0.2, RINK.y + 0.4), CONCRETE, true)
 	_boards(shell)
-	_goal(shell, GOAL_LINE, 1.0)
-	_goal(shell, RINK.x - GOAL_LINE, -1.0)
 	field = PropField.new()
 	field.name = "Props"
 	add_child(field)
@@ -161,7 +156,7 @@ func _ready() -> void:
 		(
 			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [, .] ICE OVER PAINT   "
 			+ "[R] RESURFACER   [M] MODE   [ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   "
-			+ "[T] CLOCK   [B] BODY   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
+			+ "[T] CLOCK   [B] BODY   [V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 		)
 	)
 	_stream = _make_stream()
@@ -428,6 +423,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_B:
 				_machine.show_body = not _machine.show_body
 				hud.toast("MACHINE: %s" % ("WHOLE" if _machine.show_body else "CONDITIONER ONLY"))
+			KEY_V:
+				# over to the machine, whole, from its left side
+				_machine.show_body = true
+				walker.set_noclip(false)
+				walker.global_position = _machine.global_position + Vector3(-1.5, 0.05, -5.0)
+				walker.face(-2.85)
+				walker.camera.rotation.x = -0.1
+				hud.toast("THE ZAMBELLI")
 			KEY_M:
 				mode_i = (mode_i + 1) % MODES.size()
 				hud.toast("RESURFACER MODE: %s" % MODES[mode_i])
@@ -655,20 +658,6 @@ func _board(shell: StaticBody3D, at: Vector3, length: float, yaw: float) -> void
 		false,
 		yaw
 	)
-
-
-## A goal frame on the goal line at sheet x `gl`, its net `toward` the
-## end boards (-1 when the sheet's +x end is behind it).
-func _goal(shell: StaticBody3D, gl: float, toward: float) -> void:
-	var o := ice.position + Vector3(gl, 0, RINK.y / 2)
-	var pipe := 0.05
-	var back := -toward * GOAL_D
-	for z in [-GOAL_W / 2, GOAL_W / 2]:
-		_box(shell, o + Vector3(0, GOAL_H / 2, z), Vector3(pipe, GOAL_H, pipe), RED, true)
-		_box(shell, o + Vector3(back / 2, pipe / 2, z), Vector3(GOAL_D, pipe, pipe), RED, true)
-	_box(shell, o + Vector3(0, GOAL_H, 0), Vector3(pipe, pipe, GOAL_W + pipe), RED, true)
-	_box(shell, o + Vector3(back, pipe / 2, 0), Vector3(pipe, pipe, GOAL_W + pipe), RED, true)
-	_box(shell, o + Vector3(back, GOAL_H * 0.45, 0), Vector3(pipe, pipe, GOAL_W + pipe), RED, true)
 
 
 func _box(
