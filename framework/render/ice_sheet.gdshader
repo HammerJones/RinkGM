@@ -26,6 +26,17 @@ uniform float striation_strength = 0.9;
 uniform bool heatmap = false;
 uniform float heat_lo = 0.0;
 uniform float heat_hi = 0.001;
+// heat_mode 1 colours by height, 2 by the column's temperature: its
+// steady temperature between the pad and the air from its thickness
+// (depthmap.a, 0..1 of 64 mm) plus what a flood warmed it (depthmap.b,
+// 0..1 of 10 K), as IceSheet.thermal() reckons it; temp_lo..temp_hi C.
+uniform int heat_mode = 1;
+uniform float pad_c = -9.0;
+uniform float room_c = 8.0;
+uniform float h_air = 6.0;
+uniform float k_ice = 2.2;
+uniform float temp_lo = -10.0;
+uniform float temp_hi = 0.0;
 varying vec2 wp;
 varying float hy;
 
@@ -90,7 +101,8 @@ void fragment() {
 	// the paint is at a fixed depth: the lines sit on the white paint and
 	// show through the ice above them, vivid when it is thin, faded and
 	// blue when it is thick; clear ice (a filled chip) shows more
-	vec2 dm = texture(depthmap, tuv).rg;
+	vec4 dm4 = texture(depthmap, tuv);
+	vec2 dm = dm4.rg;
 	float dep = dm.r * 64.0;
 	float wmm = dm.g * 8.0;  // water standing in the column, mm
 	float gg = clamp(c.g * 4.0, 0.0, 1.0);
@@ -153,7 +165,17 @@ void fragment() {
 	if (heatmap) {
 		// matte, lit a little by its own colour so shadow does not read
 		// as a hollow; the relief still shades through the lighting
-		vec3 hc = heat_colour((hy - heat_lo) / max(heat_hi - heat_lo, 1e-6));
+		float ht = (hy - heat_lo) / max(heat_hi - heat_lo, 1e-6);
+		if (heat_mode == 2) {
+			float h = max(dm4.a * 64.0, 2.0) * 0.001;
+			float g = 2.0 * k_ice / h;
+			float t = (h_air * room_c + g * pad_c) / (h_air + g) + dm4.b * 10.0;
+			if (wmm > 0.02) {
+				t = max(t, 0.0);  // standing water sits at 0 C
+			}
+			ht = (t - temp_lo) / max(temp_hi - temp_lo, 1e-6);
+		}
+		vec3 hc = heat_colour(ht);
 		ALBEDO = hc;
 		EMISSION = hc * 0.35;
 		ROUGHNESS = 1.0;

@@ -101,6 +101,7 @@ var air_base := 8.0
 var air_c := 8.0
 var sim_t := 0.0
 var heatmap := false  # H: the ice coloured by height, blue low .. red high
+var heat_mode := 0  # H cycles 0 off, 1 height, 2 temperature
 var goals := 0  # pucks into the net on the skates
 var show_data := false  # F1: the readout lines and the key legend
 var _footprint := Zambelli.outline()  # the machine's edge, for the boards
@@ -1190,12 +1191,20 @@ func _aim(cam: Camera3D = null) -> Variant:
 ## on bare ice they pour and chip.
 ## The heatmap on or off: the ice's colour by height, its range read now.
 func set_heatmap(on: bool) -> void:
-	heatmap = on
+	set_heat_mode(1 if on else 0)
+
+
+## The heatmap's mode: 0 off, 1 the ice by height, 2 by temperature.
+func set_heat_mode(mode: int) -> void:
+	heat_mode = mode
+	heatmap = mode > 0
 	_heat_t = 0.0
-	ice.heatmap(on)
+	ice.heatmap_mode(mode)
 
 
 func _heat_text() -> String:
+	if heat_mode == 2:
+		return "   TEMP MAP BLUE %.0f C .. RED 0 C" % (slab_c - 1.0)
 	if not heatmap:
 		return ""
 	var r := ice.height_range() / (0.001 * ice.height_scale)
@@ -1319,10 +1328,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				_show_data(not show_data)
 				hud.toast("DATA %s" % ("ON" if show_data else "OFF"))
 			KEY_H:
-				set_heatmap(not heatmap)
-				hud.toast(
-					"HEATMAP %s" % ("ON: BLUE LOW, GREEN MID, RED HIGH" if heatmap else "OFF")
-				)
+				set_heat_mode((heat_mode + 1) % 3)
+				match heat_mode:
+					1:
+						hud.toast("HEATMAP HEIGHT: BLUE LOW, GREEN MID, RED HIGH")
+					2:
+						hud.toast("HEATMAP TEMPERATURE: BLUE %.0f C .. RED 0 C" % (slab_c - 1.0))
+					_:
+						hud.toast("HEATMAP OFF")
 	elif event is InputEventMouseButton:
 		if not event.pressed:
 			if event.button_index == MOUSE_BUTTON_LEFT:
@@ -2033,7 +2046,14 @@ func _screenshot(path: String) -> void:
 			0.4
 		)
 		ice.pour(Vector2(RINK.x / 2, RINK.y / 2), 2.0, 1.5)
-		set_heatmap(true)
+		if args.has("--temp"):
+			# by temperature: a flood strip setting, a puddle, the dry sheet cold
+			ice.resurface(PASS_X0, PASS_X1, 10.0, 10.0 + MACHINE_W, 0.0, 0.0, 0.0, 1.0)
+			for step in 60:
+				ice.thermal(1.0, slab_c, air_c, 100000)
+			set_heat_mode(2)
+		else:
+			set_heatmap(true)
 		walker.set_noclip(true)
 		walker.global_position = Vector3(-RINK.x / 2 - 6.0, 12.0, 0.0)
 		walker.face(-PI / 2)
@@ -3201,8 +3221,30 @@ func _self_test() -> void:
 		"... with the range on the material"
 	)
 	check.call(heat_ms < 150.0, "the range reads in under 150 ms (%.0f)" % heat_ms)
-	set_heatmap(false)
-	check.call(ice.material.get_shader_parameter("heatmap") == false, "H again turns it off")
+	# by temperature: the pad and the air on the material, a wet column warm in the map
+	set_heat_mode(2)
+	check.call(
+		(
+			ice.material.get_shader_parameter("heat_mode") == 2
+			and is_equal_approx(ice.material.get_shader_parameter("temp_lo"), slab_c - 1.0)
+		),
+		"H again is the temperature map, the pad a degree below dark blue"
+	)
+	var wet_i := ice.index(
+		ice.cell_at(Vector2(RINK.x / 2, RINK.y / 2)).x,
+		ice.cell_at(Vector2(RINK.x / 2, RINK.y / 2)).y
+	)
+	ice.thermal(30.0, slab_c, air_c, 100000)
+	var dc: Color = ice._depth_colour(wet_i)
+	check.call(
+		dc.b > 0.0 and dc.a > 0.3,
+		(
+			"a setting puddle's column is warm in the map, over its thickness (b %.2f a %.2f)"
+			% [dc.b, dc.a]
+		)
+	)
+	set_heat_mode(0)
+	check.call(ice.material.get_shader_parameter("heatmap") == false, "H once more turns it off")
 	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:
 		print("ice_demo test: all passed")

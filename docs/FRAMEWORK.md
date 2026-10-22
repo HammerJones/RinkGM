@@ -594,6 +594,13 @@ blue, the midpoint green, the highest red, four even ramps between
 high column top over the ice in mesh units, kept per chunk from its
 last whole build (a chunk patched in part is read again on the next
 call), so a read is a few milliseconds; `heatmap_refresh()` re-reads it.
+`heatmap_mode(2)` draws the sheet by temperature instead: the shader
+reckons each column's temperature as `thermal()` does, its steady
+temperature between the pad and the air from its thickness (the depth
+map's alpha, of 64 mm) plus what a flood warmed it (the depth map's
+blue, `warm` of 10 K), standing water at 0 C; dark blue a degree below
+the pad (`pad_c`, the last `thermal()` call's), red at 0 C. A cooling
+column touches its cell as it cools, so the map follows a flood setting.
 
 **The blade.** `resurface(x0, x1, z0, z1, film_mm, rag_wear, blade_mm,
 travel, spill, cut_mm)` is the resurfacer over a band: the blade at
@@ -703,10 +710,13 @@ display, and run as headless checks in CI (`--test=<name>`).
   the column's top and built-up ice under the dot while it sets from the
   edges in; T speeds the clock
   (x1, x10, x60); holding RMB chips gouges wherever you look; [ and ]
-  slide the snowed-up scale (`IceSheet.snow_level`) in tenths; H is the
-  heatmap (the ice by height, blue low, green mid, red high, the range
-  in the readout and re-read every 2 s while it is on; `--view=heat`
-  is the sheet from above with passes, an edger lane and a puddle). Those
+  slide the snowed-up scale (`IceSheet.snow_level`) in tenths; H cycles
+  the heatmap: off, by height (blue low, green mid, red high, the range
+  in the readout and re-read every 2 s while it is on), by temperature
+  (blue a degree under the pad, red at 0 C, so a flood setting shows
+  warm and fades as it cools; Sean: see the temperature effects in real
+  time); `--view=heat` is the sheet from above with passes, an edger
+  lane and a puddle, `--temp` with it by temperature. Those
   five (the state, the snow scale, the hose, the chip, the heatmap) are the only ice keys: all
   resurfacing is done from the machine's seat with its own controls
   (the pass key, the flood, blade, rag, instant-freeze and

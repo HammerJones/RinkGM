@@ -64,6 +64,9 @@ var cell := 0.025
 ## Ice over the paint at the datum, mm: the lines are painted at a fixed
 ## depth and read vivid through thin ice, faded and blue through thick.
 var base_mm := 25.0
+var pad_c := -9.0  # the pad and the air the last thermal() ran with (the temperature map)
+var room_c := 8.0
+var heat_mode := 0  # 0 off, 1 by height, 2 by temperature
 ## Vertical exaggeration of the heightfield (1 = true millimetres).
 var height_scale := 4.0
 
@@ -323,12 +326,30 @@ func _read_range(key: Vector2i) -> void:
 ## range is read now; call again (or `heatmap_refresh()`) as the ice
 ## changes.
 func heatmap(on: bool) -> void:
-	set_param("heatmap", on)
-	if on:
+	heatmap_mode(1 if on else 0)
+
+
+## The heatmap by `mode`: 0 off, 1 by height, 2 by the column's
+## temperature (the shader reckons it as thermal() does, from the
+## thickness and warmth in the depth map and the pad and air of the last
+## thermal() call), the pad a degree colder than dark blue, 0 C red.
+func heatmap_mode(mode: int) -> void:
+	heat_mode = mode
+	set_param("heatmap", mode > 0)
+	set_param("heat_mode", maxi(mode, 1))
+	if mode > 0:
 		heatmap_refresh()
 
 
 func heatmap_refresh() -> void:
+	if heat_mode == 2:
+		set_param("pad_c", pad_c)
+		set_param("room_c", room_c)
+		set_param("h_air", H_AIR)
+		set_param("k_ice", K_ICE)
+		set_param("temp_lo", pad_c - 1.0)
+		set_param("temp_hi", 0.0)
+		return
 	var r := height_range()
 	set_param("heat_lo", r.x)
 	set_param("heat_hi", maxf(r.y, r.x + 0.0001 * height_scale))
@@ -1013,6 +1034,8 @@ func _quad_cols(
 ## the way. The loop is flat (no calls, no allocations per cell): it is
 ## the hot path.
 func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
+	pad_c = slab_c
+	room_c = air_c
 	if _wet_n == 0:
 		wet_cells = 0
 		_wet_list.resize(0)
@@ -1050,6 +1073,7 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 		var wt := water[i]
 		if wt <= 0.0:
 			# dry and cooling after a set: back toward steady, then out of the walk
+			var w0 := int(warm[i] * 20.0)
 			warm[i] *= decay
 			if warm[i] < 0.1:
 				warm[i] = 0.0
@@ -1057,6 +1081,8 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 				_wet_n -= 1
 			else:
 				_wet_next.append(i)
+			if int(warm[i] * 20.0) != w0:
+				_touch(i % w, i / w, false)  # the temperature map follows the cooling
 			continue
 		var fz := frozen[i]
 		# neighbours (clamped at the rim and at the corner arcs)
@@ -1088,7 +1114,10 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 		var ti := minf(tss + warm[i], 0.0)
 		var qw := g * -ti
 		var tau := cap / (g + H_AIR)
+		var w0 := int(warm[i] * 20.0)
 		warm[i] = warm[i] * decay + qw / cap * tau * (1.0 - decay)
+		if int(warm[i] * 20.0) != w0:
+			_touch(i % w, i / w, false)
 		var power := qw - air_in
 		if power > 0.0:
 			var gain := power / LATENT * slice_dt / wt
@@ -1578,12 +1607,14 @@ func _cut_colour(i: int) -> Color:
 	)
 
 
+## r ice over the paint, g standing water, b the column's warmth (of 10 K)
+## and a its thickness (of 64 mm): the last two feed the temperature map.
 func _depth_colour(i: int) -> Color:
 	return Color(
 		clampf(paint_depth(i) / DEPTH_FULL, 0.0, 1.0),
 		clampf(water[i] / POOL_FULL, 0.0, 1.0),
-		0.0,
-		1.0
+		clampf(warm[i] / 10.0, 0.0, 1.0),
+		clampf((base_mm + ice[i] + crust[i]) / 64.0, 0.0, 1.0)
 	)
 
 
