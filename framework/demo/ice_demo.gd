@@ -102,6 +102,7 @@ var air_c := 8.0
 var sim_t := 0.0
 var heatmap := false  # H: the ice coloured by height, blue low .. red high
 var goals := 0  # pucks into the net on the skates
+var show_data := false  # F1: the readout lines and the key legend
 var _footprint := Zambelli.outline()  # the machine's edge, for the boards
 var _heat_t := 0.0  # seconds since the heatmap's range was read
 var _machine: Zambelli
@@ -233,9 +234,10 @@ func _ready() -> void:
 		(
 			"[X] STATE  [ ] SNOW  [E] USE  [LMB] SPRAY  [RMB] CHIP  [WHEEL] ADJUST  "
 			+ "[W S A D] DRIVE  [TAB] EDGER BLADE  [T] CLOCK  [B] BODY  [V] MACHINE  "
-			+ "[H] HEATMAP  [CTRL] CROUCH  [F] FLY  [Z] ZOOM"
+			+ "[H] HEATMAP  [CTRL] CROUCH  [F] FLY  [Z] ZOOM  [F1] DATA"
 		)
 	)
+	_show_data(false)  # the readout and the key legend stay off until F1 (Sean)
 	_stream = _make_stream()
 	add_child(_stream)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -954,6 +956,16 @@ func _skates_on() -> void:
 	_place_puck()
 
 
+## The data on screen (the three readout lines and the key legend) shown
+## or hidden; the prompts and toasts stay either way.
+func _show_data(on: bool) -> void:
+	show_data = on
+	if hud.readout_label:
+		hud.readout_label.visible = on
+	if hud.legend_label:
+		hud.legend_label.visible = on
+
+
 func _skates_off() -> void:
 	_skater.stop_skating()
 	walker.driven = false
@@ -1303,6 +1315,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_T:
 				scale_i = (scale_i + 1) % SCALES.size()
 				hud.toast("CLOCK x%d" % int(SCALES[scale_i]))
+			KEY_F1:
+				_show_data(not show_data)
+				hud.toast("DATA %s" % ("ON" if show_data else "OFF"))
 			KEY_H:
 				set_heatmap(not heatmap)
 				hud.toast(

@@ -911,7 +911,7 @@ display, and run as headless checks in CI (`--test=<name>`).
   the pusher's eyes.
   **Skating and practice** (`framework/demo/demo_skater.gd`, `DemoSkater`;
   `framework/demo/skate_wear.gd`, `SkateWear`; `framework/demo/hockey_net.gd`,
-  `HockeyNet`): a net from primitives (6 by 4 ft, a metre deep) starts in
+  `HockeyNet`): the game's net (`Models.net()`, 6 by 4 ft) starts in
   the bay with a pair of skates (Sean's skate model) and a stick on the
   floor beside it; no net is on the ice until you carry it there. Look at
   the net and E picks it up (it rides ahead of you), E sets it down where
@@ -968,6 +968,8 @@ display, and run as headless checks in CI (`--test=<name>`).
   along the +z wall with the 6 ft glass on the 2 m board, the 4 m board
   and 8 ft glass on the back wall, the quarter on the -z wall);
   `--view=kit` frames it.
+  The readout lines and the key legend are off by default (Sean: hide
+  the data); F1 shows them. Prompts and toasts stay.
   Footsteps leave the ice alone. `--screenshot=<png>`
   frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the
