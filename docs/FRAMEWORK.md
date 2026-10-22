@@ -644,12 +644,30 @@ display, and run as headless checks in CI (`--test=<name>`).
   (x1, x10, x60); holding RMB chips gouges wherever you look; , and .
   set the ice over the paint. R drives
   the resurfacer end to end down the sheet along your lane:
-  M switches DRY CUT (the blade shaves, striations along the
-  travel) and FLOOD (the rag lays a film behind the blade), [ and ] set
-  the cut (0 to 3 mm below the ice, in quarter millimetres; the
-  shavings feed the conditioner's snow sim), Y wears the rag. The
-  second HUD line reads the column under the dot: ice thickness over
-  the paint, snow and water in millimetres. The machine is the
+  M opens and shuts the flood valve (0 or 65 %, the rag lays a film
+  behind the blade scaled by the valve), [ and ] step the blade a
+  quarter millimetre (the shavings feed the conditioner's snow sim), Y
+  wears the rag. The
+  second HUD line reads the blade's setting in turns and millimetres,
+  the flood and wash valves, and the column under the dot: ice thickness over
+  the paint, snow and water in millimetres. N puts you at the operator's
+  console (`framework/demo/zambelli_controls.gd`, built on the deck
+  `tools/propgen/zambelli_console.py` clears in the body prop): look at
+  a control and E works it, the wheel turns it. Drive select cycles
+  F-N-R front to back; the two red auger levers (horizontal left,
+  vertical right) tilt back for on; the green conditioner lever and the
+  blue bin lever are sprung to neutral, pushed forward for up and back
+  for down; the purple handwheel is the blade, clockwise lowers it, one
+  turn is 0.5 mm from +3.0 (raised) to -3.0 (lowered) with 0 flush with
+  the conditioner's bottom, the wheel steps it a sixteenth of a turn
+  and the prompt reads the turns and the millimetres; the brown flood
+  valve opens 90 degrees anticlockwise and the grey wash valve 90
+  degrees clockwise, the wheel steps them 5 % and the prompt reads the
+  percentage (the wash valve is readout only for now). With the flood
+  valve open and the conditioner down, water runs from the pipe along
+  the top of the conditioner's back wall in streams 2.5 inches apart
+  down the wall to the rag, their thickness following the valve, and
+  above 30 % the streams merge into a sheet. The machine is the
   Zambelli 552 (`framework/demo/zambelli.gd`, five hero props: the body,
   the conditioner and a wheel come from a bought Zamboni model through
   `tools/propgen/zambelli_glb.py`, which voxelises the GLB, splits the
@@ -677,7 +695,9 @@ display, and run as headless checks in CI (`--test=<name>`).
   frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the
   conditioner nine seconds into a pass over a snowed-up sheet (`--body`
-  with the whole machine, `--cut=<mm>` for the blade's depth). In every demo Ctrl
+  with the whole machine, `--side` from beside it, `--flood` the back wall
+  with the flood running, `--cut=<mm>` for the blade's depth);
+  `--view=console` stands at the controls (`--above` looks down on them). In every demo Ctrl
   crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.
 
 ## 14. What the port looks like

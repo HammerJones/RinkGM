@@ -53,9 +53,17 @@ const TANK_M3 := 2.5  # the snow tank
 const TANK_SIZE := Vector3(1.6, 0.9, 1.2)  # the clear tank of the rig
 const TANK_Y := 1.5  # its floor
 const ROLL_R := 0.34  # the roll of snow round the auger grows to this
+# the flood water: a pipe along the top of the conditioner's back wall,
+# holes every two and a half inches, the streams down the wall to the towel
+const WALL_Z := 0.612  # just behind the back wall's rear face, from the blade
+const PIPE_L := 2.1
+const PIPE_R := 0.022
+const STREAM_GAP := 0.0635
+const TOWEL_Z := 0.66  # the towel lies from here to 0.78
 
 static var _snow_mat: StandardMaterial3D
 static var _clear_mat: StandardMaterial3D
+static var _water_mat: StandardMaterial3D
 
 var cond_down := true
 var speed := 0.0
@@ -92,8 +100,11 @@ var _snow: MeshInstance3D
 var _pile: MeshInstance3D
 var _tank_snow: MeshInstance3D
 var _puffs: MultiMeshInstance3D
+var _streams: MultiMeshInstance3D
+var _sheet: MeshInstance3D
 var _snow_dirty := true
 var _phase := 0.0
+var _ripple := 0.0
 
 
 func _ready() -> void:
@@ -123,6 +134,7 @@ func _ready() -> void:
 	var cond := _part("zambelli_conditioner")
 	cond.position = Vector3(0.0, 0.0, COND_PIVOT_Z - BLADE_Z)
 	_cond.add_child(cond)
+	_make_flood(_cond)
 	add_child(_cond)
 	_auger = Node3D.new()
 	var auger := _part("zambelli_auger")
@@ -168,6 +180,7 @@ func _process(dt: float) -> void:
 		_snow_dirty = false
 		_draw_snow()
 	_draw_puffs(dt)
+	_draw_flood(dt)
 
 
 ## The blade's shavings this step: `ice_m3[b]` cubic metres of ice taken
@@ -419,6 +432,100 @@ func _draw_puffs(dt: float) -> void:
 		else:
 			pos = Vector3(0.0, COND_H + LIFT_L + 0.1, -(y - COND_H - LIFT_L - 0.05) * 2.5)
 		mm.set_instance_transform(i, Transform3D(Basis.IDENTITY, pos))
+
+
+## The flood pipe and its water: the pipe on brackets along the top of
+## the back wall, a stream from each hole down the wall's face, and the
+## wet sheet they merge into on the way to the towel.
+func _make_flood(parent: Node3D) -> void:
+	var pipe_mat := StandardMaterial3D.new()
+	pipe_mat.albedo_color = Color(0.72, 0.74, 0.77)
+	pipe_mat.metallic = 0.5
+	pipe_mat.roughness = 0.45
+	var pipe := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = PIPE_R
+	cyl.bottom_radius = PIPE_R
+	cyl.height = PIPE_L + 0.06
+	cyl.radial_segments = 16
+	pipe.mesh = cyl
+	pipe.material_override = pipe_mat
+	pipe.rotation.z = PI / 2
+	pipe.position = Vector3(0.0, COND_H + PIPE_R + 0.005, WALL_Z + PIPE_R)
+	parent.add_child(pipe)
+	for x: float in [-PIPE_L / 2 - 0.01, 0.0, PIPE_L / 2 + 0.01]:
+		var br := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = Vector3(0.03, 0.07, 0.05)
+		br.mesh = bm
+		br.material_override = pipe_mat
+		br.position = Vector3(x, COND_H + 0.01, WALL_Z + 0.015)
+		parent.add_child(br)
+	_streams = MultiMeshInstance3D.new()
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	var drop := CylinderMesh.new()
+	drop.top_radius = 1.0
+	drop.bottom_radius = 1.0
+	drop.height = 1.0
+	drop.radial_segments = 8
+	mm.mesh = drop
+	mm.instance_count = int(PIPE_L / STREAM_GAP) + 1
+	mm.visible_instance_count = 0
+	_streams.multimesh = mm
+	_streams.material_override = water_material()
+	parent.add_child(_streams)
+	_sheet = MeshInstance3D.new()
+	var sb := BoxMesh.new()
+	sb.size = Vector3(PIPE_L + 0.02, COND_H - 0.02, 0.006)
+	_sheet.mesh = sb
+	_sheet.material_override = water_material()
+	_sheet.position = Vector3(0.0, COND_H / 2, WALL_Z + 0.004)
+	_sheet.visible = false
+	parent.add_child(_sheet)
+
+
+## The streams for the valve's opening: as many holes as the pipe has,
+## each a thread of water from the pipe to the towel, thicker and
+## straighter the more the valve is open, a little waver in each; the
+## sheet on the wall shows once they merge.
+func _draw_flood(dt: float) -> void:
+	var mm := _streams.multimesh
+	if flood <= 0.0 or not cond_down:
+		mm.visible_instance_count = 0
+		_sheet.visible = false
+		return
+	_ripple = fmod(_ripple + dt * 9.0, TAU)
+	var n := mm.instance_count
+	mm.visible_instance_count = n
+	var top := COND_H + 0.005
+	var bottom := 0.015
+	var r := 0.0025 + 0.004 * flood
+	for i in n:
+		var x := -PIPE_L / 2 + i * STREAM_GAP
+		var waver := 0.004 * sin(_ripple + i * 1.7) * (1.2 - flood)
+		var h := top - bottom
+		var t := Transform3D(
+			Basis.IDENTITY.scaled(Vector3(r, h, r)), Vector3(x + waver, bottom + h / 2, WALL_Z + r)
+		)
+		mm.set_instance_transform(i, t)
+	_sheet.visible = flood > 0.3
+	if _sheet.visible:
+		_sheet.scale = Vector3(1.0, clampf((flood - 0.3) / 0.7, 0.05, 1.0), 1.0)
+		_sheet.position.y = (COND_H - 0.02) * _sheet.scale.y / 2 + 0.01
+
+
+static func water_material() -> StandardMaterial3D:
+	if _water_mat == null:
+		_water_mat = StandardMaterial3D.new()
+		_water_mat.albedo_color = Color(0.8, 0.9, 1.0, 0.6)
+		_water_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_water_mat.roughness = 0.05
+		_water_mat.metallic_specular = 0.9
+		_water_mat.emission_enabled = true
+		_water_mat.emission = Color(0.32, 0.42, 0.55)
+		_water_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return _water_mat
 
 
 static func snow_material() -> StandardMaterial3D:

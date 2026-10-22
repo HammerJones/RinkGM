@@ -80,7 +80,6 @@ var hud: WalkHud
 var state := 1
 var scale_i := 0
 var rag_i := 0
-var _aimed := -1  # the machine control under the dot
 var instant := false
 var pass_z := -1.0
 var shaved_mm := 0.0
@@ -93,6 +92,7 @@ var air_base := 8.0
 var air_c := 8.0
 var sim_t := 0.0
 var _machine: Zambelli
+var _aimed := -1  # the machine control under the dot
 var _chip_t := 0.0
 var _stream: GPUParticles3D
 var _env: WorldEnvironment
@@ -265,7 +265,10 @@ func _process(dt: float) -> void:
 
 func _machine_line() -> String:
 	return (
-		"DRIVE %s   CONDITIONER %s   AUGERS %s/%s   BIN %s   TROUGH %.1f L   PILE %.1f L   LIFT %.1f L/S   TANK %.0f L (%.0f%%)"
+		(
+			"DRIVE %s   CONDITIONER %s   AUGERS %s/%s   BIN %s   "
+			+ "TROUGH %.1f L   PILE %.1f L   LIFT %.1f L/S   TANK %.0f L (%.0f%%)"
+		)
 		% [
 			ZambelliControls.DRIVE_NAMES[_machine.drive],
 			"DOWN" if _machine.is_down() else ("UP" if _machine.lift <= 0.001 else "MOVING"),
@@ -845,7 +848,15 @@ func _screenshot(path: String) -> void:
 			_machine._process(1.0 / 60.0)
 		_machine.settle()
 		_machine.show_body = OS.get_cmdline_user_args().has("--body")
-		if OS.get_cmdline_user_args().has("--side"):  # the whole machine side on
+		if OS.get_cmdline_user_args().has("--flood"):
+			# the flood water pouring from the pipe down the back wall, from behind
+			_machine.flood = 0.65
+			_machine._process(1.0 / 60.0)
+			walker.set_noclip(true)
+			walker.global_position = _machine.to_global(Vector3(1.5, -0.45, 1.3))
+			walker.face(-0.33)  # along the back wall from its +X end
+			walker.camera.rotation.x = -0.5
+		elif OS.get_cmdline_user_args().has("--side"):  # the whole machine side on
 			walker.global_position = ice.position + Vector3(18.5, 0.05, 16.5)
 			walker.camera.rotation.x = -0.05
 			walker.face(0.0)
@@ -856,7 +867,10 @@ func _screenshot(path: String) -> void:
 			walker.set_noclip(true)
 			walker.global_position = ice.position + Vector3(21.7, 0.9, 10.2)
 			walker.camera.rotation.x = -0.62
-		if not OS.get_cmdline_user_args().has("--side"):
+		if (
+			not OS.get_cmdline_user_args().has("--side")
+			and not OS.get_cmdline_user_args().has("--flood")
+		):
 			walker.face(0.95)
 	var args := OS.get_cmdline_user_args()
 	if args.has("--view=console"):
