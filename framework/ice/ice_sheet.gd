@@ -22,8 +22,8 @@ extends Node3D
 ## Freezing (the heat balance, simplified until the plant model drives it):
 ## a cell's water sets at a rate from the slab temperature under it,
 ## slower in deep water and warm air, faster next to cells already set or
-## dry, which is why a pool shrinks inward. 1.2 mm at -5 C takes about 12
-## minutes; the sim's IceSlab is the source of those numbers. Water that
+## dry, which is why a pool shrinks inward. 1.2 mm at -5 C takes about 6
+## minutes, twice the pace of the sim's IceSlab (Sean's ask). Water that
 ## has set becomes ice: it joins the column's `ice` thickness (water
 ## expands 9%), so flooding the same spot again and again builds it up,
 ## and the new surface is fresh frozen (no cut, no snow). Liquid water
@@ -37,7 +37,7 @@ const TILE := 256  # cells a side of one set of state textures (4 chunks)
 const SNOW_FULL := 1.0  # mm that reads as fully snowed
 const WATER_FULL := 0.5  # mm that reads as fully wet
 const GOUGE_FULL := 4.0  # mm that reads as the deepest gouge
-const FREEZE_K := 0.00033  # per second per degree below zero at 1 mm
+const FREEZE_K := 0.00066  # per second per degree below zero at 1 mm (twice the sim's IceSlab, at Sean's ask)
 const ICE_PER_WATER := 1.09
 const FILM_PIN := 0.2  # mm of water that clings to the ice and never runs
 const FLOW_K := 0.45  # share of the head difference that moves a visit

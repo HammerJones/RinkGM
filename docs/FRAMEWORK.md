@@ -534,7 +534,7 @@ tried and backed out on 2026-10-22).
 **Freezing.** `thermal()` sets each wet cell's water at a rate from the
 slab temperature under it, slower in deep water and warm air, faster next
 to cells already set or dry, so a pool shrinks inward; 1.2 mm at -5 C
-takes about 12 minutes, the sim's number. It walks the wet cells in
+takes about 6 minutes, twice as fast as the sim's IceSlab (halved on 2026-10-22 at Sean's ask; the slab will want the same when the sheet is wired in). It walks the wet cells in
 slices of 3000 a frame through an append-only list (no per-cell calls or
 allocations; the wet set is a byte per cell, not a dictionary), so a
 whole flooded sheet costs under 3 ms a frame whatever its size, and each
