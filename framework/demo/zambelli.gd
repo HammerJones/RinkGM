@@ -28,6 +28,7 @@ const BLADE_Z := 3.519
 const BODY_Y0 := 0.084  # the body's bounding box starts here
 const BODY_PIVOT_Z := 2.142  # the body's bounding box centre
 const BODY_X0 := 0.035  # ... and its centre across, off the machine's
+const LEVER_POS := Vector3(-0.339, 1.657, 0.161)  # the horizontal auger lever's foot on the deck
 const COND_PIVOT_Z := 3.689  # the conditioner's bounding box centre
 const FRONT_AXLE := 0.725
 const REAR_AXLE := 2.765
@@ -128,6 +129,18 @@ func _ready() -> void:
 	controls.name = "Controls"
 	controls.machine = self
 	_body.add_child(controls)
+	var lever_pivot := Node3D.new()
+	lever_pivot.name = "LeverH"
+	lever_pivot.position = LEVER_POS
+	lever_pivot.add_child(_part("zambelli_lever"))
+	_body.add_child(lever_pivot)
+	controls.add_lever(
+		ZambelliControls.Kind.AUGER_H,
+		"HORIZONTAL AUGER",
+		lever_pivot,
+		Vector3(0.1, 0.34, 0.2),
+		Vector3(0.0, 0.17, 0.0)
+	)
 	add_child(_body)
 	_cond = Node3D.new()
 	_cond.name = "Conditioner"

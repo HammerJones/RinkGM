@@ -93,6 +93,7 @@ var air_c := 8.0
 var sim_t := 0.0
 var _machine: Zambelli
 var _aimed := -1  # the machine control under the dot
+var _no_aim := false  # a screenshot of a control, without its glow
 var _chip_t := 0.0
 var _stream: GPUParticles3D
 var _env: WorldEnvironment
@@ -207,7 +208,9 @@ func _process(dt: float) -> void:
 	if walker:
 		field.focus = walker.global_position
 		var cam := walker.camera
-		_aimed = _machine.controls.aim(cam.global_position, -cam.global_transform.basis.z)
+		_aimed = -1
+		if not _no_aim:
+			_aimed = _machine.controls.aim(cam.global_position, -cam.global_transform.basis.z)
 		_machine.controls.set_hover(_aimed)
 		if hud:
 			hud.extra_prompt = _machine.controls.prompt(_aimed)
@@ -456,6 +459,15 @@ func _at_the_controls() -> void:
 	walker.global_position = _machine.to_global(Vector3(-0.1, ZambelliControls.DECK_Y, 1.15))
 	walker.face(_machine.rotation.y)  # at the rear, facing forward over the wheel
 	walker.camera.rotation.x = -0.72
+
+
+## The walker at `eye`, looking at `target` (noclip).
+func _look_at(eye: Vector3, target: Vector3) -> void:
+	walker.set_noclip(true)
+	walker.global_position = eye - Vector3(0.0, FirstPerson.EYE, 0.0)
+	var d := target - eye
+	walker.face(atan2(-d.x, -d.z))
+	walker.camera.rotation.x = atan2(d.y, Vector2(d.x, d.z).length())
 
 
 func _local(p: Vector3) -> Vector2:
@@ -882,6 +894,13 @@ func _screenshot(path: String) -> void:
 			walker.global_position = _machine.to_global(Vector3(0.2, 1.9, 2.1))
 			walker.face(_machine.rotation.y + 0.2)
 			walker.camera.rotation.x = -0.72
+		if args.has("--lever"):  # close on the horizontal auger's lever
+			_no_aim = true
+			var foot := Zambelli.LEVER_POS
+			_look_at(
+				_machine.to_global(foot + Vector3(-0.22, 0.42, 0.42)),
+				_machine.to_global(foot + Vector3(0.16, 0.12, 0.0))
+			)
 	if args.has("--view=pool"):
 		# water run into the low spots and left to stand: a scraped trench,
 		# a few chips, a pour between them, then a while to run downhill
@@ -1200,44 +1219,21 @@ func _self_test() -> void:
 	check.call(
 		_machine.tank_m3 == 0.0 and not _machine.auger_on, "the tank was dumped after the pass"
 	)
-	# the console: the levers and the wheel drive the machine's state
+	# the console: the lever drives the machine's state
 	var ctl: ZambelliControls = _machine.controls
 	var k_h := -1
-	var k_blade := -1
-	var k_flood := -1
 	for i in ctl._controls.size():
-		match ctl._controls[i].kind:
-			ZambelliControls.Kind.AUGER_H:
-				k_h = i
-			ZambelliControls.Kind.BLADE:
-				k_blade = i
-			ZambelliControls.Kind.FLOOD:
-				k_flood = i
+		if ctl._controls[i].kind == ZambelliControls.Kind.AUGER_H:
+			k_h = i
+	check.call(k_h >= 0, "the horizontal auger's lever is on the console")
 	ctl.toggle(k_h)
 	check.call(_machine.auger_on, "the horizontal auger's lever switches it on")
 	ctl.toggle(k_h)
 	check.call(not _machine.auger_on, "... and off")
-	_machine.blade_mm = 0.0
-	ctl.scroll(k_blade, -16.0)
+	check.call(ZambelliControls.turns_text(-0.5) == "1 TURN DOWN", "a turn down reads as one turn")
 	check.call(
-		(
-			is_equal_approx(_machine.blade_mm, -0.5)
-			and ZambelliControls.turns_text(-0.5) == "1 TURN DOWN"
-		),
-		(
-			"sixteen notches down is one turn, half a millimetre (%s)"
-			% ZambelliControls.turns_text(_machine.blade_mm)
-		)
+		ZambelliControls.turns_text(-0.40625) == "13/16 TURNS DOWN", "the turns read in sixteenths"
 	)
-	ctl.scroll(k_blade, 3.0)
-	check.call(
-		ZambelliControls.turns_text(_machine.blade_mm) == "13/16 TURNS DOWN",
-		"the turns read in sixteenths (%s)" % ZambelliControls.turns_text(_machine.blade_mm)
-	)
-	ctl.scroll(k_blade, -200.0)
-	check.call(is_equal_approx(_machine.blade_mm, -3.0), "the wheel stops at 3 mm down")
-	ctl.scroll(k_flood, 7.0)
-	check.call(is_equal_approx(_machine.flood, 0.35), "seven notches open the flood valve 35%%")
 	check.call(ZambelliControls.turns_text(0.0) == "FLUSH", "flush reads as flush")
 	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:

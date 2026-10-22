@@ -1,30 +1,21 @@
 class_name ZambelliControls
 extends Node3D
-## The Zambelli's operator console, built clean from primitives where the
-## bought model had black blobs (tools/propgen/zambelli_console.py strips
-## those): five levers in a row on the deck, the blade's handwheel on a
-## panel at the rear, the flood and wash valves either side of it. Each
-## control has an aim area; the demo rays at them, shows `prompt()` for
-## the one under the dot, and calls `toggle()` (E) or `scroll()` (the
-## wheel). The poses follow the machine's state, so a pass that switches
-## the augers on throws their levers too.
+## The Zambelli's operator console: the controls the demo can aim at and
+## work. Each is a prop from the bought model (tools/propgen/zambelli_lever.py
+## takes a lever out of the GLB at 3 mm) hung on a pivot the machine
+## registers with `add_lever()`; the demo rays at their aim areas, shows
+## `prompt()` for the one under the dot, and calls `toggle()` (E) or
+## `scroll()` (the wheel). The poses follow the machine's state, so a
+## pass that switches the augers on throws their levers too.
 ##
-## Positions are in the Zambelli's frame (the blade's edge on the ice at
-## the origin, the nose toward -Z), as read off the body prop's console:
-## the deck at 1.64 m with the wheel panel at its rear, facing the
-## operator who stands behind it looking forward; the row of four levers
-## on the deck ahead of the panel, drive select on the engine cover
-## ahead of those to the left, the flood valve on the seat box to -X
-## (the operator's left), the wash valve to +X.
+## So far: the horizontal auger's lever, the leftmost of the row.
 
 enum Kind { DRIVE, AUGER_H, AUGER_V, COND, BIN, BLADE, FLOOD, WASH }
 
 const LAYER := 6  # a collision layer of their own for the aim ray
 const REACH := 2.6
 const DECK_Y := 1.644
-const LEVER_Z := 0.15  # the row of four, on the deck ahead of the panel
-const COVER_Y := 2.08  # the engine cover's top, ahead of the row
-const LEVER_TILT := deg_to_rad(15.0)  # the auger levers: back is on, forward off
+const LEVER_TILT := deg_to_rad(30.0)  # the auger levers: back is on, as modelled is off
 const SELECT_TILT := deg_to_rad(20.0)  # drive select: F forward, N, R back
 const MOMENT_TILT := deg_to_rad(20.0)  # conditioner and bin: a push, then neutral
 const MOMENT_HOLD := 1.2  # seconds a pushed lever stays over before it springs back
@@ -34,25 +25,34 @@ const NOTCH := 1.0 / 16.0  # a wheel notch, turns
 const VALVE_NOTCH := 0.05  # a wheel notch on a valve
 const DRIVE_NAMES := ["FORWARD", "NEUTRAL", "REVERSE"]
 
-static var _mats: Dictionary = {}
+static var _glow_mat: StandardMaterial3D
 
 var machine: Zambelli
 var hovered := -1
 var _controls: Array[Dictionary] = []
 
 
-func _ready() -> void:
-	# the row of four across the deck, the operator's left to right (-X to +X)
-	_lever(Kind.AUGER_H, "HORIZONTAL AUGER", Vector3(-0.33, DECK_Y, LEVER_Z), Color("d8322e"))
-	_lever(Kind.COND, "CONDITIONER", Vector3(-0.17, DECK_Y, LEVER_Z), Color("3cb34a"))
-	_lever(Kind.AUGER_V, "VERTICAL AUGER", Vector3(-0.01, DECK_Y, LEVER_Z), Color("d8322e"))
-	_lever(Kind.BIN, "BIN", Vector3(0.15, DECK_Y, LEVER_Z), Color("3a6fd8"))
-	# drive select on the engine cover ahead, to the left, a longer throw
-	_add(self, _box(Vector3(0.16, 0.03, 0.2)), _mat("paint"), Vector3(-0.3, COVER_Y + 0.015, -0.2))
-	_lever(Kind.DRIVE, "DRIVE SELECT", Vector3(-0.3, COVER_Y + 0.03, -0.2), Color("e8c23a"), 0.3)
-	_handwheel(Vector3(-0.05, 1.92, 0.60))
-	_valve(Kind.FLOOD, "FLOOD WATER", Vector3(-0.72, 1.98, 0.3), Color("c8322e"), -1.0)
-	_valve(Kind.WASH, "WASH WATER", Vector3(0.38, 2.0, 0.42), Color("8c9096"), 1.0)
+## A lever: `pivot` is the node the lever's meshes hang from, placed at
+## the lever's foot, that tilts about its x; `size` and `at` are the aim
+## box in the pivot's frame.
+func add_lever(kind: Kind, label: String, pivot: Node3D, size: Vector3, at: Vector3) -> void:
+	var meshes: Array[MeshInstance3D] = []
+	for n in pivot.get_children():
+		if n is MeshInstance3D:
+			meshes.append(n)
+	_controls.append(
+		{
+			"kind": kind,
+			"name": label,
+			"pivot": pivot,
+			"axis": "x",
+			"meshes": meshes,
+			"area": _area(pivot, size, at),
+			"angle": 0.0,
+			"push": 0.0,
+			"hold": 0.0
+		}
+	)
 
 
 func _process(dt: float) -> void:
@@ -210,9 +210,9 @@ func _target_angle(c: Dictionary) -> float:
 		Kind.DRIVE:
 			return [-SELECT_TILT, 0.0, SELECT_TILT][machine.drive]
 		Kind.AUGER_H:
-			return LEVER_TILT if machine.auger_on else -LEVER_TILT
+			return LEVER_TILT if machine.auger_on else 0.0
 		Kind.AUGER_V:
-			return LEVER_TILT if machine.lift_on else -LEVER_TILT
+			return LEVER_TILT if machine.lift_on else 0.0
 		Kind.COND, Kind.BIN:
 			return c.push
 		Kind.BLADE:
@@ -223,136 +223,6 @@ func _target_angle(c: Dictionary) -> float:
 		Kind.WASH:
 			return -machine.wash * PI / 2  # clockwise
 	return 0.0
-
-
-# --- building ----------------------------------------------------------------
-
-
-func _lever(kind: Kind, label: String, at: Vector3, cap: Color, length := 0.24) -> void:
-	var root := Node3D.new()
-	root.position = at
-	add_child(root)
-	var meshes: Array[MeshInstance3D] = []
-	# a slotted plate on the deck and a boss the shaft comes out of
-	meshes.append(
-		_add(root, _box(Vector3(0.09, 0.012, 0.17)), _mat("black"), Vector3(0.0, 0.006, 0.0))
-	)
-	meshes.append(
-		_add(root, _box(Vector3(0.024, 0.014, 0.13)), _mat("slot"), Vector3(0.0, 0.013, 0.0))
-	)
-	meshes.append(_add(root, _cyl(0.028, 0.03), _mat("black"), Vector3(0.0, 0.03, 0.0)))
-	var pivot := Node3D.new()
-	pivot.position = Vector3(0.0, 0.035, 0.0)
-	root.add_child(pivot)
-	meshes.append(_add(pivot, _cyl(0.0105, length), _mat("chrome"), Vector3(0.0, length / 2, 0.0)))
-	meshes.append(_add(pivot, _sphere(0.031), _mat("rubber"), Vector3(0.0, length + 0.012, 0.0)))
-	meshes.append(
-		_add(pivot, _cyl(0.017, 0.012), _mat_colour(cap), Vector3(0.0, length + 0.040, 0.0))
-	)
-	var area := _area(
-		root, Vector3(0.14, length + 0.12, 0.22), Vector3(0.0, (length + 0.1) / 2, 0.0)
-	)
-	_controls.append(
-		{
-			"kind": kind,
-			"name": label,
-			"pivot": pivot,
-			"axis": "x",
-			"meshes": meshes,
-			"area": area,
-			"angle": 0.0,
-			"push": 0.0,
-			"hold": 0.0
-		}
-	)
-
-
-func _handwheel(at: Vector3) -> void:
-	var root := Node3D.new()
-	root.position = at
-	add_child(root)
-	var meshes: Array[MeshInstance3D] = []
-	# the panel it is mounted on, blue like the body, with a black bezel
-	meshes.append(
-		_add(root, _box(Vector3(0.52, 0.26, 0.05)), _mat("paint"), Vector3(0.0, 0.0, -0.035))
-	)
-	meshes.append(_add(root, _cyl_z(0.17, 0.012), _mat("black"), Vector3(0.0, 0.0, -0.004)))
-	var pivot := Node3D.new()
-	pivot.position = Vector3(0.0, 0.0, 0.03)
-	root.add_child(pivot)
-	meshes.append(_add(pivot, _cyl_z(0.032, 0.06), _mat("chrome"), Vector3(0.0, 0.0, -0.01)))
-	var rim := TorusMesh.new()
-	rim.inner_radius = 0.125
-	rim.outer_radius = 0.15
-	rim.rings = 36
-	rim.ring_segments = 12
-	var rim_mi := _add(pivot, rim, _mat("rubber"), Vector3.ZERO)
-	rim_mi.rotation.x = PI / 2
-	meshes.append(rim_mi)
-	for k in 3:
-		var spoke := _add(pivot, _box(Vector3(0.018, 0.27, 0.014)), _mat("chrome"), Vector3.ZERO)
-		spoke.rotation.z = k * PI / 3
-		meshes.append(spoke)
-	# the crank knob on the rim
-	meshes.append(_add(pivot, _cyl_z(0.011, 0.05), _mat("chrome"), Vector3(0.0, 0.137, 0.03)))
-	meshes.append(_add(pivot, _sphere(0.018), _mat("rubber"), Vector3(0.0, 0.137, 0.06)))
-	var area := _area(root, Vector3(0.36, 0.36, 0.16), Vector3(0.0, 0.0, 0.04))
-	_controls.append(
-		{
-			"kind": Kind.BLADE,
-			"name": "BLADE",
-			"pivot": pivot,
-			"axis": "z",
-			"meshes": meshes,
-			"area": area,
-			"angle": 0.0,
-			"push": 0.0,
-			"hold": 0.0
-		}
-	)
-
-
-## A quarter-turn valve on a pipe stub, its lever handle out along `side`
-## (+1 to +X, -1 to -X) when closed.
-func _valve(kind: Kind, label: String, at: Vector3, grip: Color, side: float) -> void:
-	var root := Node3D.new()
-	root.position = at
-	add_child(root)
-	var meshes: Array[MeshInstance3D] = []
-	var stub_h := at.y - DECK_Y
-	meshes.append(_add(root, _cyl(0.02, stub_h), _mat("chrome"), Vector3(0.0, -stub_h / 2, 0.0)))
-	meshes.append(_add(root, _box(Vector3(0.08, 0.07, 0.08)), _mat("brass"), Vector3.ZERO))
-	meshes.append(_add(root, _cyl(0.014, 0.05), _mat("chrome"), Vector3(0.0, 0.055, 0.0)))
-	var pivot := Node3D.new()
-	pivot.position = Vector3(0.0, 0.075, 0.0)
-	root.add_child(pivot)
-	meshes.append(
-		_add(
-			pivot, _box(Vector3(0.16, 0.016, 0.03)), _mat("chrome"), Vector3(side * 0.07, 0.0, 0.0)
-		)
-	)
-	meshes.append(
-		_add(
-			pivot,
-			_box(Vector3(0.09, 0.024, 0.036)),
-			_mat_colour(grip),
-			Vector3(side * 0.165, 0.0, 0.0)
-		)
-	)
-	var area := _area(root, Vector3(0.5, 0.24, 0.5), Vector3(side * 0.1, 0.02, 0.0))
-	_controls.append(
-		{
-			"kind": kind,
-			"name": label,
-			"pivot": pivot,
-			"axis": "y",
-			"meshes": meshes,
-			"area": area,
-			"angle": 0.0,
-			"push": 0.0,
-			"hold": 0.0
-		}
-	)
 
 
 func _area(parent: Node3D, size: Vector3, at: Vector3) -> Area3D:
@@ -371,95 +241,13 @@ func _area(parent: Node3D, size: Vector3, at: Vector3) -> Area3D:
 
 
 func _glow(c: Dictionary, on: bool) -> void:
+	if _glow_mat == null:
+		_glow_mat = StandardMaterial3D.new()
+		_glow_mat.albedo_color = Color(1.0, 0.95, 0.6, 0.25)
+		_glow_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_glow_mat.emission_enabled = true
+		_glow_mat.emission = Color(0.9, 0.8, 0.3)
+		_glow_mat.emission_energy_multiplier = 0.8
+		_glow_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	for mi: MeshInstance3D in c.meshes:
-		mi.material_overlay = _mat("glow") if on else null
-
-
-static func _add(parent: Node3D, mesh: Mesh, mat: Material, at: Vector3) -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	mi.material_override = mat
-	mi.position = at
-	parent.add_child(mi)
-	return mi
-
-
-static func _box(size: Vector3) -> BoxMesh:
-	var b := BoxMesh.new()
-	b.size = size
-	return b
-
-
-static func _cyl(r: float, h: float) -> CylinderMesh:
-	var c := CylinderMesh.new()
-	c.top_radius = r
-	c.bottom_radius = r
-	c.height = h
-	c.radial_segments = 24
-	return c
-
-
-## A cylinder along Z (the handwheel's hub and knob).
-static func _cyl_z(r: float, h: float) -> Mesh:
-	var c := _cyl(r, h)
-	var st := SurfaceTool.new()
-	st.append_from(c, 0, Transform3D(Basis(Vector3.RIGHT, PI / 2), Vector3.ZERO))
-	return st.commit()
-
-
-static func _sphere(r: float) -> SphereMesh:
-	var s := SphereMesh.new()
-	s.radius = r
-	s.height = r * 2
-	s.radial_segments = 24
-	s.rings = 12
-	return s
-
-
-static func _mat(key: String) -> StandardMaterial3D:
-	if _mats.has(key):
-		return _mats[key]
-	var m := StandardMaterial3D.new()
-	match key:
-		"chrome":
-			m.albedo_color = Color(0.82, 0.83, 0.85)
-			m.metallic = 0.95
-			m.roughness = 0.28
-		"brass":
-			m.albedo_color = Color(0.78, 0.62, 0.32)
-			m.metallic = 0.9
-			m.roughness = 0.4
-		"black":
-			m.albedo_color = Color(0.07, 0.07, 0.08)
-			m.roughness = 0.6
-			m.metallic = 0.3
-		"slot":
-			m.albedo_color = Color(0.02, 0.02, 0.02)
-			m.roughness = 0.9
-		"rubber":
-			m.albedo_color = Color(0.06, 0.06, 0.065)
-			m.roughness = 0.85
-		"paint":
-			m.albedo_color = Color(0.15, 0.33, 0.66)
-			m.roughness = 0.45
-			m.metallic = 0.15
-		"glow":
-			m.albedo_color = Color(1.0, 0.95, 0.6, 0.25)
-			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			m.emission_enabled = true
-			m.emission = Color(0.9, 0.8, 0.3)
-			m.emission_energy_multiplier = 0.8
-			m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_mats[key] = m
-	return m
-
-
-static func _mat_colour(c: Color) -> StandardMaterial3D:
-	var key := "c" + c.to_html(false)
-	if _mats.has(key):
-		return _mats[key]
-	var m := StandardMaterial3D.new()
-	m.albedo_color = c
-	m.roughness = 0.5
-	_mats[key] = m
-	return m
+		mi.material_overlay = _glow_mat if on else null
