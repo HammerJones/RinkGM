@@ -415,7 +415,12 @@ func chip(at: Vector2, width: float, depth: float, snow_mm := 0.0) -> void:
 ## along the band's sides, the mark of a worn or badly set conditioner. In flood mode (`film_mm` > 0) the
 ## conditioner's rag lays the water behind the blade: a new rag
 ## (`rag_wear` 0) an even film, a worn one (1) streaks and a coarser cut.
-## Returns the millimetres shaved, summed over the band's cells.
+## With `cut_mm` at or above zero the blade is set the way a real one is,
+## a depth below the surface the sled rides on: the level is the band's
+## mean solid height less the cut, so clean ice is thinned (the column's
+## ice goes below the base, the paint nearer) and every pass makes snow;
+## bumps are taken down more, dips less. Returns the millimetres shaved,
+## summed over the band's cells.
 func resurface(
 	x0: float,
 	x1: float,
@@ -425,10 +430,21 @@ func resurface(
 	rag_wear := 0.0,
 	blade_mm := 0.0,
 	travel := 0.0,
-	spill := 0.0
+	spill := 0.0,
+	cut_mm := -1.0
 ) -> float:
 	var c0 := cell_at(Vector2(minf(x0, x1), minf(z0, z1)))
 	var c1 := cell_at(Vector2(maxf(x0, x1), maxf(z0, z1)))
+	if cut_mm >= 0.0:
+		var sum := 0.0
+		var n := 0
+		for z in range(maxi(c0.y, 0), mini(c1.y + 1, d)):
+			for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
+				var i := index(x, z)
+				if _mask[i] != 0:
+					sum += ice[i] + crust[i]
+					n += 1
+		blade_mm = (sum / n if n > 0 else 0.0) - cut_mm
 	var shaved := 0.0
 	var touched_z := {}
 	var z_lo := maxi(c0.y, 0)
@@ -457,19 +473,18 @@ func resurface(
 				else:
 					took += snow[i]
 					snow[i] = 0.0
-					var level := maxf(blade_mm, 0.0)
-					if solid > level:
-						var cut_mm := solid - level
-						took += cut_mm
+					var cut_here := solid - blade_mm
+					if cut_here > 0.0:
+						took += cut_here
 						# peaks go first, then the ice under them
-						var from_crust := minf(crust[i], cut_mm)
+						var from_crust := minf(crust[i], cut_here)
 						crust[i] -= from_crust
-						ice[i] -= cut_mm - from_crust
-					if blade_mm < 0.0 and gouge[i] > 0.0:
-						# below the base: the blade takes the surface the gouge is in
-						var dig := minf(gouge[i], -blade_mm)
-						gouge[i] -= dig
-						scar[i] = maxf(scar[i] - dig, 0.0)
+						ice[i] -= cut_here - from_crust
+						if gouge[i] > 0.0:
+							# the blade takes the surface the gouge is in with it
+							var dig := minf(gouge[i], cut_here)
+							gouge[i] -= dig
+							scar[i] = maxf(scar[i] - dig, 0.0)
 					cut[i] = lerpf(0.75, 0.5, rag_wear) if film_mm > 0.0 else 0.75
 					ang[i] = travel
 					touched_z[z] = true
@@ -655,6 +670,26 @@ func top_at(p: Vector2) -> float:
 func ice_at(p: Vector2) -> float:
 	var c := cell_at(p)
 	return ice[index(c.x, c.y)] if in_bounds(c.x, c.y) else 0.0
+
+
+## The ice's thickness over the paint (mm) at a point: the base, what
+## floods built up or the blade took, less a gouge.
+func thickness_at(p: Vector2) -> float:
+	var c := cell_at(p)
+	return paint_depth(index(c.x, c.y)) if in_bounds(c.x, c.y) else 0.0
+
+
+## Loose snow (mm) at a point.
+func snow_at(p: Vector2) -> float:
+	var c := cell_at(p)
+	return snow[index(c.x, c.y)] if in_bounds(c.x, c.y) else 0.0
+
+
+## Liquid water (mm) at a point.
+func water_at(p: Vector2) -> float:
+	var c := cell_at(p)
+	var i := index(c.x, c.y)
+	return water[i] * (1.0 - frozen[i]) if in_bounds(c.x, c.y) else 0.0
 
 
 func _touch(x: int, z: int) -> void:

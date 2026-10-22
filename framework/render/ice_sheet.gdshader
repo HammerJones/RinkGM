@@ -48,14 +48,23 @@ void fragment() {
 	// the cut angle is the blade's travel; the grooves run along it (the
 	// map's grooves run along V, so the sample is turned a quarter turn)
 	float a = (c.r - 0.5) * 6.2832 + 1.5708;
+	// two scales of groove: the millimetre ones under your feet and a
+	// coarser set of the same lines five times wider, which still read
+	// from across the sheet once the fine ones have mipmapped away
 	vec2 su = rot(a) * wp * striation_m;
-	vec3 n_cut = texture(stria_n, su).xyz * 2.0 - 1.0;
+	vec3 n_fine = texture(stria_n, su).xyz * 2.0 - 1.0;
+	vec3 n_wide = texture(stria_n, su * 0.2 + vec2(0.37, 0.61)).xyz * 2.0 - 1.0;
+	vec3 n_cut = normalize(vec3(n_fine.xy + n_wide.xy * 0.9, n_fine.z));
+	// the grooves also streak the colour and the sheen, which survives
+	// any distance and any angle: a shade lighter on one flank, darker
+	// on the other, and the sheen broken along them
+	float streak = clamp(n_fine.x * 0.6 + n_wide.x * 1.6, -1.0, 1.0) * ct;
 	vec3 n_snow = texture(snow_n, wp * 90.0).xyz * 2.0 - 1.0;
 	vec3 n_rip = texture(ripple_n, wp * 6.0).xyz * 2.0 - 1.0;
 	vec3 n_fresh = normalize(mix(vec3(0.0, 0.0, 1.0), n_rip, 0.25));
 	vec3 n_dry = normalize(mix(n_fresh, n_cut, ct * striation_strength));
 	vec3 n = normalize(mix(n_dry, n_snow, sn));
-	float rough = mix(mix(0.16, 0.55, ct), 1.0, sn);
+	float rough = mix(mix(0.16, 0.55, ct) + 0.28 * streak, 1.0, sn);
 	// the paint is at a fixed depth: the lines sit on the white paint and
 	// show through the ice above them, vivid when it is thin, faded and
 	// blue when it is thick; clear ice (a filled chip) shows more
@@ -71,7 +80,7 @@ void fragment() {
 	}
 	vec3 body = mix(vec3(0.58, 0.68, 0.76), vec3(0.64, 0.71, 0.76), ct);
 	vec3 alb_dry = mix(body, under, through);
-	vec3 alb = mix(alb_dry, vec3(0.80, 0.82, 0.84), sn);
+	vec3 alb = mix(alb_dry * (1.0 + 0.12 * streak), vec3(0.80, 0.82, 0.84), sn);
 	// a crust: slush that set, very rough, grey-white, lumpy
 	float cr = clamp(c.a * 4.0, 0.0, 1.0);
 	vec3 n_crust = normalize(mix(n_snow, n_rip, 0.3) * vec3(2.2, 2.2, 1.0));
@@ -103,5 +112,5 @@ void fragment() {
 	ROUGHNESS = rough;
 	SPECULAR = mix(0.5, 0.1, sn);
 	NORMAL_MAP = n * 0.5 + 0.5;
-	NORMAL_MAP_DEPTH = mix(0.8, 0.4, liquid);
+	NORMAL_MAP_DEPTH = mix(mix(0.8, 1.2, ct), 0.4, liquid);
 }

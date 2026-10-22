@@ -81,7 +81,7 @@ var state := 1
 var scale_i := 0
 var rag_i := 0
 var mode_i := 0
-var blade_mm := 0.0
+var cut_mm := 0.5  # the blade's depth of cut below the surface
 var instant := false
 var pass_z := -1.0
 var shaved_mm := 0.0
@@ -155,7 +155,7 @@ func _ready() -> void:
 	hud.legend(
 		(
 			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [, .] ICE OVER PAINT   "
-			+ "[R] RESURFACER   [M] MODE   [ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   "
+			+ "[R] RESURFACER   [M] MODE   [ [ ] ] CUT   [Y] RAG   [I] INSTANT FREEZE   "
 			+ "[T] CLOCK   [B] BODY   [V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 		)
 	)
@@ -200,9 +200,10 @@ func _process(dt: float) -> void:
 		var under := ""
 		var at: Variant = _aim()
 		if at != null:
+			var p := _local(at)
 			under = (
-				"   UNDER THE DOT: TOP +%.1f MM, ICE +%.1f MM"
-				% [ice.top_at(_local(at)), ice.ice_at(_local(at))]
+				"   UNDER THE DOT: ICE %.2f MM THICK, SNOW %.2f MM, WATER %.2f MM"
+				% [ice.thickness_at(p), ice.snow_at(p), ice.water_at(p)]
 			)
 		var line1 := (
 			"STATE %s   PAINT UNDER %.0f MM   SLAB %.1f C   AIR %.1f C   CLOCK x%d%s   T+%s   WET %d   DIRTY %d / %d"
@@ -220,8 +221,8 @@ func _process(dt: float) -> void:
 			]
 		)
 		var line2 := (
-			"RESURFACER %s   BLADE %+.2f MM   RAG %s   SHAVED %.0f MM   HOSE %.1f L/S   HOSED %.0f L%s"
-			% [MODES[mode_i], blade_mm, RAGS[rag_i], shaved_mm, hose_lps, hosed_l, under]
+			"RESURFACER %s   CUT %.2f MM   RAG %s   SHAVED %.0f MM   HOSE %.1f L/S   HOSED %.0f L%s"
+			% [MODES[mode_i], cut_mm, RAGS[rag_i], shaved_mm, hose_lps, hosed_l, under]
 		)
 		var line3 := ""
 		if _machine:
@@ -345,7 +346,16 @@ func _zamboni_step(sdt: float) -> void:
 	var x1 := minf(_zam, PASS_X1)
 	var film := 0.8 if mode_i == 1 else 0.0
 	shaved_mm += ice.resurface(
-		x0, x1, pass_z - MACHINE_W / 2, pass_z + MACHINE_W / 2, film, rag_i / 2.0, blade_mm, 0.0
+		x0,
+		x1,
+		pass_z - MACHINE_W / 2,
+		pass_z + MACHINE_W / 2,
+		film,
+		rag_i / 2.0,
+		0.0,
+		0.0,
+		0.0,
+		cut_mm
 	)
 	_machine.feed(_shavings_by_bin())
 	_machine.position = ice.position + Vector3(x1, 0.0, pass_z)
@@ -419,7 +429,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				hud.toast("STATE: %s" % STATES[state][0])
 			KEY_R:
 				_start_pass()
-				hud.toast("RESURFACER: %s PASS, BLADE %+.2f MM" % [MODES[mode_i], blade_mm])
+				hud.toast("RESURFACER: %s PASS, CUT %.2f MM" % [MODES[mode_i], cut_mm])
 			KEY_B:
 				_machine.show_body = not _machine.show_body
 				hud.toast("MACHINE: %s" % ("WHOLE" if _machine.show_body else "CONDITIONER ONLY"))
@@ -435,11 +445,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				mode_i = (mode_i + 1) % MODES.size()
 				hud.toast("RESURFACER MODE: %s" % MODES[mode_i])
 			KEY_BRACKETLEFT:
-				blade_mm = maxf(blade_mm - 0.25, -2.0)
-				hud.toast("BLADE %+.2f MM" % blade_mm)
+				cut_mm = maxf(cut_mm - 0.25, 0.0)
+				hud.toast("CUT %.2f MM" % cut_mm)
 			KEY_BRACKETRIGHT:
-				blade_mm = minf(blade_mm + 0.25, 6.0)
-				hud.toast("BLADE %+.2f MM" % blade_mm)
+				cut_mm = minf(cut_mm + 0.25, 3.0)
+				hud.toast("CUT %.2f MM" % cut_mm)
 			KEY_COMMA:
 				ice.base_mm = maxf(ice.base_mm - 2.0, 4.0)
 				ice.mark_all_dirty()
@@ -748,7 +758,7 @@ func _screenshot(path: String) -> void:
 	if OS.get_cmdline_user_args().has("--view=machine"):
 		# the resurfacer mid-pass, from beside its lane
 		walker.global_position = ice.position + Vector3(10.0, 0.05, 9.0)
-		blade_mm = 0.0
+		cut_mm = 0.5
 		_set_state(0)  # a snowed-up sheet for the blade to shave
 		ice.flush()
 		_start_pass()
@@ -770,7 +780,13 @@ func _screenshot(path: String) -> void:
 			walker.camera.rotation.x = -0.62
 		if not OS.get_cmdline_user_args().has("--side"):
 			walker.face(0.95)
-	if OS.get_cmdline_user_args().has("--view=wide"):
+	var args := OS.get_cmdline_user_args()
+	if args.has("--view=cut"):
+		# the dry cut from eye height, the striations a few metres off
+		walker.global_position = ice.position + Vector3(BLUE_LINE - 7.0, 0.05, RINK.y / 2)
+		walker.face(-PI / 2)
+		walker.camera.rotation.x = -0.3
+	if args.has("--view=wide"):
 		# the whole sheet from above one end, after a few passes
 		for lane in 4:
 			var z := 3.0 + lane * MACHINE_W
@@ -1005,6 +1021,24 @@ func _self_test() -> void:
 		ice.top_at(Vector2(8.0, 4.0)) <= 0.01 and took > 0.0,
 		"a blade at 0 takes the rest (%.2f)" % ice.top_at(Vector2(8.0, 4.0))
 	)
+	# a set cut takes the ice itself: clean ice gets thinner and the
+	# shavings are what the conditioner carries
+	_set_state(1)
+	ice.flush()
+	var thick0 := ice.thickness_at(Vector2(20.0, 8.0))
+	var cut_took := ice.resurface(PASS_X0, PASS_X1, 7.0, 9.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5)
+	check.call(
+		cut_took > 0.0 and is_equal_approx(ice.thickness_at(Vector2(20.0, 8.0)), thick0 - 0.5),
+		(
+			"a 0.5 mm cut thinned clean ice (%.2f -> %.2f mm, shaved %.0f)"
+			% [thick0, ice.thickness_at(Vector2(20.0, 8.0)), cut_took]
+		)
+	)
+	ice.resurface(PASS_X0, PASS_X1, 7.0, 9.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5)
+	check.call(
+		is_equal_approx(ice.thickness_at(Vector2(20.0, 8.0)), thick0 - 1.0),
+		"a second cut takes another 0.5 mm (%.2f)" % ice.thickness_at(Vector2(20.0, 8.0))
+	)
 	ice.flush()
 	check.call(ice.remeshed > 600, "chunks re-meshed (%d)" % ice.remeshed)
 	for id in [
@@ -1020,7 +1054,7 @@ func _self_test() -> void:
 	for again in 4:
 		ice.pour(Vector2(8.0, 5.0), 0.3, 1.2)  # a bump at the +Z edge of lane z = 4
 		ice.set_now()
-	blade_mm = 0.0
+	cut_mm = 0.0
 	_begin_pass(4.0)
 	_zamboni_step(4.0)
 	var hi := 0

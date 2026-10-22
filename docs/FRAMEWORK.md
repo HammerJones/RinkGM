@@ -521,7 +521,11 @@ water layer over whichever state is under it, which is why flood over
 snow and flood over a cut look different), and dry fresh frozen (hard
 gloss, a faint freeze ripple); plus scars and crust. The detail maps are
 generated once and sampled with mipmaps; without them a grazing view
-turns the striations into moiré.
+turns the striations into moiré. The striation map is sampled twice,
+at a metre and at five metres (the same lines five times wider), and
+the grooves also streak the albedo and the roughness along their
+flanks, so a cut reads as lines from across the sheet after the
+millimetre normals have mipmapped away.
 
 **Freezing.** `thermal()` sets each wet cell's water at a rate from the
 slab temperature under it, slower in deep water and warm air, faster next
@@ -536,8 +540,14 @@ of sim per visit on a fully flooded NHL sheet at 60 fps, which the
 once, for a test rig.
 
 **The blade.** `resurface(x0, x1, z0, z1, film_mm, rag_wear, blade_mm,
-travel)` is the resurfacer over a band: the blade at `blade_mm` above
-the base shaves off everything higher. Snow has height: a blade above
+travel, spill, cut_mm)` is the resurfacer over a band: the blade at
+`blade_mm` above the base shaves off everything higher, or, with
+`cut_mm` given, the blade is set that far below the band's mean solid
+level (the sheet's surface, not the snow), so every pass lowers the
+ice by that much and the shavings come off the ice itself; `ice[]` may
+go negative, the column cut below its nominal base, and a gouge the
+blade reaches is cut away with it. `thickness_at(p)`, `snow_at(p)` and
+`water_at(p)` read a column in millimetres for a HUD. Snow has height: a blade above
 the snow touches nothing, a blade in the snow shaves only snow, and a
 blade in the solid (built-up ice, crust peaks) takes the snow with it
 and cuts the ice; below zero it cuts into the base and takes gouge
@@ -630,7 +640,10 @@ display, and run as headless checks in CI (`--test=<name>`).
   the resurfacer end to end down the sheet along your lane:
   M switches DRY CUT (the blade shaves, striations along the
   travel) and FLOOD (the rag lays a film behind the blade), [ and ] set
-  the blade in quarter millimetres, Y wears the rag. The machine is the
+  the cut (0 to 3 mm below the ice, in quarter millimetres; the
+  shavings feed the conditioner's snow sim), Y wears the rag. The
+  second HUD line reads the column under the dot: ice thickness over
+  the paint, snow and water in millimetres. The machine is the
   Zambelli 552 (`framework/demo/zambelli.gd`, five hero props: the body,
   the conditioner and a wheel come from a bought Zamboni model through
   `tools/propgen/zambelli_glb.py`, which voxelises the GLB, splits the
@@ -655,7 +668,7 @@ display, and run as headless checks in CI (`--test=<name>`).
   shows the trough, the pile, the lift rate and the tank; when the pass
   is over and the augers have cleared the snow, the tank is dumped.
   Footsteps leave the ice alone. `--screenshot=<png>`
-  frames the blue line; with `--view=wide` it floods four lanes and
+  frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the
   conditioner nine seconds into a pass over a snowed-up sheet (`--body`
   with the whole machine). In every demo Ctrl
