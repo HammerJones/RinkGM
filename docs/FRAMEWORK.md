@@ -519,7 +519,12 @@ angle: grooves 5 to 10 mm wide at random spacing and depth, running the
 length with a slow wander, from a one-metre tiling map), flood (a glossy
 water layer over whichever state is under it, which is why flood over
 snow and flood over a cut look different), and dry fresh frozen (hard
-gloss, a faint freeze ripple); plus scars and crust. The detail maps are
+gloss, a faint freeze ripple); plus scars and crust. Water standing
+deeper than a film (the depth texel's green, 0 to 8 mm) is a pool: it
+lies level over its hollow (the mesh stands water at its full depth),
+a still mirror with the grooves under the surface rather than on it,
+tinted deeper the deeper it is, with a lighter wetting line at its
+edge, so water that has run into a chip or a trench reads as water. The detail maps are
 generated once and sampled with mipmaps; without them a grazing view
 turns the striations into moiré, and it is also why the grooves fade
 with distance: past a few metres they are narrower than a pixel and
@@ -669,7 +674,7 @@ display, and run as headless checks in CI (`--test=<name>`).
   shows the trough, the pile, the lift rate and the tank; when the pass
   is over and the augers have cleared the snow, the tank is dumped.
   Footsteps leave the ice alone. `--screenshot=<png>`
-  frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=wide` it floods four lanes and
+  frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the
   conditioner nine seconds into a pass over a snowed-up sheet (`--body`
   with the whole machine, `--cut=<mm>` for the blade's depth). In every demo Ctrl

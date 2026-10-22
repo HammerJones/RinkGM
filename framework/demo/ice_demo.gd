@@ -766,7 +766,8 @@ func _screenshot(path: String) -> void:
 	ice.chip(Vector2(BLUE_LINE - 0.2, RINK.y / 2 - 0.3), 0.14, 2.0, 0.3)
 	ice.chip(Vector2(BLUE_LINE + 0.2, RINK.y / 2 + 0.1), 0.14, 2.0, 0.0)
 	ice.pour(Vector2(BLUE_LINE + 0.2, RINK.y / 2 + 0.1), 0.4, 2.5)
-	ice.set_now()
+	if not OS.get_cmdline_user_args().has("--view=pool"):
+		ice.set_now()
 	if OS.get_cmdline_user_args().has("--view=machine"):
 		# the resurfacer mid-pass, from beside its lane
 		walker.global_position = ice.position + Vector3(10.0, 0.05, 9.0)
@@ -796,6 +797,23 @@ func _screenshot(path: String) -> void:
 		if not OS.get_cmdline_user_args().has("--side"):
 			walker.face(0.95)
 	var args := OS.get_cmdline_user_args()
+	if args.has("--view=pool"):
+		# water run into the low spots and left to stand: a scraped trench,
+		# a few chips, a pour between them, then a while to run downhill
+		# with the slab at zero so nothing sets
+		var o := Vector2(BLUE_LINE + 0.6, RINK.y / 2 + 0.4)
+		walker.set_noclip(true)
+		walker.global_position = ice.position + Vector3(o.x - 1.5, 1.0, o.y - 1.0)
+		walker.face(-PI / 2 - 0.59)
+		walker.camera.rotation.x = -0.62
+		ice.stroke(o + Vector2(-0.3, -0.5), o + Vector2(1.4, 0.3), 0.06, 1.0, 2.5, 0.0)
+		ice.chip(o + Vector2(0.4, 0.9), 0.18, 2.0, 0.0)
+		ice.chip(o + Vector2(1.1, -0.6), 0.22, 3.0, 0.0)
+		ice.chip(o + Vector2(-0.6, 0.3), 0.12, 1.2, 0.0)
+		ice.pour(o + Vector2(0.5, 0.1), 0.9, 2.2)
+		ice.pour(o + Vector2(0.9, -0.5), 0.5, 1.5)
+		for step in 400:
+			ice.thermal(0.1, 0.0, 8.0)
 	if args.has("--view=cut"):
 		# the dry cut from eye height, the striations a few metres off
 		walker.global_position = ice.position + Vector3(BLUE_LINE - 7.0, 0.05, RINK.y / 2)

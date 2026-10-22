@@ -11,7 +11,7 @@ uniform vec2 tile_scale = vec2(1.0);       // sheet UV to tile UV
 uniform sampler2D stria_n : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D snow_n : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D ripple_n : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform sampler2D depthmap : filter_linear;  // r ice over the paint (0..1 of 64 mm)
+uniform sampler2D depthmap : filter_linear;  // r ice over the paint (0..1 of 64 mm), g water depth (0..1 of 8 mm)
 uniform sampler2D markings : source_color, filter_linear_mipmap_anisotropic;  // lines and logos on the white paint
 uniform bool has_markings = false;
 uniform float clear_mm = 30.0;  // ice this thick lets 37% of the paint through
@@ -59,7 +59,9 @@ void fragment() {
 	// the paint is at a fixed depth: the lines sit on the white paint and
 	// show through the ice above them, vivid when it is thin, faded and
 	// blue when it is thick; clear ice (a filled chip) shows more
-	float dep = texture(depthmap, tuv).r * 64.0;
+	vec2 dm = texture(depthmap, tuv).rg;
+	float dep = dm.r * 64.0;
+	float wmm = dm.g * 8.0;  // water standing in the column, mm
 	float gg = clamp(c.g * 4.0, 0.0, 1.0);
 	float sc = clamp(c.b * 4.0, 0.0, 1.0) * (1.0 - gg);
 	float through = exp(-dep / clear_mm);
@@ -88,6 +90,18 @@ void fragment() {
 	n = normalize(mix(n, n_water, liquid));
 	rough = mix(rough, 0.04, liquid);
 	alb = mix(alb, alb * vec3(0.78, 0.86, 0.96), liquid * 0.7);
+	// a pool, not a film: water standing more than a film deep lies level
+	// over whatever is under it, a still mirror (the ice's grooves and
+	// grain are under the surface, not on it), tinted deeper the deeper
+	// it is, with a lighter wetting line round its edge
+	float pool = smoothstep(0.3, 1.2, wmm) * (1.0 - fz) * (1.0 - sn);
+	vec3 n_pool = normalize(mix(vec3(0.0, 0.0, 1.0), n_rip, 0.12));
+	n = normalize(mix(n, n_pool, pool));
+	rough = mix(rough, 0.02, pool);
+	float deep = 1.0 - exp(-wmm / 3.0);
+	alb = mix(alb, alb * mix(vec3(0.70, 0.80, 0.90), vec3(0.42, 0.56, 0.70), deep), pool);
+	float rim = smoothstep(0.08, 0.3, wmm) * (1.0 - smoothstep(0.3, 0.7, wmm)) * (1.0 - fz) * (1.0 - sn);
+	alb = mix(alb, alb * 1.12 + vec3(0.04), rim * 0.8);
 	// frozen-over water: the gloss stays, the tint goes
 	float set = wt * fz;
 	rough = mix(rough, 0.12, set);
@@ -101,7 +115,7 @@ void fragment() {
 	rough = mix(rough, 0.1, sc * 0.7);
 	ALBEDO = alb;
 	ROUGHNESS = rough;
-	SPECULAR = mix(0.5, 0.1, sn);
+	SPECULAR = mix(mix(0.5, 0.1, sn), 0.6, pool);
 	NORMAL_MAP = n * 0.5 + 0.5;
 	NORMAL_MAP_DEPTH = mix(0.8, 0.4, liquid);
 }

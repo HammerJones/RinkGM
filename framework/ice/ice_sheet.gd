@@ -43,6 +43,7 @@ const FILM_PIN := 0.2  # mm of water that clings to the ice and never runs
 const FLOW_K := 0.45  # share of the head difference that moves a visit
 const FLAT_EPS := 0.00002  # m of height range a chunk may have and still be one quad
 const DEPTH_FULL := 64.0  # mm the depth texel spans
+const POOL_FULL := 8.0  # mm of water the depth texel's green spans: a pool's depth
 
 static var _stria: Texture2D  # the striation map, generated once
 
@@ -806,19 +807,16 @@ func _build_chunk(key: Vector2i) -> void:
 					px,
 					pz,
 					Color(
-						clampf((base_mm + ice[i] - gouge[i]) / DEPTH_FULL, 0.0, 1.0), 0.0, 0.0, 1.0
+						clampf((base_mm + ice[i] - gouge[i]) / DEPTH_FULL, 0.0, 1.0),
+						clampf(water[i] / POOL_FULL, 0.0, 1.0),
+						0.0,
+						1.0
 					)
 				)
 				# the column's height, as _height has it, inline
 				var hs := (((i * 1103515245 + 12345) & 0x7fffffff) >> 8) & 0xffff
 				var h := (
-					(
-						ice[i]
-						+ snow[i]
-						+ crust[i] * (0.4 + 0.6 * hs / 65535.0)
-						+ water[i] * 0.6
-						- gouge[i]
-					)
+					(ice[i] + snow[i] + crust[i] * (0.4 + 0.6 * hs / 65535.0) + water[i] - gouge[i])
 					* scale
 				)
 				lo = minf(lo, h)
@@ -863,14 +861,20 @@ func _cut_colour(i: int) -> Color:
 
 
 func _depth_colour(i: int) -> Color:
-	return Color(clampf(paint_depth(i) / DEPTH_FULL, 0.0, 1.0), 0.0, 0.0, 1.0)
+	return Color(
+		clampf(paint_depth(i) / DEPTH_FULL, 0.0, 1.0),
+		clampf(water[i] / POOL_FULL, 0.0, 1.0),
+		0.0,
+		1.0
+	)
 
 
 func _height(x: int, z: int) -> float:
 	var i := index(mini(x, w - 1), mini(z, d - 1))
 	# crust is peaks: each column its own height within the crust depth
 	var peak := crust[i] * (0.4 + 0.6 * _hash(i))
-	return (ice[i] + snow[i] + peak + water[i] * 0.6 - gouge[i]) * 0.001 * height_scale
+	# water stands at its full depth, so a pool is level across its hollow
+	return (ice[i] + snow[i] + peak + water[i] - gouge[i]) * 0.001 * height_scale
 
 
 static func _hash(i: int) -> float:
