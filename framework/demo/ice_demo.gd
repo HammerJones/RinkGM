@@ -96,7 +96,7 @@ var slab_c := -5.0
 var air_base := 8.0
 var air_c := 8.0
 var sim_t := 0.0
-var _machine: Node3D
+var _machine: Zambelli
 var _chip_t := 0.0
 var _stream: GPUParticles3D
 var _env: WorldEnvironment
@@ -148,6 +148,8 @@ func _ready() -> void:
 	Quality.apply(
 		quality, {"env": _env, "sun": _sun, "fields": [field], "viewport": get_viewport()}
 	)
+	_machine = _make_machine()
+	add_child(_machine)
 	if OS.get_cmdline_user_args().has("--test=ice_demo"):
 		_self_test.call_deferred()
 		return
@@ -166,12 +168,9 @@ func _ready() -> void:
 		(
 			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [, .] ICE OVER PAINT   "
 			+ "[R] RESURFACER   [M] MODE   [ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   "
-			+ "[T] CLOCK   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
+			+ "[T] CLOCK   [B] BODY   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 		)
 	)
-	_machine = _make_machine()
-	add_child(_machine)
-	_machine.visible = false
 	_stream = _make_stream()
 	add_child(_stream)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -193,6 +192,12 @@ func _process(dt: float) -> void:
 		ice.set_now()
 	if _zam >= 0.0:
 		_zamboni_step(sdt)
+	elif _machine and _machine.auger_on and _machine.trough_m3() + _machine.pile_m3 < 0.0005:
+		# the pass is over and the augers have cleared the snow: dump the tank
+		_machine.auger_on = false
+		var dumped := _machine.dump()
+		if hud and dumped > 0.0:
+			hud.toast("TANK DUMPED: %.0f L OF SNOW" % (dumped * 1000.0))
 	if walker:
 		field.focus = walker.global_position
 		if hosing:
@@ -230,7 +235,24 @@ func _process(dt: float) -> void:
 			"RESURFACER %s   BLADE %+.2f MM   RAG %s   SHAVED %.0f MM   HOSE %.1f L/S   HOSED %.0f L%s"
 			% [MODES[mode_i], blade_mm, RAGS[rag_i], shaved_mm, hose_lps, hosed_l, under]
 		)
-		hud.readout(line1 + "\n" + line2)
+		var line3 := ""
+		if _machine:
+			line3 = _machine_line()
+		hud.readout(line1 + "\n" + line2 + "\n" + line3)
+
+
+func _machine_line() -> String:
+	return (
+		"CONDITIONER %s   TROUGH %.1f L   PILE %.1f L   LIFT %.1f L/S   TANK %.0f L (%.0f%%)"
+		% [
+			"DOWN" if _machine.is_down() else ("UP" if _machine.lift <= 0.001 else "MOVING"),
+			_machine.trough_m3() * 1000.0,
+			_machine.pile_m3 * 1000.0,
+			_machine.lift_flow * 1000.0,
+			_machine.tank_m3 * 1000.0,
+			_machine.tank_m3 / Zambelli.TANK_M3 * 100.0
+		]
+	)
 
 
 func _set_state(k: int) -> void:
@@ -316,10 +338,17 @@ func _chip() -> void:
 func _start_pass() -> void:
 	if _zam >= 0.0 or walker == null:
 		return
+	_begin_pass(_local(walker.global_position).y)
+
+
+func _begin_pass(z: float) -> void:
 	_zam = PASS_X0
-	pass_z = clampf(_local(walker.global_position).y, MACHINE_W / 2, RINK.y - MACHINE_W / 2)
+	pass_z = clampf(z, MACHINE_W / 2, RINK.y - MACHINE_W / 2)
 	shaved_mm = 0.0
-	_machine.visible = true
+	_machine.position = ice.position + Vector3(_zam, 0.0, pass_z)
+	_machine.cond_down = true
+	_machine.auger_on = true
+	_machine.speed = MACHINE_SPEED
 
 
 func _zamboni_step(sdt: float) -> void:
@@ -330,37 +359,46 @@ func _zamboni_step(sdt: float) -> void:
 	shaved_mm += ice.resurface(
 		x0, x1, pass_z - MACHINE_W / 2, pass_z + MACHINE_W / 2, film, rag_i / 2.0, blade_mm, 0.0
 	)
-	_machine.position = ice.position + Vector3(x1 + 1.2, 0.0, pass_z)
+	_machine.feed(_shavings_by_bin())
+	_machine.position = ice.position + Vector3(x1, 0.0, pass_z)
 	if _zam >= PASS_X1:
 		_zam = -1.0
-		_machine.visible = false
+		_machine.cond_down = false
+		_machine.speed = 0.0
 		if hud:
 			hud.toast("PASS DONE: %s, SHAVED %.0f MM OF COLUMNS" % [MODES[mode_i], shaved_mm])
 
 
-## A box for the machine, so the pass is seen; the blade is the dark bar
-## at the back edge.
-func _make_machine() -> Node3D:
-	var n := Node3D.new()
-	var body := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = Vector3(2.8, 1.6, MACHINE_W)
-	body.mesh = bm
-	body.position = Vector3(0, 0.9, 0)
-	var m := StandardMaterial3D.new()
-	m.albedo_color = Color("2f4a6e")
-	body.material_override = m
-	n.add_child(body)
-	var blade := MeshInstance3D.new()
-	var bb := BoxMesh.new()
-	bb.size = Vector3(0.12, 0.08, MACHINE_W)
-	blade.mesh = bb
-	blade.position = Vector3(-1.3, 0.04, 0)
-	var bmat := StandardMaterial3D.new()
-	bmat.albedo_color = Color("1a1c20")
-	blade.material_override = bmat
-	n.add_child(blade)
-	return n
+## The last resurface() call's shavings as the conditioner wants them: m³
+## of ice under each of the blade's bins. The machine faces +X along the
+## pass, so its bins run with the sheet's +Z; the band's rows (2.5 cm) are
+## binned by where they sit across the 2.1 m blade.
+func _shavings_by_bin() -> PackedFloat32Array:
+	var bins := PackedFloat32Array()
+	bins.resize(Zambelli.BINS)
+	bins.fill(0.0)
+	var z0 := pass_z - MACHINE_W / 2
+	var cell_m3 := ice.cell * ice.cell * 0.001  # mm of a cell -> m³
+	for r in ice.shave_rows.size():
+		var mm := ice.shave_rows[r]
+		if mm <= 0.0:
+			continue
+		var zm := (ice.shave_z0 + r + 0.5) * ice.cell
+		var b := clampi(int((zm - z0) / MACHINE_W * Zambelli.BINS), 0, Zambelli.BINS - 1)
+		bins[b] += mm * cell_m3
+	return bins
+
+
+## The resurfacer (framework/demo/zambelli.gd), parked by the end boards
+## with the conditioner up until a pass; it faces +X, the way a pass runs.
+func _make_machine() -> Zambelli:
+	var z := Zambelli.new()
+	z.name = "Zambelli"
+	z.rotation.y = -PI / 2
+	z.position = ice.position + Vector3(PASS_X0, 0.0, RINK.y - 3.0)
+	z.cond_down = false
+	z.lift = 0.0
+	return z
 
 
 func _local(p: Vector3) -> Vector2:
@@ -394,6 +432,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_R:
 				_start_pass()
 				hud.toast("RESURFACER: %s PASS, BLADE %+.2f MM" % [MODES[mode_i], blade_mm])
+			KEY_B:
+				_machine.show_body = not _machine.show_body
+				hud.toast("MACHINE: %s" % ("WHOLE" if _machine.show_body else "CONDITIONER ONLY"))
 			KEY_M:
 				mode_i = (mode_i + 1) % MODES.size()
 				hud.toast("RESURFACER MODE: %s" % MODES[mode_i])
@@ -722,6 +763,26 @@ func _screenshot(path: String) -> void:
 	ice.chip(Vector2(BLUE_LINE + 0.2, RINK.y / 2 + 0.1), 0.14, 2.0, 0.0)
 	ice.pour(Vector2(BLUE_LINE + 0.2, RINK.y / 2 + 0.1), 0.4, 2.5)
 	ice.set_now()
+	if OS.get_cmdline_user_args().has("--view=machine"):
+		# the resurfacer mid-pass, from beside its lane
+		walker.global_position = ice.position + Vector3(10.0, 0.05, 9.0)
+		blade_mm = 0.0
+		_set_state(0)  # a snowed-up sheet for the blade to shave
+		ice.flush()
+		_start_pass()
+		for step in 540:  # 9 s of pass at 60 Hz, the augers carrying as they go
+			_zamboni_step(1.0 / 60.0)
+			_machine._process(1.0 / 60.0)
+		_machine.settle()
+		_machine.show_body = OS.get_cmdline_user_args().has("--body")
+		if _machine.show_body:
+			walker.global_position = ice.position + Vector3(26.0, 0.05, 13.2)
+			walker.camera.rotation.x = -0.15
+		else:  # from above the front wall, into the open trough
+			walker.set_noclip(true)
+			walker.global_position = ice.position + Vector3(21.7, 0.9, 10.2)
+			walker.camera.rotation.x = -0.62
+		walker.face(0.95)
 	if OS.get_cmdline_user_args().has("--view=wide"):
 		# the whole sheet from above one end, after a few passes
 		for lane in 4:
@@ -960,6 +1021,47 @@ func _self_test() -> void:
 	ice.flush()
 	check.call(ice.remeshed > 600, "chunks re-meshed (%d)" % ice.remeshed)
 	check.call(objects.count() == 8, "mugs on the ice")
+	for id in [
+		"zambelli_body", "zambelli_conditioner", "zambelli_auger", "zambelli_lift", "zambelli_wheel"
+	]:
+		var m := ObjectCatalog.mesh(id)
+		check.call(m != null and m.get_surface_count() > 0, "%s has a mesh" % id)
+	# the conditioner: the blade's shavings land in the trough under the
+	# rows they came from, the auger walks them to the middle, the lift
+	# takes them up into the tank, and the tank is dumped once it is clear
+	_set_state(1)
+	ice.flush()
+	for again in 4:
+		ice.pour(Vector2(8.0, 5.0), 0.3, 1.2)  # a bump at the +Z edge of lane z = 4
+		ice.set_now()
+	blade_mm = 0.0
+	_begin_pass(4.0)
+	_zamboni_step(4.0)
+	var hi := 0
+	for b in Zambelli.BINS:
+		if _machine.trough[b] > _machine.trough[hi]:
+			hi = b
+	check.call(
+		_machine.trough_m3() > 0.0 and hi > Zambelli.BINS * 0.6,
+		"the shavings landed in the trough on the side they were cut (bin %d)" % hi
+	)
+	var trough0 := _machine.trough_m3()
+	for step in 240:
+		_machine._process(1.0 / 60.0)
+	check.call(
+		_machine.trough_m3() < trough0 * 0.5 and _machine.tank_m3 > 0.0,
+		(
+			"the augers carried the snow to the middle and up (%.3f -> %.3f L, tank %.3f L)"
+			% [trough0 * 1000.0, _machine.trough_m3() * 1000.0, _machine.tank_m3 * 1000.0]
+		)
+	)
+	_zamboni_step(60.0)  # to the end of the pass
+	for step in 600:
+		_machine._process(1.0 / 60.0)
+		_process(1.0 / 60.0)
+	check.call(
+		_machine.tank_m3 == 0.0 and not _machine.auger_on, "the tank was dumped after the pass"
+	)
 	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:
 		print("ice_demo test: all passed")

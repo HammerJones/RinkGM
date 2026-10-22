@@ -1,0 +1,36 @@
+{
+  "collision_cell": 8,
+  "id": "zambelli_conditioner",
+  "inspect": "The conditioner: the auger, the blade, the wash pipe and squeegee, the flood pipe and the towel.",
+  "mass_kg": 400.0,
+  "mesh": "merged",
+  "name": "Conditioner",
+  "pivot": [
+    107.5,
+    0,
+    45.5
+  ],
+  "shape": [],
+  "size_m": [
+    2.15,
+    0.57,
+    0.91
+  ],
+  "sound": "metal",
+  "source": "tools/propgen/zambelli.py",
+  "tags": [
+    "machine",
+    "resurfacer"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/zambelli_conditioner.vox",
+  "voxel_m": 0.01,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}

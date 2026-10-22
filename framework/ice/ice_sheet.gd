@@ -72,6 +72,10 @@ var scar := PackedFloat32Array()  # mm of gouge that water filled: faintly visib
 var crust := PackedFloat32Array()  # mm of slush that set: a rough surface with peaks
 var material: ShaderMaterial
 var remeshed := 0
+## The last resurface() call's shavings by row (mm summed over the row's
+## cells), from `shave_z0` on: what the conditioner's auger has to carry.
+var shave_rows := PackedFloat32Array()
+var shave_z0 := 0
 var wet_cells := 0
 
 var _cw := 0
@@ -427,8 +431,13 @@ func resurface(
 	var c1 := cell_at(Vector2(maxf(x0, x1), maxf(z0, z1)))
 	var shaved := 0.0
 	var touched_z := {}
-	for z in range(maxi(c0.y, 0), mini(c1.y + 1, d)):
+	var z_lo := maxi(c0.y, 0)
+	shave_z0 = z_lo
+	shave_rows.resize(maxi(mini(c1.y + 1, d) - z_lo, 0))
+	shave_rows.fill(0.0)
+	for z in range(z_lo, mini(c1.y + 1, d)):
 		var streak := 1.0 + rag_wear * 0.6 * sin(z * cell * 41.0) * sin(z * cell * 7.3)
+		var row_took := 0.0
 		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
 			var i := index(x, z)
 			if _mask[i] == 0:
@@ -468,8 +477,10 @@ func resurface(
 				water[i] = film_mm * streak
 				frozen[i] = 0.0
 				_wet_add(i)
-			shaved += took
+			row_took += took
 			_touch(x, z)
+		shave_rows[z - z_lo] = row_took
+		shaved += row_took
 	# the shavings go up the auger into the tank; a side spill is a flaw
 	# of a worn or badly set conditioner, so it is off by default
 	if shaved > 0.0 and spill > 0.0:

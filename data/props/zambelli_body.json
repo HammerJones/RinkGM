@@ -1,0 +1,36 @@
+{
+  "collision_cell": 8,
+  "id": "zambelli_body",
+  "inspect": "The rink's resurfacer. Her name is Doris and she has opinions about the plant room floor.",
+  "mass_kg": 3200.0,
+  "mesh": "merged",
+  "name": "Zambelli 552",
+  "pivot": [
+    53.5,
+    0,
+    87.5
+  ],
+  "shape": [],
+  "size_m": [
+    2.14,
+    2.28,
+    3.5
+  ],
+  "sound": "metal",
+  "source": "tools/propgen/zambelli.py",
+  "tags": [
+    "machine",
+    "resurfacer"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/zambelli_body.vox",
+  "voxel_m": 0.02,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}

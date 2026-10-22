@@ -319,8 +319,10 @@ class Scene:
         else:
             ua, va, da, sgn = "z", "y", "x", (1 if face == "right" else -1)
         # a model faces -Z, so from the front +X is on the viewer's left:
-        # text on the front and top runs toward -X
-        uflip = -1 if face in ("front", "top", "left") else 1
+        # text on the front and top runs toward -X; on the sides it runs
+        # toward the front (-Z) on the right face, the back on the left
+        # (the import mirrors X, which is what the Godot build showed)
+        uflip = -1 if face in ("front", "top", "right") else 1
         vflip = -1 if face == "bottom" else 1
         coords = {"x": self.X, "y": self.Y, "z": self.Z}
         U, V, D = coords[ua], coords[va], coords[da]

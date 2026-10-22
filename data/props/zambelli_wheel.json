@@ -1,0 +1,36 @@
+{
+  "collision_cell": 8,
+  "id": "zambelli_wheel",
+  "inspect": "A studded tyre on a steel rim.",
+  "mass_kg": 45.0,
+  "mesh": "merged",
+  "name": "Resurfacer wheel",
+  "pivot": [
+    16.0,
+    0,
+    38.0
+  ],
+  "shape": [],
+  "size_m": [
+    0.32,
+    0.76,
+    0.76
+  ],
+  "sound": "rubber",
+  "source": "tools/propgen/zambelli.py",
+  "tags": [
+    "machine",
+    "resurfacer"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/zambelli_wheel.vox",
+  "voxel_m": 0.01,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}

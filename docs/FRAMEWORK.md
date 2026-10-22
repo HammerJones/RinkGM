@@ -196,6 +196,7 @@ photo, adjusted; two or three rounds.
 
 ```
 python3 tools/propgen/library.py                 # regenerate everything
+python3 tools/propgen/zambelli.py --preview      # the resurfacer's five parts, four-view previews
 python3 tools/propgen/library.py boombox --preview
 python3 tools/propgen/hollow.py big.vox small.vox   # a solid MagicaVoxel model to surface voxels
 GODOT=... tools/prop_sheet.sh                    # the contact sheet, as the game draws them
@@ -612,10 +613,29 @@ display, and run as headless checks in CI (`--test=<name>`).
   the resurfacer end to end down the sheet along your lane:
   M switches DRY CUT (the blade shaves, striations along the
   travel) and FLOOD (the rag lays a film behind the blade), [ and ] set
-  the blade in quarter millimetres, Y wears the rag. Footsteps leave the
-  ice alone. Mugs on the ice to kick and carry. `--screenshot=<png>`
+  the blade in quarter millimetres, Y wears the rag. The machine is the
+  Zambelli 552 (`framework/demo/zambelli.gd`, five hero props from
+  `tools/propgen/zambelli.py`: the body, the conditioner, its horizontal
+  auger, the vertical auger, a wheel, built after Sean's reference shots
+  of a real resurfacer). By default only the conditioner is drawn, with
+  the vertical auger standing in a clear tube and a clear tank above it,
+  so the snow's path is in view; B shows the whole machine. The snow is
+  simulated: `IceSheet.resurface()` reports the millimetres it shaved per
+  row (`shave_rows`), the demo bins those across the 2.1 m blade and feeds
+  them to the machine as cubic metres of ice; they land in the trough in
+  front of the blade as snow (2.5 times the room), drawn as a roll along
+  the auger whose cross-section holds each bin's volume; the horizontal
+  auger walks each half toward the middle at its flights' feed rate
+  (7 rad/s, 26 cm pitch); what reaches the middle piles at the vertical
+  auger's foot, which lifts up to 12 L/s into the tank (a 1 mm cut at
+  2 m/s keeps up, a deeper one grows the pile). The third readout line
+  shows the trough, the pile, the lift rate and the tank; when the pass
+  is over and the augers have cleared the snow, the tank is dumped.
+  Footsteps leave the ice alone. Mugs on the ice to kick and carry. `--screenshot=<png>`
   frames the blue line; with `--view=wide` it floods four lanes and
-  frames the whole sheet from above one end. In every demo Ctrl
+  frames the whole sheet from above one end; `--view=machine` frames the
+  conditioner nine seconds into a pass over a snowed-up sheet (`--body`
+  with the whole machine). In every demo Ctrl
   crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.
 
 ## 14. What the port looks like
