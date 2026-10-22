@@ -521,11 +521,10 @@ water layer over whichever state is under it, which is why flood over
 snow and flood over a cut look different), and dry fresh frozen (hard
 gloss, a faint freeze ripple); plus scars and crust. The detail maps are
 generated once and sampled with mipmaps; without them a grazing view
-turns the striations into moiré. The striation map is sampled twice,
-at a metre and at five metres (the same lines five times wider), and
-the grooves also streak the albedo and the roughness along their
-flanks, so a cut reads as lines from across the sheet after the
-millimetre normals have mipmapped away.
+turns the striations into moiré, and it is also why the grooves fade
+with distance: past a few metres they are narrower than a pixel and
+average out, whatever the lighting (a coarser second groove layer was
+tried and backed out on 2026-10-22).
 
 **Freezing.** `thermal()` sets each wet cell's water at a rate from the
 slab temperature under it, slower in deep water and warm air, faster next
