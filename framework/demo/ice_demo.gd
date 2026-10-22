@@ -1,3 +1,5 @@
+# gdlint:disable=max-file-lines
+# (the scene's own self-test lives here with what it exercises; it is most of the file)
 extends Node3D
 ## The ice demo: a full NHL sheet of ice (60.96 x 25.9 m, 8.5 m corners,
 ## the lines and circles painted under it, boards around it)
@@ -248,6 +250,12 @@ func _process(dt: float) -> void:
 			hud.extra_prompt = _machine.controls.prompt(_aimed)
 			if _aimed < 0 and _aboard:
 				hud.extra_prompt = "[E] GET OUT"
+			elif (
+				_aimed < 0
+				and not _hose.held
+				and _edger.engine_aimed(cam.global_position, -cam.global_transform.basis.z)
+			):
+				hud.extra_prompt = "[E] %s THE EDGER" % ("STOP" if _edger.running else "START")
 			elif _aimed < 0 and _edging:
 				hud.extra_prompt = "[W S] PUSH   [A D] TURN   [WHEEL] CRANK   [TAB] BLADE   [E] LET GO"
 			elif (
@@ -861,6 +869,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				elif _aboard:
 					_off_the_machine()
 					hud.toast("OFF THE MACHINE")
+				elif (
+					not _hose.held
+					and _edger.engine_aimed(
+						walker.camera.global_position, -walker.camera.global_transform.basis.z
+					)
+				):
+					_edger.toggle_engine()
+					hud.toast("THE EDGER %s" % ("RUNS" if _edger.running else "IS OFF"))
 				elif _edging:
 					_let_go()
 					hud.toast("OFF THE EDGER")
@@ -1352,6 +1368,7 @@ func _screenshot(path: String) -> void:
 		_edger.rotation.y = -PI / 2  # nose toward +X
 		_edger.depth_mm = 1.5
 		_edger.blade_down = true
+		_edger.running = true
 		for step in 300:
 			_push_with(1.0 / 60.0, 1.0, 0.0)
 		ice.flush()
@@ -2106,6 +2123,7 @@ func _self_test() -> void:
 	_edger.rotation.y = -PI / 2  # nose toward +X
 	_edger.depth_mm = 1.5
 	_edger.blade_down = false
+	_edger.running = false
 	_edger.speed = 0.0
 	var e0 := _edger.global_position
 	for step in 120:
@@ -2118,6 +2136,19 @@ func _self_test() -> void:
 	var lane := _local(_edger.to_global(Vector3(0.0, 0.0, IceEdger.BLADE_Z + 0.3)))
 	check.call(is_equal_approx(ice.thickness_at(lane), 25.0), "the blade up, the lane is untouched")
 	_edger.blade_down = true
+	for step in 60:
+		_push_with(1.0 / 60.0, 1.0, 0.0)
+	lane = _local(_edger.to_global(Vector3(0.0, 0.0, IceEdger.BLADE_Z + 0.4)))
+	check.call(
+		is_equal_approx(ice.thickness_at(lane), 25.0), "the engine off, the blade down cuts nothing"
+	)
+	var eng_eye: Vector3 = _edger.to_global(Vector3(0.0, 1.5, 1.6))
+	var eng_dir: Vector3 = (_edger.to_global(Vector3(0.0, 0.55, -0.15)) - eng_eye).normalized()
+	check.call(
+		_edger.engine_aimed(eng_eye, eng_dir), "the engine is under the dot from the handles"
+	)
+	_edger.toggle_engine()
+	check.call(_edger.running, "E starts it")
 	for step in 120:
 		_push_with(1.0 / 60.0, 1.0, 0.0)
 	lane = _local(_edger.to_global(Vector3(0.0, 0.0, IceEdger.BLADE_Z + 0.4)))
@@ -2167,6 +2198,8 @@ func _self_test() -> void:
 		"it turns slower with the blade in the ice"
 	)
 	_edger.blade_down = false
+	_edger.toggle_engine()
+	check.call(not _edger.running, "E again stops it")
 	_edger.speed = 0.0
 	# the bay: shut doors are boards, open ones a doorway onto the pad, and
 	# the pad's walls are the end of it

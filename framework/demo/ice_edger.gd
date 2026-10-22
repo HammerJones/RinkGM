@@ -3,8 +3,9 @@ extends Node3D
 ## The ice edger: a walk-behind machine (Sean's uploaded mower model
 ## voxelised, art/props/ice_edger.vox) with a spinning disc blade under
 ## its deck, tilted so its leading rim does the cutting, pushed by hand
-## along the boards where the resurfacer cannot reach. Look at its
-## handles and E takes them: W pushes, S pulls back, A and D turn it with
+## along the boards where the resurfacer cannot reach. E on the engine
+## starts and stops it (Sean's ask); the blade only cuts with it running.
+## Look at its handles and E takes them: W pushes, S pulls back, A and D turn it with
 ## your weight (slower with the blade in the ice), the wheel is the crank
 ## on the handle (counter-clockwise lowers the blade, the opposite of the
 ## Zambelli's handwheel, half a millimetre a notch) and TAB lifts the
@@ -36,6 +37,7 @@ const TAKE_REACH := 2.4
 const SPIN := 120.0  # rad/s, for the look
 
 var depth_mm := 1.0  # the crank's setting
+var running := false  # the engine
 var blade_down := false
 var speed := 0.0
 var shaved_mm := 0.0
@@ -119,18 +121,30 @@ func _ready() -> void:
 
 
 func _process(dt: float) -> void:
-	if blade_down or absf(speed) > 0.01:
+	if running:
 		disc.rotate_object_local(Vector3.UP, SPIN * dt)
 
 
 ## True when the view line meets the handles within reach.
 func aimed(origin: Vector3, dir: Vector3) -> bool:
-	var centre := to_global(Vector3(0.0, 0.9, 0.7))
-	var to := centre - origin
+	return _hits(origin, dir, Vector3(0.0, 0.9, 0.7), 0.45)
+
+
+## True when the view line meets the engine on the deck within reach.
+func engine_aimed(origin: Vector3, dir: Vector3) -> bool:
+	return _hits(origin, dir, Vector3(0.0, 0.55, -0.15), 0.42)
+
+
+func toggle_engine() -> void:
+	running = not running
+
+
+func _hits(origin: Vector3, dir: Vector3, at: Vector3, r: float) -> bool:
+	var to := to_global(at) - origin
 	var t := to.dot(dir)
 	if t < 0.0 or t > TAKE_REACH:
 		return false
-	return (to - dir * t).length() < 0.45
+	return (to - dir * t).length() < r
 
 
 ## A notch of the crank: up is clockwise and raises the blade, down is
@@ -167,7 +181,7 @@ func step(dt: float, push: float, turn: float) -> Array[Vector3]:
 ## centre): shaves the lane, rocks an arc in every ARC_STEP, throws the
 ## shavings to the right. Returns the millimetres shaved.
 func cut(sheet: IceSheet, a: Vector2, b: Vector2) -> float:
-	if not blade_down:
+	if not blade_down or not running:
 		return 0.0
 	var ds := a.distance_to(b)
 	_since_arc += ds
@@ -193,8 +207,8 @@ func cut(sheet: IceSheet, a: Vector2, b: Vector2) -> float:
 
 func state_text() -> String:
 	return (
-		"EDGER: BLADE %s, CRANK %.1f MM   SHAVED %.0f MM"
-		% ["DOWN" if blade_down else "UP", depth_mm, shaved_mm]
+		"EDGER: ENGINE %s, BLADE %s, CRANK %.1f MM   SHAVED %.0f MM"
+		% ["RUNNING" if running else "OFF", "DOWN" if blade_down else "UP", depth_mm, shaved_mm]
 	)
 
 

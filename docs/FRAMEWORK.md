@@ -823,7 +823,8 @@ display, and run as headless checks in CI (`--test=<name>`).
   art/props/ice_edger.vox at 1 cm, turned handle-back and scaled to a
   push edger) with a 46 cm disc under its deck tilted 4 degrees and a
   crank (primitives: the model has none) on the handle; it parks in the
-  bay. Look at the handles and E takes them: W pushes (0.9 m/s), S pulls
+  bay. E on the engine starts or stops it, and the blade only cuts
+  with it running. Look at the handles and E takes them: W pushes (0.9 m/s), S pulls
   back, A and D turn it with your weight (0.8 rad/s, 0.35 with the blade
   in), the wheel is the crank (counter-clockwise lowers the blade, the
   opposite of the Zambelli's handwheel, half a millimetre a notch, up to
