@@ -54,8 +54,13 @@ void fragment() {
 	vec3 n_rip = texture(ripple_n, wp * 6.0).xyz * 2.0 - 1.0;
 	vec3 n_fresh = normalize(mix(vec3(0.0, 0.0, 1.0), n_rip, 0.25));
 	vec3 n_dry = normalize(mix(n_fresh, n_cut, ct * striation_strength));
-	vec3 n = normalize(mix(n_dry, n_snow, sn));
-	float rough = mix(mix(0.16, 0.55, ct), 1.0, sn);
+	// snow: a dusting already reads, a few tenths of a millimetre hides the
+	// ice; matte, bright white, lumpy (the grain's bumps also shade it)
+	float snw = smoothstep(0.0, 0.6, sn);
+	vec3 n_snowy = normalize(n_snow * vec3(1.7, 1.7, 1.0));
+	vec3 n = normalize(mix(n_dry, n_snowy, snw));
+	float rough = mix(mix(0.16, 0.55, ct), 1.0, snw);
+	float lumps = 0.86 + 0.14 * n_snow.z;
 	// the paint is at a fixed depth: the lines sit on the white paint and
 	// show through the ice above them, vivid when it is thin, faded and
 	// blue when it is thick; clear ice (a filled chip) shows more
@@ -73,7 +78,7 @@ void fragment() {
 	}
 	vec3 body = mix(vec3(0.58, 0.68, 0.76), vec3(0.64, 0.71, 0.76), ct);
 	vec3 alb_dry = mix(body, under, through);
-	vec3 alb = mix(alb_dry, vec3(0.80, 0.82, 0.84), sn);
+	vec3 alb = mix(alb_dry, vec3(0.94, 0.95, 0.97) * lumps, snw);
 	// a crust: slush that set, very rough, grey-white, lumpy
 	float cr = clamp(c.a * 4.0, 0.0, 1.0);
 	vec3 n_crust = normalize(mix(n_snow, n_rip, 0.3) * vec3(2.2, 2.2, 1.0));
@@ -81,11 +86,17 @@ void fragment() {
 	rough = mix(rough, 0.9, cr);
 	alb = mix(alb, vec3(0.70, 0.72, 0.74), cr);
 	// liquid water: a glossy layer over whatever is under it; over snow it
-	// is slush, wet grey and only half glossy
+	// is slush: wet, grey, a little see-through (the ice shows through the
+	// soaked snow), lumpy, and only a little glossy, until it sets and is
+	// a crust
 	float liquid = wt * (1.0 - fz);
-	float slush = liquid * sn;
-	alb = mix(alb, vec3(0.55, 0.58, 0.60), slush);
-	liquid *= 1.0 - 0.5 * sn;
+	float slush = clamp(liquid * 2.0, 0.0, 1.0) * snw;
+	vec3 slush_col = mix(alb_dry, vec3(0.60, 0.64, 0.69), 0.55);
+	alb = mix(alb, slush_col, slush);
+	vec3 n_slush = normalize(mix(n_snow, n_rip, 0.4) * vec3(1.3, 1.3, 1.0));
+	n = normalize(mix(n, n_slush, slush));
+	rough = mix(rough, 0.3, slush);
+	liquid *= 1.0 - 0.75 * snw;
 	vec3 n_water = normalize(mix(n, n_rip, 0.6));
 	n = normalize(mix(n, n_water, liquid));
 	rough = mix(rough, 0.04, liquid);
@@ -94,13 +105,13 @@ void fragment() {
 	// over whatever is under it, a still mirror (the ice's grooves and
 	// grain are under the surface, not on it), tinted deeper the deeper
 	// it is, with a lighter wetting line round its edge
-	float pool = smoothstep(0.3, 1.2, wmm) * (1.0 - fz) * (1.0 - sn);
+	float pool = smoothstep(0.3, 1.2, wmm) * (1.0 - fz) * (1.0 - snw);
 	vec3 n_pool = normalize(mix(vec3(0.0, 0.0, 1.0), n_rip, 0.12));
 	n = normalize(mix(n, n_pool, pool));
 	rough = mix(rough, 0.02, pool);
 	float deep = 1.0 - exp(-wmm / 3.0);
 	alb = mix(alb, alb * mix(vec3(0.70, 0.80, 0.90), vec3(0.42, 0.56, 0.70), deep), pool);
-	float rim = smoothstep(0.08, 0.3, wmm) * (1.0 - smoothstep(0.3, 0.7, wmm)) * (1.0 - fz) * (1.0 - sn);
+	float rim = smoothstep(0.08, 0.3, wmm) * (1.0 - smoothstep(0.3, 0.7, wmm)) * (1.0 - fz) * (1.0 - snw);
 	alb = mix(alb, alb * 1.12 + vec3(0.04), rim * 0.8);
 	// frozen-over water: the gloss stays, the tint goes
 	float set = wt * fz;
@@ -115,7 +126,7 @@ void fragment() {
 	rough = mix(rough, 0.1, sc * 0.7);
 	ALBEDO = alb;
 	ROUGHNESS = rough;
-	SPECULAR = mix(mix(0.5, 0.1, sn), 0.6, pool);
+	SPECULAR = mix(mix(0.5, 0.08, snw), 0.6, pool);
 	NORMAL_MAP = n * 0.5 + 0.5;
 	NORMAL_MAP_DEPTH = mix(0.8, 0.4, liquid);
 }

@@ -323,10 +323,10 @@ func snow_level(level: float) -> void:
 	var px := img.get_data()  # L8: one byte a column
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 8
-	var lift := 1.6 * level
+	var lift := 1.5 * level
 	for i in w * d:
 		var patch := px[i] / 255.0  # 0 in the hollows the snow fills first
-		var mm := clampf(lift - 0.8 * patch, 0.0, 1.0) * SNOW_FULL
+		var mm := clampf(lift - 1.1 * patch, 0.0, 1.0) * SNOW_FULL
 		snow[i] = mm * (0.85 + 0.15 * rng.randf()) if mm > 0.0 else 0.0
 	for i in _outside:
 		snow[i] = 0.0

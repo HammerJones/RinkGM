@@ -1358,6 +1358,31 @@ func _screenshot(path: String) -> void:
 		_look_at(
 			_edger.to_global(Vector3(-1.2, 1.5, 2.2)), _edger.to_global(Vector3(0.0, 0.0, -1.5))
 		)
+	if args.has("--view=snow"):
+		# half snowed up, a mist's water on a patch of it (slush) and a
+		# patch set into crust, from low over the sheet
+		_set_state(1)
+		ice.snow_level(0.5)
+		var o := Vector2(BLUE_LINE + 2.0, RINK.y / 2)
+		ice.pour(o + Vector2(0.0, 0.8), 1.6, 0.5)
+		ice.pour(o + Vector2(0.0, -1.0), 1.6, 0.5)
+		# the second patch set: walk its cells to crust
+		var c := ice.cell_at(o + Vector2(0.0, -1.0))
+		for dz in range(-40, 41):
+			for dx in range(-40, 41):
+				var i := ice.index(c.x + dx, c.y + dz)
+				if ice.water[i] > 0.0 and ice.snow[i] > 0.0:
+					ice.crust[i] += ice.snow[i] + ice.water[i] * 0.5
+					ice.snow[i] = 0.0
+					ice.water[i] = 0.0
+					ice._wet_flag[i] = 0
+					ice._wet_n -= 1
+		ice.mark_all_dirty()
+		ice.flush()
+		_look_at(
+			ice.position + Vector3(o.x - 2.6, 1.3, o.y + 2.6),
+			ice.position + Vector3(o.x + 0.5, 0.0, o.y - 0.3)
+		)
 	if args.has("--view=track"):
 		# from above and behind: the lane the conditioner leaves against its width
 		_machine.global_position = ice.position + Vector3(8.0, 0.0, 10.0)
@@ -1621,7 +1646,7 @@ func _self_test() -> void:
 	var bare := 0
 	for x in range(100, ice.w - 100, 50):
 		for z in range(100, ice.d - 100, 50):
-			if ice.snow[ice.index(x, z)] < 0.5:
+			if ice.snow[ice.index(x, z)] < 0.3:
 				bare += 1
 	check.call(bare == 0, "fully snowed up covers the sheet (%d bare samples)" % bare)
 	ice.snow_level(0.0)
