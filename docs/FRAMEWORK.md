@@ -539,7 +539,7 @@ angle: grooves 5 to 10 mm wide at random spacing and depth, running the
 length with a slow wander, from a one-metre tiling map), flood (a glossy
 water layer over whichever state is under it, which is why flood over
 snow and flood over a cut look different), and dry fresh frozen (hard
-gloss, a faint freeze ripple); plus scars and crust. Water standing
+gloss, a faint freeze ripple); plus scars and crust. Snow is bright matte white with its grain's lumps shading it, and a dusting already reads (`snw`, a smoothstep over the first 0.6 mm); water on snow is slush, wet grey and a little see-through with the ice under it, lumpy and only a little glossy, until it sets to crust (2026-10-22, Sean's ask for distinct snow and a slush state). Water standing
 deeper than a film (the depth texel's green, 0 to 8 mm) is a pool: it
 lies level over its hollow (the mesh stands water at its full depth),
 a still mirror with the grooves under the surface rather than on it,
