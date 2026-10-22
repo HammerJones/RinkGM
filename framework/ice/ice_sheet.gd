@@ -37,7 +37,8 @@ const TILE := 256  # cells a side of one set of state textures (4 chunks)
 const SNOW_FULL := 1.0  # mm that reads as fully snowed
 const WATER_FULL := 0.5  # mm that reads as fully wet
 const GOUGE_FULL := 4.0  # mm that reads as the deepest gouge
-const FREEZE_K := 0.00066  # per second per degree below zero at 1 mm (twice the sim's IceSlab, at Sean's ask)
+const FREEZE_K := 0.00105  # per second per degree below zero at 1 mm: 0.8 mm sets in about 3.5 min at -5 C (Sean's ask)
+const SLUSH_SET := 4.0  # water on snow (slush) sets this many times faster: the snow is cold and seeds it
 const ICE_PER_WATER := 1.09
 const FILM_PIN := 0.2  # mm of water that clings to the ice and never runs
 const POOL_RUNS := 1.0  # mm of water that is a pool, spreading over level ice; less holds its edge
@@ -291,6 +292,37 @@ func dirty_count() -> int:
 
 
 # --- writing the columns ---------------------------------------------------
+
+
+## How snowed up the sheet is, 0..1, laid where snow collects: a patchy
+## field (drifts a couple of metres across with finer grain in them) that
+## the level fills from its deepest patches outward, so a little snow is a
+## few drifts and a lot is the whole sheet under it. Replaces the snow;
+## everything else stays.
+func snow_level(level: float) -> void:
+	level = clampf(level, 0.0, 1.0)
+	if level <= 0.0:
+		snow.fill(0.0)
+		mark_all_dirty()
+		return
+	var n := FastNoiseLite.new()
+	n.seed = 23
+	n.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	n.frequency = 0.5  # per metre: drifts ~2 m across
+	n.fractal_octaves = 3
+	n.fractal_gain = 0.6
+	var img := n.get_image(w, d, false, false, false)
+	var px := img.get_data()  # L8: one byte a column
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 8
+	var lift := 1.6 * level
+	for i in w * d:
+		var patch := px[i] / 255.0  # 0 in the hollows the snow fills first
+		var mm := clampf(lift - 0.8 * patch, 0.0, 1.0) * SNOW_FULL
+		snow[i] = mm * (0.85 + 0.15 * rng.randf()) if mm > 0.0 else 0.0
+	for i in _outside:
+		snow[i] = 0.0
+	mark_all_dirty()
 
 
 ## Every cell to one state: snow mm, cut amount, water mm, frozen 0..1.
@@ -726,7 +758,9 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 			_wet_list = _wet_scan()
 	wet_cells = _wet_n
 	var n := mini(max_cells, _wet_list.size() - _thermal_cursor)
-	var per_pass := float(_wet_list.size()) / maxi(mini(max_cells, _wet_list.size()), 1)
+	# a pass over the list takes this many calls, and each cell is visited
+	# once a pass: it gets the whole pass's time
+	var per_pass := ceili(float(_wet_list.size()) / maxi(max_cells, 1))
 	var slice_dt := dt * per_pass
 	var cold := maxf(0.0, -slab_c)
 	var air := clampf(1.0 - air_c / 30.0, 0.3, 1.2)
@@ -777,7 +811,10 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 				_flow(i, il, ir, iu, id, liquid)
 				wt = water[i]
 		var before := int(fz * 255.0)
-		fz += k_air * (1.0 + edge) / maxf(wt, 0.3)
+		var gain := k_air * (1.0 + edge) / maxf(wt, 0.3)
+		if snow[i] > 0.0:
+			gain *= SLUSH_SET
+		fz += gain
 		if fz >= 1.0:
 			# set through: it fills the gouge first (a scar stays visible,
 			# no depth), the rest is new ice; a fresh frozen surface either way

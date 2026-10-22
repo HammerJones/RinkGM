@@ -680,7 +680,9 @@ static func clear_material() -> StandardMaterial3D:
 func _make_hull() -> AnimatableBody3D:
 	var h := AnimatableBody3D.new()
 	h.name = "Hull"
-	h.sync_to_physics = true
+	# not synced to physics: synced, the body ignores its parent's moves
+	# and the hull stayed where the machine spawned (Sean drove through it)
+	h.sync_to_physics = false
 	h.collision_layer = Layers.bit(Layers.PROPS)
 	h.collision_mask = 0
 	for box: Array in [

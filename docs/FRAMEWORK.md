@@ -553,14 +553,21 @@ tried and backed out on 2026-10-22).
 
 **Freezing.** `thermal()` sets each wet cell's water at a rate from the
 slab temperature under it, slower in deep water and warm air, faster next
-to cells already set or dry, so a pool shrinks inward; 1.2 mm at -5 C
-takes about 6 minutes, twice as fast as the sim's IceSlab (halved on 2026-10-22 at Sean's ask; the slab will want the same when the sheet is wired in). It walks the wet cells in
+to cells already set or dry, so a pool shrinks inward; a 0.8 mm film
+at -5 C with 8 C air sets in about 3.5 minutes in the middle of a lane
+(`FREEZE_K`, retuned on 2026-10-22 at Sean's ask: the sim's IceSlab is
+about a third of that and will want the same when the sheet is wired
+in). Water on snow (slush) sets `SLUSH_SET` (4) times faster: the snow
+is cold and seeds it, and it sets into a rough crust. It walks the wet cells in
 slices of 3000 a frame through an append-only list (no per-cell calls or
 allocations; the wet set is a byte per cell, not a dictionary), so a
 whole flooded sheet costs under 3 ms a frame whatever its size, and each
-cell is visited every size / 3000 frames with that much sim time (14 s
-of sim per visit on a fully flooded NHL sheet at 60 fps, which the
-12-minute freeze does not notice). `set_now()` sets every wet cell at
+cell is visited once a pass of ceil(size / 3000) frames with that much
+sim time (14 s of sim per visit on a fully flooded NHL sheet at 60 fps,
+which a minutes-long freeze does not notice). `snow_level(0..1)` is the
+snowed-up scale: a patchy simplex field (drifts a couple of metres
+across) that the level fills from its hollows outward, so a quarter is a
+few drifts and the full scale covers the sheet. `set_now()` sets every wet cell at
 once, for a test rig.
 
 **The blade.** `resurface(x0, x1, z0, z1, film_mm, rag_wear, blade_mm,
@@ -670,8 +677,9 @@ display, and run as headless checks in CI (`--test=<name>`).
   shows the slab and air temperatures, the clock, the litres hosed and
   the column's top and built-up ice under the dot while it sets from the
   edges in; T speeds the clock
-  (x1, x10, x60); holding RMB chips gouges wherever you look. Those
-  three (the state, the hose, the chip) are the only ice keys: all
+  (x1, x10, x60); holding RMB chips gouges wherever you look; [ and ]
+  slide the snowed-up scale (`IceSheet.snow_level`) in tenths. Those
+  four (the state, the snow scale, the hose, the chip) are the only ice keys: all
   resurfacing is done from the machine's seat with its own controls
   (the pass key, the flood, blade, rag, instant-freeze and
   ice-over-paint keys are gone, at Sean's ask). The machine starts at
@@ -763,8 +771,13 @@ display, and run as headless checks in CI (`--test=<name>`).
   (7 rad/s, 26 cm pitch); what reaches the middle piles at the vertical
   auger's foot, which lifts up to 12 L/s into the tank (a 1 mm cut at
   2 m/s keeps up, a deeper one grows the pile). The third readout line
-  shows the trough, the pile, the lift rate and the tank; when the pass
-  is over and the augers have cleared the snow, the tank is dumped.
+  shows the trough, the pile, the lift rate and the tank; when the
+  machine stands still with both augers running and they have cleared
+  the snow, the tank is dumped (the levers stay where the operator left
+  them: each auger's lever is its own, the two run together or apart).
+  The hull (the collider you bump into) is an AnimatableBody3D with
+  `sync_to_physics` off, so it travels with the machine (synced, it stayed
+  at the spawn). The demo opens full screen; `--windowed` keeps the window.
   Footsteps leave the ice alone. `--screenshot=<png>`
   frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the

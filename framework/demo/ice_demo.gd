@@ -86,6 +86,7 @@ var rag_i := 0
 var instant := false
 var pass_z := -1.0
 var shaved_mm := 0.0
+var snow_level := 0.0  # the [ ] scale, 0..1
 var hosing := false
 var chipping := false
 var hosed_l := 0.0
@@ -158,6 +159,8 @@ func _ready() -> void:
 	if OS.get_cmdline_user_args().has("--test=ice_demo"):
 		_self_test.call_deferred()
 		return
+	if not OS.get_cmdline_user_args().has("--windowed") and _no_screenshot_arg():
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)  # Sean's ask
 	walker = FirstPerson.new()
 	walker.position = Vector3(-RINK.x / 2 + BLUE_LINE - 2.0, 0.05, 0.0)
 	add_child(walker)
@@ -171,7 +174,7 @@ func _ready() -> void:
 	hud.bind(interactor)
 	hud.legend(
 		(
-			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   "
+			"[X] STATE   [ ] SNOW   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   "
 			+ "[E] USE / SEAT   [W S] DRIVE   [A D] STEER   [WHEEL] TURN   [T] CLOCK   [B] BODY   "
 			+ "[V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 		)
@@ -211,9 +214,8 @@ func _process(dt: float) -> void:
 			and _machine.trough_m3() + _machine.pile_m3 < 0.0005
 		)
 	):
-		# the pass is over and the augers have cleared the snow: dump the tank
-		_machine.auger_on = false
-		_machine.lift_on = false
+		# the pass is over and the augers have cleared the snow: dump the
+		# tank (the levers are the operator's: they stay where they are)
 		var dumped := _machine.dump()
 		if hud and dumped > 0.0:
 			hud.toast("TANK DUMPED: %.0f L OF SNOW" % (dumped * 1000.0))
@@ -646,6 +648,13 @@ func _look_at(eye: Vector3, target: Vector3) -> void:
 	walker.camera.rotation.x = atan2(d.y, Vector2(d.x, d.z).length())
 
 
+func _no_screenshot_arg() -> bool:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--screenshot="):
+			return false
+	return true
+
+
 func _local(p: Vector3) -> Vector2:
 	var l := p - ice.global_position
 	return Vector2(l.x, l.z)
@@ -674,6 +683,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_X:
 				_set_state(state + 1)
 				hud.toast("STATE: %s" % STATES[state][0])
+			KEY_BRACKETLEFT, KEY_BRACKETRIGHT:
+				# how snowed up: a sliding scale, the snow laid where it collects
+				snow_level = clampf(
+					snow_level + (0.1 if event.keycode == KEY_BRACKETRIGHT else -0.1), 0.0, 1.0
+				)
+				ice.snow_level(snow_level)
+				hud.toast("SNOWED UP %d%%" % int(round(snow_level * 100.0)))
 			KEY_B:
 				_machine.show_body = not _machine.show_body
 				hud.toast("MACHINE: %s" % ("WHOLE" if _machine.show_body else "CONDITIONER ONLY"))
@@ -1264,12 +1280,67 @@ func _self_test() -> void:
 	var sc := ice.cell_at(Vector2(12.0, 5.0))
 	var si := ice.index(sc.x, sc.y)
 	check.call(ice.snow[si] > 0.0 and ice.water[si] > 0.0, "water on snow keeps the snow as slush")
-	for minute in 25:
-		ice.thermal(60.0, -5.0, 8.0)
+	# the same pour on bare ice next to it: the slush sets first, by a lot
+	ice.pour(Vector2(12.0, 8.0), 0.6, 1.2)
+	for x in 60:
+		for z in 60:
+			ice.snow[ice.index(sc.x - 30 + x, sc.y + 90 + z)] = 0.0
+	var bare_i := ice.index(sc.x, sc.y + 120)
+	var slush_t := -1.0
+	var film_t := -1.0
+	for second in 1500:
+		ice.thermal(1.0, -5.0, 8.0)
+		if slush_t < 0.0 and ice.water[si] == 0.0:
+			slush_t = second
+		if film_t < 0.0 and ice.water[bare_i] == 0.0:
+			film_t = second
+		if slush_t >= 0.0 and film_t >= 0.0:
+			break
 	check.call(
 		ice.crust[si] > 0.5 and ice.snow[si] == 0.0 and ice.water[si] == 0.0,
 		"slush set into a crust (%.2f mm)" % ice.crust[si]
 	)
+	check.call(
+		slush_t > 0.0 and film_t > slush_t * 2.5,
+		"slush sets several times faster than water on ice (%.0f s vs %.0f s)" % [slush_t, film_t]
+	)
+	# Sean's clock: a 0.8 mm film in the middle of a lane sets in 3 to 4 minutes
+	_set_state(1)
+	ice.flush()
+	ice.lay_film(10.0, 12.0, 4.0, 6.0, 0.8, 0.0)
+	var fi := ice.index(ice.cell_at(Vector2(11.0, 5.0)).x, ice.cell_at(Vector2(11.0, 5.0)).y)
+	var set_t := -1.0
+	for second in 600:
+		ice.thermal(1.0, -5.0, 8.0)
+		if ice.water[fi] == 0.0:
+			set_t = second
+			break
+	check.call(
+		set_t >= 165.0 and set_t <= 240.0,
+		"0.8 mm at -5 C, 8 C air sets in 3 to 4 minutes (%.0f s)" % set_t
+	)
+	# the snowed-up scale: a little snow is a few drifts, the full scale covers the sheet
+	ice.snow_level(0.25)
+	var snowed := 0
+	var sampled := 0
+	for x in range(100, ice.w - 100, 50):
+		for z in range(100, ice.d - 100, 50):
+			sampled += 1
+			if ice.snow[ice.index(x, z)] > 0.0:
+				snowed += 1
+	var frac := float(snowed) / sampled
+	check.call(
+		frac > 0.1 and frac < 0.7,
+		"a quarter snowed up is drifts (%.0f%% of the sheet)" % (frac * 100.0)
+	)
+	ice.snow_level(1.0)
+	var bare := 0
+	for x in range(100, ice.w - 100, 50):
+		for z in range(100, ice.d - 100, 50):
+			if ice.snow[ice.index(x, z)] < 0.5:
+				bare += 1
+	check.call(bare == 0, "fully snowed up covers the sheet (%d bare samples)" % bare)
+	ice.snow_level(0.0)
 	# the paint is at a fixed depth: thicker ice over it reads deeper
 	var d0 := ice.paint_depth(ice.index(10, 10))
 	ice.base_mm += 10.0
@@ -1430,7 +1501,8 @@ func _self_test() -> void:
 		_machine._process(1.0 / 60.0)
 		_process(1.0 / 60.0)
 	check.call(
-		_machine.tank_m3 == 0.0 and not _machine.auger_on, "the tank was dumped after the pass"
+		_machine.tank_m3 == 0.0 and _machine.auger_on and _machine.lift_on,
+		"the tank was dumped after the pass and the levers stayed where they were"
 	)
 	# the console: the levers, the handwheel and the valves drive the machine's state
 	var ctl: ZambelliControls = _machine.controls
@@ -1446,7 +1518,11 @@ func _self_test() -> void:
 			ZambelliControls.Kind.FLOOD:
 				k_flood = i
 	check.call(k_h >= 0 and k_blade >= 0 and k_flood >= 0, "the console's controls are registered")
+	_machine.auger_on = false
 	ctl.toggle(k_h)
+	check.call(
+		_machine.auger_on and _machine.lift_on, "the horizontal lever leaves the vertical alone"
+	)
 	check.call(_machine.auger_on, "the horizontal auger's lever switches it on")
 	ctl.toggle(k_h)
 	check.call(not _machine.auger_on, "... and off")
@@ -1478,6 +1554,11 @@ func _self_test() -> void:
 	_machine.drive = 0
 	_machine.settle()
 	var before_drive := _machine.global_position
+	var hull_before: Vector3 = (
+		PhysicsServer3D
+		. body_get_state(_machine.hull.get_rid(), PhysicsServer3D.BODY_STATE_TRANSFORM)
+		. origin
+	)
 	var sweep_took := 0.0
 	for step in 240:
 		var sweep := _machine.drive_step(1.0 / 60.0, 1.0, 0.0, 0.3)
@@ -1504,6 +1585,27 @@ func _self_test() -> void:
 		"the wheel turns it (%.2f)" % _machine.rotation.y
 	)
 	check.call(sweep_took > 1000.0, "the sweep cuts the ice on the way (%.0f mm)" % sweep_took)
+	# the hull (the collider the walker bumps into) travels with the machine
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var hull_now: Vector3 = (
+		PhysicsServer3D
+		. body_get_state(_machine.hull.get_rid(), PhysicsServer3D.BODY_STATE_TRANSFORM)
+		. origin
+	)
+	check.call(
+		(
+			hull_now.distance_to(hull_before) > 2.0
+			and hull_now.distance_to(_machine.hull.global_position) < 0.01
+		),
+		(
+			"the hull travels with the machine (%.1f m, off by %.3f)"
+			% [
+				hull_now.distance_to(hull_before),
+				hull_now.distance_to(_machine.hull.global_position)
+			]
+		)
+	)
 	var fed := 0.0
 	for b in ice.shave_bins.size():
 		fed += ice.shave_bins[b]
