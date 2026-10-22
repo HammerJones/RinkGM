@@ -55,7 +55,7 @@ const STATES := [
 ]
 const SCALES := [1.0, 10.0, 60.0]
 const RAGS := ["NEW", "USED", "WORN"]
-const MODES := ["DRY CUT", "FLOOD"]
+const FLOOD_FULL_MM := 1.2  # the film the flood valve lays wide open
 const MACHINE_W := 2.1  # the conditioner's width
 const MACHINE_SPEED := 2.0  # m/s
 const PASS_X0 := 2.0  # the pass runs end to end, clear of the end boards
@@ -80,8 +80,7 @@ var hud: WalkHud
 var state := 1
 var scale_i := 0
 var rag_i := 0
-var mode_i := 0
-var cut_mm := 0.5  # the blade's depth of cut below the surface
+var _aimed := -1  # the machine control under the dot
 var instant := false
 var pass_z := -1.0
 var shaved_mm := 0.0
@@ -167,8 +166,9 @@ func _ready() -> void:
 	hud.legend(
 		(
 			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [, .] ICE OVER PAINT   "
-			+ "[R] RESURFACER   [M] MODE   [ [ ] ] CUT   [Y] RAG   [I] INSTANT FREEZE   "
-			+ "[T] CLOCK   [B] BODY   [V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
+			+ "[R] RESURFACER   [N] AT THE CONTROLS   [E] USE   [WHEEL] TURN   [M] FLOOD   "
+			+ "[ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   [T] CLOCK   [B] BODY   "
+			+ "[V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 		)
 	)
 	_stream = _make_stream()
@@ -192,14 +192,25 @@ func _process(dt: float) -> void:
 		ice.set_now()
 	if _zam >= 0.0:
 		_zamboni_step(sdt)
-	elif _machine and _machine.auger_on and _machine.trough_m3() + _machine.pile_m3 < 0.0005:
+	elif (
+		_machine
+		and _machine.auger_on
+		and _machine.lift_on
+		and _machine.trough_m3() + _machine.pile_m3 < 0.0005
+	):
 		# the pass is over and the augers have cleared the snow: dump the tank
 		_machine.auger_on = false
+		_machine.lift_on = false
 		var dumped := _machine.dump()
 		if hud and dumped > 0.0:
 			hud.toast("TANK DUMPED: %.0f L OF SNOW" % (dumped * 1000.0))
 	if walker:
 		field.focus = walker.global_position
+		var cam := walker.camera
+		_aimed = _machine.controls.aim(cam.global_position, -cam.global_transform.basis.z)
+		_machine.controls.set_hover(_aimed)
+		if hud:
+			hud.extra_prompt = _machine.controls.prompt(_aimed)
 		if hosing:
 			_hose(dt)
 		_stream.emitting = hosing
@@ -233,8 +244,18 @@ func _process(dt: float) -> void:
 			]
 		)
 		var line2 := (
-			"RESURFACER %s   CUT %.2f MM   RAG %s   SHAVED %.0f MM   HOSE %.1f L/S   HOSED %.0f L%s"
-			% [MODES[mode_i], cut_mm, RAGS[rag_i], shaved_mm, hose_lps, hosed_l, under]
+			"BLADE %s (%+.2f MM)   FLOOD %d%%   WASH %d%%   RAG %s   SHAVED %.0f MM   HOSE %.1f L/S   HOSED %.0f L%s"
+			% [
+				ZambelliControls.turns_text(_machine.blade_mm),
+				_machine.blade_mm,
+				roundi(_machine.flood * 100.0),
+				roundi(_machine.wash * 100.0),
+				RAGS[rag_i],
+				shaved_mm,
+				hose_lps,
+				hosed_l,
+				under
+			]
 		)
 		var line3 := ""
 		if _machine:
@@ -244,9 +265,13 @@ func _process(dt: float) -> void:
 
 func _machine_line() -> String:
 	return (
-		"CONDITIONER %s   TROUGH %.1f L   PILE %.1f L   LIFT %.1f L/S   TANK %.0f L (%.0f%%)"
+		"DRIVE %s   CONDITIONER %s   AUGERS %s/%s   BIN %s   TROUGH %.1f L   PILE %.1f L   LIFT %.1f L/S   TANK %.0f L (%.0f%%)"
 		% [
+			ZambelliControls.DRIVE_NAMES[_machine.drive],
 			"DOWN" if _machine.is_down() else ("UP" if _machine.lift <= 0.001 else "MOVING"),
+			"ON" if _machine.auger_on else "OFF",
+			"ON" if _machine.lift_on else "OFF",
+			"UP" if _machine.bin_up else "DOWN",
 			_machine.trough_m3() * 1000.0,
 			_machine.pile_m3 * 1000.0,
 			_machine.lift_flow * 1000.0,
@@ -349,6 +374,8 @@ func _begin_pass(z: float) -> void:
 	_machine.position = ice.position + Vector3(_zam, 0.0, pass_z)
 	_machine.cond_down = true
 	_machine.auger_on = true
+	_machine.lift_on = true
+	_machine.drive = 0
 	_machine.speed = MACHINE_SPEED
 
 
@@ -356,7 +383,7 @@ func _zamboni_step(sdt: float) -> void:
 	var x0 := _zam
 	_zam += sdt * MACHINE_SPEED
 	var x1 := minf(_zam, PASS_X1)
-	var film := 0.8 if mode_i == 1 else 0.0
+	var film := FLOOD_FULL_MM * _machine.flood
 	shaved_mm += ice.resurface(
 		x0,
 		x1,
@@ -367,7 +394,7 @@ func _zamboni_step(sdt: float) -> void:
 		0.0,
 		0.0,
 		0.0,
-		cut_mm
+		-_machine.blade_mm
 	)
 	_machine.feed(_shavings_by_bin())
 	_machine.position = ice.position + Vector3(x1, 0.0, pass_z)
@@ -375,8 +402,9 @@ func _zamboni_step(sdt: float) -> void:
 		_zam = -1.0
 		_machine.cond_down = false
 		_machine.speed = 0.0
+		_machine.drive = 1
 		if hud:
-			hud.toast("PASS DONE: %s, SHAVED %.0f MM OF COLUMNS" % [MODES[mode_i], shaved_mm])
+			hud.toast("PASS DONE: SHAVED %.0f MM OF COLUMNS" % shaved_mm)
 
 
 ## The last resurface() call's shavings as the conditioner wants them: m³
@@ -411,6 +439,22 @@ func _make_machine() -> Zambelli:
 	return z
 
 
+func _blade_toast() -> String:
+	return (
+		"BLADE %s, %+.2f MM" % [ZambelliControls.turns_text(_machine.blade_mm), _machine.blade_mm]
+	)
+
+
+## Over to the operator's station: on the deck behind the console, whole
+## machine shown, looking over the levers (noclip, so the deck holds).
+func _at_the_controls() -> void:
+	_machine.show_body = true
+	walker.set_noclip(true)
+	walker.global_position = _machine.to_global(Vector3(-0.1, ZambelliControls.DECK_Y, 1.15))
+	walker.face(_machine.rotation.y)  # at the rear, facing forward over the wheel
+	walker.camera.rotation.x = -0.72
+
+
 func _local(p: Vector3) -> Vector2:
 	var l := p - ice.global_position
 	return Vector2(l.x, l.z)
@@ -441,7 +485,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				hud.toast("STATE: %s" % STATES[state][0])
 			KEY_R:
 				_start_pass()
-				hud.toast("RESURFACER: %s PASS, CUT %.2f MM" % [MODES[mode_i], cut_mm])
+				hud.toast(
+					(
+						"RESURFACER: %s PASS, BLADE %+.2f MM"
+						% ["FLOOD" if _machine.flood > 0.0 else "DRY", _machine.blade_mm]
+					)
+				)
 			KEY_B:
 				_machine.show_body = not _machine.show_body
 				hud.toast("MACHINE: %s" % ("WHOLE" if _machine.show_body else "CONDITIONER ONLY"))
@@ -454,14 +503,21 @@ func _unhandled_input(event: InputEvent) -> void:
 				walker.camera.rotation.x = -0.1
 				hud.toast("THE ZAMBELLI")
 			KEY_M:
-				mode_i = (mode_i + 1) % MODES.size()
-				hud.toast("RESURFACER MODE: %s" % MODES[mode_i])
-			KEY_BRACKETLEFT:
-				cut_mm = maxf(cut_mm - 0.25, 0.0)
-				hud.toast("CUT %.2f MM" % cut_mm)
+				_machine.flood = 0.0 if _machine.flood > 0.0 else 0.65
+				hud.toast("FLOOD VALVE %d%%" % roundi(_machine.flood * 100.0))
+			KEY_BRACKETLEFT:  # half a turn of the handwheel either way
+				_machine.blade_mm = clampf(_machine.blade_mm - 0.25, -3.0, 3.0)
+				hud.toast(_blade_toast())
 			KEY_BRACKETRIGHT:
-				cut_mm = minf(cut_mm + 0.25, 3.0)
-				hud.toast("CUT %.2f MM" % cut_mm)
+				_machine.blade_mm = clampf(_machine.blade_mm + 0.25, -3.0, 3.0)
+				hud.toast(_blade_toast())
+			KEY_E:
+				if _aimed >= 0:
+					_machine.controls.toggle(_aimed)
+					hud.toast(_machine.controls.prompt(_aimed).get_slice("   [", 0))
+			KEY_N:
+				_at_the_controls()
+				hud.toast("AT THE CONTROLS")
 			KEY_COMMA:
 				ice.base_mm = maxf(ice.base_mm - 2.0, 4.0)
 				ice.mark_all_dirty()
@@ -492,10 +548,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			event.button_index == MOUSE_BUTTON_WHEEL_UP
 			or event.button_index == MOUSE_BUTTON_WHEEL_DOWN
 		):
-			# the valve (the Interactor has the wheel while something is held)
-			var step := 1.25 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 0.8
-			hose_lps = clampf(hose_lps * step, HOSE_MIN, HOSE_MAX)
-			hud.toast("HOSE %.1f L/S" % hose_lps)
+			var up: bool = event.button_index == MOUSE_BUTTON_WHEEL_UP
+			if _aimed >= 0:
+				# a machine control under the dot: the handwheel or a valve
+				_machine.controls.scroll(_aimed, 1.0 if up else -1.0)
+				hud.toast(_machine.controls.prompt(_aimed).get_slice("   [", 0))
+			else:
+				# the valve (the Interactor has the wheel while something is held)
+				var step := 1.25 if up else 0.8
+				hose_lps = clampf(hose_lps * step, HOSE_MIN, HOSE_MAX)
+				hud.toast("HOSE %.1f L/S" % hose_lps)
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			hosing = true
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
@@ -771,10 +833,10 @@ func _screenshot(path: String) -> void:
 	if OS.get_cmdline_user_args().has("--view=machine"):
 		# the resurfacer mid-pass, from beside its lane
 		walker.global_position = ice.position + Vector3(10.0, 0.05, 9.0)
-		cut_mm = 0.5
+		_machine.blade_mm = -0.5
 		for a in OS.get_cmdline_user_args():
 			if a.begins_with("--cut="):
-				cut_mm = float(a.trim_prefix("--cut="))
+				_machine.blade_mm = -float(a.trim_prefix("--cut="))
 		_set_state(0)  # a snowed-up sheet for the blade to shave
 		ice.flush()
 		_start_pass()
@@ -797,6 +859,15 @@ func _screenshot(path: String) -> void:
 		if not OS.get_cmdline_user_args().has("--side"):
 			walker.face(0.95)
 	var args := OS.get_cmdline_user_args()
+	if args.has("--view=console"):
+		# the operator's station: the levers, the handwheel and the valves
+		_machine.auger_on = true
+		_machine.flood = 0.65
+		_at_the_controls()
+		if args.has("--above"):  # from behind and above, the whole console
+			walker.global_position = _machine.to_global(Vector3(0.2, 1.9, 2.1))
+			walker.face(_machine.rotation.y + 0.2)
+			walker.camera.rotation.x = -0.72
 	if args.has("--view=pool"):
 		# water run into the low spots and left to stand: a scraped trench,
 		# a few chips, a pour between them, then a while to run downhill
@@ -1087,7 +1158,7 @@ func _self_test() -> void:
 	for again in 4:
 		ice.pour(Vector2(8.0, 5.0), 0.3, 1.2)  # a bump at the +Z edge of lane z = 4
 		ice.set_now()
-	cut_mm = 0.0
+	_machine.blade_mm = 0.0
 	_begin_pass(4.0)
 	_zamboni_step(4.0)
 	var hi := 0
@@ -1115,6 +1186,45 @@ func _self_test() -> void:
 	check.call(
 		_machine.tank_m3 == 0.0 and not _machine.auger_on, "the tank was dumped after the pass"
 	)
+	# the console: the levers and the wheel drive the machine's state
+	var ctl: ZambelliControls = _machine.controls
+	var k_h := -1
+	var k_blade := -1
+	var k_flood := -1
+	for i in ctl._controls.size():
+		match ctl._controls[i].kind:
+			ZambelliControls.Kind.AUGER_H:
+				k_h = i
+			ZambelliControls.Kind.BLADE:
+				k_blade = i
+			ZambelliControls.Kind.FLOOD:
+				k_flood = i
+	ctl.toggle(k_h)
+	check.call(_machine.auger_on, "the horizontal auger's lever switches it on")
+	ctl.toggle(k_h)
+	check.call(not _machine.auger_on, "... and off")
+	_machine.blade_mm = 0.0
+	ctl.scroll(k_blade, -16.0)
+	check.call(
+		(
+			is_equal_approx(_machine.blade_mm, -0.5)
+			and ZambelliControls.turns_text(-0.5) == "1 TURN DOWN"
+		),
+		(
+			"sixteen notches down is one turn, half a millimetre (%s)"
+			% ZambelliControls.turns_text(_machine.blade_mm)
+		)
+	)
+	ctl.scroll(k_blade, 3.0)
+	check.call(
+		ZambelliControls.turns_text(_machine.blade_mm) == "13/16 TURNS DOWN",
+		"the turns read in sixteenths (%s)" % ZambelliControls.turns_text(_machine.blade_mm)
+	)
+	ctl.scroll(k_blade, -200.0)
+	check.call(is_equal_approx(_machine.blade_mm, -3.0), "the wheel stops at 3 mm down")
+	ctl.scroll(k_flood, 7.0)
+	check.call(is_equal_approx(_machine.flood, 0.35), "seven notches open the flood valve 35%%")
+	check.call(ZambelliControls.turns_text(0.0) == "FLUSH", "flush reads as flush")
 	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:
 		print("ice_demo test: all passed")

@@ -43,6 +43,7 @@ const FILM_PIN := 0.2  # mm of water that clings to the ice and never runs
 const FLOW_K := 0.45  # share of the head difference that moves a visit
 const FLAT_EPS := 0.00002  # m of height range a chunk may have and still be one quad
 const DEPTH_FULL := 64.0  # mm the depth texel spans
+const NO_CUT := -1000.0  # resurface()'s cut_mm when the blade is set by height instead
 const POOL_FULL := 8.0  # mm of water the depth texel's green spans: a pool's depth
 
 static var _stria: Texture2D  # the striation map, generated once
@@ -432,11 +433,11 @@ func resurface(
 	blade_mm := 0.0,
 	travel := 0.0,
 	spill := 0.0,
-	cut_mm := -1.0
+	cut_mm := NO_CUT
 ) -> float:
 	var c0 := cell_at(Vector2(minf(x0, x1), minf(z0, z1)))
 	var c1 := cell_at(Vector2(maxf(x0, x1), maxf(z0, z1)))
-	if cut_mm >= 0.0:
+	if cut_mm > NO_CUT:
 		var sum := 0.0
 		var n := 0
 		for z in range(maxi(c0.y, 0), mini(c1.y + 1, d)):

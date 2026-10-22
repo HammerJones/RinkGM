@@ -59,8 +59,15 @@ static var _clear_mat: StandardMaterial3D
 
 var cond_down := true
 var speed := 0.0
-var auger_on := false
+var auger_on := false  # the horizontal auger
+var lift_on := false  # the vertical auger
 var lift := 1.0  # 0 up, 1 down
+var drive := 1  # 0 forward, 1 neutral, 2 reverse: the drive select lever
+var bin_up := false  # the snow tank tipped up (it dumps on the way)
+var blade_mm := -0.5  # the blade's edge from the conditioner's bottom: - cuts
+var flood := 0.0  # the flood water valve, 0 closed to 1 wide open
+var wash := 0.0  # the wash water valve
+var controls: ZambelliControls
 var show_body := false:
 	set(v):
 		show_body = v
@@ -106,6 +113,10 @@ func _ready() -> void:
 			hub.add_child(w)
 			_body.add_child(hub)
 			_wheels.append(hub)
+	controls = ZambelliControls.new()
+	controls.name = "Controls"
+	controls.machine = self
+	_body.add_child(controls)
 	add_child(_body)
 	_cond = Node3D.new()
 	_cond.name = "Conditioner"
@@ -144,7 +155,9 @@ func _process(dt: float) -> void:
 	_auger.position.y = AUGER_R + 0.01 + COND_LIFT * (1.0 - lift)
 	if auger_on:
 		_auger.rotate_x(AUGER_RAD_S * dt)
+	if lift_on:
 		_lift.rotate_y(LIFT_RAD_S * dt)
+	if auger_on or lift_on:
 		_carry(dt)
 	else:
 		lift_flow = 0.0
@@ -175,11 +188,12 @@ func feed(ice_m3: PackedFloat32Array) -> void:
 ## its snow toward the middle at the flights' feed rate; what reaches the
 ## middle piles at the vertical auger's foot, which lifts LIFT_M3S of it a
 ## second into the tank while the tank has room. A deeper cut than the
-## lift can take, or a full tank, grows the pile.
+## lift can take, or a full tank, grows the pile. Each auger only works
+## with its lever on.
 func _carry(dt: float) -> void:
 	var feed_m := AUGER_RAD_S / TAU * AUGER_PITCH * dt  # metres the flights advance
 	var bin_w := AUGER_L / BINS
-	var frac := minf(feed_m / bin_w, 1.0)
+	var frac := minf(feed_m / bin_w, 1.0) if auger_on else 0.0
 	var half := BINS / 2
 	var moved := false
 	for b in half - 1:  # the -X half: bins step toward half - 1
@@ -200,7 +214,7 @@ func _carry(dt: float) -> void:
 			trough[b] -= m
 			pile_m3 += m
 			moved = true
-	var up := minf(pile_m3, minf(LIFT_M3S * dt, TANK_M3 - tank_m3))
+	var up := minf(pile_m3, minf(LIFT_M3S * dt, TANK_M3 - tank_m3)) if lift_on else 0.0
 	pile_m3 -= up
 	tank_m3 += up
 	lift_flow = up / dt if dt > 0.0 else 0.0
@@ -214,6 +228,13 @@ func trough_m3() -> float:
 	for b in BINS:
 		s += trough[b]
 	return s
+
+
+## The bin lever: tipping the tank up dumps it.
+func set_bin(up: bool) -> void:
+	bin_up = up
+	if up:
+		dump()
 
 
 ## Empties the tank (the dump at the end of the pass). Returns the m³.

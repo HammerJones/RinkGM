@@ -33,6 +33,7 @@ var panel: PanelContainer
 var panel_text: RichTextLabel
 var dot: ColorRect
 
+var extra_prompt := ""  # shown while the interactor has nothing to say
 var _toast_t := 0.0
 var _interactor: Interactor
 
@@ -90,7 +91,8 @@ func _process(dt: float) -> void:
 		if _toast_t <= 0.0:
 			toast_label.visible = false
 	if _interactor:
-		prompt_label.text = _interactor.prompt()
+		var p := _interactor.prompt()
+		prompt_label.text = p if p != "" else extra_prompt
 
 
 ## Prompt and inspect text follow this interactor.
