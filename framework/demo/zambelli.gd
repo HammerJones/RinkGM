@@ -22,19 +22,22 @@ extends Node3D
 ##   z.auger_on = true    # the augers turn and carry snow
 ##   z.feed(bins)         # m³ of ice shaved under each bin across the blade
 
-# the layout, as tools/propgen/zambelli.py has it, metres from the nose
-const BLADE_Z := 3.80
-const BODY_Y0 := 0.26  # the body's bounding box starts here (the axle knuckles)
-const BODY_PIVOT_Z := 1.82  # the body's bounding box centre
-const FRONT_AXLE := 0.80
-const REAR_AXLE := 2.75
-const WHEEL_R := 0.38
-const WHEEL_X := 0.86
-const COND_Z0 := 3.35  # the conditioner's front wall
-const AUGER_Z := 3.55
+# the layout, as tools/propgen/zambelli_glb.py prints it, metres from the
+# nose (the props come from the bought model, split there)
+const BLADE_Z := 3.519
+const BODY_Y0 := 0.084  # the body's bounding box starts here
+const BODY_PIVOT_Z := 2.142  # the body's bounding box centre
+const BODY_X0 := 0.035  # ... and its centre across, off the machine's
+const COND_PIVOT_Z := 3.689  # the conditioner's bounding box centre
+const FRONT_AXLE := 0.725
+const REAR_AXLE := 2.765
+const WHEEL_R := 0.341
+const WHEEL_X := 0.755
+const COND_Z0 := 3.069  # the conditioner's front wall
+const AUGER_Z := 3.269
 const AUGER_R := 0.15
 const AUGER_L := 2.0
-const COND_H := 0.36
+const COND_H := 0.42
 const COND_LIFT := 0.12  # the conditioner's travel, up
 const COND_TRAVEL_S := 5.5
 const AUGER_RAD_S := 7.0
@@ -92,7 +95,7 @@ func _ready() -> void:
 	_body = Node3D.new()
 	_body.name = "Body"
 	var body := _part("zambelli_body")
-	body.position = Vector3(0.0, BODY_Y0, BODY_PIVOT_Z - BLADE_Z)
+	body.position = Vector3(BODY_X0, BODY_Y0, BODY_PIVOT_Z - BLADE_Z)
 	_body.add_child(body)
 	for z: float in [FRONT_AXLE, REAR_AXLE]:
 		for x: float in [-WHEEL_X, WHEEL_X]:
@@ -106,7 +109,9 @@ func _ready() -> void:
 	add_child(_body)
 	_cond = Node3D.new()
 	_cond.name = "Conditioner"
-	_cond.add_child(_part("zambelli_conditioner"))
+	var cond := _part("zambelli_conditioner")
+	cond.position = Vector3(0.0, 0.0, COND_PIVOT_Z - BLADE_Z)
+	_cond.add_child(cond)
 	add_child(_cond)
 	_auger = Node3D.new()
 	var auger := _part("zambelli_auger")

@@ -768,14 +768,19 @@ func _screenshot(path: String) -> void:
 			_machine._process(1.0 / 60.0)
 		_machine.settle()
 		_machine.show_body = OS.get_cmdline_user_args().has("--body")
-		if _machine.show_body:
+		if OS.get_cmdline_user_args().has("--side"):  # the whole machine side on
+			walker.global_position = ice.position + Vector3(18.5, 0.05, 16.5)
+			walker.camera.rotation.x = -0.05
+			walker.face(0.0)
+		elif _machine.show_body:
 			walker.global_position = ice.position + Vector3(26.0, 0.05, 13.2)
 			walker.camera.rotation.x = -0.15
 		else:  # from above the front wall, into the open trough
 			walker.set_noclip(true)
 			walker.global_position = ice.position + Vector3(21.7, 0.9, 10.2)
 			walker.camera.rotation.x = -0.62
-		walker.face(0.95)
+		if not OS.get_cmdline_user_args().has("--side"):
+			walker.face(0.95)
 	if OS.get_cmdline_user_args().has("--view=wide"):
 		# the whole sheet from above one end, after a few passes
 		for lane in 4:

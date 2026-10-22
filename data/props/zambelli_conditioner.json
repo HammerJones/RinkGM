@@ -6,18 +6,17 @@
   "mesh": "merged",
   "name": "Conditioner",
   "pivot": [
-    107.5,
+    115.5,
     0,
-    45.5
+    62.0
   ],
-  "shape": [],
   "size_m": [
-    2.15,
-    0.57,
-    0.91
+    2.31,
+    0.42,
+    1.24
   ],
   "sound": "metal",
-  "source": "tools/propgen/zambelli.py",
+  "source": "tools/propgen/zambelli_glb.py",
   "tags": [
     "machine",
     "resurfacer"
