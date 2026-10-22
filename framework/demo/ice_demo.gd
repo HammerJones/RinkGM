@@ -93,6 +93,8 @@ var sim_t := 0.0
 var _machine: Zambelli
 var _bay: ZamboniBay
 var _hose: FireHose
+var _edger: IceEdger
+var _edging := false  # at the edger's handles: the keys push it
 var _aimed := -1  # the machine control under the dot
 var _no_aim := false  # a screenshot of a control, without its glow
 var _aboard := false  # the walker is in the seat and the keys drive the machine
@@ -144,6 +146,12 @@ func _ready() -> void:
 	# on the bay's -z wall, the reel a metre up, its plate to the wall
 	_hose.build(Vector3(RINK.x / 2 + BOARD_T + 3.0, 0.5, -ZamboniBay.BAY_W / 2 + 0.23), PI)
 	add_child(_hose)
+	_edger = IceEdger.new()
+	_edger.name = "Edger"
+	# parked in the bay, nose toward the doors
+	_edger.position = Vector3(RINK.x / 2 + BOARD_T + 5.5, 0.0, 2.2)
+	_edger.rotation.y = PI / 2
+	add_child(_edger)
 	field = PropField.new()
 	field.name = "Props"
 	add_child(field)
@@ -178,14 +186,11 @@ func _ready() -> void:
 	hud = WalkHud.new()
 	add_child(hud)
 	hud.bind(interactor)
-	(
-		hud
-		. legend(
-			(
-				"[X] STATE   [ ] SNOW   [E] FIRE HOSE   [LMB] SPRAY   [WHEEL] MIST / JET   [RMB] CHIP   "
-				+ "[E] USE / SEAT / DOORS   [W S] DRIVE   [A D] STEER   [WHEEL] TURN   [T] CLOCK   [B] BODY   "
-				+ "[V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
-			)
+	hud.legend(
+		(
+			"[X] STATE   [ ] SNOW   [E] USE / SEAT / DOORS / HOSE / EDGER   [LMB] SPRAY   "
+			+ "[RMB] CHIP   [WHEEL] ADJUST   [W S A D] DRIVE / PUSH   [TAB] EDGER BLADE   "
+			+ "[T] CLOCK   [B] BODY   [V] MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 		)
 	)
 	_stream = _make_stream()
@@ -211,8 +216,12 @@ func _process(dt: float) -> void:
 		_zamboni_step(sdt)
 	elif _aboard:
 		_drive(sdt)
+	elif _edging:
+		_push(sdt)
 	if _aboard and walker:
 		walker.global_position = _machine.to_global(Zambelli.SEAT)
+	if _edging and walker:
+		walker.global_position = _edger.to_global(IceEdger.HANDLES)
 	if (
 		_zam < 0.0
 		and (
@@ -239,6 +248,14 @@ func _process(dt: float) -> void:
 			hud.extra_prompt = _machine.controls.prompt(_aimed)
 			if _aimed < 0 and _aboard:
 				hud.extra_prompt = "[E] GET OUT"
+			elif _aimed < 0 and _edging:
+				hud.extra_prompt = "[W S] PUSH   [A D] TURN   [WHEEL] CRANK   [TAB] BLADE   [E] LET GO"
+			elif (
+				_aimed < 0
+				and not _hose.held
+				and _edger.aimed(cam.global_position, -cam.global_transform.basis.z)
+			):
+				hud.extra_prompt = "[E] TAKE THE EDGER'S HANDLES"
 			elif _aimed < 0 and _bay.aimed(cam.global_position, -cam.global_transform.basis.z):
 				hud.extra_prompt = _bay.prompt()
 			elif _aimed < 0 and _hose.aimed(cam.global_position, -cam.global_transform.basis.z):
@@ -295,6 +312,8 @@ func _process(dt: float) -> void:
 		var line3 := ""
 		if _machine:
 			line3 = _machine_line()
+		if _edging:
+			line3 += "   " + _edger.state_text()
 		hud.readout(line1 + "\n" + line2 + "\n" + line3)
 
 
@@ -697,6 +716,66 @@ func _off_the_machine() -> void:
 	walker.camera.rotation.x = -0.2
 
 
+## At the edger's handles: the keys push it, the walker rides behind it.
+func _take_the_handles() -> void:
+	_edging = true
+	walker.set_noclip(true)
+	walker.driven = true
+	walker.global_position = _edger.to_global(IceEdger.HANDLES)
+	walker.face(_edger.rotation.y)
+	walker.camera.rotation.x = -0.45
+
+
+func _let_go() -> void:
+	_edging = false
+	_edger.speed = 0.0
+	walker.driven = false
+	walker.set_noclip(false)
+	walker.global_position = _edger.to_global(IceEdger.HANDLES + Vector3(0.0, 0.0, 0.6))
+
+
+func _push(sdt: float) -> void:
+	_push_with(
+		sdt,
+		(
+			(1.0 if Input.is_key_pressed(KEY_W) else 0.0)
+			- (1.0 if Input.is_key_pressed(KEY_S) else 0.0)
+		),
+		(
+			(1.0 if Input.is_key_pressed(KEY_A) else 0.0)
+			- (1.0 if Input.is_key_pressed(KEY_D) else 0.0)
+		)
+	)
+
+
+## A step of the edger: pushed, kept inside the boards (its corners, like
+## the machine's), the blade cutting the path the disc's centre took.
+func _push_with(sdt: float, push: float, turn: float) -> void:
+	var path := _edger.step(sdt, push, turn)
+	var in_bay := _local(_edger.global_position).x > RINK.x
+	var shove := Vector2.ZERO
+	for c: Vector3 in [
+		Vector3(-0.36, 0.0, -0.75),
+		Vector3(0.36, 0.0, -0.75),
+		Vector3(-0.36, 0.0, 0.95),
+		Vector3(0.36, 0.0, 0.95)
+	]:
+		var p := _local(_edger.to_global(c))
+		var d := _inside_the_boards(p, in_bay) - p
+		if absf(d.x) > absf(shove.x):
+			shove.x = d.x
+		if absf(d.y) > absf(shove.y):
+			shove.y = d.y
+	if shove != Vector2.ZERO:
+		_edger.global_position += Vector3(shove.x, 0.0, shove.y)
+		_edger.speed *= 0.5
+		if path.size() == 2:
+			path[1] += Vector3(shove.x, 0.0, shove.y)
+	if path.size() == 2:
+		var took := _edger.cut(ice, _local(path[0]), _local(path[1]))
+		shaved_mm += took
+
+
 ## The walker at `eye`, looking at `target` (noclip).
 func _look_at(eye: Vector3, target: Vector3) -> void:
 	walker.set_noclip(true)
@@ -777,6 +856,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				elif _aboard:
 					_off_the_machine()
 					hud.toast("OFF THE MACHINE")
+				elif _edging:
+					_let_go()
+					hud.toast("OFF THE EDGER")
 				elif _bay.aimed(
 					walker.camera.global_position, -walker.camera.global_transform.basis.z
 				):
@@ -787,10 +869,27 @@ func _unhandled_input(event: InputEvent) -> void:
 				):
 					_hose.take(walker.camera)
 					hud.toast("THE FIRE HOSE: [LMB] SPRAY   [WHEEL] MIST .. JET")
+				elif (
+					not _hose.held
+					and _edger.aimed(
+						walker.camera.global_position, -walker.camera.global_transform.basis.z
+					)
+				):
+					_take_the_handles()
+					hud.toast("THE EDGER: [W S] PUSH   [A D] TURN   [WHEEL] CRANK   [TAB] BLADE")
 				elif _hose.held:
 					_hose.hang()
 					hosing = false
 					hud.toast("THE HOSE IS BACK ON THE REEL")
+			KEY_TAB:
+				if _edging:
+					_edger.toggle_blade()
+					hud.toast(
+						(
+							"EDGER BLADE %s"
+							% ("DOWN %.1f MM" % _edger.depth_mm if _edger.blade_down else "UP")
+						)
+					)
 			KEY_T:
 				scale_i = (scale_i + 1) % SCALES.size()
 				hud.toast("CLOCK x%d" % int(SCALES[scale_i]))
@@ -816,6 +915,19 @@ func _unhandled_input(event: InputEvent) -> void:
 				# the nozzle's pattern (the Interactor has the wheel while a prop is held)
 				_hose.scroll(up)
 				hud.toast("FIRE HOSE: %s" % _hose.pattern_text())
+			elif _edging:
+				# the crank: counter-clockwise lowers the blade
+				_edger.crank_notch(up)
+				hud.toast(
+					(
+						"CRANK %s: BLADE %.1f MM%s"
+						% [
+							"CLOCKWISE" if up else "COUNTER-CLOCKWISE",
+							_edger.depth_mm,
+							"" if _edger.blade_down else " (RAISED)"
+						]
+					)
+				)
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			hosing = true
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
@@ -1203,6 +1315,43 @@ func _screenshot(path: String) -> void:
 		_look_at(
 			ice.position + Vector3(RINK.x - 4.5, 1.7, RINK.y / 2 + 4.0),
 			ice.position + Vector3(RINK.x + 1.0, 0.7, RINK.y / 2)
+		)
+	if args.has("--view=hose"):
+		# in the bay, the reel on its wall
+		_bay.want_open = true
+		_bay.open = 1.0
+		_bay._process(0.0)
+		var hx := RINK.x / 2 + BOARD_T
+		_look_at(Vector3(hx + 0.8, 1.5, -0.8), Vector3(hx + 3.0, 0.95, -ZamboniBay.BAY_W / 2))
+	if args.has("--view=spray"):
+		# on the ice by the end, the hose in hand, spraying down the sheet
+		# (--pattern=0 mist .. 1 jet) for a second before the shot
+		walker.set_noclip(false)
+		walker.global_position = ice.position + Vector3(RINK.x - 5.0, 0.05, RINK.y / 2 + 2.0)
+		walker.face(PI / 2)
+		walker.camera.rotation.x = -0.3
+		_hose.take(walker.camera)
+		_hose.pattern = 0.5
+		for a in args:
+			if a.begins_with("--pattern="):
+				_hose.pattern = float(a.trim_prefix("--pattern="))
+		hosing = true
+		for i in 70:
+			await get_tree().process_frame
+	if args.has("--view=edger"):
+		# the edger pushed a few metres along the side boards with the
+		# blade set 1.5 mm down, seen from behind its right shoulder
+		_set_state(1)
+		ice.flush()
+		_edger.global_position = ice.position + Vector3(RINK.x - 12.0, 0.0, RINK.y - 0.42)
+		_edger.rotation.y = -PI / 2  # nose toward +X
+		_edger.depth_mm = 1.5
+		_edger.blade_down = true
+		for step in 300:
+			_push_with(1.0 / 60.0, 1.0, 0.0)
+		ice.flush()
+		_look_at(
+			_edger.to_global(Vector3(-1.2, 1.5, 2.2)), _edger.to_global(Vector3(0.0, 0.0, -1.5))
 		)
 	if args.has("--view=track"):
 		# from above and behind: the lane the conditioner leaves against its width
@@ -1880,6 +2029,76 @@ func _self_test() -> void:
 	hcam.queue_free()
 	ice.fill_state(0.0, 0.8, 0.0, 0.0, 0.08)
 	ice.flush()
+	# the edger: pushed along, the blade down cuts its lane with arcs and
+	# throws the shavings to its right; the crank sets the depth
+	_set_state(1)
+	ice.flush()
+	_edger.global_position = ice.position + Vector3(RINK.x - 12.0, 0.0, RINK.y / 2)
+	_edger.rotation.y = -PI / 2  # nose toward +X
+	_edger.depth_mm = 1.5
+	_edger.blade_down = false
+	_edger.speed = 0.0
+	var e0 := _edger.global_position
+	for step in 120:
+		_push_with(1.0 / 60.0, 1.0, 0.0)
+	var moved := _edger.global_position.distance_to(e0)
+	check.call(
+		moved > 1.0 and _edger.global_position.x > e0.x + 1.0,
+		"W pushes the edger forward (%.2f m in two seconds)" % moved
+	)
+	var lane := _local(_edger.to_global(Vector3(0.0, 0.0, IceEdger.BLADE_Z + 0.3)))
+	check.call(is_equal_approx(ice.thickness_at(lane), 25.0), "the blade up, the lane is untouched")
+	_edger.blade_down = true
+	for step in 120:
+		_push_with(1.0 / 60.0, 1.0, 0.0)
+	lane = _local(_edger.to_global(Vector3(0.0, 0.0, IceEdger.BLADE_Z + 0.4)))
+	check.call(
+		ice.thickness_at(lane) < 24.0,
+		"the blade down, the lane is cut 1.5 mm (%.2f mm)" % ice.thickness_at(lane)
+	)
+	var lane_c := ice.cell_at(lane)
+	var circling := false
+	var arcs := 0
+	for dx in range(-8, 9):
+		for dz in range(-8, 9):
+			var li := ice.index(lane_c.x + dx, lane_c.y + dz)
+			if ice.gouge[li] > 0.3:
+				arcs += 1
+			if ice.cut[li] > 0.0 and absf(ice.ang[li] - PI) > 0.4 and absf(ice.ang[li]) > 0.4:
+				circling = true
+	check.call(arcs > 0, "the rim rocked arcs into the lane (%d cells)" % arcs)
+	check.call(circling, "the striations circle the disc")
+	var throw_r := _local(_edger.to_global(Vector3(IceEdger.THROW, 0.0, IceEdger.BLADE_Z + 0.4)))
+	var throw_l := _local(_edger.to_global(Vector3(-IceEdger.THROW, 0.0, IceEdger.BLADE_Z + 0.4)))
+	check.call(
+		ice.snow_at(throw_r) > 0.0 and ice.snow_at(throw_l) == 0.0,
+		(
+			"the shavings land to its right (%.2f mm right, %.2f left)"
+			% [ice.snow_at(throw_r), ice.snow_at(throw_l)]
+		)
+	)
+	var crank0 := _edger.depth_mm
+	_edger.crank_notch(false)
+	check.call(
+		is_equal_approx(_edger.depth_mm, crank0 + IceEdger.CRANK_MM),
+		"counter-clockwise lowers the blade"
+	)
+	_edger.crank_notch(true)
+	check.call(is_equal_approx(_edger.depth_mm, crank0), "clockwise raises it")
+	_edger.toggle_blade()
+	check.call(not _edger.blade_down, "TAB lifts the blade")
+	var yaw0 := _edger.rotation.y
+	_push_with(1.0 / 60.0, 0.0, 1.0)
+	var turned_up := absf(_edger.rotation.y - yaw0)
+	_edger.blade_down = true
+	yaw0 = _edger.rotation.y
+	_push_with(1.0 / 60.0, 0.0, 1.0)
+	check.call(
+		absf(_edger.rotation.y - yaw0) < turned_up * 0.6,
+		"it turns slower with the blade in the ice"
+	)
+	_edger.blade_down = false
+	_edger.speed = 0.0
 	# the bay: shut doors are boards, open ones a doorway onto the pad, and
 	# the pad's walls are the end of it
 	_bay.want_open = false

@@ -401,6 +401,69 @@ func pour(at: Vector2, width: float, mm: float) -> void:
 			_touch(x, z)
 
 
+## Snow landing on the sheet: `mm` over a disc `width` across (a cone,
+## most in the middle), the way an edger's shavings fly.
+func add_snow(at: Vector2, width: float, mm: float) -> void:
+	var c := cell_at(at)
+	var r := int(ceil(width * 0.5 / cell))
+	for dz in range(-r, r + 1):
+		for dx in range(-r, r + 1):
+			var x := c.x + dx
+			var z := c.y + dz
+			if not is_ice(x, z):
+				continue
+			var f := 1.0 - Vector2(dx, dz).length() / r
+			if f <= 0.0:
+				continue
+			var i := index(x, z)
+			snow[i] = clampf(snow[i] + mm * clampf(f * 1.5, 0.0, 1.0), 0.0, 6.0)
+			_touch(x, z)
+
+
+## The edger's disc, its centre from `a` to `b`: the lane 2 `r` wide is
+## shaved `cut_mm` below its mean solid level with striations circling
+## the disc (the blade spins), and with `arc_mm` above zero the tilted
+## rim rocks in at `b` and leaves an arc of gouge `arc_w` wide along the
+## trailing rim (behind the cut, where the blade will not come back and
+## take it), a mark a light flood evens out. Returns the millimetres
+## shaved.
+func edge_sweep(
+	a: Vector2, b: Vector2, r: float, cut_mm: float, arc_mm: float, arc_w: float
+) -> float:
+	var dir := b - a
+	var took := 0.0
+	if dir.length() > 1e-6:
+		dir = dir.normalized()
+		var side := Vector2(-dir.y, dir.x) * r
+		took = resurface_sweep(
+			a + side, a - side, b + side, b - side, 0.0, 0.0, dir.angle(), cut_mm, 1
+		)
+	else:
+		dir = Vector2.RIGHT
+	var c := cell_at(b)
+	var rc := int(ceil(r / cell)) + 1
+	var rim := r - arc_w / 2
+	for dz in range(-rc, rc + 1):
+		for dx in range(-rc, rc + 1):
+			var x := c.x + dx
+			var z := c.y + dz
+			if not is_ice(x, z):
+				continue
+			var off := Vector2(dx, dz) * cell
+			var dist := off.length()
+			if dist > r:
+				continue
+			var i := index(x, z)
+			if cut[i] > 0.0:
+				ang[i] = off.angle() + PI / 2  # the rim's tangent
+				_touch(x, z)
+			if arc_mm > 0.0 and absf(dist - rim) <= arc_w / 2 and off.dot(dir) < -0.3 * r:
+				gouge[i] = maxf(gouge[i], arc_mm * (1.0 - absf(dist - rim) / (arc_w / 2)))
+				cut[i] = maxf(cut[i], 0.75)
+				_touch(x, z)
+	return took
+
+
 ## A blade stroke from a to b: cut at the stroke's angle `width` m wide,
 ## a gouge `depth` mm along it, snow thrown to its sides.
 func stroke(
