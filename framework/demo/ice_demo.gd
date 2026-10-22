@@ -690,6 +690,20 @@ func _inside_the_boards(p: Vector2, in_bay := false, M := 0.1) -> Vector2:
 	return q
 
 
+## How far `p` (sheet metres) is inside the boards' corner arc when it is
+## in a corner, else INF.
+func _corner_gap(p: Vector2) -> float:
+	var cx := (
+		CORNER_R if p.x < CORNER_R else (RINK.x - CORNER_R if p.x > RINK.x - CORNER_R else -1.0)
+	)
+	var cy := (
+		CORNER_R if p.y < CORNER_R else (RINK.y - CORNER_R if p.y > RINK.y - CORNER_R else -1.0)
+	)
+	if cx < 0.0 or cy < 0.0:
+		return INF
+	return CORNER_R - (p - Vector2(cx, cy)).length()
+
+
 func _inside_the_sheet(p: Vector2, M := 0.1) -> Vector2:
 	var q := Vector2(clampf(p.x, M, RINK.x - M), clampf(p.y, M, RINK.y - M))
 	var cx := (
@@ -818,6 +832,15 @@ func _push_with(sdt: float, push: float, turn: float) -> void:
 			_edger.speed = 0.0  # straight into them
 		if path.size() == 2:
 			path[1] += Vector3(shove.x, 0.0, shove.y)
+	# round a corner the deck's ends sit on the arc and its middle stands
+	# off it (4 cm on this deck and radius), so there the lane reaches
+	# out to the boards past the rim (Sean: a cut outside the model's
+	# size is fine in the curves, flush is what matters)
+	var rim := _local(_edger.to_global(Vector3(-IceEdger.DECK_HALF_W, 0.0, IceEdger.BLADE_Z)))
+	var gap := _corner_gap(rim)
+	_edger.edge_over = (
+		IceEdger.EDGE_OVER if gap == INF else clampf(gap + 0.01, IceEdger.EDGE_OVER, 0.09)
+	)
 	if path.size() == 2:
 		var took := _edger.cut(ice, _local(path[0]), _local(path[1]))
 		shaved_mm += took
@@ -2301,6 +2324,25 @@ func _self_test() -> void:
 	check.call(
 		_edger.speed > IceEdger.PUSH_SPEED * IceEdger.FREE * 0.98,
 		"... and slides along them at full speed (%.2f m/s)" % _edger.speed
+	)
+	check.call(
+		is_equal_approx(_edger.edge_over, IceEdger.EDGE_OVER),
+		"on the straight the lane starts at the rim (+%.0f mm)" % (_edger.edge_over * 1000.0)
+	)
+	# in a corner, the deck's ends on the arc, its middle stands off: the lane reaches out
+	var arc_c := Vector2(RINK.x - CORNER_R, RINK.y - CORNER_R)
+	var at45 := arc_c + Vector2(1.0, 1.0).normalized() * (CORNER_R - IceEdger.DECK_HALF_W - 0.05)
+	_edger.global_position = ice.position + Vector3(at45.x, 0.0, at45.y)
+	_edger.rotation.y = PI / 4 + PI / 2  # tangent to the arc, the boards on its left
+	_edger.speed = 0.0
+	for step in 30:
+		_push_with(1.0 / 60.0, 1.0, 0.0)
+	check.call(
+		_edger.edge_over > 0.04,
+		(
+			"round the corner it reaches past the rim to the boards (+%.0f mm)"
+			% (_edger.edge_over * 1000.0)
+		)
 	)
 	_edger.speed = 0.0
 	# the bay: shut doors are boards, open ones a doorway onto the pad, and

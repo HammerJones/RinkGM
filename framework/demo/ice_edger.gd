@@ -15,14 +15,16 @@ extends Node3D
 ## drag), the wheel is the crank (counter-clockwise lowers the blade, the
 ## opposite of the Zambelli's handwheel, half a millimetre a notch) and
 ## TAB lifts the blade clear or sets it back to the crank's depth. The
-## cut is `IceSheet.edge_sweep`: the left half of the disc shaves
-## `depth_mm` at the rim tapering to nothing under the centre,
+## cut is `IceSheet.edge_sweep`: the disc shaves a lane `CUT_W` across
+## from its left rim, `depth_mm` there tapering to nothing,
 ## striations circle the disc, and every `ARC_STEP` of travel the rim
 ## rocks in and leaves a deep arc `ARC_W` wide (Sean: about 3.5 cm, every
 ## 5 cm or so) that a light flood evens out. The shavings fly `THROW` to
 ## its right as snow. It lives in the bay.
 
 const BLADE_R := 0.23  # a 46 cm disc
+const CUT_W := 0.345  # the lane it cuts, from the left rim across (Sean: half again the disc's half)
+const EDGE_OVER := 0.03  # the lane reaches at least this far past the rim, so the last cells at the boards are cut
 const BLADE_Z := -0.30  # the disc's centre under the deck, between the wheels
 const DECK_HALF_W := 0.37  # the deck's sides, the corners the boards hold
 const DECK_FRONT := -0.85
@@ -30,8 +32,8 @@ const DECK_BACK := 0.88
 const BLADE_X := -DECK_HALF_W + BLADE_R  # ... and to its left: the rim flush with the deck's left side
 const TILT := deg_to_rad(2.5)  # the disc leaning left (Sean: 4 was a bit much)
 const ARC_STEP := 0.05  # metres of travel between arcs
-const ARC_W := 0.035
-const ARC_MM := 1.2  # the arc's gouge beyond the set depth
+const ARC_W := 0.015  # a fine line (Sean: finer, and plain to see)
+const ARC_MM := 3.0  # the arc's gouge beyond the set depth
 const DEPTH_MAX := 4.0  # mm the crank can set
 const CRANK_MM := 0.5  # a notch of the crank
 const PUSH_SPEED := 0.9  # m/s pushed flat out with the blade in the ice
@@ -52,6 +54,7 @@ const TAKE_REACH := 2.4
 const SPIN := 120.0  # rad/s, for the look
 
 var depth_mm := 1.0  # the crank's setting
+var edge_over := EDGE_OVER  # how far past the rim the lane reaches now (more round a corner)
 var running := false  # the engine
 var blade_down := false
 var speed := 0.0
@@ -257,8 +260,15 @@ func cut(sheet: IceSheet, a: Vector2, b: Vector2) -> float:
 		_since_arc -= ARC_STEP
 		arcs += 1
 	var dir := (b - a).normalized() if ds > 1e-6 else Vector2.RIGHT
+	var over := Vector2(-dir.y, dir.x) * edge_over  # the lane starts past the rim, by this much
 	var took := sheet.edge_sweep(
-		a, b, BLADE_R, depth_mm, ARC_MM + depth_mm * 0.3 if arcs > 0 else 0.0, ARC_W
+		a - over,
+		b - over,
+		BLADE_R,
+		depth_mm,
+		ARC_MM + depth_mm * 0.3 if arcs > 0 else 0.0,
+		ARC_W,
+		CUT_W + edge_over
 	)
 	shaved_mm += took
 	if took > 0.0:

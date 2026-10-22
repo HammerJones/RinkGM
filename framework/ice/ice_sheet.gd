@@ -440,16 +440,19 @@ func add_snow(at: Vector2, width: float, mm: float) -> void:
 
 
 ## The edger's disc swept from `a` to `b` (its centre, metres on the
-## sheet), radius `r`. The disc is tilted to the machine's left, so only
-## its left half cuts: `cut_mm` deep at the left rim (flush with the
-## edger's side, run along the boards) tapering to nothing under the
-## centre. The cut is relative to each column, so every pass lowers the
-## ice there again. Striations circle the disc, and when `arc_mm` > 0 the
-## rim rocks a deep arc `arc_w` wide into the trailing left quarter.
-## Returns the millimetres shaved.
+## sheet), radius `r`. The disc is tilted to the machine's left, so it
+## cuts from its left rim (flush with the edger's side, run along the
+## boards) `lane_w` across toward the right: `cut_mm` deep at the rim
+## tapering to nothing at the lane's far edge. The cut is relative to
+## each column, so every pass lowers the ice there again. Striations
+## circle the disc, and when `arc_mm` > 0 the rim rocks a fine, deep arc
+## `arc_w` wide into the trailing left quarter. Returns the millimetres
+## shaved.
 func edge_sweep(
-	a: Vector2, b: Vector2, r: float, cut_mm: float, arc_mm: float, arc_w: float
+	a: Vector2, b: Vector2, r: float, cut_mm: float, arc_mm: float, arc_w: float, lane_w := -1.0
 ) -> float:
+	if lane_w <= 0.0:
+		lane_w = r
 	var dir := b - a
 	var took := 0.0
 	if dir.length() > 1e-6:
@@ -460,8 +463,9 @@ func edge_sweep(
 	if a.distance_to(b) > 1e-6 and cut_mm > 0.0:
 		var cols := PackedInt32Array()
 		var us := PackedFloat32Array()
-		# the lane from the left rim (u 0) to the centre (u 1)
-		if _quad_cols(a - right * r, a, b - right * r, b, cols, us):
+		# the lane from the left rim (u 0) lane_w across (u 1)
+		var far := right * (lane_w - r)
+		if _quad_cols(a - right * r, a + far, b - right * r, b + far, cols, us):
 			var travel := dir.angle()
 			for k in cols.size():
 				var i := cols[k]
@@ -481,15 +485,16 @@ func edge_sweep(
 				continue
 			var off := Vector2(dx, dz) * cell
 			var dist := off.length()
-			if dist > r or off.dot(right) > 0.0:
+			if dist > r or off.dot(right) > lane_w - r:
 				continue
 			var i := index(x, z)
 			if cut[i] > 0.0:
 				ang[i] = off.angle() + PI / 2  # the rim's tangent
 				_touch(x, z)
 			if arc_mm > 0.0 and absf(dist - rim) <= arc_w / 2 and off.dot(dir) < -0.3 * r:
-				gouge[i] = maxf(gouge[i], arc_mm * (1.0 - absf(dist - rim) / (arc_w / 2)))
-				cut[i] = maxf(cut[i], 0.75)
+				# a sharp-edged trench the width of the band, the rim's mark
+				gouge[i] = maxf(gouge[i], arc_mm)
+				cut[i] = 1.0
 				_touch(x, z)
 	return took
 
