@@ -162,9 +162,16 @@ const ACCEL := 1.4  # m/s² with the pedal down
 const BRAKE := 3.0  # m/s² on the brake
 const COAST := 0.6  # m/s² rolling with the pedal up
 const STEER_MAX := deg_to_rad(32.0)  # the front wheels' lock
-const STEER_RATE := 1.6  # rad/s the wheels turn toward the lock
+const STEER_RATE := 0.5  # rad/s the wheels turn toward the lock: a second to full lock
+const STEER_BACK := 1.5  # rad/s they come back to straight ahead
 const WHEELBASE := REAR_AXLE - FRONT_AXLE
 const SEAT := Vector3(-0.5, 1.23, 0.7)  # where the operator's feet go, seated at the wheel
+# the footprint on the ice, for the boards: the hull from the nose back
+# to the conditioner (its sides read off the voxel body at wheel height,
+# x -0.99..0.89) and the conditioner, the blade's width plus its side
+# plates, wider than the hull. Rect2(x, z, width, depth), nose -z.
+const HULL := Rect2(-1.0, -BLADE_Z, 1.9, BLADE_Z - 0.5)
+const COND_FOOT := Rect2(BLADE_X0 - 0.08, -0.45, BLADE_W + 0.16, 1.25)
 # the flood water: a pipe along the top of the conditioner's back wall,
 # holes every two and a half inches, the streams down the wall to the towel
 const WALL_Z := 0.612  # just behind the back wall's rear face, from the blade
@@ -709,6 +716,31 @@ func _make_hull() -> AnimatableBody3D:
 ## bicycle model pivoting on the rear axle and returns the blade's edge
 ## before and after, in the parent's frame, as [a0, a1, b0, b1] (the 0
 ## end at the blade's -X), or an empty array when it did not move.
+## Points round the footprint's edge, `step` apart at most (sheet-plane
+## x, z in the machine's frame): what the boards push back in. The hull
+## and the conditioner overlap, so a point of one inside the other is
+## dropped.
+static func outline(step := 0.4) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for r: Rect2 in [HULL, COND_FOOT]:
+		var other := COND_FOOT if r == HULL else HULL
+		var corners := [
+			r.position,
+			r.position + Vector2(r.size.x, 0.0),
+			r.end,
+			r.position + Vector2(0.0, r.size.y)
+		]
+		for k in 4:
+			var a: Vector2 = corners[k]
+			var b: Vector2 = corners[(k + 1) % 4]
+			var n := maxi(int(ceil(a.distance_to(b) / step)), 1)
+			for j in n:
+				var q := a.lerp(b, float(j) / n)
+				if not other.grow(-0.01).has_point(q):
+					pts.append(q)
+	return pts
+
+
 func drive_step(dt: float, pedal: float, brake: float, turn: float) -> Array[Vector3]:
 	var dir := 1.0 if drive == 0 else (-1.0 if drive == 2 else 0.0)
 	var want := dir * pedal
@@ -720,7 +752,13 @@ func drive_step(dt: float, pedal: float, brake: float, turn: float) -> Array[Vec
 		speed = move_toward(speed, 0.0, BRAKE * brake * dt)
 	elif pedal == 0.0:
 		speed = move_toward(speed, 0.0, COAST * dt)
-	steer = move_toward(steer, turn * STEER_MAX, STEER_RATE * dt)
+	# the wheel builds the angle over a second rather than snapping to the
+	# lock (Sean: twitchy), and comes back to straight quicker
+	var want_steer := turn * STEER_MAX
+	var toward_lock := absf(want_steer) > absf(steer) and signf(want_steer) == signf(steer)
+	steer = move_toward(
+		steer, want_steer, (STEER_RATE if toward_lock or steer == 0.0 else STEER_BACK) * dt
+	)
 	if absf(speed) < 0.001:
 		speed = 0.0
 		return []

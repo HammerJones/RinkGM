@@ -28,6 +28,8 @@ extends Node3D
 const RINK := Vector2(60.96, 25.9)  # metres
 const CORNER_R := 8.5
 const HEAT_REFRESH := 2.0  # seconds between the heatmap's range reads
+const BOARDS_TURN := 0.5  # radians of swing toward the boards' line per metre of push
+const BOARDS_TURN_MAX := 0.02  # radians a frame, at most
 const CELL := 0.025
 # the markings, in metres from the sheet's corner
 const PX := 80.0  # markings texels per metre (1.25 cm)
@@ -97,6 +99,7 @@ var air_base := 8.0
 var air_c := 8.0
 var sim_t := 0.0
 var heatmap := false  # H: the ice coloured by height, blue low .. red high
+var _footprint := Zambelli.outline()  # the machine's edge, for the boards
 var _heat_t := 0.0  # seconds since the heatmap's range was read
 var _machine: Zambelli
 var _bay: ZamboniBay
@@ -636,25 +639,30 @@ func _drive_with(sdt: float, pedal: float, brake: float, turn: float) -> void:
 		_machine.feed(bins)
 
 
-## The boards, with the bumper's roller: a corner of the machine that
-## would go past them (the straights, or the corner arcs) is pushed back
-## in and the machine slides along, losing some speed to the rub; only
-## a run straight at them stops it. Returns false for that stop.
+## The boards, with the bumper's roller: a point of the machine's
+## footprint (`Zambelli.outline()`: the hull and the wider conditioner,
+## right at the model's skin, no margin, so it rides flush and the nose
+## reaches into a corner) that would go past them (the straights, or the
+## corner arcs) is pushed back in and the machine slides along, losing
+## some speed to the rub; only a run straight at them stops it. Returns
+## false for that stop.
 func _along_the_boards() -> bool:
 	var push := Vector2.ZERO
 	var in_bay := _local(_machine.global_position).x > RINK.x
-	for c: Vector3 in [
-		Vector3(Zambelli.BLADE_X0 - 0.05, 0.0, -Zambelli.BLADE_Z - 0.1),
-		Vector3(Zambelli.BLADE_X1 + 0.05, 0.0, -Zambelli.BLADE_Z - 0.1),
-		Vector3(Zambelli.BLADE_X0 - 0.05, 0.0, 0.85),
-		Vector3(Zambelli.BLADE_X1 + 0.05, 0.0, 0.85)
-	]:
-		var p := _local(_machine.to_global(c))
-		var d := _inside_the_boards(p, in_bay) - p
+	var at := Vector2.ZERO  # the point pushed furthest
+	var at_c := Vector2.ZERO
+	var deepest := 0.0
+	for c in _footprint:
+		var p := _local(_machine.to_global(Vector3(c.x, 0.0, c.y)))
+		var d := _inside_the_boards(p, in_bay, 0.0) - p
 		if absf(d.x) > absf(push.x):
 			push.x = d.x
 		if absf(d.y) > absf(push.y):
 			push.y = d.y
+		if d.length_squared() > deepest:
+			deepest = d.length_squared()
+			at = p
+			at_c = c
 	if push == Vector2.ZERO:
 		return true
 	var fwd := -_machine.global_transform.basis.z
@@ -665,6 +673,31 @@ func _along_the_boards() -> bool:
 		if hud:
 			hud.toast("THE BOARDS")
 		return false
+	# the push turns the machine as well as moving it: the boards hold
+	# the point that touches and the machine swings about that point
+	# toward their line, the faster the harder it leans on them (a nose
+	# on the boards stays put and the rear comes in, Sean's ask), and the
+	# push itself is a slide in
+	var n := push.normalized()
+	var tangent := Vector2(-n.y, n.x)
+	if tangent.dot(going) < 0.0:
+		tangent = -tangent
+	var fwd2 := Vector2(fwd.x, fwd.z)
+	var toward := fwd2.y * tangent.x - fwd2.x * tangent.y  # a +y turn swings the nose this way
+	var turn := signf(toward) * minf(BOARDS_TURN * push.length(), BOARDS_TURN_MAX)
+	if absf(toward) > 0.002 and turn != 0.0:
+		_machine.rotation.y += turn
+		var at_now := _local(_machine.to_global(Vector3(at_c.x, 0.0, at_c.y)))
+		_machine.global_position += Vector3(at.x - at_now.x, 0.0, at.y - at_now.y)
+		# what the turn left to push, read again
+		push = Vector2.ZERO
+		for c in _footprint:
+			var p := _local(_machine.to_global(Vector3(c.x, 0.0, c.y)))
+			var d := _inside_the_boards(p, in_bay, 0.0) - p
+			if absf(d.x) > absf(push.x):
+				push.x = d.x
+			if absf(d.y) > absf(push.y):
+				push.y = d.y
 	_machine.global_position += Vector3(push.x, 0.0, push.y)
 	# a bump slides and keeps most of its speed; the squarer the hit the
 	# more the boards take, a frame at a time while it leans on them (a
@@ -1407,6 +1440,19 @@ func _screenshot(path: String) -> void:
 		walker.global_position = _machine.to_global(Zambelli.SEAT)
 		walker.face(_machine.rotation.y + 2.9)  # looking back over the left shoulder at the lane
 		walker.camera.rotation.x = -0.62
+	if args.has("--view=boards"):
+		# the machine slid along the side boards, its conditioner's end on
+		# them, from the ice behind its left side: the fit of the hitbox
+		_machine.show_body = true
+		_machine.rotation.y = PI / 2 + 0.04
+		_machine.global_position = ice.position + Vector3(RINK.x / 2 + 3.0, 0.0, RINK.y - 1.75)
+		_machine.drive = 0
+		for step in 240:
+			_drive_with(1.0 / 60.0, 1.0, 0.0, 0.0)
+		walker.set_noclip(true)
+		walker.global_position = _machine.to_global(Vector3(2.6, 1.7, 3.4))
+		walker.face(_machine.rotation.y + 0.6)
+		walker.camera.rotation.x = -0.28
 	if args.has("--view=bay"):
 		# from the ice by the end boards: the doors swung open and the
 		# machine half through them onto the pad (--closed: shut, the machine before them)
@@ -2448,6 +2494,45 @@ func _self_test() -> void:
 	for step in 180:
 		_bay._process(1.0 / 60.0)
 	check.call(_bay.open == 0.0, "E again swings them shut")
+	# the boards fit the model: along the side boards the conditioner's
+	# end rides on them (the hull is narrower, so it sits in from them by
+	# the blade's reach), and nosed into a corner the nose meets the arc
+	_machine.rotation.y = PI / 2 + 0.04  # nose toward -X, leaning a little into the boards
+	_machine.global_position = ice.position + Vector3(RINK.x / 2 + 3.0, 0.0, RINK.y - 1.75)
+	_machine.speed = 0.0
+	_machine.drive = 0
+	for step in 420:
+		_drive_with(1.0 / 60.0, 1.0, 0.0, 0.0)
+	var side_edge := -INF
+	for fp in _footprint:
+		side_edge = maxf(side_edge, _local(_machine.to_global(Vector3(fp.x, 0.0, fp.y))).y)
+	check.call(
+		RINK.y - side_edge < 0.02 and RINK.y - side_edge > -0.001 and _machine.speed > 0.5,
+		(
+			"the conditioner's end rides flush on the side boards (%.3f m off, %.2f m/s)"
+			% [RINK.y - side_edge, _machine.speed]
+		)
+	)
+	# the push turned it to lie along them, the conditioner's side on the
+	# boards (the hull sits in from them, narrower by the blade's reach)
+	var lean := wrapf(_machine.rotation.y - PI / 2, -PI, PI)
+	print("ice demo: boards slide lean %.3f rad" % lean)
+	check.call(
+		absf(lean) < 0.03, "... and the push turned it to lie along them (lean %.3f rad)" % lean
+	)
+	_machine.rotation.y = PI / 2 + PI / 4  # nose into the -X +z corner
+	_machine.global_position = ice.position + Vector3(6.0, 0.0, RINK.y - 6.0)
+	_machine.speed = 0.0
+	for step in 300:
+		_drive_with(1.0 / 60.0, 1.0, 0.0, 0.0)
+	# (the nose is flat and 1.9 m wide, so its corners meet the arc first)
+	var nose_gap := INF
+	for fp in _footprint:
+		nose_gap = minf(nose_gap, _corner_gap(_local(_machine.to_global(Vector3(fp.x, 0.0, fp.y)))))
+	check.call(
+		nose_gap >= -0.001 and nose_gap < 0.02,
+		"nosed into a corner the nose's corner meets the arc (%.3f m off)" % nose_gap
+	)
 	# the heatmap: H colours the ice by height over the sheet's own range
 	var range_flat := ice.height_range()
 	ice.pour(Vector2(RINK.x / 2, RINK.y / 2), 1.0, 2.0)

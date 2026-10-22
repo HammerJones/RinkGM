@@ -711,16 +711,26 @@ display, and run as headless checks in CI (`--test=<name>`).
   keys drive it: W is the gas pedal and moves the machine the way the
   drive select lever on the console is set (F, N or R), S is always the
   brake, A and D steer (a bicycle model pivoting on the rear axle,
-  3.5 m/s flat out, 32 degrees of lock); with the
+  3.5 m/s flat out, 32 degrees of lock, the wheels building to the
+  lock over a second, `STEER_RATE`, and coming back quicker, so the
+  machine is not twitchy); with the
   conditioner down the blade resurfaces whatever it sweeps on any
   heading (`IceSheet.resurface_sweep()`, the swept quad's columns binned
   across the blade for the auger), the flood pipe laying its film
   0.61 m behind it (`lay_film_sweep()`). The boards act as the bumper's
-  roller does on a real machine (`_along_the_boards()`): a corner that
-  would go past them, on the straights or round the corner arcs, is
-  pushed back inside and the machine slides along, losing a little
-  speed to the rub (a fifth a second brushing, about half a second
-  leaning square on them); only a run straight at them stops it. The
+  roller does on a real machine (`_along_the_boards()`): the machine's
+  footprint (`Zambelli.outline()`: the hull read off the voxel body at
+  wheel height, 1.9 m wide from the nose to the conditioner, and the
+  conditioner, the blade's width plus its side plates, so about 0.5 m
+  wider than the hull on the left; points every 0.4 m round both, no
+  margin, so it rides flush and the nose reaches into a corner) is
+  kept inside them, on the straights or round the corner arcs: a point
+  that would go past them is pushed back in, and the push also swings
+  the machine about that point toward the boards' line (a nose on them
+  stays put and the rear comes in, `BOARDS_TURN` rad per metre of
+  push), so it ends up sliding along them, losing a little speed to the
+  rub (a fifth a second brushing, about half a second leaning square on
+  them); only a run straight at them stops it. The
   conditioner is 10 in wider on the operator's left and 2 in on the
   right than the bought model (`Zambelli.COND_LEFT`, `COND_RIGHT`, the
   blade from `BLADE_X0` to `BLADE_X1`, 2.61 m; the prop is stretched to
