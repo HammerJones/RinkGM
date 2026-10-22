@@ -86,7 +86,7 @@ var snow_level := 0.0  # the [ ] scale, 0..1
 var hosing := false
 var chipping := false
 var hosed_l := 0.0
-var slab_c := -5.0
+var slab_c := -9.0  # the pad: a brine rink's
 var air_base := 8.0
 var air_c := 8.0
 var sim_t := 0.0
@@ -188,9 +188,9 @@ func _ready() -> void:
 	hud.bind(interactor)
 	hud.legend(
 		(
-			"[X] STATE   [ ] SNOW   [E] USE / SEAT / DOORS / HOSE / EDGER   [LMB] SPRAY   "
-			+ "[RMB] CHIP   [WHEEL] ADJUST   [W S A D] DRIVE / PUSH   [TAB] EDGER BLADE   "
-			+ "[T] CLOCK   [B] BODY   [V] MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
+			"[X] STATE  [ ] SNOW  [E] USE  [LMB] SPRAY  [RMB] CHIP  [WHEEL] ADJUST  "
+			+ "[W S A D] DRIVE  [TAB] EDGER BLADE  [T] CLOCK  [B] BODY  [V] MACHINE  "
+			+ "[CTRL] CROUCH  [F] FLY  [Z] ZOOM"
 		)
 	)
 	_stream = _make_stream()
@@ -277,11 +277,16 @@ func _process(dt: float) -> void:
 		if at != null:
 			var p := _local(at)
 			under = (
-				"   UNDER THE DOT: ICE %.2f MM THICK, SNOW %.2f MM, WATER %.2f MM"
-				% [ice.thickness_at(p), ice.snow_at(p), ice.water_at(p)]
+				"   UNDER THE DOT: ICE %.2f MM THICK AT %.1f C, SNOW %.2f MM, WATER %.2f MM"
+				% [
+					ice.thickness_at(p),
+					ice.ice_temp_at(p, slab_c, air_c),
+					ice.snow_at(p),
+					ice.water_at(p)
+				]
 			)
 		var line1 := (
-			"STATE %s   PAINT UNDER %.0f MM   SLAB %.1f C   AIR %.1f C   CLOCK x%d%s   T+%s   WET %d   DIRTY %d / %d"
+			"STATE %s   PAINT UNDER %.0f MM   SLAB %.1f C   AIR %.1f C   CLOCK x%d%s   T+%s   WET / COOLING %d   DIRTY %d / %d"
 			% [
 				STATES[state][0],
 				ice.base_mm,
@@ -384,8 +389,8 @@ func _spray(dt: float, cam: Camera3D = null) -> void:
 	mat.initial_velocity_min = v.length() * 0.9
 	mat.initial_velocity_max = v.length() * 1.1
 	mat.spread = rad_to_deg(_hose.cone())
-	mat.scale_min = lerpf(0.3, 0.7, _hose.pattern)
-	mat.scale_max = lerpf(0.5, 1.1, _hose.pattern)
+	mat.scale_min = lerpf(0.25, 0.2, _hose.pattern)
+	mat.scale_max = lerpf(0.45, 0.35, _hose.pattern)
 	_stream.amount_ratio = 1.0
 	if WorldSound.wanted():
 		WorldSound.play(self, "ball_bounce_2", at, -16.0, 0.6)
@@ -393,7 +398,7 @@ func _spray(dt: float, cam: Camera3D = null) -> void:
 
 func _make_stream() -> GPUParticles3D:
 	var ps := GPUParticles3D.new()
-	ps.amount = 520
+	ps.amount = 2000
 	ps.lifetime = 0.8
 	ps.emitting = false
 	ps.local_coords = false
@@ -1453,7 +1458,7 @@ func _self_test() -> void:
 	check.call(ice.dirty_count() == 0, "the budget re-meshes them within a frame or two")
 	var edge := ice.index(c.x + 10, c.y)
 	for minute in 4:
-		ice.thermal(60.0, -5.0, 8.0)
+		ice.thermal(60.0, -9.0, 8.0)
 	check.call(
 		ice.ice[edge] > 0.0 or ice.frozen[edge] > ice.frozen[mid],
 		(
@@ -1462,7 +1467,7 @@ func _self_test() -> void:
 		)
 	)
 	for minute in 16:
-		ice.thermal(60.0, -5.0, 8.0)
+		ice.thermal(60.0, -9.0, 8.0)
 	check.call(
 		ice.water[mid] == 0.0 and ice.ice[mid] > 1.0,
 		(
@@ -1470,23 +1475,24 @@ func _self_test() -> void:
 			% [ice.water[mid], ice.ice[mid]]
 		)
 	)
-	ice.thermal(1.0, -5.0, 8.0)
-	check.call(ice.wet_cells == 0, "no wet cells left (%d)" % ice.wet_cells)
+	for minute in 25:
+		ice.thermal(60.0, -9.0, 8.0)  # the set columns cool back to steady and leave the walk
+	check.call(ice.wet_cells == 0, "no wet or cooling cells left (%d)" % ice.wet_cells)
 	# set water is ice: flooding the same spot again builds it up
 	var h0 := ice.ice_at(Vector2(6.0, 7.0))
 	check.call(h0 > 1.0, "the set pour became ice (%.2f mm)" % h0)
 	for again in 3:
 		ice.pour(Vector2(6.0, 7.0), 0.6, 1.2)
 		for minute in 20:
-			ice.thermal(60.0, -5.0, 8.0)
+			ice.thermal(60.0, -9.0, 8.0)
 	var h1 := ice.ice_at(Vector2(6.0, 7.0))
 	check.call(h1 > h0 + 3.0, "three more floods raised it (%.2f -> %.2f mm)" % [h0, h1])
 	# a whole flooded sheet: level chunks stay one quad and a step stays cheap
 	_set_state(2)
 	ice.flush()
-	ice.thermal(1.0, -5.0, 8.0)  # the first call builds the walk list
+	ice.thermal(1.0, -9.0, 8.0)  # the first call builds the walk list
 	var t0 := Time.get_ticks_usec()
-	ice.thermal(1.0, -5.0, 8.0)
+	ice.thermal(1.0, -9.0, 8.0)
 	var ms := (Time.get_ticks_usec() - t0) / 1000.0
 	check.call(ms < 12.0, "a thermal step on a flooded sheet is under 12 ms (%.1f)" % ms)  # ~6 here, the CI box is slow
 	t0 = Time.get_ticks_usec()
@@ -1529,7 +1535,7 @@ func _self_test() -> void:
 	var slush_t := -1.0
 	var film_t := -1.0
 	for second in 1500:
-		ice.thermal(1.0, -5.0, 8.0)
+		ice.thermal(1.0, -9.0, 8.0)
 		if slush_t < 0.0 and ice.water[si] == 0.0:
 			slush_t = second
 		if film_t < 0.0 and ice.water[bare_i] == 0.0:
@@ -1544,20 +1550,58 @@ func _self_test() -> void:
 		slush_t > 0.0 and film_t > slush_t * 2.5,
 		"slush sets several times faster than water on ice (%.0f s vs %.0f s)" % [slush_t, film_t]
 	)
-	# Sean's clock: a 0.8 mm film in the middle of a lane sets in 3 to 4 minutes
-	_set_state(1)
-	ice.flush()
+	# Sean's clock: a 0.8 mm flood on 25 mm over a -9 C pad sets in about four
+	# minutes; the freeze is heat flow, so a mist sets in under a minute,
+	# thin ice freezes faster (the pad is nearer) and a second flood on the
+	# warmed column takes longer
+	var film_time := func(mm: float, base: float, slab: float) -> float:
+		_set_state(1)
+		ice.base_mm = base
+		ice.flush()
+		ice.lay_film(10.0, 12.0, 4.0, 6.0, mm, 0.0)
+		var fi := ice.index(ice.cell_at(Vector2(11.0, 5.0)).x, ice.cell_at(Vector2(11.0, 5.0)).y)
+		for second in 3600:
+			ice.thermal(1.0, slab, 8.0)
+			if ice.water[fi] == 0.0:
+				return float(second)
+		return 3600.0
+	var set_t: float = film_time.call(0.8, 25.0, -9.0)
+	check.call(
+		set_t >= 180.0 and set_t <= 300.0,
+		"0.8 mm on 25 mm at -9 C, 8 C air sets in 3 to 5 minutes (%.0f s)" % set_t
+	)
+	var mist_t: float = film_time.call(0.15, 25.0, -9.0)
+	check.call(mist_t < 60.0, "a mist's 0.15 mm sets in under a minute (%.0f s)" % mist_t)
+	var thin_t: float = film_time.call(0.8, 12.0, -9.0)
+	check.call(thin_t < set_t * 0.7, "the same film on 12 mm of ice sets faster (%.0f s)" % thin_t)
+	var pool_t: float = film_time.call(3.0, 25.0, -9.0)
+	check.call(pool_t > set_t * 3.0, "a 3 mm pool takes much longer (%.0f s)" % pool_t)
+	# a second flood right after the first, on the warmed column
 	ice.lay_film(10.0, 12.0, 4.0, 6.0, 0.8, 0.0)
-	var fi := ice.index(ice.cell_at(Vector2(11.0, 5.0)).x, ice.cell_at(Vector2(11.0, 5.0)).y)
-	var set_t := -1.0
-	for second in 600:
-		ice.thermal(1.0, -5.0, 8.0)
-		if ice.water[fi] == 0.0:
-			set_t = second
+	var fi2 := ice.index(ice.cell_at(Vector2(11.0, 5.0)).x, ice.cell_at(Vector2(11.0, 5.0)).y)
+	var again_t := 3600.0
+	for second in 3600:
+		ice.thermal(1.0, -9.0, 8.0)
+		if ice.water[fi2] == 0.0:
+			again_t = float(second)
 			break
 	check.call(
-		set_t >= 165.0 and set_t <= 240.0,
-		"0.8 mm at -5 C, 8 C air sets in 3 to 4 minutes (%.0f s)" % set_t
+		again_t > set_t * 1.15,
+		(
+			"a flood right after a flood sets slower on the warmed column (%.0f vs %.0f s)"
+			% [again_t, set_t]
+		)
+	)
+	ice.base_mm = 25.0
+	check.call(
+		(
+			ice.ice_temp_at(Vector2(30.0, 12.0), -9.0, 8.0) < -8.0
+			and ice.ice_temp_at(Vector2(30.0, 12.0), -9.0, 8.0) > -9.0
+		),
+		(
+			"a dry column sits a little above the pad's temperature (%.1f C)"
+			% ice.ice_temp_at(Vector2(30.0, 12.0), -9.0, 8.0)
+		)
 	)
 	# the snowed-up scale: a little snow is a few drifts, the full scale covers the sheet
 	ice.snow_level(0.25)
@@ -1645,7 +1689,7 @@ func _self_test() -> void:
 	var depth0 := ice.gouge[gi]
 	ice.pour(Vector2(9.2, 9.1), 0.6, 1.5)  # a puddle over and beside it
 	for minute in 30:
-		ice.thermal(60.0, -5.0, 8.0)
+		ice.thermal(60.0, -9.0, 8.0)
 	check.call(
 		ice.gouge[gi] < depth0 and ice.scar[gi] > 0.0,
 		(
@@ -1901,7 +1945,7 @@ func _self_test() -> void:
 	for step in 600:
 		_zamboni_step(1.0 / 60.0)
 		_machine._process(1.0 / 60.0)
-		ice.thermal(1.0 / 60.0, -5.0, 8.0)
+		ice.thermal(1.0 / 60.0, -9.0, 8.0)
 		var tick := Time.get_ticks_usec()
 		ice._process(1.0 / 60.0)
 		var us := Time.get_ticks_usec() - tick

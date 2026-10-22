@@ -551,24 +551,34 @@ with distance: past a few metres they are narrower than a pixel and
 average out, whatever the lighting (a coarser second groove layer was
 tried and backed out on 2026-10-22).
 
-**Freezing.** `thermal()` sets each wet cell's water at a rate from the
-slab temperature under it, slower in deep water and warm air, faster next
-to cells already set or dry, so a pool shrinks inward; a 0.8 mm film
-at -5 C with 8 C air sets in about 3.5 minutes in the middle of a lane
-(`FREEZE_K`, retuned on 2026-10-22 at Sean's ask: the sim's IceSlab is
-about a third of that and will want the same when the sheet is wired
-in). Water on snow (slush) sets `SLUSH_SET` (4) times faster: the snow
-is cold and seeds it, and it sets into a rough crust. It walks the wet cells in
-slices of 3000 a frame through an append-only list (no per-cell calls or
-allocations; the wet set is a byte per cell, not a dictionary), so a
-whole flooded sheet costs under 3 ms a frame whatever its size, and each
-cell is visited once a pass of ceil(size / 3000) frames with that much
-sim time (14 s of sim per visit on a fully flooded NHL sheet at 60 fps,
-which a minutes-long freeze does not notice). `snow_level(0..1)` is the
-snowed-up scale: a patchy simplex field (drifts a couple of metres
-across) that the level fills from its hollows outward, so a quarter is a
-few drifts and the full scale covers the sheet. `set_now()` sets every wet cell at
-once, for a test rig.
+**Freezing.** `thermal()` is heat flow, a column at a time (Sean's ask,
+2026-10-22: a function of the water's and the ice's volume, from real
+physics). The water sits at 0 C and gives its latent heat (334 kJ per
+mm) to the ice column under it by conduction through the column's half
+thickness (`K_ICE` 2.2 W/m K), so thin ice freezes a film faster, the
+pad being nearer; the column warms on that heat (its thermal mass is
+its thickness, 917 kg/m3 x 2100 J/kg K) and sheds it to the pad at
+`slab_c`, relaxing back to its steady temperature between the pad and
+the air (`H_AIR` 6 W/m2 K; about -8.4 C on 25 mm over a -9 C pad in 8 C
+air) with a time constant of a few minutes; the air gives the wet
+surface a little heat back and evaporation (at `AIR_RH` 0.4) takes
+some. So a mist's 0.15 mm sets in about half a minute, a 0.8 mm flood on
+25 mm over a -9 C pad (the demo's default, a brine rink's) in about four
+minutes, 12 mm of ice does the same in two and a half, a 3 mm pool takes
+twenty, and a second flood right after a first sets slower on the warmed
+column (`warm[]`, K above steady; `ice_temp_at()` reads a column for the
+HUD). A set column stays in the walk while it cools back. Water on snow
+(slush) sets `SLUSH_SET` (4) times faster: the snow seeds it and the
+water sits in a porous matrix; it sets into a rough crust. It walks the
+listed cells in slices of 3000 a frame through an append-only list (no
+per-cell calls or allocations; the set is a byte per cell), so a whole
+flooded sheet costs a few milliseconds a frame whatever its size, and
+each cell is visited once a pass of ceil(size / 3000) frames with that
+much sim time (14 s of sim per visit on a fully flooded NHL sheet at
+60 fps, which a minutes-long freeze does not notice). `snow_level(0..1)`
+is the snowed-up scale: a patchy simplex field (drifts a couple of
+metres across) that the level fills from its hollows outward, so a
+quarter is a few drifts and the full scale covers the sheet.
 
 **The blade.** `resurface(x0, x1, z0, z1, film_mm, rag_wear, blade_mm,
 travel, spill, cut_mm)` is the resurfacer over a band: the blade at
@@ -794,6 +804,40 @@ display, and run as headless checks in CI (`--test=<name>`).
   is where the edger lives and the fire hose hangs. `--view=bay` frames
   the open doors with the machine half through them (`--closed`: shut,
   the machine before them).
+  **The fire hose** (`framework/demo/fire_hose.gd`, `FireHose`): Sean's
+  uploaded reel model voxelised (art/props/fire_hose.vox, from
+  tools/propgen/glb2vox.py) hangs on the bay's side wall; its nozzle
+  (art/props/fire_nozzle.vox, the same model's nozzle cropped out) rides
+  in hand once E on the reel takes it, and E with nothing else under the
+  dot hangs it back. In hand LMB sprays `LPS` (8 L/s, a 1.5 in line) and
+  the wheel sets the pattern continuously from a fine mist cone (28
+  degrees, carrying 3.5 m, wetting a disc metres across with a fraction
+  of a millimetre: the way to flood a thin area wide and have it set in
+  a minute) to a straight jet (1.5 degrees, 20 m, a small disc). Water
+  that would carry past the pattern's reach lands at the reach. The
+  demo's `_spray()` does the pouring and the drops; the old built-in
+  hose and its valve are gone. `--view=hose` is the reel on its wall,
+  `--view=spray --pattern=0..1` the hose at work.
+  **The edger** (`framework/demo/ice_edger.gd`, `IceEdger`): a
+  walk-behind machine (Sean's uploaded mower model's intact parts,
+  art/props/ice_edger.vox at 1 cm, turned handle-back and scaled to a
+  push edger) with a 46 cm disc under its deck tilted 4 degrees and a
+  crank (primitives: the model has none) on the handle; it parks in the
+  bay. Look at the handles and E takes them: W pushes (0.9 m/s), S pulls
+  back, A and D turn it with your weight (0.8 rad/s, 0.35 with the blade
+  in), the wheel is the crank (counter-clockwise lowers the blade, the
+  opposite of the Zambelli's handwheel, half a millimetre a notch, up to
+  4 mm), TAB lifts the blade clear or sets it back to the crank's depth,
+  E lets go. The cut is `IceSheet.edge_sweep()`: the disc's lane shaved
+  `depth_mm` below its mean solid level (a `resurface_sweep` the disc's
+  width) with the striations re-angled to circle the disc, and every
+  `ARC_STEP` (5 cm) of travel the rim rocks in and leaves an arc of gouge
+  `ARC_W` (3.5 cm) wide along the trailing rim, `ARC_MM` plus a share of
+  the depth deep (Sean's spec: about 3.5 cm, every 5 cm or so), a mark
+  a light flood fills; the shavings land as snow `THROW` (0.6 to 0.9 m)
+  to its right (`IceSheet.add_snow()`). Its corners are kept inside the
+  boards like the machine's. `--view=edger` is a lane cut along the
+  side boards.
   Footsteps leave the ice alone. `--screenshot=<png>`
   frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the

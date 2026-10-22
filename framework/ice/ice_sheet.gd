@@ -37,8 +37,15 @@ const TILE := 256  # cells a side of one set of state textures (4 chunks)
 const SNOW_FULL := 1.0  # mm that reads as fully snowed
 const WATER_FULL := 0.5  # mm that reads as fully wet
 const GOUGE_FULL := 4.0  # mm that reads as the deepest gouge
-const FREEZE_K := 0.00105  # per second per degree below zero at 1 mm: 0.8 mm sets in about 3.5 min at -5 C (Sean's ask)
-const SLUSH_SET := 4.0  # water on snow (slush) sets this many times faster: the snow is cold and seeds it
+# the freeze is heat flow (Sean's ask, 2026-10-22): the water gives its
+# latent heat to the ice column under it, the column sheds it to the pad
+const K_ICE := 2.2  # W/m K, ice's conductivity
+const RHO_ICE := 917.0  # kg/m3
+const C_ICE := 2100.0  # J/kg K
+const LATENT := 334000.0  # J per kg of water set, which is J/m2 per mm of film
+const H_AIR := 6.0  # W/m2 K, still air over the sheet
+const AIR_RH := 0.4  # the building's humidity, for the evaporation off a wet surface
+const SLUSH_SET := 4.0  # water on snow (slush) sets this many times faster: the snow seeds it, porous
 const ICE_PER_WATER := 1.09
 const FILM_PIN := 0.2  # mm of water that clings to the ice and never runs
 const POOL_RUNS := 1.0  # mm of water that is a pool, spreading over level ice; less holds its edge
@@ -72,6 +79,7 @@ var gouge := PackedFloat32Array()  # mm
 var ice := PackedFloat32Array()  # mm of ice built up over the base by floods
 var scar := PackedFloat32Array()  # mm of gouge that water filled: faintly visible, no depth
 var crust := PackedFloat32Array()  # mm of slush that set: a rough surface with peaks
+var warm := PackedFloat32Array()  # K the ice column is above its steady temperature (a flood's heat)
 var material: ShaderMaterial
 var remeshed := 0
 ## The last resurface() call's shavings by row (mm summed over the row's
@@ -125,7 +133,7 @@ func setup(size_m: Vector2, cell_m := 0.025, corner_m := 0.0) -> void:
 	corner = corner_m
 	w = int(round(size.x / cell))
 	d = int(round(size.y / cell))
-	for arr in [snow, water, frozen, cut, ang, gouge, ice, scar, crust]:
+	for arr in [snow, water, frozen, cut, ang, gouge, ice, scar, crust, warm]:
 		arr.resize(w * d)
 		arr.fill(0.0)
 	_wet_flag.resize(w * d)
@@ -331,7 +339,7 @@ func fill_state(sn: float, ct: float, wt: float, fz: float, angle := 0.0) -> voi
 	ang.fill(angle)
 	water.fill(wt)
 	frozen.fill(fz)
-	for arr in [gouge, ice, scar, crust]:
+	for arr in [gouge, ice, scar, crust, warm]:
 		arr.fill(0.0)
 	if sn > 0.0:
 		# a little unevenness in the snow: one band of chunk rows is drawn
@@ -798,13 +806,24 @@ func _quad_cols(
 	return not cols.is_empty()
 
 
-## The freezing step: `dt` seconds of sim time with the slab at `slab_c`
-## and the air at `air_c`. Walks the wet cells in slices (`max_cells` a
-## call) so a whole wet sheet costs a couple of milliseconds a frame
-## rather than one long stall; each cell is visited every size/max_cells
-## calls and gets that much time. Deep water runs to lower neighbours on
-## the way. The loop is written flat (no calls, no allocations per cell)
-## because it is the hot path: about half a microsecond a cell.
+## The freezing step: `dt` seconds of sim time with the pad under the
+## sheet at `slab_c` and the air at `air_c`. Modelled as heat flow, a
+## column at a time: the water sits at 0 C and gives its latent heat
+## (LATENT per mm) to the ice column under it by conduction through the
+## column's half thickness (so thin ice freezes a film faster: the pad
+## is nearer), the column warms by that heat (its thermal mass is its
+## thickness) and sheds it to the pad, relaxing back to its steady
+## temperature (between the pad and the air) with a time constant of a
+## few minutes; the air gives the water a little heat back and
+## evaporation takes some. So a mist's 0.1 mm sets in under a minute, a
+## 0.8 mm flood at -9 C on 25 mm in about four, a 3 mm pool in twenty,
+## and a second flood right after a first sets slower on the warmed
+## column (as it does). A set column stays in the walk while it cools.
+## Walks the cells in slices (`max_cells` a call) so a whole wet sheet
+## costs a couple of milliseconds a frame; each cell is visited once a
+## pass and gets the pass's time. Deep water runs to lower neighbours on
+## the way. The loop is flat (no calls, no allocations per cell): it is
+## the hot path.
 func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 	if _wet_n == 0:
 		wet_cells = 0
@@ -825,35 +844,38 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 	# once a pass: it gets the whole pass's time
 	var per_pass := ceili(float(_wet_list.size()) / maxi(max_cells, 1))
 	var slice_dt := dt * per_pass
-	var cold := maxf(0.0, -slab_c)
-	var air := clampf(1.0 - air_c / 30.0, 0.3, 1.2)
-	var k_air := FREEZE_K * cold * air * slice_dt
+	# the air's heat into a wet surface at 0 C, less what evaporation takes (W/m2)
+	var e_air := 611.0 * pow(10.0, 7.5 * air_c / (237.3 + air_c))
+	var evap := H_AIR / 1005.0 * 2.5e6 * 0.622 * maxf(611.0 - AIR_RH * e_air, 0.0) / 101325.0
+	var air_in := H_AIR * air_c - evap
 	var last := w * d - 1
 	for k in n:
 		var i := _wet_list[_thermal_cursor + k]
 		if _wet_flag[i] == 0:
 			continue
+		# the column: its half thickness is the path to the pad
+		var h := maxf(base_mm + ice[i] + crust[i], 2.0) * 0.001
+		var g := 2.0 * K_ICE / h
+		var cap := RHO_ICE * C_ICE * h
+		var tss := (H_AIR * air_c + g * slab_c) / (H_AIR + g)
+		var decay := exp(-slice_dt * (g + H_AIR) / cap)
 		var wt := water[i]
 		if wt <= 0.0:
-			_wet_flag[i] = 0
-			_wet_n -= 1
+			# dry and cooling after a set: back toward steady, then out of the walk
+			warm[i] *= decay
+			if warm[i] < 0.1:
+				warm[i] = 0.0
+				_wet_flag[i] = 0
+				_wet_n -= 1
+			else:
+				_wet_next.append(i)
 			continue
 		var fz := frozen[i]
-		# neighbours (clamped at the rim and at the corner arcs); an edge
-		# that is dry or set pulls heat sideways
+		# neighbours (clamped at the rim and at the corner arcs)
 		var il := i - 1 if i % w > 0 and _mask[i - 1] == 1 else i
 		var ir := i + 1 if i % w < w - 1 and _mask[i + 1] == 1 else i
 		var iu := i - w if i >= w and _mask[i - w] == 1 else i
 		var id := i + w if i + w <= last and _mask[i + w] == 1 else i
-		var edge := 0.0
-		if water[il] <= 0.0 or frozen[il] >= 0.999:
-			edge += 0.5
-		if water[ir] <= 0.0 or frozen[ir] >= 0.999:
-			edge += 0.5
-		if water[iu] <= 0.0 or frozen[iu] >= 0.999:
-			edge += 0.5
-		if water[id] <= 0.0 or frozen[id] >= 0.999:
-			edge += 0.5
 		# liquid runs downhill (a gouge is downhill) by head, all but the film;
 		# water that has started to set is slush and stays put
 		var liquid := wt * (1.0 - fz)
@@ -874,10 +896,17 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 				_flow(i, il, ir, iu, id, liquid)
 				wt = water[i]
 		var before := int(fz * 255.0)
-		var gain := k_air * (1.0 + edge) / maxf(wt, 0.3)
-		if snow[i] > 0.0:
-			gain *= SLUSH_SET
-		fz += gain
+		# heat out of the water into the column (W/m2), and the column warming on it
+		var ti := minf(tss + warm[i], 0.0)
+		var qw := g * -ti
+		var tau := cap / (g + H_AIR)
+		warm[i] = warm[i] * decay + qw / cap * tau * (1.0 - decay)
+		var power := qw - air_in
+		if power > 0.0:
+			var gain := power / LATENT * slice_dt / wt
+			if snow[i] > 0.0:
+				gain *= SLUSH_SET
+			fz += gain
 		if fz >= 1.0:
 			# set through: it fills the gouge first (a scar stays visible,
 			# no depth), the rest is new ice; a fresh frozen surface either way
@@ -893,8 +922,7 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 			water[i] = 0.0
 			frozen[i] = 0.0
 			cut[i] = 0.0
-			_wet_flag[i] = 0
-			_wet_n -= 1
+			_wet_next.append(i)  # stays in the walk while the column cools
 			_touch(i % w, i / w)
 		else:
 			frozen[i] = fz
@@ -902,6 +930,18 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 			if int(fz * 255.0) != before:
 				_touch(i % w, i / w, false)
 	_thermal_cursor += n
+
+
+## The ice column's temperature under a point, C: its steady temperature
+## between the pad and the air plus what a flood has warmed it.
+func ice_temp_at(p: Vector2, slab_c: float, air_c: float) -> float:
+	var c := cell_at(p)
+	if not in_bounds(c.x, c.y):
+		return slab_c
+	var i := index(c.x, c.y)
+	var h := maxf(base_mm + ice[i] + crust[i], 2.0) * 0.001
+	var g := 2.0 * K_ICE / h
+	return (H_AIR * air_c + g * slab_c) / (H_AIR + g) + warm[i]
 
 
 func _wet_add(i: int) -> void:
