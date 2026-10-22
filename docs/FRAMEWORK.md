@@ -825,13 +825,13 @@ display, and run as headless checks in CI (`--test=<name>`).
   100 ms to 10. The old built-in hose and its valve are gone. `--view=hose` is the reel on its wall,
   `--view=spray --pattern=0..1` the hose at work.
   **The edger** (`framework/demo/ice_edger.gd`, `IceEdger`): a
-  walk-behind machine (Sean's uploaded mower model's intact parts less
-  its handle, which was a one-sided loop off the right of the deck,
-  art/props/ice_edger.vox at 1.1 cm, turned handle-back and scaled to a
-  push edger) with a 46 cm disc under its deck tilted 4 degrees to the
-  left, its rim flush with the machine's left side (`BLADE_X`), a square
-  two-grip handle of primitives off the back of the deck and the crank
-  clamped to the bar by the right grip; it parks in the bay. E on the
+  walk-behind machine (Sean's uploaded mower model's intact parts,
+  art/props/ice_edger.vox at 1 cm, turned handle-back and scaled to a
+  push edger; its handle is a loop off the right of the deck, kept as
+  it is at Sean's ask) with a 46 cm disc under its deck tilted 4
+  degrees to the left, its rim flush with the machine's left side
+  (`BLADE_X`), and the crank (primitives) clamped to the right end of
+  the handle's grip; it parks in the bay. E on the
   engine starts or stops it, and the blade only cuts with it running.
   Look at the handle and E takes it: you stand square behind it
   (`HANDLES`), your heading follows the machine as it turns and the

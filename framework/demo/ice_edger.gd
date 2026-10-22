@@ -1,20 +1,21 @@
 class_name IceEdger
 extends Node3D
 ## The ice edger: a walk-behind machine (Sean's uploaded mower model
-## voxelised, art/props/ice_edger.vox, less its one-sided handle) with a
-## spinning disc blade under its deck tilted to the left, so only the
-## disc's left half cuts, its rim flush with the machine's left side: set
-## that side against the boards and push, and the ice along them comes
-## down where the resurfacer cannot reach. A square two-grip handle of
-## primitives stands off the back of the deck, so it is pushed from dead
-## behind. Look at the handle and E takes it: W pushes, S pulls back, A
-## and D turn it with your weight (slower with the blade in the ice, and
-## the push slower too: the blade's bite is felt as drag), the wheel is
-## the crank clamped to the right grip (counter-clockwise lowers the
-## blade, the opposite of the Zambelli's handwheel, half a millimetre a
-## notch) and TAB lifts the blade clear or sets it back to the crank's
-## depth. The cut is `IceSheet.edge_sweep`: the left half of the disc
-## shaves `depth_mm` at the rim tapering to nothing under the centre,
+## voxelised as it is, art/props/ice_edger.vox) with a spinning disc
+## blade under its deck tilted to the left, so only the disc's left half
+## cuts, its rim flush with the machine's left side: set that side
+## against the boards and push, and the ice along them comes down where
+## the resurfacer cannot reach. The model's handle is a loop off the
+## right of the deck; the crank is clamped to its right end. You stand
+## square behind the deck to push (`HANDLES`), and your heading follows
+## the machine as it turns. Look at the handle and E takes it: W pushes,
+## S pulls back, A and D turn it with your weight (slower with the blade
+## in the ice, and the push slower too: the blade's bite is felt as
+## drag), the wheel is the crank (counter-clockwise lowers the blade, the
+## opposite of the Zambelli's handwheel, half a millimetre a notch) and
+## TAB lifts the blade clear or sets it back to the crank's depth. The
+## cut is `IceSheet.edge_sweep`: the left half of the disc shaves
+## `depth_mm` at the rim tapering to nothing under the centre,
 ## striations circle the disc, and every `ARC_STEP` of travel the rim
 ## rocks in and leaves a deep arc `ARC_W` wide (Sean: about 3.5 cm, every
 ## 5 cm or so) that a light flood evens out. The shavings fly `THROW` to
@@ -22,7 +23,7 @@ extends Node3D
 
 const BLADE_R := 0.23  # a 46 cm disc
 const BLADE_Z := -0.15  # the disc's centre ahead of the machine's middle
-const BLADE_X := -0.27  # ... and to its left: the rim flush with the left side
+const BLADE_X := -0.40  # ... and to its left: the rim flush with the left wheels (the deck is centred at -0.11, the handle off its right)
 const TILT := deg_to_rad(4.0)
 const ARC_STEP := 0.05  # metres of travel between arcs
 const ARC_W := 0.035
@@ -40,11 +41,9 @@ const THROW_W := 0.6
 const CHUTE := Vector3(0.50, 0.12, BLADE_Z)  # the deck's right side, where the shavings fly out
 const CHUTE_UP := deg_to_rad(28.0)  # the throw's elevation
 const SNOW_EXPAND := 2.5
-const HANDLES := Vector3(0.0, 0.05, 1.6)  # where you stand to push, arms out to the grips
-const GRIP_Y := 1.0  # the handle's bar
-const GRIP_Z := 0.95
-const GRIP_X := 0.30  # the uprights, either side
-const CRANK_AT := Vector3(0.17, GRIP_Y, GRIP_Z + 0.04)  # clamped to the bar by the right grip, its face toward you
+const HANDLES := Vector3(-0.1, 0.05, 1.5)  # where you stand to push: square behind the deck
+const HANDLE_AT := Vector3(0.4, 0.95, 0.65)  # the model's grip, for the aim
+const CRANK_AT := Vector3(0.50, 1.04, 0.64)  # clamped to the grip's right end, its face toward you
 const TAKE_REACH := 2.4
 const SPIN := 120.0  # rad/s, for the look
 
@@ -85,9 +84,9 @@ func _ready() -> void:
 	disc.position = Vector3(BLADE_X, 0.03, BLADE_Z)
 	disc.rotation.z = TILT  # the left rim down
 	add_child(disc)
-	_build_handle(steel)
-	# the crank on the right grip of the handle, facing whoever pushes: a
-	# clamp round the bar, then a hub, an arm and a knob turned to the setting
+	# the crank on the right end of the handle's grip, facing whoever
+	# pushes: a clamp round the bar, then a hub, an arm and a knob turned
+	# to the setting
 	crank = Node3D.new()
 	crank.name = "Crank"
 	crank.position = CRANK_AT
@@ -189,56 +188,7 @@ func _make_spray() -> GPUParticles3D:
 
 ## True when the view line meets the handle within reach.
 func aimed(origin: Vector3, dir: Vector3) -> bool:
-	return _hits(origin, dir, Vector3(0.0, GRIP_Y - 0.1, GRIP_Z - 0.05), 0.5)
-
-
-## The handle: two uprights off the back of the deck, a bar across their
-## tops with a rubber grip at each end, square behind the machine.
-func _build_handle(steel: Material) -> void:
-	var black := StandardMaterial3D.new()
-	black.albedo_color = Color(0.12, 0.12, 0.12)
-	black.roughness = 0.7
-	var foot := Vector3(0.0, 0.30, 0.58)  # on the deck's rear
-	var top := Vector3(0.0, GRIP_Y, GRIP_Z)
-	var run := top - foot
-	for s: float in [-1.0, 1.0]:
-		var up := MeshInstance3D.new()
-		var up_m := CylinderMesh.new()
-		up_m.top_radius = 0.014
-		up_m.bottom_radius = 0.014
-		up_m.height = run.length()
-		up.mesh = up_m
-		up.position = (foot + top) / 2 + Vector3(s * GRIP_X, 0.0, 0.0)
-		up.rotation.x = atan2(run.z, run.y)
-		up.material_override = steel
-		add_child(up)
-		var plate := MeshInstance3D.new()
-		var plate_m := BoxMesh.new()
-		plate_m.size = Vector3(0.07, 0.02, 0.09)
-		plate.mesh = plate_m
-		plate.position = foot + Vector3(s * GRIP_X, 0.0, 0.0)
-		plate.material_override = steel
-		add_child(plate)
-		var grip := MeshInstance3D.new()
-		var grip_m := CylinderMesh.new()
-		grip_m.top_radius = 0.019
-		grip_m.bottom_radius = 0.019
-		grip_m.height = 0.16
-		grip.mesh = grip_m
-		grip.position = top + Vector3(s * (GRIP_X - 0.07), 0.0, 0.0)
-		grip.rotation.z = PI / 2
-		grip.material_override = black
-		add_child(grip)
-	var bar := MeshInstance3D.new()
-	var bar_m := CylinderMesh.new()
-	bar_m.top_radius = 0.014
-	bar_m.bottom_radius = 0.014
-	bar_m.height = GRIP_X * 2
-	bar.mesh = bar_m
-	bar.position = top
-	bar.rotation.z = PI / 2
-	bar.material_override = steel
-	add_child(bar)
+	return _hits(origin, dir, HANDLE_AT, 0.45)
 
 
 ## True when the view line meets the engine on the deck within reach.

@@ -2198,7 +2198,7 @@ func _self_test() -> void:
 	check.call(
 		is_equal_approx(ice.thickness_at(lane), 25.0), "the engine off, the blade down cuts nothing"
 	)
-	var eng_eye: Vector3 = _edger.to_global(Vector3(0.0, 1.5, 1.6))
+	var eng_eye: Vector3 = _edger.to_global(Vector3(-0.1, 1.5, 1.6))
 	var eng_dir: Vector3 = (_edger.to_global(Vector3(0.0, 0.55, -0.15)) - eng_eye).normalized()
 	check.call(
 		_edger.engine_aimed(eng_eye, eng_dir), "the engine is under the dot from the handles"
