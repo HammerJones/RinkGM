@@ -20,10 +20,36 @@ uniform vec2 sheet = vec2(24.0, 14.0);     // metres
 uniform float corner_r = 0.0;              // corner radius, metres: outside the arcs is not ice
 uniform float striation_m = 1.0;           // striation tiles per metre (the map is one metre)
 uniform float striation_strength = 0.9;
+// The heatmap: the surface coloured by its height alone, the lowest
+// column dark blue, the middle green, the highest red, a gradient
+// between. heat_lo/heat_hi are mesh heights (IceSheet.height_range()).
+uniform bool heatmap = false;
+uniform float heat_lo = 0.0;
+uniform float heat_hi = 0.001;
 varying vec2 wp;
+varying float hy;
 
 void vertex() {
 	wp = UV * sheet;
+	hy = VERTEX.y;
+}
+
+vec3 heat_colour(float t) {
+	// dark blue .. blue .. green .. yellow .. red, four even ramps
+	vec3 c0 = vec3(0.02, 0.02, 0.35);
+	vec3 c1 = vec3(0.05, 0.35, 1.0);
+	vec3 c2 = vec3(0.05, 0.85, 0.15);
+	vec3 c3 = vec3(1.0, 0.92, 0.05);
+	vec3 c4 = vec3(0.9, 0.05, 0.02);
+	float u = clamp(t, 0.0, 1.0) * 4.0;
+	if (u < 1.0) {
+		return mix(c0, c1, u);
+	} else if (u < 2.0) {
+		return mix(c1, c2, u - 1.0);
+	} else if (u < 3.0) {
+		return mix(c2, c3, u - 2.0);
+	}
+	return mix(c3, c4, u - 3.0);
 }
 
 mat2 rot(float a) {
@@ -124,9 +150,21 @@ void fragment() {
 	rough = mix(rough, 0.7, gg);
 	alb = mix(alb, alb * 0.92, sc * 0.6);
 	rough = mix(rough, 0.1, sc * 0.7);
-	ALBEDO = alb;
-	ROUGHNESS = rough;
-	SPECULAR = mix(mix(0.5, 0.08, snw), 0.6, pool);
-	NORMAL_MAP = n * 0.5 + 0.5;
-	NORMAL_MAP_DEPTH = mix(0.8, 0.4, liquid);
+	if (heatmap) {
+		// matte, lit a little by its own colour so shadow does not read
+		// as a hollow; the relief still shades through the lighting
+		vec3 hc = heat_colour((hy - heat_lo) / max(heat_hi - heat_lo, 1e-6));
+		ALBEDO = hc;
+		EMISSION = hc * 0.35;
+		ROUGHNESS = 1.0;
+		SPECULAR = 0.0;
+		NORMAL_MAP = vec3(0.5, 0.5, 1.0);
+		NORMAL_MAP_DEPTH = 0.0;
+	} else {
+		ALBEDO = alb;
+		ROUGHNESS = rough;
+		SPECULAR = mix(mix(0.5, 0.08, snw), 0.6, pool);
+		NORMAL_MAP = n * 0.5 + 0.5;
+		NORMAL_MAP_DEPTH = mix(0.8, 0.4, liquid);
+	}
 }

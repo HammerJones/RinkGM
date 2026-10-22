@@ -106,6 +106,7 @@ var _dirty := {}  # Vector2i -> Rect2i, the cells of a chunk changed since it wa
 var _dirty_shape := {}  # Vector2i -> true when a change moved a column's top or cut
 var _geo := {}  # Vector2i -> [verts, norms, uvs, idx] of a heightfield chunk, patched in place
 var _flat_h := {}  # Vector2i -> the height of a chunk drawn as one flat quad
+var _range := {}  # Vector2i -> Vector2 (lo, hi) of a chunk's ice columns, for the heatmap
 var _grid_idx := {}  # Vector2i (nx, nz) -> the shared index array of a heightfield that size
 var _wet_flag := PackedByteArray()  # 1 per cell with liquid water
 var _wet_n := 0
@@ -158,6 +159,7 @@ func setup(size_m: Vector2, cell_m := 0.025, corner_m := 0.0) -> void:
 	_dirty_shape.clear()
 	_geo.clear()
 	_flat_h.clear()
+	_range.clear()
 	_tiles.clear()
 	_tile_dirty.clear()
 	_wet_list.resize(0)
@@ -254,6 +256,71 @@ func set_param(name: String, value: Variant) -> void:
 	material.set_shader_parameter(name, value)
 	for t: Tile in _tiles.values():
 		t.material.set_shader_parameter(name, value)
+
+
+## The lowest and highest column tops over the ice, in mesh units (true
+## millimetres x height_scale, as the heightfield is built): x low, y high.
+## Each chunk's range is kept from its last whole build; a chunk patched
+## in part since is read again here (a chunk is 64 x 64 columns).
+func height_range() -> Vector2:
+	flush()  # a change this frame counts
+	var lo := INF
+	var hi := -INF
+	for key in _keys:
+		if not _range.has(key):
+			_read_range(key)
+		if not _range.has(key):
+			continue
+		var r: Vector2 = _range[key]
+		lo = minf(lo, r.x)
+		hi = maxf(hi, r.y)
+	if lo == INF:
+		return Vector2.ZERO
+	return Vector2(lo, hi)
+
+
+func _read_range(key: Vector2i) -> void:
+	var x0 := key.x * CHUNK
+	var z0 := key.y * CHUNK
+	var x1 := mini(x0 + CHUNK, w)
+	var z1 := mini(z0 + CHUNK, d)
+	var full := _full.has(key)
+	var scale := 0.001 * height_scale
+	var lo := INF
+	var hi := -INF
+	for z in range(z0, z1):
+		var row := z * w
+		for x in range(x0, x1):
+			var i := row + x
+			if not full and _mask[i] == 0:
+				continue
+			var hs := (((i * 1103515245 + 12345) & 0x7fffffff) >> 8) & 0xffff
+			var h := (
+				(ice[i] + snow[i] + crust[i] * (0.4 + 0.6 * hs / 65535.0) + water[i] - gouge[i])
+				* scale
+			)
+			lo = minf(lo, h)
+			hi = maxf(hi, h)
+	if lo <= hi:
+		_range[key] = Vector2(lo, hi)
+	else:
+		_range.erase(key)
+
+
+## The heatmap: the surface drawn by height alone, the lowest column dark
+## blue, the midpoint green, the highest red, a gradient between. The
+## range is read now; call again (or `heatmap_refresh()`) as the ice
+## changes.
+func heatmap(on: bool) -> void:
+	set_param("heatmap", on)
+	if on:
+		heatmap_refresh()
+
+
+func heatmap_refresh() -> void:
+	var r := height_range()
+	set_param("heat_lo", r.x)
+	set_param("heat_hi", maxf(r.y, r.x + 0.0001 * height_scale))
 
 
 ## Ice over the paint at a column, mm (the datum's base plus what floods
@@ -1236,17 +1303,24 @@ func _build_whole(key: Vector2i, x0: int, z0: int, x1: int, z1: int) -> void:
 					(ice[i] + snow[i] + crust[i] * (0.4 + 0.6 * hs / 65535.0) + water[i] - gouge[i])
 					* scale
 				)
-				lo = minf(lo, h)
-				hi = maxf(hi, h)
+				if _mask[i] == 1:
+					lo = minf(lo, h)
+					hi = maxf(hi, h)
 		# the border row shared with the next chunk counts too
 		for x in range(x0, x1 + 1):
-			var h := _height(x, z1)
-			lo = minf(lo, h)
-			hi = maxf(hi, h)
+			if is_ice(x, z1):
+				var h := _height(x, z1)
+				lo = minf(lo, h)
+				hi = maxf(hi, h)
 		for z in range(z0, z1 + 1):
-			var h := _height(x1, z)
-			lo = minf(lo, h)
-			hi = maxf(hi, h)
+			if is_ice(x1, z):
+				var h := _height(x1, z)
+				lo = minf(lo, h)
+				hi = maxf(hi, h)
+	if lo <= hi:
+		_range[key] = Vector2(lo, hi)
+	else:
+		_range.erase(key)
 	_tile_dirty[tkey] = 3
 	_apron(x0, z0, x1, z1, 3)
 	var mi := _chunk_node(key, t)
@@ -1289,6 +1363,7 @@ func _build_part(
 	_apron(cx0, cz0, cx1, cz1, 3 if shape else 1)
 	if not shape:
 		return
+	_range.erase(key)  # read again on the next height_range()
 	var g: Array = _geo.get(key, [])
 	if g.is_empty():
 		g = _flat_geo(x0, z0, x1, z1, _flat_h.get(key, 0.0))

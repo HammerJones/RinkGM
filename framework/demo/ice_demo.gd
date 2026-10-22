@@ -27,6 +27,7 @@ extends Node3D
 # copy so the framework layer stays free of the game's scripts)
 const RINK := Vector2(60.96, 25.9)  # metres
 const CORNER_R := 8.5
+const HEAT_REFRESH := 2.0  # seconds between the heatmap's range reads
 const CELL := 0.025
 # the markings, in metres from the sheet's corner
 const PX := 80.0  # markings texels per metre (1.25 cm)
@@ -95,6 +96,8 @@ var slab_c := -9.0  # the pad: a brine rink's
 var air_base := 8.0
 var air_c := 8.0
 var sim_t := 0.0
+var heatmap := false  # H: the ice coloured by height, blue low .. red high
+var _heat_t := 0.0  # seconds since the heatmap's range was read
 var _machine: Zambelli
 var _bay: ZamboniBay
 var _hose: FireHose
@@ -196,7 +199,7 @@ func _ready() -> void:
 		(
 			"[X] STATE  [ ] SNOW  [E] USE  [LMB] SPRAY  [RMB] CHIP  [WHEEL] ADJUST  "
 			+ "[W S A D] DRIVE  [TAB] EDGER BLADE  [T] CLOCK  [B] BODY  [V] MACHINE  "
-			+ "[CTRL] CROUCH  [F] FLY  [Z] ZOOM"
+			+ "[H] HEATMAP  [CTRL] CROUCH  [F] FLY  [Z] ZOOM"
 		)
 	)
 	_stream = _make_stream()
@@ -218,6 +221,12 @@ func _process(dt: float) -> void:
 	ice.thermal(sdt, slab_c, air_c)
 	if instant:
 		ice.set_now()
+	if heatmap:
+		# the range follows the ice: re-read every couple of seconds
+		_heat_t += dt
+		if _heat_t >= HEAT_REFRESH:
+			_heat_t = 0.0
+			ice.heatmap_refresh()
 	if _zam >= 0.0:
 		_zamboni_step(sdt)
 	elif _aboard:
@@ -305,7 +314,7 @@ func _process(dt: float) -> void:
 				slab_c,
 				air_c,
 				int(SCALES[scale_i]),
-				"   INSTANT FREEZE" if instant else "",
+				("   INSTANT FREEZE" if instant else "") + _heat_text(),
 				_clock(sim_t),
 				ice.wet_cells,
 				ice.dirty_count(),
@@ -683,7 +692,8 @@ func _inside_the_boards(p: Vector2, in_bay := false, margin := 0.1) -> Vector2:
 	if in_bay:
 		var bay_half := ZamboniBay.BAY_W / 2 - margin
 		q = Vector2(
-			clampf(p.x, RINK.x + BOARD_T + margin, pad_x1), clampf(p.y, mid - bay_half, mid + bay_half)
+			clampf(p.x, RINK.x + BOARD_T + margin, pad_x1),
+			clampf(p.y, mid - bay_half, mid + bay_half)
 		)
 	if throat.distance_squared_to(p) < q.distance_squared_to(p):
 		return throat
@@ -883,6 +893,20 @@ func _aim(cam: Camera3D = null) -> Variant:
 
 ## The Interactor takes LMB and RMB when something is looked at or held;
 ## on bare ice they pour and chip.
+## The heatmap on or off: the ice's colour by height, its range read now.
+func set_heatmap(on: bool) -> void:
+	heatmap = on
+	_heat_t = 0.0
+	ice.heatmap(on)
+
+
+func _heat_text() -> String:
+	if not heatmap:
+		return ""
+	var r := ice.height_range() / (0.001 * ice.height_scale)
+	return "   HEATMAP %.2f .. %.2f MM" % [r.x, r.y]
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if walker == null:
 		return
@@ -971,6 +995,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_T:
 				scale_i = (scale_i + 1) % SCALES.size()
 				hud.toast("CLOCK x%d" % int(SCALES[scale_i]))
+			KEY_H:
+				set_heatmap(not heatmap)
+				hud.toast(
+					"HEATMAP %s" % ("ON: BLUE LOW, GREEN MID, RED HIGH" if heatmap else "OFF")
+				)
 	elif event is InputEventMouseButton:
 		if not event.pressed:
 			if event.button_index == MOUSE_BUTTON_LEFT:
@@ -1513,6 +1542,27 @@ func _screenshot(path: String) -> void:
 		walker.global_position = ice.position + Vector3(BLUE_LINE - 7.0, 0.05, RINK.y / 2)
 		walker.face(-PI / 2)
 		walker.camera.rotation.x = -0.3
+	if args.has("--view=heat"):
+		# the heatmap over a sheet with a few passes, an edger lane and a gouge
+		for lane in 3:
+			var z := 3.0 + lane * MACHINE_W
+			ice.resurface(
+				PASS_X0,
+				PASS_X1,
+				z - MACHINE_W / 2,
+				z + MACHINE_W / 2,
+				0.8 + 0.3 * lane,
+				0.0,
+				0.0,
+				0.0
+			)
+		ice.edge_sweep(Vector2(4.0, 0.4), Vector2(RINK.x - 4.0, 0.4), 0.23, 3.0, 3.0, 0.015, 0.4)
+		ice.pour(Vector2(RINK.x / 2, RINK.y / 2), 2.0, 1.5)
+		set_heatmap(true)
+		walker.set_noclip(true)
+		walker.global_position = Vector3(-RINK.x / 2 - 6.0, 12.0, 0.0)
+		walker.face(-PI / 2)
+		walker.camera.rotation.x = -0.42
 	if args.has("--view=wide"):
 		# the whole sheet from above one end, after a few passes
 		for lane in 4:
@@ -2398,6 +2448,27 @@ func _self_test() -> void:
 	for step in 180:
 		_bay._process(1.0 / 60.0)
 	check.call(_bay.open == 0.0, "E again swings them shut")
+	# the heatmap: H colours the ice by height over the sheet's own range
+	var range_flat := ice.height_range()
+	ice.pour(Vector2(RINK.x / 2, RINK.y / 2), 1.0, 2.0)
+	ice.flush()
+	var heat_t0 := Time.get_ticks_usec()
+	var range0 := ice.height_range()
+	var heat_ms := (Time.get_ticks_usec() - heat_t0) / 1000.0
+	print("ice demo: height range read in %.1f ms" % heat_ms)
+	check.call(
+		range0.y > range_flat.y and range0.x == range_flat.x,
+		"a puddle raises the sheet's high point and not its low (%s -> %s)" % [range_flat, range0]
+	)
+	set_heatmap(true)
+	check.call(ice.material.get_shader_parameter("heatmap") == true, "H turns the heatmap on")
+	check.call(
+		ice.material.get_shader_parameter("heat_hi") > ice.material.get_shader_parameter("heat_lo"),
+		"... with the range on the material"
+	)
+	check.call(heat_ms < 150.0, "the range reads in under 150 ms (%.0f)" % heat_ms)
+	set_heatmap(false)
+	check.call(ice.material.get_shader_parameter("heatmap") == false, "H again turns it off")
 	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:
 		print("ice_demo test: all passed")

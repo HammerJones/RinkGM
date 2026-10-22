@@ -579,6 +579,12 @@ much sim time (14 s of sim per visit on a fully flooded NHL sheet at
 is the snowed-up scale: a patchy simplex field (drifts a couple of
 metres across) that the level fills from its hollows outward, so a
 quarter is a few drifts and the full scale covers the sheet.
+`heatmap(on)` draws the sheet by height alone: the lowest column dark
+blue, the midpoint green, the highest red, four even ramps between
+(blue, green, yellow, red). The range is `height_range()`, the low and
+high column top over the ice in mesh units, kept per chunk from its
+last whole build (a chunk patched in part is read again on the next
+call), so a read is a few milliseconds; `heatmap_refresh()` re-reads it.
 
 **The blade.** `resurface(x0, x1, z0, z1, film_mm, rag_wear, blade_mm,
 travel, spill, cut_mm)` is the resurfacer over a band: the blade at
@@ -688,8 +694,11 @@ display, and run as headless checks in CI (`--test=<name>`).
   the column's top and built-up ice under the dot while it sets from the
   edges in; T speeds the clock
   (x1, x10, x60); holding RMB chips gouges wherever you look; [ and ]
-  slide the snowed-up scale (`IceSheet.snow_level`) in tenths. Those
-  four (the state, the snow scale, the hose, the chip) are the only ice keys: all
+  slide the snowed-up scale (`IceSheet.snow_level`) in tenths; H is the
+  heatmap (the ice by height, blue low, green mid, red high, the range
+  in the readout and re-read every 2 s while it is on; `--view=heat`
+  is the sheet from above with passes, an edger lane and a puddle). Those
+  five (the state, the snow scale, the hose, the chip, the heatmap) are the only ice keys: all
   resurfacing is done from the machine's seat with its own controls
   (the pass key, the flood, blade, rag, instant-freeze and
   ice-over-paint keys are gone, at Sean's ask). The machine starts at
