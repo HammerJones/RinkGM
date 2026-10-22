@@ -43,6 +43,7 @@ WHITE = np.array([236.0, 236.0, 232.0])
 COND_DECK_Y = 0.42      # the conditioner is everything behind the rear wheels under this
 AUGER_FROM_COND = 0.20  # the horizontal auger's axis behind the conditioner's front wall
 BLADE_FROM_COND = 0.45  # the blade's edge behind it
+COND_LEFT_EXTRA = 0.152  # the conditioner 6 in wider on the operator's left (zambelli.gd COND_LEFT)
 AUGER_R = 0.15
 
 
@@ -215,6 +216,14 @@ def main() -> None:
     auger_z = cond_z0 + AUGER_FROM_COND
     opening = (np.abs(ZC - auger_z) <= AUGER_R + 0.04) & (YC >= 0.2) & (XC > 0.12) & (XC < ext[0] - 0.12)
     csolid &= ~opening
+    # 6 in wider on the operator's left (the low-x side), at Sean's ask,
+    # for the corners: the end plate kept, the section just inside it
+    # carried out that far
+    n_extra = int(round(COND_LEFT_EXTRA / vm_c))
+    x_end = int(np.argmax(csolid.any(axis=(1, 2))))
+    cap, inner = slice(x_end, x_end + 3), slice(x_end + 3, x_end + 4)
+    csolid = np.concatenate([csolid[cap], np.repeat(csolid[inner], n_extra, axis=0), csolid[x_end + 3:]], axis=0)
+    cmean = np.concatenate([cmean[cap], np.repeat(cmean[inner], n_extra, axis=0), cmean[x_end + 3:]], axis=0)
     cscene, _ = to_scene(cmean, csolid, vm_c, [])
     geo = cscene.write(os.path.join(VOX_DIR, "zambelli_conditioner.vox"), hollow=False)
     manifest("zambelli_conditioner", "Conditioner", geo, vm_c, 400.0,

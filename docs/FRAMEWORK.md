@@ -500,7 +500,12 @@ it measurably higher, and the new surface is fresh frozen. Liquid water
 flows: each visit a wet cell sends part of the head difference (ice plus
 crust plus water minus gouge) to each lower neighbour, all but a 0.2 mm
 film that clings to the ice, and water that has begun to set is slush
-and stays put. So a pour spreads into a pool, runs downhill, fills a
+and stays put. A film under 1 mm holds its edge on level ice
+(surface tension): it runs only where the ice itself falls away, a
+pool deeper than that spreads. Without that the flood crept forward
+over the dry cut ahead of the pipe at the thermal walk's visits and
+left the film 17 % thinner in bands across the lane, the cross waves
+in the gloss. So a pour spreads into a pool, runs downhill, fills a
 gouge (when it sets the trench is gone but a pale scar stays visible)
 and pins as a film at its rim. Water on snow is slush, wet grey and half glossy, and
 sets with the snow into a rough crust of peaks.
@@ -676,15 +681,22 @@ display, and run as headless checks in CI (`--test=<name>`).
   the paint, snow and water in millimetres. Look at the operator's seat
   and E puts you in it; E with nothing under the dot steps you off
   beside the machine. In the seat the
-  keys drive it: W drives forward, S brakes and, once stopped, backs
-  up, A and D steer (a bicycle model pivoting on the rear axle, 3.5 m/s
-  flat out, 32 degrees of lock), and the drive select lever on the
-  console follows (forward, neutral, reverse); with the
+  keys drive it: W is the gas pedal and moves the machine the way the
+  drive select lever on the console is set (F, N or R), S is always the
+  brake, A and D steer (a bicycle model pivoting on the rear axle,
+  3.5 m/s flat out, 32 degrees of lock); with the
   conditioner down the blade resurfaces whatever it sweeps on any
   heading (`IceSheet.resurface_sweep()`, the swept quad's columns binned
   across the blade for the auger), the flood pipe laying its film
-  0.61 m behind it (`lay_film_sweep()`), and the boards stop the
-  machine. Every column the blade or the pipe touched is on screen the
+  0.61 m behind it (`lay_film_sweep()`). The boards act as the bumper's
+  roller does on a real machine (`_along_the_boards()`): a corner that
+  would go past them, on the straights or round the corner arcs, is
+  pushed back inside and the machine slides along, losing some speed
+  to the rub; only a run straight at them stops it. The conditioner is
+  6 in wider on the operator's left than the bought model
+  (`Zambelli.COND_LEFT`, the blade from `BLADE_X0` to `BLADE_X1`,
+  2.46 m; the propgen carries the end section out that far), so the
+  left edge reaches the boards in a corner. Every column the blade or the pipe touched is on screen the
   same frame (see the state textures above). The blade's level is carried along the
   cut (`_follow()`): the handwheel's setting below the ice the
   conditioner's runners ride, read 0.8 m ahead of the blade
@@ -703,8 +715,11 @@ display, and run as headless checks in CI (`--test=<name>`).
   auger's and the bin's (the augers' alike, the other two alike), drive
   select ahead on the left, the blade's handwheel lying on its column
   at the rear, the flood and wash valves either side of it (a post with
-  a handle each); the stalk with the ball beside the levers, which did
-  nothing, is left off. The script then tidies the deck to smooth blue
+  a handle each), and the stalk with the ball beside the levers: the
+  vertical auger's plunger, which the operator pushes down to drive a
+  plate across the auger's mouth and break up packed snow (not a
+  mechanic yet). The levers' aim boxes are the width of a lever, so the
+  four select separately. The script then tidies the deck to smooth blue
   sheet metal, the model's gauges and pads gone or painted blue, for
   the diagrams to come later, and despeckles the body: floating dust
   (components under 50 voxels off the body) and, in the cab above the
@@ -737,10 +752,12 @@ display, and run as headless checks in CI (`--test=<name>`).
   so the snow's path is in view; B shows the whole machine, V puts you
   beside it, whole. The snow is
   simulated: `IceSheet.resurface()` reports the millimetres it shaved per
-  row (`shave_rows`), the demo bins those across the 2.31 m blade (the
-  bought model's conditioner width, `Zambelli.COND_W`) and feeds
+  row (`shave_rows`), the demo bins those across the 2.46 m blade
+  (`Zambelli.BLADE_W`) and feeds
   them to the machine as cubic metres of ice; they land in the trough in
-  front of the blade as snow (2.5 times the room), drawn as a roll along
+  front of the blade as snow (2.5 times the room, down to 1.3 with the
+  wash valve open: wet shavings are slush and pack down, so the trough,
+  the lift and the pile all carry less), drawn as a roll along
   the auger whose cross-section holds each bin's volume; the horizontal
   auger walks each half toward the middle at its flights' feed rate
   (7 rad/s, 26 cm pitch); what reaches the middle piles at the vertical

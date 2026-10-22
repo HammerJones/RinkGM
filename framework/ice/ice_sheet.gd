@@ -40,6 +40,7 @@ const GOUGE_FULL := 4.0  # mm that reads as the deepest gouge
 const FREEZE_K := 0.00066  # per second per degree below zero at 1 mm (twice the sim's IceSlab, at Sean's ask)
 const ICE_PER_WATER := 1.09
 const FILM_PIN := 0.2  # mm of water that clings to the ice and never runs
+const POOL_RUNS := 1.0  # mm of water that is a pool, spreading over level ice; less holds its edge
 const FLOW_K := 0.45  # share of the head difference that moves a visit
 const FLAT_EPS := 0.00002  # m of height range a chunk may have and still be one quad
 const DEPTH_FULL := 64.0  # mm the depth texel spans
@@ -821,6 +822,7 @@ func _wet_scan() -> PackedInt32Array:
 
 func _flow(i: int, il: int, ir: int, iu: int, id: int, liquid: float) -> void:
 	var here := ice[i] + crust[i] + water[i] - gouge[i]
+	var ground := ice[i] + crust[i] - gouge[i]
 	var spare := liquid - FILM_PIN
 	for nb in [il, ir, iu, id]:
 		if nb == i or spare <= 0.0:
@@ -828,6 +830,11 @@ func _flow(i: int, il: int, ir: int, iu: int, id: int, liquid: float) -> void:
 		var diff := here - (ice[nb] + crust[nb] + water[nb] - gouge[nb])
 		if diff <= 0.06:
 			continue  # level enough: it sits (no sloshing back and forth)
+		if liquid <= POOL_RUNS and ground - (ice[nb] + crust[nb] - gouge[nb]) <= 0.06:
+			# a film holds its edge on level ice (surface tension): the flood
+			# does not creep out over the dry cut ahead of the pipe; a pool
+			# spreads, and any water runs where the ice falls away
+			continue
 		var give := minf(diff * 0.5 * FLOW_K, spare * 0.25)
 		water[i] -= give
 		spare -= give

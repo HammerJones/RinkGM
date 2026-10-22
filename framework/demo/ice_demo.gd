@@ -55,8 +55,8 @@ const STATES := [
 ]
 const SCALES := [1.0, 10.0, 60.0]
 const RAGS := ["NEW", "USED", "WORN"]
-const FLOOD_FULL_MM := 1.2  # the film the flood valve lays wide open
-const MACHINE_W := Zambelli.COND_W  # the conditioner's width: the blade and the flood pipe span it
+const FLOOD_FULL_MM := 1.0  # the film the flood valve lays wide open: a litre a square metre, and it holds its edge
+const MACHINE_W := Zambelli.BLADE_W  # the blade's width: the conditioner plus 6 in on the left
 const FLOOD_BEHIND := Zambelli.WALL_Z  # the flood pipe this far behind the blade: a strip is cut dry, then flooded
 const MACHINE_SPEED := 2.0  # m/s
 const RUNNER_M := 0.8  # the conditioner's runners: how far ahead of the blade they ride
@@ -390,7 +390,7 @@ func _start_pass() -> void:
 
 func _begin_pass(z: float) -> void:
 	_zam = PASS_X0
-	pass_z = clampf(z, MACHINE_W / 2, RINK.y - MACHINE_W / 2)
+	pass_z = clampf(z, -Zambelli.BLADE_X0, RINK.y - Zambelli.BLADE_X1)
 	shaved_mm = 0.0
 	_level = NAN
 	_machine.position = ice.position + Vector3(_zam, 0.0, pass_z)
@@ -406,8 +406,9 @@ func _zamboni_step(sdt: float) -> void:
 	_zam += sdt * MACHINE_SPEED
 	var x1 := minf(_zam, PASS_X1)
 	var film := FLOOD_FULL_MM * _machine.flood
-	var z0 := pass_z - MACHINE_W / 2
-	var z1 := pass_z + MACHINE_W / 2
+	# the machine faces +X: its left (BLADE_X0) is the sheet's -Z
+	var z0 := pass_z + Zambelli.BLADE_X0
+	var z1 := pass_z + Zambelli.BLADE_X1
 	var ahead: Array[Vector2] = [
 		Vector2(x1, z0), Vector2(x1 + RUNNER_M, z0), Vector2(x1 + RUNNER_M, z1), Vector2(x1, z1)
 	]
@@ -440,7 +441,7 @@ func _shavings_by_bin() -> PackedFloat32Array:
 	var bins := PackedFloat32Array()
 	bins.resize(Zambelli.BINS)
 	bins.fill(0.0)
-	var z0 := pass_z - MACHINE_W / 2
+	var z0 := pass_z + Zambelli.BLADE_X0
 	var cell_m3 := ice.cell * ice.cell * 0.001  # mm of a cell -> m³
 	for r in ice.shave_rows.size():
 		var mm := ice.shave_rows[r]
@@ -471,34 +472,16 @@ func _follow(ahead: Array[Vector2], swept: Array[Vector2], dist: float) -> void:
 		_level = move_toward(_level, target, LEVEL_RATE_MM * dist)
 
 
-## A frame at the wheel: W drives forward, S brakes and, once stopped,
-## backs up, A and D steer; the drive select lever on the console
-## follows (forward, neutral, reverse). The conditioner resurfaces
-## whatever the blade sweeps, on any heading; the boards stop the
-## machine.
+## A frame at the wheel: W is the gas pedal and moves the machine the
+## way the drive select lever on the console is set (F, N or R), S is
+## always the brake, A and D steer. The conditioner resurfaces whatever
+## the blade sweeps, on any heading; the boards push the nose back in
+## and it slides along them.
 func _drive(sdt: float) -> void:
-	var fwd := Input.is_key_pressed(KEY_W)
-	var back := Input.is_key_pressed(KEY_S)
-	var pedal := 0.0
-	var brake := 0.0
-	if fwd and not back:
-		if _machine.speed < -0.05:
-			brake = 1.0
-		else:
-			_machine.drive = 0
-			pedal = 1.0
-	elif back and not fwd:
-		if _machine.speed > 0.05:
-			brake = 1.0
-		else:
-			_machine.drive = 2
-			pedal = 1.0
-	elif _machine.speed == 0.0:
-		_machine.drive = 1
 	_drive_with(
 		sdt,
-		pedal,
-		brake,
+		1.0 if Input.is_key_pressed(KEY_W) else 0.0,
+		1.0 if Input.is_key_pressed(KEY_S) else 0.0,
 		(
 			(1.0 if Input.is_key_pressed(KEY_A) else 0.0)
 			- (1.0 if Input.is_key_pressed(KEY_D) else 0.0)
@@ -511,12 +494,12 @@ func _drive_with(sdt: float, pedal: float, brake: float, turn: float) -> void:
 	var sweep := _machine.drive_step(sdt, pedal, brake, turn)
 	if sweep.is_empty():
 		return
-	if not _on_the_sheet():
+	if not _along_the_boards():
 		_machine.global_transform = before
-		_machine.speed = 0.0
-		if hud:
-			hud.toast("THE BOARDS")
 		return
+	# the blade's edge where the machine is now, after any push off the boards
+	sweep[2] = _machine.to_global(Vector3(Zambelli.BLADE_X0, 0.0, 0.0))
+	sweep[3] = _machine.to_global(Vector3(Zambelli.BLADE_X1, 0.0, 0.0))
 	if not _machine.is_down():
 		_level = NAN  # the conditioner is up: the next cut finds its own level
 		return
@@ -562,18 +545,56 @@ func _drive_with(sdt: float, pedal: float, brake: float, turn: float) -> void:
 		_machine.feed(bins)
 
 
-## Whether the machine's four corners are on the ice, clear of the boards.
-func _on_the_sheet() -> bool:
+## The boards, with the bumper's roller: a corner of the machine that
+## would go past them (the straights, or the corner arcs) is pushed back
+## in and the machine slides along, losing some speed to the rub; only
+## a run straight at them stops it. Returns false for that stop.
+func _along_the_boards() -> bool:
+	var push := Vector2.ZERO
 	for c: Vector3 in [
-		Vector3(-1.2, 0.0, -Zambelli.BLADE_Z - 0.1),
-		Vector3(1.2, 0.0, -Zambelli.BLADE_Z - 0.1),
-		Vector3(-1.2, 0.0, 0.85),
-		Vector3(1.2, 0.0, 0.85)
+		Vector3(Zambelli.BLADE_X0 - 0.05, 0.0, -Zambelli.BLADE_Z - 0.1),
+		Vector3(Zambelli.BLADE_X1 + 0.05, 0.0, -Zambelli.BLADE_Z - 0.1),
+		Vector3(Zambelli.BLADE_X0 - 0.05, 0.0, 0.85),
+		Vector3(Zambelli.BLADE_X1 + 0.05, 0.0, 0.85)
 	]:
 		var p := _local(_machine.to_global(c))
-		if p.x < 0.1 or p.x > RINK.x - 0.1 or p.y < 0.1 or p.y > RINK.y - 0.1:
-			return false
+		var d := _inside_the_boards(p) - p
+		if absf(d.x) > absf(push.x):
+			push.x = d.x
+		if absf(d.y) > absf(push.y):
+			push.y = d.y
+	if push == Vector2.ZERO:
+		return true
+	var fwd := -_machine.global_transform.basis.z
+	var going := Vector2(fwd.x, fwd.z) * signf(_machine.speed)
+	if push.normalized().dot(going) < -0.7:
+		_machine.speed = 0.0
+		if hud:
+			hud.toast("THE BOARDS")
+		return false
+	_machine.global_position += Vector3(push.x, 0.0, push.y)
+	_machine.speed *= 0.6
 	return true
+
+
+## The nearest point to `p` (sheet metres) a hand's width inside the
+## boards: the straights, and the corner arcs of CORNER_R.
+func _inside_the_boards(p: Vector2) -> Vector2:
+	const M := 0.1
+	var q := Vector2(clampf(p.x, M, RINK.x - M), clampf(p.y, M, RINK.y - M))
+	var cx := (
+		CORNER_R if q.x < CORNER_R else (RINK.x - CORNER_R if q.x > RINK.x - CORNER_R else -1.0)
+	)
+	var cy := (
+		CORNER_R if q.y < CORNER_R else (RINK.y - CORNER_R if q.y > RINK.y - CORNER_R else -1.0)
+	)
+	if cx < 0.0 or cy < 0.0:
+		return q
+	var c := Vector2(cx, cy)
+	var v := q - c
+	if v.length() > CORNER_R - M:
+		q = c + v.normalized() * (CORNER_R - M)
+	return q
 
 
 ## The resurfacer (framework/demo/zambelli.gd), parked by the end boards
@@ -669,8 +690,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_E:
 				if _aimed >= 0 and _machine.controls.kind_of(_aimed) == ZambelliControls.Kind.SEAT:
 					_at_the_controls()
-					hud.toast(
-						"IN THE SEAT: [W] FORWARD  [S] BRAKE, REVERSE  [A D] STEER  [E] GET OUT"
+					(
+						hud
+						. toast(
+							"IN THE SEAT: [W] GAS (DRIVE SELECT F N R)  [S] BRAKE  [A D] STEER  [E] GET OUT"
+						)
 					)
 				elif _aimed >= 0:
 					_machine.controls.toggle(_aimed)
@@ -1262,7 +1286,7 @@ func _self_test() -> void:
 	# water flows: a pour spreads into a pool and leaves a film at its rim
 	_set_state(1)
 	ice.flush()
-	ice.pour(Vector2(16.0, 7.0), 0.3, 6.0)
+	ice.pour(Vector2(16.0, 7.0), 0.4, 7.0)  # half a litre: a pool, which spreads
 	var pc := ice.cell_at(Vector2(16.0, 7.0))
 	var pi := ice.index(pc.x, pc.y)
 	var deep0 := ice.water[pi]
@@ -1567,8 +1591,8 @@ func _self_test() -> void:
 			lane_lo = minf(lane_lo, z * ice.cell)
 			lane_hi = maxf(lane_hi, (z + 1) * ice.cell)
 	check.call(
-		absf((lane_hi - lane_lo) - Zambelli.COND_W) < 0.06,
-		"the lane is the conditioner's width (%.2f m)" % (lane_hi - lane_lo)
+		absf((lane_hi - lane_lo) - Zambelli.BLADE_W) < 0.06,
+		"the lane is the blade's width (%.2f m)" % (lane_hi - lane_lo)
 	)
 	# a tile's apron holds the next tile's edge cells, so the textures read
 	# the same on both sides of a tile's edge (no seam every 6.4 m)

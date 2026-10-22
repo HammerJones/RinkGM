@@ -40,7 +40,7 @@ const CONSOLE: Array[Dictionary] = [
 		"foot": Vector3(-0.339, 1.660, 0.169),
 		"offset": Vector3(0.0, 0.0, -0.008),
 		"axis": "x",
-		"aim": Vector3(0.1, 0.3, 0.16),
+		"aim": Vector3(0.05, 0.3, 0.16),
 	},
 	{
 		"id": "zambelli_lever_cond",
@@ -49,7 +49,7 @@ const CONSOLE: Array[Dictionary] = [
 		"foot": Vector3(-0.285, 1.660, 0.180),
 		"offset": Vector3(0.0, 0.0, -0.039),
 		"axis": "x",
-		"aim": Vector3(0.1, 0.3, 0.16),
+		"aim": Vector3(0.05, 0.3, 0.16),
 	},
 	{
 		"id": "zambelli_lever",
@@ -58,7 +58,7 @@ const CONSOLE: Array[Dictionary] = [
 		"foot": Vector3(-0.161, 1.660, 0.169),
 		"offset": Vector3(0.0, 0.0, -0.008),
 		"axis": "x",
-		"aim": Vector3(0.1, 0.3, 0.16),
+		"aim": Vector3(0.05, 0.3, 0.16),
 	},
 	{
 		"id": "zambelli_lever_cond",
@@ -67,7 +67,7 @@ const CONSOLE: Array[Dictionary] = [
 		"foot": Vector3(-0.107, 1.660, 0.180),
 		"offset": Vector3(0.0, 0.0, -0.039),
 		"axis": "x",
-		"aim": Vector3(0.1, 0.3, 0.16),
+		"aim": Vector3(0.05, 0.3, 0.16),
 	},
 	{
 		"id": "zambelli_drive",
@@ -77,6 +77,15 @@ const CONSOLE: Array[Dictionary] = [
 		"offset": Vector3(0.0, 0.0, 0.056),
 		"axis": "x",
 		"aim": Vector3(0.12, 0.24, 0.2),
+	},
+	{
+		"id": "zambelli_stalk",  # the vertical auger's plunger: no mechanic yet
+		"kind": -1,
+		"name": "",
+		"foot": Vector3(-0.014, 1.660, 0.180),
+		"offset": Vector3.ZERO,
+		"axis": "",
+		"aim": Vector3.ZERO,
 	},
 	{
 		"id": "zambelli_handwheel",
@@ -124,7 +133,11 @@ const COND_Z0 := 3.069  # the conditioner's front wall
 const AUGER_Z := 3.269
 const AUGER_R := 0.15
 const AUGER_L := 2.0
-const COND_W := 2.308  # the conditioner's width, from the bought model: the blade and the pipe span it
+const COND_W := 2.308  # the conditioner's width, from the bought model
+const COND_LEFT := 0.152  # the conditioner 6 in wider on the operator's left (Sean's ask): the corners
+const BLADE_X0 := -COND_W / 2 - COND_LEFT  # the blade's and the pipe's left end
+const BLADE_X1 := COND_W / 2  # ... and right end
+const BLADE_W := COND_W + COND_LEFT
 const COND_H := 0.42
 const COND_LIFT := 0.12  # the conditioner's travel, up
 const COND_TRAVEL_S := 5.5
@@ -152,7 +165,9 @@ const SEAT := Vector3(-0.5, 1.23, 0.7)  # where the operator's feet go, seated a
 # the flood water: a pipe along the top of the conditioner's back wall,
 # holes every two and a half inches, the streams down the wall to the towel
 const WALL_Z := 0.612  # just behind the back wall's rear face, from the blade
-const PIPE_L := COND_W - 0.1
+const PIPE_L := BLADE_W - 0.1
+const PIPE_X0 := BLADE_X0 + 0.05
+const SLUSH_EXPAND := 1.3  # wet shavings: the wash water turns the snow to slush, which packs down
 const PIPE_R := 0.022
 const PIPE_Y := 0.06  # the pipe's axis over the ice, at the bottom of the back wall
 const STREAM_GAP := 0.0635
@@ -248,7 +263,7 @@ func _ready() -> void:
 	_cond = Node3D.new()
 	_cond.name = "Conditioner"
 	var cond := _part("zambelli_conditioner")
-	cond.position = Vector3(0.0, 0.0, COND_PIVOT_Z - BLADE_Z)
+	cond.position = Vector3(-COND_LEFT / 2, 0.0, COND_PIVOT_Z - BLADE_Z)  # the prop is centred on itself
 	_cond.add_child(cond)
 	_make_flood(_cond)
 	add_child(_cond)
@@ -309,7 +324,7 @@ func feed(ice_m3: PackedFloat32Array) -> void:
 	var any := false
 	for b in n:
 		if ice_m3[b] > 0.0:
-			trough[b] += ice_m3[b] * SNOW_EXPAND
+			trough[b] += ice_m3[b] * lerpf(SNOW_EXPAND, SLUSH_EXPAND, wash)
 			any = true
 	if any:
 		_snow_dirty = true
@@ -323,7 +338,7 @@ func feed(ice_m3: PackedFloat32Array) -> void:
 ## with its lever on.
 func _carry(dt: float) -> void:
 	var feed_m := AUGER_RAD_S / TAU * AUGER_PITCH * dt  # metres the flights advance
-	var bin_w := AUGER_L / BINS
+	var bin_w := BLADE_W / BINS
 	var frac := minf(feed_m / bin_w, 1.0) if auger_on else 0.0
 	var half := BINS / 2
 	var moved := false
@@ -473,7 +488,7 @@ func _make_rig() -> Node3D:
 ## middle a mound, the tank's level a slab. The roll's mesh is rebuilt
 ## when the snow moves: BINS stations of seven vertices.
 func _draw_snow() -> void:
-	var bin_w := AUGER_L / BINS
+	var bin_w := BLADE_W / BINS
 	var zc := AUGER_Z - BLADE_Z
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -492,7 +507,7 @@ func _draw_snow() -> void:
 		var r := 0.0
 		if v > 0.0:
 			r = minf(AUGER_R + 0.04 + sqrt(2.0 * v / bin_w / PI), ROLL_R)
-		var x := -AUGER_L / 2 + b * bin_w
+		var x := BLADE_X0 + b * bin_w
 		var ring := PackedVector3Array()
 		for k in segs + 1:  # round the auger's axis, cut off at the ice
 			var a := PI - TAU * k / segs
@@ -569,9 +584,9 @@ func _make_flood(parent: Node3D) -> void:
 	pipe.mesh = cyl
 	pipe.material_override = pipe_mat
 	pipe.rotation.z = PI / 2
-	pipe.position = Vector3(0.0, PIPE_Y, WALL_Z + PIPE_R)
+	pipe.position = Vector3(PIPE_X0 + PIPE_L / 2, PIPE_Y, WALL_Z + PIPE_R)
 	parent.add_child(pipe)
-	for x: float in [-PIPE_L / 2 - 0.01, 0.0, PIPE_L / 2 + 0.01]:
+	for x: float in [PIPE_X0 - 0.01, PIPE_X0 + PIPE_L / 2, PIPE_X0 + PIPE_L + 0.01]:
 		var br := MeshInstance3D.new()
 		var bm := BoxMesh.new()
 		bm.size = Vector3(0.03, 0.05, 0.05)
@@ -613,7 +628,7 @@ func _draw_flood(dt: float) -> void:
 	var bottom := 0.002
 	var r := 0.0025 + 0.005 * flood
 	for i in n:
-		var x := -PIPE_L / 2 + i * STREAM_GAP
+		var x := PIPE_X0 + i * STREAM_GAP
 		var waver := 0.004 * sin(_ripple + i * 1.7) * (1.2 - flood)
 		var h := top - bottom
 		var t := Transform3D(
@@ -670,7 +685,7 @@ func _make_hull() -> AnimatableBody3D:
 	h.collision_mask = 0
 	for box: Array in [
 		[Vector3(2.3, 2.2, 4.28), Vector3(0.0, BODY_Y0 + 1.1, BODY_PIVOT_Z - BLADE_Z)],
-		[Vector3(2.2, 0.5, 0.9), Vector3(0.0, 0.25, 0.3)],
+		[Vector3(BLADE_W, 0.5, 0.9), Vector3((BLADE_X0 + BLADE_X1) / 2, 0.25, 0.3)],
 	]:
 		var cs := CollisionShape3D.new()
 		var bs := BoxShape3D.new()
@@ -702,8 +717,8 @@ func drive_step(dt: float, pedal: float, brake: float, turn: float) -> Array[Vec
 	if absf(speed) < 0.001:
 		speed = 0.0
 		return []
-	var a0 := to_global(Vector3(-COND_W / 2, 0.0, 0.0))
-	var a1 := to_global(Vector3(COND_W / 2, 0.0, 0.0))
+	var a0 := to_global(Vector3(BLADE_X0, 0.0, 0.0))
+	var a1 := to_global(Vector3(BLADE_X1, 0.0, 0.0))
 	var fwd := -global_transform.basis.z
 	var rear := global_position + fwd * (BLADE_Z - REAR_AXLE)
 	var ds := speed * dt
@@ -712,8 +727,8 @@ func drive_step(dt: float, pedal: float, brake: float, turn: float) -> Array[Vec
 		rotate_y(ds / WHEELBASE * tan(steer))
 	fwd = -global_transform.basis.z
 	global_position = rear - fwd * (BLADE_Z - REAR_AXLE)
-	var b0 := to_global(Vector3(-COND_W / 2, 0.0, 0.0))
-	var b1 := to_global(Vector3(COND_W / 2, 0.0, 0.0))
+	var b0 := to_global(Vector3(BLADE_X0, 0.0, 0.0))
+	var b1 := to_global(Vector3(BLADE_X1, 0.0, 0.0))
 	return [a0, a1, b0, b1]
 
 
