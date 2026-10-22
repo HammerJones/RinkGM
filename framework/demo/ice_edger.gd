@@ -1,12 +1,13 @@
 class_name IceEdger
 extends Node3D
 ## The ice edger: a walk-behind machine (Sean's uploaded mower model
-## voxelised as it is, art/props/ice_edger.vox) with a spinning disc
+## voxelised, art/props/ice_edger.vox, turned square to its wheels: the
+## model sits yawed 31 degrees in its scene) with a spinning disc
 ## blade under its deck tilted to the left, so only the disc's left half
 ## cuts, its rim flush with the machine's left side: set that side
 ## against the boards and push, and the ice along them comes down where
-## the resurfacer cannot reach. The model's handle is a loop off the
-## right of the deck; the crank is clamped to its right end. You stand
+## the resurfacer cannot reach. The crank is clamped to the right end of
+## the model's handle. You stand
 ## square behind the deck to push (`HANDLES`), and your heading follows
 ## the machine as it turns. Look at the handle and E takes it: W pushes,
 ## S pulls back, A and D turn it with your weight (slower with the blade
@@ -22,8 +23,8 @@ extends Node3D
 ## its right as snow. It lives in the bay.
 
 const BLADE_R := 0.23  # a 46 cm disc
-const BLADE_Z := -0.15  # the disc's centre ahead of the machine's middle
-const BLADE_X := -0.40  # ... and to its left: the rim flush with the left wheels (the deck is centred at -0.11, the handle off its right)
+const BLADE_Z := -0.30  # the disc's centre under the deck, between the wheels
+const BLADE_X := -0.12  # ... and to its left: the rim just inside the deck's left edge
 const TILT := deg_to_rad(2.5)  # the disc leaning left (Sean: 4 was a bit much)
 const ARC_STEP := 0.05  # metres of travel between arcs
 const ARC_W := 0.035
@@ -38,12 +39,12 @@ const TURN_RATE := 0.8  # rad/s with the blade up
 const TURN_RATE_CUT := 0.35  # rad/s with the blade in the ice
 const THROW := 1.2  # metres to the right of the disc the shavings land (Sean: further, about 4 ft)
 const THROW_W := 0.6
-const CHUTE := Vector3(0.50, 0.12, BLADE_Z)  # the deck's right side, where the shavings fly out
+const CHUTE := Vector3(0.37, 0.12, BLADE_Z)  # the deck's right side, where the shavings fly out
 const CHUTE_UP := deg_to_rad(28.0)  # the throw's elevation
 const SNOW_EXPAND := 2.5
-const HANDLES := Vector3(-0.1, 0.05, 1.5)  # where you stand to push: square behind the deck
-const HANDLE_AT := Vector3(0.4, 0.95, 0.65)  # the model's grip, for the aim
-const CRANK_AT := Vector3(0.50, 1.04, 0.64)  # clamped to the grip's right end, its face toward you
+const HANDLES := Vector3(0.0, 0.05, 1.35)  # where you stand to push: square behind the handle
+const HANDLE_AT := Vector3(0.0, 0.95, 0.65)  # the model's grip, for the aim
+const CRANK_AT := Vector3(0.20, 1.02, 0.78)  # clamped to the grip's right end, its face toward you
 const TAKE_REACH := 2.4
 const SPIN := 120.0  # rad/s, for the look
 
@@ -137,7 +138,7 @@ func _ready() -> void:
 	hull.collision_mask = 0
 	var cs := CollisionShape3D.new()
 	var bs := BoxShape3D.new()
-	bs.size = Vector3(0.7, 1.0, 1.7)
+	bs.size = Vector3(0.75, 1.0, 1.75)
 	cs.shape = bs
 	cs.position = Vector3(0.0, 0.5, 0.0)
 	hull.add_child(cs)
@@ -193,7 +194,7 @@ func aimed(origin: Vector3, dir: Vector3) -> bool:
 
 ## True when the view line meets the engine on the deck within reach.
 func engine_aimed(origin: Vector3, dir: Vector3) -> bool:
-	return _hits(origin, dir, Vector3(0.0, 0.55, -0.15), 0.42)
+	return _hits(origin, dir, Vector3(0.0, 0.45, -0.25), 0.42)
 
 
 func toggle_engine() -> void:

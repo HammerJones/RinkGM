@@ -826,12 +826,13 @@ display, and run as headless checks in CI (`--test=<name>`).
   `--view=spray --pattern=0..1` the hose at work.
   **The edger** (`framework/demo/ice_edger.gd`, `IceEdger`): a
   walk-behind machine (Sean's uploaded mower model's intact parts,
-  art/props/ice_edger.vox at 1 cm, turned handle-back and scaled to a
-  push edger; its handle is a loop off the right of the deck, kept as
-  it is at Sean's ask) with a 46 cm disc under its deck tilted 2.5
-  degrees to the left, its rim flush with the machine's left side
-  (`BLADE_X`), and the crank (primitives) clamped to the right end of
-  the handle's grip; it parks in the bay. E on the
+  art/props/ice_edger.vox at 1 cm, scaled to a push edger and turned
+  square to its wheels: the model sits yawed 31 degrees in its scene,
+  which had it pushed crabwise until the bake squared it by the deck's
+  principal axis) with a 46 cm disc under its deck tilted 2.5 degrees
+  to the left, its rim just inside the machine's left side (`BLADE_X`),
+  and the crank (primitives) clamped to the right end of the handle's
+  grip; it parks in the bay. E on the
   engine starts or stops it, and the blade only cuts with it running.
   Look at the handle and E takes it: you stand square behind it
   (`HANDLES`), your heading follows the machine as it turns and the

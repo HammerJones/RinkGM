@@ -134,8 +134,10 @@ const AUGER_Z := 3.269
 const AUGER_R := 0.15
 const AUGER_L := 2.0
 const COND_W := 2.308  # the conditioner's width, from the bought model
-const COND_LEFT := 0.254  # the conditioner 10 in wider on the operator's left (Sean's asks: 6 in, then 4 more): the corners
-const COND_RIGHT := 0.051  # ... and 2 in on the right
+# the conditioner wider than the bought model, for the corners: 10 in on the
+# operator's left (Sean's asks: 6 in, then 4 more) and 2 in on the right
+const COND_LEFT := 0.254
+const COND_RIGHT := 0.051
 const BLADE_X0 := -COND_W / 2 - COND_LEFT  # the blade's and the pipe's left end
 const BLADE_X1 := COND_W / 2 + COND_RIGHT  # ... and right end
 const BLADE_W := COND_W + COND_LEFT + COND_RIGHT

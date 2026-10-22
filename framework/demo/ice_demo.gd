@@ -62,7 +62,7 @@ const MACHINE_W := Zambelli.BLADE_W  # the blade's width: the conditioner plus 6
 const FLOOD_BEHIND := Zambelli.WALL_Z  # the flood pipe this far behind the blade: a strip is cut dry, then flooded
 const MACHINE_SPEED := 2.0  # m/s
 const EDGER_LOOK := deg_to_rad(50.0)  # how far the head turns off the edger's line while pushing
-const EDGER_SIDE := 0.52  # the edger's left side this far in from the boards when set against them
+const EDGER_SIDE := 0.42  # the edger's left side this far in from the boards when set against them
 const SPRAY_CELLS := 2500  # columns the hose pours a frame, at most: the cone in strips
 const RUNNER_M := 0.8  # the conditioner's runners: how far ahead of the blade they ride
 const LEVEL_RATE_MM := 1.0  # the most the blade's level moves per metre of travel
@@ -799,10 +799,10 @@ func _push_with(sdt: float, push: float, turn: float) -> void:
 	var in_bay := _local(_edger.global_position).x > RINK.x
 	var shove := Vector2.ZERO
 	for c: Vector3 in [
-		Vector3(-0.36, 0.0, -0.75),
-		Vector3(0.36, 0.0, -0.75),
-		Vector3(-0.36, 0.0, 0.95),
-		Vector3(0.36, 0.0, 0.95)
+		Vector3(-0.38, 0.0, -0.85),
+		Vector3(0.38, 0.0, -0.85),
+		Vector3(-0.38, 0.0, 0.9),
+		Vector3(0.38, 0.0, 0.9)
 	]:
 		var p := _local(_edger.to_global(c))
 		var d := _inside_the_boards(p, in_bay) - p
@@ -2198,8 +2198,8 @@ func _self_test() -> void:
 	check.call(
 		is_equal_approx(ice.thickness_at(lane), 25.0), "the engine off, the blade down cuts nothing"
 	)
-	var eng_eye: Vector3 = _edger.to_global(Vector3(-0.1, 1.5, 1.6))
-	var eng_dir: Vector3 = (_edger.to_global(Vector3(0.0, 0.55, -0.15)) - eng_eye).normalized()
+	var eng_eye: Vector3 = _edger.to_global(Vector3(0.0, 1.5, 1.6))
+	var eng_dir: Vector3 = (_edger.to_global(Vector3(0.0, 0.45, -0.25)) - eng_eye).normalized()
 	check.call(
 		_edger.engine_aimed(eng_eye, eng_dir), "the engine is under the dot from the handles"
 	)
