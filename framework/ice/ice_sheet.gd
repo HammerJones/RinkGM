@@ -56,7 +56,11 @@ var base_mm := 25.0
 ## Vertical exaggeration of the heightfield (1 = true millimetres).
 var height_scale := 4.0
 ## How long a frame may spend uploading and re-meshing dirty chunks.
-var budget_ms := 3.0
+var budget_ms := 6.0
+## Where the eye is on the sheet (metres): dirty chunks nearest it are
+## rebuilt first, so the lane behind the resurfacer refreshes at once
+## while a far pool's slow creep waits its turn. Negative means no focus.
+var focus := Vector2(-1.0, -1.0)
 
 var size := Vector2(24.0, 14.0)
 ## Corner radius in metres (0 is a rectangle).
@@ -793,7 +797,14 @@ func _process(_dt: float) -> void:
 	var t0 := Time.get_ticks_usec()
 	var limit := int(budget_ms * 1000.0)
 	var any := false
-	for key in _dirty.keys():
+	var keys := _dirty.keys()
+	if focus.x >= 0.0:
+		var fc := Vector2(focus / (cell * CHUNK))
+		keys.sort_custom(
+			func(a: Vector2i, b: Vector2i) -> bool:
+				return Vector2(a).distance_squared_to(fc) < Vector2(b).distance_squared_to(fc)
+		)
+	for key in keys:
 		_build_chunk(key)
 		_dirty.erase(key)
 		any = true

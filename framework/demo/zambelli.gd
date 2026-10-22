@@ -106,6 +106,15 @@ const CONSOLE: Array[Dictionary] = [
 		"aim": Vector3(0.22, 0.4, 0.1),
 	},
 	{
+		"id": "",
+		"kind": ZambelliControls.Kind.SEAT,
+		"name": "OPERATOR'S SEAT",
+		"foot": Vector3(-0.5, 1.66, 0.66),
+		"offset": Vector3.ZERO,
+		"axis": "",
+		"aim": Vector3(0.5, 0.5, 0.5),
+	},
+	{
 		"id": "zambelli_valve_wash",
 		"kind": ZambelliControls.Kind.WASH,
 		"name": "WASH WATER",
@@ -229,9 +238,12 @@ func _ready() -> void:
 		var pivot := Node3D.new()
 		pivot.name = c.id
 		pivot.position = c.foot
-		var part := _part(c.id)
-		part.position = c.offset
-		pivot.add_child(part)
+		if c.id != "":
+			var part := _part(c.id)
+			part.position = c.offset
+			pivot.add_child(part)
+		else:
+			pivot.name = "Seat"
 		_body.add_child(pivot)
 		if c.kind >= 0:
 			var aim: Vector3 = c.aim

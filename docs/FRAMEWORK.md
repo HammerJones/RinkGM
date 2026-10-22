@@ -650,15 +650,21 @@ display, and run as headless checks in CI (`--test=<name>`).
   wears the rag. The
   second HUD line reads the blade's setting in turns and millimetres,
   the flood and wash valves, and the column under the dot: ice thickness over
-  the paint, snow and water in millimetres. N puts you in the operator's
-  seat and N again steps you off beside the machine. In the seat the
+  the paint, snow and water in millimetres. Look at the operator's seat
+  and E puts you in it; E with nothing under the dot steps you off
+  beside the machine. In the seat the
   keys drive it: W is the pedal, S the brake, A and D steer (a bicycle
   model pivoting on the rear axle, 3.5 m/s flat out, 32 degrees of
   lock), and the drive select lever gives the direction; with the
   conditioner down the blade resurfaces whatever it sweeps on any
   heading (`IceSheet.resurface_sweep()`, the swept quad's columns binned
   across the blade for the auger), the flood valve laying its film
-  behind it, and the boards stop the machine. The machine is also a
+  behind it, and the boards stop the machine. The sheet rebuilds its
+  dirty chunks nearest `IceSheet.focus` first (the machine's lane while
+  it runs, else where you stand) with 6 ms a frame, so the lane behind
+  the blade refreshes at once. A film's surface is water, not the ice
+  under it: the shader lays it flat over the grooves (they read as a
+  corrugated wave through the gloss otherwise) with only a faint ripple. The machine is also a
   body the walker collides with (an `AnimatableBody3D` hull of two
   boxes on the props layer, carried with it). The console's controls are props taken out of the bought
   model (`tools/propgen/zambelli_lever.py` takes each out of the GLB
@@ -719,7 +725,8 @@ display, and run as headless checks in CI (`--test=<name>`).
   `--view=console` stands at the controls (`--above` looks down on them,
   `--lever` is close on the console from the operator's left);
   `--view=drive` drives a curving flood pass from the seat and looks back
-  at the lane. In every demo Ctrl
+  at the lane; `--view=wet` stands on a flooded lane looking at a lamp's
+  reflection in the film. In every demo Ctrl
   crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.
 
 ## 14. What the port looks like

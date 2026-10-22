@@ -8,7 +8,7 @@ extends Node3D
 ## `scroll()` (the wheel). The poses follow the machine's state, so a
 ## pass that switches the augers on throws their levers too.
 
-enum Kind { DRIVE, AUGER_H, AUGER_V, COND, BIN, BLADE, FLOOD, WASH }
+enum Kind { DRIVE, AUGER_H, AUGER_V, COND, BIN, BLADE, FLOOD, WASH, SEAT }
 
 const LAYER := 6  # a collision layer of their own for the aim ray
 const REACH := 2.6
@@ -69,6 +69,8 @@ func _process(dt: float) -> void:
 		c.angle = lerpf(c.angle, target, minf(rate * dt, 1.0))
 		var pivot: Node3D = c.pivot
 		match c.axis:
+			"":
+				pass
 			"x":
 				pivot.rotation = Vector3(c.angle, 0.0, 0.0)
 			"y":
@@ -91,6 +93,10 @@ func aim(from: Vector3, dir: Vector3) -> int:
 		if _controls[i].area == hit.collider:
 			return i
 	return -1
+
+
+func kind_of(i: int) -> int:
+	return _controls[i].kind if i >= 0 and i < _controls.size() else -1
 
 
 func set_hover(i: int) -> void:
@@ -136,6 +142,8 @@ func prompt(i: int) -> String:
 			return "%s: %d%% OPEN   [WHEEL] VALVE" % [c.name, roundi(machine.flood * 100.0)]
 		Kind.WASH:
 			return "%s: %d%% OPEN   [WHEEL] VALVE" % [c.name, roundi(machine.wash * 100.0)]
+		Kind.SEAT:
+			return "%s   [E] GET IN" % c.name
 	return ""
 
 

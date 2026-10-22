@@ -170,7 +170,7 @@ func _ready() -> void:
 		. legend(
 			(
 				"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [, .] ICE OVER PAINT   "
-				+ "[R] RESURFACER   [N] SEAT   [W S] PEDAL BRAKE   [A D] STEER   [E] USE   [WHEEL] TURN   [M] FLOOD   "
+				+ "[R] RESURFACER   [E] USE / SEAT   [W S] PEDAL BRAKE   [A D] STEER   [WHEEL] TURN   [M] FLOOD   "
 				+ "[ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   [T] CLOCK   [B] BODY   "
 				+ "[V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 			)
@@ -219,6 +219,13 @@ func _process(dt: float) -> void:
 			hud.toast("TANK DUMPED: %.0f L OF SNOW" % (dumped * 1000.0))
 	if walker:
 		field.focus = walker.global_position
+		# the ice rebuilds nearest the eye first: the machine's lane while it
+		# runs, else wherever you stand
+		ice.focus = (
+			_local(_machine.to_global(Vector3(0.0, 0.0, 0.5)))
+			if _machine and (_zam >= 0.0 or _machine.speed != 0.0)
+			else _local(walker.global_position)
+		)
 		var cam := walker.camera
 		_aimed = -1
 		if not _no_aim:
@@ -226,6 +233,9 @@ func _process(dt: float) -> void:
 		_machine.controls.set_hover(_aimed)
 		if hud:
 			hud.extra_prompt = _machine.controls.prompt(_aimed)
+			if _aimed < 0 and _aboard:
+				hud.extra_prompt = "[E] GET OUT"
+
 		if hosing:
 			_hose(dt)
 		_stream.emitting = hosing
@@ -618,16 +628,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				_machine.blade_mm = clampf(_machine.blade_mm + 0.25, -3.0, 3.0)
 				hud.toast(_blade_toast())
 			KEY_E:
-				if _aimed >= 0:
+				if _aimed >= 0 and _machine.controls.kind_of(_aimed) == ZambelliControls.Kind.SEAT:
+					_at_the_controls()
+					hud.toast("IN THE SEAT: [W] PEDAL  [S] BRAKE  [A D] STEER  [E] GET OUT")
+				elif _aimed >= 0:
 					_machine.controls.toggle(_aimed)
 					hud.toast(_machine.controls.prompt(_aimed).get_slice("   [", 0))
-			KEY_N:
-				if _aboard:
+				elif _aboard:
 					_off_the_machine()
 					hud.toast("OFF THE MACHINE")
-				else:
-					_at_the_controls()
-					hud.toast("IN THE SEAT: [W] PEDAL  [S] BRAKE  [A D] STEER")
 			KEY_COMMA:
 				ice.base_mm = maxf(ice.base_mm - 2.0, 4.0)
 				ice.mark_all_dirty()
@@ -996,6 +1005,13 @@ func _screenshot(path: String) -> void:
 				_machine.to_global(Vector3(-0.95, 2.35, 0.95)),
 				_machine.to_global(Vector3(-0.12, 1.78, 0.25))
 			)
+	if args.has("--view=wet"):
+		# a flooded lane from standing height, the film's surface up close
+		ice.resurface(PASS_X0, PASS_X1, 8.0, 10.1, 0.8, 0.0, 0.0, 0.0)
+		ice.flush()
+		walker.global_position = ice.position + Vector3(20.0, 0.05, 9.0)
+		walker.face(-1.33)  # toward a lamp's reflection on the film
+		walker.camera.rotation.x = -0.73
 	if args.has("--view=drive"):
 		# from the seat, a dozen seconds into a curving flood pass across the sheet
 		_machine.global_position = ice.position + Vector3(8.0, 0.0, 14.0)
