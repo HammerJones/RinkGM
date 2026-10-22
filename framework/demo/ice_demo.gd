@@ -96,6 +96,7 @@ var air_base := 8.0
 var air_c := 8.0
 var sim_t := 0.0
 var _machine: Zambelli
+var _bay: ZamboniBay
 var _aimed := -1  # the machine control under the dot
 var _no_aim := false  # a screenshot of a control, without its glow
 var _aboard := false  # the walker is in the seat and the keys drive the machine
@@ -138,6 +139,10 @@ func _ready() -> void:
 		false
 	)
 	_boards(shell)
+	_bay = ZamboniBay.new()
+	_bay.name = "Bay"
+	_bay.build(RINK.x / 2 + BOARD_T, BOARD_H, BOARD_T, KICK_H, BOARD, KICK)
+	add_child(_bay)
 	field = PropField.new()
 	field.name = "Props"
 	add_child(field)
@@ -172,11 +177,14 @@ func _ready() -> void:
 	hud = WalkHud.new()
 	add_child(hud)
 	hud.bind(interactor)
-	hud.legend(
-		(
-			"[X] STATE   [ ] SNOW   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   "
-			+ "[E] USE / SEAT   [W S] DRIVE   [A D] STEER   [WHEEL] TURN   [T] CLOCK   [B] BODY   "
-			+ "[V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
+	(
+		hud
+		. legend(
+			(
+				"[X] STATE   [ ] SNOW   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   "
+				+ "[E] USE / SEAT / DOORS   [W S] DRIVE   [A D] STEER   [WHEEL] TURN   [T] CLOCK   [B] BODY   "
+				+ "[V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
+			)
 		)
 	)
 	_stream = _make_stream()
@@ -230,6 +238,8 @@ func _process(dt: float) -> void:
 			hud.extra_prompt = _machine.controls.prompt(_aimed)
 			if _aimed < 0 and _aboard:
 				hud.extra_prompt = "[E] GET OUT"
+			elif _aimed < 0 and _bay.aimed(cam.global_position, -cam.global_transform.basis.z):
+				hud.extra_prompt = _bay.prompt()
 
 		if hosing:
 			_hose(dt)
@@ -553,6 +563,7 @@ func _drive_with(sdt: float, pedal: float, brake: float, turn: float) -> void:
 ## a run straight at them stops it. Returns false for that stop.
 func _along_the_boards() -> bool:
 	var push := Vector2.ZERO
+	var in_bay := _local(_machine.global_position).x > RINK.x
 	for c: Vector3 in [
 		Vector3(Zambelli.BLADE_X0 - 0.05, 0.0, -Zambelli.BLADE_Z - 0.1),
 		Vector3(Zambelli.BLADE_X1 + 0.05, 0.0, -Zambelli.BLADE_Z - 0.1),
@@ -560,7 +571,7 @@ func _along_the_boards() -> bool:
 		Vector3(Zambelli.BLADE_X1 + 0.05, 0.0, 0.85)
 	]:
 		var p := _local(_machine.to_global(c))
-		var d := _inside_the_boards(p) - p
+		var d := _inside_the_boards(p, in_bay) - p
 		if absf(d.x) > absf(push.x):
 			push.x = d.x
 		if absf(d.y) > absf(push.y):
@@ -580,8 +591,32 @@ func _along_the_boards() -> bool:
 
 
 ## The nearest point to `p` (sheet metres) a hand's width inside the
-## boards: the straights, and the corner arcs of CORNER_R.
-func _inside_the_boards(p: Vector2) -> Vector2:
+## boards: the straights, and the corner arcs of CORNER_R. With the bay
+## doors open the doorway is a throat from the sheet onto the bay's pad:
+## a machine on the sheet (`in_bay` false) may be in the sheet or the
+## throat, one on the pad in the bay or the throat, so the only way
+## between them is through the doors.
+func _inside_the_boards(p: Vector2, in_bay := false) -> Vector2:
+	const M := 0.1
+	var q := _inside_the_sheet(p)
+	if _bay == null or _bay.open < 0.9:
+		return q
+	var mid := RINK.y / 2
+	var half := ZamboniBay.DOOR_W / 2 - M
+	var pad_x1 := RINK.x + BOARD_T + ZamboniBay.BAY_D - M
+	# the throat: the doorway's width, run from a little inside the boards to the back wall
+	var throat := Vector2(clampf(p.x, RINK.x - 3.0, pad_x1), clampf(p.y, mid - half, mid + half))
+	if in_bay:
+		var bay_half := ZamboniBay.BAY_W / 2 - M
+		q = Vector2(
+			clampf(p.x, RINK.x + BOARD_T + M, pad_x1), clampf(p.y, mid - bay_half, mid + bay_half)
+		)
+	if throat.distance_squared_to(p) < q.distance_squared_to(p):
+		return throat
+	return q
+
+
+func _inside_the_sheet(p: Vector2) -> Vector2:
 	const M := 0.1
 	var q := Vector2(clampf(p.x, M, RINK.x - M), clampf(p.y, M, RINK.y - M))
 	var cx := (
@@ -718,6 +753,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				elif _aboard:
 					_off_the_machine()
 					hud.toast("OFF THE MACHINE")
+				elif _bay.aimed(
+					walker.camera.global_position, -walker.camera.global_transform.basis.z
+				):
+					_bay.toggle()
+					hud.toast("THE BAY DOORS SWING %s" % ("OPEN" if _bay.want_open else "SHUT"))
 			KEY_T:
 				scale_i = (scale_i + 1) % SCALES.size()
 				hud.toast("CLOCK x%d" % int(SCALES[scale_i]))
@@ -883,9 +923,12 @@ func _boards(shell: StaticBody3D) -> void:
 		[Vector3(0, 0, -hz - t), RINK.x - 2 * CORNER_R, 0.0],
 		[Vector3(0, 0, hz + t), RINK.x - 2 * CORNER_R, 0.0],
 		[Vector3(-hx - t, 0, 0), RINK.y - 2 * CORNER_R, PI / 2],
-		[Vector3(hx + t, 0, 0), RINK.y - 2 * CORNER_R, PI / 2],
 	]:
 		_board(shell, s[0], s[1], s[2])
+	# the +X end: the straight is split around the bay doorway
+	var side := (RINK.y - 2 * CORNER_R - ZamboniBay.DOOR_W) / 2
+	for sz: float in [-1.0, 1.0]:
+		_board(shell, Vector3(hx + t, 0, sz * (ZamboniBay.DOOR_W / 2 + side / 2)), side, PI / 2)
 	var n := 16
 	var seg := PI / 2 / n
 	var r := CORNER_R + t
@@ -1113,6 +1156,22 @@ func _screenshot(path: String) -> void:
 		walker.global_position = _machine.to_global(Zambelli.SEAT)
 		walker.face(_machine.rotation.y + 2.9)  # looking back over the left shoulder at the lane
 		walker.camera.rotation.x = -0.62
+	if args.has("--view=bay"):
+		# from the ice by the end boards: the doors swung open and the
+		# machine half through them onto the pad (--closed: shut, the machine before them)
+		var shut := args.has("--closed")
+		_bay.want_open = not shut
+		_bay.open = 0.0 if shut else 1.0
+		_bay._process(0.0)
+		_machine.show_body = true
+		_machine.rotation.y = -PI / 2
+		_machine.global_position = (
+			ice.position + Vector3(RINK.x + (0.3 if not shut else -3.5), 0.0, RINK.y / 2)
+		)
+		_look_at(
+			ice.position + Vector3(RINK.x - 4.5, 1.7, RINK.y / 2 + 4.0),
+			ice.position + Vector3(RINK.x + 1.0, 0.7, RINK.y / 2)
+		)
 	if args.has("--view=track"):
 		# from above and behind: the lane the conditioner leaves against its width
 		_machine.global_position = ice.position + Vector3(8.0, 0.0, 10.0)
@@ -1724,6 +1783,59 @@ func _self_test() -> void:
 		"a change on a chunk's edge rebuilds the chunk before it too (%s)" % [edge_keys]
 	)
 	ice.flush()
+	# the bay: shut doors are boards, open ones a doorway onto the pad, and
+	# the pad's walls are the end of it
+	_bay.want_open = false
+	_bay.open = 0.0
+	_bay._process(0.0)
+	_machine.rotation.y = -PI / 2
+	_machine.cond_down = false
+	_machine.settle()
+	_machine.global_position = ice.position + Vector3(RINK.x - 6.0, 0.0, RINK.y / 2)
+	_machine.drive = 0
+	for step in 600:
+		_drive_with(1.0 / 60.0, 1.0, 0.0, 0.0)
+	check.call(
+		_local(_machine.global_position).x < RINK.x - 1.0 and _machine.speed == 0.0,
+		"shut, the bay doors are boards (x %.2f)" % _local(_machine.global_position).x
+	)
+	var eye := ice.position + Vector3(RINK.x - 1.5, 1.6, RINK.y / 2 - 1.0)
+	check.call(_bay.aimed(eye, Vector3(1.0, -0.6, 0.0).normalized()), "a leaf is under the dot")
+	check.call(not _bay.aimed(eye, Vector3(-1.0, -0.6, 0.0).normalized()), "... not from behind")
+	_bay.toggle()
+	for step in 180:
+		_bay._process(1.0 / 60.0)
+	check.call(
+		_bay.open == 1.0 and absf(_bay._leaves[0].rotation.y - ZamboniBay.OPEN_RAD) < 0.01,
+		"E swings the leaves outward in three seconds (%.2f rad)" % _bay._leaves[0].rotation.y
+	)
+	_machine.speed = 0.0
+	for step in 900:
+		_drive_with(1.0 / 60.0, 1.0, 0.0, 0.0)
+	check.call(
+		_local(_machine.global_position).x > RINK.x + 2.0,
+		(
+			"open, the machine drives through onto the pad (x %.2f)"
+			% _local(_machine.global_position).x
+		)
+	)
+	check.call(
+		_local(_machine.global_position).x < RINK.x + ZamboniBay.BAY_D and _machine.speed == 0.0,
+		"... and stops at the back wall"
+	)
+	_machine.drive = 2
+	_machine.speed = 0.0
+	for step in 900:
+		_drive_with(1.0 / 60.0, 1.0, 0.0, 0.0)
+	check.call(
+		_local(_machine.global_position).x < RINK.x - 4.0,
+		"reverse takes it back out onto the ice (x %.2f)" % _local(_machine.global_position).x
+	)
+	_machine.drive = 0
+	_bay.toggle()
+	for step in 180:
+		_bay._process(1.0 / 60.0)
+	check.call(_bay.open == 0.0, "E again swings them shut")
 	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:
 		print("ice_demo test: all passed")
