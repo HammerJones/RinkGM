@@ -100,6 +100,7 @@ var air_base := 8.0
 var air_c := 8.0
 var sim_t := 0.0
 var heatmap := false  # H: the ice coloured by height, blue low .. red high
+var goals := 0  # pucks into the net on the skates
 var _footprint := Zambelli.outline()  # the machine's edge, for the boards
 var _heat_t := 0.0  # seconds since the heatmap's range was read
 var _machine: Zambelli
@@ -110,6 +111,8 @@ var _pusher: SnowPusher
 var _net: HockeyNet
 var _skater: DemoSkater
 var _skates: Node3D  # the skates and stick on the bay floor
+var _puck: DemoPuck
+var _kit: Node3D  # the rink kit on show in the bay: board sections and glass
 var _edging := false  # at the edger's handles: the keys push it
 var _spray_strip := 0  # which strip of the hose's cone this frame pours
 var _aimed := -1  # the machine control under the dot
@@ -181,6 +184,12 @@ func _ready() -> void:
 	add_child(_net)
 	_skates = _make_skates(Vector3(RINK.x / 2 + BOARD_T + 7.0, 0.0, -0.6))
 	add_child(_skates)
+	_puck = DemoPuck.new()
+	_puck.name = "Puck"
+	_puck.position = _skates.position + Vector3(0.3, 0.0, 0.45)  # by the skates until you are on them
+	add_child(_puck)
+	_kit = _kit_display()
+	add_child(_kit)
 	_skater = DemoSkater.new()
 	_skater.name = "Skater"
 	add_child(_skater)
@@ -266,6 +275,7 @@ func _process(dt: float) -> void:
 			Input.is_key_pressed(KEY_W),
 			Input.is_key_pressed(KEY_S)
 		)
+		_puck_step(sdt)
 	if _pusher.held and walker:
 		_shovel()
 	if _aboard and walker:
@@ -330,7 +340,7 @@ func _process(dt: float) -> void:
 			elif _aimed < 0 and _net.aimed(cam.global_position, -cam.global_transform.basis.z):
 				hud.extra_prompt = _net.prompt()
 			elif _aimed < 0 and _skater.active:
-				hud.extra_prompt = "[W] STRIDE   [S] STOP   [MOUSE] STEER   [E] SKATES OFF"
+				hud.extra_prompt = "[W] STRIDE   [S] STOP   [MOUSE] STEER   [LMB] SHOOT   [E] SKATES OFF"
 			elif _aimed < 0 and _skates_aimed(cam.global_position, -cam.global_transform.basis.z):
 				hud.extra_prompt = "[E] SKATE"
 
@@ -391,7 +401,7 @@ func _process(dt: float) -> void:
 		if _pusher.held:
 			line3 += "   SNOW PUSHER %s" % _pusher.load_text()
 		if _skater.active:
-			line3 += "   " + _skater.state_text()
+			line3 += "   " + _skater.state_text() + "   GOALS %d" % goals
 		if _edging:
 			line3 += "   " + _edger.state_text()
 		hud.readout(line1 + "\n" + line2 + "\n" + line3)
@@ -869,18 +879,44 @@ func _make_skates(at: Vector3) -> Node3D:
 		sk.position = Vector3(0.0, 0.0, -0.1 + 0.2 * k)
 		sk.rotation.y = PI / 2
 		n.add_child(sk)
+	# the game's stick (StickProps) lying flat beside them, blade toward the doors
 	var stick := MeshInstance3D.new()
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.013
-	cyl.bottom_radius = 0.013
-	cyl.height = 1.5
-	stick.mesh = cyl
-	var wood := StandardMaterial3D.new()
-	wood.albedo_color = Color(0.72, 0.56, 0.32)
-	stick.material_override = wood
-	stick.position = Vector3(0.5, 0.03, 0.2)
-	stick.rotation = Vector3(0.0, 0.2, PI / 2)
+	stick.mesh = StickProps.stick_mesh(StickProps.variant("team", -1, false, "black"))
+	stick.position = Vector3(0.45, 0.02, 0.25)
+	stick.rotation = Vector3(-PI / 2, PI + 0.2, 0.0)
 	n.add_child(stick)
+	return n
+
+
+## The rink kit on show in the bay: the straight sections and the eighth
+## corner along the +z wall (a 6 ft glass on the 2 m board), the 4 m
+## board and the 8 ft glass against the back wall, the quarter corner on
+## the -z wall. Each stands on the floor, its ice side into the bay.
+func _kit_display() -> Node3D:
+	var n := Node3D.new()
+	n.name = "RinkKit"
+	var x0 := RINK.x / 2 + BOARD_T  # the hinge line
+	var back := x0 + ZamboniBay.BAY_D - 0.07
+	var side := ZamboniBay.BAY_W / 2 - 0.08
+	var pieces := [
+		["board_1m", Vector3(x0 + 4.6, 0.0, side), 0.0],
+		["board_2m", Vector3(x0 + 6.2, 0.0, side), 0.0],
+		["board_curve_eighth", Vector3(x0 + 8.1, 0.0, side - 0.12), 0.0],
+		["board_4m", Vector3(back, 0.0, -1.8), PI / 2],
+		["board_curve_quarter", Vector3(x0 + 6.6, 0.0, -side + 0.15), PI],
+	]
+	for p in pieces:
+		var b := RinkKit.board(p[0])
+		b.position = p[1]
+		b.rotation.y = p[2]
+		n.add_child(b)
+	var g6 := RinkKit.glass("glass_4x6")
+	g6.position = Vector3(x0 + 6.2, 1.11, side)  # on the 2 m board's cap
+	n.add_child(g6)
+	var g8 := RinkKit.glass("glass_4x8")
+	g8.position = Vector3(back, 0.0, 1.0)
+	g8.rotation.y = PI / 2
+	n.add_child(g8)
 	return n
 
 
@@ -909,11 +945,54 @@ func _skates_on() -> void:
 	walker.face(PI / 2)  # down the ice, toward the bay end
 	walker.camera.rotation.x = -0.15
 	_skater.start(walker)
+	# a puck ahead on the ice
+	_puck.live = true
+	_puck.vel = Vector2.ZERO
+	_puck.at = _local(SKATE_START) + Vector2(3.0, 0.3)
+	_place_puck()
 
 
 func _skates_off() -> void:
 	_skater.stop_skating()
 	walker.driven = false
+	# the puck goes back to the bay with the skates
+	_puck.live = false
+	_puck.vel = Vector2.ZERO
+	_puck.position = _skates.position + Vector3(0.3, 0.0, 0.45)
+
+
+func _place_puck() -> void:
+	_puck.position = ice.global_position + Vector3(_puck.at.x, 0.0, _puck.at.y)
+
+
+## The puck on the ice this step: carried on the blade when it is under it,
+## sliding and bouncing off the boards otherwise, held in the net once in.
+func _puck_step(dt: float) -> void:
+	if not _puck.live:
+		return
+	var in_net := _net.holds(_puck.position)
+	if in_net:
+		_puck.vel = Vector2.ZERO
+	else:
+		_puck.carry(_local(_skater.blade_world()), _skater.vel)
+		_puck.step(dt, _inside_the_sheet.bind(DemoPuck.RADIUS))
+		_place_puck()
+		if _net.holds(_puck.position):
+			goals += 1
+			_puck.vel = Vector2.ZERO
+			if hud:
+				hud.toast("GOAL! %d" % goals)
+
+
+## LMB on the skates: the puck off the blade, hard, where you face.
+func _shoot() -> void:
+	if not _puck.live or _net.holds(_puck.position):
+		return
+	var yaw := walker.rotation.y
+	var face := Vector2(-sin(yaw), -cos(yaw))
+	if _puck.shoot(_local(_skater.blade_world()), face):
+		_puck.step(0.0, _inside_the_sheet.bind(DemoPuck.RADIUS))
+		_place_puck()
 
 
 ## The snow pusher pushed: the blade's sweep since last frame scoops the
@@ -1265,6 +1344,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			if _pusher.held:
 				_set_snow_down()
+			elif _skater.active:
+				_shoot()
 			else:
 				hosing = true
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
@@ -1691,7 +1772,7 @@ func _screenshot(path: String) -> void:
 		walker.camera.rotation.x = -0.55
 	if args.has("--view=practice"):
 		# the net set down by the goal line and the skater's own view of
-		# it from the slot: the stick and nothing else of you
+		# it from the slot: the game's stick, the puck ahead, nothing else of you
 		_net.carry(walker)
 		walker.global_position = Vector3(RINK.x / 2 - GOAL_LINE - 1.7, 0.05, 0.0)
 		walker.face(-PI / 2)
@@ -1701,7 +1782,18 @@ func _screenshot(path: String) -> void:
 		walker.face(-PI / 2 + 0.15)
 		for step in 60:
 			_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), true, false)
+		_puck.at = _local(walker.global_position) + Vector2(3.2, -0.6)
+		_place_puck()
 		walker.camera.rotation.x = -0.2
+	if args.has("--view=kit"):
+		# the rink kit on show in the bay, from inside the doors
+		_bay.want_open = true
+		_bay.open = 1.0
+		_bay._process(0.0)
+		walker.set_noclip(true)
+		walker.global_position = Vector3(RINK.x / 2 + BOARD_T + 0.8, 0.9, -1.2)
+		walker.face(-PI / 2 - 0.5)
+		walker.camera.rotation.x = -0.05
 	if args.has("--view=bay"):
 		# from the ice by the end boards: the doors swung open and the
 		# machine half through them onto the pad (--closed: shut, the machine before them)
@@ -2913,8 +3005,89 @@ func _self_test() -> void:
 			% [snow_before * 1000.0, snow_after * 1000.0]
 		)
 	)
+	# the puck: the game's model, on the ice ahead when the skates go on;
+	# it rides the blade, a shot sends it off, the boards send it back,
+	# and it counts in the net
+	check.call(_puck.live and _puck.position.y < 0.01, "a puck is on the ice with you")
+	# back to centre ice, still, the puck put on the blade
+	walker.global_position = SKATE_START
+	walker.face(PI / 2)
+	_skater.vel = Vector2.ZERO
+	_puck.at = _local(_skater.blade_world())
+	_puck.vel = Vector2.ZERO
+	_place_puck()
+	var puck0 := _puck.at
+	walker.face(walker.rotation.y)
+	for step in 60:
+		_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), true, false)
+		_puck_step(1.0 / 60.0)
+	check.call(
+		(
+			_puck.at.distance_to(puck0) > 0.5
+			and _puck.at.distance_to(_local(_skater.blade_world())) < 0.6
+		),
+		(
+			"the puck under the blade goes with you (%.2f m, %.2f from the blade)"
+			% [_puck.at.distance_to(puck0), _puck.at.distance_to(_local(_skater.blade_world()))]
+		)
+	)
+	_shoot()
+	var shot_v := _puck.vel.length()
+	for step in 240:
+		_puck.step(1.0 / 60.0, _inside_the_sheet.bind(DemoPuck.RADIUS))
+	var inside: Vector2 = _inside_the_sheet.bind(DemoPuck.RADIUS).call(_puck.at)
+	check.call(
+		shot_v > 10.0 and inside == _puck.at,
+		"LMB shoots it (%.1f m/s) and the boards keep it on the sheet" % shot_v
+	)
+	# into the net: the net set across the puck's path
+	_puck.vel = Vector2.ZERO
+	_puck.at = Vector2(20.0, 8.0)
+	_place_puck()
+	_net.global_position = ice.global_position + Vector3(24.0, 0.0, 8.0)
+	_net.global_rotation = Vector3(0.0, PI / 2, 0.0)  # mouth toward -x, the puck
+	var goals0 := goals
+	_puck.vel = Vector2(8.0, 0.0)
+	for step in 120:
+		_puck_step(1.0 / 60.0)
+	check.call(
+		goals == goals0 + 1 and _net.holds(_puck.position) and _puck.vel == Vector2.ZERO,
+		"a puck into the net counts a goal and stays (%d)" % (goals - goals0)
+	)
 	_skates_off()
 	check.call(not _skater.active and not walker.driven, "E again takes the skates off")
+	check.call(
+		not _puck.live and _puck.position.distance_to(_skates.position) < 1.0,
+		"the puck is back in the bay"
+	)
+	# the rink kit: the board sections and glass panels from the generator
+	check.call(
+		RinkKit.ids("board").size() == 5 and RinkKit.ids("glass").size() == 2,
+		(
+			"the kit has five board sections and two glass panels (%s %s)"
+			% [RinkKit.ids("board"), RinkKit.ids("glass")]
+		)
+	)
+	check.call(
+		(
+			absf(RinkKit.length_m("board_4m") - 4.0) < 0.01
+			and absf(RinkKit.length_m("board_curve_quarter") - 3.36) < 0.02
+		),
+		"straight sections are their length, the quarter corner a 3.36 m chord"
+	)
+	var pane: MeshInstance3D = RinkKit.glass("glass_4x8").get_node("Pane")
+	check.call(
+		(
+			pane != null
+			and absf((pane.mesh as BoxMesh).size.y - 2.38) < 0.03
+			and absf((pane.mesh as BoxMesh).size.x - 1.12) < 0.01
+		),
+		"the 8 ft glass has a see-through pane 4 ft wide between its posts"
+	)
+	check.call(
+		_kit.get_child_count() == 7,
+		"the kit is on show in the bay (%d pieces)" % _kit.get_child_count()
+	)
 	walker.queue_free()
 	walker = null
 	ice.flush()

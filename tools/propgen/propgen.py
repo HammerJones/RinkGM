@@ -76,6 +76,14 @@ PALETTE = {
     "bakelite": (30, 29, 31),
     "bakelite2": (25, 24, 27),
     "bakelite_hi": (54, 53, 57),
+    # the rink kit (boards and glass): the dasher's white facing, its
+    # yellow kick plate, the blue cap rail, the glass frames' aluminium
+    "board_white": (242, 240, 234),
+    "board_white2": (236, 234, 228),
+    "kick_yellow": (232, 194, 58),
+    "dasher_blue": (42, 79, 176),
+    "alu": (168, 172, 178),
+    "alu2": (160, 164, 170),
 }
 NAMES = list(PALETTE.keys())  # palette index = position + 1
 

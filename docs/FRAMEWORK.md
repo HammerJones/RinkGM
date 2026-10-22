@@ -197,6 +197,7 @@ photo, adjusted; two or three rounds.
 ```
 python3 tools/propgen/library.py                 # regenerate everything
 python3 tools/propgen/zambelli.py --preview      # the resurfacer's five parts, four-view previews
+python3 tools/propgen/rink_kit.py --preview      # dasher board sections and glass panels
 python3 tools/propgen/glb2vox.py model.glb skate --size 200 --scale 0.001 --preview   # a bought GLB to a hero prop
 python3 tools/propgen/zambelli_glb.py Zamboni.glb --preview   # the resurfacer's body, conditioner and wheel from the bought model
 python3 tools/propgen/library.py boombox --preview
@@ -920,9 +921,18 @@ display, and run as headless checks in CI (`--test=<name>`).
   9 m/s), S is a hockey stop (`STOP_DEC`, 7.5 m/s2), nothing is a coast
   (`COAST`); your velocity swings toward where you face as fast as the
   edges hold (`GRIP`, 7 m/s2 of lateral pull), asking more slides. No
-  body and no hands (Sean: they got in the way), just the stick held low
-  to the right with its blade on the ice; no balance game. E again takes
-  the skates off where you are. What skating does to the ice is
+  body and no hands (Sean: they got in the way), just the game's own
+  stick (`StickProps.stick_mesh()`, a team stick with a right curve)
+  held in the camera's frame: the knob by the hands at the bottom right
+  of the view, the shaft down at its lie to the heel ahead and to the
+  right, the blade flat on the ice; no balance game. The game's puck
+  (`Models.puck()`, `framework/demo/demo_puck.gd`, `DemoPuck`) waits by
+  the skates in the bay and is on the ice ahead of you when they go on:
+  it slides (`FRICTION`), bounces off the boards (`RESTITUTION`), is
+  cupped on the blade when the blade is on it (`CARRY_R`), LMB shoots it
+  off the blade where you face (`SHOT_V`, 16 m/s), and in the net
+  (`HockeyNet.holds()`) it stops and counts (GOALS on the HUD). E again
+  takes the skates off where you are, and the puck goes back to the bay. What skating does to the ice is
   `SkateWear`: a glide leaves a faint line per blade (`BLADE_GAP`, 24 cm
   apart, stronger with speed), a push-off chips the ice where the back
   foot drives (`STRIDE_CHIP`, `STRIDE_MM`) with a puff of snow, a turn
@@ -931,7 +941,25 @@ display, and run as headless checks in CI (`--test=<name>`).
   the shavings `STOP_THROW` ahead as snow (`STOP_SNOW` per m/s of speed
   by m/s2 of braking). `--view=skate` is a run with a hard turn and a
   stop from above under the heatmap, `--view=practice` the net by the
-  goal line from the slot on skates.
+  goal line from the slot on skates, the puck ahead.
+  **The rink kit** (`tools/propgen/rink_kit.py`; `framework/demo/rink_kit.gd`,
+  `RinkKit`): dasher board sections and glass panels as hero props at
+  2 cm (Sean, 2026-10-22). A board is a white panel 42 in tall with a
+  yellow kick plate along the foot, a blue cap rail lipped over both
+  faces and dark steel uprights behind: straight in 1, 2 and 4 m
+  (`board_1m`, `board_2m`, `board_4m`) and curved on the 8.5 m corner
+  radius, an eighth and a quarter of a corner (`board_curve_eighth`,
+  1.68 m chord; `board_curve_quarter`, 3.36 m). The manifest's `board`
+  gives the length, height, thickness and, curved, the radius and
+  angle. Glass is 4 ft wide, 6 ft or 8 ft tall (`glass_4x6`,
+  `glass_4x8`): the voxels are the frame (two aluminium posts and the
+  bottom channel), the pane is the manifest's `pane` (size and where it
+  sits), which `RinkKit.glass()` draws see-through over a box collider;
+  `RinkKit.board()` is a section with its collider. Every piece stands on
+  its bottom centre with the ice side facing -Z. The set stands in the
+  bay (`_kit_display()`: the straights and the eighth along the +z wall
+  with the 6 ft glass on the 2 m board, the 4 m board and 8 ft glass on
+  the back wall, the quarter on the -z wall); `--view=kit` frames it.
   Footsteps leave the ice alone. `--screenshot=<png>`
   frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the

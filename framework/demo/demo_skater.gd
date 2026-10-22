@@ -17,10 +17,16 @@ const STOP_DEC := 7.5
 const COAST := 0.35
 const GRIP := 7.0  # m/s2 the edges hold before the skates slide
 
+## In the camera's frame: where the top hand holds the knob, and which
+## way (on the ground) the shaft runs from there down to the heel.
+const HANDS := Vector3(0.35, -0.5, -1.3)  # arms out ahead, so the blade is in the view
+const HEEL_DIR := Vector2(0.42, -0.91)  # x right, z forward (negative) in the camera's frame
+
 var active := false
 var vel := Vector2.ZERO  # on the sheet plane (x, z), world
 var stick: Node3D
 var stride_count := 0
+var _mesh: MeshInstance3D  # the stick's voxels, placed in the camera's frame
 var _stride_t := 0.0
 var _foot := 1.0
 var _stopping := false
@@ -31,38 +37,29 @@ func _ready() -> void:
 	stick.name = "Stick"
 	stick.visible = false
 	add_child(stick)
-	# in the camera's frame: from the hands at the bottom right of the
-	# view down to the blade on the ice ahead and to the right
-	var hand := Vector3(0.28, -0.22, -0.55)
-	var blade := Vector3(0.85, -1.05, -2.1)
-	var shaft := MeshInstance3D.new()
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.013
-	cyl.bottom_radius = 0.013
-	cyl.height = hand.distance_to(blade)
-	cyl.radial_segments = 8
-	shaft.mesh = cyl
-	var wood := StandardMaterial3D.new()
-	wood.albedo_color = Color(0.72, 0.56, 0.32)
-	wood.roughness = 0.6
-	shaft.material_override = wood
-	shaft.position = (hand + blade) / 2
-	var dir := (blade - hand).normalized()
-	shaft.basis = Basis.looking_at(dir, Vector3.UP).rotated(
-		Basis.looking_at(dir, Vector3.UP).x, PI / 2
+	# the game's own stick (StickProps, a team stick with a right curve),
+	# held in the camera's frame: the knob by the hands at the bottom right
+	# of the view, the shaft down at its lie to the heel on the ice ahead
+	# and to the right, the blade flat on the ice beyond it
+	var mi := MeshInstance3D.new()
+	mi.name = "Voxels"
+	mi.mesh = StickProps.stick_mesh(StickProps.variant("team", -1, false, "black"))
+	stick.add_child(mi)
+	var shaft_len := (StickProps.SENIOR_VOX + 2) * StickProps.SV
+	var heel := (
+		HANDS
+		+ (
+			Vector3(HEEL_DIR.x * cos(StickProps.LIE), 0.0, HEEL_DIR.y * cos(StickProps.LIE))
+			* shaft_len
+		)
 	)
-	stick.add_child(shaft)
-	var bl := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(0.32, 0.07, 0.025)
-	bl.mesh = box
-	var tape := StandardMaterial3D.new()
-	tape.albedo_color = Color(0.1, 0.1, 0.1)
-	tape.roughness = 0.9
-	bl.material_override = tape
-	bl.position = blade + Vector3(0.14, 0.035, -0.02)
-	bl.rotation.y = -0.35
-	stick.add_child(bl)
+	heel.y = HANDS.y - sin(StickProps.LIE) * shaft_len
+	# stick space turned so the blade lies flat (the shaft then leans back
+	# at the lie toward -X), then yawed so -X runs from the heel to the hands
+	var yaw := Basis(Vector3.UP, atan2(-HEEL_DIR.y, HEEL_DIR.x))
+	mi.basis = yaw * Basis(Vector3.BACK, StickProps.LIE)
+	mi.position = heel
+	_mesh = mi
 
 
 ## On the skates: the walker is ours to move, the stick in its view.
@@ -149,3 +146,8 @@ func state_text() -> String:
 		"SKATING %.1f M/S%s   STRIDES %d"
 		% [vel.length(), "  STOPPING" if _stopping else "", stride_count]
 	)
+
+
+## The blade's middle, world: where a puck is carried or shot from.
+func blade_world() -> Vector3:
+	return _mesh.to_global(Vector3(0.15, -0.04, 0.0))

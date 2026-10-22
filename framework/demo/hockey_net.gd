@@ -131,3 +131,10 @@ func set_down() -> void:
 	reparent(_floor_parent, false)
 	global_position = Vector3(at.x, 0.0, at.z)
 	global_rotation = Vector3(0.0, yaw, 0.0)
+
+
+## True when `world` is inside the net: past the goal line, between the
+## posts and short of the back mesh.
+func holds(world: Vector3) -> bool:
+	var l := to_local(world)
+	return absf(l.x) < W / 2 * 0.92 and l.z > 0.05 and l.z < D * 0.9 and l.y < H

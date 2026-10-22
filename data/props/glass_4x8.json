@@ -1,0 +1,48 @@
+{
+  "collision_cell": 8,
+  "id": "glass_4x8",
+  "inspect": "Glass, 4 x 8 ft.",
+  "mass_kg": 21.9,
+  "mesh": "merged",
+  "name": "Glass, 4 x 8 ft",
+  "pane": {
+    "at": [
+      0.0,
+      0.06,
+      0.0
+    ],
+    "size_m": [
+      1.1192,
+      2.3784,
+      0.012
+    ]
+  },
+  "pivot": [
+    30.5,
+    0,
+    2.0
+  ],
+  "shape": [],
+  "size_m": [
+    1.22,
+    2.44,
+    0.08
+  ],
+  "sound": "wood",
+  "source": "tools/propgen/rink_kit.py",
+  "tags": [
+    "rink",
+    "kit"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/glass_4x8.vox",
+  "voxel_m": 0.02,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.05",
+    "worn": "tint:8a7a60:0.12"
+  }
+}
