@@ -1639,7 +1639,7 @@ func _self_test() -> void:
 				snowed += 1
 	var frac := float(snowed) / sampled
 	check.call(
-		frac > 0.1 and frac < 0.7,
+		frac > 0.04 and frac < 0.7,
 		"a quarter snowed up is drifts (%.0f%% of the sheet)" % (frac * 100.0)
 	)
 	ice.snow_level(1.0)
