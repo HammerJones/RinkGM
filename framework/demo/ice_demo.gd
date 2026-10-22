@@ -671,19 +671,19 @@ func _along_the_boards() -> bool:
 ## a machine on the sheet (`in_bay` false) may be in the sheet or the
 ## throat, one on the pad in the bay or the throat, so the only way
 ## between them is through the doors.
-func _inside_the_boards(p: Vector2, in_bay := false, M := 0.1) -> Vector2:
-	var q := _inside_the_sheet(p, M)
+func _inside_the_boards(p: Vector2, in_bay := false, margin := 0.1) -> Vector2:
+	var q := _inside_the_sheet(p, margin)
 	if _bay == null or _bay.open < 0.9:
 		return q
 	var mid := RINK.y / 2
-	var half := ZamboniBay.DOOR_W / 2 - M
-	var pad_x1 := RINK.x + BOARD_T + ZamboniBay.BAY_D - M
+	var half := ZamboniBay.DOOR_W / 2 - margin
+	var pad_x1 := RINK.x + BOARD_T + ZamboniBay.BAY_D - margin
 	# the throat: the doorway's width, run from a little inside the boards to the back wall
 	var throat := Vector2(clampf(p.x, RINK.x - 3.0, pad_x1), clampf(p.y, mid - half, mid + half))
 	if in_bay:
-		var bay_half := ZamboniBay.BAY_W / 2 - M
+		var bay_half := ZamboniBay.BAY_W / 2 - margin
 		q = Vector2(
-			clampf(p.x, RINK.x + BOARD_T + M, pad_x1), clampf(p.y, mid - bay_half, mid + bay_half)
+			clampf(p.x, RINK.x + BOARD_T + margin, pad_x1), clampf(p.y, mid - bay_half, mid + bay_half)
 		)
 	if throat.distance_squared_to(p) < q.distance_squared_to(p):
 		return throat
@@ -704,8 +704,8 @@ func _corner_gap(p: Vector2) -> float:
 	return CORNER_R - (p - Vector2(cx, cy)).length()
 
 
-func _inside_the_sheet(p: Vector2, M := 0.1) -> Vector2:
-	var q := Vector2(clampf(p.x, M, RINK.x - M), clampf(p.y, M, RINK.y - M))
+func _inside_the_sheet(p: Vector2, margin := 0.1) -> Vector2:
+	var q := Vector2(clampf(p.x, margin, RINK.x - margin), clampf(p.y, margin, RINK.y - margin))
 	var cx := (
 		CORNER_R if q.x < CORNER_R else (RINK.x - CORNER_R if q.x > RINK.x - CORNER_R else -1.0)
 	)
@@ -716,8 +716,8 @@ func _inside_the_sheet(p: Vector2, M := 0.1) -> Vector2:
 		return q
 	var c := Vector2(cx, cy)
 	var v := q - c
-	if v.length() > CORNER_R - M:
-		q = c + v.normalized() * (CORNER_R - M)
+	if v.length() > CORNER_R - margin:
+		q = c + v.normalized() * (CORNER_R - margin)
 	return q
 
 
