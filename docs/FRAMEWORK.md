@@ -508,8 +508,18 @@ sets with the snow into a rough crust of peaks.
 **The state textures, one texel per cell, in tiles.** Three RGBA8 images
 carry the columns to the shader, as tiles of 256 cells a side (4 chunks)
 with a copy of the material each, so a chunk's rebuild uploads its
-tile's 768 KB rather than the sheet's 30 MB; only dirty chunks are
-rewritten, within `budget_ms` a frame, and only touched tiles upload.
+tile's 768 KB rather than the sheet's 30 MB. A change marks its chunk
+with the rect of cells it touched (`_touch()`; a cell on a chunk's
+first row or column marks the chunk before too, which shares it as
+its border, or the two meshes would not meet), and every marked chunk
+is rebuilt the same frame, with no queue and no nearest-first: a
+chunk marked whole is encoded cell by cell, one marked in part writes
+only those cells and patches its heightfield's vertices and normals in
+place (a flat quad becomes a heightfield first), so the blade's strip
+costs a few hundred cells a frame, not the chunks it crosses. The
+film's setting only marks the state texture (`shape` off), in 32 steps
+over the freeze, so the thermal walk stays cheap. Only touched tiles
+upload, and only the textures that changed.
 The chunk meshes keep sheet-wide UV; the tile's material carries where
 it sits (`tile_off`, `tile_scale`) and the markings sample the sheet UV.
 
@@ -564,10 +574,15 @@ share can be left as a ridge along the sides, off by default: side-by-side
 passes must blend), and the call returns the millimetres taken. With
 `film_mm` > 0 the conditioner's rag lays water behind the blade: a new
 rag (`rag_wear` 0) an even film, a worn one (1) streaks and a coarser
-cut. A dry pass is the one without the film. `mean_solid(quad)` reads
-the mean solid height of the columns in a quad, the level the
-conditioner's runners ride, and `resurface_sweep(a0, a1, b0, b1, ...)`
-is the same blade over the quad it sweeps on any heading. The
+cut. A dry pass is the one without the film. The demo does not use
+that film: its blade cuts dry and `lay_film(x0, x1, z0, z1, film_mm,
+rag_wear)` floods the strip the flood pipe is over, 0.61 m behind the
+blade (`Zambelli.WALL_Z`), so a strip is a dry cut for that long
+before the hot water goes on, as on the machine. `mean_solid(quad)`
+reads the mean solid height of the columns in a quad, the level the
+conditioner's runners ride; `resurface_sweep(a0, a1, b0, b1, ...)` is
+the same blade over the quad it sweeps on any heading, and
+`lay_film_sweep(p0, p1, q0, q1, ...)` the pipe over its own. The
 game's `IceSlab` and `RefrigerationPlant` are where the real heat balance
 lives; this is the surface they will drive, and the sim's 25 cm grid is
 the source the 2.5 cm columns sample.
@@ -589,8 +604,9 @@ scene is up about a second after the engine; `fill_state` is 20 ms and
 the `flush()` after it 0.4 s (639 uniform chunks, mostly mesh and node
 creation); a `resurface()` over the whole sheet is a second, and the
 rebuild of every chunk the slow way after it 2.4 s, which the machine
-never asks for (a pass is one lane, a few chunks a frame within
-`budget_ms`). The state textures are 40 MB at 2.5 cm. So: sim at 25 cm,
+never asks for (a pass is one lane, patched in place: a flood pass
+stepped at 60 Hz rebuilds in 6 ms a frame on the CI box, worst 13).
+The state textures are 40 MB at 2.5 cm. So: sim at 25 cm,
 columns and textures at 2.5 cm, shader below, with a local 5 mm patch
 an option later.
 
@@ -661,11 +677,10 @@ display, and run as headless checks in CI (`--test=<name>`).
   lock), and the drive select lever gives the direction; with the
   conditioner down the blade resurfaces whatever it sweeps on any
   heading (`IceSheet.resurface_sweep()`, the swept quad's columns binned
-  across the blade for the auger), the flood valve laying its film
-  behind it, and the boards stop the machine. The sheet rebuilds its
-  dirty chunks nearest `IceSheet.focus` first (the machine's lane while
-  it runs, else where you stand) with 6 ms a frame, so the lane behind
-  the blade refreshes at once. The blade's level is carried along the
+  across the blade for the auger), the flood pipe laying its film
+  0.61 m behind it (`lay_film_sweep()`), and the boards stop the
+  machine. Every column the blade or the pipe touched is on screen the
+  same frame (see the state textures above). The blade's level is carried along the
   cut (`_follow()`): the handwheel's setting below the ice the
   conditioner's runners ride, read 0.8 m ahead of the blade
   (`IceSheet.mean_solid()` over that quad) and eased there at 1 mm a
@@ -714,7 +729,8 @@ display, and run as headless checks in CI (`--test=<name>`).
   so the snow's path is in view; B shows the whole machine, V puts you
   beside it, whole. The snow is
   simulated: `IceSheet.resurface()` reports the millimetres it shaved per
-  row (`shave_rows`), the demo bins those across the 2.1 m blade and feeds
+  row (`shave_rows`), the demo bins those across the 2.31 m blade (the
+  bought model's conditioner width, `Zambelli.COND_W`) and feeds
   them to the machine as cubic metres of ice; they land in the trough in
   front of the blade as snow (2.5 times the room), drawn as a roll along
   the auger whose cross-section holds each bin's volume; the horizontal
@@ -733,7 +749,9 @@ display, and run as headless checks in CI (`--test=<name>`).
   `--view=console` stands at the controls (`--above` looks down on them,
   `--lever` is close on the console from the operator's left);
   `--view=drive` drives a curving flood pass from the seat and looks back
-  at the lane; `--view=wet` runs the machine's flood pass stepped at
+  at the lane; `--view=track` looks down from behind the machine at
+  the lane it leaves (the dry strip behind the blade, the film behind
+  the pipe, against the conditioner's width); `--view=wet` runs the machine's flood pass stepped at
   60 Hz as in play and stands on the lane looking at a lamp's
   reflection in the film. In every demo Ctrl
   crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.

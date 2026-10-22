@@ -56,7 +56,8 @@ const STATES := [
 const SCALES := [1.0, 10.0, 60.0]
 const RAGS := ["NEW", "USED", "WORN"]
 const FLOOD_FULL_MM := 1.2  # the film the flood valve lays wide open
-const MACHINE_W := 2.1  # the conditioner's width
+const MACHINE_W := Zambelli.COND_W  # the conditioner's width: the blade and the flood pipe span it
+const FLOOD_BEHIND := Zambelli.WALL_Z  # the flood pipe this far behind the blade: a strip is cut dry, then flooded
 const MACHINE_SPEED := 2.0  # m/s
 const RUNNER_M := 0.8  # the conditioner's runners: how far ahead of the blade they ride
 const LEVEL_RATE_MM := 1.0  # the most the blade's level moves per metre of travel
@@ -222,13 +223,6 @@ func _process(dt: float) -> void:
 			hud.toast("TANK DUMPED: %.0f L OF SNOW" % (dumped * 1000.0))
 	if walker:
 		field.focus = walker.global_position
-		# the ice rebuilds nearest the eye first: the machine's lane while it
-		# runs, else wherever you stand
-		ice.focus = (
-			_local(_machine.to_global(Vector3(0.0, 0.0, 0.5)))
-			if _machine and (_zam >= 0.0 or _machine.speed != 0.0)
-			else _local(walker.global_position)
-		)
 		var cam := walker.camera
 		_aimed = -1
 		if not _no_aim:
@@ -424,7 +418,13 @@ func _zamboni_step(sdt: float) -> void:
 	var swept: Array[Vector2] = [Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)]
 	_follow(ahead, swept, x1 - x0)
 	if not is_nan(_level):
-		shaved_mm += ice.resurface(x0, x1, z0, z1, film, rag_i / 2.0, _level, 0.0, 0.0)
+		# the blade cuts the strip dry; the flood pipe, FLOOD_BEHIND behind
+		# it, lays the film on the strip it cut that long ago
+		shaved_mm += ice.resurface(x0, x1, z0, z1, 0.0, rag_i / 2.0, _level, 0.0, 0.0)
+		var f0 := maxf(x0 - FLOOD_BEHIND, PASS_X0)
+		var f1 := x1 - FLOOD_BEHIND
+		if f1 > f0:
+			ice.lay_film(f0, f1, z0, z1, film, rag_i / 2.0)
 	_machine.feed(_shavings_by_bin())
 	_machine.position = ice.position + Vector3(x1, 0.0, pass_z)
 	if _zam >= PASS_X1:
@@ -521,12 +521,22 @@ func _drive_with(sdt: float, pedal: float, brake: float, turn: float) -> void:
 		a1,
 		b0,
 		b1,
-		film,
+		0.0,
 		rag_i / 2.0,
 		atan2(fwd.z, fwd.x),
 		IceSheet.NO_CUT,
 		Zambelli.BINS,
 		_level
+	)
+	# the flood pipe, behind the blade, sweeps its own quad
+	var half := Zambelli.COND_W / 2
+	ice.lay_film_sweep(
+		_local(before * Vector3(-half, 0.0, FLOOD_BEHIND)),
+		_local(before * Vector3(half, 0.0, FLOOD_BEHIND)),
+		_local(_machine.to_global(Vector3(-half, 0.0, FLOOD_BEHIND))),
+		_local(_machine.to_global(Vector3(half, 0.0, FLOOD_BEHIND))),
+		film,
+		rag_i / 2.0
 	)
 	shaved_mm += took
 	if took > 0.0:
@@ -1067,6 +1077,23 @@ func _screenshot(path: String) -> void:
 		walker.global_position = _machine.to_global(Zambelli.SEAT)
 		walker.face(_machine.rotation.y + 2.9)  # looking back over the left shoulder at the lane
 		walker.camera.rotation.x = -0.62
+	if args.has("--view=track"):
+		# from above and behind: the lane the conditioner leaves against its width
+		_machine.global_position = ice.position + Vector3(8.0, 0.0, 10.0)
+		_machine.rotation.y = -PI / 2
+		_machine.cond_down = true
+		_machine.lift = 1.0
+		_machine.settle()
+		_machine.flood = 0.65
+		_machine.drive = 0
+		_machine.show_body = true
+		for step in 300:
+			_drive_with(1.0 / 60.0, 1.0, 0.0, 0.0)
+			_machine._process(1.0 / 60.0)
+		ice.flush()
+		_look_at(
+			_machine.to_global(Vector3(0.0, 4.0, 4.5)), _machine.to_global(Vector3(0.0, 0.0, 0.5))
+		)
 	if args.has("--view=pool"):
 		# water run into the low spots and left to stand: a scraped trench,
 		# a few chips, a pour between them, then a while to run downhill
@@ -1499,6 +1526,63 @@ func _self_test() -> void:
 		ridge < 0.1,
 		"the stepped pass cuts one plane, no ridges across it (max step %.3f mm)" % ridge
 	)
+	# the flood: the blade cuts dry and the pipe behind it lays the film,
+	# the lane is the conditioner's width, and every changed column is
+	# rebuilt the frame it changes (no queue, no seam at a chunk's edge)
+	_set_state(1)
+	ice.flush()
+	_machine.blade_mm = -0.5
+	_machine.flood = 0.65
+	_begin_pass(6.0)
+	var worst_us := 0
+	var sum_us := 0
+	for step in 600:
+		_zamboni_step(1.0 / 60.0)
+		_machine._process(1.0 / 60.0)
+		ice.thermal(1.0 / 60.0, -5.0, 8.0)
+		var tick := Time.get_ticks_usec()
+		ice._process(1.0 / 60.0)
+		var us := Time.get_ticks_usec() - tick
+		worst_us = maxi(worst_us, us)
+		sum_us += us
+	print(
+		(
+			"ice demo: a flood pass rebuilds in %.1f ms a frame, worst %.1f"
+			% [sum_us / 600000.0, worst_us / 1000.0]
+		)
+	)
+	check.call(ice.dirty_count() == 0, "every changed column is on screen the frame it changed")
+	var blade_x := _zam
+	var just_cut := Vector2(blade_x - FLOOD_BEHIND / 2, 6.0)
+	var flooded := Vector2(blade_x - FLOOD_BEHIND - 0.3, 6.0)
+	var jc := ice.cell_at(just_cut)
+	check.call(
+		ice.water_at(just_cut) == 0.0 and ice.cut[ice.index(jc.x, jc.y)] > 0.0,
+		"the strip behind the blade is a dry cut before the pipe reaches it"
+	)
+	check.call(
+		ice.water_at(flooded) > 0.5, "... and flooded once it has (%.2f mm)" % ice.water_at(flooded)
+	)
+	var lane_lo := 99.0
+	var lane_hi := -99.0
+	var xc := ice.cell_at(Vector2(blade_x - 2.0, 0.0)).x
+	for z in ice.d:
+		if ice.ice[ice.index(xc, z)] < -0.01:
+			lane_lo = minf(lane_lo, z * ice.cell)
+			lane_hi = maxf(lane_hi, (z + 1) * ice.cell)
+	check.call(
+		absf((lane_hi - lane_lo) - Zambelli.COND_W) < 0.06,
+		"the lane is the conditioner's width (%.2f m)" % (lane_hi - lane_lo)
+	)
+	# a column on a chunk's first row is the chunk before's border row too
+	ice.flush()
+	ice.pour(Vector2(30.0, IceSheet.CHUNK * ice.cell * 4 + ice.cell / 2), 0.03, 1.0)
+	var edge_keys := ice._dirty.keys()
+	check.call(
+		edge_keys.size() == 2 and edge_keys.has(Vector2i(int(30.0 / ice.cell) / IceSheet.CHUNK, 3)),
+		"a change on a chunk's edge rebuilds the chunk before it too (%s)" % [edge_keys]
+	)
+	ice.flush()
 	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:
 		print("ice_demo test: all passed")

@@ -133,6 +133,7 @@ const COND_Z0 := 3.069  # the conditioner's front wall
 const AUGER_Z := 3.269
 const AUGER_R := 0.15
 const AUGER_L := 2.0
+const COND_W := 2.308  # the conditioner's width, from the bought model: the blade and the pipe span it
 const COND_H := 0.42
 const COND_LIFT := 0.12  # the conditioner's travel, up
 const COND_TRAVEL_S := 5.5
@@ -160,7 +161,7 @@ const SEAT := Vector3(-0.5, 1.23, 0.7)  # where the operator's feet go, seated a
 # the flood water: a pipe along the top of the conditioner's back wall,
 # holes every two and a half inches, the streams down the wall to the towel
 const WALL_Z := 0.612  # just behind the back wall's rear face, from the blade
-const PIPE_L := 2.1
+const PIPE_L := COND_W - 0.1
 const PIPE_R := 0.022
 const PIPE_Y := 0.06  # the pipe's axis over the ice, at the bottom of the back wall
 const STREAM_GAP := 0.0635
@@ -708,8 +709,8 @@ func drive_step(dt: float, pedal: float, brake: float, turn: float) -> Array[Vec
 	if absf(speed) < 0.001:
 		speed = 0.0
 		return []
-	var a0 := to_global(Vector3(-AUGER_L / 2 - 0.05, 0.0, 0.0))
-	var a1 := to_global(Vector3(AUGER_L / 2 + 0.05, 0.0, 0.0))
+	var a0 := to_global(Vector3(-COND_W / 2, 0.0, 0.0))
+	var a1 := to_global(Vector3(COND_W / 2, 0.0, 0.0))
 	var fwd := -global_transform.basis.z
 	var rear := global_position + fwd * (BLADE_Z - REAR_AXLE)
 	var ds := speed * dt
@@ -718,8 +719,8 @@ func drive_step(dt: float, pedal: float, brake: float, turn: float) -> Array[Vec
 		rotate_y(ds / WHEELBASE * tan(steer))
 	fwd = -global_transform.basis.z
 	global_position = rear - fwd * (BLADE_Z - REAR_AXLE)
-	var b0 := to_global(Vector3(-AUGER_L / 2 - 0.05, 0.0, 0.0))
-	var b1 := to_global(Vector3(AUGER_L / 2 + 0.05, 0.0, 0.0))
+	var b0 := to_global(Vector3(-COND_W / 2, 0.0, 0.0))
+	var b1 := to_global(Vector3(COND_W / 2, 0.0, 0.0))
 	return [a0, a1, b0, b1]
 
 

@@ -55,12 +55,6 @@ var cell := 0.025
 var base_mm := 25.0
 ## Vertical exaggeration of the heightfield (1 = true millimetres).
 var height_scale := 4.0
-## How long a frame may spend uploading and re-meshing dirty chunks.
-var budget_ms := 6.0
-## Where the eye is on the sheet (metres): dirty chunks nearest it are
-## rebuilt first, so the lane behind the resurfacer refreshes at once
-## while a far pool's slow creep waits its turn. Negative means no focus.
-var focus := Vector2(-1.0, -1.0)
 
 var size := Vector2(24.0, 14.0)
 ## Corner radius in metres (0 is a rectangle).
@@ -98,7 +92,11 @@ var _uniform := {}  # Vector2i -> true, full chunks untouched since the last fil
 var _tiles := {}  # Vector2i -> Tile
 var _tile_dirty := {}  # Vector2i -> true, tiles with a rebuilt chunk to upload
 var _chunks := {}  # Vector2i -> MeshInstance3D
-var _dirty := {}  # Vector2i -> true
+var _dirty := {}  # Vector2i -> Rect2i, the cells of a chunk changed since it was built
+var _dirty_shape := {}  # Vector2i -> true when a change moved a column's top or cut
+var _geo := {}  # Vector2i -> [verts, norms, uvs, idx] of a heightfield chunk, patched in place
+var _flat_h := {}  # Vector2i -> the height of a chunk drawn as one flat quad
+var _grid_idx := {}  # Vector2i (nx, nz) -> the shared index array of a heightfield that size
 var _wet_flag := PackedByteArray()  # 1 per cell with liquid water
 var _wet_n := 0
 var _wet_list := PackedInt32Array()  # the wet set as a list, walked in slices
@@ -147,6 +145,9 @@ func setup(size_m: Vector2, cell_m := 0.025, corner_m := 0.0) -> void:
 		c.queue_free()
 	_chunks.clear()
 	_dirty.clear()
+	_dirty_shape.clear()
+	_geo.clear()
+	_flat_h.clear()
 	_tiles.clear()
 	_tile_dirty.clear()
 	_wet_list.resize(0)
@@ -165,7 +166,7 @@ func setup(size_m: Vector2, cell_m := 0.025, corner_m := 0.0) -> void:
 			var rows := _chunk_ice(key)
 			if rows.x > 0:
 				_keys.append(key)
-				_dirty[key] = true
+				_mark_all(key)
 			if rows.y == mini(cz * CHUNK + CHUNK, d) - cz * CHUNK:
 				_full[key] = true
 
@@ -247,7 +248,7 @@ func paint_depth(i: int) -> float:
 ## Re-reads every column (after a change of base_mm).
 func mark_all_dirty() -> void:
 	for key in _keys:
-		_dirty[key] = true
+		_mark_all(key)
 
 
 ## Lines and logos drawn under the ice (a texture over the whole sheet).
@@ -327,7 +328,7 @@ func fill_state(sn: float, ct: float, wt: float, fz: float, angle := 0.0) -> voi
 			_wet_flag[i] = 0
 			_wet_n -= 1
 	for key in _keys:
-		_dirty[key] = true
+		_mark_all(key)
 	_uniform = _full.duplicate()
 
 
@@ -582,6 +583,83 @@ func resurface_sweep(
 ) -> float:
 	shave_bins.resize(bins)
 	shave_bins.fill(0.0)
+	var cols := PackedInt32Array()
+	var us := PackedFloat32Array()
+	if not _quad_cols(a0, a1, b0, b1, cols, us):
+		return 0.0
+	if cut_mm > NO_CUT:
+		var sum := 0.0
+		for i in cols:
+			sum += ice[i] + crust[i]
+		blade_mm = sum / cols.size() - cut_mm
+	var shaved := 0.0
+	var blade_len := b0.distance_to(b1)
+	for k in cols.size():
+		var i := cols[k]
+		var u := us[k]
+		var streak := 1.0 + rag_wear * 0.6 * sin(u * blade_len * 41.0) * sin(u * blade_len * 7.3)
+		var took := _shave(i % w, i / w, blade_mm, film_mm, rag_wear, streak, travel)
+		shave_bins[int(u * bins)] += took
+		shaved += took
+	return shaved
+
+
+## The flood pipe over a band: `film_mm` of hot water laid on whatever
+## is there (a worn rag, `rag_wear` toward 1, streaks it), the dry cut
+## under it softened as the rag's water does. The pipe sits behind the
+## blade, so the demo cuts a strip dry and floods it that much later.
+func lay_film(x0: float, x1: float, z0: float, z1: float, film_mm: float, rag_wear := 0.0) -> void:
+	if film_mm <= 0.0:
+		return
+	var c0 := cell_at(Vector2(minf(x0, x1), minf(z0, z1)))
+	var c1 := cell_at(Vector2(maxf(x0, x1), maxf(z0, z1)))
+	for z in range(maxi(c0.y, 0), mini(c1.y + 1, d)):
+		var streak := 1.0 + rag_wear * 0.6 * sin(z * cell * 41.0) * sin(z * cell * 7.3)
+		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
+			if _mask[index(x, z)] != 0:
+				_wet(x, z, film_mm * streak, rag_wear)
+
+
+## The flood pipe swept from p0-p1 to q0-q1 (metres on the sheet, the 0
+## ends on the same side), for the machine on any heading.
+func lay_film_sweep(
+	p0: Vector2, p1: Vector2, q0: Vector2, q1: Vector2, film_mm: float, rag_wear := 0.0
+) -> void:
+	if film_mm <= 0.0:
+		return
+	var cols := PackedInt32Array()
+	var us := PackedFloat32Array()
+	if not _quad_cols(p0, p1, q0, q1, cols, us):
+		return
+	var pipe_len := q0.distance_to(q1)
+	for k in cols.size():
+		var u := us[k]
+		var streak := 1.0 + rag_wear * 0.6 * sin(u * pipe_len * 41.0) * sin(u * pipe_len * 7.3)
+		_wet(cols[k] % w, cols[k] / w, film_mm * streak, rag_wear)
+
+
+## One column under the pipe: the film on it, liquid, the cut softened.
+func _wet(x: int, z: int, mm: float, rag_wear: float) -> void:
+	var i := index(x, z)
+	water[i] = maxf(water[i] * (1.0 - frozen[i]), mm)
+	frozen[i] = 0.0
+	if cut[i] > 0.0:
+		cut[i] = minf(cut[i], lerpf(0.75, 0.5, rag_wear))
+	_wet_add(i)
+	_touch(x, z)
+
+
+## The ice columns inside the quad a0, a1, b1, b0 (either way round),
+## into `cols`, each with its place along b0-b1 (0..1) in `us`. False
+## when the quad is degenerate or holds no ice.
+func _quad_cols(
+	a0: Vector2,
+	a1: Vector2,
+	b0: Vector2,
+	b1: Vector2,
+	cols: PackedInt32Array,
+	us: PackedFloat32Array
+) -> bool:
 	var lo := Vector2(
 		minf(minf(a0.x, a1.x), minf(b0.x, b1.x)), minf(minf(a0.y, a1.y), minf(b0.y, b1.y))
 	)
@@ -590,18 +668,15 @@ func resurface_sweep(
 	)
 	var c0 := cell_at(lo)
 	var c1 := cell_at(hi)
-	# the quad a0, a1, b1, b0, whichever way round it turns
 	var q: Array[Vector2] = [a0, a1, b1, b0]
 	var area := 0.0
 	for k in 4:
 		area += q[k].cross(q[(k + 1) % 4])
 	if absf(area) < 1e-9:
-		return 0.0
+		return false
 	var turn := signf(area)
 	var along := b1 - b0
 	var len2 := maxf(along.length_squared(), 1e-9)
-	var cols := PackedInt32Array()
-	var us := PackedFloat32Array()
 	for z in range(maxi(c0.y, 0), mini(c1.y + 1, d)):
 		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
 			var i := index(x, z)
@@ -617,23 +692,7 @@ func resurface_sweep(
 				continue
 			cols.append(i)
 			us.append(clampf((p - b0).dot(along) / len2, 0.0, 0.9999))
-	if cols.is_empty():
-		return 0.0
-	if cut_mm > NO_CUT:
-		var sum := 0.0
-		for i in cols:
-			sum += ice[i] + crust[i]
-		blade_mm = sum / cols.size() - cut_mm
-	var shaved := 0.0
-	var blade_len := sqrt(len2)
-	for k in cols.size():
-		var i := cols[k]
-		var u := us[k]
-		var streak := 1.0 + rag_wear * 0.6 * sin(u * blade_len * 41.0) * sin(u * blade_len * 7.3)
-		var took := _shave(i % w, i / w, blade_mm, film_mm, rag_wear, streak, travel)
-		shave_bins[int(u * bins)] += took
-		shaved += took
-	return shaved
+	return not cols.is_empty()
 
 
 ## The freezing step: `dt` seconds of sim time with the slab at `slab_c`
@@ -733,7 +792,7 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 			frozen[i] = fz
 			_wet_next.append(i)
 			if int(fz * 255.0) != before:
-				_touch(i % w, i / w)
+				_touch(i % w, i / w, false)
 	_thermal_cursor += n
 
 
@@ -819,64 +878,108 @@ func water_at(p: Vector2) -> float:
 	return water[i] * (1.0 - frozen[i]) if in_bounds(c.x, c.y) else 0.0
 
 
-func _touch(x: int, z: int) -> void:
-	var key := Vector2i(x / CHUNK, z / CHUNK)
-	_dirty[key] = true
-	_uniform.erase(key)
+## A column changed: its chunk rebuilds the cells around it. `shape`
+## is a change to the column's top or its cut (the mesh and every
+## texture); off, only the state texture (the film setting). The chunk
+## before shares the column as its border row or column, so it is
+## marked too, or the two would not meet.
+func _touch(x: int, z: int, shape := true) -> void:
+	var cx := x / CHUNK
+	var cz := z / CHUNK
+	var lx := x % CHUNK
+	var lz := z % CHUNK
+	_mark(cx, cz, lx, lz, shape)
+	if lx == 0 and cx > 0:
+		_mark(cx - 1, cz, CHUNK, lz, shape)
+	if lz == 0 and cz > 0:
+		_mark(cx, cz - 1, lx, CHUNK, shape)
+		if lx == 0 and cx > 0:
+			_mark(cx - 1, cz - 1, CHUNK, CHUNK, shape)
+
+
+func _mark(cx: int, cz: int, lx: int, lz: int, shape: bool) -> void:
+	var key := Vector2i(cx, cz)
+	var at := Vector2i(lx, lz)
+	if _dirty.has(key):
+		_dirty[key] = (_dirty[key] as Rect2i).expand(at).expand(at + Vector2i.ONE)
+	else:
+		_dirty[key] = Rect2i(at, Vector2i.ONE)
+	if shape:
+		_dirty_shape[key] = true
+		_uniform.erase(key)
+
+
+## The whole chunk, every texture and the mesh.
+func _mark_all(key: Vector2i) -> void:
+	_dirty[key] = Rect2i(0, 0, CHUNK + 1, CHUNK + 1)
+	_dirty_shape[key] = true
 
 
 # --- to the GPU, a few chunks a frame --------------------------------------
 
 
+## Every column that changed this frame is on screen this frame: no
+## queue, no nearest-first. A chunk's rebuild is the cells that changed
+## (the blade's strip is a few hundred cells), so the sheet keeps up
+## with the machine and the film setting behind it.
 func _process(_dt: float) -> void:
 	if _dirty.is_empty():
 		return
-	var t0 := Time.get_ticks_usec()
-	var limit := int(budget_ms * 1000.0)
-	var any := false
-	var keys := _dirty.keys()
-	if focus.x >= 0.0:
-		var fc := Vector2(focus / (cell * CHUNK))
-		keys.sort_custom(
-			func(a: Vector2i, b: Vector2i) -> bool:
-				return Vector2(a).distance_squared_to(fc) < Vector2(b).distance_squared_to(fc)
-		)
-	for key in keys:
+	for key in _dirty.keys():
 		_build_chunk(key)
-		_dirty.erase(key)
-		any = true
-		if Time.get_ticks_usec() - t0 > limit:
-			break
-	if any:
-		_upload()
+	_upload()
 
 
 ## Everything now (loading, tests).
 func flush() -> void:
 	for key in _dirty.keys():
 		_build_chunk(key)
-	_dirty.clear()
 	_upload()
 
 
-## The tiles with a rebuilt chunk go to the GPU (768 KB each).
+## The tiles with a rebuilt chunk go to the GPU (256 KB a texture).
 func _upload() -> void:
 	for tkey in _tile_dirty:
 		var t: Tile = _tiles[tkey]
-		t.state_tex.update(t.state_img)
-		t.cut_tex.update(t.cut_img)
-		t.depth_tex.update(t.depth_img)
+		var bits: int = _tile_dirty[tkey]
+		if bits & 1:
+			t.state_tex.update(t.state_img)
+		if bits & 2:
+			t.cut_tex.update(t.cut_img)
+			t.depth_tex.update(t.depth_img)
 	_tile_dirty.clear()
 
 
-## A chunk's columns into its tile's images and its mesh. A uniform chunk
-## (untouched since the fill) is three fill_rects and a flat quad; any
-## other is encoded cell by cell, the hot path, written flat.
+## A chunk's changed columns into its tile's images and its mesh. A
+## chunk marked whole is encoded cell by cell (the hot path, written
+## flat): a uniform chunk (untouched since the fill) is three fill_rects
+## and a flat quad, a level one a flat quad too. A chunk marked in part
+## writes only those cells, and patches its heightfield's vertices and
+## normals in place (a flat quad becomes a heightfield first), so the
+## blade's strip costs a few hundred cells a frame, not the chunk.
 func _build_chunk(key: Vector2i) -> void:
+	var rect: Rect2i = _dirty[key]
+	var shape := _dirty_shape.has(key)
+	_dirty.erase(key)
+	_dirty_shape.erase(key)
 	var x0 := key.x * CHUNK
 	var z0 := key.y * CHUNK
 	var x1 := mini(x0 + CHUNK, w)
 	var z1 := mini(z0 + CHUNK, d)
+	var whole := (
+		rect.position.x <= 0
+		and rect.position.y <= 0
+		and rect.end.x >= x1 - x0
+		and rect.end.y >= z1 - z0
+	)
+	if whole or not _chunks.has(key):
+		_build_whole(key, x0, z0, x1, z1)
+	else:
+		_build_part(key, x0, z0, x1, z1, rect, shape)
+	remeshed += 1
+
+
+func _build_whole(key: Vector2i, x0: int, z0: int, x1: int, z1: int) -> void:
 	var tkey := Vector2i(key.x / (TILE / CHUNK), key.y / (TILE / CHUNK))
 	var t: Tile = _tiles[tkey]
 	var tx0 := tkey.x * TILE
@@ -963,16 +1066,93 @@ func _build_chunk(key: Vector2i) -> void:
 			var h := _height(x1, z)
 			lo = minf(lo, h)
 			hi = maxf(hi, h)
-	_tile_dirty[tkey] = true
+	_tile_dirty[tkey] = 3
+	var mi := _chunk_node(key, t)
+	# a level chunk (dry, or an even film, or built-up ice all one height) is one quad
+	if hi - lo < FLAT_EPS:
+		mi.mesh = _flat_quad(x0, z0, x1, z1, lo)
+		_flat_h[key] = lo
+		_geo.erase(key)
+	else:
+		var g := _heightfield(x0, z0, x1, z1)
+		_geo[key] = g
+		_flat_h.erase(key)
+		mi.mesh = _mesh(g[0], g[1], g[2], g[3])
+
+
+func _build_part(
+	key: Vector2i, x0: int, z0: int, x1: int, z1: int, rect: Rect2i, shape: bool
+) -> void:
+	var tkey := Vector2i(key.x / (TILE / CHUNK), key.y / (TILE / CHUNK))
+	var t: Tile = _tiles[tkey]
+	var tx0 := tkey.x * TILE
+	var tz0 := tkey.y * TILE
+	var sim := t.state_img
+	var cim := t.cut_img
+	var dim := t.depth_img
+	# the cells (the rect may reach the border vertex column, no cell of this chunk)
+	var cx0 := x0 + maxi(rect.position.x, 0)
+	var cz0 := z0 + maxi(rect.position.y, 0)
+	var cx1 := mini(x0 + rect.end.x, x1)
+	var cz1 := mini(z0 + rect.end.y, z1)
+	for z in range(cz0, cz1):
+		var row := z * w
+		for x in range(cx0, cx1):
+			var i := row + x
+			sim.set_pixel(x - tx0, z - tz0, _state_colour(i))
+			if shape:
+				cim.set_pixel(x - tx0, z - tz0, _cut_colour(i))
+				dim.set_pixel(x - tx0, z - tz0, _depth_colour(i))
+	_tile_dirty[tkey] = int(_tile_dirty.get(tkey, 0)) | (3 if shape else 1)
+	if not shape:
+		return
+	var g: Array = _geo.get(key, [])
+	if g.is_empty():
+		g = _flat_geo(x0, z0, x1, z1, _flat_h.get(key, 0.0))
+		_geo[key] = g
+		_flat_h.erase(key)
+	var verts: PackedVector3Array = g[0]
+	var norms: PackedVector3Array = g[1]
+	var nx := x1 - x0 + 1
+	var nz := z1 - z0 + 1
+	# the vertices in the rect and one round it (a normal reads its
+	# neighbours): the heights once, over a ring one wider again
+	var vx0 := maxi(rect.position.x - 1, 0)
+	var vz0 := maxi(rect.position.y - 1, 0)
+	var vx1 := mini(rect.end.x + 1, nx)
+	var vz1 := mini(rect.end.y + 1, nz)
+	var hx0 := vx0 - 1
+	var hz0 := vz0 - 1
+	var hw := vx1 - vx0 + 2
+	var hd := vz1 - vz0 + 2
+	var hs := PackedFloat32Array()
+	hs.resize(hw * hd)
+	for hz in hd:
+		var gz := maxi(z0 + hz0 + hz, 0)
+		for hx in hw:
+			hs[hz * hw + hx] = _height(maxi(x0 + hx0 + hx, 0), gz)
+	for vz in range(vz0, vz1):
+		var gz := z0 + vz
+		var hrow := (vz - hz0) * hw
+		for vx in range(vx0, vx1):
+			var gx := x0 + vx
+			var k := vz * nx + vx
+			var hk := hrow + vx - hx0
+			verts[k] = Vector3(gx * cell, hs[hk], gz * cell)
+			norms[k] = (
+				Vector3(hs[hk - 1] - hs[hk + 1], 2.0 * cell, hs[hk - hw] - hs[hk + hw]).normalized()
+			)
+	_chunk_node(key, t).mesh = _mesh(verts, norms, g[2], g[3])
+
+
+func _chunk_node(key: Vector2i, t: Tile) -> MeshInstance3D:
 	var mi: MeshInstance3D = _chunks.get(key)
 	if mi == null:
 		mi = MeshInstance3D.new()
 		mi.material_override = t.material
 		add_child(mi)
 		_chunks[key] = mi
-	# a level chunk (dry, or an even film, or built-up ice all one height) is one quad
-	mi.mesh = _flat_quad(x0, z0, x1, z1, lo) if hi - lo < FLAT_EPS else _heightfield(x0, z0, x1, z1)
-	remeshed += 1
+	return mi
 
 
 func _state_colour(i: int) -> Color:
@@ -1037,13 +1217,12 @@ func _flat_quad(x0: int, z0: int, x1: int, z1: int, y := 0.0) -> ArrayMesh:
 	return _mesh(verts, norms, uvs, idx)
 
 
-func _heightfield(x0: int, z0: int, x1: int, z1: int) -> ArrayMesh:
+func _heightfield(x0: int, z0: int, x1: int, z1: int) -> Array:
 	var nx := x1 - x0 + 1
 	var nz := z1 - z0 + 1
 	var verts := PackedVector3Array()
 	var norms := PackedVector3Array()
 	var uvs := PackedVector2Array()
-	var idx := PackedInt32Array()
 	verts.resize(nx * nz)
 	norms.resize(nx * nz)
 	uvs.resize(nx * nz)
@@ -1059,11 +1238,50 @@ func _heightfield(x0: int, z0: int, x1: int, z1: int) -> ArrayMesh:
 			var hd := _height(gx, maxi(gz - 1, 0))
 			var hu := _height(gx, gz + 1)
 			norms[k] = Vector3(hl - hr, 2.0 * cell, hd - hu).normalized()
+	return [verts, norms, uvs, _grid_index(nx, nz)]
+
+
+## A flat chunk's heightfield at `h`, to be patched: every vertex level.
+func _flat_geo(x0: int, z0: int, x1: int, z1: int, h: float) -> Array:
+	var nx := x1 - x0 + 1
+	var nz := z1 - z0 + 1
+	var verts := PackedVector3Array()
+	var norms := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	verts.resize(nx * nz)
+	norms.resize(nx * nz)
+	norms.fill(Vector3.UP)
+	uvs.resize(nx * nz)
+	for z in nz:
+		var gz := z0 + z
+		for x in nx:
+			var gx := x0 + x
+			var k := z * nx + x
+			verts[k] = Vector3(gx * cell, h, gz * cell)
+			uvs[k] = Vector2(float(gx) / w, float(gz) / d)
+	return [verts, norms, uvs, _grid_index(nx, nz)]
+
+
+## The triangles of an nx by nz grid, shared by every chunk of that size.
+func _grid_index(nx: int, nz: int) -> PackedInt32Array:
+	var key := Vector2i(nx, nz)
+	if _grid_idx.has(key):
+		return _grid_idx[key]
+	var idx := PackedInt32Array()
+	idx.resize((nx - 1) * (nz - 1) * 6)
+	var n := 0
 	for z in nz - 1:
 		for x in nx - 1:
 			var a := z * nx + x
-			idx.append_array([a, a + 1, a + nx, a + 1, a + nx + 1, a + nx])
-	return _mesh(verts, norms, uvs, idx)
+			idx[n] = a
+			idx[n + 1] = a + 1
+			idx[n + 2] = a + nx
+			idx[n + 3] = a + 1
+			idx[n + 4] = a + nx + 1
+			idx[n + 5] = a + nx
+			n += 6
+	_grid_idx[key] = idx
+	return idx
 
 
 static func _mesh(
