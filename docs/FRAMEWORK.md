@@ -546,7 +546,9 @@ level (the sheet's surface, not the snow), so every pass lowers the
 ice by that much and the shavings come off the ice itself; `ice[]` may
 go negative, the column cut below its nominal base, and a gouge the
 blade reaches is cut away with it. `thickness_at(p)`, `snow_at(p)` and
-`water_at(p)` read a column in millimetres for a HUD. Snow has height: a blade above
+`water_at(p)` read a column in millimetres for a HUD. The demo draws
+the concrete a full `base_mm` (times its height scale) under the ice
+surface, so a cut shows ice until it has gone through all 25 mm. Snow has height: a blade above
 the snow touches nothing, a blade in the snow shaves only snow, and a
 blade in the solid (built-up ice, crust peaks) takes the snow with it
 and cuts the ice; below zero it cuts into the base and takes gouge
@@ -670,7 +672,7 @@ display, and run as headless checks in CI (`--test=<name>`).
   frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the
   conditioner nine seconds into a pass over a snowed-up sheet (`--body`
-  with the whole machine). In every demo Ctrl
+  with the whole machine, `--cut=<mm>` for the blade's depth). In every demo Ctrl
   crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.
 
 ## 14. What the port looks like

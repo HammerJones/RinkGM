@@ -118,7 +118,19 @@ func _ready() -> void:
 	shell.collision_layer = Layers.bit(Layers.VENUE)
 	shell.collision_mask = 0
 	add_child(shell)
-	_box(shell, Vector3(0, -0.103, 0), Vector3(RINK.x + 0.4, 0.2, RINK.y + 0.4), CONCRETE, true)
+	# the walker stands at the ice's nominal top; the concrete is drawn a
+	# full sheet thickness lower (at the demo's height scale), so a cut
+	# into the ice shows ice, and only a cut through all of it shows grey
+	_box(shell, Vector3(0, -0.103, 0), Vector3(RINK.x + 0.4, 0.2, RINK.y + 0.4), CONCRETE, false)
+	var slab_top := -ice.base_mm * 0.001 * ice.height_scale
+	_box(
+		shell,
+		Vector3(0, slab_top - 0.1, 0),
+		Vector3(RINK.x + 0.4, 0.2, RINK.y + 0.4),
+		CONCRETE,
+		true,
+		false
+	)
 	_boards(shell)
 	field = PropField.new()
 	field.name = "Props"
@@ -759,6 +771,9 @@ func _screenshot(path: String) -> void:
 		# the resurfacer mid-pass, from beside its lane
 		walker.global_position = ice.position + Vector3(10.0, 0.05, 9.0)
 		cut_mm = 0.5
+		for a in OS.get_cmdline_user_args():
+			if a.begins_with("--cut="):
+				cut_mm = float(a.trim_prefix("--cut="))
 		_set_state(0)  # a snowed-up sheet for the blade to shave
 		ice.flush()
 		_start_pass()
