@@ -671,9 +671,8 @@ func _along_the_boards() -> bool:
 ## a machine on the sheet (`in_bay` false) may be in the sheet or the
 ## throat, one on the pad in the bay or the throat, so the only way
 ## between them is through the doors.
-func _inside_the_boards(p: Vector2, in_bay := false) -> Vector2:
-	const M := 0.1
-	var q := _inside_the_sheet(p)
+func _inside_the_boards(p: Vector2, in_bay := false, M := 0.1) -> Vector2:
+	var q := _inside_the_sheet(p, M)
 	if _bay == null or _bay.open < 0.9:
 		return q
 	var mid := RINK.y / 2
@@ -691,8 +690,7 @@ func _inside_the_boards(p: Vector2, in_bay := false) -> Vector2:
 	return q
 
 
-func _inside_the_sheet(p: Vector2) -> Vector2:
-	const M := 0.1
+func _inside_the_sheet(p: Vector2, M := 0.1) -> Vector2:
 	var q := Vector2(clampf(p.x, M, RINK.x - M), clampf(p.y, M, RINK.y - M))
 	var cx := (
 		CORNER_R if q.x < CORNER_R else (RINK.x - CORNER_R if q.x > RINK.x - CORNER_R else -1.0)
@@ -792,27 +790,32 @@ func _push(sdt: float) -> void:
 	)
 
 
-## A step of the edger: pushed, kept inside the boards (its corners, like
-## the machine's), the blade cutting the path the disc's centre took.
+## A step of the edger: pushed, kept inside the boards by its deck's
+## corners, right at the boards (no margin: it has to cut flush along
+## them) and sliding along them with nothing lost but a push straight
+## into them, the blade cutting the path the disc's centre took.
 func _push_with(sdt: float, push: float, turn: float) -> void:
 	var path := _edger.step(sdt, push, turn)
 	var in_bay := _local(_edger.global_position).x > RINK.x
 	var shove := Vector2.ZERO
 	for c: Vector3 in [
-		Vector3(-0.38, 0.0, -0.85),
-		Vector3(0.38, 0.0, -0.85),
-		Vector3(-0.38, 0.0, 0.9),
-		Vector3(0.38, 0.0, 0.9)
+		Vector3(-IceEdger.DECK_HALF_W, 0.0, IceEdger.DECK_FRONT),
+		Vector3(IceEdger.DECK_HALF_W, 0.0, IceEdger.DECK_FRONT),
+		Vector3(-IceEdger.DECK_HALF_W, 0.0, IceEdger.DECK_BACK),
+		Vector3(IceEdger.DECK_HALF_W, 0.0, IceEdger.DECK_BACK)
 	]:
 		var p := _local(_edger.to_global(c))
-		var d := _inside_the_boards(p, in_bay) - p
+		var d := _inside_the_boards(p, in_bay, 0.0) - p
 		if absf(d.x) > absf(shove.x):
 			shove.x = d.x
 		if absf(d.y) > absf(shove.y):
 			shove.y = d.y
 	if shove != Vector2.ZERO:
 		_edger.global_position += Vector3(shove.x, 0.0, shove.y)
-		_edger.speed *= 0.5
+		var fwd := -_edger.global_transform.basis.z
+		var going := Vector2(fwd.x, fwd.z) * signf(_edger.speed)
+		if -shove.normalized().dot(going) > 0.95:
+			_edger.speed = 0.0  # straight into them
 		if path.size() == 2:
 			path[1] += Vector3(shove.x, 0.0, shove.y)
 	if path.size() == 2:
@@ -2283,6 +2286,22 @@ func _self_test() -> void:
 	_edger.blade_down = false
 	_edger.toggle_engine()
 	check.call(not _edger.running, "E again stops it")
+	_edger.speed = 0.0
+	# against the side boards, a touch into them: it rides flush and slides
+	# along at full speed (Sean: no gap, no sticking)
+	_edger.global_position = ice.position + Vector3(RINK.x - 12.0, 0.0, RINK.y - 0.3)
+	_edger.rotation.y = PI / 2 + 0.05  # nose toward -X, leaning a little into the boards
+	for step in 90:
+		_push_with(1.0 / 60.0, 1.0, 0.0)
+	var gap := INF
+	for cz: float in [IceEdger.DECK_FRONT, IceEdger.DECK_BACK]:
+		var corner := _local(_edger.to_global(Vector3(-IceEdger.DECK_HALF_W, 0.0, cz)))
+		gap = minf(gap, RINK.y - corner.y)
+	check.call(gap < 0.02 and gap > -0.001, "its deck rides flush on the boards (%.3f m off)" % gap)
+	check.call(
+		_edger.speed > IceEdger.PUSH_SPEED * IceEdger.FREE * 0.98,
+		"... and slides along them at full speed (%.2f m/s)" % _edger.speed
+	)
 	_edger.speed = 0.0
 	# the bay: shut doors are boards, open ones a doorway onto the pad, and
 	# the pad's walls are the end of it

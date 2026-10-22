@@ -854,7 +854,9 @@ display, and run as headless checks in CI (`--test=<name>`).
   the deck's right side as a spray of grains (`GPUParticles3D` from the
   chute, thrown `THROW`, 1.2 m) and land as snow there
   (`IceSheet.add_snow()`). Its corners are kept inside the boards like
-  the machine's. `--view=edger` is a lane cut along the side boards with
+  the machine's, but with no margin and nothing lost to the rub: it rides
+  flush on the boards and slides along them, stopping only when pushed
+  straight into them. `--view=edger` is a lane cut along the side boards with
   the edger's left side on them, `--view=push` the pusher's own view.
   Footsteps leave the ice alone. `--screenshot=<png>`
   frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and

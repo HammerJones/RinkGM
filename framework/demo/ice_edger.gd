@@ -24,7 +24,10 @@ extends Node3D
 
 const BLADE_R := 0.23  # a 46 cm disc
 const BLADE_Z := -0.30  # the disc's centre under the deck, between the wheels
-const BLADE_X := -0.12  # ... and to its left: the rim just inside the deck's left edge
+const DECK_HALF_W := 0.37  # the deck's sides, the corners the boards hold
+const DECK_FRONT := -0.85
+const DECK_BACK := 0.88
+const BLADE_X := -DECK_HALF_W + BLADE_R  # ... and to its left: the rim flush with the deck's left side
 const TILT := deg_to_rad(2.5)  # the disc leaning left (Sean: 4 was a bit much)
 const ARC_STEP := 0.05  # metres of travel between arcs
 const ARC_W := 0.035
