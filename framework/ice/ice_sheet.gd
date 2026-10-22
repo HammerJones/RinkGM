@@ -217,9 +217,12 @@ func _chunk_ice(key: Vector2i) -> Vector2i:
 
 func _make_tile(tx: int, tz: int) -> Tile:
 	var t := Tile.new()
-	t.state_img = Image.create_empty(TILE, TILE, false, Image.FORMAT_RGBA8)
-	t.cut_img = Image.create_empty(TILE, TILE, false, Image.FORMAT_RGBA8)
-	t.depth_img = Image.create_empty(TILE, TILE, false, Image.FORMAT_RGBA8)
+	# a one-texel apron all round holds the next tiles' edge cells, so the
+	# linear sampling at a tile's edge blends into the neighbour as it
+	# does everywhere else: no seam where tiles meet
+	t.state_img = Image.create_empty(TILE + 2, TILE + 2, false, Image.FORMAT_RGBA8)
+	t.cut_img = Image.create_empty(TILE + 2, TILE + 2, false, Image.FORMAT_RGBA8)
+	t.depth_img = Image.create_empty(TILE + 2, TILE + 2, false, Image.FORMAT_RGBA8)
 	t.state_tex = ImageTexture.create_from_image(t.state_img)
 	t.cut_tex = ImageTexture.create_from_image(t.cut_img)
 	t.depth_tex = ImageTexture.create_from_image(t.depth_img)
@@ -227,8 +230,12 @@ func _make_tile(tx: int, tz: int) -> Tile:
 	t.material.set_shader_parameter("state", t.state_tex)
 	t.material.set_shader_parameter("cutmap", t.cut_tex)
 	t.material.set_shader_parameter("depthmap", t.depth_tex)
-	t.material.set_shader_parameter("tile_off", Vector2(float(tx * TILE) / w, float(tz * TILE) / d))
-	t.material.set_shader_parameter("tile_scale", Vector2(float(w) / TILE, float(d) / TILE))
+	t.material.set_shader_parameter(
+		"tile_off", Vector2(float(tx * TILE - 1) / w, float(tz * TILE - 1) / d)
+	)
+	t.material.set_shader_parameter(
+		"tile_scale", Vector2(float(w) / (TILE + 2), float(d) / (TILE + 2))
+	)
 	return t
 
 
@@ -1007,18 +1014,18 @@ func _build_whole(key: Vector2i, x0: int, z0: int, x1: int, z1: int) -> void:
 			lo = h
 			hi = h
 			var i := z0 * w + x0
-			var rect := Rect2i(x0 - tx0, z0 - tz0, x1 - x0, z1 - z0)
+			var rect := Rect2i(x0 - tx0 + 1, z0 - tz0 + 1, x1 - x0, z1 - z0)
 			sim.fill_rect(rect, _state_colour(i))
 			cim.fill_rect(rect, _cut_colour(i))
 			dim.fill_rect(rect, _depth_colour(i))
 	if not flat:
 		var scale := 0.001 * height_scale
 		for z in range(z0, z1):
-			var pz := z - tz0
+			var pz := z - tz0 + 1
 			var row := z * w
 			for x in range(x0, x1):
 				var i := row + x
-				var px := x - tx0
+				var px := x - tx0 + 1
 				sim.set_pixel(
 					px,
 					pz,
@@ -1067,6 +1074,7 @@ func _build_whole(key: Vector2i, x0: int, z0: int, x1: int, z1: int) -> void:
 			lo = minf(lo, h)
 			hi = maxf(hi, h)
 	_tile_dirty[tkey] = 3
+	_apron(x0, z0, x1, z1, 3)
 	var mi := _chunk_node(key, t)
 	# a level chunk (dry, or an even film, or built-up ice all one height) is one quad
 	if hi - lo < FLAT_EPS:
@@ -1099,11 +1107,12 @@ func _build_part(
 		var row := z * w
 		for x in range(cx0, cx1):
 			var i := row + x
-			sim.set_pixel(x - tx0, z - tz0, _state_colour(i))
+			sim.set_pixel(x - tx0 + 1, z - tz0 + 1, _state_colour(i))
 			if shape:
-				cim.set_pixel(x - tx0, z - tz0, _cut_colour(i))
-				dim.set_pixel(x - tx0, z - tz0, _depth_colour(i))
+				cim.set_pixel(x - tx0 + 1, z - tz0 + 1, _cut_colour(i))
+				dim.set_pixel(x - tx0 + 1, z - tz0 + 1, _depth_colour(i))
 	_tile_dirty[tkey] = int(_tile_dirty.get(tkey, 0)) | (3 if shape else 1)
+	_apron(cx0, cz0, cx1, cz1, 3 if shape else 1)
 	if not shape:
 		return
 	var g: Array = _geo.get(key, [])
@@ -1143,6 +1152,50 @@ func _build_part(
 				Vector3(hs[hk - 1] - hs[hk + 1], 2.0 * cell, hs[hk - hw] - hs[hk + hw]).normalized()
 			)
 	_chunk_node(key, t).mesh = _mesh(verts, norms, g[2], g[3])
+
+
+## The cells of the rect cx0..cx1, cz0..cz1 (within one tile) that sit
+## on the tile's edge, written into the next tiles' aprons as well.
+func _apron(cx0: int, cz0: int, cx1: int, cz1: int, bits: int) -> void:
+	if cx1 <= cx0 or cz1 <= cz0:
+		return
+	var tx := cx0 / TILE
+	var tz := cz0 / TILE
+	var lx0 := cx0 - tx * TILE
+	var lz0 := cz0 - tz * TILE
+	var lx1 := cx1 - tx * TILE
+	var lz1 := cz1 - tz * TILE
+	if lx0 == 0:
+		for z in range(cz0, cz1):
+			_put(Vector2i(tx - 1, tz), TILE + 1, z - tz * TILE + 1, index(cx0, z), bits)
+	if lx1 == TILE:
+		for z in range(cz0, cz1):
+			_put(Vector2i(tx + 1, tz), 0, z - tz * TILE + 1, index(cx1 - 1, z), bits)
+	if lz0 == 0:
+		for x in range(cx0, cx1):
+			_put(Vector2i(tx, tz - 1), x - tx * TILE + 1, TILE + 1, index(x, cz0), bits)
+	if lz1 == TILE:
+		for x in range(cx0, cx1):
+			_put(Vector2i(tx, tz + 1), x - tx * TILE + 1, 0, index(x, cz1 - 1), bits)
+	if lx0 == 0 and lz0 == 0:
+		_put(Vector2i(tx - 1, tz - 1), TILE + 1, TILE + 1, index(cx0, cz0), bits)
+	if lx0 == 0 and lz1 == TILE:
+		_put(Vector2i(tx - 1, tz + 1), TILE + 1, 0, index(cx0, cz1 - 1), bits)
+	if lx1 == TILE and lz0 == 0:
+		_put(Vector2i(tx + 1, tz - 1), 0, TILE + 1, index(cx1 - 1, cz0), bits)
+	if lx1 == TILE and lz1 == TILE:
+		_put(Vector2i(tx + 1, tz + 1), 0, 0, index(cx1 - 1, cz1 - 1), bits)
+
+
+func _put(tkey: Vector2i, px: int, pz: int, i: int, bits: int) -> void:
+	var t: Tile = _tiles.get(tkey)
+	if t == null:
+		return
+	t.state_img.set_pixel(px, pz, _state_colour(i))
+	if bits & 2:
+		t.cut_img.set_pixel(px, pz, _cut_colour(i))
+		t.depth_img.set_pixel(px, pz, _depth_colour(i))
+	_tile_dirty[tkey] = int(_tile_dirty.get(tkey, 0)) | bits
 
 
 func _chunk_node(key: Vector2i, t: Tile) -> MeshInstance3D:

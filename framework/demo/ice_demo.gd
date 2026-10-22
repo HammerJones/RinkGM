@@ -169,15 +169,11 @@ func _ready() -> void:
 	hud = WalkHud.new()
 	add_child(hud)
 	hud.bind(interactor)
-	(
-		hud
-		. legend(
-			(
-				"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   [, .] ICE OVER PAINT   "
-				+ "[R] RESURFACER   [E] USE / SEAT   [W S] PEDAL BRAKE   [A D] STEER   [WHEEL] TURN   [M] FLOOD   "
-				+ "[ [ ] ] BLADE   [Y] RAG   [I] INSTANT FREEZE   [T] CLOCK   [B] BODY   "
-				+ "[V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
-			)
+	hud.legend(
+		(
+			"[X] STATE   [LMB] HOSE   [WHEEL] VALVE   [RMB] CHIP   "
+			+ "[E] USE / SEAT   [W S] DRIVE   [A D] STEER   [WHEEL] TURN   [T] CLOCK   [B] BODY   "
+			+ "[V] SEE MACHINE   [CTRL] CROUCH   [F] FLY   [Z] ZOOM"
 		)
 	)
 	_stream = _make_stream()
@@ -475,15 +471,34 @@ func _follow(ahead: Array[Vector2], swept: Array[Vector2], dist: float) -> void:
 		_level = move_toward(_level, target, LEVEL_RATE_MM * dist)
 
 
-## A frame at the wheel: W is the pedal, S the brake, A and D steer, the
-## drive select lever on the console gives the direction. The conditioner
-## resurfaces whatever the blade sweeps, on any heading; the boards stop
-## the machine.
+## A frame at the wheel: W drives forward, S brakes and, once stopped,
+## backs up, A and D steer; the drive select lever on the console
+## follows (forward, neutral, reverse). The conditioner resurfaces
+## whatever the blade sweeps, on any heading; the boards stop the
+## machine.
 func _drive(sdt: float) -> void:
+	var fwd := Input.is_key_pressed(KEY_W)
+	var back := Input.is_key_pressed(KEY_S)
+	var pedal := 0.0
+	var brake := 0.0
+	if fwd and not back:
+		if _machine.speed < -0.05:
+			brake = 1.0
+		else:
+			_machine.drive = 0
+			pedal = 1.0
+	elif back and not fwd:
+		if _machine.speed > 0.05:
+			brake = 1.0
+		else:
+			_machine.drive = 2
+			pedal = 1.0
+	elif _machine.speed == 0.0:
+		_machine.drive = 1
 	_drive_with(
 		sdt,
-		1.0 if Input.is_key_pressed(KEY_W) else 0.0,
-		1.0 if Input.is_key_pressed(KEY_S) else 0.0,
+		pedal,
+		brake,
 		(
 			(1.0 if Input.is_key_pressed(KEY_A) else 0.0)
 			- (1.0 if Input.is_key_pressed(KEY_D) else 0.0)
@@ -567,7 +582,7 @@ func _make_machine() -> Zambelli:
 	var z := Zambelli.new()
 	z.name = "Zambelli"
 	z.rotation.y = -PI / 2
-	z.position = ice.position + Vector3(PASS_X0, 0.0, RINK.y - 3.0)
+	z.position = ice.position + Vector3(RINK.x / 2, 0.0, RINK.y / 2)  # centre ice, facing down the sheet
 	z.cond_down = false
 	z.lift = 0.0
 	return z
@@ -638,14 +653,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_X:
 				_set_state(state + 1)
 				hud.toast("STATE: %s" % STATES[state][0])
-			KEY_R:
-				_start_pass()
-				hud.toast(
-					(
-						"RESURFACER: %s PASS, BLADE %+.2f MM"
-						% ["FLOOD" if _machine.flood > 0.0 else "DRY", _machine.blade_mm]
-					)
-				)
 			KEY_B:
 				_machine.show_body = not _machine.show_body
 				hud.toast("MACHINE: %s" % ("WHOLE" if _machine.show_body else "CONDITIONER ONLY"))
@@ -659,42 +666,21 @@ func _unhandled_input(event: InputEvent) -> void:
 				walker.face(-2.85)
 				walker.camera.rotation.x = -0.1
 				hud.toast("THE ZAMBELLI")
-			KEY_M:
-				_machine.flood = 0.0 if _machine.flood > 0.0 else 0.65
-				hud.toast("FLOOD VALVE %d%%" % roundi(_machine.flood * 100.0))
-			KEY_BRACKETLEFT:  # half a turn of the handwheel either way
-				_machine.blade_mm = clampf(_machine.blade_mm - 0.25, -3.0, 3.0)
-				hud.toast(_blade_toast())
-			KEY_BRACKETRIGHT:
-				_machine.blade_mm = clampf(_machine.blade_mm + 0.25, -3.0, 3.0)
-				hud.toast(_blade_toast())
 			KEY_E:
 				if _aimed >= 0 and _machine.controls.kind_of(_aimed) == ZambelliControls.Kind.SEAT:
 					_at_the_controls()
-					hud.toast("IN THE SEAT: [W] PEDAL  [S] BRAKE  [A D] STEER  [E] GET OUT")
+					hud.toast(
+						"IN THE SEAT: [W] FORWARD  [S] BRAKE, REVERSE  [A D] STEER  [E] GET OUT"
+					)
 				elif _aimed >= 0:
 					_machine.controls.toggle(_aimed)
 					hud.toast(_machine.controls.prompt(_aimed).get_slice("   [", 0))
 				elif _aboard:
 					_off_the_machine()
 					hud.toast("OFF THE MACHINE")
-			KEY_COMMA:
-				ice.base_mm = maxf(ice.base_mm - 2.0, 4.0)
-				ice.mark_all_dirty()
-				hud.toast("ICE OVER THE PAINT %.0f MM" % ice.base_mm)
-			KEY_PERIOD:
-				ice.base_mm = minf(ice.base_mm + 2.0, 60.0)
-				ice.mark_all_dirty()
-				hud.toast("ICE OVER THE PAINT %.0f MM" % ice.base_mm)
-			KEY_I:
-				instant = not instant
-				hud.toast("INSTANT FREEZE %s" % ("ON" if instant else "OFF"))
 			KEY_T:
 				scale_i = (scale_i + 1) % SCALES.size()
 				hud.toast("CLOCK x%d" % int(SCALES[scale_i]))
-			KEY_Y:
-				rag_i = (rag_i + 1) % RAGS.size()
-				hud.toast("RAG: %s" % RAGS[rag_i])
 	elif event is InputEventMouseButton:
 		if not event.pressed:
 			if event.button_index == MOUSE_BUTTON_LEFT:
@@ -1040,6 +1026,16 @@ func _screenshot(path: String) -> void:
 			walker.global_position = _machine.to_global(Vector3(0.2, 1.9, 2.1))
 			walker.face(_machine.rotation.y + 0.2)
 			walker.camera.rotation.x = -0.72
+		if args.has("--right"):  # from the operator's right, over the console toward the seat
+			_no_aim = true
+			_off_the_machine()
+			_look_at(
+				_machine.to_global(Vector3(1.5, 2.5, 0.9)),
+				_machine.to_global(Vector3(-0.3, 1.7, 0.45))
+			)
+		if args.has("--noprops"):  # the body alone: what is left of the old controls
+			for pv in _machine.console_pivots:
+				pv.visible = false
 		if args.has("--lever"):  # close on the console from the operator's left
 			_no_aim = true
 			_look_at(
@@ -1573,6 +1569,25 @@ func _self_test() -> void:
 	check.call(
 		absf((lane_hi - lane_lo) - Zambelli.COND_W) < 0.06,
 		"the lane is the conditioner's width (%.2f m)" % (lane_hi - lane_lo)
+	)
+	# a tile's apron holds the next tile's edge cells, so the textures read
+	# the same on both sides of a tile's edge (no seam every 6.4 m)
+	ice.flush()
+	var tile_m := IceSheet.TILE * ice.cell
+	ice.pour(Vector2(tile_m * 2, 7.0), 0.3, 1.0)
+	ice.flush()
+	var zr := ice.cell_at(Vector2(0.0, 7.0)).y
+	var left: Variant = ice._tiles[Vector2i(1, zr / IceSheet.TILE)]
+	var right: Variant = ice._tiles[Vector2i(2, zr / IceSheet.TILE)]
+	var pz := zr % IceSheet.TILE + 1
+	check.call(
+		(
+			right.state_img.get_pixel(1, pz).b > 0.0
+			and left.state_img.get_pixel(IceSheet.TILE + 1, pz) == right.state_img.get_pixel(1, pz)
+			and right.state_img.get_pixel(0, pz) == left.state_img.get_pixel(IceSheet.TILE, pz)
+			and left.depth_img.get_pixel(IceSheet.TILE + 1, pz) == right.depth_img.get_pixel(1, pz)
+		),
+		"the tiles' aprons carry the edge cells across the seam"
 	)
 	# a column on a chunk's first row is the chunk before's border row too
 	ice.flush()

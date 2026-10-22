@@ -128,8 +128,8 @@ def clear_body(lo: np.ndarray, hi: np.ndarray) -> int:
 # is not blue (the model's gauges, the old blobs' leftovers, the white pads
 # and plates) goes or turns blue, so the deck reads as smooth blue sheet
 # metal until the diagrams are drawn on it (Sean's ask)
-CONSOLE_BOX = ((0.74, 1.58, 3.33), (1.46, 2.30, 4.26))
-PANEL_BOX = ((0.70, 1.58, 3.27), (1.46, 2.30, 3.33))  # the gauge panel at the front: turns blue
+CONSOLE_BOX = ((0.74, 1.50, 3.33), (1.46, 2.30, 4.26))
+PANEL_BOX = ((0.70, 1.50, 3.27), (1.46, 2.30, 3.33))  # the gauge panel at the front: turns blue
 BLUE = np.array([38.0, 84.0, 168.0])
 
 
@@ -154,6 +154,51 @@ def tidy_console() -> None:
     paint = odd & ((on_deck & (gy <= DECK_TOP)) | within(PANEL_BOX))
     vox[paint, 3] = blue_i
     print(f"zambelli_body: console tidied, {int(drop.sum())} voxels off it, {int(paint.sum())} painted blue")
+    write_vox(path, chunks, vox[~drop])
+
+
+# the cab above the deck, in the grid frame: whatever stands here that is
+# not the steering column, the seat or the mirror posts is a leftover
+CAB_BOX = ((0.50, 1.58, 3.20), (1.75, 2.40, 4.40))
+SPECK = 50  # voxels: anything floating or standing in the cab with fewer is dust
+DARK = 60  # mean RGB under this is a black blob (the bar beside the seat, the stubs)
+
+
+def despeckle() -> None:
+    """Drops the body's floating dust (components under SPECK voxels that
+    do not touch the body) and, in the cab above the deck, every small or
+    black component: the stubs, flakes and the bar beside the seat that
+    the bought model left there (Sean circled them)."""
+    from scipy import ndimage
+
+    path = os.path.join(VOX_DIR, "zambelli_body.vox")
+    size, vox, pal, chunks = read_vox(path)
+    vm = json.load(open(os.path.join(DATA_DIR, "zambelli_body.json")))["voxel_m"]
+    gx = size[0] - 1 - vox[:, 0].astype(int)
+    gy = vox[:, 2].astype(int)
+    gz = vox[:, 1].astype(int)
+    bright = pal[:, :3].astype(float).mean(1)[vox[:, 3].astype(int) - 1]
+    grid = np.zeros((size[0], size[2], size[1]), bool)
+    grid[gx, gy, gz] = True
+    lab, n = ndimage.label(grid, structure=np.ones((3, 3, 3)))
+    lv = lab[gx, gy, gz]
+    sizes = np.bincount(lv)
+    main = int(np.argmax(sizes[1:])) + 1
+    drop = (lv != main) & (sizes[lv] < SPECK)
+    x, y, z = (gx + 0.5) * vm, (gy + 0.5) * vm, (gz + 0.5) * vm
+    lo, hi = CAB_BOX
+    cab = (y > DECK_TOP) & (x >= lo[0]) & (x <= hi[0]) & (z >= lo[2]) & (z <= hi[2])
+    grid[:] = False
+    grid[gx[cab], gy[cab], gz[cab]] = True
+    lab, n = ndimage.label(grid, structure=np.ones((3, 3, 3)))
+    cv = lab[gx, gy, gz]
+    cv[~cab] = 0
+    csize = np.bincount(cv)
+    cdark = np.zeros(csize.size)
+    np.add.at(cdark, cv, bright)
+    cdark = cdark / np.maximum(csize, 1)
+    drop |= (cv > 0) & ((csize[cv] < SPECK) | (cdark[cv] < DARK))
+    print(f"zambelli_body: despeckled, {int(drop.sum())} voxels of dust and black blobs off")
     write_vox(path, chunks, vox[~drop])
 
 
@@ -218,6 +263,7 @@ def main() -> None:
                 os.makedirs(PREVIEW_DIR, exist_ok=True)
                 zambelli.views(scene, os.path.join(PREVIEW_DIR, f"{pid}.png"))
     tidy_console()
+    despeckle()
     print("\nzambelli.gd: each control's foot in the Zambelli's frame, and the prop's offset from it")
     for pid, foot, off in placed:
         print(f"  {pid:22s} foot Vector3({foot[0] - ext[0] / 2:.3f}, {foot[1]:.3f}, {foot[2] - BLADE_Z:.3f})"

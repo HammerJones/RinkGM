@@ -79,15 +79,6 @@ const CONSOLE: Array[Dictionary] = [
 		"aim": Vector3(0.12, 0.24, 0.2),
 	},
 	{
-		"id": "zambelli_stalk",
-		"kind": -1,
-		"name": "",
-		"foot": Vector3(-0.014, 1.660, 0.180),
-		"offset": Vector3.ZERO,
-		"axis": "",
-		"aim": Vector3.ZERO,
-	},
-	{
 		"id": "zambelli_handwheel",
 		"kind": ZambelliControls.Kind.BLADE,
 		"name": "BLADE",
@@ -184,6 +175,7 @@ var wash := 0.0  # the wash water valve
 var controls: ZambelliControls
 var steer := 0.0  # the front wheels' angle, + to the left
 var hull: AnimatableBody3D
+var console_pivots: Array[Node3D] = []  # the console's props, on their pivots (hidden for a body shot)
 var show_body := false:
 	set(v):
 		show_body = v
@@ -246,6 +238,7 @@ func _ready() -> void:
 		else:
 			pivot.name = "Seat"
 		_body.add_child(pivot)
+		console_pivots.append(pivot)
 		if c.kind >= 0:
 			var aim: Vector3 = c.aim
 			controls.add_control(

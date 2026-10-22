@@ -508,7 +508,12 @@ sets with the snow into a rough crust of peaks.
 **The state textures, one texel per cell, in tiles.** Three RGBA8 images
 carry the columns to the shader, as tiles of 256 cells a side (4 chunks)
 with a copy of the material each, so a chunk's rebuild uploads its
-tile's 768 KB rather than the sheet's 30 MB. A change marks its chunk
+tile's 768 KB rather than the sheet's 30 MB. Each tile's images are
+two texels wider than the tile: a one-texel apron all round carries
+the next tiles' edge cells (`_apron()` writes a cell on a tile's edge
+into the neighbour's apron too), so the linear sampling at a tile's
+edge blends into the neighbour as it does everywhere else and no line
+shows every 6.4 m where tiles meet. A change marks its chunk
 with the rect of cells it touched (`_touch()`; a cell on a chunk's
 first row or column marks the chunk before too, which shares it as
 its border, or the two meshes would not meet), and every marked chunk
@@ -659,22 +664,22 @@ display, and run as headless checks in CI (`--test=<name>`).
   to 6 L/s, a stream of drops to match) and the readout
   shows the slab and air temperatures, the clock, the litres hosed and
   the column's top and built-up ice under the dot while it sets from the
-  edges in; I makes water set the instant it lands; T speeds the clock
-  (x1, x10, x60); holding RMB chips gouges wherever you look; , and .
-  set the ice over the paint. R drives
-  the resurfacer end to end down the sheet along your lane:
-  M opens and shuts the flood valve (0 or 65 %, the rag lays a film
-  behind the blade scaled by the valve), [ and ] step the blade a
-  quarter millimetre (the shavings feed the conditioner's snow sim), Y
-  wears the rag. The
+  edges in; T speeds the clock
+  (x1, x10, x60); holding RMB chips gouges wherever you look. Those
+  three (the state, the hose, the chip) are the only ice keys: all
+  resurfacing is done from the machine's seat with its own controls
+  (the pass key, the flood, blade, rag, instant-freeze and
+  ice-over-paint keys are gone, at Sean's ask). The machine starts at
+  centre ice facing down the sheet. The
   second HUD line reads the blade's setting in turns and millimetres,
   the flood and wash valves, and the column under the dot: ice thickness over
   the paint, snow and water in millimetres. Look at the operator's seat
   and E puts you in it; E with nothing under the dot steps you off
   beside the machine. In the seat the
-  keys drive it: W is the pedal, S the brake, A and D steer (a bicycle
-  model pivoting on the rear axle, 3.5 m/s flat out, 32 degrees of
-  lock), and the drive select lever gives the direction; with the
+  keys drive it: W drives forward, S brakes and, once stopped, backs
+  up, A and D steer (a bicycle model pivoting on the rear axle, 3.5 m/s
+  flat out, 32 degrees of lock), and the drive select lever on the
+  console follows (forward, neutral, reverse); with the
   conditioner down the blade resurfaces whatever it sweeps on any
   heading (`IceSheet.resurface_sweep()`, the swept quad's columns binned
   across the blade for the auger), the flood pipe laying its film
@@ -698,10 +703,13 @@ display, and run as headless checks in CI (`--test=<name>`).
   auger's and the bin's (the augers' alike, the other two alike), drive
   select ahead on the left, the blade's handwheel lying on its column
   at the rear, the flood and wash valves either side of it (a post with
-  a handle each), and the stalk with the ball beside the levers, which
-  does nothing; the script then tidies the deck to smooth blue sheet
-  metal, the model's gauges and pads gone or painted blue, for the
-  diagrams to come later. Look at a control and the HUD names it and its state;
+  a handle each); the stalk with the ball beside the levers, which did
+  nothing, is left off. The script then tidies the deck to smooth blue
+  sheet metal, the model's gauges and pads gone or painted blue, for
+  the diagrams to come later, and despeckles the body: floating dust
+  (components under 50 voxels off the body) and, in the cab above the
+  deck, every small or black component (the bar beside the seat, the
+  stubs and flakes the bought model left there) go. Look at a control and the HUD names it and its state;
   E throws a lever (the augers' 30 degrees back for on, the
   conditioner's and the bin's a push forward for up or back for down
   that springs back to neutral, drive select through F, N and R), the
