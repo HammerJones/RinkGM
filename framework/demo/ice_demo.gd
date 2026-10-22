@@ -753,23 +753,9 @@ func _screenshot(path: String) -> void:
 	walker.face(-PI / 2)
 	walker.camera.rotation.x = -0.55
 	ice.chip(Vector2(BLUE_LINE - 0.2, RINK.y / 2 - 0.3), 0.14, 2.0, 0.3)
-	if ObjectCatalog.mesh("hockey_skate") != null:  # the imported skate, lying by the line
-		objects.spawn(
-			"hockey_skate",
-			Transform3D(
-				Basis(Vector3.UP, 0.9),
-				ice.position + Vector3(BLUE_LINE - 0.6, 0.0, RINK.y / 2 + 0.45)
-			)
-		)
 	ice.chip(Vector2(BLUE_LINE + 0.2, RINK.y / 2 + 0.1), 0.14, 2.0, 0.0)
 	ice.pour(Vector2(BLUE_LINE + 0.2, RINK.y / 2 + 0.1), 0.4, 2.5)
 	ice.set_now()
-	if OS.get_cmdline_user_args().has("--view=skate"):
-		# the imported skate from a crouch beside it
-		walker.set_noclip(true)
-		walker.global_position = ice.position + Vector3(BLUE_LINE - 1.3, -1.25, RINK.y / 2 + 0.9)
-		walker.face(-1.0)
-		walker.camera.rotation.x = -0.3
 	if OS.get_cmdline_user_args().has("--view=machine"):
 		# the resurfacer mid-pass, from beside its lane
 		walker.global_position = ice.position + Vector3(10.0, 0.05, 9.0)

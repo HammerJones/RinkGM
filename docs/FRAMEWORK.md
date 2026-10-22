@@ -197,10 +197,23 @@ photo, adjusted; two or three rounds.
 ```
 python3 tools/propgen/library.py                 # regenerate everything
 python3 tools/propgen/zambelli.py --preview      # the resurfacer's five parts, four-view previews
+python3 tools/propgen/glb2vox.py model.glb skate --size 200 --scale 0.001 --preview   # a bought GLB to a hero prop
 python3 tools/propgen/library.py boombox --preview
 python3 tools/propgen/hollow.py big.vox small.vox   # a solid MagicaVoxel model to surface voxels
 GODOT=... tools/prop_sheet.sh                    # the contact sheet, as the game draws them
 ```
+
+A bought or downloaded model comes in through `tools/propgen/glb2vox.py`
+(needs `trimesh`): the GLB's surface is sampled densely, each voxel takes
+the mean of its samples' base-colour texels, the colours are quantised to
+a palette of 255, and the result is written as a `.vox` with a manifest
+like any generated prop. `--size` is the voxel count along the longest
+axis, `--scale` the model's units to metres (Sketchfab conversions are
+often millimetres). The first try, a hockey skate at 1.6 mm voxels
+(`hockey_skate`, not placed in any demo), kept its laces, logo and
+holder; the shell it makes is one voxel thick, so a model with
+coincident inner surfaces may show them. Mind the model's licence before
+a `.vox` of it ships: an editorial-use model is reference only.
 
 The sheet (`framework/studio/prop_sheet.gd`, run under a virtual display
 with the software OpenGL driver) renders every prop with the baked AO mesh,
