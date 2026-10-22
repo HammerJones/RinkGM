@@ -14,16 +14,22 @@ extends Node3D
 ## in the ice, and the push slower too: the blade's bite is felt as
 ## drag), the wheel is the crank (counter-clockwise lowers the blade, the
 ## opposite of the Zambelli's handwheel, half a millimetre a notch) and
-## TAB lifts the blade clear or sets it back to the crank's depth. The
-## cut is `IceSheet.edge_sweep`: the disc shaves a lane `CUT_W` across
-## from its left rim, `depth_mm` there tapering to nothing,
+## TAB lifts the blade clear or sets it back to the crank's level. The
+## cut is `IceSheet.edge_sweep`: the blade's level `level_mm` (-4..+4,
+## against the lane's mean surface) is where the rim sits, and the
+## tilted disc rises `SLOPE` across from there, so a deeper setting cuts
+## a wider lane (4 mm down reaches `CUT_W` across, 1 mm a quarter of
+## that) and a raised one only takes the high spots the rim meets;
 ## striations circle the disc, and every `ARC_STEP` of travel the rim
-## rocks in and leaves a deep arc `ARC_W` wide (Sean: about 3.5 cm, every
-## 5 cm or so) that a light flood evens out. The shavings fly `THROW` to
-## its right as snow. It lives in the bay.
+## rocks in and leaves an arc one cell wide (`ARC_W`, a centimetre) as
+## deep as the blade is set, that a light flood evens out. The shavings
+## fly `THROW` to its right as snow. It lives in the bay.
 
 const BLADE_R := 0.23  # a 46 cm disc
-const CUT_W := 0.345  # the lane it cuts, from the left rim across (Sean: half again the disc's half)
+const CUT_W := 0.345  # the widest lane, 4 mm down (Sean: half again the disc's half)
+const LEVEL_MIN := -4.0  # mm the crank can set the blade below the surface ...
+const LEVEL_MAX := 4.0  # ... and above it (Sean: +/- 4 mm, 8 in all)
+const SLOPE := -LEVEL_MIN / CUT_W  # mm the tilted disc rises per metre across: the cut's width follows its depth
 const EDGE_OVER := 0.03  # the lane reaches at least this far past the rim, so the last cells at the boards are cut
 const BLADE_Z := -0.30  # the disc's centre under the deck, between the wheels
 const DECK_HALF_W := 0.37  # the deck's sides, the corners the boards hold
@@ -32,9 +38,7 @@ const DECK_BACK := 0.88
 const BLADE_X := -DECK_HALF_W + BLADE_R  # ... and to its left: the rim flush with the deck's left side
 const TILT := deg_to_rad(2.5)  # the disc leaning left (Sean: 4 was a bit much)
 const ARC_STEP := 0.05  # metres of travel between arcs
-const ARC_W := 0.015  # a fine line (Sean: finer, and plain to see)
-const ARC_MM := 3.0  # the arc's gouge beyond the set depth
-const DEPTH_MAX := 4.0  # mm the crank can set
+const ARC_W := 0.01  # a fine line, one cell wide (Sean: a centimetre)
 const CRANK_MM := 0.5  # a notch of the crank
 const PUSH_SPEED := 0.9  # m/s pushed flat out with the blade in the ice
 const PULL_SPEED := 0.5
@@ -53,7 +57,7 @@ const CRANK_AT := Vector3(0.20, 1.02, 0.78)  # clamped to the grip's right end, 
 const TAKE_REACH := 2.4
 const SPIN := 120.0  # rad/s, for the look
 
-var depth_mm := 1.0  # the crank's setting
+var level_mm := -1.0  # the crank's setting: the rim's level against the surface, - is down
 var edge_over := EDGE_OVER  # how far past the rim the lane reaches now (more round a corner)
 var running := false  # the engine
 var blade_down := false
@@ -218,7 +222,7 @@ func _hits(origin: Vector3, dir: Vector3, at: Vector3, r: float) -> bool:
 ## A notch of the crank: up is clockwise and raises the blade, down is
 ## counter-clockwise and lowers it (the opposite of the Zambelli's wheel).
 func crank_notch(up: bool) -> void:
-	depth_mm = clampf(depth_mm + (-CRANK_MM if up else CRANK_MM), 0.0, DEPTH_MAX)
+	level_mm = clampf(level_mm + (CRANK_MM if up else -CRANK_MM), LEVEL_MIN, LEVEL_MAX)
 	_pose_crank()
 
 
@@ -248,8 +252,9 @@ func step(dt: float, push: float, turn: float) -> Array[Vector3]:
 
 
 ## The blade over the ice from `a` to `b` (sheet metres, the disc's
-## centre): its left half shaves the lane, rocks an arc in every
-## ARC_STEP, throws the shavings to the right. Returns the millimetres shaved.
+## centre): its left half shaves the lane as wide as the setting is
+## deep, rocks an arc in every ARC_STEP, throws the shavings to the
+## right. Returns the millimetres shaved.
 func cut(sheet: IceSheet, a: Vector2, b: Vector2) -> float:
 	if not blade_down or not running:
 		return 0.0
@@ -265,8 +270,9 @@ func cut(sheet: IceSheet, a: Vector2, b: Vector2) -> float:
 		a - over,
 		b - over,
 		BLADE_R,
-		depth_mm,
-		ARC_MM + depth_mm * 0.3 if arcs > 0 else 0.0,
+		level_mm,
+		SLOPE,
+		maxf(-level_mm, 0.0) if arcs > 0 else 0.0,
 		ARC_W,
 		CUT_W + edge_over
 	)
@@ -288,11 +294,11 @@ func cut(sheet: IceSheet, a: Vector2, b: Vector2) -> float:
 
 func state_text() -> String:
 	return (
-		"EDGER: ENGINE %s, BLADE %s, CRANK %.1f MM   SHAVED %.0f MM"
-		% ["RUNNING" if running else "OFF", "DOWN" if blade_down else "UP", depth_mm, shaved_mm]
+		"EDGER: ENGINE %s, BLADE %s, CRANK %+.1f MM   SHAVED %.0f MM"
+		% ["RUNNING" if running else "OFF", "DOWN" if blade_down else "UP", level_mm, shaved_mm]
 	)
 
 
 func _pose_crank() -> void:
 	# counter-clockwise (seen from behind, looking along -z) as it lowers
-	crank.rotation.z = depth_mm / CRANK_MM * TAU / 8.0
+	crank.rotation.z = -level_mm / CRANK_MM * TAU / 8.0

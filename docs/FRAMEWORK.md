@@ -860,20 +860,25 @@ display, and run as headless checks in CI (`--test=<name>`).
   blade's bite felt as drag), S pulls back, A and D turn it with your
   weight (0.8 rad/s, 0.35 with the blade in), the wheel is the crank
   (counter-clockwise lowers the blade, the opposite of the Zambelli's
-  handwheel, half a millimetre a notch, up to 4 mm), TAB lifts the blade
-  clear or sets it back to the crank's depth, E lets go. The cut is
-  `IceSheet.edge_sweep()`: the disc cuts a lane `CUT_W` (34.5 cm)
-  across from its left rim (reaching `EDGE_OVER` past it, so the last
-  cells at the boards are always cut, and round a corner as far as the
-  arc, since the deck's ends on the arc hold its middle 4 cm off it:
-  `IceDemo._corner_gap()` sets `edge_over` each push), `depth_mm` at the rim tapering
-  to nothing at the lane's far edge, relative to each column (so set
-  against the boards and pushed, every pass lowers the ice along them
-  again), the striations re-angled to circle the disc, and every
-  `ARC_STEP` (5 cm) of travel the rim rocks in and leaves a fine
-  sharp-edged arc of gouge `ARC_W` (1.5 cm) wide along the trailing
-  left rim, `ARC_MM` (3 mm) plus a share of the depth deep (Sean: fine
-  and plain to see, every 5 cm or so), a mark a light flood fills; the shavings fly off
+  handwheel, half a millimetre a notch, from 4 mm down to 4 mm up,
+  `LEVEL_MIN`..`LEVEL_MAX`), TAB lifts the blade clear or sets it back
+  to the crank's level, E lets go. The cut is `IceSheet.edge_sweep()`:
+  the rim sits at the crank's level (`level_mm`) against the lane's
+  mean solid surface and the tilted disc rises `SLOPE` (11.6 mm per
+  metre) across from there, so the lane is as wide as the setting is
+  deep (4 mm down reaches `CUT_W`, 34.5 cm, across; 1 mm down 8.6 cm)
+  and a raised blade only takes the high spots the rim meets; the lane
+  starts `EDGE_OVER` past the rim, so the last cells at the boards are
+  always cut, and round a corner as far as the arc, since the deck's
+  ends on the arc hold its middle 4 cm off it (`IceDemo._corner_gap()`
+  sets `edge_over` each push). Set against the boards and pushed, every
+  pass lowers the ice along them again (the level is against the mean,
+  which the pass just lowered). The striations are re-angled to circle
+  the disc, and every `ARC_STEP` (5 cm) of travel the rim rocks in and
+  leaves a sharp-edged arc one cell wide (`ARC_W`, a centimetre, the
+  sheet's cells being 2.5 cm) along the trailing left rim, as deep as
+  the blade is set (Sean: much finer, the depth from the setting), a
+  mark a light flood fills; the shavings fly off
   the deck's right side as a spray of grains (`GPUParticles3D` from the
   chute, thrown `THROW`, 1.2 m) and land as snow there
   (`IceSheet.add_snow()`). Its corners are kept inside the boards like

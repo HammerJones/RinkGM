@@ -509,14 +509,24 @@ func add_snow(at: Vector2, width: float, mm: float) -> void:
 ## The edger's disc swept from `a` to `b` (its centre, metres on the
 ## sheet), radius `r`. The disc is tilted to the machine's left, so it
 ## cuts from its left rim (flush with the edger's side, run along the
-## boards) `lane_w` across toward the right: `cut_mm` deep at the rim
-## tapering to nothing at the lane's far edge. The cut is relative to
-## each column, so every pass lowers the ice there again. Striations
-## circle the disc, and when `arc_mm` > 0 the rim rocks a fine, deep arc
-## `arc_w` wide into the trailing left quarter. Returns the millimetres
-## shaved.
+## boards) across toward the right: the rim is set `level_mm` against
+## the lane's mean solid surface (- is down into it, + above it) and
+## the disc rises `slope` mm per metre across from there, so a deeper
+## setting cuts a wider lane and a raised one only takes the high spots
+## the rim meets; `lane_w` is how far across the columns are looked at.
+## Striations circle the disc, and when `arc_mm` > 0 the rim rocks an
+## arc that deep, one cell wide along the rim's circle (`arc_w` sets
+## the circle's radius inside the rim), into the trailing left quarter.
+## Returns the millimetres shaved.
 func edge_sweep(
-	a: Vector2, b: Vector2, r: float, cut_mm: float, arc_mm: float, arc_w: float, lane_w := -1.0
+	a: Vector2,
+	b: Vector2,
+	r: float,
+	level_mm: float,
+	slope: float,
+	arc_mm: float,
+	arc_w: float,
+	lane_w := -1.0
 ) -> float:
 	if lane_w <= 0.0:
 		lane_w = r
@@ -527,23 +537,25 @@ func edge_sweep(
 	else:
 		dir = Vector2.RIGHT
 	var right := Vector2(-dir.y, dir.x)  # of the travel (x right, z down)
-	if a.distance_to(b) > 1e-6 and cut_mm > 0.0:
+	if a.distance_to(b) > 1e-6:
 		var cols := PackedInt32Array()
 		var us := PackedFloat32Array()
 		# the lane from the left rim (u 0) lane_w across (u 1)
 		var far := right * (lane_w - r)
 		if _quad_cols(a - right * r, a + far, b - right * r, b + far, cols, us):
 			var travel := dir.angle()
+			var mean := 0.0
+			for i in cols:
+				mean += ice[i] + crust[i]
+			mean /= cols.size()
 			for k in cols.size():
 				var i := cols[k]
-				var depth := cut_mm * (1.0 - us[k])
-				if depth <= 0.01:
+				var blade := mean + level_mm + us[k] * lane_w * slope
+				if ice[i] + crust[i] + snow[i] <= blade + 0.01:
 					continue
-				var level := ice[i] + crust[i] - depth
-				took += _shave(i % w, i / w, level, 0.0, 0.0, 1.0, travel)
+				took += _shave(i % w, i / w, blade, 0.0, 0.0, 1.0, travel)
 	var c := cell_at(b)
 	var rc := int(ceil(r / cell)) + 1
-	var rim := r - arc_w / 2
 	for dz in range(-rc, rc + 1):
 		for dx in range(-rc, rc + 1):
 			var x := c.x + dx
@@ -551,18 +563,35 @@ func edge_sweep(
 			if not is_ice(x, z):
 				continue
 			var off := Vector2(dx, dz) * cell
-			var dist := off.length()
-			if dist > r or off.dot(right) > lane_w - r:
+			if off.length() > r or off.dot(right) > lane_w - r:
 				continue
 			var i := index(x, z)
 			if cut[i] > 0.0:
 				ang[i] = off.angle() + PI / 2  # the rim's tangent
 				_touch(x, z)
-			if arc_mm > 0.0 and absf(dist - rim) <= arc_w / 2 and off.dot(dir) < -0.3 * r:
-				# a sharp-edged trench the width of the band, the rim's mark
-				gouge[i] = maxf(gouge[i], arc_mm)
-				cut[i] = 1.0
-				_touch(x, z)
+	if arc_mm > 0.0:
+		# the rim's mark: the cells under the circle's trailing left
+		# quarter, walked round it so the line is one cell wide and unbroken
+		var rim := r - arc_w / 2
+		var back := (-dir).angle()
+		var span := acos(0.3)  # off.dot(dir) < -0.3 r
+		var n := maxi(int(ceil(2.0 * span * rim / cell * 1.5)), 1)
+		var last := -1
+		for k in n + 1:
+			var th := back - span + 2.0 * span * k / n
+			var off := Vector2(cos(th), sin(th)) * rim
+			if off.dot(right) > lane_w - r:
+				continue
+			var cc := cell_at(b + off)
+			if not is_ice(cc.x, cc.y):
+				continue
+			var i := index(cc.x, cc.y)
+			if i == last:
+				continue
+			last = i
+			gouge[i] = maxf(gouge[i], arc_mm)
+			cut[i] = 1.0
+			_touch(cc.x, cc.y)
 	return took
 
 

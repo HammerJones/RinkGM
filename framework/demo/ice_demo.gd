@@ -1022,7 +1022,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					hud.toast(
 						(
 							"EDGER BLADE %s"
-							% ("DOWN %.1f MM" % _edger.depth_mm if _edger.blade_down else "UP")
+							% ("DOWN AT %+.1f MM" % _edger.level_mm if _edger.blade_down else "UP")
 						)
 					)
 			KEY_T:
@@ -1060,10 +1060,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				_edger.crank_notch(up)
 				hud.toast(
 					(
-						"CRANK %s: BLADE %.1f MM%s"
+						"CRANK %s: BLADE %+.1f MM%s"
 						% [
 							"CLOCKWISE" if up else "COUNTER-CLOCKWISE",
-							_edger.depth_mm,
+							_edger.level_mm,
 							"" if _edger.blade_down else " (RAISED)"
 						]
 					)
@@ -1499,7 +1499,7 @@ func _screenshot(path: String) -> void:
 		ice.flush()
 		_edger.global_position = ice.position + Vector3(RINK.x - 12.0, 0.0, RINK.y - EDGER_SIDE)
 		_edger.rotation.y = PI / 2  # nose toward -X, the boards on its left
-		_edger.depth_mm = 1.5
+		_edger.level_mm = -1.5
 		_edger.blade_down = true
 		_edger.running = true
 		for step in 300:
@@ -1515,7 +1515,7 @@ func _screenshot(path: String) -> void:
 		ice.flush()
 		_edger.global_position = ice.position + Vector3(RINK.x - 12.0, 0.0, RINK.y - EDGER_SIDE)
 		_edger.rotation.y = PI / 2
-		_edger.depth_mm = 1.5
+		_edger.level_mm = -1.5
 		_edger.blade_down = true
 		_edger.running = true
 		_take_the_handles()
@@ -1602,7 +1602,16 @@ func _screenshot(path: String) -> void:
 				0.0,
 				0.0
 			)
-		ice.edge_sweep(Vector2(4.0, 0.4), Vector2(RINK.x - 4.0, 0.4), 0.23, 3.0, 3.0, 0.015, 0.4)
+		ice.edge_sweep(
+			Vector2(4.0, 0.4),
+			Vector2(RINK.x - 4.0, 0.4),
+			0.23,
+			-3.0,
+			IceEdger.SLOPE,
+			3.0,
+			0.01,
+			0.4
+		)
 		ice.pour(Vector2(RINK.x / 2, RINK.y / 2), 2.0, 1.5)
 		set_heatmap(true)
 		walker.set_noclip(true)
@@ -2296,7 +2305,7 @@ func _self_test() -> void:
 	ice.flush()
 	_edger.global_position = ice.position + Vector3(RINK.x - 12.0, 0.0, RINK.y / 2)
 	_edger.rotation.y = -PI / 2  # nose toward +X
-	_edger.depth_mm = 1.5
+	_edger.level_mm = -4.0
 	_edger.blade_down = false
 	_edger.running = false
 	_edger.speed = 0.0
@@ -2346,7 +2355,7 @@ func _self_test() -> void:
 	var right_of := _local(_edger.to_global(Vector3(0.15, 0.0, IceEdger.BLADE_Z + 0.4)))
 	check.call(
 		ice.thickness_at(lane) < 24.0,
-		"the blade down, the left rim cuts about 1.5 mm (%.2f mm)" % ice.thickness_at(lane)
+		"the blade down, the left rim cuts about 4 mm (%.2f mm)" % ice.thickness_at(lane)
 	)
 	check.call(
 		ice.thickness_at(disc_mid) > ice.thickness_at(lane) and ice.thickness_at(disc_mid) < 25.0,
@@ -2382,14 +2391,20 @@ func _self_test() -> void:
 			% [ice.snow_at(throw_r), ice.snow_at(throw_l)]
 		)
 	)
-	var crank0 := _edger.depth_mm
-	_edger.crank_notch(false)
-	check.call(
-		is_equal_approx(_edger.depth_mm, crank0 + IceEdger.CRANK_MM),
-		"counter-clockwise lowers the blade"
-	)
+	var crank0 := _edger.level_mm
 	_edger.crank_notch(true)
-	check.call(is_equal_approx(_edger.depth_mm, crank0), "clockwise raises it")
+	check.call(
+		is_equal_approx(_edger.level_mm, crank0 + IceEdger.CRANK_MM), "clockwise raises the blade"
+	)
+	_edger.crank_notch(false)
+	check.call(is_equal_approx(_edger.level_mm, crank0), "counter-clockwise lowers it")
+	for notch in 20:
+		_edger.crank_notch(true)
+	check.call(is_equal_approx(_edger.level_mm, IceEdger.LEVEL_MAX), "it goes up to +4 mm")
+	for notch in 40:
+		_edger.crank_notch(false)
+	check.call(is_equal_approx(_edger.level_mm, IceEdger.LEVEL_MIN), "... and down to -4 mm")
+	_edger.level_mm = crank0
 	_edger.toggle_blade()
 	check.call(not _edger.blade_down, "TAB lifts the blade")
 	var yaw0 := _edger.rotation.y
@@ -2535,7 +2550,7 @@ func _self_test() -> void:
 	)
 	# the heatmap: H colours the ice by height over the sheet's own range
 	var range_flat := ice.height_range()
-	ice.pour(Vector2(RINK.x / 2, RINK.y / 2), 1.0, 2.0)
+	ice.pour(Vector2(RINK.x / 2, RINK.y / 2), 1.0, 6.0)  # deeper than the snow the edger threw
 	ice.flush()
 	var heat_t0 := Time.get_ticks_usec()
 	var range0 := ice.height_range()
