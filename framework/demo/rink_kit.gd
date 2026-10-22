@@ -93,3 +93,10 @@ static func _collider(b: StaticBody3D, size: Vector3, at: Vector3) -> void:
 	cs.shape = bs
 	cs.position = at
 	b.add_child(cs)
+
+
+## A glass panel's width, metres (the 4 ft the kit is made in).
+static func glass_w() -> float:
+	var rec := ObjectCatalog.info("glass_4x6")
+	var size: Array = rec.get("size_m", [1.2192, 1.83, 0.08])
+	return float(size[0])

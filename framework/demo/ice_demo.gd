@@ -51,6 +51,7 @@ const TRAP_GOAL := 3.353  # the trapezoid, half of 22 ft on the goal line
 const TRAP_BOARDS := 4.267  # half of 28 ft at the boards
 const REF_CREASE_R := 3.048  # 10 ft
 const BOARD_H := 1.07  # 42 in
+const BOARD_H_CAP := 1.11  # the kit's cap rail on top, where the glass stands
 const KICK_H := 0.2
 const BOARD_T := 0.1
 const STATES := [
@@ -113,6 +114,7 @@ var _skater: DemoSkater
 var _skates: Node3D  # the skates and stick on the bay floor
 var _puck: DemoPuck
 var _kit: Node3D  # the rink kit on show in the bay: board sections and glass
+var _rink_pieces := {}  # kit id -> how many the rink's boards and glass use
 var _edging := false  # at the edger's handles: the keys push it
 var _spray_strip := 0  # which strip of the hose's cone this frame pours
 var _aimed := -1  # the machine control under the dot
@@ -1478,23 +1480,32 @@ static func _slant(img: Image, a: Vector2, b: Vector2, wdt: float, colour: Color
 		_rect(img, p.x - wdt / 2, p.y - wdt / 2, p.x + wdt / 2, p.y + wdt / 2, colour)
 
 
-## The boards: straight runs along the sides and ends, the corners as
-## arcs of short segments, a kick plate along the foot. Positions are in
-## world space (the sheet's centre is the origin).
+## The boards: the rink kit's sections (RinkKit, tools/propgen/rink_kit.py)
+## laid along the sides and ends, four quarter-corner curves round each
+## corner, and the 6 ft glass on the cap all the way round (Sean). The
+## collision stays the analytic boxes the walker and the machine slide
+## along: straight runs and the corners as arcs of short segments.
+## Positions are in world space (the sheet's centre is the origin).
 func _boards(shell: StaticBody3D) -> void:
 	var hx := RINK.x / 2
 	var hz := RINK.y / 2
 	var t := BOARD_T / 2
+	var kit := Node3D.new()
+	kit.name = "Boards"
+	add_child(kit)
 	for s in [
-		[Vector3(0, 0, -hz - t), RINK.x - 2 * CORNER_R, 0.0],
+		[Vector3(0, 0, -hz - t), RINK.x - 2 * CORNER_R, PI],
 		[Vector3(0, 0, hz + t), RINK.x - 2 * CORNER_R, 0.0],
-		[Vector3(-hx - t, 0, 0), RINK.y - 2 * CORNER_R, PI / 2],
+		[Vector3(-hx - t, 0, 0), RINK.y - 2 * CORNER_R, -PI / 2],
 	]:
 		_board(shell, s[0], s[1], s[2])
+		_board_run(kit, s[0], s[1], s[2])
 	# the +X end: the straight is split around the bay doorway
 	var side := (RINK.y - 2 * CORNER_R - ZamboniBay.DOOR_W) / 2
 	for sz: float in [-1.0, 1.0]:
-		_board(shell, Vector3(hx + t, 0, sz * (ZamboniBay.DOOR_W / 2 + side / 2)), side, PI / 2)
+		var at := Vector3(hx + t, 0, sz * (ZamboniBay.DOOR_W / 2 + side / 2))
+		_board(shell, at, side, PI / 2)
+		_board_run(kit, at, side, PI / 2)
 	var n := 16
 	var seg := PI / 2 / n
 	var r := CORNER_R + t
@@ -1507,8 +1518,10 @@ func _boards(shell: StaticBody3D) -> void:
 				var dir := Vector3(sx * cos(a), 0, sz * sin(a))
 				var tangent := Vector3(-dir.z, 0, dir.x)
 				_board(shell, centre + dir * r, length, atan2(-tangent.z, tangent.x))
+			_board_corner(kit, centre, sx, sz)
 
 
+## The collision of a straight run of boards: one box, nothing drawn.
 func _board(shell: StaticBody3D, at: Vector3, length: float, yaw: float) -> void:
 	_box(
 		shell,
@@ -1519,24 +1532,75 @@ func _board(shell: StaticBody3D, at: Vector3, length: float, yaw: float) -> void
 		true,
 		yaw
 	)
-	_box(
-		shell,
-		at + Vector3(0, KICK_H / 2, 0),
-		Vector3(length, KICK_H, BOARD_T + 0.01),
-		KICK,
-		true,
-		false,
-		yaw
-	)
-	_box(
-		shell,
-		at + Vector3(0, KICK_H + (BOARD_H - KICK_H) / 2, 0),
-		Vector3(length, BOARD_H - KICK_H, BOARD_T),
-		BOARD,
-		true,
-		false,
-		yaw
-	)
+
+
+## A straight run of the kit along `length` metres centred at `at` (the
+## panel's mid-thickness), the ice side facing `yaw`'s -Z: the longest
+## sections first, the remainder closed with a 1 m section tucked a
+## centimetre behind its neighbour; then the glass on the cap.
+func _board_run(kit: Node3D, at: Vector3, length: float, yaw: float) -> void:
+	var basis := Basis(Vector3.UP, yaw)
+	var along := basis * Vector3.RIGHT  # the run's +x in the world
+	var back := basis * Vector3.BACK  # away from the ice
+	var x := -length / 2
+	var left := length
+	while left > 0.005:
+		var id := "board_4m" if left >= 4.0 else ("board_2m" if left >= 2.0 else "board_1m")
+		var l := RinkKit.length_m(id)
+		var tuck := 0.0
+		if l > left + 0.005:  # the last piece overlaps the one before, a shade behind it
+			tuck = 0.01
+			x = length / 2 - l
+		var b := RinkKit.board(id)
+		b.position = at + along * (x + l / 2) + back * tuck
+		b.rotation.y = yaw
+		kit.add_child(b)
+		_rink_pieces[id] = _rink_pieces.get(id, 0) + 1
+		x += l
+		left = length / 2 - x
+	# the glass: as many 4 ft panels as fit, spread to the run's length
+	var count := maxi(int(length / RinkKit.glass_w()), 1)
+	var pitch := length / count
+	for k in count:
+		var g := RinkKit.glass("glass_4x6")
+		g.position = at + along * (-length / 2 + (k + 0.5) * pitch) + Vector3(0, BOARD_H_CAP, 0)
+		g.rotation.y = yaw
+		kit.add_child(g)
+		_rink_pieces["glass_4x6"] = _rink_pieces.get("glass_4x6", 0) + 1
+
+
+## A corner of the kit: four quarter-corner curves round the arc about
+## `centre` in the (sx, sz) quadrant, the glass as flat panels along it.
+func _board_corner(kit: Node3D, centre: Vector3, sx: float, sz: float) -> void:
+	var id := "board_curve_quarter"
+	var rec := ObjectCatalog.info(id)
+	var spec: Dictionary = rec.get("board", {})
+	var angle := deg_to_rad(float(spec.get("angle_deg", 22.5)))
+	var size: Array = rec.get("size_m", [3.36, 1.12, 0.3])
+	var half := angle / 2
+	# the piece's origin is its bounding box's bottom centre: this far out
+	# from the arc's centre along the piece's middle
+	var d := CORNER_R * cos(half) + float(size[2]) / 2 - 0.02
+	var pieces := int(round(PI / 2 / angle))
+	for k in pieces:
+		var a := (k + 0.5) * angle
+		var u := Vector3(sx * cos(a), 0, sz * sin(a))
+		var b := RinkKit.board(id)
+		b.position = centre + u * d
+		b.rotation.y = atan2(u.x, u.z)
+		kit.add_child(b)
+		_rink_pieces[id] = _rink_pieces.get(id, 0) + 1
+	var arc := (CORNER_R + BOARD_T / 2) * PI / 2
+	var count := maxi(int(arc / RinkKit.glass_w()), 1)
+	var step := PI / 2 / count
+	for k in count:
+		var a := (k + 0.5) * step
+		var u := Vector3(sx * cos(a), 0, sz * sin(a))
+		var g := RinkKit.glass("glass_4x6")
+		g.position = centre + u * (CORNER_R + BOARD_T / 2) + Vector3(0, BOARD_H_CAP, 0)
+		g.rotation.y = atan2(u.x, u.z)
+		kit.add_child(g)
+		_rink_pieces["glass_4x6"] = _rink_pieces.get("glass_4x6", 0) + 1
 
 
 func _box(
@@ -3087,6 +3151,14 @@ func _self_test() -> void:
 	check.call(
 		_kit.get_child_count() == 7,
 		"the kit is on show in the bay (%d pieces)" % _kit.get_child_count()
+	)
+	check.call(
+		(
+			_rink_pieces.get("board_curve_quarter", 0) == 16
+			and _rink_pieces.get("board_4m", 0) == 22
+			and _rink_pieces.get("glass_4x6", 0) > 120
+		),
+		"the rink's boards are the kit, the 6 ft glass all round (%s)" % _rink_pieces
 	)
 	walker.queue_free()
 	walker = null

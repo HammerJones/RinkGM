@@ -956,10 +956,18 @@ display, and run as headless checks in CI (`--test=<name>`).
   bottom channel), the pane is the manifest's `pane` (size and where it
   sits), which `RinkKit.glass()` draws see-through over a box collider;
   `RinkKit.board()` is a section with its collider. Every piece stands on
-  its bottom centre with the ice side facing -Z. The set stands in the
-  bay (`_kit_display()`: the straights and the eighth along the +z wall
-  with the 6 ft glass on the 2 m board, the 4 m board and 8 ft glass on
-  the back wall, the quarter on the -z wall); `--view=kit` frames it.
+  its bottom centre with the ice side facing -Z. The demo rink's boards
+  are these pieces (`_boards()`: 4 m sections down the sides and ends,
+  the remainder of a run closed with a 2 m or 1 m piece tucked a
+  centimetre behind its neighbour, four quarter curves round each
+  corner, `_rink_pieces` counts them) with the 6 ft glass on the cap all
+  the way round, as many 4 ft panels as a run takes, spread to its
+  length, flat facets round the corners; the collision stays the
+  analytic boxes the walker and the machine slide along. The set is also
+  on show in the bay (`_kit_display()`: the straights and the eighth
+  along the +z wall with the 6 ft glass on the 2 m board, the 4 m board
+  and 8 ft glass on the back wall, the quarter on the -z wall);
+  `--view=kit` frames it.
   Footsteps leave the ice alone. `--screenshot=<png>`
   frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the
