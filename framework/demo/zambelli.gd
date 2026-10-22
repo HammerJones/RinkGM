@@ -134,10 +134,11 @@ const AUGER_Z := 3.269
 const AUGER_R := 0.15
 const AUGER_L := 2.0
 const COND_W := 2.308  # the conditioner's width, from the bought model
-const COND_LEFT := 0.152  # the conditioner 6 in wider on the operator's left (Sean's ask): the corners
+const COND_LEFT := 0.254  # the conditioner 10 in wider on the operator's left (Sean's asks: 6 in, then 4 more): the corners
+const COND_RIGHT := 0.051  # ... and 2 in on the right
 const BLADE_X0 := -COND_W / 2 - COND_LEFT  # the blade's and the pipe's left end
-const BLADE_X1 := COND_W / 2  # ... and right end
-const BLADE_W := COND_W + COND_LEFT
+const BLADE_X1 := COND_W / 2 + COND_RIGHT  # ... and right end
+const BLADE_W := COND_W + COND_LEFT + COND_RIGHT
 const COND_H := 0.42
 const COND_LIFT := 0.12  # the conditioner's travel, up
 const COND_TRAVEL_S := 5.5
@@ -263,7 +264,9 @@ func _ready() -> void:
 	_cond = Node3D.new()
 	_cond.name = "Conditioner"
 	var cond := _part("zambelli_conditioner")
-	cond.position = Vector3(-COND_LEFT / 2, 0.0, COND_PIVOT_Z - BLADE_Z)  # the prop is centred on itself
+	# the prop is centred on itself: set over the blade's middle and stretched to its width
+	cond.position = Vector3((BLADE_X0 + BLADE_X1) / 2, 0.0, COND_PIVOT_Z - BLADE_Z)
+	cond.scale.x = BLADE_W / COND_W
 	_cond.add_child(cond)
 	_make_flood(_cond)
 	add_child(_cond)

@@ -383,11 +383,22 @@ func fill_state(sn: float, ct: float, wt: float, fz: float, angle := 0.0) -> voi
 ## A puddle: `mm` of water in a disc `width` metres across, deeper in the
 ## middle, starting liquid. Snow it lands on stays in the column as slush
 ## and sets with the water into a rough crust.
-func pour(at: Vector2, width: float, mm: float) -> void:
+func pour(at: Vector2, width: float, mm: float, clip := Rect2i()) -> void:
 	var c := cell_at(at)
 	var r := int(ceil(width * 0.5 / cell))
-	for dz in range(-r, r + 1):
-		for dx in range(-r, r + 1):
+	var z_lo := -r
+	var z_hi := r
+	var x_lo := -r
+	var x_hi := r
+	if clip.size != Vector2i.ZERO:
+		# only the cells in `clip` (cell coords): a wide cone poured a strip
+		# a frame, so the sheet's rebuild keeps pace
+		x_lo = maxi(x_lo, clip.position.x - c.x)
+		x_hi = mini(x_hi, clip.end.x - 1 - c.x)
+		z_lo = maxi(z_lo, clip.position.y - c.y)
+		z_hi = mini(z_hi, clip.end.y - 1 - c.y)
+	for dz in range(z_lo, z_hi + 1):
+		for dx in range(x_lo, x_hi + 1):
 			var x := c.x + dx
 			var z := c.y + dz
 			if not is_ice(x, z):
@@ -428,13 +439,14 @@ func add_snow(at: Vector2, width: float, mm: float) -> void:
 			_touch(x, z)
 
 
-## The edger's disc, its centre from `a` to `b`: the lane 2 `r` wide is
-## shaved `cut_mm` below its mean solid level with striations circling
-## the disc (the blade spins), and with `arc_mm` above zero the tilted
-## rim rocks in at `b` and leaves an arc of gouge `arc_w` wide along the
-## trailing rim (behind the cut, where the blade will not come back and
-## take it), a mark a light flood evens out. Returns the millimetres
-## shaved.
+## The edger's disc swept from `a` to `b` (its centre, metres on the
+## sheet), radius `r`. The disc is tilted to the machine's left, so only
+## its left half cuts: `cut_mm` deep at the left rim (flush with the
+## edger's side, run along the boards) tapering to nothing under the
+## centre. The cut is relative to each column, so every pass lowers the
+## ice there again. Striations circle the disc, and when `arc_mm` > 0 the
+## rim rocks a deep arc `arc_w` wide into the trailing left quarter.
+## Returns the millimetres shaved.
 func edge_sweep(
 	a: Vector2, b: Vector2, r: float, cut_mm: float, arc_mm: float, arc_w: float
 ) -> float:
@@ -442,12 +454,22 @@ func edge_sweep(
 	var took := 0.0
 	if dir.length() > 1e-6:
 		dir = dir.normalized()
-		var side := Vector2(-dir.y, dir.x) * r
-		took = resurface_sweep(
-			a + side, a - side, b + side, b - side, 0.0, 0.0, dir.angle(), cut_mm, 1
-		)
 	else:
 		dir = Vector2.RIGHT
+	var right := Vector2(-dir.y, dir.x)  # of the travel (x right, z down)
+	if a.distance_to(b) > 1e-6 and cut_mm > 0.0:
+		var cols := PackedInt32Array()
+		var us := PackedFloat32Array()
+		# the lane from the left rim (u 0) to the centre (u 1)
+		if _quad_cols(a - right * r, a, b - right * r, b, cols, us):
+			var travel := dir.angle()
+			for k in cols.size():
+				var i := cols[k]
+				var depth := cut_mm * (1.0 - us[k])
+				if depth <= 0.01:
+					continue
+				var level := ice[i] + crust[i] - depth
+				took += _shave(i % w, i / w, level, 0.0, 0.0, 1.0, travel)
 	var c := cell_at(b)
 	var rc := int(ceil(r / cell)) + 1
 	var rim := r - arc_w / 2
@@ -459,7 +481,7 @@ func edge_sweep(
 				continue
 			var off := Vector2(dx, dz) * cell
 			var dist := off.length()
-			if dist > r:
+			if dist > r or off.dot(right) > 0.0:
 				continue
 			var i := index(x, z)
 			if cut[i] > 0.0:

@@ -61,6 +61,9 @@ const FLOOD_FULL_MM := 1.0  # the film the flood valve lays wide open: a litre a
 const MACHINE_W := Zambelli.BLADE_W  # the blade's width: the conditioner plus 6 in on the left
 const FLOOD_BEHIND := Zambelli.WALL_Z  # the flood pipe this far behind the blade: a strip is cut dry, then flooded
 const MACHINE_SPEED := 2.0  # m/s
+const EDGER_LOOK := deg_to_rad(50.0)  # how far the head turns off the edger's line while pushing
+const EDGER_SIDE := 0.52  # the edger's left side this far in from the boards when set against them
+const SPRAY_CELLS := 2500  # columns the hose pours a frame, at most: the cone in strips
 const RUNNER_M := 0.8  # the conditioner's runners: how far ahead of the blade they ride
 const LEVEL_RATE_MM := 1.0  # the most the blade's level moves per metre of travel
 const PASS_X0 := 2.0  # the pass runs end to end, clear of the end boards
@@ -97,6 +100,7 @@ var _bay: ZamboniBay
 var _hose: FireHose
 var _edger: IceEdger
 var _edging := false  # at the edger's handles: the keys push it
+var _spray_strip := 0  # which strip of the hose's cone this frame pours
 var _aimed := -1  # the machine control under the dot
 var _no_aim := false  # a screenshot of a control, without its glow
 var _aboard := false  # the walker is in the seat and the keys drive the machine
@@ -223,7 +227,7 @@ func _process(dt: float) -> void:
 	if _aboard and walker:
 		walker.global_position = _machine.to_global(Zambelli.SEAT)
 	if _edging and walker:
-		walker.global_position = _edger.to_global(IceEdger.HANDLES)
+		_stay_behind_the_edger()
 	if (
 		_zam < 0.0
 		and (
@@ -384,7 +388,21 @@ func _spray(dt: float, cam: Camera3D = null) -> void:
 	var area := PI * (width * 0.5) * (width * 0.5)
 	var mm := litres * 0.001 / area * 1000.0  # L -> m3 -> m -> mm
 	var wander := Vector2(randf_range(-0.05, 0.05), randf_range(-0.05, 0.05))
-	ice.pour(_local(at) + wander, width, mm)
+	# a wide cone is thousands of columns, and every one poured is a
+	# column the sheet rebuilds: the cone is poured a strip a frame, its
+	# share of the water each, scanning down it (Sean: the hose lagged)
+	var land_c := ice.cell_at(_local(at) + wander)
+	var r_cells := int(ceil(width * 0.5 / ice.cell))
+	var strips := maxi(1, ceili(float(r_cells * r_cells * 4) / SPRAY_CELLS))
+	_spray_strip = (_spray_strip + 1) % strips
+	var rows := ceili(float(2 * r_cells + 1) / strips)
+	var z0 := land_c.y - r_cells + _spray_strip * rows
+	ice.pour(
+		_local(at) + wander,
+		width,
+		mm * strips,
+		Rect2i(land_c.x - r_cells, z0, 2 * r_cells + 1, rows)
+	)
 	if _stream == null:
 		return
 	_stream.global_position = hand
@@ -401,7 +419,7 @@ func _spray(dt: float, cam: Camera3D = null) -> void:
 	mat.scale_max = lerpf(0.45, 0.35, _hose.pattern)
 	_stream.amount_ratio = 1.0
 	if WorldSound.wanted():
-		WorldSound.play(self, "ball_bounce_2", at, -16.0, 0.6)
+		WorldSound.play(self, "ball_bounce_2", at, -16.0, 0.6, 3.0, 35.0, "stop_spray")
 
 
 func _make_stream() -> GPUParticles3D:
@@ -633,15 +651,17 @@ func _along_the_boards() -> bool:
 	var fwd := -_machine.global_transform.basis.z
 	var going := Vector2(fwd.x, fwd.z) * signf(_machine.speed)
 	var square := -push.normalized().dot(going)  # 1 head on, 0 brushing along
-	if square > 0.93:
+	if square > 0.97:
 		_machine.speed = 0.0
 		if hud:
 			hud.toast("THE BOARDS")
 		return false
 	_machine.global_position += Vector3(push.x, 0.0, push.y)
-	# a glancing bump slides and keeps most of its speed; the squarer the
-	# hit the more the boards take, a frame at a time while it leans on them
-	_machine.speed *= lerpf(0.995, 0.88, square)
+	# a bump slides and keeps most of its speed; the squarer the hit the
+	# more the boards take, a frame at a time while it leans on them (a
+	# brush loses a fifth a second, a square shove about half: Sean asked
+	# for a lighter penalty than the first cut)
+	_machine.speed *= lerpf(0.9985, 0.985, square)
 	return true
 
 
@@ -736,7 +756,18 @@ func _take_the_handles() -> void:
 	walker.driven = true
 	walker.global_position = _edger.to_global(IceEdger.HANDLES)
 	walker.face(_edger.rotation.y)
-	walker.camera.rotation.x = -0.45
+	walker.camera.rotation.x = -0.5
+
+
+## Keeps the walker square behind the edger: its heading follows the
+## machine as it turns (so A and D turn you with it, and a push always
+## goes straight down its line), and the mouse looks around only within
+## `EDGER_LOOK` of dead ahead, the way you can turn your head but not
+## your hands on the handles.
+func _stay_behind_the_edger() -> void:
+	walker.global_position = _edger.to_global(IceEdger.HANDLES)
+	var off := wrapf(walker.rotation.y - _edger.rotation.y, -PI, PI)
+	walker.face(_edger.rotation.y + clampf(off, -EDGER_LOOK, EDGER_LOOK))
 
 
 func _let_go() -> void:
@@ -1360,12 +1391,13 @@ func _screenshot(path: String) -> void:
 		for i in 70:
 			await get_tree().process_frame
 	if args.has("--view=edger"):
-		# the edger pushed a few metres along the side boards with the
-		# blade set 1.5 mm down, seen from behind its right shoulder
+		# the edger pushed a few metres along the side boards, its left
+		# side on them, the blade set 1.5 mm down, seen from behind its
+		# right shoulder
 		_set_state(1)
 		ice.flush()
-		_edger.global_position = ice.position + Vector3(RINK.x - 12.0, 0.0, RINK.y - 0.42)
-		_edger.rotation.y = -PI / 2  # nose toward +X
+		_edger.global_position = ice.position + Vector3(RINK.x - 12.0, 0.0, RINK.y - EDGER_SIDE)
+		_edger.rotation.y = PI / 2  # nose toward -X, the boards on its left
 		_edger.depth_mm = 1.5
 		_edger.blade_down = true
 		_edger.running = true
@@ -1373,8 +1405,24 @@ func _screenshot(path: String) -> void:
 			_push_with(1.0 / 60.0, 1.0, 0.0)
 		ice.flush()
 		_look_at(
-			_edger.to_global(Vector3(-1.2, 1.5, 2.2)), _edger.to_global(Vector3(0.0, 0.0, -1.5))
+			_edger.to_global(Vector3(1.3, 1.5, 2.2)), _edger.to_global(Vector3(0.0, 0.0, -1.5))
 		)
+	if args.has("--view=push"):
+		# at the edger's handles on the ice by the side boards, the view
+		# the pusher gets: the right grip's crank in front, the lane ahead
+		_set_state(1)
+		ice.flush()
+		_edger.global_position = ice.position + Vector3(RINK.x - 12.0, 0.0, RINK.y - EDGER_SIDE)
+		_edger.rotation.y = PI / 2
+		_edger.depth_mm = 1.5
+		_edger.blade_down = true
+		_edger.running = true
+		_take_the_handles()
+		for step in 120:
+			_push_with(1.0 / 60.0, 1.0, 0.0)
+		ice.flush()
+		_stay_behind_the_edger()
+		walker.camera.rotation.x = -0.5
 	if args.has("--view=snow"):
 		# half snowed up, a mist's water on a patch of it (slush) and a
 		# patch set into crust, from low over the sheet
@@ -2093,8 +2141,13 @@ func _self_test() -> void:
 	ice.fill_state(0.0, 0.8, 0.0, 0.0, 0.08)
 	ice.flush()
 	_hose.pattern = 0.0
+	var spray_us := 0
 	for frame in 60:
+		var ta := Time.get_ticks_usec()
 		_spray(1.0 / 60.0, hcam)
+		ice.flush()
+		spray_us += Time.get_ticks_usec() - ta
+	print("  a mist frame, poured and rebuilt: %.1f ms" % (spray_us / 60000.0))
 	var mist_far := 0.0
 	for x in range(0, ice.w, 4):
 		for z in range(0, ice.d, 4):
@@ -2133,12 +2186,15 @@ func _self_test() -> void:
 		moved > 1.0 and _edger.global_position.x > e0.x + 1.0,
 		"W pushes the edger forward (%.2f m in two seconds)" % moved
 	)
-	var lane := _local(_edger.to_global(Vector3(0.0, 0.0, IceEdger.BLADE_Z + 0.3)))
+	var lane := _local(
+		_edger.to_global(Vector3(IceEdger.BLADE_X - 0.19, 0.0, IceEdger.BLADE_Z + 0.3))
+	)
 	check.call(is_equal_approx(ice.thickness_at(lane), 25.0), "the blade up, the lane is untouched")
+	var free_speed := _edger.speed
 	_edger.blade_down = true
 	for step in 60:
 		_push_with(1.0 / 60.0, 1.0, 0.0)
-	lane = _local(_edger.to_global(Vector3(0.0, 0.0, IceEdger.BLADE_Z + 0.4)))
+	lane = _local(_edger.to_global(Vector3(IceEdger.BLADE_X - 0.19, 0.0, IceEdger.BLADE_Z + 0.4)))
 	check.call(
 		is_equal_approx(ice.thickness_at(lane), 25.0), "the engine off, the blade down cuts nothing"
 	)
@@ -2151,12 +2207,37 @@ func _self_test() -> void:
 	check.call(_edger.running, "E starts it")
 	for step in 120:
 		_push_with(1.0 / 60.0, 1.0, 0.0)
-	lane = _local(_edger.to_global(Vector3(0.0, 0.0, IceEdger.BLADE_Z + 0.4)))
+	check.call(
+		(
+			is_equal_approx(free_speed, IceEdger.PUSH_SPEED * IceEdger.FREE)
+			and is_equal_approx(_edger.speed, IceEdger.PUSH_SPEED)
+		),
+		(
+			"the push is %.0f%% quicker with the blade clear (%.2f vs %.2f m/s)"
+			% [(IceEdger.FREE - 1.0) * 100.0, free_speed, _edger.speed]
+		)
+	)
+	lane = _local(_edger.to_global(Vector3(IceEdger.BLADE_X - 0.19, 0.0, IceEdger.BLADE_Z + 0.4)))
+	var disc_mid := _local(
+		_edger.to_global(Vector3(IceEdger.BLADE_X - 0.07, 0.0, IceEdger.BLADE_Z + 0.4))
+	)
+	var right_of := _local(_edger.to_global(Vector3(0.15, 0.0, IceEdger.BLADE_Z + 0.4)))
 	check.call(
 		ice.thickness_at(lane) < 24.0,
-		"the blade down, the lane is cut 1.5 mm (%.2f mm)" % ice.thickness_at(lane)
+		"the blade down, the left rim cuts about 1.5 mm (%.2f mm)" % ice.thickness_at(lane)
 	)
-	var lane_c := ice.cell_at(lane)
+	check.call(
+		ice.thickness_at(disc_mid) > ice.thickness_at(lane) and ice.thickness_at(disc_mid) < 25.0,
+		"... shallower toward the disc's centre (%.2f mm)" % ice.thickness_at(disc_mid)
+	)
+	check.call(
+		is_equal_approx(ice.thickness_at(right_of), 25.0),
+		(
+			"... and the disc's right half, tilted clear, cuts nothing (%.2f mm)"
+			% ice.thickness_at(right_of)
+		)
+	)
+	var lane_c := ice.cell_at(disc_mid)
 	var circling := false
 	var arcs := 0
 	for dx in range(-8, 9):
@@ -2169,7 +2250,9 @@ func _self_test() -> void:
 	check.call(arcs > 0, "the rim rocked arcs into the lane (%d cells)" % arcs)
 	check.call(circling, "the striations circle the disc")
 	var throw_r := _local(_edger.to_global(Vector3(IceEdger.THROW, 0.0, IceEdger.BLADE_Z + 0.4)))
-	var throw_l := _local(_edger.to_global(Vector3(-IceEdger.THROW, 0.0, IceEdger.BLADE_Z + 0.4)))
+	var throw_l := _local(
+		_edger.to_global(Vector3(IceEdger.BLADE_X - IceEdger.THROW, 0.0, IceEdger.BLADE_Z + 0.4))
+	)
 	check.call(
 		ice.snow_at(throw_r) > 0.0 and ice.snow_at(throw_l) == 0.0,
 		(

@@ -709,12 +709,14 @@ display, and run as headless checks in CI (`--test=<name>`).
   0.61 m behind it (`lay_film_sweep()`). The boards act as the bumper's
   roller does on a real machine (`_along_the_boards()`): a corner that
   would go past them, on the straights or round the corner arcs, is
-  pushed back inside and the machine slides along, losing some speed
-  to the rub; only a run straight at them stops it. The conditioner is
-  6 in wider on the operator's left than the bought model
-  (`Zambelli.COND_LEFT`, the blade from `BLADE_X0` to `BLADE_X1`,
-  2.46 m; the propgen carries the end section out that far), so the
-  left edge reaches the boards in a corner. Every column the blade or the pipe touched is on screen the
+  pushed back inside and the machine slides along, losing a little
+  speed to the rub (a fifth a second brushing, about half a second
+  leaning square on them); only a run straight at them stops it. The
+  conditioner is 10 in wider on the operator's left and 2 in on the
+  right than the bought model (`Zambelli.COND_LEFT`, `COND_RIGHT`, the
+  blade from `BLADE_X0` to `BLADE_X1`, 2.61 m; the prop is stretched to
+  that width over the blade's middle), so the left edge reaches the
+  boards in a corner. Every column the blade or the pipe touched is on screen the
   same frame (see the state textures above). The blade's level is carried along the
   cut (`_follow()`): the handwheel's setting below the ice the
   conditioner's runners ride, read 0.8 m ahead of the blade
@@ -815,30 +817,44 @@ display, and run as headless checks in CI (`--test=<name>`).
   of a millimetre: the way to flood a thin area wide and have it set in
   a minute) to a straight jet (1.5 degrees, 20 m, a small disc). Water
   that would carry past the pattern's reach lands at the reach. The
-  demo's `_spray()` does the pouring and the drops; the old built-in
-  hose and its valve are gone. `--view=hose` is the reel on its wall,
+  demo's `_spray()` does the pouring and the drops: a wide cone is
+  thousands of columns and every one poured is a column the sheet
+  rebuilds, so the cone is poured a strip a frame (`SPRAY_CELLS` at
+  most, each strip its share of the water, scanning down the disc;
+  `IceSheet.pour()` takes a clip rect), which took a mist frame from
+  100 ms to 10. The old built-in hose and its valve are gone. `--view=hose` is the reel on its wall,
   `--view=spray --pattern=0..1` the hose at work.
   **The edger** (`framework/demo/ice_edger.gd`, `IceEdger`): a
-  walk-behind machine (Sean's uploaded mower model's intact parts,
-  art/props/ice_edger.vox at 1 cm, turned handle-back and scaled to a
-  push edger) with a 46 cm disc under its deck tilted 4 degrees and a
-  crank (primitives: the model has none) on the handle; it parks in the
-  bay. E on the engine starts or stops it, and the blade only cuts
-  with it running. Look at the handles and E takes them: W pushes (0.9 m/s), S pulls
-  back, A and D turn it with your weight (0.8 rad/s, 0.35 with the blade
-  in), the wheel is the crank (counter-clockwise lowers the blade, the
-  opposite of the Zambelli's handwheel, half a millimetre a notch, up to
-  4 mm), TAB lifts the blade clear or sets it back to the crank's depth,
-  E lets go. The cut is `IceSheet.edge_sweep()`: the disc's lane shaved
-  `depth_mm` below its mean solid level (a `resurface_sweep` the disc's
-  width) with the striations re-angled to circle the disc, and every
-  `ARC_STEP` (5 cm) of travel the rim rocks in and leaves an arc of gouge
-  `ARC_W` (3.5 cm) wide along the trailing rim, `ARC_MM` plus a share of
-  the depth deep (Sean's spec: about 3.5 cm, every 5 cm or so), a mark
-  a light flood fills; the shavings land as snow `THROW` (0.6 to 0.9 m)
-  to its right (`IceSheet.add_snow()`). Its corners are kept inside the
-  boards like the machine's. `--view=edger` is a lane cut along the
-  side boards.
+  walk-behind machine (Sean's uploaded mower model's intact parts less
+  its handle, which was a one-sided loop off the right of the deck,
+  art/props/ice_edger.vox at 1.1 cm, turned handle-back and scaled to a
+  push edger) with a 46 cm disc under its deck tilted 4 degrees to the
+  left, its rim flush with the machine's left side (`BLADE_X`), a square
+  two-grip handle of primitives off the back of the deck and the crank
+  clamped to the bar by the right grip; it parks in the bay. E on the
+  engine starts or stops it, and the blade only cuts with it running.
+  Look at the handle and E takes it: you stand square behind it
+  (`HANDLES`), your heading follows the machine as it turns and the
+  mouse looks only `EDGER_LOOK` off its line. W pushes (0.9 m/s with
+  the blade in the ice, a fifth quicker with it clear, `FREE`: the
+  blade's bite felt as drag), S pulls back, A and D turn it with your
+  weight (0.8 rad/s, 0.35 with the blade in), the wheel is the crank
+  (counter-clockwise lowers the blade, the opposite of the Zambelli's
+  handwheel, half a millimetre a notch, up to 4 mm), TAB lifts the blade
+  clear or sets it back to the crank's depth, E lets go. The cut is
+  `IceSheet.edge_sweep()`: only the disc's left half cuts, `depth_mm`
+  at the rim tapering to nothing under the centre, relative to each
+  column (so set against the boards and pushed, every pass lowers the
+  ice along them again), the striations re-angled to circle the disc,
+  and every `ARC_STEP` (5 cm) of travel the rim rocks in and leaves an
+  arc of gouge `ARC_W` (3.5 cm) wide along the trailing left rim,
+  `ARC_MM` plus a share of the depth deep (Sean's spec: about 3.5 cm,
+  every 5 cm or so), a mark a light flood fills; the shavings fly off
+  the deck's right side as a spray of grains (`GPUParticles3D` from the
+  chute, thrown `THROW`, 1.2 m) and land as snow there
+  (`IceSheet.add_snow()`). Its corners are kept inside the boards like
+  the machine's. `--view=edger` is a lane cut along the side boards with
+  the edger's left side on them, `--view=push` the pusher's own view.
   Footsteps leave the ice alone. `--screenshot=<png>`
   frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and
   frames the whole sheet from above one end; `--view=machine` frames the

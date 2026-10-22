@@ -1,38 +1,50 @@
 class_name IceEdger
 extends Node3D
 ## The ice edger: a walk-behind machine (Sean's uploaded mower model
-## voxelised, art/props/ice_edger.vox) with a spinning disc blade under
-## its deck, tilted so its leading rim does the cutting, pushed by hand
-## along the boards where the resurfacer cannot reach. E on the engine
-## starts and stops it (Sean's ask); the blade only cuts with it running.
-## Look at its handles and E takes them: W pushes, S pulls back, A and D turn it with
-## your weight (slower with the blade in the ice), the wheel is the crank
-## on the handle (counter-clockwise lowers the blade, the opposite of the
-## Zambelli's handwheel, half a millimetre a notch) and TAB lifts the
-## blade clear or sets it back to the crank's depth. The cut is
-## `IceSheet.edge_sweep`: a `BLADE_R`-wide lane shaved `depth_mm` below
-## the surface with striations circling the disc, and every `ARC_STEP`
-## of travel the tilted rim rocks in and leaves a deep arc `ARC_W` wide
-## (Sean: about 3.5 cm, every 5 cm or so) that a light flood evens out.
-## The shavings fly `THROW` to its right as snow. It lives in the bay.
+## voxelised, art/props/ice_edger.vox, less its one-sided handle) with a
+## spinning disc blade under its deck tilted to the left, so only the
+## disc's left half cuts, its rim flush with the machine's left side: set
+## that side against the boards and push, and the ice along them comes
+## down where the resurfacer cannot reach. A square two-grip handle of
+## primitives stands off the back of the deck, so it is pushed from dead
+## behind. Look at the handle and E takes it: W pushes, S pulls back, A
+## and D turn it with your weight (slower with the blade in the ice, and
+## the push slower too: the blade's bite is felt as drag), the wheel is
+## the crank clamped to the right grip (counter-clockwise lowers the
+## blade, the opposite of the Zambelli's handwheel, half a millimetre a
+## notch) and TAB lifts the blade clear or sets it back to the crank's
+## depth. The cut is `IceSheet.edge_sweep`: the left half of the disc
+## shaves `depth_mm` at the rim tapering to nothing under the centre,
+## striations circle the disc, and every `ARC_STEP` of travel the rim
+## rocks in and leaves a deep arc `ARC_W` wide (Sean: about 3.5 cm, every
+## 5 cm or so) that a light flood evens out. The shavings fly `THROW` to
+## its right as snow. It lives in the bay.
 
 const BLADE_R := 0.23  # a 46 cm disc
 const BLADE_Z := -0.15  # the disc's centre ahead of the machine's middle
+const BLADE_X := -0.27  # ... and to its left: the rim flush with the left side
 const TILT := deg_to_rad(4.0)
 const ARC_STEP := 0.05  # metres of travel between arcs
 const ARC_W := 0.035
 const ARC_MM := 1.2  # the arc's gouge beyond the set depth
 const DEPTH_MAX := 4.0  # mm the crank can set
 const CRANK_MM := 0.5  # a notch of the crank
-const PUSH_SPEED := 0.9  # m/s pushed flat out
+const PUSH_SPEED := 0.9  # m/s pushed flat out with the blade in the ice
 const PULL_SPEED := 0.5
+const FREE := 1.2  # that much faster with the blade up (Sean: the blade's force, felt)
 const ACCEL := 1.4
 const TURN_RATE := 0.8  # rad/s with the blade up
 const TURN_RATE_CUT := 0.35  # rad/s with the blade in the ice
-const THROW := 0.75  # metres to the right the shavings land (Sean: 2 to 3 ft)
-const THROW_W := 0.5
+const THROW := 1.2  # metres to the right of the disc the shavings land (Sean: further, about 4 ft)
+const THROW_W := 0.6
+const CHUTE := Vector3(0.50, 0.12, BLADE_Z)  # the deck's right side, where the shavings fly out
+const CHUTE_UP := deg_to_rad(28.0)  # the throw's elevation
 const SNOW_EXPAND := 2.5
-const HANDLES := Vector3(0.0, 0.05, 1.25)  # where you stand to push
+const HANDLES := Vector3(0.0, 0.05, 1.6)  # where you stand to push, arms out to the grips
+const GRIP_Y := 1.0  # the handle's bar
+const GRIP_Z := 0.95
+const GRIP_X := 0.30  # the uprights, either side
+const CRANK_AT := Vector3(0.17, GRIP_Y, GRIP_Z + 0.04)  # clamped to the bar by the right grip, its face toward you
 const TAKE_REACH := 2.4
 const SPIN := 120.0  # rad/s, for the look
 
@@ -45,7 +57,9 @@ var body: MeshInstance3D
 var disc: MeshInstance3D
 var crank: Node3D
 var hull: AnimatableBody3D
+var spray: GPUParticles3D  # the shavings in the air
 var _since_arc := 0.0
+var _spraying := 0.0  # seconds of spray left after the last bite
 
 
 func _ready() -> void:
@@ -68,14 +82,23 @@ func _ready() -> void:
 	steel.metallic = 0.8
 	steel.roughness = 0.35
 	disc.material_override = steel
-	disc.position = Vector3(0.0, 0.03, BLADE_Z)
-	disc.rotation.x = -TILT
+	disc.position = Vector3(BLADE_X, 0.03, BLADE_Z)
+	disc.rotation.z = TILT  # the left rim down
 	add_child(disc)
-	# the crank on the handle: a hub, an arm and a knob, turned to the setting
+	_build_handle(steel)
+	# the crank on the right grip of the handle, facing whoever pushes: a
+	# clamp round the bar, then a hub, an arm and a knob turned to the setting
 	crank = Node3D.new()
 	crank.name = "Crank"
-	crank.position = Vector3(0.0, 0.98, 0.78)
+	crank.position = CRANK_AT
 	add_child(crank)
+	var clamp := MeshInstance3D.new()
+	var clamp_m := BoxMesh.new()
+	clamp_m.size = Vector3(0.05, 0.05, 0.06)
+	clamp.mesh = clamp_m
+	clamp.position = Vector3(0.0, 0.0, -0.035)
+	clamp.material_override = steel
+	crank.add_child(clamp)
 	var hub := MeshInstance3D.new()
 	var hub_m := CylinderMesh.new()
 	hub_m.top_radius = 0.025
@@ -106,6 +129,8 @@ func _ready() -> void:
 	knob.material_override = black
 	crank.add_child(knob)
 	_pose_crank()
+	spray = _make_spray()
+	add_child(spray)
 	hull = AnimatableBody3D.new()
 	hull.name = "Hull"
 	hull.sync_to_physics = false
@@ -123,11 +148,97 @@ func _ready() -> void:
 func _process(dt: float) -> void:
 	if running:
 		disc.rotate_object_local(Vector3.UP, SPIN * dt)
+	if _spraying > 0.0:
+		_spraying = maxf(_spraying - dt, 0.0)
+		if _spraying == 0.0:
+			spray.emitting = false
 
 
-## True when the view line meets the handles within reach.
+## The shavings flying off the chute: white grains thrown right and up,
+## as far as `THROW`, while the blade is taking ice.
+func _make_spray() -> GPUParticles3D:
+	var ps := GPUParticles3D.new()
+	ps.name = "Spray"
+	ps.amount = 320
+	ps.lifetime = 0.7
+	ps.emitting = false
+	ps.local_coords = false
+	ps.position = CHUTE
+	var mat := ParticleProcessMaterial.new()
+	mat.gravity = Vector3(0, -9.8, 0)
+	mat.spread = 14.0
+	# the chute aims right (+x) and up; the speed that carries THROW on a flat throw
+	mat.direction = Vector3(cos(CHUTE_UP), sin(CHUTE_UP), 0.0)
+	var v := sqrt(THROW * 9.8 / sin(2.0 * CHUTE_UP))
+	mat.initial_velocity_min = v * 0.8
+	mat.initial_velocity_max = v * 1.15
+	mat.scale_min = 0.6
+	mat.scale_max = 1.3
+	mat.angular_velocity_min = -360.0
+	mat.angular_velocity_max = 360.0
+	ps.process_material = mat
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(0.025, 0.018, 0.025)
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.95, 0.96, 0.98)
+	m.roughness = 0.9
+	mesh.material = m
+	ps.draw_pass_1 = mesh
+	return ps
+
+
+## True when the view line meets the handle within reach.
 func aimed(origin: Vector3, dir: Vector3) -> bool:
-	return _hits(origin, dir, Vector3(0.0, 0.9, 0.7), 0.45)
+	return _hits(origin, dir, Vector3(0.0, GRIP_Y - 0.1, GRIP_Z - 0.05), 0.5)
+
+
+## The handle: two uprights off the back of the deck, a bar across their
+## tops with a rubber grip at each end, square behind the machine.
+func _build_handle(steel: Material) -> void:
+	var black := StandardMaterial3D.new()
+	black.albedo_color = Color(0.12, 0.12, 0.12)
+	black.roughness = 0.7
+	var foot := Vector3(0.0, 0.30, 0.58)  # on the deck's rear
+	var top := Vector3(0.0, GRIP_Y, GRIP_Z)
+	var run := top - foot
+	for s: float in [-1.0, 1.0]:
+		var up := MeshInstance3D.new()
+		var up_m := CylinderMesh.new()
+		up_m.top_radius = 0.014
+		up_m.bottom_radius = 0.014
+		up_m.height = run.length()
+		up.mesh = up_m
+		up.position = (foot + top) / 2 + Vector3(s * GRIP_X, 0.0, 0.0)
+		up.rotation.x = atan2(run.z, run.y)
+		up.material_override = steel
+		add_child(up)
+		var plate := MeshInstance3D.new()
+		var plate_m := BoxMesh.new()
+		plate_m.size = Vector3(0.07, 0.02, 0.09)
+		plate.mesh = plate_m
+		plate.position = foot + Vector3(s * GRIP_X, 0.0, 0.0)
+		plate.material_override = steel
+		add_child(plate)
+		var grip := MeshInstance3D.new()
+		var grip_m := CylinderMesh.new()
+		grip_m.top_radius = 0.019
+		grip_m.bottom_radius = 0.019
+		grip_m.height = 0.16
+		grip.mesh = grip_m
+		grip.position = top + Vector3(s * (GRIP_X - 0.07), 0.0, 0.0)
+		grip.rotation.z = PI / 2
+		grip.material_override = black
+		add_child(grip)
+	var bar := MeshInstance3D.new()
+	var bar_m := CylinderMesh.new()
+	bar_m.top_radius = 0.014
+	bar_m.bottom_radius = 0.014
+	bar_m.height = GRIP_X * 2
+	bar.mesh = bar_m
+	bar.position = top
+	bar.rotation.z = PI / 2
+	bar.material_override = steel
+	add_child(bar)
 
 
 ## True when the view line meets the engine on the deck within reach.
@@ -163,6 +274,8 @@ func toggle_blade() -> void:
 ## or [] when it did not move.
 func step(dt: float, push: float, turn: float) -> Array[Vector3]:
 	var want := push * (PUSH_SPEED if push > 0.0 else PULL_SPEED)
+	if not (blade_down and running):
+		want *= FREE  # nothing in the ice to drag on
 	speed = move_toward(speed, want, ACCEL * dt)
 	if absf(speed) < 0.003:
 		speed = 0.0
@@ -171,15 +284,15 @@ func step(dt: float, push: float, turn: float) -> Array[Vector3]:
 		rotate_y(turn * rate * dt)
 	if speed == 0.0:
 		return []
-	var before := to_global(Vector3(0.0, 0.0, BLADE_Z))
+	var before := to_global(Vector3(BLADE_X, 0.0, BLADE_Z))
 	global_position += -global_transform.basis.z * speed * dt
-	var after := to_global(Vector3(0.0, 0.0, BLADE_Z))
+	var after := to_global(Vector3(BLADE_X, 0.0, BLADE_Z))
 	return [before, after]
 
 
 ## The blade over the ice from `a` to `b` (sheet metres, the disc's
-## centre): shaves the lane, rocks an arc in every ARC_STEP, throws the
-## shavings to the right. Returns the millimetres shaved.
+## centre): its left half shaves the lane, rocks an arc in every
+## ARC_STEP, throws the shavings to the right. Returns the millimetres shaved.
 func cut(sheet: IceSheet, a: Vector2, b: Vector2) -> float:
 	if not blade_down or not running:
 		return 0.0
@@ -195,12 +308,16 @@ func cut(sheet: IceSheet, a: Vector2, b: Vector2) -> float:
 	)
 	shaved_mm += took
 	if took > 0.0:
+		# the chute throws while the blade is biting, scaled to the bite
+		spray.emitting = true
+		spray.amount_ratio = clampf(took / 60.0, 0.3, 1.0)
+		_spraying = 0.15
 		# shavings: mm summed over cells -> m3 of ice -> snow, landing to the right
 		var m3 := took * 0.001 * sheet.cell * sheet.cell
 		var area := PI * (THROW_W / 2) * (THROW_W / 2)
 		var mm := m3 * SNOW_EXPAND / area * 1000.0
 		var right := Vector2(-dir.y, dir.x)  # right of the travel, in sheet coords (x right, z down)
-		var land := b + right * randf_range(THROW - 0.15, THROW + 0.15)
+		var land := b + right * (randf_range(THROW - 0.15, THROW + 0.15) - BLADE_X)
 		sheet.add_snow(land, THROW_W, mm)
 	return took
 
