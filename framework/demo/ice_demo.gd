@@ -3139,7 +3139,8 @@ func _self_test() -> void:
 		),
 		"straight sections are their length, the quarter corner a 3.36 m chord"
 	)
-	var pane: MeshInstance3D = RinkKit.glass("glass_4x8").get_node("Pane")
+	var g8 := RinkKit.glass("glass_4x8")
+	var pane: MeshInstance3D = g8.get_node("Pane")
 	check.call(
 		(
 			pane != null
@@ -3148,6 +3149,7 @@ func _self_test() -> void:
 		),
 		"the 8 ft glass has a see-through pane 4 ft wide between its posts"
 	)
+	g8.free()  # a loose body would leak at exit, which CI counts as an error
 	check.call(
 		_kit.get_child_count() == 7,
 		"the kit is on show in the bay (%d pieces)" % _kit.get_child_count()
