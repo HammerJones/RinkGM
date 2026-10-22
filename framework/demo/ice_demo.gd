@@ -896,10 +896,10 @@ func _screenshot(path: String) -> void:
 			walker.camera.rotation.x = -0.72
 		if args.has("--lever"):  # close on the horizontal auger's lever
 			_no_aim = true
-			var foot := Zambelli.LEVER_POS
+			var foot := Zambelli.LEVER_FEET[0]
 			_look_at(
-				_machine.to_global(foot + Vector3(-0.22, 0.42, 0.42)),
-				_machine.to_global(foot + Vector3(0.16, 0.12, 0.0))
+				_machine.to_global(foot + Vector3(-0.55, 0.42, 0.3)),
+				_machine.to_global(foot + Vector3(0.12, 0.12, 0.0))
 			)
 	if args.has("--view=pool"):
 		# water run into the low spots and left to stand: a scraped trench,

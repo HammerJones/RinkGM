@@ -653,10 +653,13 @@ display, and run as headless checks in CI (`--test=<name>`).
   the paint, snow and water in millimetres. N puts you at the operator's
   console. The console's controls are being rebuilt one at a time from
   the bought model (`framework/demo/zambelli_controls.gd` registers
-  them, `tools/propgen/zambelli_lever.py` takes a lever out of the GLB
-  at 3 mm as `zambelli_lever` and clears its 17 mm blob off the body
-  prop); so far the horizontal auger's lever, the leftmost of the row:
-  look at it and E throws it, 30 degrees back for on. The rest of the
+  them, `tools/propgen/zambelli_lever.py` takes the row of four levers
+  out of the GLB at 3 mm, the augers' as `zambelli_lever` and the
+  conditioner's, which the bin's repeats, as `zambelli_lever_cond`, and
+  clears their 17 mm blobs off the body prop); so far that row: look at
+  a lever and E throws it, the augers' 30 degrees back for on, the
+  conditioner's and the bin's a push forward for up or back for down
+  that springs back to neutral. The rest of the
   console is still the body prop's blobs, driven from the keyboard: the
   blade in sixteenths of a turn (a turn is 0.5 mm, +3.0 raised to -3.0
   lowered, 0 flush with the conditioner's bottom), the flood valve as a
@@ -695,7 +698,7 @@ display, and run as headless checks in CI (`--test=<name>`).
   with the whole machine, `--side` from beside it, `--flood` the back wall
   with the flood running, `--cut=<mm>` for the blade's depth);
   `--view=console` stands at the controls (`--above` looks down on them,
-  `--lever` is close on the lever). In every demo Ctrl
+  `--lever` is close on the row of levers). In every demo Ctrl
   crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.
 
 ## 14. What the port looks like

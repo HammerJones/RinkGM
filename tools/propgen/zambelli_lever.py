@@ -1,12 +1,16 @@
-"""One console lever from the bought Zamboni GLB, as its own prop.
+"""The console's row of levers from the bought Zamboni GLB, as props.
 
 The body prop is voxelised at 17 mm, which turns its levers into blobs.
-This takes the leftmost lever of the row on the console (the operator's
-left, the horizontal auger's) out of the model at 3 mm, writes it as
-art/props/zambelli_lever.vox with its manifest, and clears the blob it
-replaces off art/props/zambelli_body.vox, leaving the plate it stands on.
-Run after tools/propgen/zambelli_glb.py; it prints where the lever's
-foot sits in the Zambelli's frame for framework/demo/zambelli.gd.
+The row on the console is four levers of two patterns: the operator's
+left to right, the horizontal auger's, the conditioner's, the vertical
+auger's and the bin's, the augers' alike and the other two alike. This
+takes the row out of the model at 3 mm, writes the first of each pattern
+as art/props/zambelli_lever.vox (the augers') and zambelli_lever_cond.vox
+(the conditioner's and the bin's) with their manifests, and clears the
+four blobs they replace off art/props/zambelli_body.vox, leaving the
+plates they stand on. Run after tools/propgen/zambelli_glb.py; it prints
+where each lever's foot sits in the Zambelli's frame for
+framework/demo/zambelli.gd.
 
     python3 tools/propgen/zambelli_lever.py path/to/Zamboni.glb --preview
 """
@@ -28,10 +32,13 @@ from zambelli_glb import DATA_DIR, LENGTH_M, PREVIEW_DIR, VOX_DIR, manifest, to_
 BODY_X0 = 0.035  # framework/demo/zambelli.gd: the body prop's pivot off the centreline
 BLADE_Z = 3.519  # ... and the blade's edge, the frame's origin, from the nose
 VOXEL_M = 0.003
-# the lever row sits here on the deck; the lever's own meshes in the model
-# are its shaft, its knob and the boss under it (the plate is another)
-CLIP = ((0.74, 1.60, 3.55), (0.94, 1.95, 3.80))
+# the lever row sits here on the deck; the levers' own meshes in the model
+# are their shafts, knobs and the bosses under them (the plates and the
+# deck are others, and a rod with a cap stands at the row's right end)
+CLIP = ((0.74, 1.60, 3.55), (1.10, 1.95, 3.80))
 LEVER_MESHES = {"mesh_id6", "mesh_id12", "mesh_id16"}
+PROPS = [("zambelli_lever", "Auger lever", "A lever on the resurfacer's console: a chromed shaft with a rubber knob."),
+         ("zambelli_lever_cond", "Lift lever", "A sprung lever on the resurfacer's console: push it and it comes back.")]
 PLATE_TOP = 1.656  # the slotted plate's top: the lever starts above it
 DARK = 120  # a body voxel with r + g + b under this is a control, not the deck
 
@@ -102,7 +109,7 @@ def clear_body(lo: np.ndarray, hi: np.ndarray) -> None:
     inside = (gx >= lo_i[0]) & (gx <= hi_i[0]) & (gy >= lo_i[1]) & (gy <= hi_i[1]) & (gz >= lo_i[2]) & (gz <= hi_i[2])
     lum = pal[vox[:, 3].astype(int) - 1][:, :3].astype(int).sum(1)
     drop = inside & (lum < DARK)
-    print(f"zambelli_body: {int(drop.sum())} voxels of the lever's blob cleared")
+    print(f"zambelli_body: {int(drop.sum())} voxels of a lever's blob cleared")
     write_vox(path, chunks, vox[~drop])
 
 
@@ -120,35 +127,39 @@ def main() -> None:
     ys = (np.arange(solid.shape[1]) + 0.5) * VOXEL_M + lo[1]
     solid[:, ys < PLATE_TOP, :] = False
     lab, n = ndimage.label(solid)
-    best, best_x = None, 1e9
+    levers = []
     for i in range(1, n + 1):
         m = lab == i
         if m.sum() < 500:
             continue
-        x = np.nonzero(m)[0].mean()
-        if x < best_x:
-            best, best_x = m, x
-    assert best is not None, "no lever found in the clip"
-    ii, jj, kk = np.nonzero(best)
-    blo = np.array([ii.min(), jj.min(), kk.min()])
-    bhi = np.array([ii.max(), jj.max(), kk.max()]) + 1
-    sub_solid = best[blo[0]:bhi[0], blo[1]:bhi[1], blo[2]:bhi[2]]
-    sub_mean = mean[blo[0]:bhi[0], blo[1]:bhi[1], blo[2]:bhi[2]]
-    scene, _ = to_scene(sub_mean, sub_solid, VOXEL_M, [])
-    geo = scene.write(os.path.join(VOX_DIR, "zambelli_lever.vox"), hollow=False)
-    manifest("zambelli_lever", "Console lever", geo, VOXEL_M, 1.2,
-             "A lever on the resurfacer's console: a chromed shaft with a rubber knob.", "metal")
-    m_lo = lo + blo * VOXEL_M
-    m_hi = lo + bhi * VOXEL_M
-    foot = np.array([(m_lo[0] + m_hi[0]) / 2, m_lo[1], (m_lo[2] + m_hi[2]) / 2])
-    print(f"zambelli_lever: {geo['size_vox']} at {VOXEL_M * 1000:.0f} mm, {int(sub_solid.sum())} voxels, "
-          f"grid box {np.round(m_lo, 3)}..{np.round(m_hi, 3)}")
-    print("zambelli.gd constants (the lever's foot in the Zambelli's frame):")
-    print(f"  LEVER_POS Vector3({foot[0] - ext[0] / 2:.3f}, {foot[1]:.3f}, {foot[2] - BLADE_Z:.3f})")
-    clear_body(m_lo - VOXEL_M, m_hi + VOXEL_M)
-    if args.preview:
-        os.makedirs(PREVIEW_DIR, exist_ok=True)
-        zambelli.views(scene, os.path.join(PREVIEW_DIR, "zambelli_lever.png"))
+        levers.append((np.nonzero(m)[0].mean(), m))
+    levers.sort(key=lambda t: t[0])
+    assert len(levers) >= 4, f"{len(levers)} levers found in the row, expected four"
+    feet = []
+    for k, (_, m) in enumerate(levers[:4]):
+        ii, jj, kk = np.nonzero(m)
+        blo = np.array([ii.min(), jj.min(), kk.min()])
+        bhi = np.array([ii.max(), jj.max(), kk.max()]) + 1
+        m_lo = lo + blo * VOXEL_M
+        m_hi = lo + bhi * VOXEL_M
+        feet.append(np.array([(m_lo[0] + m_hi[0]) / 2, m_lo[1], (m_lo[2] + m_hi[2]) / 2]))
+        clear_body(m_lo - VOXEL_M, m_hi + VOXEL_M)
+        if k >= 2:
+            continue  # the third and fourth are the first two again
+        sub_solid = m[blo[0]:bhi[0], blo[1]:bhi[1], blo[2]:bhi[2]]
+        sub_mean = mean[blo[0]:bhi[0], blo[1]:bhi[1], blo[2]:bhi[2]]
+        scene, _ = to_scene(sub_mean, sub_solid, VOXEL_M, [])
+        pid, name, inspect = PROPS[k]
+        geo = scene.write(os.path.join(VOX_DIR, f"{pid}.vox"), hollow=False)
+        manifest(pid, name, geo, VOXEL_M, 1.2, inspect, "metal")
+        print(f"{pid}: {geo['size_vox']} at {VOXEL_M * 1000:.0f} mm, {int(sub_solid.sum())} voxels, "
+              f"grid box {np.round(m_lo, 3)}..{np.round(m_hi, 3)}")
+        if args.preview:
+            os.makedirs(PREVIEW_DIR, exist_ok=True)
+            zambelli.views(scene, os.path.join(PREVIEW_DIR, f"{pid}.png"))
+    print("zambelli.gd constants (the levers' feet in the Zambelli's frame, the operator's left to right):")
+    for foot in feet:
+        print(f"  Vector3({foot[0] - ext[0] / 2:.3f}, {foot[1]:.3f}, {foot[2] - BLADE_Z:.3f}),")
 
 
 if __name__ == "__main__":
