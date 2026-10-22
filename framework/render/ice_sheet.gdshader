@@ -86,10 +86,7 @@ void fragment() {
 	float slush = liquid * sn;
 	alb = mix(alb, vec3(0.55, 0.58, 0.60), slush);
 	liquid *= 1.0 - 0.5 * sn;
-	// the film's surface is water, not the ice under it: it lies flat over
-	// the grooves (which would read as a corrugated wave through the gloss),
-	// with only a faint ripple
-	vec3 n_water = normalize(mix(vec3(0.0, 0.0, 1.0), n_rip, 0.15));
+	vec3 n_water = normalize(mix(n, n_rip, 0.6));
 	n = normalize(mix(n, n_water, liquid));
 	rough = mix(rough, 0.04, liquid);
 	alb = mix(alb, alb * vec3(0.78, 0.86, 0.96), liquid * 0.7);
@@ -107,7 +104,6 @@ void fragment() {
 	alb = mix(alb, alb * 1.12 + vec3(0.04), rim * 0.8);
 	// frozen-over water: the gloss stays, the tint goes
 	float set = wt * fz;
-	n = normalize(mix(n, n_fresh, set));
 	rough = mix(rough, 0.12, set);
 	alb = mix(alb, vec3(0.74, 0.83, 0.90), set * 0.5);
 	// a gouge: darker trench, rougher; one that water filled is clear

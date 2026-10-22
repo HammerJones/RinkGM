@@ -58,6 +58,8 @@ const RAGS := ["NEW", "USED", "WORN"]
 const FLOOD_FULL_MM := 1.2  # the film the flood valve lays wide open
 const MACHINE_W := 2.1  # the conditioner's width
 const MACHINE_SPEED := 2.0  # m/s
+const RUNNER_M := 0.8  # the conditioner's runners: how far ahead of the blade they ride
+const LEVEL_RATE_MM := 1.0  # the most the blade's level moves per metre of travel
 const PASS_X0 := 2.0  # the pass runs end to end, clear of the end boards
 const PASS_X1 := RINK.x - 2.0
 const HOSE_LPS := 1.6  # the big hose wide open, litres a second
@@ -100,6 +102,7 @@ var _stream: GPUParticles3D
 var _env: WorldEnvironment
 var _sun: DirectionalLight3D
 var _zam := -1.0
+var _level := NAN  # the blade's height over the base, mm, carried along the cut
 var _fails := 0
 
 
@@ -399,6 +402,7 @@ func _begin_pass(z: float) -> void:
 	_zam = PASS_X0
 	pass_z = clampf(z, MACHINE_W / 2, RINK.y - MACHINE_W / 2)
 	shaved_mm = 0.0
+	_level = NAN
 	_machine.position = ice.position + Vector3(_zam, 0.0, pass_z)
 	_machine.cond_down = true
 	_machine.auger_on = true
@@ -412,18 +416,15 @@ func _zamboni_step(sdt: float) -> void:
 	_zam += sdt * MACHINE_SPEED
 	var x1 := minf(_zam, PASS_X1)
 	var film := FLOOD_FULL_MM * _machine.flood
-	shaved_mm += ice.resurface(
-		x0,
-		x1,
-		pass_z - MACHINE_W / 2,
-		pass_z + MACHINE_W / 2,
-		film,
-		rag_i / 2.0,
-		0.0,
-		0.0,
-		0.0,
-		-_machine.blade_mm
-	)
+	var z0 := pass_z - MACHINE_W / 2
+	var z1 := pass_z + MACHINE_W / 2
+	var ahead: Array[Vector2] = [
+		Vector2(x1, z0), Vector2(x1 + RUNNER_M, z0), Vector2(x1 + RUNNER_M, z1), Vector2(x1, z1)
+	]
+	var swept: Array[Vector2] = [Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)]
+	_follow(ahead, swept, x1 - x0)
+	if not is_nan(_level):
+		shaved_mm += ice.resurface(x0, x1, z0, z1, film, rag_i / 2.0, _level, 0.0, 0.0)
 	_machine.feed(_shavings_by_bin())
 	_machine.position = ice.position + Vector3(x1, 0.0, pass_z)
 	if _zam >= PASS_X1:
@@ -455,6 +456,25 @@ func _shavings_by_bin() -> PackedFloat32Array:
 	return bins
 
 
+## The blade's level for the next strip: the handwheel's setting below
+## the ice the conditioner's runners ride, read `ahead` of the blade
+## (the strip itself when the runners are off the sheet), and eased
+## there at LEVEL_RATE_MM a metre over `dist`. A level set from each
+## strip's own mean left a ridge across the lane at every step, as if
+## the blade skipped; carried along, the cut is one continuous plane.
+func _follow(ahead: Array[Vector2], swept: Array[Vector2], dist: float) -> void:
+	var ride := ice.mean_solid(ahead)
+	if is_nan(ride):
+		ride = ice.mean_solid(swept)
+	if is_nan(ride):
+		return
+	var target := ride + _machine.blade_mm
+	if is_nan(_level):
+		_level = target
+	else:
+		_level = move_toward(_level, target, LEVEL_RATE_MM * dist)
+
+
 ## A frame at the wheel: W is the pedal, S the brake, A and D steer, the
 ## drive select lever on the console gives the direction. The conditioner
 ## resurfaces whatever the blade sweeps, on any heading; the boards stop
@@ -483,19 +503,30 @@ func _drive_with(sdt: float, pedal: float, brake: float, turn: float) -> void:
 			hud.toast("THE BOARDS")
 		return
 	if not _machine.is_down():
+		_level = NAN  # the conditioner is up: the next cut finds its own level
 		return
 	var film := FLOOD_FULL_MM * _machine.flood
 	var fwd := -_machine.global_transform.basis.z
+	var a0 := _local(sweep[0])
+	var a1 := _local(sweep[1])
+	var b0 := _local(sweep[2])
+	var b1 := _local(sweep[3])
+	var step := (b0 - a0 + b1 - a1) / 2.0
+	var on := step.normalized() * RUNNER_M
+	_follow([b0, b0 + on, b1 + on, b1], [a0, a1, b1, b0], step.length())
+	if is_nan(_level):
+		return
 	var took := ice.resurface_sweep(
-		_local(sweep[0]),
-		_local(sweep[1]),
-		_local(sweep[2]),
-		_local(sweep[3]),
+		a0,
+		a1,
+		b0,
+		b1,
 		film,
 		rag_i / 2.0,
 		atan2(fwd.z, fwd.x),
-		-_machine.blade_mm,
-		Zambelli.BINS
+		IceSheet.NO_CUT,
+		Zambelli.BINS,
+		_level
 	)
 	shaved_mm += took
 	if took > 0.0:
@@ -1006,8 +1037,14 @@ func _screenshot(path: String) -> void:
 				_machine.to_global(Vector3(-0.12, 1.78, 0.25))
 			)
 	if args.has("--view=wet"):
-		# a flooded lane from standing height, the film's surface up close
-		ice.resurface(PASS_X0, PASS_X1, 8.0, 10.1, 0.8, 0.0, 0.0, 0.0)
+		# a flooded lane from standing height, the film's surface up close:
+		# the machine's own pass, stepped at 60 Hz as in play
+		_set_state(1)
+		_machine.flood = 0.65
+		_begin_pass(9.05)
+		for step in 1800:
+			_zamboni_step(1.0 / 60.0)
+			_machine._process(1.0 / 60.0)
 		ice.flush()
 		walker.global_position = ice.position + Vector3(20.0, 0.05, 9.0)
 		walker.face(-1.33)  # toward a lamp's reflection on the film
@@ -1437,6 +1474,31 @@ func _self_test() -> void:
 	ctl.scroll(k_flood, 7.0)
 	check.call(is_equal_approx(_machine.flood, 0.35), "seven notches open the flood valve 35%%")
 	check.call(ZambelliControls.turns_text(0.0) == "FLUSH", "flush reads as flush")
+	# the blade's level is carried along the cut: a pass stepped at 60 Hz
+	# over bumpy ice leaves one plane, not a ridge across the lane at
+	# every strip (the blade-skip look)
+	_set_state(1)
+	ice.flush()
+	for k in 12:
+		ice.pour(Vector2(6.0 + k * 4.3, 6.0 + (k % 3 - 1) * 0.5), 0.5, 0.6 + 0.1 * (k % 4))
+	ice.set_now()
+	_machine.blade_mm = -1.0
+	_machine.flood = 0.0
+	_begin_pass(6.0)
+	for step in 1800:
+		_zamboni_step(1.0 / 60.0)
+	var ridge := 0.0
+	var row := ice.cell_at(Vector2(0.0, 6.0)).y
+	for x in range(
+		ice.cell_at(Vector2(PASS_X0 + 1.0, 0.0)).x, ice.cell_at(Vector2(PASS_X1 - 1.0, 0.0)).x
+	):
+		var i := ice.index(x, row)
+		var j := ice.index(x + 1, row)
+		ridge = maxf(ridge, absf((ice.ice[j] + ice.crust[j]) - (ice.ice[i] + ice.crust[i])))
+	check.call(
+		ridge < 0.1,
+		"the stepped pass cuts one plane, no ridges across it (max step %.3f mm)" % ridge
+	)
 	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:
 		print("ice_demo test: all passed")

@@ -480,6 +480,43 @@ func resurface(
 	return shaved
 
 
+## The mean solid height (ice plus crust, mm over the base) of the
+## columns inside the quad `q` (metres on the sheet, either way round),
+## or NAN when none of the sheet is in it. The conditioner's runners
+## ride this on the uncut ice ahead of the blade, so the blade's level
+## follows the sheet instead of the strip it is cutting.
+func mean_solid(q: Array[Vector2]) -> float:
+	var lo := q[0]
+	var hi := q[0]
+	var area := 0.0
+	for k in 4:
+		lo = lo.min(q[k])
+		hi = hi.max(q[k])
+		area += q[k].cross(q[(k + 1) % 4])
+	if absf(area) < 1e-9:
+		return NAN
+	var turn := signf(area)
+	var c0 := cell_at(lo)
+	var c1 := cell_at(hi)
+	var sum := 0.0
+	var n := 0
+	for z in range(maxi(c0.y, 0), mini(c1.y + 1, d)):
+		for x in range(maxi(c0.x, 0), mini(c1.x + 1, w)):
+			var i := index(x, z)
+			if _mask[i] == 0:
+				continue
+			var p := Vector2((x + 0.5) * cell, (z + 0.5) * cell)
+			var inside := true
+			for k in 4:
+				if (q[(k + 1) % 4] - q[k]).cross(p - q[k]) * turn < 0.0:
+					inside = false
+					break
+			if inside:
+				sum += ice[i] + crust[i]
+				n += 1
+	return sum / n if n > 0 else NAN
+
+
 ## One column under the blade at `blade_mm` over the base, the rag laying
 ## `film_mm` of water behind it (times `streak`, a worn rag's unevenness).
 ## Returns the millimetres taken off the column.

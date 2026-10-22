@@ -236,7 +236,7 @@ func _ready() -> void:
 	_body.add_child(controls)
 	for c in CONSOLE:
 		var pivot := Node3D.new()
-		pivot.name = c.id
+		pivot.name = c.id if c.id != "" else "Seat"
 		pivot.position = c.foot
 		if c.id != "":
 			var part := _part(c.id)

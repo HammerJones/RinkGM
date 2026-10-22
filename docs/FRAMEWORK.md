@@ -564,7 +564,10 @@ share can be left as a ridge along the sides, off by default: side-by-side
 passes must blend), and the call returns the millimetres taken. With
 `film_mm` > 0 the conditioner's rag lays water behind the blade: a new
 rag (`rag_wear` 0) an even film, a worn one (1) streaks and a coarser
-cut. A dry pass is the one without the film. The
+cut. A dry pass is the one without the film. `mean_solid(quad)` reads
+the mean solid height of the columns in a quad, the level the
+conditioner's runners ride, and `resurface_sweep(a0, a1, b0, b1, ...)`
+is the same blade over the quad it sweeps on any heading. The
 game's `IceSlab` and `RefrigerationPlant` are where the real heat balance
 lives; this is the surface they will drive, and the sim's 25 cm grid is
 the source the 2.5 cm columns sample.
@@ -662,9 +665,14 @@ display, and run as headless checks in CI (`--test=<name>`).
   behind it, and the boards stop the machine. The sheet rebuilds its
   dirty chunks nearest `IceSheet.focus` first (the machine's lane while
   it runs, else where you stand) with 6 ms a frame, so the lane behind
-  the blade refreshes at once. A film's surface is water, not the ice
-  under it: the shader lays it flat over the grooves (they read as a
-  corrugated wave through the gloss otherwise) with only a faint ripple. The machine is also a
+  the blade refreshes at once. The blade's level is carried along the
+  cut (`_follow()`): the handwheel's setting below the ice the
+  conditioner's runners ride, read 0.8 m ahead of the blade
+  (`IceSheet.mean_solid()` over that quad) and eased there at 1 mm a
+  metre, so a pass stepped at 60 Hz cuts one plane. A level taken from
+  each strip's own mean (the band's `cut_mm` mode) left a ridge across
+  the lane at every strip, a staircase that read as the blade skipping
+  through the film's gloss. The machine is also a
   body the walker collides with (an `AnimatableBody3D` hull of two
   boxes on the props layer, carried with it). The console's controls are props taken out of the bought
   model (`tools/propgen/zambelli_lever.py` takes each out of the GLB
@@ -725,7 +733,8 @@ display, and run as headless checks in CI (`--test=<name>`).
   `--view=console` stands at the controls (`--above` looks down on them,
   `--lever` is close on the console from the operator's left);
   `--view=drive` drives a curving flood pass from the seat and looks back
-  at the lane; `--view=wet` stands on a flooded lane looking at a lamp's
+  at the lane; `--view=wet` runs the machine's flood pass stepped at
+  60 Hz as in play and stands on the lane looking at a lamp's
   reflection in the film. In every demo Ctrl
   crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.
 
