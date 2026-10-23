@@ -7,20 +7,19 @@ extends Node
 ## and no stats beyond the shot count the rig watches.
 
 
-## The game's first-person camera, on a camera the demo owns: the view
-## turns with the skater, looks down enough to see the blade, and LMB
+## The game's first-person camera on a camera the demo owns: a `CameraRig`
+## (HumanController types it so; `aim_from_view` asks it for the viewport
+## and `cam`) that makes no camera of its own and never places one. The
+## view turns with the skater, looks down enough to see the blade, and LMB
 ## looks around from there. HumanController reads its forward and right.
 class DemoCameraRig:
-	extends Node
-	const SELF_LAYER := 1 << 19  # the skater's own head, torso and shoulders: this camera skips them
+	extends CameraRig
 	const EYE := 1.55
 	const PITCH := deg_to_rad(-36.0)
-	const LOOK_YAW := deg_to_rad(160.0)
-	const LOOK_PITCH := deg_to_rad(55.0)
-	var cam: Camera3D
 	var yaw := 0.0
-	var look := Vector2.ZERO
-	var looking := false
+
+	func _ready() -> void:
+		mode = Mode.FIRST  # no camera made, nothing placed: `cam` is the walker's
 
 	func forward_flat() -> Vector3:
 		return Vector3(-sin(yaw), 0.0, -cos(yaw))
@@ -37,7 +36,7 @@ class DemoCameraRig:
 
 	## The eyes on `body` (the demo's walker, which carries `cam`) at the
 	## skater's head, turned the way they skate.
-	func follow(h: Skater, body: Node3D, dt: float) -> void:
+	func ride(h: Skater, body: Node3D, dt: float) -> void:
 		var want := atan2(-h.heading.x, -h.heading.z)
 		yaw = lerp_angle(yaw, want, 1.0 - exp(-9.0 * dt))
 		if not looking:

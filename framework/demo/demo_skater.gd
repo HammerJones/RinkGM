@@ -10,7 +10,7 @@ extends Node3D
 ## head and torso hidden from its camera. Every stride, stop, turn and
 ## glide is written into the ice through `SkateWear`.
 
-const SELF_LAYER := DemoRinkGame.DemoCameraRig.SELF_LAYER
+const SELF_LAYER := CameraRig.SELF_LAYER
 const PUCK_SUBSTEPS := 4
 const TURN_G := 3.0  # m/s2 of lateral load under which a turn leaves no edge mark
 const SURE_REACH := Skater.REACH_ONE_HAND  # m from the body: a loose puck this close is yours
@@ -136,7 +136,7 @@ func step(dt: float, sheet: IceSheet, to_sheet: Callable) -> void:
 		if sure_hands:
 			_sure_hands()
 	game.time += dt
-	game.camera_rig.follow(skater, _walker, dt)
+	game.camera_rig.ride(skater, _walker, dt)
 	# the ice under the blades
 	var v := skater.speed()
 	var a1: Vector2 = to_sheet.call(skater.global_position)

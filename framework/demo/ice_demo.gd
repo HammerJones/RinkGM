@@ -218,7 +218,12 @@ func _ready() -> void:
 	_skater = DemoSkater.new()
 	_skater.name = "Skater"
 	add_child(_skater)
-	_skater.setup(_puck, func(text: String, _seconds: float) -> void: hud.toast(text))
+	_skater.setup(
+		_puck,
+		func(text: String, _seconds: float) -> void:
+			if hud:
+				hud.toast(text)
+	)
 	field = PropField.new()
 	field.name = "Props"
 	add_child(field)
@@ -3238,6 +3243,34 @@ func _self_test() -> void:
 			% _puck.position.distance_to(sk.blade_pos)
 		)
 	)
+	# RMB held draws a shot aimed from the demo's camera rig, which must be
+	# the game's CameraRig (HumanController types it so; a rig that was not
+	# one paused Sean's editor on a type error at every right click)
+	check.call(
+		_skater.game.camera_rig is CameraRig, "the demo's camera rig is the game's CameraRig"
+	)
+	var aim: Variant = _skater.controller.aim_from_view()
+	check.call(aim is Vector3, "the centre dot aims from the walker's camera (%s)" % str(aim))
+	_skater.script(
+		func(f: PlayerInput.Frame, _dt: float) -> void:
+			f.tracing = true
+			f.trace_pos = Vector2(0.0, 40.0)
+	)
+	for i in 6:
+		_skater.step(1.0 / 60.0, ice, _local)
+	_skater.script(
+		func(f: PlayerInput.Frame, _dt: float) -> void:
+			f.trace_done = true
+			f.trace = [
+				Vector3(0.0, 0.0, 0.0),
+				Vector3(0.0, 40.0, 0.05),
+				Vector3(0.0, 80.0, 0.1),
+				Vector3(0.0, 120.0, 0.15)
+			]
+	)
+	_skater.step(1.0 / 60.0, ice, _local)
+	_skater.script(Callable())
+	check.call(_skater.controller.last_shot.has("ok"), "an RMB release grades the pattern drawn")
 	# a traced wrist shot at the east net from the slot
 	sk.place(Vector2(Rink.GOAL_X - 8.0, 0.0), Vector3(1.0, 0.0, 0.0))
 	_skate(10, Vector2.ZERO)
