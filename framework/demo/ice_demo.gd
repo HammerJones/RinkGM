@@ -384,7 +384,7 @@ func _process(dt: float) -> void:
 		if hosing and _hose.held:
 			_spray(dt)
 		_stream.emitting = hosing and _hose.held
-		if chipping:
+		if chipping and not _skater.active:
 			_chip_t -= dt
 			if _chip_t <= 0.0:
 				_chip_t = 0.08
@@ -980,6 +980,8 @@ func _skates_on() -> void:
 	# centre ice, a stride past the dot so the parked resurfacer is not in the way
 	walker.global_position = SKATE_START
 	walker.face(PI / 2)  # down the ice, toward the bay end
+	hosing = false
+	chipping = false  # RMB on the ice is the game's shot pattern, never the chisel
 	_skater.start(walker)
 	# a puck ahead on the ice
 	_puck.reset_at(SKATE_START + Vector3(3.0, 0.0, 0.3))
@@ -1233,6 +1235,15 @@ func _heat_text() -> String:
 		return ""
 	var r := ice.height_range() / (0.001 * ice.height_scale)
 	return "   HEATMAP %.2f .. %.2f MM" % [r.x, r.y]
+
+
+## The window back in front (the editor's game panel, a tabbed-away
+## window): the mouse is ours again, so a click in the game is a click in
+## the game and not on whatever sits behind it.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN or what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
+		if DisplayServer.get_name() != "headless":
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -3202,6 +3213,29 @@ func _self_test() -> void:
 		(
 			"the puck on the blade goes with you (%.2f m, %.2f from the blade)"
 			% [_puck.position.distance_to(puck0), _puck.position.distance_to(sk.blade_pos)]
+		)
+	)
+	# sure hands: a loose puck in reach is picked up, forehand or backhand,
+	# and a carried puck does not get away
+	sk.place(Vector2(SKATE_START.x, SKATE_START.z), Vector3(1.0, 0.0, 0.0))
+	_puck.reset_at(sk.global_position + Vector3(1.2, 0.0, 1.0))  # ahead, forehand side
+	_skate(5, Vector2.ZERO)
+	check.call(sk.has_puck(), "a loose puck in reach on the forehand is picked up")
+	_puck.reset_at(sk.global_position + Vector3(1.0, 0.0, -1.2))  # ahead, backhand side
+	_skate(5, Vector2.ZERO)
+	check.call(sk.has_puck(), "...and on the backhand")
+	_puck.reset_at(sk.global_position + Vector3(3.0, 0.0, 0.0))
+	_skate(5, Vector2.ZERO)
+	check.call(not sk.has_puck(), "a puck out of reach is not")
+	_puck.reset_at(sk.puck_anchor())
+	_puck.controller = sk
+	_puck.vel = Vector3(0.0, 0.0, 9.0)  # knocked hard off the blade
+	_skate(30, Vector2(0.0, 1.0))
+	check.call(
+		sk.has_puck() and _puck.position.distance_to(sk.blade_pos) < 0.6,
+		(
+			"a puck knocked off the blade is back on it (%.2f m)"
+			% _puck.position.distance_to(sk.blade_pos)
 		)
 	)
 	# a traced wrist shot at the east net from the slot

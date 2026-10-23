@@ -13,9 +13,14 @@ extends Node3D
 const SELF_LAYER := DemoRinkGame.DemoCameraRig.SELF_LAYER
 const PUCK_SUBSTEPS := 4
 const TURN_G := 3.0  # m/s2 of lateral load under which a turn leaves no edge mark
+const SURE_REACH := Skater.REACH_ONE_HAND  # m from the body: a loose puck this close is yours
 
 var active := false
 var stride_count := 0
+## Sure hands (Sean): a loose puck anywhere the stick can reach, forehand
+## or backhand, is picked up at once, and a carried puck is never lost
+## (a shot or a pass still leaves the blade).
+var sure_hands := true
 var game: DemoRinkGame
 var skater: Skater
 var controller: HumanController
@@ -116,6 +121,10 @@ func step(dt: float, sheet: IceSheet, to_sheet: Callable) -> void:
 		return
 	_sheet = sheet
 	_to_sheet = to_sheet
+	# the mouse is the stick for as long as you skate: the game's Esc lets it
+	# go, and a loose cursor over the editor takes the next click there (Sean)
+	if DisplayServer.get_name() != "headless" and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		controller.player_input.capture_mouse()
 	var a0: Vector2 = to_sheet.call(skater.global_position)
 	controller.update(dt)
 	skater.physics_update(dt)
@@ -124,6 +133,8 @@ func step(dt: float, sheet: IceSheet, to_sheet: Callable) -> void:
 	for i in PUCK_SUBSTEPS:
 		StickPuck.step(game, puck, sdt, float(i + 1) / PUCK_SUBSTEPS)
 		puck.integrate(sdt)
+		if sure_hands:
+			_sure_hands()
 	game.time += dt
 	game.camera_rig.follow(skater, _walker, dt)
 	# the ice under the blades
@@ -134,6 +145,34 @@ func step(dt: float, sheet: IceSheet, to_sheet: Callable) -> void:
 		if skater.turn_load > TURN_G:
 			SkateWear.turn(sheet, a0, a1, dir, skater.turn_load, skater.yaw_rate > 0.0)
 		SkateWear.glide(sheet, a0, a1, dir, v)
+
+
+## A loose puck the stick can reach, or one that just slipped off the
+## blade, is on the blade: the stick's own 220 degree arc and one-hand
+## reach, no release in progress (a shot or a pass goes), the puck on the ice.
+func _sure_hands() -> void:
+	var puck := game.puck
+	if puck.controller == skater or puck.frozen or puck.in_net_side != 0 or puck.out_of_play:
+		return
+	if not puck.can_be_touched_by(skater) or puck.position.y > StickPuck.BLADE_TOP:
+		return
+	var to := puck.position - skater.global_position
+	to.y = 0.0
+	var slipped := puck.controller == null and puck.last_touch == skater
+	if not slipped:
+		if to.length() > SURE_REACH:
+			return
+		if (
+			absf(skater.heading.signed_angle_to(to, Vector3.UP)) > Skater.ARC_HALF
+			and to.length() > 0.3
+		):
+			return
+	puck.controller = skater
+	puck.last_touch = skater
+	var anchor := skater.puck_anchor()
+	puck.position = Vector3(anchor.x, 0.0, anchor.z)
+	puck.vel = skater.vel
+	game.on_possession(skater)
 
 
 func _on_stride(at: Vector3, speed: float, foot: int) -> void:

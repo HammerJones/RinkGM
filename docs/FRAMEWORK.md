@@ -995,7 +995,11 @@ display, and run as headless checks in CI (`--test=<name>`).
   can still be carried (E on it, E sets it down), the physics stays put.
   A goal is the puck over the goal line between the posts
   (`Puck.goal_scored`): GOALS on the HUD, and the puck is back in play a
-  stride ahead of you a moment later. What skating does to the ice is
+  stride ahead of you a moment later. Sure hands (Sean): a loose puck
+  anywhere the stick can reach, forehand or backhand, is on the blade at
+  once, and a carried puck is never knocked or slipped off (a shot or a
+  pass still leaves). While you skate the mouse stays captured and RMB is
+  the shot pattern only, never the chisel. What skating does to the ice is
   `SkateWear`, fed by the skater's `stride` and `stop_spray` signals and
   its `turn_load`: a glide leaves a faint line per blade (`BLADE_GAP`,
   24 cm apart, stronger with speed), a push-off chips the ice where the
