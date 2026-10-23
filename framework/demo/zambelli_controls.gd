@@ -80,12 +80,20 @@ func _process(dt: float) -> void:
 
 
 ## The control the view ray hits, or -1.
-func aim(from: Vector3, dir: Vector3) -> int:
+## The control the look from `from` along `dir` lands on, or -1; controls
+## of `skip`'s kind are looked through (the seat, from the seat).
+func aim(from: Vector3, dir: Vector3, skip: int = -1) -> int:
 	if not is_inside_tree():
 		return -1
 	var q := PhysicsRayQueryParameters3D.create(from, from + dir * REACH, 1 << (LAYER - 1))
 	q.collide_with_areas = true
 	q.collide_with_bodies = false
+	if skip >= 0:
+		var out: Array[RID] = []
+		for c in _controls:
+			if c.kind == skip:
+				out.append(c.area.get_rid())
+		q.exclude = out
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	if hit.is_empty():
 		return -1

@@ -842,7 +842,10 @@ display, and run as headless checks in CI (`--test=<name>`).
   the millimetres; wheel up is clockwise) and the valves in 5 % steps (the flood valve a
   quarter turn anticlockwise to full, the wash valve clockwise; the
   prompt reads the
-  percentage; the wash valve is readout only for now). With the flood
+  percentage; the wash valve is readout only for now). In the seat the
+  seat's own aim box is looked through (`aim(from, dir, skip)`): it sits
+  between the eyes and the valves and caught every look down at them
+  (Sean). With the flood
   valve open and the conditioner down, water sprays from the pipe along
   the foot of the conditioner's back wall onto the ice in streams
   2.5 inches apart, their thickness following the valve, for the rag
@@ -990,9 +993,12 @@ display, and run as headless checks in CI (`--test=<name>`).
   camera skips, so only the stick and blade are in view (Sean: the hands
   got in the way). A pair of skates and the puck wait in the bay; look
   at the skates and E puts you on them at centre ice, Q takes them off.
-  The nets stand on both goal lines where the game's puck physics has
-  them (`Rink.GOAL_X`; `NetPhysics` for the posts and mesh); the east one
-  can still be carried (E on it, E sets it down), the physics stays put.
+  One net stands on the east goal line where the game's puck physics has
+  it (`Rink.GOAL_X`; `NetPhysics` for the posts and mesh); it can still be
+  carried (E on it, E sets it down), the physics stays put. The game
+  would stand a second net on the west line; `DemoPuck` (`Puck` with the
+  net collision and goal test for the east side only) leaves that line
+  open ice (Sean: no fixed second net).
   A goal is the puck over the goal line between the posts
   (`Puck.goal_scored`): GOALS on the HUD, and the puck is back in play a
   stride ahead of you a moment later. Sure hands (Sean): a loose puck

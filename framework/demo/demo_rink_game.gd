@@ -16,10 +16,23 @@ class DemoCameraRig:
 	extends CameraRig
 	const EYE := 1.55
 	const PITCH := deg_to_rad(-36.0)
+	## After a shot the view follows the puck this long before easing back (Sean:
+	## letting go of the mouse by reflex lost sight of where the shot went).
+	const WATCH_S := 2.0
+	const WATCH_RATE := 7.0  # 1/s, the view swinging onto the puck
+	const RETURN_RATE := 3.5  # 1/s, easing back to the skating view
 	var yaw := 0.0
+	var pitch := PITCH
+	var watch_t := 0.0
+	var watching: Puck
 
 	func _ready() -> void:
 		mode = Mode.FIRST  # no camera made, nothing placed: `cam` is the walker's
+
+	## A shot went: the view holds on `puck` for WATCH_S.
+	func watch(puck: Puck) -> void:
+		watching = puck
+		watch_t = WATCH_S
 
 	func forward_flat() -> Vector3:
 		return Vector3(-sin(yaw), 0.0, -cos(yaw))
@@ -38,13 +51,30 @@ class DemoCameraRig:
 	## skater's head, turned the way they skate.
 	func ride(h: Skater, body: Node3D, dt: float) -> void:
 		var want := atan2(-h.heading.x, -h.heading.z)
-		yaw = lerp_angle(yaw, want, 1.0 - exp(-9.0 * dt))
+		var want_pitch := PITCH
+		var rate := 9.0
+		if watch_t > 0.0:
+			watch_t -= dt
+			# the puck back on your blade (or gone, or reset) ends the watch early
+			if watching == null or watching.controller == h or watching.frozen:
+				watch_t = 0.0
+		if watch_t > 0.0:
+			var eye := h.global_position + Vector3(0.0, EYE, 0.0)
+			var to := watching.position - eye
+			if Vector2(to.x, to.z).length() > 0.5:
+				want = atan2(-to.x, -to.z)
+				want_pitch = clampf(atan2(to.y, Vector2(to.x, to.z).length()), -1.2, 0.6)
+				rate = WATCH_RATE
+		elif absf(angle_difference(yaw, want)) > 0.3 or absf(pitch - PITCH) > 0.2:
+			rate = RETURN_RATE
+		yaw = lerp_angle(yaw, want, 1.0 - exp(-rate * dt))
+		pitch = lerpf(pitch, want_pitch, 1.0 - exp(-rate * dt))
 		if not looking:
 			look = look.lerp(Vector2.ZERO, 1.0 - exp(-10.0 * dt))
 		body.global_position = h.global_position
 		body.rotation.y = yaw + look.x
 		cam.position.y = EYE
-		cam.rotation.x = clampf(PITCH + look.y, -1.4, 1.4)
+		cam.rotation.x = clampf(pitch + look.y, -1.4, 1.4)
 
 
 ## A HUD the controller can talk to: its messages go to the demo's toast.
@@ -81,6 +111,7 @@ func is_frozen() -> bool:
 
 func on_shot(_s: Skater, _slap: bool) -> void:
 	stats.shots += 1
+	camera_rig.watch(puck)
 
 
 func on_new_stick(_s: Skater) -> void:

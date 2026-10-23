@@ -118,7 +118,6 @@ var _net: HockeyNet
 var _skater: DemoSkater
 var _skates: Node3D  # the skates and stick on the bay floor
 var _puck: Puck  # the game's puck
-var _net2: HockeyNet  # the west goal's net (the east one, _net, can be carried)
 var _puck_reset := 0.0  # seconds until a scored puck is put back in play
 var _kit: Node3D  # the rink kit on show in the bay: board sections and glass
 var _rink_pieces := {}  # kit id -> how many the rink's boards and glass use
@@ -193,21 +192,17 @@ func _ready() -> void:
 	# on the bay's +z wall, across from the hose, its blade's face to the bay
 	_pusher.build(Vector3(RINK.x / 2 + BOARD_T + 3.0, 0.45, ZamboniBay.BAY_W / 2 - 0.3), 0.0)
 	add_child(_pusher)
-	# the nets on their goal lines, where the game's puck physics has them
-	# (the east one can still be carried off; the physics stays put)
+	# the one net on its goal line, where the game's puck physics has the
+	# east one (it can still be carried off; the physics stays put); the
+	# west goal line is open ice (DemoPuck: Sean wanted no fixed second net)
 	_net = HockeyNet.new()
 	_net.name = "Net"
 	_net.position = Vector3(Rink.GOAL_X, 0.0, 0.0)
 	_net.rotation.y = PI / 2  # its mouth toward centre ice
-	_net2 = HockeyNet.new()
-	_net2.name = "NetWest"
-	_net2.position = Vector3(-Rink.GOAL_X, 0.0, 0.0)
-	_net2.rotation.y = -PI / 2
-	add_child(_net2)
 	add_child(_net)
 	_skates = _make_skates(Vector3(RINK.x / 2 + BOARD_T + 7.0, 0.0, -0.6))
 	add_child(_skates)
-	_puck = Puck.new()
+	_puck = DemoPuck.new()
 	_puck.name = "Puck"
 	add_child(_puck)
 	_puck.reset_at(_skates.position + Vector3(0.3, 0.0, 0.45))  # by the skates until you are on them
@@ -335,7 +330,13 @@ func _process(dt: float) -> void:
 		var cam := walker.camera
 		_aimed = -1
 		if not _no_aim:
-			_aimed = _machine.controls.aim(cam.global_position, -cam.global_transform.basis.z)
+			# in the seat the seat's own aim box is skipped: it sits between the
+			# eyes and the valves, and caught every look down at them (Sean)
+			_aimed = _machine.controls.aim(
+				cam.global_position,
+				-cam.global_transform.basis.z,
+				ZambelliControls.Kind.SEAT if _aboard else -1
+			)
 		_machine.controls.set_hover(_aimed)
 		_plant_aimed = -1
 		if _aimed < 0 and not _no_aim:
@@ -2628,6 +2629,23 @@ func _self_test() -> void:
 			]
 		)
 	)
+	# from the seat, a look down at the flood valve reaches the valve: the
+	# seat's own aim box, which the look passes through, is skipped aboard
+	var eye_w := _machine.to_global(Zambelli.SEAT + Vector3(0.0, FirstPerson.EYE, 0.0))
+	var fl: Dictionary = ctl._controls[k_flood]
+	var fl_mesh: MeshInstance3D = fl.meshes[0]
+	var fl_at := fl_mesh.to_global(fl_mesh.mesh.get_aabb().get_center())
+	var fl_dir := (fl_at - eye_w).normalized()
+	var seat_hit := ctl.aim(eye_w, fl_dir)
+	var seat_kind := ctl.kind_of(seat_hit)
+	check.call(
+		seat_kind == ZambelliControls.Kind.SEAT,
+		"from the seat, the look at the flood valve crosses the seat's box (%d)" % seat_kind
+	)
+	check.call(
+		ctl.aim(eye_w, fl_dir, ZambelliControls.Kind.SEAT) == k_flood,
+		"...and with the seat skipped it is the flood valve"
+	)
 	var fed := 0.0
 	for b in ice.shave_bins.size():
 		fed += ice.shave_bins[b]
@@ -3279,16 +3297,32 @@ func _self_test() -> void:
 	var goals0 := goals
 	var fired := sk.shoot_traced(&"wrist_shot", 22.0, Vector3(Rink.GOAL_X, 0.3, 0.0))
 	var shot_v := _puck.vel.length()
-	_skate(90, Vector2.ZERO)
+	_skate(150, Vector2.ZERO)  # 2.5 s: the shot, the goal, and the view's watch over
 	check.call(
 		fired and shot_v > 12.0 and goals == goals0 + 1 and _puck.in_net_side == 1,
 		"a traced wrist shot fires (%.1f m/s) and counts in the net (%d)" % [shot_v, goals - goals0]
 	)
 	check.call(_puck_reset > 0.0, "...and the puck is set to come back into play")
+	# the view held on the puck after the shot (Sean: letting go of LMB by
+	# reflex lost sight of it): the walker faces the net the puck is in
+	var rig: DemoRinkGame.DemoCameraRig = _skater.game.camera_rig
+	var to_puck := _puck.position - sk.global_position
+	var yaw_off := absf(angle_difference(rig.yaw, atan2(-to_puck.x, -to_puck.z)))
+	check.call(yaw_off < 0.2, "after the shot the view follows the puck (%.2f rad off)" % yaw_off)
+	check.call(rig.watch_t <= 0.0, "...and lets go after %.0f s" % rig.WATCH_S)
 	_puck_in_play()
 	check.call(
 		_puck.in_net_side == 0 and _puck.position.distance_to(sk.global_position) < 2.5,
 		"...ahead of you a moment later"
+	)
+	# no net at the west end: a shot down the west goal line goes to the boards
+	_puck.reset_at(Vector3(-Rink.GOAL_X + 5.0, 0.0, 0.0))
+	_puck.vel = Vector3(-14.0, 0.0, 0.0)
+	var goals1 := goals
+	_skate(60, Vector2.ZERO)
+	check.call(
+		goals == goals1 and _puck.in_net_side == 0 and _puck.position.x < -Rink.GOAL_X + 1.0,
+		"the west goal line is open ice: no net, no goal (x %.1f)" % _puck.position.x
 	)
 	# the boards keep a hard shot on the sheet
 	_puck.reset_at(Vector3(0.0, 0.0, 0.0))
