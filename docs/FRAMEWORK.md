@@ -601,6 +601,56 @@ map's alpha, of 64 mm) plus what a flood warmed it (the depth map's
 blue, `warm` of 10 K), standing water at 0 C; dark blue a degree below
 the pad (`pad_c`, the last `thermal()` call's), red at 0 C. A cooling
 column touches its cell as it cools, so the map follows a flood setting.
+With a brine floor attached (`brine`, below) the shader reads the pad's
+temperature per node from a pad map (`padmap`, red the slab top of
+-30..+10 C, green the circuit's flow) and draws the two pipes of each
+circuit as cooler lines a pitch apart where brine runs, stronger than
+the real few tenths so they can be seen.
+
+**The brine floor and the plant.** `BrineFloor` (`framework/ice/
+brine_floor.gd`) is the pad under the sheet: one node per circuit across
+it (a circuit is a pair of pipes out and back, `PITCH` 0.2 m apart) and
+`NODE_M` 2 m along it, each node four stacked temperatures (the slab top
+under the ice, the slab at the pipe plane, the sub-base under the
+insulation, the ground). Brine marches along each circuit from the
+headers at the x = 0 end, warming as it goes, so the far end runs warmer
+and a shut circuit (`set_valve`, `set_zone`) is a warm strip; the warm
+loop under the insulation holds the ground above freezing, and ground
+below 0 C heaves (`heave`, mm per node, ~2 mm a day per degree of
+frost). `step(dt, supply, pump, warm_on, air_c)` runs a pass every
+`STEP_S` sim seconds, sub-stepped for stability, and says so;
+`advance()` runs it forward for a view or a test. The sheet attaches it
+as `brine`: `thermal()` then uses the slab top under each column as its
+pad and hands the floor the heat a flood left in the column (`q_wet`),
+`_height` adds the heave at the heightfield's scale, `floor_sync()`
+rebuilds the columns over nodes whose heave stepped, and the temperature
+map carries the pad map. `IcePlant` (`ice_plant.gd`) runs the floor: a
+9 000 L brine tank chilled by two 175 kW stages (off / auto / hand each,
+auto staging on the set point with hysteresis and a minimum cycle), the
+pump and its speed, the warm loop, hour meters and kWh at a COP of 2.8.
+A running stage trips on low suction (brine below -14 C, or no flow for
+20 s) or high head (outside air over 32 C) and stays off through a
+lockout and until `reset()` with the cause gone. The numbers are tuned so
+a game day plays: the insulation is thin enough that the ground freezes
+in a couple of weeks without the warm loop, and -9 C brine makes
+medium ice under 8 C air, hard ice needs -11.
+
+**The plant room.** `PlantRoom` (`framework/demo/plant_room.gd`) is the
+room behind the Zamboni bay (through a door in its back wall): the two
+stages, the chiller, the tank with its sight glass and the pump along
+the far wall, the supply and return headers on the rink-side wall with a
+handwheel per zone (`ZONES` 13 runs of ten circuits), and the control
+wall: the set point dial (wheel, half degrees), the stage switches,
+their lamps and reset buttons, the pump switch and speed dial, the warm
+loop switch, a plate of gauges (supply, return, header kPa, outside,
+ground, heave, hours, kWh) and the laminated start-up card. Each control
+is an Area3D on the Zambelli controls' layer: `aim()`, `set_hover()`,
+`prompt()`, `toggle()` ([E]) and `scroll()` (the wheel) as the machine's.
+The demo steps the plant every frame, feeds its supply to `thermal()`,
+shows the plant's line in the F1 data and the pad's temperature and the
+ice's hardness under the dot; `--view=plant` (`--wide`, `--header`)
+frames the room, `--view=heat --temp` the pad map with its pipes and
+`--dead` a zone shut for two hours.
 
 **The blade.** `resurface(x0, x1, z0, z1, film_mm, rag_wear, blade_mm,
 travel, spill, cut_mm)` is the resurfacer over a band: the blade at

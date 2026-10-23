@@ -16,6 +16,9 @@ const BAY_D := 9.0  # metres of floor past the boards
 const BAY_W := 8.0
 const WALL_H := 3.2
 const WALL_T := 0.2
+const BACK_DOOR_Z := -2.0  # the door through the back wall to the plant room: its middle
+const BACK_DOOR_W := 1.0
+const BACK_DOOR_H := 2.1
 const OPEN_RAD := deg_to_rad(100.0)  # a leaf swung fully out lies a little past square
 const SWING_S := 2.2  # seconds to swing
 const AIM_REACH := 3.0
@@ -55,11 +58,19 @@ func build(
 	var mid := x0 + BAY_D / 2
 	# the pad: concrete, its top level with the ice
 	_box(shell, Vector3(mid, -0.1, 0.0), Vector3(BAY_D, 0.2, BAY_W), FLOOR)
-	# three walls and the two returns beside the doorway, above the boards
+	# three walls and the two returns beside the doorway, above the boards;
+	# the back wall has a door through to the plant room
+	var bx := x0 + BAY_D + WALL_T / 2
+	var zn := -BAY_W / 2 - WALL_T  # the back wall's north end
+	var zs := BAY_W / 2 + WALL_T
+	var dn := BACK_DOOR_Z - BACK_DOOR_W / 2
+	var ds := BACK_DOOR_Z + BACK_DOOR_W / 2
+	_box(shell, Vector3(bx, WALL_H / 2, (zn + dn) / 2), Vector3(WALL_T, WALL_H, dn - zn), WALL)
+	_box(shell, Vector3(bx, WALL_H / 2, (ds + zs) / 2), Vector3(WALL_T, WALL_H, zs - ds), WALL)
 	_box(
 		shell,
-		Vector3(x0 + BAY_D + WALL_T / 2, WALL_H / 2, 0.0),
-		Vector3(WALL_T, WALL_H, BAY_W + 2 * WALL_T),
+		Vector3(bx, (BACK_DOOR_H + WALL_H) / 2, BACK_DOOR_Z),
+		Vector3(WALL_T, WALL_H - BACK_DOOR_H, BACK_DOOR_W),
 		WALL
 	)
 	for s: float in [-1.0, 1.0]:

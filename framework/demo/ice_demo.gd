@@ -108,6 +108,9 @@ var _footprint := Zambelli.outline()  # the machine's edge, for the boards
 var _heat_t := 0.0  # seconds since the heatmap's range was read
 var _machine: Zambelli
 var _bay: ZamboniBay
+var _plant: IcePlant  # the brine plant and the floor under the ice
+var _room: PlantRoom  # behind the bay: where the plant is run from
+var _plant_aimed := -1  # the plant room control under the dot
 var _hose: FireHose
 var _edger: IceEdger
 var _pusher: SnowPusher
@@ -165,6 +168,13 @@ func _ready() -> void:
 	_bay.name = "Bay"
 	_bay.build(RINK.x / 2 + BOARD_T, BOARD_H, BOARD_T, KICK_H, BOARD, KICK)
 	add_child(_bay)
+	_plant = IcePlant.new()
+	_plant.setup(RINK, slab_c)
+	ice.brine = _plant.pad
+	_room = PlantRoom.new()
+	_room.name = "PlantRoom"
+	_room.build(_bay.hinge_x + ZamboniBay.BAY_D + ZamboniBay.WALL_T, _plant)
+	add_child(_room)
 	_hose = FireHose.new()
 	_hose.name = "FireHose"
 	# on the bay's -z wall, the reel a metre up, its plate to the wall
@@ -255,7 +265,13 @@ func _process(dt: float) -> void:
 	sim_t += sdt
 	# the building's air drifts over the day; the slab holds its setpoint
 	air_c = air_base + 3.0 * sin(sim_t / 900.0)
-	ice.thermal(sdt, slab_c, air_c)
+	# the plant chills the brine, the brine the pad, the pad the ice
+	slab_c = _plant.set_point
+	if _plant.step(sdt, air_c):
+		ice.floor_sync()
+		if heat_mode == 2:
+			_heat_t = HEAT_REFRESH
+	ice.thermal(sdt, _plant.supply_c(), air_c)
 	if instant:
 		ice.set_now()
 	if heatmap:
@@ -309,6 +325,10 @@ func _process(dt: float) -> void:
 		if not _no_aim:
 			_aimed = _machine.controls.aim(cam.global_position, -cam.global_transform.basis.z)
 		_machine.controls.set_hover(_aimed)
+		_plant_aimed = -1
+		if _aimed < 0 and not _no_aim:
+			_plant_aimed = _room.aim(cam.global_position, -cam.global_transform.basis.z)
+		_room.set_hover(_plant_aimed)
 		if hud:
 			hud.extra_prompt = _machine.controls.prompt(_aimed)
 			if _aimed < 0 and _aboard:
@@ -327,6 +347,8 @@ func _process(dt: float) -> void:
 				and _edger.aimed(cam.global_position, -cam.global_transform.basis.z)
 			):
 				hud.extra_prompt = "[E] TAKE THE EDGER'S HANDLES"
+			elif _plant_aimed >= 0:
+				hud.extra_prompt = _room.prompt(_plant_aimed)
 			elif _aimed < 0 and _bay.aimed(cam.global_position, -cam.global_transform.basis.z):
 				hud.extra_prompt = _bay.prompt()
 			elif _aimed < 0 and _hose.aimed(cam.global_position, -cam.global_transform.basis.z):
@@ -363,10 +385,12 @@ func _process(dt: float) -> void:
 		if at != null:
 			var p := _local(at)
 			under = (
-				"   UNDER THE DOT: ICE %.2f MM THICK AT %.1f C, SNOW %.2f MM, WATER %.2f MM"
+				"   UNDER THE DOT: ICE %.2f MM THICK AT %.1f C (%s), PAD %.1f C, SNOW %.2f MM, WATER %.2f MM"
 				% [
 					ice.thickness_at(p),
 					ice.ice_temp_at(p, slab_c, air_c),
+					hardness_text(ice.ice_temp_at(p, slab_c, air_c)),
+					_plant.pad.top_at(p.x, p.y),
 					ice.snow_at(p),
 					ice.water_at(p)
 				]
@@ -409,7 +433,7 @@ func _process(dt: float) -> void:
 			line3 += "   " + _skater.state_text() + "   GOALS %d" % goals
 		if _edging:
 			line3 += "   " + _edger.state_text()
-		hud.readout(line1 + "\n" + line2 + "\n" + line3)
+		hud.readout(line1 + "\n" + line2 + "\n" + line3 + "\n" + _plant.text())
 
 
 func _machine_line() -> String:
@@ -1251,6 +1275,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				elif _aimed >= 0:
 					_machine.controls.toggle(_aimed)
 					hud.toast(_machine.controls.prompt(_aimed).get_slice("   [", 0))
+				elif _plant_aimed >= 0:
+					hud.toast(_room.toggle(_plant_aimed))
 				elif _aboard:
 					_off_the_machine()
 					hud.toast("OFF THE MACHINE")
@@ -1354,6 +1380,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				# a machine control under the dot: the handwheel or a valve
 				_machine.controls.scroll(_aimed, 1.0 if up else -1.0)
 				hud.toast(_machine.controls.prompt(_aimed).get_slice("   [", 0))
+			elif _plant_aimed >= 0:
+				hud.toast(_room.scroll(_plant_aimed, 1.0 if up else -1.0))
 			elif _hose.held:
 				# the nozzle's pattern (the Interactor has the wheel while a prop is held)
 				_hose.scroll(up)
@@ -1702,6 +1730,17 @@ func _lights() -> void:
 			add_child(l)
 
 
+## How the ice skates at a surface temperature: hard below -5, soft above -2.
+static func hardness_text(surface_c: float) -> String:
+	if surface_c < -5.0:
+		return "HARD"
+	if surface_c < -3.5:
+		return "FIRM"
+	if surface_c < -2.0:
+		return "MEDIUM"
+	return "SOFT"
+
+
 static func _clock(t: float) -> String:
 	return "%02d:%02d" % [int(t) / 60, int(t) % 60]
 
@@ -1886,6 +1925,17 @@ func _screenshot(path: String) -> void:
 		walker.global_position = Vector3(RINK.x / 2 + BOARD_T + 0.8, 0.9, -1.2)
 		walker.face(-PI / 2 - 0.5)
 		walker.camera.rotation.x = -0.05
+	if args.has("--view=plant"):
+		# the plant room's control wall, from the middle of the room
+		var rx := _room.position.x
+		if args.has("--wide"):
+			# from the door: the machines along the far wall, the headers to the left
+			_look_at(Vector3(rx + 0.7, 1.6, -2.0), Vector3(rx + 4.6, 1.0, 1.2))
+		elif args.has("--header"):
+			# the headers and their zone valves, along the rink-side wall
+			_look_at(Vector3(rx + 2.6, 1.5, 3.2), Vector3(rx + 0.4, 1.4, 0.0))
+		else:
+			_look_at(Vector3(rx + 2.0, 1.55, 1.6), Vector3(rx + 2.0, 1.45, 4.0))
 	if args.has("--view=bay"):
 		# from the ice by the end boards: the doors swung open and the
 		# machine half through them onto the pad (--closed: shut, the machine before them)
@@ -2047,10 +2097,14 @@ func _screenshot(path: String) -> void:
 		)
 		ice.pour(Vector2(RINK.x / 2, RINK.y / 2), 2.0, 1.5)
 		if args.has("--temp"):
-			# by temperature: a flood strip setting, a puddle, the dry sheet cold
+			# by temperature: a flood strip setting, a puddle, the dry sheet cold;
+			# the pad's circuits in it, and with --dead a header zone shut for two hours
+			if args.has("--dead"):
+				_room.set_zone(6, 0.0)
+			_plant.advance(7200.0, air_c)
 			ice.resurface(PASS_X0, PASS_X1, 10.0, 10.0 + MACHINE_W, 0.0, 0.0, 0.0, 1.0)
 			for step in 60:
-				ice.thermal(1.0, slab_c, air_c, 100000)
+				ice.thermal(1.0, _plant.supply_c(), air_c, 100000)
 			set_heat_mode(2)
 		else:
 			set_heatmap(true)
@@ -2256,8 +2310,8 @@ func _self_test() -> void:
 	ice.base_mm = 25.0
 	check.call(
 		(
-			ice.ice_temp_at(Vector2(30.0, 12.0), -9.0, 8.0) < -8.0
-			and ice.ice_temp_at(Vector2(30.0, 12.0), -9.0, 8.0) > -9.0
+			ice.ice_temp_at(Vector2(30.0, 12.0), -9.0, 8.0) < _plant.pad.top_at(30.0, 12.0) + 1.0
+			and ice.ice_temp_at(Vector2(30.0, 12.0), -9.0, 8.0) > _plant.pad.top_at(30.0, 12.0)
 		),
 		(
 			"a dry column sits a little above the pad's temperature (%.1f C)"
@@ -3245,6 +3299,141 @@ func _self_test() -> void:
 	)
 	set_heat_mode(0)
 	check.call(ice.material.get_shader_parameter("heatmap") == false, "H once more turns it off")
+	# the brine floor: a small one of its own
+	var bf := BrineFloor.new()
+	bf.setup(Vector2(8.0, 2.0), -9.0)
+	check.call(
+		bf.nx == 4 and bf.nc == 10, "a small floor is 4 by 10 nodes (%d x %d)" % [bf.nx, bf.nc]
+	)
+	bf.advance(4.0 * 3600.0, -9.0, 1.0, true, 8.0)
+	var tr := bf.top_range()
+	check.call(
+		tr.x > -9.0 and tr.y < -4.5,
+		"four hours on: the slab top sits between brine and ice (%s)" % tr
+	)
+	check.call(
+		bf.return_c > bf.supply_c and bf.return_c < bf.supply_c + 3.0 and bf.heat_w > 0.0,
+		(
+			"the brine comes back warmer, carrying heat (%.2f from %.2f, %.0f W)"
+			% [bf.return_c, bf.supply_c, bf.heat_w]
+		)
+	)
+	check.call(
+		bf.top[5 * bf.nx + bf.nx - 1] > bf.top[5 * bf.nx],
+		(
+			"a circuit's far end runs warmer than its header end (%.2f vs %.2f)"
+			% [bf.top[5 * bf.nx + bf.nx - 1], bf.top[5 * bf.nx]]
+		)
+	)
+	bf.set_valve(5, 0.0)
+	bf.advance(2.0 * 3600.0, -9.0, 1.0, true, 8.0)
+	check.call(
+		bf.top[5 * bf.nx] > bf.top[7 * bf.nx] + 0.3,
+		"a shut circuit is a warm strip (%.2f vs %.2f)" % [bf.top[5 * bf.nx], bf.top[7 * bf.nx]]
+	)
+	bf.set_valve(5, 1.0)
+	var cold := bf.top_range().x
+	bf.advance(3600.0, -9.0, 0.0, true, 8.0)
+	check.call(
+		bf.top_range().x > cold,
+		"pump off: the slab warms (%.2f -> %.2f)" % [cold, bf.top_range().x]
+	)
+	check.call(
+		bf.ground_min() > 0.0 and bf.heave_max() == 0.0,
+		"the warm loop keeps the ground above freezing (%.1f C)" % bf.ground_min()
+	)
+	bf.advance(30.0 * 86400.0, -9.0, 1.0, false, 8.0)
+	check.call(
+		bf.ground_min() < 0.0 and bf.heave_max() > 0.0,
+		(
+			"a month without the warm loop: the ground freezes and heaves (%.1f C, %.1f mm)"
+			% [bf.ground_min(), bf.heave_max()]
+		)
+	)
+	# the plant: staging, a trip and its reset
+	var pl := IcePlant.new()
+	pl.setup(RINK, -9.0)
+	pl.tank_c = -7.0
+	pl.advance(400.0, 8.0)
+	check.call(
+		pl.stage_on[0] and pl.tank_c < -7.0,
+		"brine above the set point: stage 1 runs in auto and the tank cools (%.2f)" % pl.tank_c
+	)
+	pl.pump_on = false
+	pl.advance(60.0, 8.0)
+	check.call(
+		pl.trip[0] == IcePlant.Trip.LOW_SUCTION and not pl.stage_on[0],
+		"no flow: stage 1 trips on low suction"
+	)
+	check.call(not pl.reset(0), "the reset does nothing in the lockout")
+	pl.advance(200.0, 8.0)
+	check.call(not pl.reset(0), "...or with the pump still off")
+	pl.pump_on = true
+	check.call(
+		pl.reset(0) and pl.trip[0] == IcePlant.Trip.NONE,
+		"pump on, lockout over: the reset clears it"
+	)
+	pl.stage_mode[0] = IcePlant.Mode.OFF
+	pl.advance(200.0, 8.0)
+	check.call(not pl.stage_on[0], "a stage switched off stays off")
+	# the plant room's controls on the demo's plant
+	check.call(
+		_room.control_count() == 8 + PlantRoom.ZONES,
+		"the plant room has its controls (%d)" % _room.control_count()
+	)
+	var pump_i := _room.find(PlantRoom.Kind.PUMP)
+	_room.toggle(pump_i)
+	check.call(not _plant.pump_on, "[E] on the pump switch stops the pump")
+	_room.toggle(pump_i)
+	var sp := _room.find(PlantRoom.Kind.SET_POINT)
+	_room.scroll(sp, -2.0)
+	check.call(
+		is_equal_approx(_plant.set_point, -10.0),
+		"two notches down on the dial: -10 C (%.1f)" % _plant.set_point
+	)
+	_room.scroll(sp, 2.0)
+	var zi := _room.find(PlantRoom.Kind.ZONE, 3)
+	_room.toggle(zi)
+	var zc := _plant.pad.zone_circuits(3, PlantRoom.ZONES)
+	check.call(
+		zc.size() == 10 and _plant.pad.valve[zc[0]] == 0.0, "zone 4's wheel shuts its ten circuits"
+	)
+	_room.toggle(zi)
+	var dial_at := _room.to_global(
+		Vector3(PlantRoom.PANEL_X - 1.0, PlantRoom.PANEL_Y + 0.2, PlantRoom.ROOM_W / 2 - 0.12)
+	)
+	var hit := _room.aim(dial_at + Vector3(0.0, 0.0, -1.0), Vector3(0.0, 0.0, 1.0))
+	check.call(hit == sp, "the dot on the set point dial finds it (%d)" % hit)
+	# the sheet reads the pad: its temperature, its heave
+	check.call(ice.brine == _plant.pad, "the sheet's pad is the plant's floor")
+	var t_mid := ice.ice_temp_at(Vector2(RINK.x / 2, RINK.y / 2), slab_c, air_c)
+	check.call(
+		t_mid > -9.5 and t_mid < -3.0, "centre ice reads a pad-driven temperature (%.1f)" % t_mid
+	)
+	check.call(
+		hardness_text(-6.0) == "HARD" and hardness_text(-1.0) == "SOFT",
+		"hardness from the surface temperature"
+	)
+	var mc := ice.cell_at(Vector2(RINK.x / 2, RINK.y / 2))
+	var hv0 := ice._height(mc.x, mc.y)
+	var node := _plant.pad.node_at(RINK.x / 2, RINK.y / 2)
+	_plant.pad.heave[node] = 2.0
+	_plant.pad.heave_steps = PackedInt32Array([node])
+	check.call(
+		is_equal_approx(ice._height(mc.x, mc.y) - hv0, 0.002 * ice.height_scale),
+		"two millimetres of heave lift the ice at the heightfield's scale"
+	)
+	ice.floor_sync()
+	check.call(ice.dirty_count() > 0, "...and the columns over the node are rebuilt")
+	ice.flush()
+	_plant.pad.heave[node] = 0.0
+	_plant.pad.heave_steps.resize(0)
+	set_heat_mode(2)
+	check.call(
+		ice.material.get_shader_parameter("has_padmap") == true,
+		"the temperature map carries the pad map"
+	)
+	set_heat_mode(0)
 	print("ice demo: %d chunks, %d re-meshes" % [ice.chunk_count(), ice.remeshed])
 	if _fails == 0:
 		print("ice_demo test: all passed")

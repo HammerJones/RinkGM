@@ -37,6 +37,13 @@ uniform float h_air = 6.0;
 uniform float k_ice = 2.2;
 uniform float temp_lo = -10.0;
 uniform float temp_hi = 0.0;
+// the brine floor's pad map over the sheet: r the slab top's temperature
+// ((C + 30) / 40), g the circuit's brine flow; the pipes drawn into it as
+// cooler lines a pipe_pitch apart where brine runs
+uniform sampler2D padmap : filter_nearest;
+uniform vec2 padmap_m = vec2(61.0, 26.0);  // metres the map spans from the sheet's corner
+uniform bool has_padmap = false;
+uniform float pipe_pitch = 0.2;
 varying vec2 wp;
 varying float hy;
 
@@ -169,7 +176,16 @@ void fragment() {
 		if (heat_mode == 2) {
 			float h = max(dm4.a * 64.0, 2.0) * 0.001;
 			float g = 2.0 * k_ice / h;
-			float t = (h_air * room_c + g * pad_c) / (h_air + g) + dm4.b * 10.0;
+			float pc = pad_c;
+			if (has_padmap) {
+				vec4 pm = texture(padmap, wp / padmap_m);
+				pc = pm.r * 40.0 - 30.0;
+				// the two pipes of a circuit, a quarter and three quarters across its pitch
+				float zf = fract(wp.y / pipe_pitch);
+				float dp = min(abs(zf - 0.25), abs(zf - 0.75)) * pipe_pitch;
+				pc -= 1.2 * pm.g * (1.0 - smoothstep(0.0, 0.05, dp));  // drawn stronger than the real few tenths
+			}
+			float t = (h_air * room_c + g * pc) / (h_air + g) + dm4.b * 10.0;
 			if (wmm > 0.02) {
 				t = max(t, 0.0);  // standing water sits at 0 C
 			}

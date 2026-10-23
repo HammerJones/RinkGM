@@ -1,8 +1,9 @@
 class_name HockeyNet
 extends Node3D
-## The game's hockey net (Models.net(): 6 ft by 4 ft, 1.1 m deep). It starts in the bay; look at it and E picks it up (it
-## rides ahead of you), E again sets it down where you stand, facing the
-## way you face. Nothing is pinned: it stays wherever it was carried.
+## The game's hockey net (Models.net(): 6 ft by 4 ft, 1.1 m deep). It starts
+## in the bay; look at it and E picks it up (it rides ahead of you), E again
+## sets it down where you stand, facing the way you face. Nothing is pinned:
+## it stays wherever it was carried.
 
 const W := 1.83
 const H := 1.22

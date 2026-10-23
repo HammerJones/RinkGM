@@ -67,6 +67,7 @@ var base_mm := 25.0
 var pad_c := -9.0  # the pad and the air the last thermal() ran with (the temperature map)
 var room_c := 8.0
 var heat_mode := 0  # 0 off, 1 by height, 2 by temperature
+var brine: BrineFloor  # the pad under the sheet, when there is one: the pad's temperature per column, its heave
 ## Vertical exaggeration of the heightfield (1 = true millimetres).
 var height_scale := 4.0
 
@@ -312,6 +313,7 @@ func _read_range(key: Vector2i) -> void:
 					* scale
 				)
 				+ maxf(snow[i] - SNOW_SCALED, 0.0) * 0.001
+				+ _lift(i)
 			)
 			lo = minf(lo, h)
 			hi = maxf(hi, h)
@@ -347,7 +349,17 @@ func heatmap_refresh() -> void:
 		set_param("room_c", room_c)
 		set_param("h_air", H_AIR)
 		set_param("k_ice", K_ICE)
-		set_param("temp_lo", pad_c - 1.0)
+		var lo := pad_c - 1.0
+		if brine != null:
+			# the pad as the floor has it, node by node, the pipes drawn in it
+			set_param("padmap", brine.map_texture())
+			set_param("padmap_m", brine.size)
+			set_param("has_padmap", true)
+			set_param("pipe_pitch", BrineFloor.PITCH)
+			lo = minf(lo, brine.top_range().x - 1.0)
+		else:
+			set_param("has_padmap", false)
+		set_param("temp_lo", lo)
 		set_param("temp_hi", 0.0)
 		return
 	var r := height_range()
@@ -1068,7 +1080,14 @@ func thermal(dt: float, slab_c: float, air_c: float, max_cells := 3000) -> void:
 		var h := maxf(base_mm + ice[i] + crust[i], 2.0) * 0.001
 		var g := 2.0 * K_ICE / h
 		var cap := RHO_ICE * C_ICE * h
-		var tss := (H_AIR * air_c + g * slab_c) / (H_AIR + g)
+		var pc := slab_c
+		if brine != null:
+			# the pad under this column, and what a flood's heat the column still
+			# holds goes on into the pad
+			var node := brine.node_at((i % w) * cell, (i / w) * cell)
+			pc = brine.top[node]
+			brine.q_wet[node] += g * warm[i] * cell * cell * slice_dt
+		var tss := (H_AIR * air_c + g * pc) / (H_AIR + g)
 		var decay := exp(-slice_dt * (g + H_AIR) / cap)
 		var wt := water[i]
 		if wt <= 0.0:
@@ -1158,7 +1177,31 @@ func ice_temp_at(p: Vector2, slab_c: float, air_c: float) -> float:
 	var i := index(c.x, c.y)
 	var h := maxf(base_mm + ice[i] + crust[i], 2.0) * 0.001
 	var g := 2.0 * K_ICE / h
-	return (H_AIR * air_c + g * slab_c) / (H_AIR + g) + warm[i]
+	var pc := slab_c if brine == null else brine.top_at(p.x, p.y)
+	return (H_AIR * air_c + g * pc) / (H_AIR + g) + warm[i]
+
+
+## What the ground's heave under a column lifts it, metres as drawn.
+func _lift(i: int) -> float:
+	if brine == null:
+		return 0.0
+	return brine.heave[brine.node_at((i % w) * cell, (i / w) * cell)] * 0.001 * height_scale
+
+
+## The pad's heave moved since its last pass: the columns over the nodes
+## that stepped are rebuilt.
+func floor_sync() -> void:
+	if brine == null or brine.heave_steps.is_empty():
+		return
+	var cx := int(BrineFloor.NODE_M / cell)
+	var cz := int(BrineFloor.PITCH / cell)
+	for node in brine.heave_steps:
+		var x0 := (node % brine.nx) * cx
+		var z0 := (node / brine.nx) * cz
+		for z in range(z0, mini(z0 + cz, d)):
+			for x in range(x0, mini(x0 + cx, w)):
+				if _mask[index(x, z)] == 1:
+					_touch(x, z)
 
 
 func _wet_add(i: int) -> void:
@@ -1434,6 +1477,7 @@ func _build_whole(key: Vector2i, x0: int, z0: int, x1: int, z1: int) -> void:
 						* scale
 					)
 					+ maxf(snow[i] - SNOW_SCALED, 0.0) * 0.001
+					+ _lift(i)
 				)
 				if _mask[i] == 1:
 					lo = minf(lo, h)
@@ -1628,6 +1672,7 @@ func _height(x: int, z: int) -> float:
 	return (
 		(ice[i] + minf(snow[i], SNOW_SCALED) + peak + water[i] - gouge[i]) * 0.001 * height_scale
 		+ maxf(snow[i] - SNOW_SCALED, 0.0) * 0.001
+		+ _lift(i)
 	)
 
 
