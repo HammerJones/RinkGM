@@ -1,0 +1,383 @@
+{
+  "id": "yvette_lacombe",
+  "barks": {
+    "idle": [
+      "The coffee, a 4.2.",
+      "That door has been closing for some time. A 3.1 for the door.",
+      "Patience is a mark too. Mine is a 5.9."
+    ],
+    "good_ice": [
+      "The edges are holding. I am not smiling. This is my face.",
+      "Minus four, I suspect. Somebody here knows what they are doing."
+    ],
+    "bad_ice": [
+      "This ice would fail its own test.",
+      "Ruts at the takeoff. I will not mark the skater for the rink's sins. I will remember them."
+    ],
+    "wet_ice": [
+      "Water on a figure surface. I have seen floods with more discipline.",
+      "One does not jump into a puddle. One wades."
+    ],
+    "cold": [
+      "The judges' box is a refrigerator with a window.",
+      "My feet have filed a complaint with my knees."
+    ],
+    "hungry": [
+      "I have not eaten since Sainte-Odile. Two hours of valley road."
+    ],
+    "long_line": [
+      "A queue, a 2.0. It does not even move with intent."
+    ],
+    "bored": [
+      "Between skaters I am a closed door."
+    ],
+    "greet_owner": [
+      "Ah. The owner. Your posture, a 4.4.",
+      "Good day. The car park, a 3.0."
+    ],
+    "leaving_happy": [
+      "A good day. I will drive home slowly, which is how I celebrate."
+    ],
+    "leaving_angry": [
+      "I will be back for the next test day. I always come back. I also always remember."
+    ],
+    "event_specific": {
+      "figure_show": [
+        "Do not speak to me between skaters.",
+        "The bow to the panel. Yes. Good child."
+      ],
+      "figure_practice": [
+        "Six in the morning. At this hour nobody lies, not even the music."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_yvette_lacombe"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_show"
+        }
+      ],
+      "node": "test_day"
+    },
+    {
+      "if": [
+        {
+          "flag": "lacombe_blanket_promised"
+        },
+        {
+          "rel_gte": [
+            "yvette_lacombe",
+            15
+          ]
+        }
+      ],
+      "node": "blanket_back"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "You are the owner. I am Madame Lacombe. I judge. Your entrance, a 3.9.",
+      "do": [
+        {
+          "set": "met_yvette_lacombe"
+        }
+      ],
+      "options": [
+        {
+          "text": "A 3.9 out of what?",
+          "do": [
+            {
+              "rel": [
+                "yvette_lacombe",
+                2
+              ]
+            }
+          ],
+          "to": "first_scale"
+        },
+        {
+          "text": "Welcome to {rink}, Madame. Can I take your coat?",
+          "do": [
+            {
+              "rel": [
+                "yvette_lacombe",
+                4
+              ]
+            }
+          ],
+          "to": "first_coat"
+        },
+        {
+          "text": "We don't really do marks here.",
+          "do": [
+            {
+              "rel": [
+                "yvette_lacombe",
+                -2
+              ]
+            }
+          ],
+          "to": "first_marks"
+        }
+      ]
+    },
+    "first_scale": {
+      "say": "Out of six. As it should be. The new system puts decimals in places decimals should not go.",
+      "options": [
+        {
+          "text": "Six it is.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_coat": {
+      "say": "No. I will need it in the judges' box. One always needs it in the judges' box. The offer, a 5.1.",
+      "options": [
+        {
+          "text": "I'll remember that.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_marks": {
+      "say": "Everybody does marks. Most people simply do not say them out loud. You, for instance, just gave me a 2.",
+      "options": [
+        {
+          "text": "Fair enough.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Madame. It won't happen again.",
+          "do": [
+            {
+              "rel": [
+                "yvette_lacombe",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "It's an old building.",
+          "do": [
+            {
+              "rel": [
+                "yvette_lacombe",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "test_day": {
+      "say": [
+        "Test day. Do not speak to me between skaters. Between skaters I am a closed door.",
+        "Yes? Quickly. The next skater is lacing, and she laces like a surgeon."
+      ],
+      "options": [
+        {
+          "text": "Of course. Good luck to them all.",
+          "do": [
+            {
+              "rel": [
+                "yvette_lacombe",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "blanket_back": {
+      "say": "You are the owner who asked about blankets. I told two other judges. They are jealous. A 5.4.",
+      "options": [
+        {
+          "text": "Glad to hear it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Yes?",
+        "{owner}. You may proceed.",
+        "Madame Lacombe is listening. Briefly."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What does a test judge actually do?",
+          "to": "job"
+        },
+        {
+          "text": "What do you look for in a skater?",
+          "to": "events"
+        },
+        {
+          "text": "You know Helene Arsenault, I hear.",
+          "to": "gossip"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Could anything make the judges' box better?",
+          "if": [
+            {
+              "not_flag": "lacombe_blanket_promised"
+            }
+          ],
+          "to": "blanket"
+        },
+        {
+          "text": "Good day, Madame.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "I sit in a box for nine hours and decide whether children have earned the next badge. Forty years. I have been wrong four times. I remember each one.",
+      "options": [
+        {
+          "text": "That's a lot of badges.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Edges first. Then whether the skater finishes the program she started. Then the bow. I cannot mark a skater higher for bowing to the panel. I would never. I do, slightly.",
+      "options": [
+        {
+          "text": "I'll tell the kids to bow.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Helene skated for my student. She was stubborn at nine and she is stubborn now, which is why her skaters land. Do not tell her I said so. I will deny it in two languages.",
+      "options": [
+        {
+          "text": "My lips are sealed.",
+          "do": [
+            {
+              "rel": [
+                "yvette_lacombe",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "I measure the ice by the edges and the judges' box by my feet. Your box is a refrigerator with a window.",
+      "options": [
+        {
+          "text": "The ice is better now, isn't it?",
+          "if": [
+            {
+              "ice_gte": 65
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "I'm working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "The surface held its edges through three flights. Minus four, I suspect. A 5.3. I do not give 5.3 lightly. The last one was in 1987.",
+      "options": [
+        {
+          "text": "I'll frame it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "blanket": {
+      "say": "A blanket. Wool, not fleece. Fleece is for people who have given up. And a hook for it, so I do not have to sit on it.",
+      "options": [
+        {
+          "text": "There'll be a wool blanket waiting for you. And a hook.",
+          "do": [
+            {
+              "set": "lacombe_blanket_promised"
+            },
+            {
+              "rel": [
+                "yvette_lacombe",
+                4
+              ]
+            },
+            {
+              "note": "Promised Madame Lacombe a wool blanket and a hook in the judges' box."
+            }
+          ],
+          "to": "blanket_yes"
+        },
+        {
+          "text": "That's a lot of fuss for one blanket.",
+          "do": [
+            {
+              "rel": [
+                "yvette_lacombe",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "blanket_yes": {
+      "say": "Then I will drive the two hours with one blanket fewer. The promise, a 5.5. Do not make me revise it.",
+      "options": [
+        {
+          "text": "I won't.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Good day. Your goodbye, a 4.6.",
+        "Until test day.",
+        "Drive carefully. Oh, you live here. Walk carefully, then."
+      ],
+      "options": []
+    }
+  }
+}

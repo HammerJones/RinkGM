@@ -1,0 +1,392 @@
+{
+  "id": "archetype_hockey_parent",
+  "start": [
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "rel_lt": [
+            "self",
+            -15
+          ]
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "minor_hockey"
+        }
+      ],
+      "node": "event"
+    },
+    {
+      "if": [
+        {
+          "event_now": "tournament"
+        }
+      ],
+      "node": "event"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            5,
+            8
+          ]
+        }
+      ],
+      "node": "time"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "self",
+            30
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "grumpy": {
+      "say": [
+        "I've got three kids, two hockey bags and zero patience left for this building.",
+        "Not a great week to ask me, {owner}. Not a great week.",
+        "@how_are_things"
+      ],
+      "options": [
+        {
+          "text": "I'm sorry. What would make it better?",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            },
+            {
+              "mood": 0.03
+            }
+          ],
+          "to": "better"
+        },
+        {
+          "text": "It's an old building. Bear with us.",
+          "to": "hub"
+        },
+        {
+          "text": "Rinks are hard. Take it or leave it.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                -3
+              ]
+            },
+            {
+              "mood": -0.03
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "event": {
+      "say": [
+        "{event} today. I've had two coffees and a power bar. That's breakfast and lunch.",
+        "Game day! I'm not nervous. My leg is bouncing for unrelated reasons.",
+        "{event}. If my kid gets one shift on the power play I'll cry in the car."
+      ],
+      "options": [
+        {
+          "text": "Which one's yours?",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "love"
+        },
+        {
+          "text": "Good luck out there.",
+          "to": "hub"
+        }
+      ]
+    },
+    "time": {
+      "say": [
+        "It's dark out, {owner}. It's dark and I'm at a rink. This is my life now.",
+        "Six am ice. I've seen more sunrises from this parking lot than from my own porch."
+      ],
+      "options": [
+        {
+          "text": "Good to see you anyway.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! You're the only person in this building who doesn't ask me to drive.",
+        "Hey, it's my favourite rink owner. Don't tell the one in Harlow Falls."
+      ],
+      "options": [
+        {
+          "text": "Good to see you too, {known_as}.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "@how_are_things",
+        "Ask me anything. Except the carpool schedule. I don't know the carpool schedule.",
+        "What's up, {owner}? I've got ten minutes before I have to do up skates."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's your kid's team doing?",
+          "to": "love"
+        },
+        {
+          "text": "What brings you to the rink?",
+          "to": "why"
+        },
+        {
+          "text": "What do you make of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Heard anything around the glass?",
+          "to": "gossip"
+        },
+        {
+          "text": "What would make this place better for you?",
+          "to": "better"
+        },
+        {
+          "text": "Take care.",
+          "to": "bye"
+        }
+      ]
+    },
+    "love": {
+      "say": [
+        "We lost 7-2 but we won the third period. I'm counting that.",
+        "Coach finally moved my kid to the second line. I said nothing. I said a lot, actually, in the car.",
+        "They're learning to pass. Mostly to the other team, but it's a start."
+      ],
+      "options": [
+        {
+          "text": "Sounds like they're getting there.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "why": {
+      "say": "@why_here",
+      "options": [
+        {
+          "text": "Tell me a bit about yourself.",
+          "to": "about"
+        },
+        {
+          "text": "Glad you come.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "about": {
+      "say": "@about",
+      "options": [
+        {
+          "text": "Good to know you, {known_as}.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": [
+        "The visitors' room is an icebox. Try doing up fifteen pairs of skates in there.",
+        "It's home. A cold, drafty home where the hot chocolate runs out.",
+        "@ice"
+      ],
+      "options": [
+        {
+          "text": "The ice has been better lately, hasn't it?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "ice_up"
+        },
+        {
+          "text": "Noticed the work on the building?",
+          "if": [
+            {
+              "rooms_gte": 45
+            }
+          ],
+          "to": "rooms_up"
+        },
+        {
+          "text": "Fair enough. We're working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "ice_up": {
+      "say": [
+        "The ice is better, I'll give you that. Fewer kids face down in a rut.",
+        "My kid said the puck doesn't bounce as much. That's high praise from a nine-year-old."
+      ],
+      "options": [
+        {
+          "text": "Glad it shows.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rooms_up": {
+      "say": [
+        "The rooms are warmer. I could feel my fingers on the laces. A miracle.",
+        "Somebody fixed the lobby. I sat down and didn't get a splinter."
+      ],
+      "options": [
+        {
+          "text": "That's the idea.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": [
+        "Donna Pettigrew moved half the ice to Harlow Falls last spring. Fix this place and she'll move it back. Maybe.",
+        "Lisa Cormier panic-bakes blueberry muffins before every U7 game. I time my arrival around them."
+      ],
+      "options": [
+        {
+          "text": "Ha. Good to know.",
+          "to": "hub"
+        }
+      ]
+    },
+    "better": {
+      "say": [
+        "Post the schedule somewhere I can see it. Which kid, which room, which ice, what time. In big letters.",
+        "A board by the door with the schedule on it. I've driven to Harlow Falls by mistake twice."
+      ],
+      "options": [
+        {
+          "text": "I'll see what I can do.",
+          "if": [
+            {
+              "not_flag": "heard_wants_posted_schedule"
+            }
+          ],
+          "do": [
+            {
+              "set": "heard_wants_posted_schedule"
+            },
+            {
+              "rel": [
+                "self",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Can't promise anything, but noted.",
+          "if": [
+            {
+              "not_flag": "heard_wants_posted_schedule"
+            }
+          ],
+          "do": [
+            {
+              "set": "heard_wants_posted_schedule"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "You're not the first to say it. It's on the list.",
+          "if": [
+            {
+              "flag": "heard_wants_posted_schedule"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Gotta run. Somebody's kid forgot a glove and it's mine. The kid, I mean.",
+        "See you Saturday. And Sunday. And probably Tuesday."
+      ]
+    }
+  }
+}

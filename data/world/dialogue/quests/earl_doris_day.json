@@ -1,0 +1,259 @@
+{
+ "id": "earl_doris_day",
+ "giver": "earl_bratt",
+ "quest": "earl_doris_day",
+ "nodes": {
+  "offer": {
+   "say": "She came off the truck from Port Lucerne in '74. Gus had a cake. Nobody's done it since. Fifty-two years. I'm not asking for a party.",
+   "options": [
+    {
+     "text": "What are you asking for?",
+     "to": "why"
+    },
+    {
+     "text": "Doris Day. Let's do it properly.",
+     "do": [
+      {
+       "quest_start": "earl_doris_day"
+      },
+      {
+       "rel": [
+        "earl_bratt",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "A birthday party for a resurfacer?",
+     "do": [
+      {
+       "rel": [
+        "earl_bratt",
+        -2
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "Not this year, Earl.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Tune-up. New towel. A cake, if Lorraine's got time. And one flood where people watch. People never watch. They go for fries.",
+   "options": [
+    {
+     "text": "All of it. Doris Day.",
+     "do": [
+      {
+       "quest_start": "earl_doris_day"
+      },
+      {
+       "rel": [
+        "earl_bratt",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Let me check the budget.",
+     "to": "end"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "She's not a resurfacer. She's a Zambelli brand ice resurfacer. And she's Doris.",
+   "options": [
+    {
+     "text": "Sorry, Earl. Let's do it.",
+     "do": [
+      {
+       "quest_start": "earl_doris_day"
+      },
+      {
+       "rel": [
+        "earl_bratt",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Fine.",
+   "do": [
+    {
+     "rel": [
+      "earl_bratt",
+      -3
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Plugs first. She knows if you rush the gap.",
+   "options": []
+  },
+  "progress": {
+   "say": "Hm.",
+   "options": [
+    {
+     "text": "Tune-up's coming.",
+     "if": [
+      {
+       "step": [
+        "earl_doris_day",
+        "tune"
+       ]
+      }
+     ],
+     "to": "p_tune"
+    },
+    {
+     "text": "Towel next.",
+     "if": [
+      {
+       "step": [
+        "earl_doris_day",
+        "towel"
+       ]
+      }
+     ],
+     "to": "p_towel"
+    },
+    {
+     "text": "I'll talk to Lorraine about the cake.",
+     "if": [
+      {
+       "step": [
+        "earl_doris_day",
+        "cake"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Everything's ready for the day.",
+     "if": [
+      {
+       "step": [
+        "earl_doris_day",
+        "day"
+       ]
+      }
+     ],
+     "to": "p_day"
+    },
+    {
+     "text": "Just checking on her.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_tune": {
+   "say": "Thirty-five thou on the gap. Not thirty-six. She can tell.",
+   "options": []
+  },
+  "p_towel": {
+   "say": "Old towel cleans the bay. Gus's rule. Hang it on his hook.",
+   "options": []
+  },
+  "p_day": {
+   "say": "Radio on CKVL. She likes it.",
+   "options": []
+  },
+  "complete": {
+   "say": "They watched. Whole building. Some kid clapped on the last pass. Lorraine's cake had her headlamps in icing.",
+   "options": [
+    {
+     "text": "She deserved it. So did you.",
+     "do": [
+      {
+       "rel": [
+        "earl_bratt",
+        2
+       ]
+      }
+     ],
+     "to": "c_both"
+    },
+    {
+     "text": "Same day next year?",
+     "to": "c_next"
+    }
+   ]
+  },
+  "c_both": {
+   "say": "Hm. Here. Ribbon off the cake box. Tie it on her mirror. And.",
+   "options": [
+    {
+     "text": "And?",
+     "to": "c_tally"
+    }
+   ]
+  },
+  "c_next": {
+   "say": "Every year. Gus would like that. He'd say so on a postcard with an alligator on it.",
+   "options": [
+    {
+     "text": "Anything else?",
+     "to": "c_tally"
+    }
+   ]
+  },
+  "c_tally": {
+   "say": "Tally wall. Nobody else marks it. You can mark one. One. Today's.",
+   "options": [
+    {
+     "text": "I'd be honoured.",
+     "do": [
+      {
+       "set": "owner_tally_mark"
+      },
+      {
+       "rel": [
+        "earl_bratt",
+        3
+       ]
+      }
+     ],
+     "to": "c_mark"
+    },
+    {
+     "text": "It's your wall, Earl. You mark it.",
+     "do": [
+      {
+       "rel": [
+        "earl_bratt",
+        5
+       ]
+      }
+     ],
+     "to": "c_his"
+    }
+   ]
+  },
+  "c_mark": {
+   "say": "Straight line. Not too long. Good. Nine thousand four hundred and something. And one.",
+   "options": []
+  },
+  "c_his": {
+   "say": "Hm. Yeah. It is. Thanks.",
+   "options": []
+  },
+  "done": {
+   "say": "She's running nice.",
+   "options": []
+  }
+ }
+}

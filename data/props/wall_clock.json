@@ -1,0 +1,38 @@
+{
+  "collision_cell": 8,
+  "id": "wall_clock",
+  "inspect": "Schoolhouse clock, ten past ten, like every clock in every catalogue.",
+  "mass_kg": 1.4,
+  "mesh": "merged",
+  "name": "Wall clock",
+  "pivot": [
+    60.0,
+    60.0,
+    24
+  ],
+  "shape": [],
+  "size_m": [
+    0.3,
+    0.3,
+    0.06
+  ],
+  "sound": "metal",
+  "source": "tools/propgen/library.py",
+  "tags": [
+    "lobby",
+    "office",
+    "dressing_room",
+    "sign"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/wall_clock.vox",
+  "voxel_m": 0.0025,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

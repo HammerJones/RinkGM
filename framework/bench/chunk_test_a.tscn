@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://framework/bench/test_chunk.gd" id="1_d4i1x"]
+
+[node name="ChunkA" type="Node3D" unique_id=1317371244]
+script = ExtResource("1_d4i1x")
+chunk_id = "test_a"

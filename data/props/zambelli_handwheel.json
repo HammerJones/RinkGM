@@ -1,0 +1,35 @@
+{
+  "collision_cell": 8,
+  "id": "zambelli_handwheel",
+  "inspect": "The blade's handwheel: a turn is half a millimetre of blade.",
+  "mass_kg": 1.2,
+  "mesh": "merged",
+  "name": "Blade handwheel",
+  "pivot": [
+    41.0,
+    0,
+    43.0
+  ],
+  "size_m": [
+    0.246,
+    0.267,
+    0.258
+  ],
+  "sound": "metal",
+  "source": "tools/propgen/zambelli_glb.py",
+  "tags": [
+    "machine",
+    "resurfacer"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/zambelli_handwheel.vox",
+  "voxel_m": 0.003,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}

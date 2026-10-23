@@ -1,0 +1,41 @@
+{
+  "board": {
+    "height_m": 1.11,
+    "length_m": 1.0,
+    "thickness_m": 0.1
+  },
+  "collision_cell": 8,
+  "id": "board_1m",
+  "inspect": "Dasher board, 1 m.",
+  "mass_kg": 18.0,
+  "mesh": "merged",
+  "name": "Dasher board, 1 m",
+  "pivot": [
+    25.0,
+    0,
+    3.0
+  ],
+  "shape": [],
+  "size_m": [
+    1.0,
+    1.1,
+    0.12
+  ],
+  "sound": "wood",
+  "source": "tools/propgen/rink_kit.py",
+  "tags": [
+    "rink",
+    "kit"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/board_1m.vox",
+  "voxel_m": 0.02,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.05",
+    "worn": "tint:8a7a60:0.12"
+  }
+}

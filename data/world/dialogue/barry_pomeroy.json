@@ -1,0 +1,342 @@
+{
+  "id": "barry_pomeroy",
+  "barks": {
+    "idle": [
+      "Did I tell you about Wexford? And then I was in Fairhaven.",
+      "Suitcase is in the car. Just in case."
+    ],
+    "good_ice": [
+      "Lovely ice! I've played on ice in nine cities and this is in the top nine."
+    ],
+    "bad_ice": [
+      "Ice like this, I'd get traded off of."
+    ],
+    "wet_ice": [
+      "A little damp. Like the airport in Kingsport at six in the morning."
+    ],
+    "cold": [
+      "Cold as a trade deadline."
+    ],
+    "hungry": [
+      "I'll grab a hot dog. Never unpack on an empty stomach."
+    ],
+    "long_line": [
+      "Long line. I've waited longer at baggage claim. Every time."
+    ],
+    "bored": [
+      "If it's quiet, I start telling stories. You've been warned."
+    ],
+    "goal": [
+      "Great goal! Somebody give that kid a standing ovation!"
+    ],
+    "greet_owner": [
+      "Hey! Good to see you! Still here! Haven't been traded!",
+      "Look who it is!"
+    ],
+    "leaving_happy": [
+      "Leaving's my specialty. And I always come back."
+    ],
+    "leaving_angry": [
+      "Well. I've been sent down from nicer places. Not many."
+    ],
+    "event_specific": {
+      "pro_practice": [
+        "Dukes on the ice! I've been one seven times.",
+        "Head up, son! You'll be in Kingsport by Friday!"
+      ],
+      "special": [
+        "Old-timers! My people!",
+        "Standing ovation on the way in? I'll take one on the way out too."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_barry_pomeroy"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "pro_practice"
+        }
+      ],
+      "node": "practice"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Barry Pomeroy! Suitcase, to my friends, which is everyone. Nine GNHL clubs and the Duncannon Dukes seven times. You must be the owner. Great to be welcome!",
+      "do": [
+        {
+          "set": "met_barry_pomeroy"
+        }
+      ],
+      "options": [
+        {
+          "text": "(Give him a standing ovation.)",
+          "do": [
+            {
+              "rel": [
+                "barry_pomeroy",
+                6
+              ]
+            }
+          ],
+          "to": "first_ovation"
+        },
+        {
+          "text": "Where's the suitcase?",
+          "do": [
+            {
+              "rel": [
+                "barry_pomeroy",
+                2
+              ]
+            }
+          ],
+          "to": "first_suitcase"
+        },
+        {
+          "text": "Nine clubs? That's a lot of moving.",
+          "to": "first_moving"
+        }
+      ]
+    },
+    "first_ovation": {
+      "say": "(He bows, deeply, then bows to the snack bar, then to the Zambelli.) Oh, you've done it now. I'll come every week.",
+      "options": [
+        {
+          "text": "You're always welcome here.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_suitcase": {
+      "say": "In the car. Packed. Nineteen years by the front door and I can't stop. The Hall of Honour has the old one. This is its little brother.",
+      "options": [
+        {
+          "text": "Very wise.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_moving": {
+      "say": "Seven deadlines, three in a row, once in the airport. They traded me at gate twelve. I just went to gate fourteen.",
+      "options": [
+        {
+          "text": "Ha!",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "Sorry, Suitcase. That's not how we treat a guest.",
+          "do": [
+            {
+              "rel": [
+                "barry_pomeroy",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Next time will be better.",
+          "to": "hub"
+        }
+      ]
+    },
+    "practice": {
+      "say": [
+        "Dukes are out! I skate with them as the ambassador. Mostly I just say 'good job' and fall over.",
+        "Look at them go. Every one of them thinks he's going to Kingsport. Half of them will. Twice."
+      ],
+      "options": [
+        {
+          "text": "Enjoy practice.",
+          "to": "end"
+        },
+        {
+          "text": "Got a minute?",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What can I tell you? I know nine cities.",
+        "Hey! Ask me anything. I'll tell you a story about it.",
+        "Fire away. And then I was in Fairhaven."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What's an ambassador do?",
+          "to": "job"
+        },
+        {
+          "text": "Tell me a story.",
+          "to": "story"
+        },
+        {
+          "text": "What do you like to watch?",
+          "to": "events"
+        },
+        {
+          "text": "How do you know Coach Rourke?",
+          "to": "gossip"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Any advice for a player my age?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "path_player"
+        },
+        {
+          "text": "Safe travels, Suitcase.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "I shake hands at the Frostbank, skate with the Dukes, and tell kids it's okay to get sent down. I got sent down seven times. Got a standing ovation every time.",
+      "options": [
+        {
+          "text": "Sounds like a good job.",
+          "to": "hub"
+        }
+      ]
+    },
+    "story": {
+      "say": [
+        "Wexford, 1991. I scored on my own net, the crowd went wild, the coach shook my hand. And then I was in Fairhaven.",
+        "Northgate, 1994. Beautiful city. Lovely hotel. I unpacked one sock. And then I was in Fairhaven.",
+        "My last game, Fairhaven, 2004. We won the Cup. Teammates carried me round the ice. Nobody traded me. First time in nineteen years."
+      ],
+      "options": [
+        {
+          "text": "Another one?",
+          "to": "story"
+        },
+        {
+          "text": "Great story.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Dukes practice, because it's my job and I love it. The Old-timers', because they're my people. A bit of beer league, because I'm a defenceman and we never stop.",
+      "options": [
+        {
+          "text": "Sounds fun.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Annette played defence like she was angry at the puck personally. Now she coaches like she's angry at it professionally. Fairest coach I know. And Rejean won't let anyone touch his thermometer. Not even me. I tried once. I was in Fairhaven.",
+      "options": [
+        {
+          "text": "Ha!",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "This place? It's got bones. A good old barn with a dead spot in the boards and a crowd that knows your mother. That's all a rink needs.",
+      "options": [
+        {
+          "text": "And now it's fixed up a bit.",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "Thanks, Suitcase.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "New paint and the same crowd! That's the trick, and nobody gets it right. The Frostbank's got a video board the size of a barn. You've got a barn. I'd choose the barn.",
+      "options": [
+        {
+          "text": "I'll take that.",
+          "to": "hub"
+        }
+      ]
+    },
+    "path_player": {
+      "say": "Keep a bag by the door. Not because you'll leave. Because you'll want to know you could. Here. A Duncannon luggage tag. Put it on your hockey bag.",
+      "options": [
+        {
+          "text": "Thanks, Suitcase.",
+          "if": [
+            {
+              "not_flag": "suitcase_tag_given"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "barry_pomeroy",
+                2
+              ]
+            },
+            {
+              "set": "suitcase_tag_given"
+            },
+            {
+              "item": [
+                "duncannon_luggage_tag",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll remember that.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "See you soon! Probably. You never know with me.",
+        "Off I go! Standing ovation optional. Encouraged."
+      ],
+      "options": []
+    }
+  }
+}

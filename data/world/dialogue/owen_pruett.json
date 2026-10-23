@@ -1,0 +1,458 @@
+{
+  "id": "owen_pruett",
+  "barks": {
+    "idle": [
+      "Did you know Moose Kowalczuk has 3,644 penalty minutes? That's like two days in the box.",
+      "I've got a double Milkman card. Doubles are for trading.",
+      "My dad is somewhere. Please don't tell him I'm here."
+    ],
+    "good_ice": [
+      "The ice is fast today. I'm fast today.",
+      "Good ice. Even my dad could skate on this."
+    ],
+    "bad_ice": [
+      "There's a rut by the blue line. I fell in it. Twice. Not on purpose."
+    ],
+    "wet_ice": [
+      "It's soggy. My socks are soggy. Everything's soggy."
+    ],
+    "goal": [
+      "YES! Did you see that?",
+      "Okay that was a good one."
+    ],
+    "cold": [
+      "My fingers are numb. That's how you know you're tough.",
+      "I can't feel my feet. Normal."
+    ],
+    "hungry": [
+      "Can I get a Haverstock? It's got fourteen marshmallows. I counted once.",
+      "Fries. Gravy. Now."
+    ],
+    "long_line": [
+      "This line is longer than my dad's stories."
+    ],
+    "bored": [
+      "Want to hear a fact? Okay. I'll tell you anyway."
+    ],
+    "greet_owner": [
+      "Hi {owner}. Want to trade a fact?",
+      "Hey. My dad's not here. I checked."
+    ],
+    "leaving_happy": [
+      "Best practice ever. Basically.",
+      "I did a backwards crossover. Dad still can't."
+    ],
+    "leaving_angry": [
+      "That was the worst. Saturday practice is too early anyway."
+    ],
+    "event_specific": {
+      "minor_hockey": [
+        "I'm on the second line. It's basically the first line.",
+        "Coach says pass more. I pass sometimes."
+      ],
+      "tournament": [
+        "Tommy says Kessler pins are worth three of ours. Is that true?",
+        "Tournament day! I've been dressed since six."
+      ],
+      "public_skate": [
+        "Watch, backwards crossover. Okay, almost."
+      ],
+      "pro_practice": [
+        "The Dukes! I'm getting a stick. Tommy says I won't. I will."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_owen_pruett"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "minor_hockey"
+        }
+      ],
+      "node": "minor_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "owen_pruett",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hi. I'm Owen. Pruett. P-R-U-E-T-T. Not Pruitt. Not Maddie's brother. Not Gary's kid. Well, I am Gary's kid, but don't say it.",
+      "do": [
+        {
+          "set": "met_owen_pruett"
+        }
+      ],
+      "options": [
+        {
+          "text": "Got it. Just Owen.",
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                4
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Your dad's the one who stops in front of the bench?",
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                -2
+              ]
+            }
+          ],
+          "to": "first_dad"
+        },
+        {
+          "text": "Nice to meet you, Owen.",
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_dad": {
+      "say": "Every single time. He makes a little 'whoosh' noise with his mouth when he does it. It's so embarrassing.",
+      "options": [
+        {
+          "text": "I'll pretend I've never seen it.",
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "Saturday practice at seven again? I'll talk to the schedule.",
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Early ice builds character, buddy.",
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "minor_now": {
+      "say": [
+        "I'm dressed. I've been dressed for an hour. Is it time yet?",
+        "My dad's at the glass. He's going to bang on it when I touch the puck. Not when I score. When I touch it."
+      ],
+      "options": [
+        {
+          "text": "Go get 'em, Owen.",
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Want me to stand next to your dad and keep him calm?",
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! I've got a new fact. It's a good one.",
+        "Hey {owner}. Did you see my crossover? You saw it. Right?"
+      ],
+      "options": [
+        {
+          "text": "Let's hear it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What? I'm busy. Okay, not busy.",
+        "Hi. Fact trade?",
+        "I'm waiting for Tommy. He owes me a pin. Kind of."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "Trade you a fact.",
+          "to": "fact"
+        },
+        {
+          "text": "How's hockey going?",
+          "to": "hockey"
+        },
+        {
+          "text": "How's your dad's skating?",
+          "to": "dad"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Got to go, Owen.",
+          "to": "end"
+        }
+      ]
+    },
+    "fact": {
+      "say": "Okay. Ronnie Haverstock is carrying milk crates in the 1979 Lumber Kings photo, before he was famous. You can see him in the doorway. Your turn.",
+      "options": [
+        {
+          "text": "Earl's tally wall has over nine thousand floods on it.",
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                2
+              ]
+            }
+          ],
+          "to": "fact_earl"
+        },
+        {
+          "text": "Fresh out of facts, sorry.",
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "fact_earl": {
+      "say": "NINE THOUSAND? Whoa. Okay. That's worth a card. Here. It's a double. Ronnie Haverstock, rookie year.",
+      "options": [
+        {
+          "text": "Thanks, Owen. I'll keep it safe.",
+          "if": [
+            {
+              "not_flag": "got_owen_card"
+            }
+          ],
+          "do": [
+            {
+              "item": [
+                "milkman_rookie_card",
+                1
+              ]
+            },
+            {
+              "set": "got_owen_card"
+            },
+            {
+              "rel": [
+                "owen_pruett",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Keep your card. The fact was free.",
+          "if": [
+            {
+              "not_flag": "got_owen_card"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Fact trade any time.",
+          "if": [
+            {
+              "flag": "got_owen_card"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hockey": {
+      "say": "Good. I play U11 wing. I'm the second-fastest. Little Sauce is faster but he's twelve so it doesn't count. Tommy says I'm worth two Kessler pins.",
+      "options": [
+        {
+          "text": "What's Little Sauce like?",
+          "to": "mason"
+        },
+        {
+          "text": "Two pins is a good rate.",
+          "to": "hub"
+        }
+      ]
+    },
+    "mason": {
+      "say": "He's quiet. Like, really quiet. But he's really funny if his dad isn't there. He drew Doris with muscles. Best drawing ever.",
+      "options": [
+        {
+          "text": "I'd like to see that.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dad": {
+      "say": "He learned to stop last February. Now he stops everywhere. He stopped in the grocery store. In shoes. And he still can't go backwards. I can.",
+      "options": [
+        {
+          "text": "You must be a bit proud of him, though.",
+          "to": "dad_proud"
+        },
+        {
+          "text": "Don't rub it in too much.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dad_proud": {
+      "say": "...Maybe. A little. Don't tell him. He'll stop in front of me about it.",
+      "options": [
+        {
+          "text": "I won't tell.",
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The hot chocolate sign says HOT CHOC LATE. It's been like that forever. Don't fix it. It's funny.",
+      "options": [
+        {
+          "text": "The ice is better now, right?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "We put real hooks in the dressing rooms.",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "owen_pruett",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll leave the sign alone.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Way better. I did a hockey stop and a big spray came up. Like on TV. Dad tried. He fell.",
+      "options": [
+        {
+          "text": "Ha.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

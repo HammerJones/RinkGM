@@ -1,0 +1,45 @@
+{
+  "collision_cell": 8,
+  "id": "walkie_talkie",
+  "inspect": "Rink ops channel 4. The talk button sticks; everyone knows the click.",
+  "mass_kg": 0.35,
+  "mesh": "merged",
+  "name": "Walkie-talkie",
+  "pivot": [
+    23.0,
+    0,
+    14.5
+  ],
+  "shape": [
+    [
+      0,
+      0
+    ]
+  ],
+  "size_m": [
+    0.0644,
+    0.245,
+    0.0406
+  ],
+  "sound": "plastic",
+  "source": "tools/propgen/library.py",
+  "tags": [
+    "rink_ops",
+    "handheld",
+    "electronics"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "take",
+    "inspect",
+    "push",
+    "use"
+  ],
+  "vox": "art/props/walkie_talkie.vox",
+  "voxel_m": 0.0014,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

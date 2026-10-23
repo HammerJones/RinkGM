@@ -1,0 +1,355 @@
+{
+  "id": "bob_ferreira",
+  "barks": {
+    "idle": [
+      "Game four departs at 10:45. Not 10:46.",
+      "(He checks his pocket watch.) On time. For now."
+    ],
+    "good_ice": [
+      "Good ice, on time. A dispatcher's dream."
+    ],
+    "bad_ice": [
+      "Bad ice means long whistles means delays. I can feel the timetable slipping."
+    ],
+    "wet_ice": [
+      "Flood ran long. We are now four minutes behind. Four."
+    ],
+    "cold": [
+      "Cold is fine. Cold is punctual."
+    ],
+    "hungry": [
+      "Lunch is 12:15. I'll be eating at 12:15. Thereabouts. No. 12:15."
+    ],
+    "long_line": [
+      "This queue is a bottleneck. In freight, we'd add a siding."
+    ],
+    "bored": [
+      "Quiet. On time. Lovely."
+    ],
+    "goal": [
+      "Goal at 14:32. Noted on the sheet."
+    ],
+    "greet_owner": [
+      "Good morning. You're on time. I noticed.",
+      "Ah. The owner. Arriving on schedule."
+    ],
+    "leaving_happy": [
+      "Every game on time. I'm going to sit in the car and enjoy it."
+    ],
+    "leaving_angry": [
+      "Forty minutes behind. Roughly. I hate that I had to say roughly."
+    ],
+    "event_specific": {
+      "tournament": [
+        "Game six departs at 13:15! Zamboni clears the platform at 13:05!",
+        "Coaches, your seventy-five minutes start now."
+      ],
+      "minor_hockey": [
+        "The grandkids are on at nine. I'm here at 8:20. Of course I am."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_bob_ferreira"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "ferreira_promise_on_time"
+        },
+        {
+          "quest": [
+            "ferreira_seventy_five",
+            "done"
+          ]
+        }
+      ],
+      "node": "promise_kept"
+    },
+    {
+      "if": [
+        {
+          "event_now": "tournament"
+        }
+      ],
+      "node": "tournament"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Bob Ferreira. Thirty-four years dispatching freight out of Carrick Junction. I chair the Valley Peewee Tournament committee. A game every seventy-five minutes, a flood between. You'll be the owner.",
+      "do": [
+        {
+          "set": "met_bob_ferreira"
+        }
+      ],
+      "options": [
+        {
+          "text": "We'll run it to the minute, Bob.",
+          "do": [
+            {
+              "rel": [
+                "bob_ferreira",
+                4
+              ]
+            },
+            {
+              "set": "ferreira_promise_on_time"
+            }
+          ],
+          "to": "first_minute"
+        },
+        {
+          "text": "We'll be roughly on time.",
+          "do": [
+            {
+              "rel": [
+                "bob_ferreira",
+                -3
+              ]
+            }
+          ],
+          "to": "first_roughly"
+        },
+        {
+          "text": "Is that a pocket watch?",
+          "do": [
+            {
+              "rel": [
+                "bob_ferreira",
+                1
+              ]
+            }
+          ],
+          "to": "first_watch"
+        }
+      ]
+    },
+    "first_minute": {
+      "say": "(He checks his watch, then you.) Good. I'll hold you to it. Not unkindly. Precisely.",
+      "options": [
+        {
+          "text": "Precisely.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_roughly": {
+      "say": "Roughly. (He winces.) Roughly is the word that derailed the 7:40 to Kessler in 1989. We'll talk.",
+      "options": [
+        {
+          "text": "To the minute, then.",
+          "do": [
+            {
+              "rel": [
+                "bob_ferreira",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_watch": {
+      "say": "My father's. Railway grade. It's lost nine seconds since 1961. I've forgiven it.",
+      "options": [
+        {
+          "text": "Beautiful.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Bob. It won't happen again.",
+          "do": [
+            {
+              "rel": [
+                "bob_ferreira",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "tournament": {
+      "say": [
+        "Game four departs at 10:45. Not 10:46. (He taps the schedule board.) We're on time. For now.",
+        "Flood in six minutes. Then game five. Then lunch. Then the crest table. Then game six."
+      ],
+      "options": [
+        {
+          "text": "I'll leave you to the schedule.",
+          "to": "end"
+        },
+        {
+          "text": "Got a minute?",
+          "to": "hub"
+        }
+      ]
+    },
+    "promise_kept": {
+      "say": "You said to the minute. The last game left at 18:15. Not 18:16. In thirty-four years of freight I never once had a weekend like it.",
+      "options": [
+        {
+          "text": "We did it, Bob.",
+          "do": [
+            {
+              "rel": [
+                "bob_ferreira",
+                2
+              ]
+            },
+            {
+              "clear": "ferreira_promise_on_time"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Yes? I've got four minutes.",
+        "(He checks his watch.) Go ahead.",
+        "Good morning. What can I schedule for you?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What was freight dispatch like?",
+          "to": "job"
+        },
+        {
+          "text": "Why tournaments?",
+          "to": "events"
+        },
+        {
+          "text": "Who's on the committee?",
+          "to": "gossip"
+        },
+        {
+          "text": "How does the rink do on a tournament weekend?",
+          "to": "rink"
+        },
+        {
+          "text": "What's the secret to running on time?",
+          "to": "schedule"
+        },
+        {
+          "text": "See you, Bob.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Thirty-four years at Carrick Junction. Eighty cars a day, two main lines and one siding with a temper. I retired to be near the grandkids. Now I dispatch peewees.",
+      "options": [
+        {
+          "text": "Sounds busy.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "A tournament is a railway with skates. Teams from five towns, a game every seventy-five minutes, a flood between. When it runs on time it's the most beautiful thing in the valley.",
+      "options": [
+        {
+          "text": "And the crest table?",
+          "to": "events_crest"
+        },
+        {
+          "text": "Sounds great.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events_crest": {
+      "say": "Tommy Bellweather runs it. Eleven years old and a better trader than any dispatcher I knew. He got a Wendover crest for a Millbrook pin and a cough drop.",
+      "options": [
+        {
+          "text": "Ruthless.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Donna Pettigrew is the best organiser I've worked with, and I worked for the railway. Larry Piche keeps the clock. And Lorraine at the Hot Stove makes the Legion's chili, which runs on its own schedule.",
+      "options": [
+        {
+          "text": "Good team.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The floods are the bottleneck. Ten minutes is a flood. Fourteen minutes is a delay. Twenty is a derailment.",
+      "options": [
+        {
+          "text": "We're faster now, aren't we?",
+          "if": [
+            {
+              "ice_gte": 65
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll talk to Earl.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "Ten minutes, every flood. Earl and Doris run like the 6:05. I told him so. He said 'Doris doesn't run, she glides'. Fair.",
+      "options": [
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "schedule": {
+      "say": "Edge the boards before the weekend, flood between every game and never let overtime happen. Overtime is chaos with a scoreboard.",
+      "options": [
+        {
+          "text": "Got it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Departing now. On time.",
+        "(He checks his watch.) Good timing."
+      ],
+      "options": []
+    }
+  }
+}

@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://framework/bench/test_chunk.gd" id="1_sj1yb"]
+
+[node name="ChunkB" type="Node3D" unique_id=296823650]
+script = ExtResource("1_sj1yb")
+chunk_id = "test_b"
+bounds = AABB(40, 0, 0, 16, 4, 16)

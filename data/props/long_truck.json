@@ -1,0 +1,36 @@
+{
+  "collision_cell": 8,
+  "id": "long_truck",
+  "inspect": "A box truck. The supplier's, parked across two spaces again.",
+  "mass_kg": 9000.0,
+  "mesh": "merged",
+  "name": "Long truck",
+  "pivot": [
+    62.5,
+    0,
+    24.0
+  ],
+  "shape": [],
+  "size_m": [
+    12.5,
+    5.8,
+    4.8
+  ],
+  "sound": "metal",
+  "source": "third party, see art/props/THIRD_PARTY.md",
+  "tags": [
+    "outside",
+    "vehicle"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/long_truck.vox",
+  "voxel_m": 0.1,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

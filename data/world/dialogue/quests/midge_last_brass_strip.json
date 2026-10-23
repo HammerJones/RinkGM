@@ -1,0 +1,222 @@
+{
+ "id": "midge_last_brass_strip",
+ "giver": "midge_kaminski",
+ "quest": "midge_last_brass_strip",
+ "nodes": {
+  "offer": {
+   "say": "I've written about that roof nine times, {owner}. Five repairs, nine columns, one brass strip that says WE'RE TRYING. Gus left a gap under it. He said it was for whoever fixes it properly. I'd like to write the tenth column. The last one.",
+   "options": [
+    {
+     "text": "Then I'll fix the roof properly.",
+     "do": [
+      {
+       "quest_start": "midge_last_brass_strip"
+      },
+      {
+       "rel": [
+        "midge_kaminski",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why does a brass strip matter so much?",
+     "to": "why"
+    },
+    {
+     "text": "Can't you just write a column about the gap?",
+     "to": "cheek"
+    },
+    {
+     "text": "A new roof is a quarter of a million dollars, Midge.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Because the plaque says 'for the ones who learn to skate here, and the ones who never stop.' Under it, the town has spent fifty years admitting it couldn't keep the rain out. I'd like the last line to be something other than an apology.",
+   "options": [
+    {
+     "text": "Then it won't be an apology.",
+     "do": [
+      {
+       "quest_start": "midge_last_brass_strip"
+      },
+      {
+       "rel": [
+        "midge_kaminski",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "I've written about the gap. 2017. 'Mind the Gap.' Very well received in Kessler, oddly.",
+   "options": [
+    {
+     "text": "Fine. A roof, and then a strip.",
+     "do": [
+      {
+       "quest_start": "midge_last_brass_strip"
+      },
+      {
+       "rel": [
+        "midge_kaminski",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "It is. That's why there's a gap and not a strip. I'm in no hurry. I'm only seventy-three.",
+   "do": [
+    {
+     "rel": [
+      "midge_kaminski",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Take your time. A strip that says FIXED should only go up once.",
+   "options": []
+  },
+  "progress": {
+   "say": "The roof, the strip, the column.",
+   "options": [
+    {
+     "text": "Going to read the plaque.",
+     "if": [
+      {
+       "step": [
+        "midge_last_brass_strip",
+        "plaque"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "The roof's a big job. Still working on it.",
+     "if": [
+      {
+       "step": [
+        "midge_last_brass_strip",
+        "roof"
+       ]
+      }
+     ],
+     "to": "p_roof"
+    },
+    {
+     "text": "Roof's done. Talking to June about the strip.",
+     "if": [
+      {
+       "step": [
+        "midge_last_brass_strip",
+        "june"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Strip's engraved. Just need to put it up.",
+     "if": [
+      {
+       "step": [
+        "midge_last_brass_strip",
+        "screw"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_roof": {
+   "say": "Gus said the roof was a promise the town kept making. Take as long as you need. It held for five repairs. It'll hold for one more spring.",
+   "options": []
+  },
+  "complete": {
+   "say": "I stood under it this morning for twenty minutes. No drip. In March. Now. What does the strip say? I'd like to quote it exactly.",
+   "options": [
+    {
+     "text": "ROOF RENOVATED. WE DID IT.",
+     "do": [
+      {
+       "set": "strip_we_did_it"
+      },
+      {
+       "rel": [
+        "midge_kaminski",
+        2
+       ]
+      }
+     ],
+     "to": "c_did"
+    },
+    {
+     "text": "ROOF RENOVATED. THANKS, GUS.",
+     "do": [
+      {
+       "set": "strip_thanks_gus"
+      },
+      {
+       "rel": [
+        "midge_kaminski",
+        3
+       ]
+      }
+     ],
+     "to": "c_gus"
+    },
+    {
+     "text": "ROOF RENOVATED. STILL TRYING.",
+     "do": [
+      {
+       "set": "strip_still_trying"
+      },
+      {
+       "rel": [
+        "midge_kaminski",
+        4
+       ]
+      }
+     ],
+     "to": "c_trying"
+    }
+   ]
+  },
+  "c_did": {
+   "say": "'We did it.' Not 'I'. Good. The town will read that and feel like they held the ladder.",
+   "options": []
+  },
+  "c_gus": {
+   "say": "Thanks, Gus. He'll get the clipping in Florida. He'll pin it to a palm tree. He'll say it's crooked.",
+   "options": []
+  },
+  "c_trying": {
+   "say": "Still trying. Oh, that's the one. That's Millbrook. That's the whole column, right there. I can go home.",
+   "options": []
+  },
+  "done": {
+   "say": "The tenth column. The last one about the roof. I'll miss it a little.",
+   "options": []
+  }
+ }
+}

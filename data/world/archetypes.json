@@ -1,0 +1,5867 @@
+{
+ "version": 1,
+ "archetypes": [
+  {
+   "id": "hockey_parent",
+   "label": "Hockey parent",
+   "weight": 0.1,
+   "age": [
+    30,
+    55
+   ],
+   "role": "customer",
+   "traits": {
+    "warmth": [
+     0.4,
+     0.9
+    ],
+    "chatter": [
+     0.4,
+     0.9
+    ],
+    "patience": [
+     0.3,
+     0.8
+    ],
+    "pride": [
+     0.4,
+     0.9
+    ],
+    "nerve": [
+     0.3,
+     0.8
+    ],
+    "humour": [
+     0.3,
+     0.8
+    ]
+   },
+   "interests": {
+    "minor_hockey": {
+     "watch": 0.9,
+     "play": 0.0
+    },
+    "tournament": {
+     "watch": 0.95,
+     "play": 0.0
+    },
+    "learn_to_skate": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.4
+    },
+    "beer_league": {
+     "watch": 0.2,
+     "play": 0.3
+    },
+    "senior_hockey": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "work"
+    },
+    {
+     "days": [
+      0,
+      6
+     ],
+     "from": 7.0,
+     "to": 12.0,
+     "place": "glass",
+     "doing": "minor hockey"
+    }
+   ],
+   "look": {
+    "builds": [
+     "average",
+     "stocky",
+     "slim",
+     "big"
+    ],
+    "outfits": [
+     "parka",
+     "team_jacket",
+     "casual",
+     "hoodie"
+    ],
+    "hair": [
+     "short",
+     "ponytail",
+     "long",
+     "toque_hair",
+     "bun"
+    ],
+    "accessories": [
+     "coffee",
+     "thermos",
+     "toque",
+     "blanket",
+     "none"
+    ],
+    "colors": [
+     [
+      "1c4e80",
+      "f2f2f2"
+     ],
+     [
+      "2e7d4f",
+      "c9a227"
+     ],
+     [
+      "7a4a26",
+      "f2d16b"
+     ],
+     [
+      "b22222",
+      "1b1b1b"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.35,
+    "bladder": 0.3,
+    "cold": 0.45,
+    "boredom": 0.4
+   },
+   "family": {
+    "kids": [
+     1,
+     3
+    ],
+    "partner": 0.85
+   },
+   "first_names": [
+    "Darren",
+    "Kelly",
+    "Trevor",
+    "Lisa",
+    "Jason",
+    "Tammy",
+    "Jeff",
+    "Angela",
+    "Shawn",
+    "Michelle",
+    "Curtis",
+    "Kristen",
+    "Chad",
+    "Nicole",
+    "Rob",
+    "Stacey",
+    "Dean",
+    "Lori",
+    "Sandeep",
+    "Anh",
+    "Marc",
+    "Josée"
+   ],
+   "barks": {
+    "idle": [
+     "Who's got the 6 am carpool Saturday? Not me. Please not me.",
+     "I've spent more hours in {rink} than in my own kitchen.",
+     "Does anybody know if the U11s are on at quarter past or half past?",
+     "Hockey bag in the trunk since September. The car smells like a decision."
+    ],
+    "bad_ice": [
+     "That rut's going to catch somebody's edge. Somebody's kid.",
+     "Ice looks {ice_word}. Donna's going to have words.",
+     "You'd think for $175 an hour they'd fill the holes."
+    ],
+    "wet_ice": [
+     "Puddles at the blue line. Lovely. Socks for everyone.",
+     "It's wet. The kids are going to be skating through soup.",
+     "Is that water on top? Is it supposed to be water on top?"
+    ],
+    "good_ice": [
+     "Look at that sheet. You could do surgery on it.",
+     "Ice is {ice_word} today. Somebody cared.",
+     "Good ice. Now if only our D could skate on it."
+    ],
+    "goal": [
+     "THAT'S MY KID! Well, that's the kid next to my kid. Still!",
+     "YES! Go, go, go! Oh, it went in. YES!",
+     "Did you see that? Somebody tell me I filmed that."
+    ],
+    "cold": [
+     "I can't feel my coffee.",
+     "Who do I have to bribe to get the heater going over here?",
+     "Blanket. Blanket. Who has the blanket."
+    ],
+    "hungry": [
+     "If I don't get fries before the second period I'm going to cry in public.",
+     "Is the Hot Stove open? Please tell me the Hot Stove is open.",
+     "I've had a granola bar and three coffees today. Is that dinner?"
+    ],
+    "long_line": [
+     "This line is longer than the drive to Harlow Falls.",
+     "I'll be back before the period ends. That's a lie, but I'll be back.",
+     "Twelve people and one fryer. We're going to miss a goal."
+    ],
+    "bored": [
+     "They've been on the power play for six minutes. Spiritually.",
+     "Is this the practice or the warm-up? Either way.",
+     "I could be folding laundry. I'd rather be here. Barely."
+    ],
+    "leaving_happy": [
+     "Good game, good ice. See you Saturday, {rink}.",
+     "We'll be back. The kid won't stop talking about it.",
+     "Best hour of my week, and I sat on a bench."
+    ],
+    "leaving_angry": [
+     "We'll be in Harlow Falls next season if this keeps up.",
+     "That's the last time we drive in for that ice.",
+     "I'm writing to Donna. I'm writing to the Clarion. I'm writing to my mother."
+    ],
+    "greet_owner": [
+     "You're the new owner? The washrooms need a word with you.",
+     "Hi! You're doing great. Mostly. The coffee, though.",
+     "Morning, {owner}. Ice looks {ice_word}."
+    ],
+    "event_specific": {
+     "minor_hockey": [
+      "Skate! SKATE! Sorry. I was told not to do that.",
+      "Shoulder check, buddy! Shoulder check!",
+      "Why is the ref fifteen? Is that legal? Good for him."
+     ],
+     "tournament": [
+      "Third game today. I've lost track of which motel we're in.",
+      "If we win this one we play at 7 am tomorrow. Please don't win.",
+      "Crest trading table's open. My kid traded a crest for half a hot dog."
+     ],
+     "learn_to_skate": [
+      "Let go of the boards, sweetheart. No, the other hand. No. Okay, both hands.",
+      "She stood up! She's standing! Oh no. Okay. She stood up!",
+      "Six weeks of lessons and he's already faster than me. Rude."
+     ]
+    }
+   }
+  },
+  {
+   "id": "figure_parent",
+   "label": "Figure parent",
+   "weight": 0.04,
+   "age": [
+    32,
+    55
+   ],
+   "role": "customer",
+   "traits": {
+    "warmth": [
+     0.3,
+     0.8
+    ],
+    "chatter": [
+     0.3,
+     0.8
+    ],
+    "patience": [
+     0.4,
+     0.9
+    ],
+    "pride": [
+     0.5,
+     0.95
+    ],
+    "nerve": [
+     0.2,
+     0.6
+    ],
+    "humour": [
+     0.2,
+     0.7
+    ]
+   },
+   "interests": {
+    "figure_practice": {
+     "watch": 0.9,
+     "play": 0.0
+    },
+    "figure_show": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "learn_to_skate": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.3
+    },
+    "special": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 9.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "work"
+    },
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 5.5,
+     "to": 8.5,
+     "place": "stands",
+     "doing": "figure club"
+    }
+   ],
+   "look": {
+    "builds": [
+     "slim",
+     "average"
+    ],
+    "outfits": [
+     "parka",
+     "cardigan",
+     "casual"
+    ],
+    "hair": [
+     "bun",
+     "short",
+     "long",
+     "ponytail"
+    ],
+    "accessories": [
+     "coffee",
+     "thermos",
+     "camera",
+     "blanket",
+     "scarf"
+    ],
+    "colors": [
+     [
+      "6a8caf",
+      "f4f4f4"
+     ],
+     [
+      "9fc5e8",
+      "1d2b4f"
+     ],
+     [
+      "f28db2",
+      "2b2b2b"
+     ],
+     [
+      "c9a66b",
+      "f2e6c8"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.25,
+    "bladder": 0.35,
+    "cold": 0.65,
+    "boredom": 0.3
+   },
+   "family": {
+    "kids": [
+     1,
+     2
+    ],
+    "partner": 0.85
+   },
+   "first_names": [
+    "Grace",
+    "Paolo",
+    "Helen",
+    "Monique",
+    "Wendy",
+    "Hiroshi",
+    "Stephanie",
+    "Andrea",
+    "Mei",
+    "Sylvie",
+    "Diane",
+    "Natasha",
+    "Joanne",
+    "Craig",
+    "Leah",
+    "Renée",
+    "Kristin",
+    "Amrit",
+    "Carol",
+    "Tom"
+   ],
+   "barks": {
+    "idle": [
+     "We've been up since 4:40. That's just figure skating.",
+     "She has a test in three weeks. I have a test in three weeks.",
+     "I know every song in her program. I hum them in the shower. I hate it.",
+     "Do you know what sequins cost? Do you want to?"
+    ],
+    "bad_ice": [
+     "There's a rut right where she lands the Lutz. Right there.",
+     "That is hockey ice. At figure time. Hélène is going to be thrilled.",
+     "If she catches an edge on that, I'm sending you the physio bill."
+    ],
+    "wet_ice": [
+     "The surface is soft. Her blade is going to sink on the takeoff.",
+     "Is it warm on the ice? It looks warm. It looks like a lake.",
+     "Wet ice and a double axel. Pray."
+    ],
+    "good_ice": [
+     "Oh, that's lovely. That's minus three and a half, I can feel it from here.",
+     "Clean ice. She'll land everything. She won't, but she could.",
+     "Thank you, whoever flooded. Truly."
+    ],
+    "goal": [
+     "Was that a goal? Good for them. Anyway.",
+     "Oh, hockey. Yes. Hooray.",
+     "Is it the horn? Every time I hear that horn I flinch for her."
+    ],
+    "cold": [
+     "I have two blankets and a thermos and I am still cold.",
+     "Is the heater on? Is it ever on?",
+     "My toes are a concept."
+    ],
+    "hungry": [
+     "Is there anything at the canteen that isn't fried?",
+     "I'd kill for a muffin. A real one.",
+     "Coffee. Is the machine WORKING or NOT WORKING today?"
+    ],
+    "long_line": [
+     "There's a hockey team in front of me at the canteen. A whole team.",
+     "I'll miss her run-through. I'll go after.",
+     "Fifteen minutes for a coffee. At 6 am."
+    ],
+    "bored": [
+     "Stroking drills. Forty minutes of stroking drills.",
+     "She's doing the same spin again. It's beautiful. It's the ninth time.",
+     "I've answered every email I have ever received."
+    ],
+    "leaving_happy": [
+     "She landed it. She landed it! Okay, see you Thursday.",
+     "Good session. Good ice. Thank you.",
+     "Hélène nodded. Did you see? She nodded."
+    ],
+    "leaving_angry": [
+     "The club is looking at Harlow Falls. I'm just saying.",
+     "Ice like that, she'll get hurt. I'm telling the board.",
+     "Four-forty alarm for that? No."
+    ],
+    "greet_owner": [
+     "Are you the owner? Can we talk about the ice temperature?",
+     "Good morning! Is the coffee machine working? Just checking. Every day.",
+     "Hello, {owner}. The ice is {ice_word}. Please make it not that."
+    ],
+    "event_specific": {
+     "figure_show": [
+      "Her music better not skip. If it skips, I'm going up there.",
+      "Sequins are on. Hair is on. I've had nine coffees.",
+      "There she is! Don't wave. Don't wave. I'm waving."
+     ],
+     "figure_practice": [
+      "06:00. The sacred hour.",
+      "Hélène said 'better' twice today. That's a record.",
+      "Could the Zambelli be done by quarter past? She needs her warm-up."
+     ]
+    }
+   }
+  },
+  {
+   "id": "rink_rat",
+   "label": "Rink rat",
+   "weight": 0.03,
+   "age": [
+    10,
+    17
+   ],
+   "role": "regular",
+   "traits": {
+    "warmth": [
+     0.6,
+     1.0
+    ],
+    "chatter": [
+     0.6,
+     1.0
+    ],
+    "patience": [
+     0.05,
+     0.4
+    ],
+    "pride": [
+     0.2,
+     0.6
+    ],
+    "nerve": [
+     0.5,
+     0.9
+    ],
+    "humour": [
+     0.6,
+     1.0
+    ]
+   },
+   "interests": {
+    "stick_and_puck": {
+     "watch": 0.4,
+     "play": 1.0
+    },
+    "pro_practice": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.5,
+     "play": 0.7
+    },
+    "tournament": {
+     "watch": 0.6,
+     "play": 0.5
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.6
+    },
+    "beer_league": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.4
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 15.5,
+     "to": 20.0,
+     "place": "lobby",
+     "doing": "hanging around"
+    },
+    {
+     "days": [
+      0,
+      6
+     ],
+     "from": 9.0,
+     "to": 18.0,
+     "place": "glass",
+     "doing": "hanging around"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 21.5,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "look": {
+    "builds": [
+     "slim",
+     "average"
+    ],
+    "outfits": [
+     "hoodie",
+     "school_jacket",
+     "casual"
+    ],
+    "hair": [
+     "toque_hair",
+     "short",
+     "curly",
+     "ponytail",
+     "mullet"
+    ],
+    "accessories": [
+     "skates_over_shoulder",
+     "stick",
+     "toque",
+     "camera",
+     "none"
+    ],
+    "colors": [
+     [
+      "2e7d4f",
+      "c9a227"
+     ],
+     [
+      "c1272d",
+      "f7c548"
+     ],
+     [
+      "1b1b1b",
+      "f28c28"
+     ],
+     [
+      "3c8d4e",
+      "f2f2e9"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.5,
+    "bladder": 0.35,
+    "cold": 0.2,
+    "boredom": 0.85
+   },
+   "family": {
+    "kids": [
+     0,
+     0
+    ],
+    "partner": 0.0
+   },
+   "first_names": [
+    "Jojo",
+    "Kyle",
+    "Ty",
+    "Brayden",
+    "Liam",
+    "Emma",
+    "Logan",
+    "Jayden",
+    "Ava",
+    "Cole",
+    "Mason",
+    "Zoe",
+    "Nate",
+    "Riley",
+    "Harper",
+    "Arjun",
+    "Kai",
+    "Brooklyn",
+    "Declan",
+    "Quinn"
+   ],
+   "barks": {
+    "idle": [
+     "Do you need a hand with anything? I can do anything. I can't drive Doris yet.",
+     "I know where the lost pucks go. Under the visitors' bench. Forty-one of them.",
+     "Is that the Zambelli? Can I watch? I'm watching.",
+     "If you need someone to open the doors, I'm here. I'm always here."
+    ],
+    "bad_ice": [
+     "There's a crack by the faceoff dot. I named it.",
+     "That corner's chewed up. Want me to get the shovel?",
+     "Ice is {ice_word}. Earl would be so mad. Is Earl here?"
+    ],
+    "wet_ice": [
+     "Somebody flooded too late! Ha. Not me. I wasn't allowed.",
+     "It's like a slip-and-slide. Can I try?",
+     "Water on top. You can see the lines wobbling."
+    ],
+    "good_ice": [
+     "Oh man. Look at that. You can see your face in it.",
+     "That's a Doris flood. I can always tell.",
+     "Perfect ice. I'd skate on it right now if you let me."
+    ],
+    "goal": [
+     "SNIPE! Top cheese!",
+     "Did you see the release on that? Did you SEE it?",
+     "I'm getting that puck. I'm getting it. I got it."
+    ],
+    "cold": [
+     "I'm not cold. My hands are a bit blue but that's normal.",
+     "Is the heater broken or is it just shy?",
+     "I put on two hoodies. I'm basically a parka."
+    ],
+    "hungry": [
+     "Can I get fries on credit? I'll sweep.",
+     "I've had a hot chocolate and a hot chocolate. I need a hot dog.",
+     "Is there pizza left from the Puckheads? Asking for me."
+    ],
+    "long_line": [
+     "I'll just wait. I've got nowhere else to be. Ever.",
+     "This line goes past the trophy case!",
+     "I could run to Bev's and back before this line moves."
+    ],
+    "bored": [
+     "Can I shoot pucks at the empty net? Just like nine?",
+     "Nothing's on till six. What do I do till six?",
+     "I've read every plaque in the building. Twice."
+    ],
+    "leaving_happy": [
+     "Best day ever. See you tomorrow. And the day after.",
+     "Got two autographs and a broken stick! Bye!",
+     "Thanks, {owner}! I'll be back at four!"
+    ],
+    "leaving_angry": [
+     "My mum says I have to go home. That's not fair.",
+     "Fine. FINE. Nobody needs a helper anyway.",
+     "They kicked me off the ice. I was only on it a little."
+    ],
+    "greet_owner": [
+     "Hi! Are you the owner? Can I have a job? I'm twelve. Is that old enough?",
+     "Boss! Hey boss! The washroom's flooding. Kind of. A bit.",
+     "Hi {owner}! I counted, there's forty-one pucks under the bench."
+    ],
+    "event_specific": {
+     "pro_practice": [
+      "That's an actual Duke. In our rink. I'm going to faint.",
+      "Can I get your autograph? Can you sign my stick? Can you sign my arm?",
+      "He did a toe drag at full speed. I saw it. I'll tell everybody."
+     ],
+     "stick_and_puck": [
+      "Open ice! Open ice!",
+      "Watch this. No, watch. Okay, watch this one.",
+      "I'm going to shoot until Earl turns the lights off. He'll turn the lights off."
+     ],
+     "senior_hockey": [
+      "Lumber Kings! I'm going to bang on the glass.",
+      "I'm going to get a stick at the end. They always give a stick to somebody.",
+      "I'm sitting by the tunnel. They high-five the tunnel."
+     ]
+    }
+   }
+  },
+  {
+   "id": "beer_leaguer",
+   "label": "Beer leaguer",
+   "weight": 0.1,
+   "age": [
+    24,
+    60
+   ],
+   "role": "regular",
+   "traits": {
+    "warmth": [
+     0.4,
+     0.95
+    ],
+    "chatter": [
+     0.4,
+     0.95
+    ],
+    "patience": [
+     0.2,
+     0.7
+    ],
+    "pride": [
+     0.3,
+     0.9
+    ],
+    "nerve": [
+     0.3,
+     0.9
+    ],
+    "humour": [
+     0.5,
+     1.0
+    ]
+   },
+   "interests": {
+    "beer_league": {
+     "watch": 0.4,
+     "play": 1.0
+    },
+    "stick_and_puck": {
+     "watch": 0.2,
+     "play": 0.6
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "broomball": {
+     "watch": 0.3,
+     "play": 0.3
+    },
+    "public_skate": {
+     "watch": 0.1,
+     "play": 0.2
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.4
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "work"
+    }
+   ],
+   "look": {
+    "builds": [
+     "average",
+     "stocky",
+     "big",
+     "slim"
+    ],
+    "outfits": [
+     "hockey_gear",
+     "team_jacket",
+     "hoodie",
+     "goalie_gear"
+    ],
+    "hair": [
+     "short",
+     "mullet",
+     "buzz",
+     "bald",
+     "long",
+     "ponytail"
+    ],
+    "accessories": [
+     "stick",
+     "helmet",
+     "none",
+     "ball_cap"
+    ],
+    "colors": [
+     [
+      "d98a1c",
+      "2b2b2b"
+     ],
+     [
+      "a4161a",
+      "f2f2f2"
+     ],
+     [
+      "1f4d2b",
+      "e0a526"
+     ],
+     [
+      "7fb3d5",
+      "0b2545"
+     ],
+     [
+      "3c8d4e",
+      "f2f2e9"
+     ],
+     [
+      "f28db2",
+      "6f3b1f"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.4,
+    "bladder": 0.4,
+    "cold": 0.25,
+    "boredom": 0.3
+   },
+   "family": {
+    "kids": [
+     0,
+     3
+    ],
+    "partner": 0.7
+   },
+   "first_names": [
+    "Dave",
+    "Kevin",
+    "Mike",
+    "Jen",
+    "Trevor",
+    "Darcy",
+    "Steve",
+    "Nicole",
+    "Brent",
+    "Shauna",
+    "Jamie",
+    "Corey",
+    "Lindsay",
+    "Raj",
+    "Wayne",
+    "Tara",
+    "Rob",
+    "Owen",
+    "Kendra",
+    "Pat"
+   ],
+   "barks": {
+    "idle": [
+     "Somebody bring the speaker? No? Classic.",
+     "My knee says rain. My knee also says hockey.",
+     "We're down four D tonight. I'm a forward. I'm D now.",
+     "Ten bucks says the scoreboard's still dead on the home side."
+    ],
+    "bad_ice": [
+     "This ice is a gravel road. Kessler called, they want it back.",
+     "Hit a rut, did a full Swan Lake, lost my dignity.",
+     "Ice is {ice_word}. Good. Gives me an excuse."
+    ],
+    "wet_ice": [
+     "It's wet. Pucks are stopping like they've got somewhere to be.",
+     "Who flooded at 9:55? Who hurt you?",
+     "My saucer pass is a water ski."
+    ],
+    "good_ice": [
+     "Oh, that's nice ice. Too nice. They'll expect us to be good.",
+     "Good sheet tonight. I'm going to try a spin-o-rama.",
+     "Somebody flooded with love. And hot water."
+    ],
+    "goal": [
+     "TOP SHELF! Okay, middle shelf. A shelf!",
+     "Hat trick tracker: one. Don't jinx it.",
+     "That's the beauty of beer league. Anybody can score. Even Dwayne."
+    ],
+    "cold": [
+     "Change room's colder than the ice. How.",
+     "Sweat's freezing on my neck. That's character.",
+     "I'll warm up in the third. Or at the bar."
+    ],
+    "hungry": [
+     "Is the canteen open at this hour? Please. Anything with gravy.",
+     "Postgame wings or bust.",
+     "I had a protein bar in 2019."
+    ],
+    "long_line": [
+     "Ten guys and one hot dog roller. It's like a breakaway.",
+     "I'll skip it. The pitcher's waiting.",
+     "We're on in five and I'm in a line for fries. Priorities."
+    ],
+    "bored": [
+     "We're waiting on the Zamboni. Sorry. The Zambelli. Sorry, Earl.",
+     "Late ice. Late start. Late everything.",
+     "Who has the binder? Dale has the binder."
+    ],
+    "leaving_happy": [
+     "Good skate, boys. Same time Thursday.",
+     "Win or lose, the pitcher's on Dwayne.",
+     "That's the best ice we've had all year. Tell the owner."
+    ],
+    "leaving_angry": [
+     "Fifteen minutes late and the ice was soup. Unreal.",
+     "We're asking Dale about Kessler ice. I'm serious.",
+     "Our goalie lost a filling. I'm blaming the ice."
+    ],
+    "greet_owner": [
+     "Hey, it's the owner! You playing tonight or flooding?",
+     "{owner}! Nice ice. Mostly. The dressing room shower's a rumour.",
+     "Oh hey, you're the new guy. Dale says pay your dues."
+    ],
+    "event_specific": {
+     "beer_league": [
+      "Change! Change! I can't feel my lungs.",
+      "Ref, that's hooking! Okay, it's holding. It's something!",
+      "Line change in three, two, I'm dying."
+     ],
+     "stick_and_puck": [
+      "Shooting till the Zambelli kicks me off.",
+      "Nobody here. Glorious.",
+      "Working on my stop. Don't watch. Okay, watch."
+     ]
+    }
+   }
+  },
+  {
+   "id": "retiree_regular",
+   "label": "Retiree regular",
+   "weight": 0.07,
+   "age": [
+    62,
+    90
+   ],
+   "role": "regular",
+   "traits": {
+    "warmth": [
+     0.5,
+     1.0
+    ],
+    "chatter": [
+     0.3,
+     0.9
+    ],
+    "patience": [
+     0.6,
+     1.0
+    ],
+    "pride": [
+     0.4,
+     0.9
+    ],
+    "nerve": [
+     0.4,
+     0.9
+    ],
+    "humour": [
+     0.3,
+     0.9
+    ]
+   },
+   "interests": {
+    "senior_hockey": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.6,
+     "play": 0.5
+    },
+    "figure_show": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "figure_practice": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 7.0,
+     "to": 9.0,
+     "place": "away",
+     "doing": "coffee at the Legion"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 20.5,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "look": {
+    "builds": [
+     "slim",
+     "average",
+     "stocky"
+    ],
+    "outfits": [
+     "cardigan",
+     "parka",
+     "team_jacket"
+    ],
+    "hair": [
+     "bald",
+     "short",
+     "bun",
+     "curly"
+    ],
+    "accessories": [
+     "reading_glasses",
+     "scarf",
+     "thermos",
+     "blanket",
+     "programme"
+    ],
+    "colors": [
+     [
+      "b22222",
+      "1b1b1b"
+     ],
+     [
+      "2b4f86",
+      "c9a227"
+     ],
+     [
+      "6a8caf",
+      "f2e6c8"
+     ],
+     [
+      "3fa7d6",
+      "f4f4f4"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.2,
+    "bladder": 0.45,
+    "cold": 0.75,
+    "boredom": 0.25
+   },
+   "family": {
+    "kids": [
+     2,
+     4
+    ],
+    "partner": 0.6
+   },
+   "first_names": [
+    "Harold",
+    "Marjorie",
+    "Walter",
+    "Lorraine",
+    "Ernie",
+    "Gladys",
+    "Norm",
+    "Irene",
+    "Bert",
+    "Shirley",
+    "Clarence",
+    "Dot",
+    "Leonard",
+    "Muriel",
+    "Ron",
+    "Vern",
+    "Elsie",
+    "Bill",
+    "June",
+    "Gord"
+   ],
+   "barks": {
+    "idle": [
+     "I sat in this seat for the opener in 1974. Kessler won. I'm still angry.",
+     "When I was young we flooded the pond with a bucket. This is luxury.",
+     "They don't make benches like this any more. Thank goodness.",
+     "Is that the same clock? It's still fast. Good."
+    ],
+    "bad_ice": [
+     "In my day you'd have been run out of town for ice like this.",
+     "Looks {ice_word}. Gus never let it get like that. Well. Twice.",
+     "That's not ice, that's a ploughed field."
+    ],
+    "wet_ice": [
+     "Water on the ice. They used to do that with a garden hose. Same result.",
+     "Soft as butter. You'll get wet feet out there.",
+     "I can see a puddle from row E. That's not a good sign."
+    ],
+    "good_ice": [
+     "Now that is a sheet of ice. Like 1979.",
+     "Ice is {ice_word}. Somebody knows what they're doing.",
+     "Lovely. You could skate a waltz on that."
+    ],
+    "goal": [
+     "Atta boy! Atta boy!",
+     "Now that's hockey. That's how Ronnie did it.",
+     "Oh, well done. Well done indeed."
+    ],
+    "cold": [
+     "My knees have filed a complaint.",
+     "Push for heat, the sign says. I've pushed. Nothing happens.",
+     "I've got three layers and a blanket and I'm still cold. That's arena life."
+    ],
+    "hungry": [
+     "A hot chocolate and a hot dog, that's dinner at my age.",
+     "Is the gravy still Earl's gravy? I'll have that.",
+     "Do they still do the popcorn? The real kind?"
+    ],
+    "long_line": [
+     "I'll wait. I've waited fifty years for a decent coffee here.",
+     "In my day there was one lady and a kettle. It moved faster.",
+     "No rush, dear. No rush. Well, some rush."
+    ],
+    "bored": [
+     "Not much happening. I'll watch the Zambelli.",
+     "I'll have a little rest. Wake me if they score.",
+     "I remember when this was all exciting. It still is, mostly."
+    ],
+    "leaving_happy": [
+     "Lovely afternoon. See you next week, God willing.",
+     "That was a treat. Thank you, dear.",
+     "Ice was {ice_word} and I had a hot chocolate. A good day."
+    ],
+    "leaving_angry": [
+     "Too cold, too loud, too dear. I'll listen on CKVL.",
+     "I'm writing to the Clarion. Midge will print it.",
+     "Not like it was. Not like it was at all."
+    ],
+    "greet_owner": [
+     "You're the new owner. Gus would have liked you. He liked everybody, eventually.",
+     "Hello, dear. Leave the clock alone.",
+     "Good to see the lights on, {owner}. Keep them on."
+    ],
+    "event_specific": {
+     "public_skate": [
+      "Mind the youngsters, they come at you like pucks.",
+      "One more lap and then a hot chocolate. That's the rule.",
+      "I skated here with my wife every Friday. I still do. She'd want me to."
+     ],
+     "senior_hockey": [
+      "Come on, Kings! Not like 1979, but come on!",
+      "Beat the mill! Beat the mill!",
+      "I saw the '79 Kings. These boys skate faster. They don't hit as hard."
+     ],
+     "figure_show": [
+      "Isn't that lovely. Isn't that something.",
+      "When I was a girl the carnival had a live band. This is nice too.",
+      "The little ones in the snowflake costumes. Oh, my heart."
+     ]
+    }
+   }
+  },
+  {
+   "id": "date_night",
+   "label": "Date night",
+   "weight": 0.05,
+   "age": [
+    18,
+    40
+   ],
+   "role": "customer",
+   "traits": {
+    "warmth": [
+     0.6,
+     1.0
+    ],
+    "chatter": [
+     0.4,
+     0.9
+    ],
+    "patience": [
+     0.4,
+     0.8
+    ],
+    "pride": [
+     0.3,
+     0.7
+    ],
+    "nerve": [
+     0.2,
+     0.7
+    ],
+    "humour": [
+     0.5,
+     1.0
+    ]
+   },
+   "interests": {
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.95
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.8
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "broomball": {
+     "watch": 0.3,
+     "play": 0.4
+    },
+    "figure_show": {
+     "watch": 0.4,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "work"
+    }
+   ],
+   "look": {
+    "builds": [
+     "slim",
+     "average"
+    ],
+    "outfits": [
+     "casual",
+     "parka",
+     "hoodie"
+    ],
+    "hair": [
+     "long",
+     "short",
+     "curly",
+     "ponytail",
+     "toque_hair"
+    ],
+    "accessories": [
+     "scarf",
+     "toque",
+     "none",
+     "coffee"
+    ],
+    "colors": [
+     [
+      "0e6b6b",
+      "f2f2f2"
+     ],
+     [
+      "f28db2",
+      "f4f4f4"
+     ],
+     [
+      "e8452c",
+      "2b2b2b"
+     ],
+     [
+      "c9a66b",
+      "1d2b4f"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.3,
+    "bladder": 0.35,
+    "cold": 0.4,
+    "boredom": 0.35
+   },
+   "family": {
+    "kids": [
+     0,
+     0
+    ],
+    "partner": 1.0
+   },
+   "first_names": [
+    "Kyle",
+    "Ashley",
+    "Jordan",
+    "Megan",
+    "Ryan",
+    "Taylor",
+    "Justin",
+    "Amanda",
+    "Brandon",
+    "Hailey",
+    "Imran",
+    "Mei",
+    "Nico",
+    "Chloe",
+    "Marcus",
+    "Priya",
+    "Emily",
+    "Dustin",
+    "Sara",
+    "Alex"
+   ],
+   "barks": {
+    "idle": [
+     "Okay so I didn't say I could skate. I said I'd 'been on skates'.",
+     "This is romantic, right? It feels romantic. It's cold.",
+     "Hold my hand. No, for balance. Also not for balance.",
+     "Is the music always this loud or is it just my heart?"
+    ],
+    "bad_ice": [
+     "I tripped on a crack. I'm telling people I was showing off.",
+     "The ice has a pothole. I didn't know ice could have potholes.",
+     "That's a lot of ruts for a first date."
+    ],
+    "wet_ice": [
+     "My jeans are wet to the knee. Very attractive.",
+     "It's like skating on a puddle. A cold, public puddle.",
+     "We're just going to slide into each other, aren't we."
+    ],
+    "good_ice": [
+     "Oh this is smooth. I'm good at this! Am I good at this?",
+     "Look, I'm gliding. Don't look. Look!",
+     "Okay, this is actually lovely."
+    ],
+    "goal": [
+     "Was that a goal? Should we cheer? We're cheering.",
+     "Yay! Sports!",
+     "Wait, who are we for?"
+    ],
+    "cold": [
+     "Share the scarf? Purely practical.",
+     "Hot chocolate. Two. Now. For my hands.",
+     "I can't feel my face, which is fine, nobody can see it blushing."
+    ],
+    "hungry": [
+     "The Haverstock has fourteen marshmallows. We're getting two.",
+     "Fries and a hot chocolate. Fancy.",
+     "Is it weird to share a hot dog? It's weird. Let's do it."
+    ],
+    "long_line": [
+     "We'll wait. It's the most time we've had to talk all week.",
+     "Long line. More time to plan my next fall.",
+     "Every couple in Millbrook is in this line."
+    ],
+    "bored": [
+     "Want to try the backwards thing? I can do it. I can't do it.",
+     "One more lap and then I'm proposing we sit down.",
+     "Is there anything to do here besides fall?"
+    ],
+    "leaving_happy": [
+     "That was the best date. I fell four times. Five.",
+     "Same time next week? Same time next week.",
+     "I'm going to remember this rink forever. Mostly my tailbone."
+    ],
+    "leaving_angry": [
+     "Slush, cold, rental skates from 1988. Never again.",
+     "We're going bowling next time.",
+     "That music. Who picked that music."
+    ],
+    "greet_owner": [
+     "Is this your rink? It's adorable. The skates are terrible.",
+     "Hi! Do you do couples skates? Like, officially?",
+     "Hello, {owner}. The ice is {ice_word}. We're in love. Bye!"
+    ],
+    "event_specific": {
+     "public_skate": [
+      "Slow song! Slow song! Hold on.",
+      "If I fall, I'm taking you with me.",
+      "Let's do one lap without the boards. Okay, half a lap."
+     ],
+     "special": [
+      "A couples skate. They dimmed the lights. I'm going to faint.",
+      "Doreen's playing a love song on the organ. This is the most romantic thing that's ever happened in this town.",
+      "If someone proposes tonight I'm going to cry, and then I'm going to be jealous."
+     ]
+    }
+   }
+  },
+  {
+   "id": "figure_skater",
+   "label": "Figure skater",
+   "weight": 0.04,
+   "age": [
+    6,
+    20
+   ],
+   "role": "family",
+   "traits": {
+    "warmth": [
+     0.4,
+     0.9
+    ],
+    "chatter": [
+     0.2,
+     0.8
+    ],
+    "patience": [
+     0.3,
+     0.8
+    ],
+    "pride": [
+     0.5,
+     1.0
+    ],
+    "nerve": [
+     0.2,
+     0.8
+    ],
+    "humour": [
+     0.3,
+     0.9
+    ]
+   },
+   "interests": {
+    "figure_practice": {
+     "watch": 0.3,
+     "play": 1.0
+    },
+    "figure_show": {
+     "watch": 0.6,
+     "play": 1.0
+    },
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.6
+    },
+    "learn_to_skate": {
+     "watch": 0.2,
+     "play": 0.3
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 21.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "look": {
+    "builds": [
+     "slim"
+    ],
+    "outfits": [
+     "figure_warmup",
+     "figure_dress",
+     "parka"
+    ],
+    "hair": [
+     "bun",
+     "ponytail",
+     "short",
+     "curly"
+    ],
+    "accessories": [
+     "skates_over_shoulder",
+     "none",
+     "scarf"
+    ],
+    "colors": [
+     [
+      "9fc5e8",
+      "f4f4f4"
+     ],
+     [
+      "f28db2",
+      "ffffff"
+     ],
+     [
+      "6a8caf",
+      "f4f4f4"
+     ],
+     [
+      "7b3fa0",
+      "c0c0c0"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.35,
+    "bladder": 0.3,
+    "cold": 0.5,
+    "boredom": 0.45
+   },
+   "family": {
+    "kids": [
+     0,
+     0
+    ],
+    "partner": 0.0
+   },
+   "first_names": [
+    "Sophie",
+    "Chloe",
+    "Ava",
+    "Mia",
+    "Isabelle",
+    "Amélie",
+    "Lily",
+    "Grace",
+    "Hana",
+    "Noah",
+    "Elena",
+    "Julia",
+    "Ruby",
+    "Clara",
+    "Nadia",
+    "Simone",
+    "Priya",
+    "Maeve",
+    "Léa",
+    "Tess"
+   ],
+   "barks": {
+    "idle": [
+     "Counting my program in my head. Don't talk to me between eight and twelve.",
+     "My blades are new and I hate them.",
+     "Hélène said 'acceptable' yesterday. I'm still thinking about it.",
+     "Do you want to see a scratch spin? You don't get a choice."
+    ],
+    "bad_ice": [
+     "There's a rut right on my takeoff. Right ON it.",
+     "This is hockey ice. I can feel the hockey.",
+     "If I catch that edge I'm suing the Zambelli."
+    ],
+    "wet_ice": [
+     "The ice is soft. My toe pick is going straight through.",
+     "It's like jumping off a sponge.",
+     "Wet ice. Everybody's going to fall on the Salchow."
+    ],
+    "good_ice": [
+     "Oh. Oh, it's perfect. I'm going to land everything.",
+     "This ice is like a mirror. I can see my mistakes in it.",
+     "Hard and smooth. Finally."
+    ],
+    "goal": [
+     "Ugh, the horn. I was mid-spin.",
+     "Good for them. Can they score more quietly?",
+     "Hockey. Right."
+    ],
+    "cold": [
+     "I'm in a dress. In a fridge.",
+     "Can I wear my jacket for the run-through? No? Okay.",
+     "My fingers are too cold to do my laces."
+    ],
+    "hungry": [
+     "I'm not allowed fries before practice. After practice I'm allowed everything.",
+     "Banana. I need a banana. Does the canteen have bananas?",
+     "I'd do a triple for a hot chocolate."
+    ],
+    "long_line": [
+     "I'll miss my warm-up if I wait.",
+     "Hockey team in the line. A whole hockey team.",
+     "I'll just be hungry. Skaters are always hungry."
+    ],
+    "bored": [
+     "Stroking. Stroking. More stroking.",
+     "Waiting for the flood. Waiting. Waiting.",
+     "I've done my program in my head fourteen times."
+    ],
+    "leaving_happy": [
+     "I landed it! I landed it three times!",
+     "Good session. My mum cried. She always cries.",
+     "Bye! See you at six. Six AM. Ugh. Yay."
+    ],
+    "leaving_angry": [
+     "I fell on every jump and it was the ice's fault.",
+     "I'm telling Hélène about that rut.",
+     "My blade's chipped. On THAT ice."
+    ],
+    "greet_owner": [
+     "Are you the owner? Can you make the ice minus three and a half? Hélène said to ask.",
+     "Hi! I'm in the show! Are you coming to the show?",
+     "Good morning, {owner}. The ice is {ice_word}. Can you fix it? Please?"
+    ],
+    "event_specific": {
+     "figure_show": [
+      "I'm so nervous I could throw up. In a good way.",
+      "If my music skips I'm just going to keep going.",
+      "Bow to the judges. Bow to the judges. Don't fall bowing."
+     ],
+     "figure_practice": [
+      "Again. Again. Again.",
+      "That was a two-footed landing. Don't tell Hélène.",
+      "Hélène is watching. Don't look at Hélène. Land it."
+     ]
+    }
+   }
+  },
+  {
+   "id": "minor_player",
+   "label": "Minor hockey player",
+   "weight": 0.09,
+   "age": [
+    5,
+    17
+   ],
+   "role": "family",
+   "traits": {
+    "warmth": [
+     0.5,
+     1.0
+    ],
+    "chatter": [
+     0.3,
+     1.0
+    ],
+    "patience": [
+     0.1,
+     0.6
+    ],
+    "pride": [
+     0.3,
+     0.8
+    ],
+    "nerve": [
+     0.3,
+     0.9
+    ],
+    "humour": [
+     0.4,
+     1.0
+    ]
+   },
+   "interests": {
+    "minor_hockey": {
+     "watch": 0.3,
+     "play": 1.0
+    },
+    "tournament": {
+     "watch": 0.4,
+     "play": 1.0
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.7
+    },
+    "stick_and_puck": {
+     "watch": 0.2,
+     "play": 0.6
+    },
+    "pro_practice": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "learn_to_skate": {
+     "watch": 0.1,
+     "play": 0.3
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 20.5,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "look": {
+    "builds": [
+     "slim",
+     "average",
+     "stocky"
+    ],
+    "outfits": [
+     "hockey_gear",
+     "goalie_gear",
+     "school_jacket",
+     "hoodie",
+     "parka"
+    ],
+    "hair": [
+     "short",
+     "toque_hair",
+     "ponytail",
+     "curly",
+     "mullet"
+    ],
+    "accessories": [
+     "helmet",
+     "stick",
+     "toque",
+     "skates_over_shoulder"
+    ],
+    "colors": [
+     [
+      "d98a1c",
+      "2b2b2b"
+     ],
+     [
+      "7a4a26",
+      "f2d16b"
+     ],
+     [
+      "1c4e80",
+      "f2f2f2"
+     ],
+     [
+      "2e7d4f",
+      "c9a227"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.55,
+    "bladder": 0.6,
+    "cold": 0.35,
+    "boredom": 0.9
+   },
+   "family": {
+    "kids": [
+     0,
+     0
+    ],
+    "partner": 0.0
+   },
+   "first_names": [
+    "Liam",
+    "Olivia",
+    "Noah",
+    "Emma",
+    "Lucas",
+    "Ava",
+    "Hudson",
+    "Charlotte",
+    "Jackson",
+    "Amelia",
+    "Rowan",
+    "Isla",
+    "Theo",
+    "Maya",
+    "Arjun",
+    "Aria",
+    "Kai",
+    "Zara",
+    "Owen",
+    "Hazel",
+    "Mateo",
+    "Lily"
+   ],
+   "barks": {
+    "idle": [
+     "My mum packed my bag. I don't know where anything is.",
+     "Coach said we're doing the drill with the cones. I hate the cones.",
+     "I'm going to be a goalie. No, a forward. A goalie.",
+     "Is that a real Lumber King? Is that his real beard?"
+    ],
+    "bad_ice": [
+     "I fell in a hole! A hockey hole!",
+     "The ice is bumpy. My puck jumped over my stick.",
+     "There's a crack by the net. It's spooky."
+    ],
+    "wet_ice": [
+     "The ice is all splashy!",
+     "My socks are wet. INSIDE my skates.",
+     "It's raining on the ice. Upwards."
+    ],
+    "good_ice": [
+     "It's so shiny! I'm going so fast!",
+     "Look how fast I am. Look. LOOK.",
+     "This ice is the best ice."
+    ],
+    "goal": [
+     "I SCORED! I SCORED! Did you see?",
+     "That was MY assist. It counts. It counts!",
+     "Celly! Celly! Everybody celly!"
+    ],
+    "cold": [
+     "My toes are crying.",
+     "Can I go in the lobby and warm my hands on the hot chocolate?",
+     "It's freezing. I'm not wearing my toque, though."
+    ],
+    "hungry": [
+     "Can I have a freezie? Can I have fries? Can I have a freezie AND fries?",
+     "I'm starving. I had breakfast. That was ages ago.",
+     "The Haverstock has FOURTEEN marshmallows."
+    ],
+    "long_line": [
+     "This line is SO long.",
+     "My whole team is in front of me. And their dads.",
+     "I'll get hungry later. I'm already hungry."
+    ],
+    "bored": [
+     "When's our ice? Is it now? Is it now?",
+     "I've been dressed for an hour.",
+     "I'm going to kick a puck down the hall. Quietly."
+    ],
+    "leaving_happy": [
+     "We won! Or tied! It was so fun!",
+     "Bye, Zambelli! Bye, Doris!",
+     "Can we come back tomorrow? Is there hockey tomorrow?"
+    ],
+    "leaving_angry": [
+     "We lost and the ice was mean.",
+     "I fell on my bum the whole time.",
+     "Coach made me sit. I'm never coming back. Until Saturday."
+    ],
+    "greet_owner": [
+     "Are you the boss of the rink? Can I drive the Zambelli?",
+     "Hi! I scored once! Not today. Once.",
+     "Hi {owner}! Is Doris coming out? I love Doris."
+    ],
+    "event_specific": {
+     "minor_hockey": [
+      "Coach! Coach! Can I go on? Can I go on now?",
+      "Shoot it! Shoot it! Oh, okay, pass.",
+      "Coach said I'm on the second line! There are two lines!"
+     ],
+     "tournament": [
+      "Hotel pool after this! Hotel pool!",
+      "I traded my crest for a Kessler one. It's got a moose.",
+      "If we win we get medals. Real ones. Plastic ones."
+     ]
+    }
+   }
+  },
+  {
+   "id": "teen",
+   "label": "Teen",
+   "weight": 0.07,
+   "age": [
+    13,
+    19
+   ],
+   "role": "customer",
+   "traits": {
+    "warmth": [
+     0.3,
+     0.8
+    ],
+    "chatter": [
+     0.3,
+     0.9
+    ],
+    "patience": [
+     0.1,
+     0.5
+    ],
+    "pride": [
+     0.4,
+     0.9
+    ],
+    "nerve": [
+     0.3,
+     0.8
+    ],
+    "humour": [
+     0.5,
+     1.0
+    ]
+   },
+   "interests": {
+    "high_school": {
+     "watch": 0.8,
+     "play": 0.4
+    },
+    "public_skate": {
+     "watch": 0.3,
+     "play": 0.8
+    },
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "stick_and_puck": {
+     "watch": 0.2,
+     "play": 0.5
+    },
+    "broomball": {
+     "watch": 0.3,
+     "play": 0.2
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.5
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school"
+    },
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 22.5,
+     "to": 24.0,
+     "place": "away",
+     "doing": "home"
+    }
+   ],
+   "look": {
+    "builds": [
+     "slim",
+     "average"
+    ],
+    "outfits": [
+     "hoodie",
+     "school_jacket",
+     "casual"
+    ],
+    "hair": [
+     "long",
+     "toque_hair",
+     "short",
+     "curly",
+     "ponytail",
+     "mullet"
+    ],
+    "accessories": [
+     "none",
+     "toque",
+     "ball_cap",
+     "coffee"
+    ],
+    "colors": [
+     [
+      "2e7d4f",
+      "c9a227"
+     ],
+     [
+      "1b1b1b",
+      "f4f4f4"
+     ],
+     [
+      "7b3fa0",
+      "c0c0c0"
+     ],
+     [
+      "e8452c",
+      "2b2b2b"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.5,
+    "bladder": 0.35,
+    "cold": 0.3,
+    "boredom": 0.8
+   },
+   "family": {
+    "kids": [
+     0,
+     0
+    ],
+    "partner": 0.0
+   },
+   "first_names": [
+    "Ethan",
+    "Madison",
+    "Logan",
+    "Hannah",
+    "Carter",
+    "Brooke",
+    "Hunter",
+    "Kaitlyn",
+    "Aiden",
+    "Sydney",
+    "Gurpreet",
+    "Jasmine",
+    "Tristan",
+    "Mackenzie",
+    "Dylan",
+    "Kiara",
+    "Connor",
+    "Avery",
+    "Marcus",
+    "Leah"
+   ],
+   "barks": {
+    "idle": [
+     "This rink smells like 1974.",
+     "Can you get wifi in here? No? Cool. Cool cool cool.",
+     "We're just here to hang out. We're not doing anything.",
+     "My dad played on this ice. He tells me every time."
+    ],
+    "bad_ice": [
+     "Ice is mid. Very mid.",
+     "That's a whole canyon by the blue line.",
+     "Bro the ice is chewed."
+    ],
+    "wet_ice": [
+     "It's literally a puddle.",
+     "Who flooded with a garden hose?",
+     "My shoes are soaked and I'm not even skating."
+    ],
+    "good_ice": [
+     "Okay the ice is actually clean.",
+     "Glassy. I respect it.",
+     "This is the nicest the rink's ever looked and I'm upset about it."
+    ],
+    "goal": [
+     "LET'S GO!",
+     "That's a highlight. I'm posting that.",
+     "Mallards! Mallards! Quack!"
+    ],
+    "cold": [
+     "I wore a hoodie on purpose. I regret it.",
+     "Cold. So cold. Aesthetic, though.",
+     "Can we stand by the heater? Is there a heater?"
+    ],
+    "hungry": [
+     "Fries. Gravy. Now.",
+     "The canteen has like four things and I want all four.",
+     "Are the Puckhead slices back? Somebody said slices."
+    ],
+    "long_line": [
+     "This line is longer than the period.",
+     "I'll just steal your fries.",
+     "We've been in this line so long I've aged."
+    ],
+    "bored": [
+     "Nothing's happening.",
+     "Can we go to the Puckhead after?",
+     "I've watched the Zambelli go around nine times. It's kind of relaxing, actually."
+    ],
+    "leaving_happy": [
+     "That was actually fun. Don't tell anybody.",
+     "Same time next week? Yeah. Fine. Yeah.",
+     "Lit. The rink. Who knew."
+    ],
+    "leaving_angry": [
+     "That was so boring.",
+     "Cold and boring. We're going to Harlow Falls next time.",
+     "My mum's picking me up in an hour. Kill me."
+    ],
+    "greet_owner": [
+     "You own this? Respect. Also why is the scoreboard broken?",
+     "Hi. Can we put music on at public skate? Like, music from this century?",
+     "Yo, {owner}. Ice is {ice_word}."
+    ],
+    "event_specific": {
+     "high_school": [
+      "MALLARDS! MALLARDS!",
+      "That's my lab partner. He's terrible. GO, BRAD!",
+      "School spirit is mandatory. Apparently."
+     ],
+     "public_skate": [
+      "Okay, we skate in a group. Nobody holds the boards.",
+      "Can somebody play a good song?",
+      "I'm not here to skate. I'm here to be seen skating. Different thing."
+     ]
+    }
+   }
+  },
+  {
+   "id": "learn_to_skate_adult",
+   "label": "Adult learn-to-skate",
+   "weight": 0.03,
+   "age": [
+    25,
+    70
+   ],
+   "role": "customer",
+   "traits": {
+    "warmth": [
+     0.5,
+     1.0
+    ],
+    "chatter": [
+     0.3,
+     0.8
+    ],
+    "patience": [
+     0.5,
+     1.0
+    ],
+    "pride": [
+     0.3,
+     0.8
+    ],
+    "nerve": [
+     0.0,
+     0.4
+    ],
+    "humour": [
+     0.5,
+     1.0
+    ]
+   },
+   "interests": {
+    "learn_to_skate": {
+     "watch": 0.3,
+     "play": 1.0
+    },
+    "public_skate": {
+     "watch": 0.7,
+     "play": 0.5
+    },
+    "figure_show": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.4,
+     "play": 0.1
+    },
+    "special": {
+     "watch": 0.4,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "work"
+    }
+   ],
+   "look": {
+    "builds": [
+     "average",
+     "stocky",
+     "slim",
+     "big"
+    ],
+    "outfits": [
+     "casual",
+     "parka",
+     "cardigan"
+    ],
+    "hair": [
+     "short",
+     "bun",
+     "long",
+     "bald",
+     "curly"
+    ],
+    "accessories": [
+     "helmet",
+     "scarf",
+     "glasses",
+     "toque"
+    ],
+    "colors": [
+     [
+      "c9a66b",
+      "1d2b4f"
+     ],
+     [
+      "e8452c",
+      "f2f2f2"
+     ],
+     [
+      "3fa7d6",
+      "f2d16b"
+     ],
+     [
+      "6a8caf",
+      "f2e6c8"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.3,
+    "bladder": 0.45,
+    "cold": 0.6,
+    "boredom": 0.35
+   },
+   "family": {
+    "kids": [
+     0,
+     2
+    ],
+    "partner": 0.6
+   },
+   "first_names": [
+    "Gerald",
+    "Marisol",
+    "Susan",
+    "Tony",
+    "Debbie",
+    "Neil",
+    "Farah",
+    "Brian",
+    "Karen",
+    "Hassan",
+    "Linda",
+    "Paul",
+    "Rosa",
+    "Greg",
+    "Joyce",
+    "Daniel",
+    "Anita",
+    "Frank",
+    "Melanie",
+    "Chen"
+   ],
+   "barks": {
+    "idle": [
+     "I'm fifty-two and I've never skated. This is my midlife crisis. It's cheaper than a motorcycle.",
+     "Week four. I can stand. I am a person who can stand.",
+     "Helmet's on. Elbow pads are on. Dignity is off.",
+     "If I hold the boards long enough, maybe they'll let me keep them."
+    ],
+    "bad_ice": [
+     "There's a groove in the ice and my skate went in it and I went in it too.",
+     "The ice has texture. I don't need texture.",
+     "That bump is a mountain to me."
+    ],
+    "wet_ice": [
+     "It's wet. When I fall I'll be wet as well as embarrassed.",
+     "Soft ice. Is that easier? It doesn't feel easier.",
+     "I'm sliding even when I'm standing still."
+    ],
+    "good_ice": [
+     "Oh. Oh, I glided. Did you see? I glided!",
+     "Smooth ice. No excuses now. I hate that.",
+     "It's so slippery. Is that a good thing? It's a good thing."
+    ],
+    "goal": [
+     "How do they skate AND hold a stick?",
+     "I can barely stand and they're doing that.",
+     "Hooray! I'm not letting go of the boards to clap."
+    ],
+    "cold": [
+     "I'm sweating and freezing at the same time.",
+     "Cold from the outside, terrified from the inside.",
+     "I'll warm up when I fall. I'll fall soon."
+    ],
+    "hungry": [
+     "After this I'm having The Haverstock. All fourteen marshmallows. I've earned them.",
+     "Hot chocolate is my reward for not dying.",
+     "I'm stress-hungry."
+    ],
+    "long_line": [
+     "A line. Good. I can stand in a line. I'm good at standing now.",
+     "This is the most confident I've been all night.",
+     "I'll wait. My legs need the rest."
+    ],
+    "bored": [
+     "We're doing the 'march' again. I'm a very good marcher.",
+     "Ten minutes of falling practice. I don't need practice.",
+     "I'd like to graduate to gliding, please."
+    ],
+    "leaving_happy": [
+     "I let go of the boards! For a second! Two seconds!",
+     "Same time next week. I'm going to stop next week. On purpose.",
+     "I'm going to tell everybody at work. Nobody at work cares. I'm telling them."
+    ],
+    "leaving_angry": [
+     "The rental skates were blunt. Bev would be horrified.",
+     "I fell nine times. Seven was the ice.",
+     "Maybe skating isn't for me. Maybe bowling."
+    ],
+    "greet_owner": [
+     "Are you the owner? Thank you for the class. And the helmet. Especially the helmet.",
+     "Hello! I'm the one who holds the boards. You've seen me.",
+     "Hi, {owner}. Rental skate 41 is cursed. Just so you know."
+    ],
+    "event_specific": {
+     "learn_to_skate": [
+      "Knees soft, eyes up. Knees soft, eyes up. Knees... no.",
+      "I'm going to try the stop. Here I go. Here I... went.",
+      "Coach says fall like a pancake. I'm a natural pancake."
+     ],
+     "public_skate": [
+      "Nobody's watching. Everybody's watching. Nobody's watching.",
+      "Public skate is a test. Learn-to-skate was the lesson. I'm failing at speed.",
+      "If a seven-year-old passes me one more time I'm signing up for two classes."
+     ]
+    }
+   }
+  },
+  {
+   "id": "stick_and_puck_regular",
+   "label": "Stick and puck regular",
+   "weight": 0.03,
+   "age": [
+    16,
+    60
+   ],
+   "role": "regular",
+   "traits": {
+    "warmth": [
+     0.3,
+     0.8
+    ],
+    "chatter": [
+     0.0,
+     0.5
+    ],
+    "patience": [
+     0.5,
+     0.9
+    ],
+    "pride": [
+     0.3,
+     0.8
+    ],
+    "nerve": [
+     0.5,
+     1.0
+    ],
+    "humour": [
+     0.3,
+     0.8
+    ]
+   },
+   "interests": {
+    "stick_and_puck": {
+     "watch": 0.3,
+     "play": 1.0
+    },
+    "beer_league": {
+     "watch": 0.4,
+     "play": 0.7
+    },
+    "pro_practice": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "work"
+    }
+   ],
+   "look": {
+    "builds": [
+     "average",
+     "big",
+     "slim"
+    ],
+    "outfits": [
+     "hockey_gear",
+     "hoodie",
+     "casual"
+    ],
+    "hair": [
+     "short",
+     "toque_hair",
+     "buzz",
+     "long"
+    ],
+    "accessories": [
+     "stick",
+     "helmet",
+     "none"
+    ],
+    "colors": [
+     [
+      "3c3c3c",
+      "f28c28"
+     ],
+     [
+      "1b1b1b",
+      "f4f4f4"
+     ],
+     [
+      "4b2a7b",
+      "e3b23c"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.35,
+    "bladder": 0.35,
+    "cold": 0.3,
+    "boredom": 0.3
+   },
+   "family": {
+    "kids": [
+     0,
+     2
+    ],
+    "partner": 0.5
+   },
+   "first_names": [
+    "Len",
+    "Marty",
+    "Cam",
+    "Sean",
+    "Ricky",
+    "Jodie",
+    "Bryce",
+    "Mitch",
+    "Tanner",
+    "Derek",
+    "Kyle",
+    "Ian",
+    "Dana",
+    "Shane",
+    "Nick",
+    "Ravi",
+    "Travis",
+    "Curtis",
+    "Jesse",
+    "Kris"
+   ],
+   "barks": {
+    "idle": [
+     "Bucket of pucks. Empty net. That's church.",
+     "Don't talk to me, I'm working on my backhand.",
+     "Half the fun is the sound. Puck off the crossbar. Ping.",
+     "Five people out here. It's paradise."
+    ],
+    "bad_ice": [
+     "Puck's hopping like a frog.",
+     "Ice is {ice_word}. Still beats the pond.",
+     "Rut at the hash marks. Noted."
+    ],
+    "wet_ice": [
+     "Pucks are dying in the slush.",
+     "Soft. Stickhandling in porridge.",
+     "Can't get a clean shot off this."
+    ],
+    "good_ice": [
+     "Fresh sheet. Mine. All mine.",
+     "Pucks slide forever. Beautiful.",
+     "Somebody flooded right. Hot water. You can tell."
+    ],
+    "goal": [
+     "Bar down.",
+     "Top corner. Nobody saw. Doesn't matter.",
+     "Ping. Off the post. Close enough."
+    ],
+    "cold": [
+     "Hands are cold. Shoot faster.",
+     "Cold rink, good ice. That's the deal.",
+     "Glove liners. Should've brought glove liners."
+    ],
+    "hungry": [
+     "One more bucket and then a hot dog.",
+     "Is the Hot Stove even open at 10 am?",
+     "Coffee. Then pucks."
+    ],
+    "long_line": [
+     "Not waiting. Back to the ice.",
+     "I'll eat after.",
+     "Line? For a coffee? On a Tuesday?"
+    ],
+    "bored": [
+     "Same drill, hundredth time. Still good.",
+     "Nobody to pass to. Passing to the boards.",
+     "Need a goalie. Anybody a goalie?"
+    ],
+    "leaving_happy": [
+     "Good skate. Quiet. Perfect.",
+     "That's my week sorted.",
+     "See you Thursday, if the shift lets me."
+    ],
+    "leaving_angry": [
+     "Booked over again. Third time.",
+     "Ice was garbage. Pucks everywhere but where I aimed.",
+     "Twelve dollars for slush."
+    ],
+    "greet_owner": [
+     "You run stick and puck? Keep running it.",
+     "Morning. Any chance of more of these? Weekdays?",
+     "Hey, {owner}. Ice is {ice_word}. I'm not complaining. Much."
+    ],
+    "event_specific": {
+     "stick_and_puck": [
+      "Heads up! Sorry. Heads up!",
+      "Anybody want to play two-on-two? No? Okay.",
+      "Last puck. Okay, last last puck."
+     ]
+    }
+   }
+  },
+  {
+   "id": "broomballer",
+   "label": "Broomballer",
+   "weight": 0.03,
+   "age": [
+    20,
+    60
+   ],
+   "role": "regular",
+   "traits": {
+    "warmth": [
+     0.6,
+     1.0
+    ],
+    "chatter": [
+     0.7,
+     1.0
+    ],
+    "patience": [
+     0.1,
+     0.5
+    ],
+    "pride": [
+     0.3,
+     0.8
+    ],
+    "nerve": [
+     0.5,
+     0.9
+    ],
+    "humour": [
+     0.7,
+     1.0
+    ]
+   },
+   "interests": {
+    "broomball": {
+     "watch": 0.6,
+     "play": 1.0
+    },
+    "beer_league": {
+     "watch": 0.4,
+     "play": 0.2
+    },
+    "senior_hockey": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.1,
+     "play": 0.3
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.6
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "work"
+    }
+   ],
+   "look": {
+    "builds": [
+     "stocky",
+     "big",
+     "average"
+    ],
+    "outfits": [
+     "hoodie",
+     "casual",
+     "team_jacket"
+    ],
+    "hair": [
+     "ponytail",
+     "mullet",
+     "short",
+     "toque_hair",
+     "buzz"
+    ],
+    "accessories": [
+     "helmet",
+     "toque",
+     "none",
+     "ball_cap"
+    ],
+    "colors": [
+     [
+      "f28c28",
+      "1b1b1b"
+     ],
+     [
+      "2b6cb0",
+      "ffffff"
+     ],
+     [
+      "c1272d",
+      "f7c548"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.4,
+    "bladder": 0.45,
+    "cold": 0.35,
+    "boredom": 0.25
+   },
+   "family": {
+    "kids": [
+     0,
+     3
+    ],
+    "partner": 0.7
+   },
+   "first_names": [
+    "Tina",
+    "Mike",
+    "Deb",
+    "Rocco",
+    "Sandy",
+    "Kev",
+    "Trish",
+    "Moe",
+    "Jolene",
+    "Dale",
+    "Barb",
+    "Chris",
+    "Lenny",
+    "Tammy",
+    "Raj",
+    "Wanda",
+    "Gus",
+    "Patti",
+    "Mo",
+    "Terri"
+   ],
+   "barks": {
+    "idle": [
+     "Broomball: all of the hockey, none of the skates, most of the bruises.",
+     "These sneakers have grip tape. Illegal? Probably. Effective? Very.",
+     "We're loud because we're happy. And because we're loud.",
+     "Hockey players look at us like we're curling. We're not curling."
+    ],
+    "bad_ice": [
+     "Bumpy ice is our home field advantage.",
+     "Who cares, we're in sneakers!",
+     "Ice is {ice_word}. We'll break it more."
+    ],
+    "wet_ice": [
+     "Wet ice in sneakers is a water park.",
+     "Oh, it's slippery. Oh, it's VERY slippery.",
+     "Someone flooded right before us. On purpose. Earl."
+    ],
+    "good_ice": [
+     "Good ice! We'll ruin it, but good ice!",
+     "Look at it. Don't look too long, we're about to slide on our faces.",
+     "Nice and grippy. Well. Grippy-ish."
+    ],
+    "goal": [
+     "GOOOOAL! WITH A BROOM!",
+     "Did you see that? Off the knee, off the broom, in!",
+     "That's going on the fridge."
+    ],
+    "cold": [
+     "I'm in shorts. Why am I in shorts.",
+     "Cold hands, warm broom.",
+     "My sneakers have frozen into the shape of my bad decisions."
+    ],
+    "hungry": [
+     "Nachos after! Nachos after!",
+     "Fries for the team. All the fries.",
+     "I'm hungry enough to eat the broom."
+    ],
+    "long_line": [
+     "We'll make our own line. A conga line.",
+     "I'll wait if you tell me a joke.",
+     "This line is longer than our penalty box."
+    ],
+    "bored": [
+     "When's our ice? We're bouncing.",
+     "Let's practise the slide. Into the boards. Again.",
+     "Waiting for the flood. Boooo the flood. Yay the flood."
+    ],
+    "leaving_happy": [
+     "Great game! Same time Wednesday! LOUDER!",
+     "Bruised and happy, the broomball way.",
+     "Beer Cup's ours next year. Write it down."
+    ],
+    "leaving_angry": [
+     "Late start, cold rink, mean ref. Classic.",
+     "They cut our time again for a flood!",
+     "We'll take our brooms to Kessler!"
+    ],
+    "greet_owner": [
+     "You're the owner? You're going to love broomball. Everybody does. Eventually.",
+     "Hi! We're the loud ones. Sorry. Not sorry.",
+     "Hey, {owner}! Any chance of more Wednesday ice?"
+    ],
+    "event_specific": {
+     "broomball": [
+      "Broom up! Broom up!",
+      "Get in front of it! With your face! Not your face!",
+      "Slide tackle! That's legal. Probably."
+     ],
+     "special": [
+      "BEER CUP! BEER CUP!",
+      "It's the Carnival broomball! The best night of the year!",
+      "Tonight we play for the tap handle. Tonight we are legends."
+     ]
+    }
+   }
+  },
+  {
+   "id": "superfan",
+   "label": "Superfan",
+   "weight": 0.06,
+   "age": [
+    30,
+    85
+   ],
+   "role": "regular",
+   "traits": {
+    "warmth": [
+     0.4,
+     0.9
+    ],
+    "chatter": [
+     0.5,
+     1.0
+    ],
+    "patience": [
+     0.1,
+     0.6
+    ],
+    "pride": [
+     0.6,
+     1.0
+    ],
+    "nerve": [
+     0.3,
+     0.8
+    ],
+    "humour": [
+     0.4,
+     0.9
+    ]
+   },
+   "interests": {
+    "senior_hockey": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "high_school": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "pro_practice": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "tournament": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "work"
+    }
+   ],
+   "look": {
+    "builds": [
+     "big",
+     "stocky",
+     "average"
+    ],
+    "outfits": [
+     "team_jacket",
+     "parka",
+     "hoodie"
+    ],
+    "hair": [
+     "short",
+     "bald",
+     "mullet",
+     "toque_hair"
+    ],
+    "accessories": [
+     "foam_finger",
+     "cowbell",
+     "sign",
+     "scarf",
+     "toque"
+    ],
+    "colors": [
+     [
+      "b22222",
+      "1b1b1b"
+     ],
+     [
+      "2e7d4f",
+      "c9a227"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.4,
+    "bladder": 0.4,
+    "cold": 0.4,
+    "boredom": 0.25
+   },
+   "family": {
+    "kids": [
+     0,
+     3
+    ],
+    "partner": 0.6
+   },
+   "first_names": [
+    "Russ",
+    "Doug",
+    "Brenda",
+    "Wayne",
+    "Bev",
+    "Lyle",
+    "Gail",
+    "Terry",
+    "Rhonda",
+    "Don",
+    "Barb",
+    "Ken",
+    "Sheila",
+    "Murray",
+    "Cheryl",
+    "Rick",
+    "Daryl",
+    "Lois",
+    "Floyd",
+    "Joanne"
+   ],
+   "barks": {
+    "idle": [
+     "I've had this cowbell since 1981. It's had three clappers.",
+     "We're due. We're SO due.",
+     "If we beat Kessler tonight I'm buying the whole section a coffee. Not the whole section.",
+     "Same seat since I was six. Same seat when I'm a hundred."
+    ],
+    "bad_ice": [
+     "Ice like that cost us the '86 semi. I remember. I REMEMBER.",
+     "Fix the ice! We've got a game to win!",
+     "That's Kessler ice. Are they paying you?"
+    ],
+    "wet_ice": [
+     "They're skating through soup! Our boys can't skate through soup!",
+     "Flood it properly or I'll come down there!",
+     "The puck's stopping dead. Not the good dead spot. The bad one."
+    ],
+    "good_ice": [
+     "Now THAT'S Lumber Kings ice!",
+     "Fast ice! Fast hockey! LET'S GO!",
+     "You could see the 1979 banner reflected in that."
+    ],
+    "goal": [
+     "GOOOAL! LUMBER KINGS! LUMBER KINGS!",
+     "THAT'S what I'm talking about! Ring the bell, Pete!",
+     "Cowbell! COWBELL!"
+    ],
+    "cold": [
+     "Cold? This is hockey weather. I'm sweating.",
+     "My face is frozen into a cheer.",
+     "The heater's for tourists."
+    ],
+    "hungry": [
+     "Hot dog and a coffee at the first intermission. Tradition.",
+     "Earl's gravy on everything.",
+     "If they're out of fries before the second, I'm writing a letter."
+    ],
+    "long_line": [
+     "I'll miss the power play! I'll miss the power play!",
+     "Somebody save my seat. SOMEBODY SAVE MY SEAT.",
+     "I'll take anything, just hand it to me."
+    ],
+    "bored": [
+     "Two-nothing in the third. Come on, boys, wake us up!",
+     "Let's get a chant going. Nobody? Okay. LET'S GO KINGS!",
+     "This intermission is a long one. Do the Zambelli again."
+    ],
+    "leaving_happy": [
+     "WE BEAT THE MILL! WE BEAT THE MILL!",
+     "Best game since '79. Okay, since Tuesday.",
+     "See you Saturday. I'll be here. I'm always here."
+    ],
+    "leaving_angry": [
+     "That ref was blind. That ice was worse.",
+     "Lost to Harlow Falls. In our own barn. I need to lie down.",
+     "If they move to Harlow Falls I'll follow them and boo."
+    ],
+    "greet_owner": [
+     "You're the owner? Get the HOME scoreboard working and I'll name my next dog after you.",
+     "Ice looks {ice_word}, {owner}. Make it better. For the Kings.",
+     "Thanks for keeping the lights on. Now win us a Cup."
+    ],
+    "event_specific": {
+     "senior_hockey": [
+      "BEAT THE MILL! BEAT THE MILL!",
+      "Skate! SKATE! Oh, somebody's already shouting skate. SKATE!",
+      "Ref, you missed one! Doreen, play the dirge!"
+     ],
+     "high_school": [
+      "Quack! Quack! Go Mallards!",
+      "Future Lumber Kings out there. Some of them. Maybe one.",
+      "That kid on the Mallards can skate. Get him on the Kings in five years."
+     ]
+    }
+   }
+  },
+  {
+   "id": "autograph_hunter",
+   "label": "Autograph hunter",
+   "weight": 0.02,
+   "age": [
+    8,
+    45
+   ],
+   "role": "customer",
+   "traits": {
+    "warmth": [
+     0.6,
+     1.0
+    ],
+    "chatter": [
+     0.6,
+     1.0
+    ],
+    "patience": [
+     0.4,
+     0.9
+    ],
+    "pride": [
+     0.2,
+     0.6
+    ],
+    "nerve": [
+     0.2,
+     0.7
+    ],
+    "humour": [
+     0.4,
+     0.9
+    ]
+   },
+   "interests": {
+    "pro_practice": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "tournament": {
+     "watch": 0.3,
+     "play": 0.0
+    },
+    "stick_and_puck": {
+     "watch": 0.4,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.5,
+     "to": 15.5,
+     "place": "away",
+     "doing": "school or work"
+    }
+   ],
+   "look": {
+    "builds": [
+     "slim",
+     "average"
+    ],
+    "outfits": [
+     "hoodie",
+     "team_jacket",
+     "school_jacket"
+    ],
+    "hair": [
+     "short",
+     "toque_hair",
+     "ponytail",
+     "curly"
+    ],
+    "accessories": [
+     "camera",
+     "programme",
+     "sign",
+     "stick"
+    ],
+    "colors": [
+     [
+      "4b2a7b",
+      "e3b23c"
+     ],
+     [
+      "b22222",
+      "1b1b1b"
+     ],
+     [
+      "2e7d4f",
+      "c9a227"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.4,
+    "bladder": 0.35,
+    "cold": 0.45,
+    "boredom": 0.6
+   },
+   "family": {
+    "kids": [
+     0,
+     1
+    ],
+    "partner": 0.3
+   },
+   "first_names": [
+    "Liam",
+    "Olivia",
+    "Noah",
+    "Emma",
+    "Lucas",
+    "Ava",
+    "Hudson",
+    "Charlotte",
+    "Jackson",
+    "Amelia",
+    "Brent",
+    "Kyle",
+    "Shelby",
+    "Darcy",
+    "Marco",
+    "Tanya",
+    "Cody",
+    "Wes",
+    "Rena",
+    "Jules"
+   ],
+   "barks": {
+    "idle": [
+     "I've got a Sharpie in every pocket. Every pocket.",
+     "Three Dukes signed my book last time. I need eleven more.",
+     "If Ronnie Haverstock comes in, I'm going to faint, and then ask him.",
+     "My autograph book has its own autograph book."
+    ],
+    "bad_ice": [
+     "If the ice is bad the Dukes won't come back. Fix it. Please.",
+     "The ice looks {ice_word}. They'll leave early. They'll leave without signing!",
+     "That's not pro ice, that's my driveway."
+    ],
+    "wet_ice": [
+     "Wet ice means a short practice means fewer autographs. This is a tragedy.",
+     "Who flooded so late? The Dukes are waiting!",
+     "Ugh, puddles."
+    ],
+    "good_ice": [
+     "Good ice. They'll come back. They'll come back!",
+     "Pros on good ice. I'm going to cry.",
+     "That's ice for champions. And their signatures."
+    ],
+    "goal": [
+     "Did you see who scored? I need his name and his pen.",
+     "That puck's going in my collection.",
+     "Score! Sign! Score! Sign!"
+    ],
+    "cold": [
+     "I'll stand here forever if it means a signature.",
+     "Frozen fingers, steady Sharpie.",
+     "Cold doesn't matter. Pens matter."
+    ],
+    "hungry": [
+     "If I leave for food I'll miss them coming out.",
+     "Somebody hold my place at the glass.",
+     "I'll eat when I'm famous."
+    ],
+    "long_line": [
+     "The real line is by the dressing room door. I'm in it.",
+     "I'm not waiting for fries. I'm waiting for greatness.",
+     "I could get an autograph in the time this line takes."
+    ],
+    "bored": [
+     "Practice is mostly skating in circles. Exciting circles.",
+     "When do they come out? Soon? Soon.",
+     "I've re-sorted my cards twice."
+    ],
+    "leaving_happy": [
+     "Got him! Got him! Look! His handwriting is terrible!",
+     "Best day ever. I'm never washing this jersey.",
+     "Three new signatures. A record."
+    ],
+    "leaving_angry": [
+     "They went out the back door. THE BACK DOOR.",
+     "Nobody signed. Nobody.",
+     "My pen died. My pen died at the worst moment of my life."
+    ],
+    "greet_owner": [
+     "Are you famous? Can you sign this anyway?",
+     "Hi! When are the Dukes back? Mondays? Every Monday?",
+     "{owner}! Can you put a sign on the dressing room door that says 'please sign autographs'?"
+    ],
+    "event_specific": {
+     "pro_practice": [
+      "Mr. Duke! Mr. Duke! Over here!",
+      "Can you sign my stick? My cast? My other stick?",
+      "Number 27 looked at me. I think. He looked near me."
+     ],
+     "special": [
+      "Ronnie's here. Ronnie's actually here.",
+      "Legends night! I brought nine books.",
+      "Old-timers sign anything. I've got a toaster in the car."
+     ]
+    }
+   }
+  },
+  {
+   "id": "coffee_coach",
+   "label": "Coffee coach",
+   "weight": 0.03,
+   "age": [
+    30,
+    60
+   ],
+   "role": "customer",
+   "traits": {
+    "warmth": [
+     0.2,
+     0.7
+    ],
+    "chatter": [
+     0.7,
+     1.0
+    ],
+    "patience": [
+     0.0,
+     0.4
+    ],
+    "pride": [
+     0.6,
+     1.0
+    ],
+    "nerve": [
+     0.2,
+     0.6
+    ],
+    "humour": [
+     0.3,
+     0.8
+    ]
+   },
+   "interests": {
+    "minor_hockey": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "tournament": {
+     "watch": 1.0,
+     "play": 0.0
+    },
+    "high_school": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.3,
+     "play": 0.6
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 17.0,
+     "place": "away",
+     "doing": "work"
+    },
+    {
+     "days": [
+      0,
+      6
+     ],
+     "from": 7.0,
+     "to": 12.0,
+     "place": "glass",
+     "doing": "minor hockey"
+    }
+   ],
+   "look": {
+    "builds": [
+     "stocky",
+     "big",
+     "average"
+    ],
+    "outfits": [
+     "team_jacket",
+     "parka",
+     "coach_tracksuit"
+    ],
+    "hair": [
+     "short",
+     "mullet",
+     "buzz",
+     "bald"
+    ],
+    "accessories": [
+     "coffee",
+     "clipboard",
+     "whistle",
+     "ball_cap"
+    ],
+    "colors": [
+     [
+      "7a4a26",
+      "f2d16b"
+     ],
+     [
+      "1c4e80",
+      "f2f2f2"
+     ],
+     [
+      "b22222",
+      "1b1b1b"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.4,
+    "bladder": 0.45,
+    "cold": 0.35,
+    "boredom": 0.3
+   },
+   "family": {
+    "kids": [
+     1,
+     3
+    ],
+    "partner": 0.8
+   },
+   "first_names": [
+    "Rick",
+    "Brad",
+    "Terry",
+    "Glen",
+    "Shelley",
+    "Darren",
+    "Jim",
+    "Kurt",
+    "Rhonda",
+    "Todd",
+    "Barry",
+    "Lance",
+    "Deb",
+    "Grant",
+    "Sal",
+    "Wes",
+    "Corinne",
+    "Duane",
+    "Al",
+    "Tracey"
+   ],
+   "barks": {
+    "idle": [
+     "If I were coaching, and I'm not, I'd have him on the point.",
+     "That coach plays favourites. Not my kid. That's the problem.",
+     "I played at this level. Higher, actually. Midget AA. Ask me.",
+     "Coffee's cold. Like that power play."
+    ],
+    "bad_ice": [
+     "How's my kid supposed to stickhandle on that?",
+     "That's a rut. A RUT! Somebody's going to get hurt!",
+     "Ice like this, no wonder we're losing."
+    ],
+    "wet_ice": [
+     "They're skating in mud! Get the Zambelli out!",
+     "Soft ice. Slows the fast kids. Like mine.",
+     "Somebody flood this properly!"
+    ],
+    "good_ice": [
+     "Good ice. No excuses now, boys.",
+     "Ice is fast. Move your feet!",
+     "Finally. Ice my kid can actually play on."
+    ],
+    "goal": [
+     "THAT'S IT! THAT'S WHAT I'VE BEEN SAYING!",
+     "See? SEE? Put him on the power play!",
+     "YES! Now do it again!"
+    ],
+    "cold": [
+     "Cold? I'm too angry to be cold.",
+     "This coffee was hot in the parking lot.",
+     "My hands are frozen to the glass."
+    ],
+    "hungry": [
+     "I'll eat at the intermission. If there's an intermission. Is there an intermission?",
+     "Double double and a dog.",
+     "I haven't eaten since the 6 am game."
+    ],
+    "long_line": [
+     "I can't leave the glass. Who'll yell?",
+     "I'll go after. Somebody has to coach.",
+     "This canteen needs a line-change system."
+    ],
+    "bored": [
+     "Drills. Drills! Scrimmage! Let them play!",
+     "What is this, a practice for the coaches?",
+     "In 1994 we didn't do drills. We scored."
+    ],
+    "leaving_happy": [
+     "Good game. He listened to me. Not the coach. Me.",
+     "We won. I'll take some credit. Most of it.",
+     "Ice was decent. Kid was great. I was right."
+    ],
+    "leaving_angry": [
+     "I'm emailing the association.",
+     "That ref is fifteen years old and it shows.",
+     "We're transferring to Harlow Falls. I'm serious this time."
+    ],
+    "greet_owner": [
+     "You're the owner? Can you get the U13s more ice? Prime ice?",
+     "Hey. Who decides the ice times? You? Great. Let's talk.",
+     "{owner}. The glass by the home bench is scratched. I can't see my kid. Fix it."
+    ],
+    "event_specific": {
+     "minor_hockey": [
+      "SKATE! Shoot! SHOOT! Okay, pass, fine!",
+      "Ref! Ref! Open your eyes!",
+      "Hustle! HUSTLE!"
+     ],
+     "tournament": [
+      "It's the semi-final! Everybody on their feet!",
+      "If we lose to Kessler I'm sleeping in the car.",
+      "Third period, tied, the whole valley watching. MOVE YOUR FEET!"
+     ]
+    }
+   }
+  },
+  {
+   "id": "grandparent",
+   "label": "Grandparent",
+   "weight": 0.07,
+   "age": [
+    58,
+    90
+   ],
+   "role": "family",
+   "traits": {
+    "warmth": [
+     0.7,
+     1.0
+    ],
+    "chatter": [
+     0.4,
+     0.9
+    ],
+    "patience": [
+     0.6,
+     1.0
+    ],
+    "pride": [
+     0.3,
+     0.8
+    ],
+    "nerve": [
+     0.4,
+     0.9
+    ],
+    "humour": [
+     0.4,
+     0.9
+    ]
+   },
+   "interests": {
+    "minor_hockey": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "figure_show": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "learn_to_skate": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "tournament": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.6,
+     "play": 0.2
+    },
+    "figure_practice": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "senior_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.7,
+     "play": 0.1
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 20.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "bed"
+    }
+   ],
+   "look": {
+    "builds": [
+     "average",
+     "stocky",
+     "slim"
+    ],
+    "outfits": [
+     "cardigan",
+     "parka"
+    ],
+    "hair": [
+     "bald",
+     "short",
+     "bun",
+     "curly"
+    ],
+    "accessories": [
+     "blanket",
+     "thermos",
+     "knitting",
+     "reading_glasses",
+     "camera"
+    ],
+    "colors": [
+     [
+      "6a8caf",
+      "f2e6c8"
+     ],
+     [
+      "b22222",
+      "f2e6c8"
+     ],
+     [
+      "c9a66b",
+      "1d2b4f"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.2,
+    "bladder": 0.5,
+    "cold": 0.8,
+    "boredom": 0.2
+   },
+   "family": {
+    "kids": [
+     2,
+     5
+    ],
+    "partner": 0.6
+   },
+   "first_names": [
+    "Marjorie",
+    "Walter",
+    "Edna",
+    "Ernie",
+    "Gladys",
+    "Norm",
+    "Irene",
+    "Bert",
+    "Shirley",
+    "Clarence",
+    "Dot",
+    "Leonard",
+    "Muriel",
+    "Vern",
+    "Elsie",
+    "Bill",
+    "June",
+    "Stan",
+    "Olga",
+    "Maurice",
+    "Lucille",
+    "Kazimierz"
+   ],
+   "barks": {
+    "idle": [
+     "I've knitted three toques this game. One has a pom-pom.",
+     "That's my grandson in the red. No, the other red.",
+     "I brought squares. Lemon squares. For anybody.",
+     "When his father played here, the roof dripped too. Lovely to see some things never change."
+    ],
+    "bad_ice": [
+     "Oh, that's a nasty bump. Mind yourself, sweetheart!",
+     "That ice looks {ice_word}. Back in my day the boys would've filled that with a kettle.",
+     "I don't like the look of that crack."
+    ],
+    "wet_ice": [
+     "The little ones are getting soaked through.",
+     "Is the ice melting? Is that normal?",
+     "Soggy. He'll need dry socks. I've brought dry socks."
+    ],
+    "good_ice": [
+     "Oh, doesn't it shine. Like glass.",
+     "Isn't that pretty. The ice, I mean. And him.",
+     "Lovely smooth ice. Someone's taken care."
+    ],
+    "goal": [
+     "Oh! Oh! He did it! Is that ours? That's ours!",
+     "Well done, sweetheart! Well done!",
+     "I've got it on the camera. I think I've got the ceiling on the camera."
+    ],
+    "cold": [
+     "I've a blanket, a flask and my good coat, and I'm still perishing.",
+     "Arenas never get warmer. I've been checking since 1962.",
+     "My hands are cold but my heart's warm. My hands are very cold."
+    ],
+    "hungry": [
+     "Is there tea? Proper tea?",
+     "I'll have a hot dog, but don't tell my doctor.",
+     "I brought squares, but I'll have fries too."
+    ],
+    "long_line": [
+     "I'll queue. I'm retired. Queuing is what I do now.",
+     "There's a line. I'll meet someone in it. I always do.",
+     "Take your time, dear. I'll just stand here and age."
+    ],
+    "bored": [
+     "I'll just close my eyes for one shift.",
+     "Is it the second period or the first? Doesn't matter.",
+     "I'm going to have a little wander and see the photos."
+    ],
+    "leaving_happy": [
+     "That was a treat. Same time next week.",
+     "He waved at me! Did you see? He waved.",
+     "Lovely afternoon. Lovely rink. Draughty."
+    ],
+    "leaving_angry": [
+     "Too cold for my hip. We'll watch on the computer.",
+     "Somebody shouted a word I won't repeat. In front of the children.",
+     "Nothing to sit on but splinters."
+    ],
+    "greet_owner": [
+     "You're the young one who bought it? Good for you, dear.",
+     "Hello! It's lovely to see it looking cared for. Bit cold, though.",
+     "{owner}, is it? My husband courted me on this ice. Keep it nice."
+    ],
+    "event_specific": {
+     "minor_hockey": [
+      "Skate, sweetheart! Skate! Oh, he's sitting on the ice. That's all right.",
+      "Go, go! Oh, that's the wrong way. That's fine!",
+      "His father used to fall like that. It's genetic. It's adorable."
+     ],
+     "figure_show": [
+      "Oh, look at her spin! I'll be dizzy for her.",
+      "She's in the pink. No, the other pink.",
+      "I sewed every sequin on that costume. Every one. Look at them catch the light."
+     ],
+     "learn_to_skate": [
+      "He let go! He let go! Oh, he's down. He's up! He's down.",
+      "Look at her go! Well, look at her stand. That's going!",
+      "When I learned we had a kitchen chair. They still use a chair. Some things work."
+     ]
+    }
+   }
+  },
+  {
+   "id": "scout",
+   "label": "Scout",
+   "weight": 0.005,
+   "age": [
+    35,
+    70
+   ],
+   "role": "visitor",
+   "traits": {
+    "warmth": [
+     0.1,
+     0.5
+    ],
+    "chatter": [
+     0.0,
+     0.4
+    ],
+    "patience": [
+     0.6,
+     1.0
+    ],
+    "pride": [
+     0.4,
+     0.9
+    ],
+    "nerve": [
+     0.7,
+     1.0
+    ],
+    "humour": [
+     0.1,
+     0.6
+    ]
+   },
+   "interests": {
+    "senior_hockey": {
+     "watch": 0.9,
+     "play": 0.0
+    },
+    "pro_practice": {
+     "watch": 0.8,
+     "play": 0.0
+    },
+    "tournament": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "high_school": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "minor_hockey": {
+     "watch": 0.5,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 0.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "on the road"
+    }
+   ],
+   "look": {
+    "builds": [
+     "average",
+     "slim",
+     "stocky"
+    ],
+    "outfits": [
+     "team_jacket",
+     "parka",
+     "suit"
+    ],
+    "hair": [
+     "short",
+     "bald",
+     "buzz"
+    ],
+    "accessories": [
+     "clipboard",
+     "coffee",
+     "ball_cap",
+     "reading_glasses"
+    ],
+    "colors": [
+     [
+      "143d29",
+      "f0e6d0"
+     ],
+     [
+      "4b2a7b",
+      "e3b23c"
+     ],
+     [
+      "3a3a3a",
+      "8a8a8a"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.2,
+    "bladder": 0.35,
+    "cold": 0.7,
+    "boredom": 0.15
+   },
+   "family": {
+    "kids": [
+     0,
+     2
+    ],
+    "partner": 0.6
+   },
+   "first_names": [
+    "Clint",
+    "Gerry",
+    "Hal",
+    "Dennis",
+    "Merv",
+    "Ted",
+    "Roy",
+    "Butch",
+    "Carla",
+    "Ken",
+    "Lorne",
+    "Phil",
+    "Wendell",
+    "Gary",
+    "Sharon",
+    "Bob",
+    "Marv",
+    "Ross",
+    "Norm",
+    "Dwight"
+   ],
+   "barks": {
+    "idle": [
+     "Hmm.",
+     "Number 22. Feet. Watch the feet.",
+     "Drove four hours for one shift. Worth it if it's the right shift.",
+     "I'm not here. You didn't see me."
+    ],
+    "bad_ice": [
+     "Ice like that, you can't tell who can skate.",
+     "Rough sheet. Noted.",
+     "Hard to judge hands on {ice_word} ice."
+    ],
+    "wet_ice": [
+     "Slow ice hides a slow skater. Noted.",
+     "Soft. Everybody looks the same on soft ice.",
+     "Can't evaluate in this."
+    ],
+    "good_ice": [
+     "Clean sheet. Now we'll see.",
+     "Good ice. Separates the skaters from the hopers.",
+     "Fast ice. Fast kids. Good."
+    ],
+    "goal": [
+     "Hm. Release.",
+     "Lucky. Or not. Watch the next one.",
+     "Good hands. Writing that down."
+    ],
+    "cold": [
+     "Cold. Doesn't matter.",
+     "Been colder in Tamarack.",
+     "Coffee's going cold faster than that defenceman."
+    ],
+    "hungry": [
+     "Hot dog. Don't need a bun.",
+     "I'll eat on the road.",
+     "Coffee. Black."
+    ],
+    "long_line": [
+     "Not waiting. Missed a shift waiting once in 1991. Never again.",
+     "I'll go without.",
+     "Line's too long. Kid's too good."
+    ],
+    "bored": [
+     "Seen enough.",
+     "Nothing here tonight.",
+     "Third period of a blowout. Leaving after this whistle."
+    ],
+    "leaving_happy": [
+     "Saw what I came for.",
+     "Worth the drive.",
+     "That one. Yeah. That one."
+    ],
+    "leaving_angry": [
+     "Waste of a tank of gas.",
+     "Couldn't see a thing through that glass.",
+     "Nobody here."
+    ],
+    "greet_owner": [
+     "You the owner? Nice rink. Small.",
+     "Evening. Who's the kid in 9?",
+     "{owner}. Good ice. Don't let it go to your head."
+    ],
+    "event_specific": {
+     "senior_hockey": [
+      "Watch him without the puck. That's the player.",
+      "Fourth line, left side. Keep an eye on him.",
+      "That's a Senior player with a pro stride. Huh."
+     ],
+     "tournament": [
+      "Peewees. Too young. Always too young. Still watching.",
+      "Watch the kid who goes back for the puck. That's the one.",
+      "Parents yelling. Kid's not listening. Good sign."
+     ]
+    }
+   }
+  },
+  {
+   "id": "shift_worker",
+   "label": "Shift worker",
+   "weight": 0.06,
+   "age": [
+    22,
+    62
+   ],
+   "role": "regular",
+   "traits": {
+    "warmth": [
+     0.3,
+     0.8
+    ],
+    "chatter": [
+     0.1,
+     0.6
+    ],
+    "patience": [
+     0.4,
+     0.9
+    ],
+    "pride": [
+     0.3,
+     0.8
+    ],
+    "nerve": [
+     0.6,
+     1.0
+    ],
+    "humour": [
+     0.3,
+     0.8
+    ]
+   },
+   "interests": {
+    "stick_and_puck": {
+     "watch": 0.3,
+     "play": 0.8
+    },
+    "beer_league": {
+     "watch": 0.4,
+     "play": 0.6
+    },
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "broomball": {
+     "watch": 0.5,
+     "play": 0.3
+    },
+    "public_skate": {
+     "watch": 0.2,
+     "play": 0.3
+    },
+    "special": {
+     "watch": 0.4,
+     "play": 0.1
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "from": 22.0,
+     "to": 24.0,
+     "place": "away",
+     "doing": "night shift"
+    },
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "from": 0.0,
+     "to": 6.0,
+     "place": "away",
+     "doing": "night shift"
+    },
+    {
+     "days": [
+      4,
+      5,
+      6
+     ],
+     "from": 14.0,
+     "to": 22.0,
+     "place": "away",
+     "doing": "afternoon shift"
+    }
+   ],
+   "look": {
+    "builds": [
+     "big",
+     "stocky",
+     "average"
+    ],
+    "outfits": [
+     "coveralls",
+     "hoodie",
+     "parka"
+    ],
+    "hair": [
+     "short",
+     "toque_hair",
+     "buzz",
+     "ponytail",
+     "bald"
+    ],
+    "accessories": [
+     "thermos",
+     "toque",
+     "stick",
+     "ball_cap"
+    ],
+    "colors": [
+     [
+      "3c3c3c",
+      "f28c28"
+     ],
+     [
+      "2b2b2b",
+      "f7c548"
+     ],
+     [
+      "1b1b1b",
+      "c0c4c8"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.45,
+    "bladder": 0.35,
+    "cold": 0.4,
+    "boredom": 0.3
+   },
+   "family": {
+    "kids": [
+     0,
+     3
+    ],
+    "partner": 0.7
+   },
+   "first_names": [
+    "Len",
+    "Darryl",
+    "Shauna",
+    "Tony",
+    "Brenda",
+    "Kurt",
+    "Dwight",
+    "Krista",
+    "Mo",
+    "Ravinder",
+    "Gordie",
+    "Jodi",
+    "Luc",
+    "Pam",
+    "Brent",
+    "Nadia",
+    "Cal",
+    "Rene",
+    "Tracy",
+    "Hector"
+   ],
+   "barks": {
+    "idle": [
+     "Just off nights. This is my evening. It's 10 am.",
+     "The mill whistle's in my bones.",
+     "Nobody here at this hour. That's why I'm here.",
+     "Fourteen hours of machine noise and now the sweet sound of nothing."
+    ],
+    "bad_ice": [
+     "Ice is rough. So am I. We'll get along.",
+     "That's worse than the floor at the mill.",
+     "Seen better. Seen worse."
+    ],
+    "wet_ice": [
+     "Wet. Like my boots after a shift.",
+     "Somebody flooded late. Probably also on nights.",
+     "Slush. Fine. Yup."
+    ],
+    "good_ice": [
+     "Good ice. Good morning. Night. Whatever it is.",
+     "Fresh sheet and nobody on it.",
+     "That'll do. That'll do nicely."
+    ],
+    "goal": [
+     "Yup.",
+     "There she goes.",
+     "Nice."
+    ],
+    "cold": [
+     "Warmer than the loading dock.",
+     "Cold's fine. Cold keeps me awake.",
+     "I've got the thermos."
+    ],
+    "hungry": [
+     "Breakfast is a hot dog at 10 am. Don't judge me.",
+     "Coffee and fries. Shift food.",
+     "Whatever's hot."
+    ],
+    "long_line": [
+     "Line? At this hour?",
+     "I'll wait. I'm used to waiting for the next shift.",
+     "Not worth it. Back to the ice."
+    ],
+    "bored": [
+     "Need sleep. Or pucks. Pucks.",
+     "Quiet. Too quiet. Good quiet.",
+     "I'll just sit here and not be at work."
+    ],
+    "leaving_happy": [
+     "Good skate. Now sleep.",
+     "That's my weekend, on a Tuesday.",
+     "See you after the next rotation."
+    ],
+    "leaving_angry": [
+     "Booked over again. Only hour I had.",
+     "Cancelled? I drove in on no sleep.",
+     "Ice was garbage. Going to bed."
+    ],
+    "greet_owner": [
+     "You're up early. Or late. Same as me.",
+     "Morning. Night. Hi.",
+     "{owner}. Keep the weekday ice. Some of us work nights."
+    ],
+    "event_specific": {
+     "stick_and_puck": [
+      "Nobody talk. Just pucks.",
+      "Bucket. Net. Bed.",
+      "Last bucket. Then the drive home in daylight. Then sleep. Then nights."
+     ],
+     "senior_hockey": [
+      "Took a shift swap for this one. Beat the mill. I work at the mill. Beat it anyway.",
+      "Traded a Sunday for a Saturday. Worth it if they win.",
+      "If they lose, I'm back on at six with nothing to say."
+     ]
+    }
+   }
+  },
+  {
+   "id": "shopkeeper",
+   "label": "Shopkeeper",
+   "weight": 0.005,
+   "age": [
+    30,
+    75
+   ],
+   "role": "regular",
+   "traits": {
+    "warmth": [
+     0.5,
+     0.9
+    ],
+    "chatter": [
+     0.4,
+     0.9
+    ],
+    "patience": [
+     0.3,
+     0.8
+    ],
+    "pride": [
+     0.5,
+     0.9
+    ],
+    "nerve": [
+     0.4,
+     0.8
+    ],
+    "humour": [
+     0.4,
+     0.9
+    ]
+   },
+   "interests": {
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.0
+    },
+    "figure_show": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.3,
+     "play": 0.3
+    },
+    "minor_hockey": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "special": {
+     "watch": 0.7,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "from": 9.0,
+     "to": 18.0,
+     "place": "away",
+     "doing": "the shop"
+    }
+   ],
+   "look": {
+    "builds": [
+     "stocky",
+     "average",
+     "big"
+    ],
+    "outfits": [
+     "shop_apron",
+     "cardigan",
+     "suit"
+    ],
+    "hair": [
+     "short",
+     "bun",
+     "bald",
+     "curly"
+    ],
+    "accessories": [
+     "reading_glasses",
+     "coffee",
+     "none",
+     "glasses"
+    ],
+    "colors": [
+     [
+      "2f5e8a",
+      "d9d4c7"
+     ],
+     [
+      "c9a66b",
+      "1d2b4f"
+     ],
+     [
+      "b22222",
+      "1b1b1b"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.3,
+    "bladder": 0.4,
+    "cold": 0.5,
+    "boredom": 0.3
+   },
+   "family": {
+    "kids": [
+     0,
+     3
+    ],
+    "partner": 0.7
+   },
+   "first_names": [
+    "Darren",
+    "Kelly",
+    "Trevor",
+    "Lisa",
+    "Jason",
+    "Tammy",
+    "Jeff",
+    "Angela",
+    "Shawn",
+    "Michelle",
+    "Curtis",
+    "Kristen",
+    "Chad",
+    "Nicole",
+    "Rob",
+    "Stacey",
+    "Dean",
+    "Lori",
+    "Sandeep",
+    "Anh",
+    "Marc",
+    "Josée"
+   ],
+   "barks": {
+    "idle": [
+     "I sponsor the board ad by the visitors' gate. Faded, but it's mine.",
+     "Business is slow. Hockey's fast. Fair trade.",
+     "Every customer I have is in this building tonight.",
+     "If you need screws, come by Monday. Not tonight. Tonight's hockey."
+    ],
+    "bad_ice": [
+     "Ice that bad is bad for business.",
+     "My ad's next to a rut. Not the look I paid for.",
+     "Looks {ice_word}. People notice."
+    ],
+    "wet_ice": [
+     "Wet ice, wet customers, cranky customers.",
+     "Puddles. Somebody sell them a squeegee.",
+     "Should've stocked more boot dryers."
+    ],
+    "good_ice": [
+     "Good ice. Good crowd. Good for Main Street.",
+     "When the rink's good, the town's good. Simple.",
+     "Somebody's earning their wages."
+    ],
+    "goal": [
+     "There we go! Drinks on... well, not on me.",
+     "Good goal. Good for business.",
+     "That's going in the window display."
+    ],
+    "cold": [
+     "I keep the shop warmer than this. You're welcome to come by.",
+     "Cold, but the people are warm.",
+     "Wish I'd brought stock. Toques would sell."
+    ],
+    "hungry": [
+     "Hot dog. I'll write it off as networking.",
+     "The canteen should stock more. I'd sell them more.",
+     "Coffee, please. Long day at the till."
+    ],
+    "long_line": [
+     "I'd have this line moving in five minutes.",
+     "Two tills, that's all they need. Two tills.",
+     "Long line means good crowd. Still long."
+    ],
+    "bored": [
+     "Slow game. Like a Tuesday afternoon.",
+     "I could be doing inventory.",
+     "Let me know when something happens."
+    ],
+    "leaving_happy": [
+     "Good night. Come by the shop.",
+     "That's the town at its best.",
+     "Good game. I'll mention it to everybody who comes in."
+    ],
+    "leaving_angry": [
+     "Not renewing that board ad. Not like this.",
+     "Cold, late and a loss.",
+     "I'm telling the Chamber."
+    ],
+    "greet_owner": [
+     "Hello, neighbour. If you need anything for the rink, ask me first.",
+     "{owner}! Good to see you. My board ad needs paint. Just saying.",
+     "Evening. When are we talking about a sponsorship?"
+    ],
+    "event_specific": {
+     "senior_hockey": [
+      "Main Street's here. All of it.",
+      "If we win, I'm putting a banner in the window.",
+      "My customers are all here. I'm going to hear about this game all week."
+     ],
+     "special": [
+      "Every event brings people downtown. Keep them coming.",
+      "I donated the raffle prize. Tell people who donated the raffle prize.",
+      "Good turnout. I'm going to be out of toques by Monday."
+     ]
+    }
+   }
+  },
+  {
+   "id": "canteen_worker",
+   "label": "Canteen worker",
+   "weight": 0.01,
+   "age": [
+    15,
+    70
+   ],
+   "role": "staff",
+   "traits": {
+    "warmth": [
+     0.6,
+     1.0
+    ],
+    "chatter": [
+     0.5,
+     1.0
+    ],
+    "patience": [
+     0.4,
+     0.9
+    ],
+    "pride": [
+     0.3,
+     0.8
+    ],
+    "nerve": [
+     0.5,
+     0.9
+    ],
+    "humour": [
+     0.5,
+     1.0
+    ]
+   },
+   "interests": {
+    "tournament": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "beer_league": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "broomball": {
+     "watch": 0.5,
+     "play": 0.0
+    },
+    "public_skate": {
+     "watch": 0.4,
+     "play": 0.2
+    },
+    "special": {
+     "watch": 0.6,
+     "play": 0.3
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      2,
+      4
+     ],
+     "from": 15.0,
+     "to": 23.0,
+     "place": "canteen",
+     "doing": "work"
+    },
+    {
+     "days": [
+      0,
+      6
+     ],
+     "from": 8.0,
+     "to": 16.0,
+     "place": "canteen",
+     "doing": "work"
+    }
+   ],
+   "look": {
+    "builds": [
+     "stocky",
+     "average",
+     "slim"
+    ],
+    "outfits": [
+     "canteen_apron"
+    ],
+    "hair": [
+     "curly",
+     "ponytail",
+     "bun",
+     "short"
+    ],
+    "accessories": [
+     "coffee",
+     "none"
+    ],
+    "colors": [
+     [
+      "e8452c",
+      "f2e6c8"
+     ],
+     [
+      "2e7d4f",
+      "c9a227"
+     ],
+     [
+      "6f3b1f",
+      "fff4e0"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.55,
+    "bladder": 0.3,
+    "cold": 0.3,
+    "boredom": 0.3
+   },
+   "family": {
+    "kids": [
+     0,
+     3
+    ],
+    "partner": 0.6
+   },
+   "first_names": [
+    "Lorraine",
+    "Donna",
+    "Josie",
+    "Bev",
+    "Kayla",
+    "Rita",
+    "Pam",
+    "Sheila",
+    "Cindy",
+    "Maria",
+    "Destiny",
+    "Gail",
+    "Nell",
+    "Tonya",
+    "Marlene",
+    "Joy",
+    "Patsy",
+    "Arlene",
+    "Maddy",
+    "Dolores"
+   ],
+   "barks": {
+    "idle": [
+     "Fryer's hot. Coffee's hot. I'm hot. Next!",
+     "Whatcha having, hon?",
+     "I know your order. Large double double and a hot dog, no onions.",
+     "We're out of the orange freezies. We've been out since 2019."
+    ],
+    "bad_ice": [
+     "I can hear people complaining about the ice from the counter. They complain to me.",
+     "Bad ice means grumpy people means extra gravy.",
+     "Somebody tell Earl, they're telling me."
+    ],
+    "wet_ice": [
+     "Wet ice, wet floors. Mind the counter, hon.",
+     "Every kid's coming in soaked. Hot chocolate for everybody.",
+     "I've mopped this lobby four times."
+    ],
+    "good_ice": [
+     "Ice must be good. Everybody's smiling at the counter.",
+     "Happy crowd tonight. They tip.",
+     "Good ice, good mood, good sales."
+    ],
+    "goal": [
+     "Was that us? That was us! Fries on the house! No, not really.",
+     "I heard the horn. Everybody's going to want a celebration hot chocolate.",
+     "Goal! Watch the line in about two minutes."
+    ],
+    "cold": [
+     "Warmest spot in the building's behind this fryer.",
+     "Cold out there? Hot chocolate's two-fifty.",
+     "Come stand by the coffee machine. It's basically a heater."
+    ],
+    "hungry": [
+     "I eat the broken fries. Perk of the job.",
+     "I haven't sat down since the anthem.",
+     "Hand me a hot dog, I'm on my break. I'm never on my break."
+    ],
+    "long_line": [
+     "One at a time, folks! I've got two hands and one fryer!",
+     "Intermission rush! Everybody stay calm and know your order!",
+     "We're out of gravy. Kidding. Don't scare me like that."
+    ],
+    "bored": [
+     "Slow night. I've wiped this counter nine times.",
+     "Nobody's hungry in the second period. Then everybody is.",
+     "I'll do the popcorn machine. It likes attention."
+    ],
+    "leaving_happy": [
+     "Good night! Record fries!",
+     "Locking up. Leaving the coffee machine on NOT WORKING for luck.",
+     "See you tomorrow, hon."
+    ],
+    "leaving_angry": [
+     "We ran out of everything and the fryer died.",
+     "Nobody helped. Nobody ever helps.",
+     "I need a new mop and a new attitude."
+    ],
+    "greet_owner": [
+     "Hey boss. We need more hot dog buns. And a new fryer. And a raise.",
+     "Hi hon! The coffee machine's working today. Knock on wood.",
+     "{owner}! Can we get the menu letters fixed? No, actually, leave it."
+    ],
+    "event_specific": {
+     "tournament": [
+      "Tournament weekend! Chili's on! Legion recipe!",
+      "Six teams, one fryer, God help us.",
+      "Chili's down to the last pot. Somebody call the Legion."
+     ],
+     "public_skate": [
+      "Hot chocolate, hot chocolate, hot chocolate, hot dog, hot chocolate.",
+      "The HOT CHOC LATE sign is true today. We're behind on hot chocolate.",
+      "Every kid wants The Haverstock. Fourteen marshmallows each. Count them, hon."
+     ]
+    }
+   }
+  },
+  {
+   "id": "volunteer",
+   "label": "Volunteer",
+   "weight": 0.02,
+   "age": [
+    40,
+    85
+   ],
+   "role": "regular",
+   "traits": {
+    "warmth": [
+     0.6,
+     1.0
+    ],
+    "chatter": [
+     0.5,
+     1.0
+    ],
+    "patience": [
+     0.6,
+     1.0
+    ],
+    "pride": [
+     0.3,
+     0.8
+    ],
+    "nerve": [
+     0.5,
+     0.9
+    ],
+    "humour": [
+     0.4,
+     0.9
+    ]
+   },
+   "interests": {
+    "minor_hockey": {
+     "watch": 0.7,
+     "play": 0.4
+    },
+    "tournament": {
+     "watch": 0.7,
+     "play": 0.6
+    },
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.4
+    },
+    "beer_league": {
+     "watch": 0.4,
+     "play": 0.3
+    },
+    "figure_show": {
+     "watch": 0.4,
+     "play": 0.2
+    },
+    "special": {
+     "watch": 0.8,
+     "play": 0.9
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 9.0,
+     "to": 12.0,
+     "place": "away",
+     "doing": "the Legion"
+    }
+   ],
+   "look": {
+    "builds": [
+     "average",
+     "stocky",
+     "slim"
+    ],
+    "outfits": [
+     "cardigan",
+     "parka",
+     "team_jacket"
+    ],
+    "hair": [
+     "short",
+     "bun",
+     "bald",
+     "curly"
+    ],
+    "accessories": [
+     "clipboard",
+     "sign",
+     "programme",
+     "reading_glasses"
+    ],
+    "colors": [
+     [
+      "b22222",
+      "f2e6c8"
+     ],
+     [
+      "1c4e80",
+      "f2f2f2"
+     ],
+     [
+      "6a8caf",
+      "f2e6c8"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.3,
+    "bladder": 0.4,
+    "cold": 0.6,
+    "boredom": 0.2
+   },
+   "family": {
+    "kids": [
+     1,
+     4
+    ],
+    "partner": 0.75
+   },
+   "first_names": [
+    "Marjorie",
+    "Walter",
+    "Edna",
+    "Ernie",
+    "Gladys",
+    "Norm",
+    "Irene",
+    "Bert",
+    "Shirley",
+    "Clarence",
+    "Donna",
+    "Ray",
+    "Pat",
+    "Ruth",
+    "Gerry",
+    "Lynn",
+    "Alan",
+    "Brenda",
+    "Wally",
+    "Nancy"
+   ],
+   "barks": {
+    "idle": [
+     "Fifty-fifty! Half for you, half for the kids!",
+     "I've been volunteering here since before you were born. Possibly before your parents were.",
+     "Clipboard says I'm on the door. Clipboard is law.",
+     "If anybody needs a timekeeper, I know the buttons. Most of them."
+    ],
+    "bad_ice": [
+     "That rut wasn't there for the Peewees. Somebody tell the owner.",
+     "The ice is {ice_word}. I'll put it in the minutes.",
+     "Poor ice. I'll organise a bake sale for a new one."
+    ],
+    "wet_ice": [
+     "Wet ice means the schedule's running late. My clipboard's running late.",
+     "The Zambelli's late. Everything's late.",
+     "Puddles on the ice and puddles in the lobby. Mops, people."
+    ],
+    "good_ice": [
+     "Lovely ice. The visiting teams will notice.",
+     "Ice is {ice_word}. Gus would be proud.",
+     "Good ice. We'll run on time tonight. Maybe."
+    ],
+    "goal": [
+     "Goal! Somebody write it down! Is anyone writing it down?",
+     "That's the game-winner. I can feel it.",
+     "Lovely goal. I almost dropped the 50/50 roll."
+    ],
+    "cold": [
+     "I've done the door in worse.",
+     "Volunteers don't get cold. Volunteers get thermoses.",
+     "My fingers are too cold to tear tickets."
+    ],
+    "hungry": [
+     "Is there any chili left? Volunteers eat last, but we do eat.",
+     "I'll take a coffee and whatever's in the warmer.",
+     "Squares in the hall for the volunteers. I made the squares."
+    ],
+    "long_line": [
+     "Somebody should organise this line. I'll organise this line.",
+     "Let me through, I'm a volunteer! I'm very sorry.",
+     "Two lines, folks. Fries left, drinks right."
+    ],
+    "bored": [
+     "Slow night on the door. I'll count the programmes again.",
+     "Anybody want a 50/50? Anybody? Last call. Not really last call.",
+     "I'll tidy the trophy case."
+    ],
+    "leaving_happy": [
+     "Big pot tonight. The kids will get their jerseys.",
+     "Ran on time! A miracle!",
+     "Good night, everybody. Same again Saturday."
+    ],
+    "leaving_angry": [
+     "Nobody bought tickets. Nobody stopped. Nobody cares.",
+     "The schedule ran an hour late. I'm too old for an hour late.",
+     "We need more volunteers. We always need more volunteers."
+    ],
+    "greet_owner": [
+     "You're the owner? We need a table by the door. And a chair. And a heater.",
+     "Hello, {owner}. Fifty-fifty? It's for the kids.",
+     "Lovely to meet you. I've volunteered here since 1971. Don't change anything."
+    ],
+    "event_specific": {
+     "tournament": [
+      "Game six of eleven. Clipboard's holding. Barely.",
+      "Crest trading in the lobby, kids! Gently!",
+      "Who has the key for dressing room 4? Someone has the key for dressing room 4."
+     ],
+     "special": [
+      "Every hand on deck tonight. Even the hands that don't know what they're doing.",
+      "Coffee urn's on, squares are out, raffle's sold. Now we pray.",
+      "I've made the signs. Somebody else can laminate them."
+     ],
+     "senior_hockey": [
+      "Programmes! Twenty-five cents! It's a dollar now. Still a bargain!",
+      "Fifty-fifty's at $212. Not a house. A fridge, maybe.",
+      "Doors open at six. I'm on the doors. I've been on the doors since 1983."
+     ]
+    }
+   }
+  },
+  {
+   "id": "official",
+   "label": "Official",
+   "weight": 0.01,
+   "age": [
+    15,
+    65
+   ],
+   "role": "regular",
+   "traits": {
+    "warmth": [
+     0.3,
+     0.7
+    ],
+    "chatter": [
+     0.2,
+     0.6
+    ],
+    "patience": [
+     0.6,
+     1.0
+    ],
+    "pride": [
+     0.6,
+     1.0
+    ],
+    "nerve": [
+     0.7,
+     1.0
+    ],
+    "humour": [
+     0.3,
+     0.7
+    ]
+   },
+   "interests": {
+    "beer_league": {
+     "watch": 0.2,
+     "play": 0.9
+    },
+    "minor_hockey": {
+     "watch": 0.2,
+     "play": 0.8
+    },
+    "senior_hockey": {
+     "watch": 0.3,
+     "play": 0.9
+    },
+    "high_school": {
+     "watch": 0.2,
+     "play": 0.8
+    },
+    "tournament": {
+     "watch": 0.2,
+     "play": 0.7
+    },
+    "figure_show": {
+     "watch": 0.3,
+     "play": 0.5
+    },
+    "special": {
+     "watch": 0.2,
+     "play": 0.3
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 16.0,
+     "place": "away",
+     "doing": "day job"
+    }
+   ],
+   "look": {
+    "builds": [
+     "average",
+     "stocky",
+     "slim"
+    ],
+    "outfits": [
+     "ref_stripes",
+     "suit"
+    ],
+    "hair": [
+     "short",
+     "bald",
+     "buzz",
+     "ponytail"
+    ],
+    "accessories": [
+     "whistle",
+     "clipboard",
+     "none"
+    ],
+    "colors": [
+     [
+      "f4f4f4",
+      "1b1b1b"
+     ],
+     [
+      "1d2b4f",
+      "f4f4f4"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.35,
+    "bladder": 0.4,
+    "cold": 0.35,
+    "boredom": 0.3
+   },
+   "family": {
+    "kids": [
+     0,
+     3
+    ],
+    "partner": 0.7
+   },
+   "first_names": [
+    "Marcel",
+    "Kim",
+    "Brody",
+    "Gerry",
+    "Lou",
+    "Dean",
+    "Denise",
+    "Yves",
+    "Rachel",
+    "Ross",
+    "Jamal",
+    "Pierre",
+    "Trent",
+    "Sandra",
+    "Neil",
+    "Raj",
+    "Luc",
+    "Owen",
+    "Brett",
+    "Simone"
+   ],
+   "barks": {
+    "idle": [
+     "One coat hook. Three officials. Noted.",
+     "Crullers from the Night Owls? Bless them.",
+     "I don't hear anything. I've trained for thirty years not to hear anything.",
+     "The book says it was a good game if nobody remembers the ref."
+    ],
+    "bad_ice": [
+     "Rut on the blue line. Going in the incident book.",
+     "Ice is {ice_word}. I'll have to call that one by eye.",
+     "If a player goes down on that, it's not a dive. Noted."
+    ],
+    "wet_ice": [
+     "The puck's stopping in the slush. Hard to call offside on a puck that won't move.",
+     "Wet ice and a late flood. Book.",
+     "My skates are wet through. Professionally."
+    ],
+    "good_ice": [
+     "Good ice. Fewer whistles. Everybody wins.",
+     "Clean sheet. Nobody to blame but the players.",
+     "Lovely ice. I'll put that in the book too. We note the good ones."
+    ],
+    "goal": [
+     "Good goal. Pointing at the net, as required.",
+     "Clean. Nothing to see here.",
+     "Goal. Centre ice. Moving on."
+    ],
+    "cold": [
+     "Ref room heater's on the wish list. Item four.",
+     "Stripes are not insulated.",
+     "I'll warm up in the third. When the parents do."
+    ],
+    "hungry": [
+     "Two crullers and a coffee, the official's diet.",
+     "No time between games. I'll eat in the car.",
+     "Is there anything left at the canteen? For the neutral party?"
+    ],
+    "long_line": [
+     "Officials don't cut the line. Officials wait like everybody else. Grumpily.",
+     "I'll go hungry. It's character.",
+     "Longer line than my penalty list."
+    ],
+    "bored": [
+     "Nobody's broken a rule in ten minutes. Suspicious.",
+     "This is the dullest game I've ever officiated. Bless it.",
+     "Faceoff. Faceoff. Faceoff."
+    ],
+    "leaving_happy": [
+     "Nobody shouted at me. Write it down.",
+     "Good game, good ice, good night.",
+     "I'll be back Thursday. Tell Shauna thanks for the crullers."
+    ],
+    "leaving_angry": [
+     "I've been called things tonight I haven't been called since 1998.",
+     "Late flood, no hook, wet skates. Book.",
+     "Parents behind the glass. Every word, noted."
+    ],
+    "greet_owner": [
+     "You're the owner? Could we have a second hook in the ref room? Just a hook.",
+     "Evening. The ice is {ice_word}. I've written it down. Nothing personal.",
+     "{owner}. The ref room smells of brooms. A heater would help. Or a different room."
+    ],
+    "event_specific": {
+     "minor_hockey": [
+      "Two minutes for tripping. No, sir, it was a trip. Yes, sir. It was.",
+      "U9s. Nobody's offside because nobody knows where offside is.",
+      "Sir, I am fifteen and I can still hear you."
+     ],
+     "beer_league": [
+      "That's hooking. No, it's not a 'hug'. It's hooking.",
+      "Gentlemen, the pitcher will still be there. Play the game.",
+      "Ten minutes left on the clock and an hour left in the pitcher. Let's move it along."
+     ],
+     "senior_hockey": [
+      "Big crowd tonight. Keep it tight.",
+      "The building's loud tonight. Doreen's on the dirge. Ignore it.",
+      "Senior hockey. Every whistle's a debate."
+     ]
+    }
+   }
+  },
+  {
+   "id": "coach",
+   "label": "Coach",
+   "weight": 0.015,
+   "age": [
+    22,
+    75
+   ],
+   "role": "regular",
+   "traits": {
+    "warmth": [
+     0.3,
+     0.9
+    ],
+    "chatter": [
+     0.3,
+     0.9
+    ],
+    "patience": [
+     0.3,
+     0.9
+    ],
+    "pride": [
+     0.5,
+     1.0
+    ],
+    "nerve": [
+     0.4,
+     1.0
+    ],
+    "humour": [
+     0.2,
+     0.8
+    ]
+   },
+   "interests": {
+    "minor_hockey": {
+     "watch": 0.6,
+     "play": 0.7
+    },
+    "high_school": {
+     "watch": 0.6,
+     "play": 0.5
+    },
+    "senior_hockey": {
+     "watch": 0.7,
+     "play": 0.4
+    },
+    "figure_practice": {
+     "watch": 0.3,
+     "play": 0.4
+    },
+    "figure_show": {
+     "watch": 0.4,
+     "play": 0.4
+    },
+    "learn_to_skate": {
+     "watch": 0.3,
+     "play": 0.4
+    },
+    "stick_and_puck": {
+     "watch": 0.4,
+     "play": 0.0
+    },
+    "tournament": {
+     "watch": 0.6,
+     "play": 0.6
+    },
+    "special": {
+     "watch": 0.4,
+     "play": 0.2
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 8.0,
+     "to": 15.5,
+     "place": "away",
+     "doing": "day job"
+    }
+   ],
+   "look": {
+    "builds": [
+     "average",
+     "stocky",
+     "slim"
+    ],
+    "outfits": [
+     "coach_tracksuit",
+     "figure_warmup",
+     "team_jacket"
+    ],
+    "hair": [
+     "short",
+     "bun",
+     "ponytail",
+     "buzz",
+     "bald"
+    ],
+    "accessories": [
+     "whistle",
+     "clipboard",
+     "coffee"
+    ],
+    "colors": [
+     [
+      "b22222",
+      "1b1b1b"
+     ],
+     [
+      "2e7d4f",
+      "c9a227"
+     ],
+     [
+      "9fc5e8",
+      "1d2b4f"
+     ],
+     [
+      "4b2a7b",
+      "e3b23c"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.3,
+    "bladder": 0.35,
+    "cold": 0.45,
+    "boredom": 0.2
+   },
+   "family": {
+    "kids": [
+     0,
+     3
+    ],
+    "partner": 0.7
+   },
+   "first_names": [
+    "Bernie",
+    "Colette",
+    "Stan",
+    "Annette",
+    "Hélène",
+    "Bruce",
+    "Dana",
+    "Marc",
+    "Lisa",
+    "Glen",
+    "Shelley",
+    "Doug",
+    "Erin",
+    "Pat",
+    "Chantal",
+    "Ken",
+    "Jo",
+    "Murray",
+    "Tess",
+    "Randy"
+   ],
+   "barks": {
+    "idle": [
+     "Practice plan's laminated. The ice better be too.",
+     "We're working on edges today. Everybody hates edges. Everybody needs edges.",
+     "Two lines, cones at the dots, go on the whistle.",
+     "If I see one more slapshot from the point in warm-up..."
+    ],
+    "bad_ice": [
+     "Can't run a passing drill on that. The puck's got a mind of its own.",
+     "Ice is {ice_word}. We'll skate. Just skate.",
+     "Somebody's going to catch an edge in that rut. I'm not having it."
+    ],
+    "wet_ice": [
+     "Late flood. We're losing eight minutes of my ice.",
+     "Soft. Nobody's turning tight on that.",
+     "Wet ice. Short drills. Keep the feet moving."
+    ],
+    "good_ice": [
+     "Good sheet. No excuses today.",
+     "That's ice you can teach on.",
+     "Fast ice. Let's see who's been working."
+    ],
+    "goal": [
+     "Good. Now do it in a game.",
+     "That's the read. That's the read!",
+     "Nice. Back to the drill."
+    ],
+    "cold": [
+     "Cold rink keeps them moving.",
+     "My whistle's frozen to my lip. Again.",
+     "Keep moving. That goes for me too."
+    ],
+    "hungry": [
+     "I'll eat after. Coaches eat after.",
+     "Coffee. Large. Please.",
+     "Somebody bring the orange slices? No? Different era."
+    ],
+    "long_line": [
+     "No time. Ice in five.",
+     "Get me a coffee if you're going.",
+     "I'm not standing in that. I've got a practice plan."
+    ],
+    "bored": [
+     "They're slow today. I'm slow today.",
+     "Water break. Already? Fine.",
+     "Let's scrimmage. Everybody loves a scrimmage."
+    ],
+    "leaving_happy": [
+     "Good practice. They listened. Some of them.",
+     "That's progress. Small, but progress.",
+     "Good ice, good work. Thanks, {owner}."
+    ],
+    "leaving_angry": [
+     "Lost twenty minutes to a late flood. That's my whole power play.",
+     "We'll book somewhere else if the ice doesn't come around.",
+     "My plan was perfect. The ice wasn't."
+    ],
+    "greet_owner": [
+     "You're the owner? I need my ice on time and flat. That's all. That's everything.",
+     "Morning, {owner}. Can we talk about the schedule?",
+     "Ice is {ice_word}. I'll tell you if it changes."
+    ],
+    "event_specific": {
+     "minor_hockey": [
+      "Heads up! Sticks on the ice!",
+      "Line change! Line change! Where's my D?",
+      "Water bottles back on the bench, please. Not in the stands, Owen."
+     ],
+     "figure_practice": [
+      "Again.",
+      "Knees. Knees! Thank you.",
+      "Arms. Where are your arms? Find your arms."
+     ],
+     "learn_to_skate": [
+      "Knees soft, eyes up. You've got this.",
+      "Falling is part of it. Up we get.",
+      "Everybody let go of the boards. Everybody. Gerald."
+     ],
+     "senior_hockey": [
+      "Same every night. That's all I ask.",
+      "Short shifts. Forty seconds. I'm counting.",
+      "Win the faceoffs and the rest takes care of itself. Mostly."
+     ]
+    }
+   }
+  },
+  {
+   "id": "rink_staff",
+   "label": "Rink staff",
+   "weight": 0.005,
+   "age": [
+    16,
+    70
+   ],
+   "role": "staff",
+   "traits": {
+    "warmth": [
+     0.3,
+     0.9
+    ],
+    "chatter": [
+     0.1,
+     0.8
+    ],
+    "patience": [
+     0.5,
+     1.0
+    ],
+    "pride": [
+     0.5,
+     1.0
+    ],
+    "nerve": [
+     0.6,
+     1.0
+    ],
+    "humour": [
+     0.3,
+     0.9
+    ]
+   },
+   "interests": {
+    "beer_league": {
+     "watch": 0.5,
+     "play": 0.6
+    },
+    "senior_hockey": {
+     "watch": 0.6,
+     "play": 0.0
+    },
+    "stick_and_puck": {
+     "watch": 0.5,
+     "play": 0.4
+    },
+    "special": {
+     "watch": 0.5,
+     "play": 0.3
+    },
+    "figure_show": {
+     "watch": 0.3,
+     "play": 0.0
+    }
+   },
+   "schedule": [
+    {
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "from": 6.0,
+     "to": 14.0,
+     "place": "zamboni_bay",
+     "doing": "work"
+    },
+    {
+     "days": [
+      0,
+      6
+     ],
+     "from": 7.0,
+     "to": 15.0,
+     "place": "lobby",
+     "doing": "work"
+    }
+   ],
+   "look": {
+    "builds": [
+     "average",
+     "stocky",
+     "big",
+     "slim"
+    ],
+    "outfits": [
+     "staff_polo",
+     "coveralls"
+    ],
+    "hair": [
+     "short",
+     "buzz",
+     "bald",
+     "ponytail",
+     "toque_hair"
+    ],
+    "accessories": [
+     "headset",
+     "thermos",
+     "coffee",
+     "clipboard"
+    ],
+    "colors": [
+     [
+      "3c8d4e",
+      "f2f2e9"
+     ],
+     [
+      "2b2b2b",
+      "f7c548"
+     ],
+     [
+      "2b4f86",
+      "d62828"
+     ]
+    ]
+   },
+   "needs": {
+    "hunger": 0.4,
+    "bladder": 0.4,
+    "cold": 0.3,
+    "boredom": 0.25
+   },
+   "family": {
+    "kids": [
+     0,
+     3
+    ],
+    "partner": 0.7
+   },
+   "first_names": [
+    "Darren",
+    "Kelly",
+    "Trevor",
+    "Lisa",
+    "Jason",
+    "Tammy",
+    "Jeff",
+    "Angela",
+    "Shawn",
+    "Michelle",
+    "Curtis",
+    "Kristen",
+    "Chad",
+    "Nicole",
+    "Rob",
+    "Stacey",
+    "Dean",
+    "Lori",
+    "Sandeep",
+    "Anh",
+    "Marc",
+    "Josée"
+   ],
+   "barks": {
+    "idle": [
+     "Snow pit's full again. Of course it is.",
+     "Doris is warming up. Give her a minute. She's old.",
+     "Somebody's left a jock in dressing room 3. Every week.",
+     "If you hear a squeal, it's the belt on the roof. Probably."
+    ],
+    "bad_ice": [
+     "Ice is {ice_word}. I'll get the edger out after this one.",
+     "Who's been doing hockey stops by the gate? That's a crater.",
+     "That soft spot's the roof. It's always the roof."
+    ],
+    "wet_ice": [
+     "Water's not setting. Check the brine temp.",
+     "Too much water on that pass. My fault. Don't tell Earl.",
+     "Wet on top. Ten more minutes before they go on."
+    ],
+    "good_ice": [
+     "Now that's a flood. Hot water and patience.",
+     "Look at that. Doris did good.",
+     "Ice is {ice_word}. Leave it alone."
+    ],
+    "goal": [
+     "Goal. Now they'll want a flood at the intermission.",
+     "Nice. Mind the dead board.",
+     "That puck's going in the rafters. Someday."
+    ],
+    "cold": [
+     "Cold's good. Cold's the job.",
+     "Plant's doing its work. So am I.",
+     "My coffee's frozen. That means the ice is fine."
+    ],
+    "hungry": [
+     "Lunch is a hot dog at 4 pm.",
+     "Lorraine saved me fries. Lorraine always saves me fries.",
+     "Never time to eat in this job."
+    ],
+    "long_line": [
+     "Staff don't queue. Staff go round the back.",
+     "I'll grab something after the flood.",
+     "Line's long. Sales are good. I'm still hungry."
+    ],
+    "bored": [
+     "Quiet night. Good. Quiet is the goal.",
+     "I'll check the plant. Again.",
+     "Mop, flood, mop, flood."
+    ],
+    "leaving_happy": [
+     "Ice is good, building's locked, Doris is tucked in. Night.",
+     "Good shift. Nothing broke.",
+     "Off home. Back at five."
+    ],
+    "leaving_angry": [
+     "Compressor tripped twice. I'm done.",
+     "Somebody touched breaker 14. Somebody.",
+     "Washroom 2. I'm not saying any more."
+    ],
+    "greet_owner": [
+     "Hey boss. Snow pit's full. Doris is fine. Belt's squealing.",
+     "{owner}, the edger's starting on the third pull again.",
+     "Morning. Plant's fine. Ice is {ice_word}. Coffee's NOT WORKING."
+    ],
+    "event_specific": {
+     "senior_hockey": [
+      "Big crowd. Intermission flood's got to be fast and clean.",
+      "Doris knows it's a game night. She runs better.",
+      "Intermission flood. Eight minutes. The whole town's watching me drive in a circle."
+     ],
+     "tournament": [
+      "Flood every 75 minutes. Eleven games. Pray for the blade.",
+      "Game six. The snow pit's full and the day's half done.",
+      "Running fifteen behind. Every flood steals another five."
+     ],
+     "figure_practice": [
+      "Minus three and a half. Hélène will know if it's not.",
+      "Fresh sheet at 05:50. No hockey stops before six or Hélène will hear about it.",
+      "Brine's cold, surface is right. Leave the door shut."
+     ]
+    }
+   }
+  }
+ ],
+ "surnames": [
+  "MacPhail",
+  "MacInnes",
+  "McLeod",
+  "Campbell",
+  "Fraser",
+  "Ross",
+  "Sinclair",
+  "Murray",
+  "Gilchrist",
+  "Haverstock",
+  "Huffman",
+  "Penner",
+  "Piche",
+  "Reid",
+  "Ellis",
+  "Peterson",
+  "Barrett",
+  "Nolan",
+  "Pruett",
+  "Pruitt",
+  "Bratt",
+  "Tremblay",
+  "Thompson",
+  "Fletcher",
+  "Hughes",
+  "Kerr",
+  "Kirkland",
+  "Dunlop",
+  "Hollis",
+  "Ashby",
+  "Weatherby",
+  "Cartwright",
+  "Mulroney",
+  "Doyle",
+  "Duffy",
+  "Rourke",
+  "Brennan",
+  "Kavanagh",
+  "Sullivan",
+  "Murphy",
+  "Flanagan",
+  "Keogh",
+  "Quinlan",
+  "Arsenault",
+  "Beaulieu",
+  "Bouchard",
+  "Delisle",
+  "Duchesne",
+  "Thibodeau",
+  "Lacombe",
+  "Gagnon",
+  "Leclerc",
+  "Delorme",
+  "Fontaine",
+  "Paquette",
+  "Moreau",
+  "Vachon",
+  "Gendron",
+  "Savard",
+  "Dubois",
+  "Fortier",
+  "Lavoie",
+  "Ouellette",
+  "Cormier",
+  "Kowalchuk",
+  "Kuzyk",
+  "Boychuk",
+  "Szymanski",
+  "Kaminski",
+  "Kubiak",
+  "Kowalczuk",
+  "Ostrowski",
+  "Kowalski",
+  "Brzezinski",
+  "Hrynyk",
+  "Melnyk",
+  "Sawchuk",
+  "Wozniak",
+  "Zielinski",
+  "Fedoruk",
+  "Haverkamp",
+  "Fischer",
+  "Lindqvist",
+  "Halvorsen",
+  "Olsen",
+  "Szabo",
+  "Brandt",
+  "Schultz",
+  "Vandenberg",
+  "Nyberg",
+  "Russo",
+  "Marchetti",
+  "Ianucci",
+  "Bianchi",
+  "Esposito",
+  "DeLuca",
+  "Whitehorse",
+  "Littlechild",
+  "Bearskin",
+  "Cardinal",
+  "Morin",
+  "Ahenakew",
+  "Morningstar",
+  "Wolfe",
+  "Sandhu",
+  "Qureshi",
+  "Grewal",
+  "Mehta",
+  "Patel",
+  "Dhillon",
+  "Bautista",
+  "Dela Cruz",
+  "Santos",
+  "Reyes",
+  "Villanueva",
+  "Fong",
+  "Tran",
+  "Nakashima",
+  "Chen",
+  "Wong",
+  "Nguyen",
+  "Park",
+  "Clarke",
+  "Baptiste",
+  "Joseph",
+  "Gooding",
+  "Campbell-Brown"
+ ],
+ "towns": [
+  {
+   "id": "millbrook",
+   "name": "Millbrook",
+   "share": 0.34,
+   "valley": true,
+   "rink": "millbrook_community_arena"
+  },
+  {
+   "id": "harlow_falls",
+   "name": "Harlow Falls",
+   "share": 0.24,
+   "valley": true,
+   "rink": "harlow_falls_municipal"
+  },
+  {
+   "id": "kessler",
+   "name": "Kessler",
+   "share": 0.18,
+   "valley": true,
+   "rink": "kessler_barn"
+  },
+  {
+   "id": "port_ainsley",
+   "name": "Port Ainsley",
+   "share": 0.14,
+   "valley": true,
+   "rink": "port_ainsley_lakeside"
+  },
+  {
+   "id": "duncannon",
+   "name": "Duncannon",
+   "share": 0.1,
+   "valley": true,
+   "rink": "duncannon_frostbank_centre"
+  },
+  {
+   "id": "sainte_odile",
+   "name": "Sainte-Odile",
+   "share": 0.0,
+   "valley": false,
+   "rink": "sainte_odile_arena"
+  },
+  {
+   "id": "kingsport",
+   "name": "Kingsport",
+   "share": 0.0,
+   "valley": false,
+   "rink": ""
+  }
+ ]
+}

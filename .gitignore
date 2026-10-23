@@ -1,0 +1,9 @@
+.godot/
+*.import
+export/
+# Pixel fonts need their import settings (antialiasing and hinting off).
+!assets/ui/fonts/**/*.import
+# gdUnit4 reports
+reports/
+__pycache__/
+*.pyc

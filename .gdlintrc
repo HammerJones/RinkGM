@@ -1,0 +1,24 @@
+# gdlint (gdtoolkit) settings for RinkGM. Runs on the framework layer and
+# new code in tools/lint.sh; the older scripts/ tree is not linted yet.
+max-line-length: 120
+max-file-lines: 2000
+max-public-methods: 40
+function-arguments-number: 12
+class-definitions-order:
+  - tools
+  - classnames
+  - extends
+  - signals
+  - enums
+  - consts
+  - staticvars
+  - exports
+  - pubvars
+  - prvvars
+  - onreadypubvars
+  - onreadyprvvars
+  - others
+disable:
+  - no-elif-return
+  - no-else-return
+  - max-returns

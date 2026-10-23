@@ -1,0 +1,203 @@
+{
+ "id": "lisa_warm_room",
+ "giver": "lisa_cormier",
+ "quest": "lisa_warm_room",
+ "nodes": {
+  "offer": {
+   "say": "Hi, sorry, hi. Lisa, U7 novices. Twelve kids, forty-eight skates, eight in the morning in the visitors' room. The cold one. My kids huddle on one floor tile like penguins. Is there anything you can do? I've brought you a muffin. That's not a bribe. It's a bit of a bribe.",
+   "options": [
+    {
+     "text": "Warm room by Saturday. Well, soon.",
+     "do": [
+      {
+       "quest_start": "lisa_warm_room"
+      },
+      {
+       "rel": [
+        "lisa_cormier",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why not the home room?",
+     "to": "home"
+    },
+    {
+     "text": "Penguins are very hardy.",
+     "to": "cheek"
+    },
+    {
+     "text": "The boiler's a big job. Not right now.",
+     "to": "decline"
+    }
+   ]
+  },
+  "home": {
+   "say": "The Lumber Kings' gear lives in there on weekends and Old Pete says the tape ball doesn't like small children. I don't know if he's joking. I don't think Old Pete jokes.",
+   "options": [
+    {
+     "text": "Then the visitors' room gets warm. Leave it with me.",
+     "do": [
+      {
+       "quest_start": "lisa_warm_room"
+      },
+      {
+       "rel": [
+        "lisa_cormier",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "Penguins don't cry when their laces won't go through the eyelets. Well. Maybe they do. But not in front of their dads.",
+   "options": [
+    {
+     "text": "Okay. Warm room. I'm on it.",
+     "do": [
+      {
+       "quest_start": "lisa_warm_room"
+      },
+      {
+       "rel": [
+        "lisa_cormier",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Okay. I'll bring more muffins. And hand warmers. And maybe a small fire. Kidding. Unless?",
+   "do": [
+    {
+     "rel": [
+      "lisa_cormier",
+      -2
+     ]
+    },
+    {
+     "mood": -0.04
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Oh thank goodness. The muffin's blueberry. The other muffin is also blueberry. I panic-bake.",
+   "options": []
+  },
+  "progress": {
+   "say": "Penguin update?",
+   "options": [
+    {
+     "text": "I'll go look at the visitors' room.",
+     "if": [
+      {
+       "step": [
+        "lisa_warm_room",
+        "room"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Working on the hot water.",
+     "if": [
+      {
+       "step": [
+        "lisa_warm_room",
+        "rooms"
+       ]
+      }
+     ],
+     "to": "p_rooms"
+    },
+    {
+     "text": "Room's warmer. How are the Saturdays?",
+     "if": [
+      {
+       "step": [
+        "lisa_warm_room",
+        "saturdays"
+       ]
+      }
+     ],
+     "to": "p_sat"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_rooms": {
+   "say": "There's writing on the shower wall that says neither is hot. My kids can't read yet. I read it to them. That was a mistake.",
+   "options": []
+  },
+  "p_sat": {
+   "say": "Nobody stood on the tile last week. Nobody needed to. One boy stood on it anyway, out of tradition.",
+   "options": []
+  },
+  "complete": {
+   "say": "Warm room, warm fingers, forty-eight skates done in eleven minutes. That's a record. Here, we got the team photo done. It's for the wall by the washrooms. Teddy is facing the wrong way. Teddy is always facing the wrong way.",
+   "options": [
+    {
+     "text": "Up on the minor hockey wall, Teddy and all.",
+     "do": [
+      {
+       "set": "novice_photo_on_wall"
+      },
+      {
+       "rel": [
+        "lisa_cormier",
+        2
+       ]
+      }
+     ],
+     "to": "c_wall"
+    },
+    {
+     "text": "Can we retake it with Teddy facing forward?",
+     "to": "c_retake"
+    },
+    {
+     "text": "Thank you for the muffins, honestly.",
+     "do": [
+      {
+       "rel": [
+        "lisa_cormier",
+        2
+       ]
+      }
+     ],
+     "to": "c_muffins"
+    }
+   ]
+  },
+  "c_wall": {
+   "say": "Next to Peewee B 1988 with the very young Rick Saucier already talking. Teddy's in good company.",
+   "options": []
+  },
+  "c_retake": {
+   "say": "We did. Eleven times. Teddy found the wrong way every time. It's his gift.",
+   "options": []
+  },
+  "c_muffins": {
+   "say": "I'll bring more. I can't stop. It's a whole thing.",
+   "options": []
+  },
+  "done": {
+   "say": "Warm room. You're a hero to twelve people under four feet tall.",
+   "options": []
+  }
+ }
+}

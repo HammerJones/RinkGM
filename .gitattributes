@@ -1,0 +1,12 @@
+# Godot text formats always diff as text with LF endings.
+*.gd text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.godot text eol=lf
+*.cfg text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+# Binary assets are plain blobs for now. Moving them to Git LFS means a
+# coordinated `git lfs migrate` across every open branch (see
+# docs/FRAMEWORK.md, section 1), not a filter rule here.

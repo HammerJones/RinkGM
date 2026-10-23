@@ -1,0 +1,406 @@
+{
+  "id": "josie_bautista",
+  "barks": {
+    "idle": [
+      "Popcorn? No? Your loss.",
+      "Who orders 'just a water'? Who does that?"
+    ],
+    "good_ice": [
+      "Ice holds an edge today. Good for hitting people."
+    ],
+    "bad_ice": [
+      "Ice is garbage. Is it me or is it garbage? It's garbage."
+    ],
+    "goal": [
+      "Nice. Did a girl score it? It should've been a girl."
+    ],
+    "long_line": [
+      "One at a time. Know your order. Is that so hard?"
+    ],
+    "bored": [
+      "Popcorn kettle's clean. Again. I'm cleaning it again."
+    ],
+    "greet_owner": [
+      "Hey.",
+      "Oh. It's you. Hi."
+    ],
+    "leaving_happy": [
+      "Good shift. Don't tell Dylan I said that."
+    ],
+    "leaving_angry": [
+      "Fryer at 9 pm. Never again. Until Wednesday."
+    ],
+    "event_specific": {
+      "high_school": [
+        "Mallards tonight. Boys, get out of my way."
+      ],
+      "learn_to_skate": [
+        "That's my mum. Third from the left. Don't look. Okay, look."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_josie_bautista"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "dylan_josie_nudge"
+        },
+        {
+          "not_flag": "josie_heard_dylan"
+        }
+      ],
+      "node": "dylan_ask"
+    },
+    {
+      "if": [
+        {
+          "event_now": "learn_to_skate"
+        }
+      ],
+      "node": "mum"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "josie_bautista",
+            30
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Can I help you? Or are you just standing there?",
+      "do": [
+        {
+          "set": "met_josie_bautista"
+        }
+      ],
+      "options": [
+        {
+          "text": "I'm the new owner.",
+          "to": "first_owner"
+        },
+        {
+          "text": "One popcorn, please.",
+          "do": [
+            {
+              "rel": [
+                "josie_bautista",
+                2
+              ]
+            }
+          ],
+          "to": "first_pop"
+        },
+        {
+          "text": "You play for the Mallards, right?",
+          "do": [
+            {
+              "rel": [
+                "josie_bautista",
+                3
+              ]
+            }
+          ],
+          "to": "first_mallards"
+        }
+      ]
+    },
+    "first_owner": {
+      "say": "Cool. Does the owner want popcorn?",
+      "options": [
+        {
+          "text": "Sure.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_pop": {
+      "say": "Fresh batch. I cleaned the kettle myself. It's satisfying. Don't make it weird.",
+      "options": [
+        {
+          "text": "I won't.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_mallards": {
+      "say": "Defence. Who told you? Dylan? Of course it was Dylan.",
+      "options": [
+        {
+          "text": "It was Dylan.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "The fryer quit at nine and somebody called me the canteen girl. Guess which was worse?"
+      ],
+      "options": [
+        {
+          "text": "Who called you that?",
+          "do": [
+            {
+              "rel": [
+                "josie_bautista",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "mum": {
+      "say": "My mum's out there. Third from the left. Don't look. Okay, look. She's letting go of the boards.",
+      "options": [
+        {
+          "text": "She's doing great.",
+          "do": [
+            {
+              "rel": [
+                "josie_bautista",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Go watch her properly.",
+          "to": "end"
+        }
+      ]
+    },
+    "dylan_ask": {
+      "say": "So Dylan asked me to the Christmas skate. Did you put him up to that?",
+      "do": [
+        {
+          "set": "josie_heard_dylan"
+        }
+      ],
+      "options": [
+        {
+          "text": "Maybe.",
+          "do": [
+            {
+              "rel": [
+                "josie_bautista",
+                2
+              ]
+            }
+          ],
+          "to": "dylan_yes"
+        },
+        {
+          "text": "No idea what you mean.",
+          "to": "dylan_yes"
+        }
+      ]
+    },
+    "dylan_yes": {
+      "say": "Hm. I said yes. Don't tell him I'm smiling. Am I smiling? I'm not.",
+      "do": [
+        {
+          "set": "josie_dylan_christmas"
+        }
+      ],
+      "options": [
+        {
+          "text": "You're not.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Hey. Usual? I know your usual.",
+        "Oh, it's you. Good. I was getting bored of normal customers."
+      ],
+      "options": [
+        {
+          "text": "Hey, Josie.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "What's up?",
+        "Popcorn, fries or questions?",
+        "Yes? I'm listening. I'm also cleaning."
+      ],
+      "options": [
+        {
+          "text": "How's the counter?",
+          "to": "job"
+        },
+        {
+          "text": "How are the Mallards doing?",
+          "to": "events"
+        },
+        {
+          "text": "What's it like working with Lorraine?",
+          "to": "lorraine"
+        },
+        {
+          "text": "What do you think of Dylan?",
+          "to": "dylan"
+        },
+        {
+          "text": "What do the Mallards say about the ice?",
+          "to": "rink"
+        },
+        {
+          "text": "Saving up for something?",
+          "if": [
+            {
+              "rel_gte": [
+                "josie_bautista",
+                25
+              ]
+            },
+            {
+              "not_flag": "josie_camp_talked"
+            }
+          ],
+          "to": "camp"
+        },
+        {
+          "text": "See you.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "The popcorn machine's the best part. You take it apart, it goes back together. Unlike the fryer.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Mostly boys. Mostly scared of me. I want the ice time Shauna Reid got. Is that too much to ask?",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "lorraine": {
+      "say": "She calls everyone hon. She knows everyone's business. She tells nobody. Who does that?",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dylan": {
+      "say": "His jokes are terrible. Why do I laugh? Unclear.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Better for the Mallards now?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Ice holds an edge now. I hit a guy clean yesterday. Thanks, I guess?",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "camp": {
+      "say": "... Goalie camp. In August. My mum doesn't know. Are you going to tell her?",
+      "options": [
+        {
+          "text": "Your secret. Want an extra shift?",
+          "do": [
+            {
+              "set": "josie_camp_talked"
+            },
+            {
+              "set": "josie_extra_shifts"
+            },
+            {
+              "rel": [
+                "josie_bautista",
+                4
+              ]
+            },
+            {
+              "note": "Josie Bautista picked up an extra Saturday shift at the Hot Stove. Goalie camp fund."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "You should tell her.",
+          "do": [
+            {
+              "set": "josie_camp_talked"
+            },
+            {
+              "rel": [
+                "josie_bautista",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

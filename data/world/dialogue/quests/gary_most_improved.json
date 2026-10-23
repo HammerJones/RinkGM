@@ -1,0 +1,221 @@
+{
+ "id": "gary_most_improved",
+ "giver": "gary_pruett",
+ "quest": "gary_most_improved",
+ "nodes": {
+  "offer": {
+   "say": "So they named an award after me. The Pruett. Most improved. And I'm looking in the lost and found for my glove, and there's a trophy. MOST IMPROVED 1991. Nobody's claimed it in thirty-five years. That's my people, {owner}. That's a fellow improver. I need to know who.",
+   "options": [
+    {
+     "text": "Let's find your fellow improver.",
+     "do": [
+      {
+       "quest_start": "gary_most_improved"
+      },
+      {
+       "rel": [
+        "gary_pruett",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why does it matter to you?",
+     "to": "why"
+    },
+    {
+     "text": "Did you just stop in front of me on purpose?",
+     "do": [
+      {
+       "rel": [
+        "gary_pruett",
+        2
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "It's probably nobody's now, Gary.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Because improving is lonely. Everybody claps for the good ones. Nobody claps for the guy who stood up. I want to clap for the guy who stood up in 1991.",
+   "options": [
+    {
+     "text": "Then we'll find them.",
+     "do": [
+      {
+       "quest_start": "gary_most_improved"
+      },
+      {
+       "rel": [
+        "gary_pruett",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "Every opportunity. Every single one. It never gets old. Will you help me?",
+   "options": [
+    {
+     "text": "Yes. Stop stopping and let's look.",
+     "do": [
+      {
+       "quest_start": "gary_most_improved"
+      },
+      {
+       "rel": [
+        "gary_pruett",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Everything's somebody's. That's what lost and found means. It's found. It's just waiting.",
+   "do": [
+    {
+     "rel": [
+      "gary_pruett",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "It's in the crate. Under the retainer. Don't touch the retainer.",
+   "options": []
+  },
+  "progress": {
+   "say": "Any improvement on the case?",
+   "options": [
+    {
+     "text": "I'll get the trophy out of the crate.",
+     "if": [
+      {
+       "step": [
+        "gary_most_improved",
+        "trophy"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Asking Midge to check the archive.",
+     "if": [
+      {
+       "step": [
+        "gary_most_improved",
+        "midge"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "I have a name. I want to ask her first.",
+     "if": [
+      {
+       "step": [
+        "gary_most_improved",
+        "doreen"
+       ]
+      }
+     ],
+     "to": "p_doreen"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_doreen": {
+   "say": "Her? A her! A fellow improver! Is she still skating? Please say she's still skating.",
+   "options": []
+  },
+  "complete": {
+   "say": "Doreen? DOREEN? Organ 2 Doreen? She couldn't stand in January 1991? She runs the clock! She's the most terrifying person in the building! And she improved! I'm... I need to sit down. I'm going to stop first.",
+   "options": [
+    {
+     "text": "She wants you to have it.",
+     "do": [
+      {
+       "set": "most_improved_with_gary"
+      },
+      {
+       "rel": [
+        "gary_pruett",
+        3
+       ]
+      }
+     ],
+     "to": "c_gary"
+    },
+    {
+     "text": "It belongs in the trophy case, next to the Last Call Cup.",
+     "do": [
+      {
+       "set": "most_improved_in_case"
+      },
+      {
+       "rel": [
+        "doreen_vachon",
+        2
+       ]
+      }
+     ],
+     "to": "c_case"
+    },
+    {
+     "text": "Go thank her yourself.",
+     "do": [
+      {
+       "rel": [
+        "doreen_vachon",
+        2
+       ]
+      },
+      {
+       "rel": [
+        "gary_pruett",
+        1
+       ]
+      }
+     ],
+     "to": "c_thank"
+    }
+   ]
+  },
+  "c_gary": {
+   "say": "Me? I'll put it on the Wobbly Pops bench. Every game. For the improvers. Doreen's going to play the dirge at me, isn't she. Worth it.",
+   "options": []
+  },
+  "c_case": {
+   "say": "With a label. 'Most Improved 1991, Mrs D. Vachon. Claimed 2026.' And under it, smaller: 'Found by G. Pruett.' Smaller. I'm humble.",
+   "options": []
+  },
+  "c_thank": {
+   "say": "I'm going to stop right in front of her timekeeper's box and say thank you. She's going to hate it. She's going to love it.",
+   "options": []
+  },
+  "done": {
+   "say": "Improvers, unite. Slowly. With good stops.",
+   "options": []
+  }
+ }
+}

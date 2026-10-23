@@ -1,0 +1,425 @@
+{
+  "id": "lily_marchetti",
+  "barks": {
+    "idle": [
+      "And now the princess falls DOWN. Ha!",
+      "Linesman the pigeon is watching me. He's my biggest fan.",
+      "Spin spin spin spin... whoa."
+    ],
+    "good_ice": [
+      "The ice is so shiny! I can spin FOREVER!"
+    ],
+    "bad_ice": [
+      "Bumpy! Bumpy is good for falling! Wheee!"
+    ],
+    "wet_ice": [
+      "Splashy ice! My sequins are wet!"
+    ],
+    "goal": [
+      "YAAAY! Wait, what happened?",
+      "Goal! I'm doing a celebration spin!"
+    ],
+    "cold": [
+      "My nose is a popsicle!"
+    ],
+    "hungry": [
+      "Can I have a freezie? I know it's cold. I still want a freezie."
+    ],
+    "long_line": [
+      "This line is SO LONG. I'm going to spin in it."
+    ],
+    "bored": [
+      "I can't sit still. Sitting is the worst."
+    ],
+    "greet_owner": [
+      "HI {owner}! Watch me fall! On purpose!",
+      "Hi hi hi! I have sequins today!"
+    ],
+    "leaving_happy": [
+      "I fell nine times! It was the best day ever!"
+    ],
+    "leaving_angry": [
+      "Daddy filmed me the WHOLE time. The whole time!"
+    ],
+    "event_specific": {
+      "figure_practice": [
+        "And the princess spins... and spins... and falls DOWN!",
+        "Madame Hélène says I have a gift for momentum!"
+      ],
+      "figure_show": [
+        "SEQUINS! SNOWFLAKES! ME!",
+        "I'm a snowflake that falls. Like a real one!"
+      ],
+      "public_skate": [
+        "Zoom zoom! Sorry! Sorry! Zoom!"
+      ],
+      "learn_to_skate": [
+        "I'm here to show Maddie how to fall! Knees bent, hands out, then LAUGH!"
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_lily_marchetti"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_show"
+        }
+      ],
+      "node": "show_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "lily_marchetti",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hi! I'm Lily! I'm eight! I fall more than anyone in the whole club! Do you want to see?",
+      "do": [
+        {
+          "set": "met_lily_marchetti"
+        }
+      ],
+      "options": [
+        {
+          "text": "Yes! Show me!",
+          "do": [
+            {
+              "rel": [
+                "lily_marchetti",
+                3
+              ]
+            }
+          ],
+          "to": "fall"
+        },
+        {
+          "text": "Isn't falling bad?",
+          "do": [
+            {
+              "rel": [
+                "lily_marchetti",
+                -1
+              ]
+            }
+          ],
+          "to": "first_bad"
+        }
+      ]
+    },
+    "first_bad": {
+      "say": "NO! Falling is the funniest part! Knees bent, hands out, then laugh. That's the rule. I made the rule. Madame Hélène didn't say no.",
+      "options": [
+        {
+          "text": "Show me, then.",
+          "to": "fall"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "Oh no. Want a freezie?",
+          "do": [
+            {
+              "money": -2
+            },
+            {
+              "rel": [
+                "lily_marchetti",
+                3
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'm sorry, Lily. I'll fix it.",
+          "do": [
+            {
+              "rel": [
+                "lily_marchetti",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "fall": {
+      "say": "Okay watch. And the princess... skates... and spins... and falls DOWN! *thump* HAHAHA! Now you do it!",
+      "options": [
+        {
+          "text": "*falls down too* Hahaha!",
+          "do": [
+            {
+              "set": "fell_with_lily"
+            },
+            {
+              "rel": [
+                "lily_marchetti",
+                6
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll just watch, thanks.",
+          "do": [
+            {
+              "rel": [
+                "lily_marchetti",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "show_now": {
+      "say": [
+        "I'm a snowflake! A falling snowflake! It's in the program! It's not in the program!",
+        "Daddy has three cameras today. THREE. I'm going to fall on all of them."
+      ],
+      "options": [
+        {
+          "text": "Break a leg! Not really.",
+          "do": [
+            {
+              "rel": [
+                "lily_marchetti",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Do your best fall, Lily.",
+          "do": [
+            {
+              "rel": [
+                "lily_marchetti",
+                3
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! My falling buddy!",
+        "HI! Did you practise falling? You have to practise!"
+      ],
+      "options": [
+        {
+          "text": "Hi Lily!",
+          "to": "hub"
+        },
+        {
+          "text": "I've been falling all week.",
+          "if": [
+            {
+              "flag": "fell_with_lily"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "lily_marchetti",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hi! I'm spinning. Can you talk and spin? I can.",
+        "What? What? What do you want to talk about? Sequins?",
+        "HI!"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What's your favourite thing about skating?",
+          "to": "events"
+        },
+        {
+          "text": "Who's Linesman?",
+          "to": "pigeon"
+        },
+        {
+          "text": "How's Maddie doing?",
+          "to": "maddie"
+        },
+        {
+          "text": "Does your dad film every practice?",
+          "to": "dad"
+        },
+        {
+          "text": "Can you do that one again?",
+          "to": "again"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Bye, Lily!",
+          "to": "end"
+        }
+      ]
+    },
+    "events": {
+      "say": "SPINNING. Until I'm dizzy. And then falling. And then sequins. And the snowflakes at the showcase! Spinning is first though.",
+      "options": [
+        {
+          "text": "Spinning first. Got it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "pigeon": {
+      "say": "He lives in the rafters! He's called Linesman because he watches everything and does nothing! Daddy said that. Then Mr. Marcel got grumpy.",
+      "options": [
+        {
+          "text": "Linesman is a good name.",
+          "do": [
+            {
+              "rel": [
+                "lily_marchetti",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "maddie": {
+      "say": "She holds the chair! I tell her falling is funny. She doesn't believe me yet. She will. I'm very convincing.",
+      "options": [
+        {
+          "text": "You're the best teacher.",
+          "do": [
+            {
+              "rel": [
+                "lily_marchetti",
+                2
+              ]
+            },
+            {
+              "rel": [
+                "maddie_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "dad": {
+      "say": "EVERY practice! Three angles! Then he puts music on it on Sunday. He cries at the end. Every time. Even when I fall. ESPECIALLY when I fall.",
+      "options": [
+        {
+          "text": "He's proud of you.",
+          "do": [
+            {
+              "rel": [
+                "paolo_marchetti",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "again": {
+      "say": "Nooooo. Not AGAIN. Again is the worst word. Madame Hélène says it all the time. Say 'one more fun one' instead.",
+      "options": [
+        {
+          "text": "One more fun one?",
+          "do": [
+            {
+              "rel": [
+                "lily_marchetti",
+                2
+              ]
+            }
+          ],
+          "to": "fall"
+        },
+        {
+          "text": "Sorry! Okay.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "I like the rafters and the hot chocolate and Doris! Doris is like a big friendly bug.",
+      "options": [
+        {
+          "text": "The ice is shinier now, right?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "lily_marchetti",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Doris is a big friendly bug.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

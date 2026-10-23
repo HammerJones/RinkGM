@@ -1,0 +1,35 @@
+{
+  "collision_cell": 8,
+  "id": "zambelli_drive",
+  "inspect": "Forward, neutral, reverse: the resurfacer's gear lever.",
+  "mass_kg": 1.2,
+  "mesh": "merged",
+  "name": "Drive select",
+  "pivot": [
+    9.5,
+    0,
+    21.0
+  ],
+  "size_m": [
+    0.057,
+    0.177,
+    0.126
+  ],
+  "sound": "metal",
+  "source": "tools/propgen/zambelli_glb.py",
+  "tags": [
+    "machine",
+    "resurfacer"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/zambelli_drive.vox",
+  "voxel_m": 0.003,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}

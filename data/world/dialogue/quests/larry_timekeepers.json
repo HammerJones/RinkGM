@@ -1,0 +1,211 @@
+{
+ "id": "larry_timekeepers",
+ "giver": "larry_piche",
+ "quest": "larry_timekeepers",
+ "nodes": {
+  "offer": {
+   "say": "Hello. Larry Piche. Mallards. You'll have seen the photo, I expect. The boys and I would like to volunteer for the Peewee tournament. Timekeeping. We have pencils. We'd like to be useful, if that's all right.",
+   "options": [
+    {
+     "text": "That's more than all right. Welcome aboard.",
+     "do": [
+      {
+       "quest_start": "larry_timekeepers"
+      },
+      {
+       "rel": [
+        "larry_piche",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why timekeeping?",
+     "to": "why"
+    },
+    {
+     "text": "Do the Mallards know how to run a clock?",
+     "to": "clock"
+    },
+    {
+     "text": "The committee handles volunteers.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "We're not fast any more. But we're very punctual. Twenty years of Tuesdays and we've never missed a start. Mind you, we've missed a lot of the puck.",
+   "options": [
+    {
+     "text": "Punctual is exactly what Bob wants. You're in.",
+     "do": [
+      {
+       "quest_start": "larry_timekeepers"
+      },
+      {
+       "rel": [
+        "larry_piche",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "clock": {
+   "say": "Not yet. But we learn things. We learned how to write to trustees. We'd like Doreen to teach us, if she would. She's very good. She's a bit frightening.",
+   "options": [
+    {
+     "text": "I'll ask Doreen.",
+     "do": [
+      {
+       "quest_start": "larry_timekeepers"
+      },
+      {
+       "rel": [
+        "larry_piche",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Of course. I'll write to them. Politely. I'm good at that.",
+   "do": [
+    {
+     "rel": [
+      "larry_piche",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Thank you. The boys will be thrilled. Well, quietly thrilled. We're a quiet team. Possession style.",
+   "options": []
+  },
+  "progress": {
+   "say": "Hello again.",
+   "options": [
+    {
+     "text": "I'll talk to Doreen about training.",
+     "if": [
+      {
+       "step": [
+        "larry_timekeepers",
+        "doreen"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Doreen's done. Working on the timekeeper's box.",
+     "if": [
+      {
+       "step": [
+        "larry_timekeepers",
+        "rooms"
+       ]
+      }
+     ],
+     "to": "p_rooms"
+    },
+    {
+     "text": "You're all set for the weekend.",
+     "if": [
+      {
+       "step": [
+        "larry_timekeepers",
+        "weekend"
+       ]
+      }
+     ],
+     "to": "p_weekend"
+    },
+    {
+     "text": "Just saying hello.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_rooms": {
+   "say": "It is a bit chilly in the box. Doreen wears two cardigans. She calls them her 'first and second period'.",
+   "options": []
+  },
+  "p_weekend": {
+   "say": "We've drawn up a rota. Laminated. Colin Nolan laminated it for us. He's very kind with a laminator.",
+   "options": []
+  },
+  "complete": {
+   "say": "Forty-one games, not one clock error. Well. One. Gerry started a period on the shout. He's written himself up. Thank you for having us. May I ask something? Every March I write to the trustees. May I mention the rink this year?",
+   "options": [
+    {
+     "text": "Of course. Tell them the ice is good now.",
+     "do": [
+      {
+       "set": "larry_letter_mentions_ice"
+      },
+      {
+       "rel": [
+        "larry_piche",
+        3
+       ]
+      }
+     ],
+     "to": "c_ice"
+    },
+    {
+     "text": "Tell them the Mallards keep time.",
+     "do": [
+      {
+       "set": "larry_letter_mentions_mallards"
+      },
+      {
+       "rel": [
+        "larry_piche",
+        2
+       ]
+      }
+     ],
+     "to": "c_time"
+    },
+    {
+     "text": "Just tell them Millbrook's still here.",
+     "do": [
+      {
+       "rel": [
+        "larry_piche",
+        3
+       ]
+      }
+     ],
+     "to": "c_here"
+    }
+   ]
+  },
+  "c_ice": {
+   "say": "'P.S. The ice is good now.' I'll put it at the bottom, after 'Still Tuesdays'. They'll like that. I'm sure they read them.",
+   "options": []
+  },
+  "c_time": {
+   "say": "'The Mallards now keep time.' Yes. It sounds like a job. We've never had a job before. As a team.",
+   "options": []
+  },
+  "c_here": {
+   "say": "'Still here.' That's what I always say. But it's nice to hear somebody else say it.",
+   "options": []
+  },
+  "done": {
+   "say": "Still Tuesdays. Still here. Thank you.",
+   "options": []
+  }
+ }
+}

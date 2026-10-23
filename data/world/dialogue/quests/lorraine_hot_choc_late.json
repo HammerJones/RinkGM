@@ -1,0 +1,225 @@
+{
+  "id": "lorraine_hot_choc_late",
+  "giver": "lorraine_duffy",
+  "quest": "lorraine_hot_choc_late",
+  "nodes": {
+    "offer": {
+      "say": "Now the machine works, people are reading the menu again. Hot choc late. A man from Kessler asked if it's a special. I said yes. It isn't. Should I fix it?",
+      "options": [
+        {
+          "text": "Let's see what letters we can find.",
+          "do": [
+            {
+              "quest_start": "lorraine_hot_choc_late"
+            },
+            {
+              "rel": [
+                "lorraine_duffy",
+                3
+              ]
+            }
+          ],
+          "to": "accepted"
+        },
+        {
+          "text": "Leave it. It's true at public skate.",
+          "to": "leave"
+        },
+        {
+          "text": "What happened to the letters?",
+          "to": "why"
+        }
+      ]
+    },
+    "why": {
+      "say": "The O went in 2014. Gino from Puckhead took it as a souvenir, he says it looked like a pizza. The second one we don't talk about.",
+      "options": [
+        {
+          "text": "I'll find replacements and we'll decide.",
+          "do": [
+            {
+              "quest_start": "lorraine_hot_choc_late"
+            },
+            {
+              "rel": [
+                "lorraine_duffy",
+                3
+              ]
+            }
+          ],
+          "to": "accepted"
+        }
+      ]
+    },
+    "leave": {
+      "say": "Ha. It is true. I'll still want the letters, though. Just in case the inspector has no sense of humour. They never do.",
+      "options": [
+        {
+          "text": "I'll find letters.",
+          "do": [
+            {
+              "quest_start": "lorraine_hot_choc_late"
+            },
+            {
+              "rel": [
+                "lorraine_duffy",
+                3
+              ]
+            }
+          ],
+          "to": "accepted"
+        }
+      ]
+    },
+    "accepted": {
+      "say": "Bev has a tin of everything. Ask nicely. Bring her a coffee. It works now.",
+      "options": []
+    },
+    "progress": {
+      "say": "The menu?",
+      "options": [
+        {
+          "text": "Asking Bev about letters.",
+          "if": [
+            {
+              "step": [
+                "lorraine_hot_choc_late",
+                "letters"
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Got letters. Here's what I think.",
+          "if": [
+            {
+              "step": [
+                "lorraine_hot_choc_late",
+                "decide"
+              ]
+            }
+          ],
+          "to": "p_decide"
+        },
+        {
+          "text": "All up. Let's see public skate.",
+          "if": [
+            {
+              "step": [
+                "lorraine_hot_choc_late",
+                "skate"
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Just checking.",
+          "to": "end"
+        }
+      ]
+    },
+    "p_decide": {
+      "say": "Go on, then. What does it say?",
+      "options": [
+        {
+          "text": "HOT CHOCOLATE. Properly.",
+          "do": [
+            {
+              "set": "menu_hot_choc_late"
+            },
+            {
+              "set": "letters_in_drawer"
+            },
+            {
+              "set": "menu_decided"
+            }
+          ],
+          "to": "p_fix"
+        },
+        {
+          "text": "Leave it as HOT CHOC LATE.",
+          "do": [
+            {
+              "set": "menu_hot_choc_late"
+            },
+            {
+              "set": "menu_decided"
+            },
+            {
+              "rel": [
+                "lorraine_duffy",
+                2
+              ]
+            }
+          ],
+          "to": "p_keep"
+        },
+        {
+          "text": "HOT CHOC LATE (AT PUBLIC SKATE). Lean in.",
+          "do": [
+            {
+              "set": "menu_hot_choc_late_public"
+            },
+            {
+              "set": "menu_decided"
+            },
+            {
+              "rel": [
+                "lorraine_duffy",
+                3
+              ]
+            }
+          ],
+          "to": "p_lean"
+        }
+      ]
+    },
+    "p_fix": {
+      "say": "Fix it? No. I asked what you think, not what I'd do. The letters go in the drawer for the inspector and it stays HOT CHOC LATE, because at public skate it's true.",
+      "options": []
+    },
+    "p_keep": {
+      "say": "As it is. Good. Things that are true should stay on the wall.",
+      "options": []
+    },
+    "p_lean": {
+      "say": "AT PUBLIC SKATE. Oh, that's cheeky. People will think we planned it. Let them.",
+      "options": []
+    },
+    "complete": {
+      "say": "Forty hot chocolates at public skate. One kid read the board out loud and his dad laughed so hard he fell on the mat. I'll take that.",
+      "options": [
+        {
+          "text": "Same again next week.",
+          "do": [
+            {
+              "rel": [
+                "lorraine_duffy",
+                1
+              ]
+            }
+          ],
+          "to": "c_next"
+        },
+        {
+          "text": "And the Haverstock? Fourteen marshmallows?",
+          "to": "c_haverstock"
+        }
+      ]
+    },
+    "c_next": {
+      "say": "Same every week. That's a canteen.",
+      "options": []
+    },
+    "c_haverstock": {
+      "say": "Fourteen. Counted. Ronnie had one last Thursday and said fourteen's too many. He's said that since 1994. He finishes it every time.",
+      "options": []
+    },
+    "done": {
+      "say": "Coffee two dollars. Hot choc late two fifty.",
+      "options": []
+    }
+  }
+}

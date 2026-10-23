@@ -1,0 +1,361 @@
+{
+  "id": "penny_marchetti",
+  "barks": {
+    "idle": [
+      "Right! Hands on knees, eyes up, and we march like penguins.",
+      "Helmets, people. Helmets are free confidence."
+    ],
+    "good_ice": [
+      "Look at that glide! That's a glide! Somebody write it down!"
+    ],
+    "bad_ice": [
+      "Bumpy ice and beginners. Everybody hold on to something. Not each other."
+    ],
+    "wet_ice": [
+      "Wet ice is just a puddle with ambitions. Little steps!"
+    ],
+    "cold": [
+      "Keep moving and you'll be warm. That's gym class and it's life."
+    ],
+    "hungry": [
+      "I'll get fries after. Teaching burns more than you'd think."
+    ],
+    "long_line": [
+      "A line! Great. Let's practise patience. It's an Olympic sport somewhere."
+    ],
+    "bored": [
+      "If nobody's falling, nobody's learning. Somebody fall! Safely!"
+    ],
+    "goal": [
+      "Woo! Nice one!"
+    ],
+    "greet_owner": [
+      "Hi! We need more boards. That's my whole hello.",
+      "Hey! Penguins say hi."
+    ],
+    "leaving_happy": [
+      "Nobody cried! Well, Walter, but happy crying."
+    ],
+    "leaving_angry": [
+      "I'll be writing a card. It'll be a very polite card."
+    ],
+    "event_specific": {
+      "learn_to_skate": [
+        "Eyes up! The ice will still be there!",
+        "Walter, let go of the boards. One finger. Now two."
+      ],
+      "public_skate": [
+        "Lily! Not so fast! Okay, that fast is fine.",
+        "Look at Irene go."
+      ],
+      "figure_show": [
+        "That's my niece! The sequins! That's her!"
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_penny_marchetti"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "penny_owner_student"
+        },
+        {
+          "event_now": "learn_to_skate"
+        }
+      ],
+      "node": "student"
+    },
+    {
+      "if": [
+        {
+          "event_now": "learn_to_skate"
+        }
+      ],
+      "node": "lesson"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hi! Penny Marchetti. Gym teacher by day, adult learn-to-skate on Monday nights. I have more beginners than boards, and I mean that literally.",
+      "do": [
+        {
+          "set": "met_penny_marchetti"
+        }
+      ],
+      "options": [
+        {
+          "text": "More beginners than boards?",
+          "do": [
+            {
+              "rel": [
+                "penny_marchetti",
+                2
+              ]
+            }
+          ],
+          "to": "first_boards"
+        },
+        {
+          "text": "Penny, you've got a great teacher voice.",
+          "do": [
+            {
+              "rel": [
+                "penny_marchetti",
+                3
+              ]
+            }
+          ],
+          "to": "first_voice"
+        }
+      ]
+    },
+    "first_boards": {
+      "say": "Eighteen grown-ups, and every one of them wants to hold the boards. There's only so much board! I've had people holding the door.",
+      "options": [
+        {
+          "text": "We'll sort something out.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_voice": {
+      "say": "Thank you! It carries without shouting. Nine years of gym class. I can stop a dodgeball game from the parking lot.",
+      "options": [
+        {
+          "text": "Impressive.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Penny. I'll make it right.",
+          "do": [
+            {
+              "rel": [
+                "penny_marchetti",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "lesson": {
+      "say": [
+        "Right! Hands on knees! Oh, hi. Give me two minutes, Walter's about to let go.",
+        "We're doing penguin marches. Want to join? Everyone joins eventually."
+      ],
+      "options": [
+        {
+          "text": "I'll leave you to it.",
+          "to": "end"
+        },
+        {
+          "text": "Quick question.",
+          "to": "hub"
+        }
+      ]
+    },
+    "student": {
+      "say": "My star pupil! Hands on knees, eyes up! You're marching like a penguin who's seen a ghost. Better than last week.",
+      "options": [
+        {
+          "text": "(March like a penguin.)",
+          "do": [
+            {
+              "rel": [
+                "penny_marchetti",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Can we talk first?",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hi! What's up?",
+        "Yes! What do you need?",
+        "Hey! Quick, before somebody grabs a door."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What's teaching grown-ups like?",
+          "to": "job"
+        },
+        {
+          "text": "What else do you love on the ice?",
+          "to": "events"
+        },
+        {
+          "text": "How's the family?",
+          "to": "gossip"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Could I join the adult class?",
+          "if": [
+            {
+              "not_flag": "penny_owner_student"
+            }
+          ],
+          "to": "join"
+        },
+        {
+          "text": "Good luck tonight, Penny.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Kids fall and laugh. Grown-ups fall and apologise to the ice. Half my job is telling forty-year-olds they're allowed to be bad at something.",
+      "options": [
+        {
+          "text": "That's lovely.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "A beginner's first glide is the best thing in sport. Public skate with Lily, figure shows for Lily's sequins, and the graduation in March. I cry every year.",
+      "options": [
+        {
+          "text": "Sounds wonderful.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Lily's eight and falls beautifully. My brother Paolo films everything from three angles. I've banned his camera from my class. And Walter, bless him, takes notes on falling.",
+      "options": [
+        {
+          "text": "Notes on falling?",
+          "to": "gossip_walter"
+        },
+        {
+          "text": "Busy family.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip_walter": {
+      "say": "He traces each fall like a fault. 'Left foot. That's where the trouble is.' He's going to skate with his granddaughter by spring. I've decided.",
+      "options": [
+        {
+          "text": "I believe it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "I love it. But I need more to hold on to. Lorne Pettipiece could make skate aids from Bev's broken sticks, I swear.",
+      "options": [
+        {
+          "text": "Is the class easier now?",
+          "if": [
+            {
+              "flag": "skate_aids_on_ice"
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll keep it in mind.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "The stick skate aids are perfect. Walter calls his 'the apprentice'. Nobody's holding the door any more!",
+      "options": [
+        {
+          "text": "Victory.",
+          "to": "hub"
+        }
+      ]
+    },
+    "join": {
+      "say": "Really? The owner in my class? Yes! Monday, six-thirty. Bring a helmet. Bring elbow pads. Bring humility.",
+      "options": [
+        {
+          "text": "I'll be there. Helmet and all.",
+          "do": [
+            {
+              "set": "penny_owner_student"
+            },
+            {
+              "rel": [
+                "penny_marchetti",
+                5
+              ]
+            },
+            {
+              "note": "Signed up for Penny Marchetti's Monday adult learn-to-skate."
+            }
+          ],
+          "to": "join_yes"
+        },
+        {
+          "text": "On second thought, maybe not.",
+          "do": [
+            {
+              "rel": [
+                "penny_marchetti",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "join_yes": {
+      "say": "Right! You'll march like a penguin by week two. I'll write you a card.",
+      "options": [
+        {
+          "text": "I'm a little scared.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Bye! Eyes up!",
+        "See you Monday! Helmets!"
+      ],
+      "options": []
+    }
+  }
+}

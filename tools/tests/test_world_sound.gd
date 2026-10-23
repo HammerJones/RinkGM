@@ -1,0 +1,249 @@
+extends SceneTree
+## World's sound hooks (WorldSound) and shadows, headless. With
+## WorldSound.recording on nothing plays: each signal World's scenes emit
+## must land a sound call in WorldSound.heard, the busy ones rate limited,
+## the looping ones on one player each, and every sound must exist in
+## assets/audio. Then World's meshes must cast shadows by Look.cast().
+##
+##   godot --headless --path . --script res://tools/tests/test_world_sound.gd
+
+var failures := 0
+
+
+func _init() -> void:
+	_run.call_deferred()
+
+
+func _expect(cond: bool, what: String) -> void:
+	if not cond:
+		failures += 1
+		printerr("FAIL: ", what)
+	else:
+		print("  ok  ", what)
+
+
+## Emits through `fire` and expects the sound `name` (a loop when `loop`).
+func _hears(what: String, fire: Callable, name: String, loop := false) -> void:
+	WorldSound.reset()
+	fire.call()
+	var hit := WorldSound.heard.filter(func(h: Dictionary) -> bool:
+		return str(h.sound) == name and (not loop or bool(h.get("loop", false))))
+	_expect(not hit.is_empty(), "%s -> %s%s" % [what, name, " (loop)" if loop else ""])
+	var file := name if ResourceLoader.exists(RinkSound.DIR + name + ".wav") else RinkSound.variant(name)
+	_expect(ResourceLoader.exists(RinkSound.DIR + file + ".wav"), "  %s.wav exists" % file)
+
+
+func _run() -> void:
+	create_timer(120.0).timeout.connect(func():
+		printerr("FAIL: test_world_sound timed out")
+		quit(1))
+	_expect(not RinkSound.enabled(), "headless runs play no sound")
+	var off := OnIceSession.create("public_skate", {"seed": 5, "fast": true, "count": 4})
+	_expect(off.get_node_or_null("WorldSound") == null, "no hooks attach while sound is off")
+	off.free()
+	var layers := ["minor_hockey", "beer_league", "learn_to_skate", "broomball"].map(VenueSound._layers_for)
+	_expect(layers == ["practice", "game", "figure", "broomball"], "a booking's kind picks the venue's sound layers %s" % [layers])
+	WorldSound.recording = true
+	var w := Node3D.new()
+	root.add_child(w)
+
+	# on the ice
+	var s := OnIceSession.create("public_skate", {"seed": 5, "fast": true, "in_place": true, "count": 12, "hour": 14.0})
+	s.auto_run = false
+	w.add_child(s)
+	var p := Vector3(4, 0, 2)
+	_hears("blade_carve", func(): s.blade_carve.emit(p, 5.0), "blade_carve")
+	_hears("stop_spray", func(): s.stop_spray.emit(p, 6.0), "stop_spray")
+	for k in [["stick", "puck_stick"], ["boards", "puck_boards"], ["post", "puck_post"], ["pad", "puck_pad"], ["net", "puck_net"]]:
+		_hears("puck_hit %s" % k[0], func(): s.puck_hit.emit(p, k[0], 20.0), k[1])
+	_hears("whistle", func(): s.whistle.emit(p), "ref_whistle")
+	_hears("coach_whistle", func(): s.coach_whistle.emit(p), "coach_whistle")
+	_hears("crowd_reaction goal", func(): s.crowd_reaction.emit("goal", 1.0), "crowd_cheer")
+	_hears("crowd_reaction applause", func(): s.crowd_reaction.emit("applause", 0.8), "crowd_applause")
+	_hears("crowd_reaction ooh", func(): s.crowd_reaction.emit("ooh", 0.3), "crowd_ooh")
+	_hears("skater_fell", func(): s.skater_fell.emit(p, "skater"), "body_fall")
+	WorldSound.reset()
+	for i in 30:
+		s.blade_carve.emit(p, 5.0)
+	var carves := WorldSound.heard.filter(func(h: Dictionary) -> bool: return h.sound == "blade_carve").size()
+	_expect(carves == 1, "30 strides at once make one carve, not a wall of noise (%d)" % carves)
+	WorldSound.reset()
+	s.crowd_reaction.emit("goal", 1.0)
+	s.crowd_reaction.emit("final", 1.0)
+	_expect(WorldSound.heard.size() == 1, "one goal, one roar (%d)" % WorldSound.heard.size())
+	s.run_for(3.0, 1.0 / 20.0)
+	WorldSound.reset()
+	s.run_for(3.0, 1.0 / 20.0)
+	_expect(WorldSound.heard.any(func(h: Dictionary) -> bool: return h.sound == "blade_carve"), "a running public skate carves the ice")
+
+	# pickup basketball
+	var g := PickupRun.new()
+	g.set_physics_process(false)
+	w.add_child(g)
+	_hears("bounced", func(): g.bounced.emit(p, 0.6), "ball_bounce")
+	_hears("squeaked", func(): g.squeaked.emit(p, 0.6), "sneaker_squeak")
+	_hears("swished", func(): g.swished.emit(p), "net_swish")
+	_hears("rim_hit", func(): g.rim_hit.emit(p, 0.6), "rim_clang")
+	_hears("backboard_hit", func(): g.backboard_hit.emit(p, 0.6), "backboard_bang")
+	_hears("scored", func(): g.scored.emit(0, 2, [2, 0]), "voice_bark")
+	_hears("PickupBall.hit (through the run)", func(): g.ball().hit.emit("floor", g.ball().global_position, 0.5), "ball_bounce")
+
+	# people
+	var people := RinkPeople.new()
+	w.add_child(people)
+	_hears("chatter", func(): people.chatter.emit(0.6), "hall_chatter", true)
+	_hears("cheered", func(): people.cheered.emit(p, 0.8), "crowd_cheer")
+	_hears("reacted gasp", func(): people.reacted.emit("gasp", p, 0.5), "crowd_gasp")
+	_hears("barked", func(): people.barked.emit(null, "Hi.", p), "voice_bark")
+	var ws: WorldSound = people.get_node("WorldSound")
+	for i in 10:
+		people.chatter.emit(0.1 * i)
+	_expect(ws.loop_count() == 1, "chatter is one looping player (%d)" % ws.loop_count())
+
+	# a stick knocked over
+	var stick := StickProp.make(StickProps.variant("warlock", 1, false, "black"))
+	w.add_child(stick)
+	_hears("knocked", func(): stick.knocked.emit(null), "stick_clatter")
+
+	# Doris
+	var sim := RinkSim.create_m1()
+	var d: DorisDrive = load("res://scenes/world/jobs/doris_drive.tscn").instantiate()
+	d.set_physics_process(false)
+	w.add_child(d)
+	d.begin({"sim": sim, "job": "resurface", "target": "doris_drive"})
+	_hears("engine", func(): d.engine.emit(1200.0), "zamboni_idle", true)
+	_hears("blade_scrape", func(): d.blade_scrape.emit(0.8, false), "blade_scrape", true)
+	_hears("blade_scrape skipping", func(): d.blade_scrape.emit(0.4, true), "blade_skip")
+	_hears("flood_flow", func(): d.flood_flow.emit(2.0, "good"), "flood_water", true)
+	_hears("wash_pump", func(): d.wash_pump.emit(true), "wash_pump", true)
+	_hears("auger", func(): d.auger.emit(true), "auger_grind", true)
+	_hears("bin_dump", func(): d.bin_dump.emit(), "bin_dump")
+	_hears("hose", func(): d.hose.emit(true), "hose_fill", true)
+	var dws: WorldSound = d.get_node("WorldSound")
+	var before := dws.loop_count()
+	for i in 40:
+		d.engine.emit(850.0 + i * 40.0)
+		d.flood_flow.emit(1.0 + i * 0.05, "good")
+	_expect(dws.loop_count() == before, "engine and flood stay single loops however often they report (%d)" % dws.loop_count())
+	_expect(d.body.get_node_or_null("ZamboniIdle") != null, "Doris's engine loop rides on her body")
+	WorldSound.reset()
+	d.auger.emit(false)
+	_expect(WorldSound.heard.any(func(h: Dictionary) -> bool: return h.sound == "auger_grind" and not h.loop), "auger(false) stops the grind")
+
+	# the ice hand
+	var h: IceHand = load("res://scenes/world/jobs/ice_hand.tscn").instantiate()
+	w.add_child(h)
+	h.begin({"sim": sim, "job": "hose_flood", "target": "ice_hose"})
+	_hears("ice hand hose", func(): h.hose.emit(true), "hose_spray", true)
+	_hears("hose_flow", func(): h.hose_flow.emit(0.5), "hose_spray", true)
+	_hears("edger", func(): h.edger.emit(true, 0.5), "edger_motor", true)
+	_hears("chipper", func(): h.chipper.emit(1.0), "ice_chip")
+
+	# shadows: World's meshes follow Look.cast()
+	await process_frame
+	await process_frame
+	var want := Look.cast()
+	var odd: Array = []
+	_collect(s, want, odd)
+	_expect(odd.is_empty() and s.find_children("*", "MultiMeshInstance3D", true, false).size() > 0,
+			"on-ice figures and gear cast by Look.cast() %s" % [odd])
+	_expect(g.ball()._mesh.cast_shadow == want, "the basketball casts by Look.cast()")
+	var model: MeshInstance3D = d.body.get_child(0)
+	_expect(model.cast_shadow == want, "Doris casts by Look.cast()")
+	var field := StickField.new()
+	w.add_child(field)
+	_expect(field._mi.cast_shadow == want, "a room's resting sticks cast by Look.cast()")
+	stick._show(true)
+	_expect(stick._mi.cast_shadow == want, "an awake stick casts by Look.cast()")
+
+	# a match puck's contacts (VenueSound.watch_puck)
+	await _match_puck(w)
+
+	WorldSound.recording = false
+	WorldSound.reset()
+	w.queue_free()
+	await process_frame
+	await process_frame
+	print("\n%s (%d failure%s)" % ["FAILED" if failures else "OK", failures, "" if failures == 1 else "s"])
+	quit(1 if failures else 0)
+
+
+## The venue's sound hears the match puck: the boards (by its velocity
+## turning round there), the glass when it's high, a post, the glass cleared.
+func _match_puck(w: Node3D) -> void:
+	for k: String in VenueSound.CONTACTS:
+		var f: String = VenueSound.CONTACTS[k]
+		_expect(ResourceLoader.exists(RinkSound.DIR + f + ".wav"), "contact %s -> %s.wav exists" % [k, f])
+	_expect(ResourceLoader.exists(RinkSound.DIR + str(WorldSound.PUCK["glass"]) + ".wav"), "World's puck_hit glass -> glass_rattle.wav exists")
+	var edge := Vector3(Rink.HALF_L - 0.0381, 0.0, 0.0)
+	_expect(VenueSound.board_hit(edge, Vector3(20, 0, 0), Vector3(-11, 0, 0)) > 19.0, "a puck turned round at the end boards is a hit")
+	_expect(VenueSound.board_hit(edge, Vector3(0.5, 0, 3), Vector3(-0.3, 0, 3)) == 0.0, "a puck nudged along the boards is silent")
+	_expect(VenueSound.board_hit(Vector3.ZERO, Vector3(20, 0, 0), Vector3(-11, 0, 0)) == 0.0, "a turn at centre ice is no boards hit")
+	_expect(VenueSound.board_kind(Vector3(0, 0.3, 12.9)) == "boards" and VenueSound.board_kind(Vector3(0, 1.6, 12.9)) == "glass",
+			"low is the boards, high is the glass")
+	VenueSound.recording = true
+	var vs := VenueSound.new()
+	w.add_child(vs)
+	var puck = load("res://scripts/game/puck.gd").new()  # loaded late: Puck pulls in the match classes
+	w.add_child(puck)
+	puck.set_physics_process(false)  # the test moves it by hand
+	puck.set_process(false)
+	vs.set_physics_process(false)  # and steps the watch itself
+	vs.watch_puck(puck)
+	var heard := func(name: String) -> bool:
+		return VenueSound.heard.any(func(h: Dictionary) -> bool: return str(h.sound) == name)
+	for c in [[Vector3(Rink.HALF_L - 0.05, 0.0, 1.0), "puck_boards"], [Vector3(Rink.HALF_L - 0.05, 1.7, 1.0), "glass_rattle"]]:
+		vs._next_contact = 0.0  # past the rate limit (the timer runs on game time)
+		VenueSound.heard.clear()
+		puck.position = c[0]
+		if puck.has_signal("boards_hit"):
+			puck.boards_hit.emit(c[0], 18.0)
+		else:
+			puck.vel = Vector3(18, 0, 0)
+			vs._physics_process(0.016)
+			puck.vel = Vector3(-10, 0, 0)
+			vs._physics_process(0.016)
+		_expect(heard.call(c[1]), "a match puck off the %s -> %s" % ["glass" if c[0].y > 1.0 else "boards", c[1]])
+	VenueSound.heard.clear()
+	vs._next_contact = 0.0
+	if _signal_args(puck, "post_hit") == 2:
+		puck.post_hit.emit(puck.position, 12.0)
+	else:
+		puck.post_hit.emit()
+	_expect(heard.call("puck_post"), "Puck.post_hit -> puck_post")
+	VenueSound.heard.clear()
+	vs._next_contact = 0.0
+	puck.left_rink.emit(puck.position)
+	_expect(heard.call("glass_rattle"), "Puck.left_rink -> glass_rattle")
+	# the skaters: a light scrape per stride, a long spray per stop
+	var sk := Node3D.new()
+	sk.add_user_signal("stride", [{"name": "at", "type": TYPE_VECTOR3}, {"name": "speed", "type": TYPE_FLOAT}, {"name": "foot", "type": TYPE_INT}])
+	sk.add_user_signal("stop_spray", [{"name": "at", "type": TYPE_VECTOR3}, {"name": "speed", "type": TYPE_FLOAT}])
+	w.add_child(sk)
+	vs.watch_skaters([sk])
+	WorldSound.recording = true
+	WorldSound.reset()
+	sk.emit_signal("stride", Vector3(0, 0, 2), 6.0, 1)
+	sk.emit_signal("stop_spray", Vector3(0, 0, 2), 8.0)
+	var ws := WorldSound.heard.map(func(h: Dictionary) -> String: return str(h.sound))
+	_expect("blade_carve" in ws, "Skater.stride -> blade_carve")
+	_expect("stop_spray" in ws, "Skater.stop_spray -> stop_spray")
+	WorldSound.recording = false
+	WorldSound.reset()
+	VenueSound.recording = false
+	VenueSound.heard.clear()
+
+
+func _collect(n: Node, want: int, odd: Array) -> void:
+	if n is GeometryInstance3D and n.cast_shadow != want:
+		odd.append(n.name)
+	for c in n.get_children():
+		_collect(c, want, odd)
+
+
+func _signal_args(o: Object, sig: String) -> int:
+	for d: Dictionary in o.get_signal_list():
+		if str(d.name) == sig:
+			var a: Array = d.args
+			return a.size()
+	return 0

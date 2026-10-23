@@ -1,0 +1,45 @@
+{
+  "collision_cell": 8,
+  "id": "coffee_mug",
+  "inspect": "Hot Stove mug. Chipped on the handle side.",
+  "mass_kg": 0.3,
+  "mesh": "merged",
+  "name": "Coffee mug",
+  "pivot": [
+    39.5,
+    0,
+    30.0
+  ],
+  "shape": [
+    [
+      0,
+      0
+    ]
+  ],
+  "size_m": [
+    0.1106,
+    0.0966,
+    0.084
+  ],
+  "sound": "ceramic",
+  "source": "tools/propgen/library.py",
+  "tags": [
+    "canteen",
+    "office",
+    "handheld",
+    "clutter"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "take",
+    "inspect",
+    "push"
+  ],
+  "vox": "art/props/coffee_mug.vox",
+  "voxel_m": 0.0014,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

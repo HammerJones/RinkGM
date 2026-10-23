@@ -1,0 +1,376 @@
+{
+  "id": "irene_dubois",
+  "barks": {
+    "idle": [
+      "Minus four on the glass. In 1974 it was minus six.",
+      "Albert would have said the boards need paint. He'd have been right.",
+      "That's eight of mine and five of his."
+    ],
+    "good_ice": [
+      "Oh, that's a dinner plate. Just like opening night.",
+      "First lap on fresh ice. There's nothing like it, dear."
+    ],
+    "bad_ice": [
+      "Bumpy as the Church Street sidewalk.",
+      "I'll take it slow. Slower. Albert's laps can wait."
+    ],
+    "wet_ice": [
+      "Slush. I didn't wait fifty-two years to wade.",
+      "My skates are wet through. Albert would have said something."
+    ],
+    "cold": [
+      "I've got two scarves and a hot water bottle in my purse. Don't tell anyone.",
+      "Colder than the switchboard room, and that's saying something."
+    ],
+    "hungry": [
+      "It's nearly 2:15. Is the hot chocolate on?"
+    ],
+    "long_line": [
+      "A queue! Well. I've waited longer for worse."
+    ],
+    "bored": [
+      "When's the waltz, dear?"
+    ],
+    "greet_owner": [
+      "There's the owner. Take my arm.",
+      "Hello, dear. It's {ice_word} today, but I've seen worse."
+    ],
+    "leaving_happy": [
+      "Twelve for me and twelve for Albert. Same time next week."
+    ],
+    "leaving_angry": [
+      "I've been coming since 1974, dear. I'd like to keep coming. Make it easy for me."
+    ],
+    "event_specific": {
+      "public_skate": [
+        "Not on your phone in the lane, young man.",
+        "Is that the Skaters' Waltz? No. Pity."
+      ],
+      "figure_practice": [
+        "I come early for the end of practice. That little Thibodeau girl can fly."
+      ],
+      "senior_hockey": [
+        "Kessler won the opener in 1974, you know. I'm still cross."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_irene_dubois"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "irene_albert_lap"
+        },
+        {
+          "event_now": "public_skate"
+        }
+      ],
+      "node": "albert_lap_greet"
+    },
+    {
+      "if": [
+        {
+          "event_now": "public_skate"
+        }
+      ],
+      "node": "public"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "irene_dubois",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "(She takes your arm before you offer it.) You must be the new owner. Irene Dubois. I was here opening night, 2 November 1974. It was minus six and the ice was harder than a church pew.",
+      "do": [
+        {
+          "set": "met_irene_dubois"
+        }
+      ],
+      "options": [
+        {
+          "text": "Every week since 1974?",
+          "do": [
+            {
+              "rel": [
+                "irene_dubois",
+                2
+              ]
+            }
+          ],
+          "to": "first_since"
+        },
+        {
+          "text": "Let me walk you to the bench.",
+          "do": [
+            {
+              "rel": [
+                "irene_dubois",
+                4
+              ]
+            }
+          ],
+          "to": "first_arm"
+        },
+        {
+          "text": "Sorry, I'm in a bit of a rush.",
+          "do": [
+            {
+              "rel": [
+                "irene_dubois",
+                -2
+              ]
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "first_since": {
+      "say": "Except two winters. My hip, and then Albert's. He's gone now, so I skate his laps too. Twelve for me, twelve for him. It keeps me honest.",
+      "options": [
+        {
+          "text": "I'm glad you still come.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_arm": {
+      "say": "Oh, you've got manners. That was rarer in 1974 than you'd think. Albert walked me to the bench once and then went for a hot dog.",
+      "options": [
+        {
+          "text": "Here we are.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Irene. I'll do better.",
+          "do": [
+            {
+              "rel": [
+                "irene_dubois",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "public": {
+      "say": [
+        "It's minus four on the glass, dear. In 1974 it was minus six. We were tougher then, and colder.",
+        "I've done eight of mine and five of Albert's. He's slower than he used to be."
+      ],
+      "options": [
+        {
+          "text": "Enjoy your laps.",
+          "to": "end"
+        },
+        {
+          "text": "Have you got a minute?",
+          "to": "hub"
+        }
+      ]
+    },
+    "albert_lap_greet": {
+      "say": "There's my partner. One of Albert's laps is yours, if you want it. He won't mind. He's not using it.",
+      "options": [
+        {
+          "text": "I'd love to.",
+          "do": [
+            {
+              "rel": [
+                "irene_dubois",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Maybe later. Can we talk?",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "There you are. Take my arm. No, the other one. That one's for Albert.",
+        "Hello, dear. I saved you a spot on the bench. It's cold, but it's yours."
+      ],
+      "options": [
+        {
+          "text": "Thank you, Irene.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hello, dear. It's {time}, so I've got until hot chocolate.",
+        "Sit down a minute. The bench is cold but the company isn't.",
+        "Yes, dear?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What did you do before you retired?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love about public skate?",
+          "to": "events"
+        },
+        {
+          "text": "Tell me about Albert.",
+          "to": "albert"
+        },
+        {
+          "text": "Who else do you see here?",
+          "to": "gossip"
+        },
+        {
+          "text": "How does the rink compare to 1974?",
+          "to": "rink"
+        },
+        {
+          "text": "Enjoy your skate, Irene.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "I ran the switchboard at the telephone exchange for thirty-one years. I knew everyone's business and I told nobody. Mostly nobody.",
+      "options": [
+        {
+          "text": "Your secrets are safe.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Friday public skate, the end of figure practice if I'm early, and the Lumber Kings when Doreen drags me. But the waltz is the thing. A rink is a ballroom that's honest about the floor.",
+      "options": [
+        {
+          "text": "A ballroom. I like that.",
+          "to": "hub"
+        }
+      ]
+    },
+    "albert": {
+      "say": "He skated like a man pushing a lawnmower, and he held my hand every lap for forty years. I do his laps now. It's not sad, dear. It's arithmetic.",
+      "options": [
+        {
+          "text": "Could I skate one of his laps with you sometime?",
+          "if": [
+            {
+              "not_flag": "irene_albert_lap"
+            }
+          ],
+          "do": [
+            {
+              "set": "irene_albert_lap"
+            },
+            {
+              "rel": [
+                "irene_dubois",
+                5
+              ]
+            },
+            {
+              "note": "Irene Dubois has offered you one of Albert's laps at public skate."
+            }
+          ],
+          "to": "albert_yes"
+        },
+        {
+          "text": "He sounds lovely.",
+          "to": "hub"
+        }
+      ]
+    },
+    "albert_yes": {
+      "say": "Oh. Yes. He'd like that. He'd say you're leaning too far forward, but he'd like it.",
+      "options": [
+        {
+          "text": "I'll lean back.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Jess brings her little one on Fridays. Birdie and I waltz at two miles an hour and she falls at every bar line. And Doreen thinks her organ hung the moon. It did, in 1979.",
+      "options": [
+        {
+          "text": "Sounds like a good crowd.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "In 1974 the paint was new and the ice was a dinner plate. Now the paint's older than most of the skaters and the ice is {ice_word}.",
+      "options": [
+        {
+          "text": "It's getting better, isn't it?",
+          "if": [
+            {
+              "ice_gte": 60
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'm working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "It's the best it's been since Albert complained about it. That's a compliment, dear. He complained about everything good.",
+      "options": [
+        {
+          "text": "I'll take it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Off you go. I've got Albert's laps to do.",
+        "Same time next week, dear. I'm not done."
+      ],
+      "options": []
+    }
+  }
+}

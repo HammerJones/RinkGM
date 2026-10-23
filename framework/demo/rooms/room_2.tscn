@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://framework/demo/demo_room.gd" id="1_2w263"]
+
+[node name="Room2" type="Node3D" unique_id=1438420216]
+script = ExtResource("1_2w263")
+theme = 2
+chunk_id = "room_2"
+bounds = AABB(15, 0, -4, 10, 3, 8)

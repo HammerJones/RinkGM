@@ -1,0 +1,36 @@
+{
+  "collision_cell": 8,
+  "id": "ice_edger",
+  "inspect": "A push edger: a disc blade under the deck tilted to its left, a crank on the handle for the depth.",
+  "mass_kg": 60.0,
+  "mesh": "merged",
+  "name": "Ice edger",
+  "pivot": [
+    34.0,
+    0,
+    79.5
+  ],
+  "size_m": [
+    0.7459,
+    1.064,
+    1.744
+  ],
+  "sound": "metal",
+  "source": "scratch edger_prop.py over tools/propgen/glb2vox.py (mower.glb, lm_* parts turned square to the wheels, x36)",
+  "tags": [
+    "imported",
+    "machine",
+    "resurfacer"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/ice_edger.vox",
+  "voxel_m": 0.01097,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}

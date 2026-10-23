@@ -1,0 +1,176 @@
+{
+ "id": "stan_rafters_stool",
+ "giver": "stan_szymanski",
+ "quest": "stan_rafters_stool",
+ "nodes": {
+  "offer": {
+   "say": "Fine.",
+   "options": [
+    {
+     "text": "You don't look fine. Knees?",
+     "to": "knees"
+    },
+    {
+     "text": "Want a seat in section A?",
+     "do": [
+      {
+       "rel": [
+        "stan_szymanski",
+        -1
+       ]
+      }
+     ],
+     "to": "seat"
+    },
+    {
+     "text": "Okay, Stan. Enjoy the game.",
+     "to": "end"
+    }
+   ]
+  },
+  "knees": {
+   "say": "Seventy-nine. They've earned an opinion.",
+   "options": [
+    {
+     "text": "What if there was something to lean on? Not a seat. A lean.",
+     "to": "lean"
+    },
+    {
+     "text": "Fair enough.",
+     "to": "end"
+    }
+   ]
+  },
+  "seat": {
+   "say": "Sitting's for the other end.",
+   "options": [
+    {
+     "text": "What about something to lean on?",
+     "to": "lean"
+    }
+   ]
+  },
+  "lean": {
+   "say": "Lean.",
+   "options": [
+    {
+     "text": "Leave it with me.",
+     "do": [
+      {
+       "quest_start": "stan_rafters_stool"
+      },
+      {
+       "rel": [
+        "stan_szymanski",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "accepted": {
+   "say": "Don't make a fuss.",
+   "options": []
+  },
+  "progress": {
+   "say": "Hm.",
+   "options": [
+    {
+     "text": "Still working on the lean.",
+     "if": [
+      {
+       "step": [
+        "stan_rafters_stool",
+        "lorne"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Next home game.",
+     "if": [
+      {
+       "step": [
+        "stan_rafters_stool",
+        "game"
+       ]
+      }
+     ],
+     "to": "p_game"
+    },
+    {
+     "text": "It'll be there next game.",
+     "if": [
+      {
+       "step": [
+        "stan_rafters_stool",
+        "stan"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Just saying hello.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_game": {
+   "say": "Kessler?",
+   "options": []
+  },
+  "complete": {
+   "say": "Good lean. Don't tell anyone. Thanks.",
+   "options": [
+    {
+     "text": "Your secret's safe.",
+     "do": [
+      {
+       "rel": [
+        "stan_szymanski",
+        3
+       ]
+      }
+     ],
+     "to": "c_secret"
+    },
+    {
+     "text": "Lorne made it from broken sticks.",
+     "do": [
+      {
+       "rel": [
+        "lorne_pettipiece",
+        2
+       ]
+      }
+     ],
+     "to": "c_lorne"
+    },
+    {
+     "text": "Did you just say thanks?",
+     "to": "c_thanks"
+    }
+   ]
+  },
+  "c_secret": {
+   "say": "Hm.",
+   "options": []
+  },
+  "c_lorne": {
+   "say": "Sticks. Good. They were here already.",
+   "options": []
+  },
+  "c_thanks": {
+   "say": "No.",
+   "options": []
+  },
+  "done": {
+   "say": "Good lean.",
+   "options": []
+  }
+ }
+}

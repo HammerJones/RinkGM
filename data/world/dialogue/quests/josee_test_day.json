@@ -1,0 +1,286 @@
+{
+ "id": "josee_test_day",
+ "giver": "josee_thibodeau",
+ "quest": "josee_test_day",
+ "nodes": {
+  "offer": {
+   "say": "Okay. Okay okay okay. My bronze test is on Millbrook ice. The evaluator is coming from Duncannon and she has a clipboard, {owner}. A real one. Can the ice be really, really fresh?",
+   "options": [
+    {
+     "text": "Fresh flood right before. Promise.",
+     "do": [
+      {
+       "quest_start": "josee_test_day"
+      },
+      {
+       "rel": [
+        "josee_thibodeau",
+        4
+       ]
+      }
+     ],
+     "to": "nerves"
+    },
+    {
+     "text": "Why does it matter so much?",
+     "to": "why"
+    },
+    {
+     "text": "The ice is always fresh. Ish.",
+     "to": "cheek"
+    },
+    {
+     "text": "I can't promise the schedule that week.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Because my axel lands on the east circle and if there's a rut there I will die. Not actually die. Test-die. Mom says I'm dramatic. I'm accurate.",
+   "options": [
+    {
+     "text": "No ruts on the east circle. Deal.",
+     "do": [
+      {
+       "quest_start": "josee_test_day"
+      },
+      {
+       "rel": [
+        "josee_thibodeau",
+        4
+       ]
+      }
+     ],
+     "to": "nerves"
+    },
+    {
+     "text": "Let me see what I can do.",
+     "to": "decline"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "Ish is not a figure skating word. Ish gets you a retry.",
+   "options": [
+    {
+     "text": "Fine. Fresh flood, no ish.",
+     "do": [
+      {
+       "quest_start": "josee_test_day"
+      },
+      {
+       "rel": [
+        "josee_thibodeau",
+        3
+       ]
+      }
+     ],
+     "to": "nerves"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Oh. Okay. That's okay. I'll just skate around the ruts. Like a hero. A tragic hero.",
+   "do": [
+    {
+     "rel": [
+      "josee_thibodeau",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "nerves": {
+   "say": "Thank you! Also, um. How do you not get nervous? Hélène says nerves are 'information'. That's not helpful information.",
+   "options": [
+    {
+     "text": "Breathe out longer than you breathe in.",
+     "do": [
+      {
+       "set": "josee_advice_breathe"
+      },
+      {
+       "rel": [
+        "josee_thibodeau",
+        2
+       ]
+      }
+     ],
+     "to": "nerves_ok"
+    },
+    {
+     "text": "Fall well. Knees bent, hands out, then laugh.",
+     "do": [
+      {
+       "set": "josee_advice_fall"
+      },
+      {
+       "rel": [
+        "josee_thibodeau",
+        2
+       ]
+      }
+     ],
+     "to": "nerves_ok"
+    },
+    {
+     "text": "Pretend the evaluator is Earl. Nothing impresses him either.",
+     "do": [
+      {
+       "set": "josee_advice_earl"
+      },
+      {
+       "rel": [
+        "josee_thibodeau",
+        3
+       ]
+      }
+     ],
+     "to": "nerves_earl"
+    }
+   ]
+  },
+  "nerves_ok": {
+   "say": "Okay. I'm writing that on my hand.",
+   "options": []
+  },
+  "nerves_earl": {
+   "say": "Oh my gosh. Earl in a blazer with a clipboard. I'm going to laugh during my spiral. That's fine. That's better than crying.",
+   "options": []
+  },
+  "progress": {
+   "say": "Is it fresh? Is it fresh yet? Sorry. Hi.",
+   "options": [
+    {
+     "text": "Not yet. I'll flood right before.",
+     "if": [
+      {
+       "step": [
+        "josee_test_day",
+        "flood"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Fresh. Go get changed.",
+     "if": [
+      {
+       "step": [
+        "josee_test_day",
+        "test"
+       ]
+      }
+     ],
+     "to": "p_test"
+    },
+    {
+     "text": "Just saying hi.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_test": {
+   "say": "It's so shiny. I can see my face. My face looks scared. Okay. Going.",
+   "options": []
+  },
+  "complete": {
+   "say": "I PASSED. She wrote 'confident edges' on the sheet. Confident! Me! Here, I made you a photocopy. It's for the notice board. Or your fridge. Do rink owners have fridges?",
+   "options": [
+    {
+     "text": "What got you through it?",
+     "to": "c_why"
+    },
+    {
+     "text": "It's going on the notice board right now.",
+     "do": [
+      {
+       "set": "test_sheet_on_board"
+      },
+      {
+       "rel": [
+        "josee_thibodeau",
+        2
+       ]
+      }
+     ],
+     "to": "c_board"
+    },
+    {
+     "text": "I knew you'd do it.",
+     "do": [
+      {
+       "rel": [
+        "josee_thibodeau",
+        1
+       ]
+      }
+     ],
+     "to": "c_knew"
+    }
+   ]
+  },
+  "c_why": {
+   "say": "Honestly? The ice. And the thing you said.",
+   "options": [
+    {
+     "text": "The breathing?",
+     "if": [
+      {
+       "flag": "josee_advice_breathe"
+      }
+     ],
+     "to": "c_breathe"
+    },
+    {
+     "text": "The falling?",
+     "if": [
+      {
+       "flag": "josee_advice_fall"
+      }
+     ],
+     "to": "c_fall"
+    },
+    {
+     "text": "Earl?",
+     "if": [
+      {
+       "flag": "josee_advice_earl"
+      }
+     ],
+     "to": "c_earl"
+    },
+    {
+     "text": "Mostly you, though.",
+     "to": "c_knew"
+    }
+   ]
+  },
+  "c_breathe": {
+   "say": "I breathed out for like a whole lap. I think I was the calmest person in the building. Mom was not.",
+   "options": []
+  },
+  "c_fall": {
+   "say": "I fell on my flip in the warm-up and I laughed and then I wasn't scared anymore. Then I landed it in the test. Falling is a cheat code.",
+   "options": []
+  },
+  "c_earl": {
+   "say": "I looked at the evaluator and saw Earl and I couldn't stop smiling. She wrote 'lovely presentation'. Please never tell Earl.",
+   "options": []
+  },
+  "c_board": {
+   "say": "Next to the black cat? Toe Drag is famous. I'm famous now too. Kind of.",
+   "options": []
+  },
+  "c_knew": {
+   "say": "You did not. Nobody did. I didn't. But thank you.",
+   "options": []
+  },
+  "done": {
+   "say": "Senior silver next. Don't worry, I'll tell you about it. A lot.",
+   "options": []
+  }
+ }
+}

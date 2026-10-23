@@ -1,0 +1,442 @@
+{
+  "id": "hap_doyle",
+  "barks": {
+    "idle": [
+      "We'll see.",
+      "(Silence.)",
+      "Hm."
+    ],
+    "good_ice": [
+      "Fine.",
+      "Ice is fine. Don't tell anyone I said."
+    ],
+    "bad_ice": [
+      "Millbrook ice.",
+      "Soft."
+    ],
+    "wet_ice": [
+      "Wet. Typical."
+    ],
+    "cold": [
+      "The Barn's colder."
+    ],
+    "hungry": [
+      "No."
+    ],
+    "long_line": [
+      "Hm."
+    ],
+    "bored": [
+      "(Silence. It goes on.)"
+    ],
+    "goal": [
+      "Lucky.",
+      "We'll see."
+    ],
+    "greet_owner": [
+      "Owner.",
+      "(A nod. A small one.)"
+    ],
+    "leaving_happy": [
+      "Fine."
+    ],
+    "leaving_angry": [
+      "Kessler next time."
+    ],
+    "event_specific": {
+      "senior_hockey": [
+        "Skate.",
+        "Don't talk. Skate."
+      ],
+      "stick_and_puck": [
+        "(He watches. He writes something down. He does not explain.)"
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_hap_doyle"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "hap_asked_smile"
+        }
+      ],
+      "node": "photo_greet"
+    },
+    {
+      "if": [
+        {
+          "event_now": "senior_hockey"
+        }
+      ],
+      "node": "game"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "(An old man in a Millmen jacket looks at you, then at your ice.) Doyle.",
+      "do": [
+        {
+          "set": "met_hap_doyle"
+        }
+      ],
+      "options": [
+        {
+          "text": "Welcome to {rink}, Coach.",
+          "do": [
+            {
+              "rel": [
+                "hap_doyle",
+                2
+              ]
+            }
+          ],
+          "to": "first_welcome"
+        },
+        {
+          "text": "What do you think of the ice?",
+          "to": "first_ice"
+        },
+        {
+          "text": "Big fan of the Millmen.",
+          "do": [
+            {
+              "rel": [
+                "hap_doyle",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_welcome": {
+      "say": "Hm. (From Hap Doyle, this is warm.)",
+      "options": [
+        {
+          "text": "Good to have you.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_ice": {
+      "say": "Millbrook ice. (He says it the way some people say 'tax audit'.)",
+      "options": [
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "Sorry, Coach.",
+          "do": [
+            {
+              "rel": [
+                "hap_doyle",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "game": {
+      "say": [
+        "Busy.",
+        "Game day. Talk after. Or don't."
+      ],
+      "options": [
+        {
+          "text": "Good luck, Coach.",
+          "to": "end"
+        },
+        {
+          "text": "One question.",
+          "to": "hub"
+        }
+      ]
+    },
+    "photo_greet": {
+      "say": "You. The photo one.",
+      "options": [
+        {
+          "text": "Still deny it?",
+          "do": [
+            {
+              "rel": [
+                "hap_doyle",
+                -1
+              ]
+            }
+          ],
+          "to": "photo_deny"
+        },
+        {
+          "text": "Hello, Coach.",
+          "to": "hub"
+        }
+      ]
+    },
+    "photo_deny": {
+      "say": "Yes.",
+      "options": [
+        {
+          "text": "Fair enough.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What.",
+        "Hm?",
+        "(He waits. He is very good at it.)"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How long have you coached the Millmen?",
+          "to": "job"
+        },
+        {
+          "text": "What do you look for in a player?",
+          "to": "events"
+        },
+        {
+          "text": "What do you make of Coach Rourke?",
+          "to": "gossip"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Is it true you smiled once, in 1996?",
+          "if": [
+            {
+              "not_flag": "hap_asked_smile"
+            }
+          ],
+          "to": "smile"
+        },
+        {
+          "text": "Think I could play for you?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "path_player"
+        },
+        {
+          "text": "Your team or mine on Friday?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "path_coach"
+        },
+        {
+          "text": "Want to make a trade?",
+          "if": [
+            {
+              "path": "gm"
+            }
+          ],
+          "to": "path_gm"
+        },
+        {
+          "text": "See you, Coach.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "1988. Eleven Cups.",
+      "options": [
+        {
+          "text": "And the last one was 1998?",
+          "do": [
+            {
+              "rel": [
+                "hap_doyle",
+                -2
+              ]
+            }
+          ],
+          "to": "job_1998"
+        },
+        {
+          "text": "Impressive.",
+          "to": "hub"
+        }
+      ]
+    },
+    "job_1998": {
+      "say": "(Silence. A long one. The kind the Barn is famous for.)",
+      "options": [
+        {
+          "text": "Never mind.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Players who don't talk. Senior. Stick and puck, from the stands. You learn who works when nobody's watching.",
+      "options": [
+        {
+          "text": "Makes sense.",
+          "do": [
+            {
+              "rel": [
+                "hap_doyle",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Rourke. Good. Same every night. (He pauses.) Don't tell her.",
+      "options": [
+        {
+          "text": "I won't.",
+          "do": [
+            {
+              "rel": [
+                "hap_doyle",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Soft. Bouncy boards. Dead spot behind the net.",
+      "options": [
+        {
+          "text": "The ice is a lot better now.",
+          "if": [
+            {
+              "ice_gte": 70
+            }
+          ],
+          "to": "rink_better"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "(He looks at the ice for a long time.) We'll see. (He does not say it like a no.)",
+      "options": [
+        {
+          "text": "I'll take that.",
+          "to": "hub"
+        }
+      ]
+    },
+    "smile": {
+      "say": "No.",
+      "options": [
+        {
+          "text": "There's a photo in the Barn.",
+          "do": [
+            {
+              "set": "hap_asked_smile"
+            },
+            {
+              "rel": [
+                "hap_doyle",
+                -2
+              ]
+            }
+          ],
+          "to": "smile_photo"
+        },
+        {
+          "text": "Okay.",
+          "to": "hub"
+        }
+      ]
+    },
+    "smile_photo": {
+      "say": "I deny it.",
+      "options": [
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "path_player": {
+      "say": "Beer leaguer. (A long look.) We'll see.",
+      "options": [
+        {
+          "text": "We will.",
+          "to": "hub"
+        }
+      ]
+    },
+    "path_coach": {
+      "say": "Mine.",
+      "options": [
+        {
+          "text": "We'll see.",
+          "do": [
+            {
+              "rel": [
+                "hap_doyle",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "path_gm": {
+      "say": "No. (A pause.) Never have. Maybe a goalie, once a decade.",
+      "options": [
+        {
+          "text": "Worth a try.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Hm.",
+        "(A nod.)"
+      ],
+      "options": []
+    }
+  }
+}

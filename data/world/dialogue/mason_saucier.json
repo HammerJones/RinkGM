@@ -1,0 +1,569 @@
+{
+  "id": "mason_saucier",
+  "barks": {
+    "idle": [
+      "Fine.",
+      "...",
+      "It's quiet in here. That's good."
+    ],
+    "good_ice": [
+      "Ice is good. Edges grip.",
+      "Clean ice. Nice."
+    ],
+    "bad_ice": [
+      "Ruts. Whatever. Fine."
+    ],
+    "wet_ice": [
+      "It's slushy. My edges hate it."
+    ],
+    "goal": [
+      "Okay.",
+      "Nice one."
+    ],
+    "cold": [
+      "It's cold. It's fine."
+    ],
+    "hungry": [
+      "Could eat."
+    ],
+    "long_line": [
+      "I'll just wait."
+    ],
+    "bored": [
+      "*draws in planner*"
+    ],
+    "greet_owner": [
+      "Hey.",
+      "Hi {owner}."
+    ],
+    "leaving_happy": [
+      "That was actually fun."
+    ],
+    "leaving_angry": [
+      "Can't wait for the car ride home. Not."
+    ],
+    "event_specific": {
+      "minor_hockey": [
+        "Is my dad at the glass? Don't tell me.",
+        "Fine. I'm fine."
+      ],
+      "tournament": [
+        "Everybody's watching. Great."
+      ],
+      "stick_and_puck": [
+        "Nobody's yelling. Best ice of the week."
+      ],
+      "figure_show": [
+        "Those edges are so clean. Don't tell anyone I said that."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_mason_saucier"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "stick_and_puck"
+        }
+      ],
+      "node": "snp_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "mason_saucier",
+            35
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "if": [
+        {
+          "flag": "mason_opened_up"
+        },
+        {
+          "rel_gte": [
+            "mason_saucier",
+            20
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hey. I'm... everybody calls me Little Sauce. Because of my dad.",
+      "do": [
+        {
+          "set": "met_mason_saucier"
+        }
+      ],
+      "options": [
+        {
+          "text": "What do you want me to call you?",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                4
+              ]
+            }
+          ],
+          "to": "first_name"
+        },
+        {
+          "text": "Little Sauce! Your dad's told me all about 1994.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                -4
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Hi. I'm {owner}.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_name": {
+      "say": "...Mason. Nobody asks that. Mason's fine.",
+      "options": [
+        {
+          "text": "Mason it is.",
+          "do": [
+            {
+              "set": "calls_him_mason"
+            },
+            {
+              "rel": [
+                "mason_saucier",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "That's on me, Mason. I'll fix it.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Want to talk about it?",
+          "to": "hub"
+        }
+      ]
+    },
+    "snp_now": {
+      "say": [
+        "It's quiet. Nobody's yelling. I can just skate.",
+        "I'm practising edges. Not hockey edges. Just edges."
+      ],
+      "options": [
+        {
+          "text": "I'll leave you to it. Enjoy the quiet.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                3
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Those look like figure edges.",
+          "to": "secret"
+        }
+      ]
+    },
+    "secret": {
+      "say": "...Don't tell my dad. I watch the figure skaters sometimes. Their edges are so clean. Hélène does this thing with her knee. I copy it.",
+      "options": [
+        {
+          "text": "Your secret's safe with me.",
+          "do": [
+            {
+              "set": "mason_secret_kept"
+            },
+            {
+              "rel": [
+                "mason_saucier",
+                5
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "You should ask Hélène for a lesson.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Hey {owner}. Want to see something? It's a drawing. It's dumb.",
+        "Oh. Hi. You're the only grown-up here who doesn't ask about 1994."
+      ],
+      "options": [
+        {
+          "text": "I'd love to see it.",
+          "to": "drawing"
+        },
+        {
+          "text": "Hey, Mason.",
+          "if": [
+            {
+              "flag": "calls_him_mason"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hey.",
+        "Fine. Everything's fine.",
+        "Hi. Is my dad around?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's hockey?",
+          "to": "hockey"
+        },
+        {
+          "text": "What are you drawing?",
+          "to": "drawing"
+        },
+        {
+          "text": "Who do you listen to around here?",
+          "to": "ronnie"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Can we talk about your ice time?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "Your dad called me about you again.",
+          "if": [
+            {
+              "path": "gm"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "See you, Mason.",
+          "to": "end"
+        }
+      ]
+    },
+    "hockey": {
+      "say": "Fine.",
+      "options": [
+        {
+          "text": "Just fine?",
+          "to": "hockey2"
+        },
+        {
+          "text": "Okay. Fine's fine.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hockey2": {
+      "say": "It's fine. I'm good at it. Everyone says I'm good at it. Dad says I'm better than him at twelve. That's supposed to make me happy.",
+      "options": [
+        {
+          "text": "Does it?",
+          "to": "hockey3"
+        }
+      ]
+    },
+    "hockey3": {
+      "say": "...I don't know. I like it when it's quiet. Stick and puck. Nobody watching. Can we talk about something else?",
+      "options": [
+        {
+          "text": "Sure. Something else.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                3
+              ]
+            },
+            {
+              "set": "mason_opened_up"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "drawing": {
+      "say": "It's Doris with muscles. And Earl in a cape. Owen says it's the best drawing ever. Owen says that about all my drawings.",
+      "options": [
+        {
+          "text": "Owen's right. That's really good.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Could I hang it in the lobby?",
+          "if": [
+            {
+              "not_flag": "mason_drawing_lobby"
+            }
+          ],
+          "to": "drawing_lobby"
+        }
+      ]
+    },
+    "drawing_lobby": {
+      "say": "Seriously? Okay. But don't put my name on it. Just put 'M.' Dad will think it's Maddie's.",
+      "options": [
+        {
+          "text": "Just 'M'. Deal.",
+          "do": [
+            {
+              "set": "mason_drawing_lobby"
+            },
+            {
+              "rel": [
+                "mason_saucier",
+                4
+              ]
+            },
+            {
+              "note": "A drawing of Doris with muscles, signed 'M.', went up in the lobby."
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "ronnie": {
+      "say": "Ronnie. He doesn't yell. He says one thing and then he waits. Last time he said 'Look up.' That was it. I scored twice.",
+      "options": [
+        {
+          "text": "And your dad?",
+          "to": "dad"
+        }
+      ]
+    },
+    "dad": {
+      "say": "He means well. Mom says that. He just... yells everything he wanted someone to yell at him. In 1994. You know about 1994.",
+      "options": [
+        {
+          "text": "Everyone knows about 1994.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Have you told him how it feels?",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I told your dad you can hear him from the bench.",
+          "if": [
+            {
+              "flag": "told_sauce_he_hears"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "I like it early, before anyone's here. And the drawing desk in the lobby. It's just a table but nobody sits there.",
+      "options": [
+        {
+          "text": "The ice is better now. Notice?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll keep that table free for you.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "Dad wants me on the power play. And first line. And in the paper. I just want to play. Maybe less. Is that bad?",
+      "options": [
+        {
+          "text": "It's not bad. We'll find the right amount.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                4
+              ]
+            },
+            {
+              "set": "mason_ice_time_talk"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "You're my best player, Mason. I need you out there.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "Sorry. He does that. He called the Clarion too. I'm twelve. I just want to go to stick and puck.",
+      "options": [
+        {
+          "text": "Don't apologise. That's my job to handle.",
+          "do": [
+            {
+              "rel": [
+                "mason_saucier",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

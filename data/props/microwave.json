@@ -1,0 +1,39 @@
+{
+  "collision_cell": 8,
+  "id": "microwave",
+  "inspect": "Canteen microwave. The turntable has not turned since the playoffs.",
+  "mass_kg": 14.0,
+  "mesh": "merged",
+  "name": "Microwave",
+  "pivot": [
+    62.5,
+    0,
+    47.5
+  ],
+  "shape": [],
+  "size_m": [
+    0.5,
+    0.3,
+    0.38
+  ],
+  "sound": "metal",
+  "source": "tools/propgen/library.py",
+  "tags": [
+    "canteen",
+    "dressing_room",
+    "electronics"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "inspect",
+    "open",
+    "use"
+  ],
+  "vox": "art/props/microwave.vox",
+  "voxel_m": 0.004,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

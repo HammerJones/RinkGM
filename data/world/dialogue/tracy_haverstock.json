@@ -1,0 +1,330 @@
+{
+  "id": "tracy_haverstock",
+  "barks": {
+    "idle": [
+      "I've got a list. You're on it. In a good way.",
+      "Backup clipboard. Always a backup clipboard."
+    ],
+    "good_ice": [
+      "Dad said 'that'll do'. From him, that's a parade."
+    ],
+    "bad_ice": [
+      "Not putting sixty-year-olds on that. Not my dad."
+    ],
+    "goal": [
+      "Was that Dad? Was it a pass? It was a pass."
+    ],
+    "greet_owner": [
+      "Hi! Two minutes, go.",
+      "{owner}! Got a sec?"
+    ],
+    "leaving_happy": [
+      "Great night. Invoice to follow. Kidding. Mostly."
+    ],
+    "leaving_angry": [
+      "I'll be calling Priya. Nicely. Firmly."
+    ],
+    "event_specific": {
+      "broomball": [
+        "My one night of sitting still. Don't make me stand up."
+      ],
+      "special": [
+        "Clipboard and backup clipboard. Let's go."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_tracy_haverstock"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "broomball"
+        }
+      ],
+      "node": "broom"
+    },
+    {
+      "if": [
+        {
+          "event_now": "special"
+        }
+      ],
+      "node": "special"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "tracy_haverstock",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Tracy Haverstock. Ronnie's daughter, yes, but I also have a name and a spreadsheet. Dad says hi. He didn't, but he would.",
+      "do": [
+        {
+          "set": "met_tracy_haverstock"
+        }
+      ],
+      "options": [
+        {
+          "text": "Nice to meet you, Tracy.",
+          "do": [
+            {
+              "rel": [
+                "tracy_haverstock",
+                3
+              ]
+            }
+          ],
+          "to": "first_nice"
+        },
+        {
+          "text": "Could your dad sign something for me?",
+          "do": [
+            {
+              "rel": [
+                "tracy_haverstock",
+                -5
+              ]
+            }
+          ],
+          "to": "first_sign"
+        },
+        {
+          "text": "A spreadsheet for what?",
+          "to": "oldtimers"
+        }
+      ]
+    },
+    "first_nice": {
+      "say": "See, that's how you do it. Most people say 'Ronnie's daughter' and then wait.",
+      "options": [
+        {
+          "text": "Ha.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_sign": {
+      "say": "He'll say yes. He always says yes. That's why I say no for him. Sorry. Not sorry.",
+      "options": [
+        {
+          "text": "Fair enough.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "The Invitational's two weeks out and the beer garden licence is a rumour. I don't do rumours."
+      ],
+      "options": [
+        {
+          "text": "I'll chase it today.",
+          "do": [
+            {
+              "rel": [
+                "tracy_haverstock",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "broom": {
+      "say": "Wednesday. My partner plays. It's the only night I sit still. Don't make me stand up.",
+      "options": [
+        {
+          "text": "I won't.",
+          "to": "end"
+        }
+      ]
+    },
+    "special": {
+      "say": "Big night. I've got a clipboard and a backup clipboard. Dad's hiding in the canteen.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! Colour-coded agenda, just for you.",
+        "Hey. Dad says you're good people. He said 'fine people'. Same thing."
+      ],
+      "options": [
+        {
+          "text": "Hi, Tracy.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Tracy. Two minutes, go.",
+        "Hi! I've got a list. Want to be on it?",
+        "What do you need? I've probably already booked it."
+      ],
+      "options": [
+        {
+          "text": "Tell me about the Old-timers' Invitational.",
+          "to": "oldtimers"
+        },
+        {
+          "text": "What do you like coming to?",
+          "to": "events"
+        },
+        {
+          "text": "How's your dad, really?",
+          "to": "dad"
+        },
+        {
+          "text": "How's working with Dale and Priya?",
+          "to": "dale"
+        },
+        {
+          "text": "Is the rink ready for the Invitational?",
+          "to": "rink"
+        },
+        {
+          "text": "See you, Tracy.",
+          "to": "end"
+        }
+      ]
+    },
+    "oldtimers": {
+      "say": "Dad's name, Dad's friends, a beer garden and a concessions split I will argue to the cent. Dad thinks it's too much fuss. It's exactly enough fuss.",
+      "options": [
+        {
+          "text": "I'll sort the beer garden licence.",
+          "if": [
+            {
+              "not_flag": "tracy_licence_promised"
+            }
+          ],
+          "do": [
+            {
+              "set": "tracy_licence_promised"
+            },
+            {
+              "rel": [
+                "tracy_haverstock",
+                4
+              ]
+            },
+            {
+              "note": "You promised Tracy Haverstock the beer garden licence for the Old-timers' Invitational."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Let's talk numbers later.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "The specials. The Invitational, the Carnival, the Christmas skate. And broomball on Wednesdays, because I love someone who plays it.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dad": {
+      "say": "He won't ask for anything, ever. So I ask for him. Then I apologise to him for asking. It's a system.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dale": {
+      "say": "Dale has a bylaw for beer gardens. Priya has a time slot for Dale. I have them both on speed dial.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Good enough for the old-timers?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "And the dressing rooms?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "The ice? Dad said 'that'll do'. From him, that's a parade.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "Dressing rooms that don't smell like 1994. The Cup sat on my shop counter that year and it smelled better.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

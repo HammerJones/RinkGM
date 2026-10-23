@@ -1,0 +1,39 @@
+{
+  "collision_cell": 8,
+  "id": "desk_phone",
+  "inspect": "AT&T 100, beige, the same one every office had. The cord reaches the window if you lean.",
+  "mass_kg": 1.1,
+  "mesh": "merged",
+  "name": "Desk phone",
+  "pivot": [
+    57.5,
+    0,
+    51.5
+  ],
+  "shape": [],
+  "size_m": [
+    0.23,
+    0.15,
+    0.206
+  ],
+  "sound": "plastic",
+  "source": "tools/propgen/library.py",
+  "tags": [
+    "office",
+    "pro_shop",
+    "electronics"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "inspect",
+    "push",
+    "use"
+  ],
+  "vox": "art/props/desk_phone.vox",
+  "voxel_m": 0.002,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

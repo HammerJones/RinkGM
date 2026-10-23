@@ -1,0 +1,1168 @@
+# The framework layer
+
+**Status:** built 2026-10-20 on the integration branch; nothing is ported
+onto it yet. This doc is the walkthrough: what each piece is, why it exists,
+how to use it, and what the port looks like.
+
+RinkGM's world code grew fast and grew its own versions of things Godot and
+its ecosystem already do: a `.vox` reader, two meshers, hand-coded props, a
+test runner, per-room physics. The framework is the thin layer that
+replaces those with the engine's own machinery and a few libraries, so the
+game code only has to do hockey. It is three things:
+
+1. **A development environment.** Godot 4.7 with Jolt as the physics
+   engine, gdUnit4 for tests, gdtoolkit for lint and format, Git LFS for
+   binaries, CI pinned to the same engine build, and budget tests that fail
+   the build when the frame cost grows.
+2. **A runtime framework.** The `.vox` import pipeline, one mesher with
+   baked ambient occlusion, a prop layer that keeps thousands of physical
+   things cheap, and chunk streaming.
+3. **An authoring layer.** The prop studio for looking at props as the game
+   draws them, and the conventions that let MagicaVoxel be the art tool.
+
+Sections 1 to 8 are the pipeline, props, streaming, objects and lighting;
+9 to 12 are the world conventions (chunks that remember), contact audio,
+the runtime voxel surface and the render benchmark; 13 is the demos.
+
+## 1. The environment
+
+| Piece | Where | What it does |
+| --- | --- | --- |
+| Godot 4.7.2 | `project.godot` (`config/features`), `.github/workflows/ci.yml` | The engine build the project and CI run on. Moved from 4.6 to 4.7.2 with no script changes; the whole gate passes on both. |
+| Jolt | `project.godot` (`physics/3d/physics_engine`) | The 3D physics engine for everything that is a body: props, loose things, walkers. The on-ice simulation (`Skater`, `Puck`, `Contact`) is its own impulse model and never touched the engine's physics, so it is unaffected. |
+| gdUnit4 | `addons/gdUnit4/`, suites in `tests/unit/` | Unit tests with assertions, a panel in the editor, and a headless runner in CI. New unit tests go here; the end-to-end `tools/tests/test_*.gd` scripts stay. |
+| gdtoolkit | `tools/lint.sh`, `.gdlintrc` | `gdlint` and `gdformat` on the framework layer. `tools/lint.sh --fix` reformats. The older `scripts/` tree is not covered yet; add paths to `tools/lint.sh` as files are brought up to the rules. |
+| Git LFS | not yet | The repo is 16 MB of binaries today, which plain git handles. Switching to LFS later is one coordinated `git lfs migrate` on a day with no open branches; a filter rule added now would turn every existing image into a pointer on its next commit, so `.gitattributes` only fixes line endings. |
+| Budgets | `tools/tests/test_framework_props.gd` | Ten thousand props in a `PropField`, 64 woken into rigid bodies, settled, demoted, a chunk streamed in and out, with the frame cost asserted. |
+
+Run everything locally with `GODOT=... tools/ci.sh`; the lint step needs
+`pip install "gdtoolkit==4.*"` once.
+
+## 2. Assets: `.vox` in, `VoxAsset` out
+
+```
+art/props/coffee_cup.vox          the MagicaVoxel file (authored or generated)
+  -> import plugin                 addons/vox_import (runs in the editor, re-runs on change)
+  -> VoxAsset                      positions, palette indices, palette, voxel_m
+  -> VoxelModel                    asset.to_model(): the kit's grid of coloured voxels
+  -> Wear.weather(model, age)      the three renovation ages, unchanged
+  -> VoxMesher.build(model)        the mesh, with ambient occlusion
+  -> model.collision_boxes()       the shape-following boxes, unchanged
+```
+
+**`VoxReader`** (`addons/vox_import/vox_reader.gd`) reads the whole format:
+every model in the file, the scene graph (`nTRN`, `nGRP`, `nSHP`) that
+places them, the palette. A one-model file lands exactly where the old
+`VoxLoader` put it, so nothing that reads `.vox` today changes.
+
+**`VoxAsset`** (`vox_asset.gd`) is the imported resource. Because the editor
+imports it, `load("res://art/props/cup.vox")` is instant, cached, and the
+asset ships in exports. Scripts that run without the import step (anything
+under `--script`) use `VoxAsset.load_any(path)`, which falls back to the
+reader. The Import dock shows two options per file: `voxel_m` (0.065 for
+the kit, 0.0125 to 0.02 for handhelds) and `recentre`.
+
+**`VoxWriter`** (`framework/voxel/vox_writer.gd`) is the inverse: a
+`VoxelModel` out to a `.vox` that MagicaVoxel opens. This is how Claude
+authors props (build in code, write the file, render the sheet, look) and
+how a coded kit prop becomes an asset Sean can edit.
+
+**`VoxMesher`** (`framework/voxel/vox_mesher.gd`) replaces the two kit
+meshers with one pass and adds baked ambient occlusion: each face corner
+darkens by how many of its three neighbouring voxels are solid, and the
+quad's diagonal flips so the shading has no seam. It costs nothing at
+runtime (it is vertex colour) and is the biggest single step toward the
+ray-traced look of the references.
+
+```gdscript
+VoxMesher.build(model)                      # speckle + AO, full detail
+VoxMesher.build(model, {"greedy": true})    # flat faces merged, AO kept (distance / big repeats)
+VoxMesher.build(model, {"ao": false})       # the kit's plain look
+```
+
+Numbers from the test on an 8x4x6 box with a bump: kit mesher 464
+triangles, AO 464 (same faces, better light), AO + greedy 64, flat greedy
+28 (equal to the kit's merged mesher).
+
+## 3. Props: `PropField` and `PropRow`
+
+The problem: "everything is physical" cannot mean a node per thing. Ten
+thousand `RigidBody3D`s cost more in scene-tree overhead than in physics.
+`StickField` already solved this for sticks (resting sticks are one mesh;
+a stick is a body only while disturbed). `PropField` is that idea for
+everything.
+
+**A `PropRow`** (`framework/props/prop_row.gd`) is one placed thing: id,
+prop id, mesh, shape boxes, transform, mass, free-form `state`, and the
+handles the field uses. Pure data; `to_dict()` is what a save keeps.
+
+**A `PropField`** (`framework/props/prop_field.gd`) holds rows and decides
+their tier:
+
+| Tier | Drawn by | Collides by | When |
+| --- | --- | --- | --- |
+| INSTANCED | one `RenderingServer` MultiMesh per mesh per 8 m cell | one `PhysicsServer3D` static body per 8 m cell holding every row's box shapes (shapes shared per mesh) | the default; thousands at once |
+| LIVE | its own `RigidBody3D` (Jolt) with a `MeshInstance3D` | the body | while something needs it to move |
+
+```gdscript
+var field := PropField.new()          # one per room or per area
+add_child(field)
+var row := field.add(&"lobby.cup.17", &"coffee_cup", mesh, boxes, xf, 0.25)
+field.wake(row).apply_central_impulse(Vector3(0, 2, 0))   # a shove, a drop
+field.focus = walker.global_position                     # each frame or so
+var hit := field.raycast(eye, eye + look * 2.5)            # -> PropRow or null
+var near := field.nearest(pos, 3.0)
+```
+
+How the tiers move:
+
+- `wake(row)` frees the static body, hides the instance, and adds a
+  `RigidBody3D` with the row's boxes and mass. Returns the body.
+- When the body sleeps (Jolt's own sleep) and is farther than
+  `sleep_radius` from `focus`, or the live count is over `live_cap`, the
+  field writes the resting transform back to the row and instances it
+  again. Nearby sleeping bodies stay live so a second shove is instant.
+- `wake()` past the cap demotes the farthest sleeping body first; if every
+  live body is still moving it returns null, and the caller treats the
+  thing as fixed for that moment.
+- Picking is the physics ray the walker already casts: the cell body
+  carries the field's instance id and the hit's shape index names the row,
+  so `field.row_of(hit)` (or `raycast`) maps a hit back to its row. No
+  node, no spatial hash of its own.
+- A cell whose rows changed rebuilds its body once, at the start of the
+  next idle frame, with every shape in place before the body enters the
+  space. Rows are therefore visible to rays on the frame after `add`;
+  `flush()` forces it sooner.
+
+Per-cell MultiMeshes mean frustum culling and `draw_range` work per cell,
+so a far room costs nothing to draw. Leaving the tree drops every server
+object and keeps the rows; re-entering instances them again, which is what
+chunk streaming needs.
+
+Measured in the headless test (10k rows, 3 meshes, Jolt, one physics
+step a frame, `framework/bench/prop_field_bench.gd` for trying it by
+hand): adding 10,000 rows takes about 60 ms plus about 30 ms to build the
+200 cell bodies; a frame with 10,000 resting rows costs under 0.01 ms;
+with 64 live bodies among them about 0.35 ms; the bodies settle within
+2 s and are demoted when the focus leaves. (First measurements used
+Godot's time monitors, which in headless runs hold a stale value; the
+test now measures wall-clock with the idle sleep off.)
+
+## 4. Streaming: `ChunkStreamer`
+
+```gdscript
+var streamer := ChunkStreamer.new()
+add_child(streamer)
+streamer.register("res://scenes/venue/chunks/lobby.tscn", AABB(Vector3(0, 0, 0), Vector3(30, 6, 20)))
+streamer.focus = walker.global_position
+streamer.chunk_loaded.connect(func(path, node): ...)
+```
+
+A chunk is a `PackedScene` with a bounding box. When `focus` comes within
+`load_radius` of the box the scene is requested through
+`ResourceLoader.load_threaded_request` (no hitch), instantiated when ready
+(at most `per_check` a tick), and freed past `unload_radius`. The gap
+between the two radii stops a chunk flapping at the edge. A chunk scene
+that contains a `PropField` brings its rows with it. The scene's scripts
+are loaded on the main thread just before the request (GDScript compiled
+on the loader thread cannot resolve class names it has not seen, and the
+load would never finish); meshes and textures still load in the thread.
+
+## 5. Authoring props: the generator and the sheet
+
+Two kinds of prop live in `art/props/`:
+
+- **Kit props** at 0.065 m voxels, built from boxes (`scripts/art/`) or
+  drawn in MagicaVoxel: furniture, architecture, anything seen from a few
+  metres away.
+- **Hero props** at 1 to 5 mm voxels, 100 to 250 voxels across, in the
+  look of the four reference models Sean supplied on 2026-10-20 (a CRT
+  television, an open record player, a micro cassette, a long truck, kept
+  hollowed in `art/props/` with `art/props/THIRD_PARTY.md`): rounded
+  corners, two-tone dithered surfaces, cream label plates with lettering,
+  screws and grilles. Things the player picks up and looks at.
+
+Hero props come from `tools/propgen/`, a Python generator (numpy and
+Pillow only): a prop is a small signed-distance scene voxelised at its
+resolution, with a palette lifted from the references, a 5x7 bitmap font
+for labels (flat faces or wrapped around a cylinder), grilles, vent slots,
+screws and dither. `tools/propgen/library.py` holds the retro set
+(boombox, VCR, VHS tape, desk phone, walkie-talkie, coffee mug, microwave,
+wall clock, and the lobby pay phone booth built from a photo) and writes
+each `.vox` with its manifest in `data/props/`; `--preview` adds a quick
+render per prop. A prop from a photo is the same loop: proportions and
+palette read off the picture, built, rendered on the sheet next to the
+photo, adjusted; two or three rounds.
+
+```
+python3 tools/propgen/library.py                 # regenerate everything
+python3 tools/propgen/zambelli.py --preview      # the resurfacer's five parts, four-view previews
+python3 tools/propgen/rink_kit.py --preview      # dasher board sections and glass panels
+python3 tools/propgen/glb2vox.py model.glb skate --size 200 --scale 0.001 --preview   # a bought GLB to a hero prop
+python3 tools/propgen/zambelli_glb.py Zamboni.glb --preview   # the resurfacer's body, conditioner and wheel from the bought model
+python3 tools/propgen/library.py boombox --preview
+python3 tools/propgen/hollow.py big.vox small.vox   # a solid MagicaVoxel model to surface voxels
+GODOT=... tools/prop_sheet.sh                    # the contact sheet, as the game draws them
+```
+
+A bought or downloaded model comes in through `tools/propgen/glb2vox.py`
+(needs `trimesh`): the GLB's surface is sampled densely, each voxel takes
+the mean of its samples' base-colour texels, the colours are quantised to
+a palette of 255, and the result is written as a `.vox` with a manifest
+like any generated prop. `--size` is the voxel count along the longest
+axis, `--scale` the model's units to metres (Sketchfab conversions are
+often millimetres). A model is one mesh per material there, so a part
+that moves (a wheel) is split off by region, not by name:
+`voxelise_at(parts, voxel_m, clip)` takes a box of the model at its own
+resolution, and `tools/propgen/zambelli_glb.py` is the worked example. The first try, a hockey skate at 1.6 mm voxels
+(`hockey_skate`, not placed in any demo), kept its laces, logo and
+holder; the shell it makes is one voxel thick, so a model with
+coincident inner surfaces may show them. Mind the model's licence before
+a `.vox` of it ships: an editorial-use model is reference only.
+
+The sheet (`framework/studio/prop_sheet.gd`, run under a virtual display
+with the software OpenGL driver) renders every prop with the baked AO mesh,
+a key light, shadows and a floor, and writes `art/props/preview/sheet.png`
+plus one image per prop. That is the review loop: a person opens the
+sheet, Claude reads it, the generator changes, the sheet is rendered again.
+
+Two things the generator settled that apply to every `.vox`:
+
+- **Orientation.** MagicaVoxel models face -Y there. `VoxReader` maps a
+  file's (x, y, z) to Godot's (-x, z, y), a proper rotation, so a model
+  faces -Z with its right at +X, the kit's convention, and `VoxWriter`
+  writes the same rotation back so exported files open in MagicaVoxel the
+  right way round. (The older `VoxLoader` leaves imported models facing
+  +Z; files round-tripped through it and the old writer need no change,
+  they just read the same way they always did through it.)
+- **Mesh baking.** The import plugin stores the greedy AO mesh, a flat
+  low-detail mesh and the collision boxes in the `VoxAsset` (the
+  `bake_mesh` import option), reading `voxel_m` from the prop's manifest.
+  A 100k-voxel prop then loads in milliseconds; meshing it at runtime took
+  1 to 4 s. Hero props are 20k to 130k triangles with AO (the dither is
+  what stops faces merging); the low-detail mesh snaps colours to a coarse
+  palette first (`quantize`), so the dither collapses and it comes out at
+  a fraction of the faces, for distance and big repeats. Resolution is the
+  other lever: triangles scale with the inverse square of the voxel size,
+  and a handheld reads the same at 1.4 mm as at 1 mm.
+
+## 6. Objects and interaction
+
+`PropField` rows collide and draw; the object layer makes them things.
+
+**`ObjectCatalog`** (`framework/objects/object_catalog.gd`): every prop
+manifest in `data/props/` (and the coded kit behind them): name, verbs,
+tags, mass, sound, inspect text, the inventory item shape, the baked AO
+mesh and low-detail mesh from the imported `.vox`, the collision boxes.
+Everything that spawns or names a prop reads it here.
+
+**`WorldObjects`** (`framework/objects/world_objects.gd`): a registry over
+one or more fields. `spawn("coffee_mug", xf)` makes a row with a stable id
+(`coffee_mug.1`); `name_of`, `verbs_of` (a thing that is open offers
+close), `get_state` / `set_state`; `act(verb, row, actor)` runs a verb and
+emits `acted`. Built in: inspect, push (wake and shove), take (the row
+leaves, an inventory item comes back with its state), drop (the item
+comes back as a live row with a velocity), open, close, use (`used` is
+emitted for the game). `add_verb` registers more. `to_save()` keeps only
+rows the game placed, moved, took or changed, plus removed ids, so a room
+laid out from code is rebuilt and then patched; `from_save()` applies it.
+
+**`Interactor`** (`framework/objects/interactor.gd`): one ray from the
+eye, blocked by walls; `hovered` is the row under the dot and it glows;
+`prompt()` is the line for the HUD; `act("take")` picks the thing up.
+Carrying is real-time physics, never a freeze: the body keeps simulating
+in the hand, a velocity spring pulls it to the hold point every physics
+step (it bumps into shelves and walls on the way), it turns with the
+view, and a drop keeps its motion as a throw. The controls live here too,
+the same in every scene, so the keyboard stays free for what a game adds:
+
+| Input | Does |
+| --- | --- |
+| LMB | take into the hands; LMB again drops |
+| RMB | throw what is held; shove what is looked at |
+| E | the thing's own verb: open, close, use, read |
+| Q | inspect (the manifest text, as a toast) |
+| wheel | tumble what is held, top over bottom, four turns a revolution |
+| ctrl + wheel | bring what is held nearer or farther |
+
+**What the verbs do today.** `take` and `drop` are real. `push` is a real
+shove. `inspect` shows the manifest text. `open`/`close` and `use` only
+flip the row's `open` and `on` state and emit `state_changed` / `used`:
+nothing yet lights a screen, plays a tape or heats a mug. Those are the
+game's hooks (connect `used`, read the state when drawing). Which prop
+offers what is its manifest's `verbs`; today: mugs, tapes, cassettes,
+walkie-talkies, phones and the boombox can be taken; the microwave and
+record player open; the boombox, phones, microwave, record player, TV,
+VCR, walkie-talkie and pay phone can be used; the clock and the truck
+only inspect. Nothing over 60 kg can be carried.
+
+**`WalkHud`** (`framework/ui/walk_hud.gd`) is the one first-person
+overlay, in the RINK-OS style: readout top left, the prompt as "[KEY]
+VERB" pairs under the centre dot, toasts lower centre, a legend bottom
+left, a centre panel for long text. The venue walk and every demo draw
+through it and nowhere else (see "First-person overlay" in
+`assets/ui/STYLE.md`).
+
+**Tint and highlight** ride the field's MultiMeshes as per-instance custom
+data and a live body's instance uniforms, read by one shader
+(`framework/render/voxel_prop.gdshader`, `PropMaterial`): vertex-colour
+albedo times a tint (the renovation ages, no mesh per age), plus the glow.
+
+**`Layers`** (`framework/core/layers.gd`) names the physics layers the game
+already uses (world 1, venue 2, props 3, walker 4, read 5) so new code
+reads them from one place.
+
+The objects demo (`scenes/dev/object_demo.tscn`) is a room with every
+catalog prop on tables and the floor and a first-person body: walk up to
+anything, it names itself, and the controls above apply; F5 saves and
+reloads the rows.
+`-- --test=objects` is its headless check (hover, prompt, carry, drop,
+take, push, open, save, load); `tests/unit/test_world_objects.gd` covers
+the catalog and the registry.
+
+## 7. Detail, light and culling
+
+**Level of detail.** A row with a low-detail mesh (every imported prop
+has one: flat colours, dither collapsed, no AO) gets a second MultiMesh
+per cell. The full batch is visible out to `lod_distance`, the low one
+from there to `draw_range`, with a short cross-fade (Godot's visibility
+ranges, per cell). A hero prop at 60k triangles costs its 5k low mesh
+from a few metres away.
+
+**Emission.** A `.vox` material of type `_emit` (MagicaVoxel's emissive
+materials; the reference TV's screen and LEDs have them, the generator's
+`EMISSIVE` table writes them) is read into `VoxAsset.emissive`, carried
+through the model and the mesher as vertex alpha below 1, and turned into
+glow by the shader (`emission_strength`). No second attribute, no second
+material; the low-detail mesh glows too. Glass materials are read but not
+yet drawn as glass.
+
+**Quality presets** (`framework/render/quality.gd`): low, medium, high as
+one dictionary each (SSAO, SDFGI, glow, shadow atlas and splits, draw and
+LOD distances, prop shadows, MSAA), applied to an Environment, the key
+light, the fields and the viewport with one call. The look is tuned by
+editing a preset; a settings screen calls `Quality.apply`. SDFGI and SSAO
+act on Forward+ only.
+
+**Occluders** (`framework/render/occluders.gd`): `Occluders.from_boxes`
+turns a room's walls, floors and counters into one `OccluderInstance3D`
+at runtime, so a code-built room (every VenueKit room, the demo) gets
+occlusion culling without an editor bake. Lightmap baking still needs the
+editor (`LightmapGI`), and is the one lighting step left for the port.
+
+The objects demo takes `--quality=low|medium|high` and builds occluders
+from its slabs.
+
+## 8. The prop studio
+
+`scenes/dev/prop_studio.tscn` (script `framework/studio/prop_studio.gd`).
+Run it from the editor, or `godot -- res://scenes/dev/prop_studio.tscn`.
+It lists every `.vox` under `art/props/` and every coded kit prop, and
+draws the selected one at its three ages side by side as the game draws it
+(AO mesher, speckle, shadows, SSAO), with triangle counts per detail
+level, voxel count, size in metres, and the collision boxes as a wireframe.
+Keys: drag to orbit, wheel to zoom, `A` toggles AO, `G` toggles greedy,
+`B` toggles boxes, `R` reloads from disk, arrows move through the list.
+Drop a new `.vox` into `art/props/` and press `R`.
+
+This is the authoring loop for both of us: Sean edits in MagicaVoxel and
+looks here; Claude writes a `.vox`, renders the contact sheet
+(`tools/prop_sheet.gd`), reads the image and adjusts.
+
+## 9. The world: chunks that remember
+
+`framework/world/world.gd` (`World`) and `world_chunk.gd` (`WorldChunk`)
+are the conventions that tie the streamer, the fields and the registry
+together, so a building made of rooms behaves as one world.
+
+```gdscript
+var world := World.new()
+add_child(world)
+world.register_chunk("res://scenes/venue/chunks/lobby.tscn", AABB(Vector3(0, 0, 0), Vector3(30, 6, 20)))
+world.focus = walker.global_position        # each frame
+world.objects.act("take", row)              # the one registry
+var save := world.to_save()                 # every chunk's rows, loaded or not
+world.from_save(save)
+```
+
+**A chunk scene** has a `WorldChunk` root with a stable `chunk_id`, a
+`bounds` box in world space, and optional `occluder_boxes` (built into an
+`OccluderInstance3D` on enter). It owns one `PropField` named `Props`
+(created if the scene has none). Its layout goes in `populate(objects)`:
+spawn rows through the registry with ids like `lobby.chair.3` and `field`
+as the target. `framework/bench/test_chunk.gd` is the smallest example.
+Anything that must only run while the room is loaded (its people, a
+machine's loop) hangs under the chunk and goes with it.
+
+**What the World does on load:** registers the chunk's field with
+`WorldObjects` under its `chunk_id`, applies any rows that were pending
+for that chunk (a save, or the state from the last time it was loaded),
+connects contact audio, then calls `populate`. A layout spawn whose id
+already has a row is skipped, and one whose id was *taken* (removed) is
+refused, so the cup you moved is still moved and the one you pocketed is
+still gone when the room streams back in. On unload the chunk's changed
+rows (moved, taken, or awake) are kept as pending data and dropped from
+the registry; unchanged layout rows cost nothing to forget.
+
+**The save** (`WorldObjects.to_save`) carries each changed row with its
+chunk, the removed ids with theirs, and the pending data of chunks that
+are not loaded right now. `from_save` applies what it can to loaded
+chunks and parks the rest until those chunks come in. A fresh `World`
+with no chunks loaded yet accepts a save and hands each chunk its part on
+load. `tools/tests/test_framework_world.gd` walks the whole loop: load,
+change, leave, save, return, reload from JSON.
+
+## 10. Contact audio
+
+`framework/audio/contact_audio.gd` (`ContactAudio`). `PropField` emits
+`contact(row, other, speed, at)` when a live body hits something, with the
+closing speed from the step *before* the hit (by the time Godot reports
+the contact the impulse has already taken the speed away) and at most one
+signal per row every 0.12 s. `ContactAudio` listens to every field the
+registry knows (`listen_objects(objects)`; the World does this itself),
+looks up the prop's manifest `sound` (wood, metal, plastic, rubber,
+ceramic, glass, cloth, paper), and plays one of that material's
+recordings from `assets/audio` through `WorldSound`, quieter for a tap and
+full for a throw, with a little pitch spread. Unknown materials sound like
+wood. `audio.log` holds the last 32 hits for tests and the dev menu. New
+materials are a row in `ContactAudio.SOUNDS`; new recordings go through
+`art/tools/synth_sounds.py` like the existing ones.
+
+## 11. Voxels that change: `VoxelSurface`
+
+`framework/voxel/voxel_surface.gd`. The props are static voxels: meshed at
+import, never edited. The ice, a dented wall, a snowbank are voxels that
+change at runtime, and `VoxelSurface` is the runtime mesher for them.
+
+```gdscript
+var ice := VoxelSurface.new()
+add_child(ice)
+ice.setup(Vector3i(640, 2, 300), 0.05)           # voxels, metres per voxel
+ice.fill(Vector3i.ZERO, Vector3i(640, 2, 300), Color.WHITE)
+ice.set_voxel(x, 1, z, Color.TRANSPARENT)        # a skate mark (alpha 0 = empty)
+ice.set_voxel(x, 1, z, Color(1, 0.8, 0.2, 0.3))  # alpha under 1 = glows
+ice.budget_ms = 2.0                              # re-mesh time per frame
+```
+
+The volume is split into 16-voxel chunks, each one `MeshInstance3D` with
+the prop material (AO, emission by alpha, the same look as everything
+else). Changing a voxel dirties its chunk, and its neighbour when it sits
+on a chunk face; dirty chunks are rebuilt in `_process` within
+`budget_ms`, or all at once by `remesh_now()`. Each rebuild meshes the
+chunk's own voxels with a one-voxel skirt of neighbours as occluders
+(`VoxMesher`'s `skip` option), so chunk seams show no faces. Measured on
+this machine: a 64x3x64 slab is 16 chunks in about 60 ms; three edited
+chunks re-mesh in about 12 ms. This is the GDScript mesher, fine for
+marks and dents; a native mesher later replaces `_build_chunk` and nothing
+else.
+
+## 11b. The ice: `IceSheet`
+
+`framework/ice/ice_sheet.gd` with `framework/render/ice_sheet.gdshader`.
+The sheet of ice is not cubes: it is a surface a few millimetres thick
+whose detail lives at three scales, so it is a grid of columns.
+
+```gdscript
+var ice := IceSheet.new()
+add_child(ice)
+ice.setup(Vector2(60.96, 25.9), 0.025, 8.5)  # metres, metres per cell, corner radius
+ice.fill_state(0.0, 0.8, 0.0, 0.0)         # snow mm, cut, water mm, frozen
+ice.pour(Vector2(3, 2), 0.6, 1.2)           # a 1.2 mm puddle 60 cm across
+ice.stroke(a, b, 0.03, 0.9, 1.5, 0.3)       # a blade: width, cut, gouge mm, snow mm
+ice.resurface(x0, x1, z0, z1, 0.8)          # shaved, a 0.8 mm film left wet
+ice.thermal(dt, slab_c, air_c)              # water sets from the edges in
+```
+
+**Columns, 2.5 cm.** Per cell: loose snow (mm), liquid water (mm), how
+much of that water has set, the dry-cut amount and its angle, gouge
+depth, built-up ice, filled-gouge scar, and crust. A chunked heightfield
+(64 cells a side) gives all of it real height; a level chunk (dry, or an
+even film, or built-up ice all one height) is two triangles. A full NHL
+sheet is 2438 x 1036 columns (2.5 million, 90 MB of state) in 639
+chunks.
+
+**The corners.** A corner radius makes the sheet a rink: columns outside
+the arcs are masked, `is_ice(x, z)` is false there, nothing writes them,
+water treats them as a wall, chunks wholly outside are never built, and
+the shader discards their pixels, so the lines run into the arc and stop.
+
+**The paint is at a fixed depth.** The lines sit on the white paint
+under `base_mm` of ice at the datum (25 by default); a column's ice
+over the paint is that plus what floods built up, less what a gouge
+took. A third texture carries it, and the shader lets the paint through
+by `exp(-depth / 30 mm)`: vivid lines on thin ice, faded and blue on
+thick. A chip brings the paint nearer; a filled chip is clear ice,
+glassier and a touch darker than the cut around it, with the paint
+showing through it more, not a pale splotch.
+
+**Water is ice when it sets.** Set water joins the column's ice
+thickness (water expands 9%), so flooding one spot again and again makes
+it measurably higher, and the new surface is fresh frozen. Liquid water
+flows: each visit a wet cell sends part of the head difference (ice plus
+crust plus water minus gouge) to each lower neighbour, all but a 0.2 mm
+film that clings to the ice, and water that has begun to set is slush
+and stays put. A film under 1 mm holds its edge on level ice
+(surface tension): it runs only where the ice itself falls away, a
+pool deeper than that spreads. Without that the flood crept forward
+over the dry cut ahead of the pipe at the thermal walk's visits and
+left the film 17 % thinner in bands across the lane, the cross waves
+in the gloss. So a pour spreads into a pool, runs downhill, fills a
+gouge (when it sets the trench is gone but a pale scar stays visible)
+and pins as a film at its rim. Water on snow is slush, wet grey and half glossy, and
+sets with the snow into a rough crust of peaks.
+
+**The state textures, one texel per cell, in tiles.** Three RGBA8 images
+carry the columns to the shader, as tiles of 256 cells a side (4 chunks)
+with a copy of the material each, so a chunk's rebuild uploads its
+tile's 768 KB rather than the sheet's 30 MB. Each tile's images are
+two texels wider than the tile: a one-texel apron all round carries
+the next tiles' edge cells (`_apron()` writes a cell on a tile's edge
+into the neighbour's apron too), so the linear sampling at a tile's
+edge blends into the neighbour as it does everywhere else and no line
+shows every 6.4 m where tiles meet. A change marks its chunk
+with the rect of cells it touched (`_touch()`; a cell on a chunk's
+first row or column marks the chunk before too, which shares it as
+its border, or the two meshes would not meet), and every marked chunk
+is rebuilt the same frame, with no queue and no nearest-first: a
+chunk marked whole is encoded cell by cell, one marked in part writes
+only those cells and patches its heightfield's vertices and normals in
+place (a flat quad becomes a heightfield first), so the blade's strip
+costs a few hundred cells a frame, not the chunks it crosses. The
+film's setting only marks the state texture (`shape` off), in 32 steps
+over the freeze, so the thermal walk stays cheap. Only touched tiles
+upload, and only the textures that changed.
+The chunk meshes keep sheet-wide UV; the tile's material carries where
+it sits (`tile_off`, `tile_scale`) and the markings sample the sheet UV.
+
+**The shader, millimetre detail.** Four surface states blended per pixel:
+snowed up (matte, grainy), dry cut (a sheen with striations at the cut
+angle: grooves 5 to 10 mm wide at random spacing and depth, running the
+length with a slow wander, from a one-metre tiling map), flood (a glossy
+water layer over whichever state is under it, which is why flood over
+snow and flood over a cut look different), and dry fresh frozen (hard
+gloss, a faint freeze ripple); plus scars and crust. Snow is bright matte white with its grain's lumps shading it, and a dusting already reads (`snw`, a smoothstep over the first 0.6 mm); water on snow is slush, wet grey and a little see-through with the ice under it, lumpy and only a little glossy, until it sets to crust (2026-10-22, Sean's ask for distinct snow and a slush state). Water standing
+deeper than a film (the depth texel's green, 0 to 8 mm) is a pool: it
+lies level over its hollow (the mesh stands water at its full depth),
+a still mirror with the grooves under the surface rather than on it,
+tinted deeper the deeper it is, with a lighter wetting line at its
+edge, so water that has run into a chip or a trench reads as water. The detail maps are
+generated once and sampled with mipmaps; without them a grazing view
+turns the striations into moiré, and it is also why the grooves fade
+with distance: past a few metres they are narrower than a pixel and
+average out, whatever the lighting (a coarser second groove layer was
+tried and backed out on 2026-10-22).
+
+**Freezing.** `thermal()` is heat flow, a column at a time (Sean's ask,
+2026-10-22: a function of the water's and the ice's volume, from real
+physics). The water sits at 0 C and gives its latent heat (334 kJ per
+mm) to the ice column under it by conduction through the column's half
+thickness (`K_ICE` 2.2 W/m K), so thin ice freezes a film faster, the
+pad being nearer; the column warms on that heat (its thermal mass is
+its thickness, 917 kg/m3 x 2100 J/kg K) and sheds it to the pad at
+`slab_c`, relaxing back to its steady temperature between the pad and
+the air (`H_AIR` 6 W/m2 K; about -8.4 C on 25 mm over a -9 C pad in 8 C
+air) with a time constant of a few minutes; the air gives the wet
+surface a little heat back and evaporation (at `AIR_RH` 0.4) takes
+some. So a mist's 0.15 mm sets in about half a minute, a 0.8 mm flood on
+25 mm over a -9 C pad (the demo's default, a brine rink's) in about four
+minutes, 12 mm of ice does the same in two and a half, a 3 mm pool takes
+twenty, and a second flood right after a first sets slower on the warmed
+column (`warm[]`, K above steady; `ice_temp_at()` reads a column for the
+HUD). A set column stays in the walk while it cools back. Water on snow
+(slush) sets `SLUSH_SET` (4) times faster: the snow seeds it and the
+water sits in a porous matrix; it sets into a rough crust. It walks the
+listed cells in slices of 3000 a frame through an append-only list (no
+per-cell calls or allocations; the set is a byte per cell), so a whole
+flooded sheet costs a few milliseconds a frame whatever its size, and
+each cell is visited once a pass of ceil(size / 3000) frames with that
+much sim time (14 s of sim per visit on a fully flooded NHL sheet at
+60 fps, which a minutes-long freeze does not notice). `snow_level(0..1)`
+is the snowed-up scale: a patchy simplex field (drifts a couple of
+metres across) that the level fills from its hollows outward, so a
+quarter is a few drifts and the full scale covers the sheet.
+Snow has volume: a column holds up to `SNOW_MAX` (600 mm) of it,
+`mound(at, width, m3)` sets cubic metres down as a cone, `scoop(a0, a1,
+b0, b1)` sweeps every column under a quad clean and returns the cubic
+metres, `snow_in(at, width)` counts it, and the heightfield draws snow
+at the sheet's scale only up to `SNOW_SCALED` (3 mm, a dusting) and at
+true scale past that, so a shovelled pile stands as tall as it is, not
+four times (Sean: snow as a thing with volume you can move about; the
+Zambelli's snow handling is to follow).
+`heatmap(on)` draws the sheet by height alone: the lowest column dark
+blue, the midpoint green, the highest red, four even ramps between
+(blue, green, yellow, red). The range is `height_range()`, the low and
+high column top over the ice in mesh units, kept per chunk from its
+last whole build (a chunk patched in part is read again on the next
+call), so a read is a few milliseconds; `heatmap_refresh()` re-reads it.
+`heatmap_mode(2)` draws the sheet by temperature instead: the shader
+reckons each column's temperature as `thermal()` does, its steady
+temperature between the pad and the air from its thickness (the depth
+map's alpha, of 64 mm) plus what a flood warmed it (the depth map's
+blue, `warm` of 10 K), standing water at 0 C; dark blue a degree below
+the pad (`pad_c`, the last `thermal()` call's), red at 0 C. A cooling
+column touches its cell as it cools, so the map follows a flood setting.
+With a brine floor attached (`brine`, below) the shader reads the pad's
+temperature per node from a pad map (`padmap`, red the slab top of
+-30..+10 C, green the circuit's flow) and draws the two pipes of each
+circuit as cooler lines a pitch apart where brine runs, stronger than
+the real few tenths so they can be seen.
+
+**The brine floor and the plant.** `BrineFloor` (`framework/ice/
+brine_floor.gd`) is the pad under the sheet: one node per circuit across
+it (a circuit is a pair of pipes out and back, `PITCH` 0.2 m apart) and
+`NODE_M` 2 m along it, each node four stacked temperatures (the slab top
+under the ice, the slab at the pipe plane, the sub-base under the
+insulation, the ground). Brine marches along each circuit from the
+headers at the x = 0 end, warming as it goes, so the far end runs warmer
+and a shut circuit (`set_valve`, `set_zone`) is a warm strip; the warm
+loop under the insulation holds the ground above freezing, and ground
+below 0 C heaves (`heave`, mm per node, ~2 mm a day per degree of
+frost). `step(dt, supply, pump, warm_on, air_c)` runs a pass every
+`STEP_S` sim seconds, sub-stepped for stability, and says so;
+`advance()` runs it forward for a view or a test. The sheet attaches it
+as `brine`: `thermal()` then uses the slab top under each column as its
+pad and hands the floor the heat a flood left in the column (`q_wet`),
+`_height` adds the heave at the heightfield's scale, `floor_sync()`
+rebuilds the columns over nodes whose heave stepped, and the temperature
+map carries the pad map. `IcePlant` (`ice_plant.gd`) runs the floor: a
+9 000 L brine tank chilled by two 175 kW stages (off / auto / hand each,
+auto staging on the set point with hysteresis and a minimum cycle), the
+pump and its speed, the warm loop, hour meters and kWh at a COP of 2.8.
+A running stage trips on low suction (brine below -14 C, or no flow for
+20 s) or high head (outside air over 32 C) and stays off through a
+lockout and until `reset()` with the cause gone. The numbers are tuned so
+a game day plays: the insulation is thin enough that the ground freezes
+in a couple of weeks without the warm loop, and -9 C brine makes
+medium ice under 8 C air, hard ice needs -11.
+
+**The plant room.** `PlantRoom` (`framework/demo/plant_room.gd`) is the
+room behind the Zamboni bay (through a door in its back wall): the two
+stages, the chiller, the tank with its sight glass and the pump along
+the far wall, the supply and return headers on the rink-side wall with a
+handwheel per zone (`ZONES` 13 runs of ten circuits), and the control
+wall: the set point dial (wheel, half degrees), the stage switches,
+their lamps and reset buttons, the pump switch and speed dial, the warm
+loop switch, a plate of gauges (supply, return, header kPa, outside,
+ground, heave, hours, kWh) and the laminated start-up card. Each control
+is an Area3D on the Zambelli controls' layer: `aim()`, `set_hover()`,
+`prompt()`, `toggle()` ([E]) and `scroll()` (the wheel) as the machine's.
+The demo steps the plant every frame, feeds its supply to `thermal()`,
+shows the plant's line in the F1 data and the pad's temperature and the
+ice's hardness under the dot; `--view=plant` (`--wide`, `--header`)
+frames the room, `--view=heat --temp` the pad map with its pipes and
+`--dead` a zone shut for two hours.
+
+**The blade.** `resurface(x0, x1, z0, z1, film_mm, rag_wear, blade_mm,
+travel, spill, cut_mm)` is the resurfacer over a band: the blade at
+`blade_mm` above the base shaves off everything higher, or, with
+`cut_mm` given, the blade is set that far below the band's mean solid
+level (the sheet's surface, not the snow), so every pass lowers the
+ice by that much and the shavings come off the ice itself; `ice[]` may
+go negative, the column cut below its nominal base, and a gouge the
+blade reaches is cut away with it. `thickness_at(p)`, `snow_at(p)` and
+`water_at(p)` read a column in millimetres for a HUD. The demo draws
+the concrete a full `base_mm` (times its height scale) under the ice
+surface, so a cut shows ice until it has gone through all 25 mm. Snow has height: a blade above
+the snow touches nothing, a blade in the snow shaves only snow, and a
+blade in the solid (built-up ice, crust peaks) takes the snow with it
+and cuts the ice; below zero it cuts into the base and takes gouge
+depth. Where it cut the solid it leaves a dry cut whose striations run
+along `travel`, the blade's direction. Columns below the blade keep
+their old cut. The shavings go up the auger into the tank (a `spill`
+share can be left as a ridge along the sides, off by default: side-by-side
+passes must blend), and the call returns the millimetres taken. With
+`film_mm` > 0 the conditioner's rag lays water behind the blade: a new
+rag (`rag_wear` 0) an even film, a worn one (1) streaks and a coarser
+cut. A dry pass is the one without the film. The demo does not use
+that film: its blade cuts dry and `lay_film(x0, x1, z0, z1, film_mm,
+rag_wear)` floods the strip the flood pipe is over, 0.61 m behind the
+blade (`Zambelli.WALL_Z`), so a strip is a dry cut for that long
+before the hot water goes on, as on the machine. `mean_solid(quad)`
+reads the mean solid height of the columns in a quad, the level the
+conditioner's runners ride; `resurface_sweep(a0, a1, b0, b1, ...)` is
+the same blade over the quad it sweeps on any heading, and
+`lay_film_sweep(p0, p1, q0, q1, ...)` the pipe over its own. The
+game's `IceSlab` and `RefrigerationPlant` are where the real heat balance
+lives; this is the surface they will drive, and the sim's 25 cm grid is
+the source the 2.5 cm columns sample.
+
+**Lighting lesson.** A near-mirror sheet shows two things an ordinary
+floor hides: any light too strong clips the whole surface to white, and
+spot shadows with the default bias self-shadow in stripes along the
+shadow map's rows. The ice demo's lamps carry the raised bias; the
+arena's lamps need the same when the ice moves into the game.
+
+**Uniform chunks are free.** A chunk clear of the corners and untouched
+since the last `fill_state` is encoded as three `fill_rect`s and a flat
+quad; anything touched is encoded cell by cell (the hot path, about a
+microsecond a cell). The pass over every cell at a state change is the
+native `fill()`.
+
+**Measured here (the full NHL sheet, headless on the CI box):** the
+scene is up about a second after the engine; `fill_state` is 20 ms and
+the `flush()` after it 0.4 s (639 uniform chunks, mostly mesh and node
+creation); a `resurface()` over the whole sheet is a second, and the
+rebuild of every chunk the slow way after it 2.4 s, which the machine
+never asks for (a pass is one lane, patched in place: a flood pass
+stepped at 60 Hz rebuilds in 6 ms a frame on the CI box, worst 13).
+The state textures are 40 MB at 2.5 cm. So: sim at 25 cm,
+columns and textures at 2.5 cm, shader below, with a local 5 mm patch
+an option later.
+
+**Future, not built:** physical skate gouges, where the skater contact
+model writes blade strokes into the columns and reads the height back,
+so a rut is felt as well as seen.
+
+## 12. The render benchmark
+
+`tools/render_bench.sh [--props=200] [--quality=medium]` runs
+`scenes/dev/render_bench.tscn` under the virtual display: a 24 m room with
+a dividing wall, N catalog props on the floor, and a camera flying one
+loop around it. It prints the average and worst frame time, primitives
+and draw calls per frame, and how many bodies were live. Under the
+software driver the frame times are meaningless (a second a frame); the
+primitive and draw-call counts are real, and the same scene before and
+after a change is the comparison. The first baseline, 200 props at medium:
+159 draw calls, 7.9 M primitives a frame (shadows count twice), 0 live.
+Headless CI runs the scene as `--test=render_bench` to keep it working.
+
+## 13. The demos
+
+Three scenes under `scenes/dev/` to get a feel for it, each run from the
+editor or with `godot --path . res://scenes/dev/<name>.tscn`. All take
+`--quality=low|medium|high`, `--screenshot=<png>` for a frame without a
+display, and run as headless checks in CI (`--test=<name>`).
+
+- **`object_demo`**: one room with every catalog prop on tables and the
+  floor. Walk up to anything, E takes it into your hands (a live body on
+  a spring that bumps into things), E drops, F throws or shoves, right
+  click inspects, Q opens or uses, F5 saves and reloads the rows. While
+  holding something the wheel tumbles it top over bottom (four wheel
+  turns for one revolution) and ctrl + wheel brings it nearer or farther (every demo, through the Interactor).
+- **`world_demo`**: five themed rooms in a row (`framework/demo/rooms/`,
+  one `DemoRoom` chunk each) that stream in and out as you walk; the HUD
+  names the loaded ones. The same controls, plus T to pocket what you
+  hold, G to tip a box of mugs at your feet (contact audio), F5 to save,
+  F9 to load. Move something, walk two rooms on and back: it is still moved;
+  pocket it: still gone.
+- **`ice_demo`**: a full NHL sheet, 60.96 x 25.9 m with 8.5 m corners
+  (the demo keeps its own copy of the numbers in `scripts/rink/rink.gd`),
+  as an `IceSheet` (section 11b) with the lines painted under it (goal,
+  blue and centre lines, the five circles, nine dots and hash marks, the
+  creases, the trapezoids, the referee's crease, drawn as rows of
+  rectangles into a 1.25 cm texture), boards with a kick plate that
+  follow the corners, and fourteen arena-style lamps. The
+  sheet's centre is the world origin, as in the game. X cycles the whole
+  sheet through the four states; holding LMB
+  runs a hose where you look (1.6 L/s, the wheel is the valve from 0.1
+  to 6 L/s, a stream of drops to match) and the readout
+  shows the slab and air temperatures, the clock, the litres hosed and
+  the column's top and built-up ice under the dot while it sets from the
+  edges in; T speeds the clock
+  (x1, x10, x60); holding RMB chips gouges wherever you look; [ and ]
+  slide the snowed-up scale (`IceSheet.snow_level`) in tenths; H cycles
+  the heatmap: off, by height (blue low, green mid, red high, the range
+  in the readout and re-read every 2 s while it is on), by temperature
+  (blue a degree under the pad, red at 0 C, so a flood setting shows
+  warm and fades as it cools; Sean: see the temperature effects in real
+  time); `--view=heat` is the sheet from above with passes, an edger
+  lane and a puddle, `--temp` with it by temperature. Those
+  five (the state, the snow scale, the hose, the chip, the heatmap) are the only ice keys: all
+  resurfacing is done from the machine's seat with its own controls
+  (the pass key, the flood, blade, rag, instant-freeze and
+  ice-over-paint keys are gone, at Sean's ask). The machine starts at
+  centre ice facing down the sheet. The
+  second HUD line reads the blade's setting in turns and millimetres,
+  the flood and wash valves, and the column under the dot: ice thickness over
+  the paint, snow and water in millimetres. Look at the operator's seat
+  and E puts you in it; E with nothing under the dot steps you off
+  beside the machine. In the seat the
+  keys drive it: W is the gas pedal and moves the machine the way the
+  drive select lever on the console is set (F, N or R), S is always the
+  brake, A and D steer (a bicycle model pivoting on the rear axle,
+  3.5 m/s flat out, 32 degrees of lock, the wheels building to the
+  lock over a second, `STEER_RATE`, and coming back quicker, so the
+  machine is not twitchy); with the
+  conditioner down the blade resurfaces whatever it sweeps on any
+  heading (`IceSheet.resurface_sweep()`, the swept quad's columns binned
+  across the blade for the auger), the flood pipe laying its film
+  0.61 m behind it (`lay_film_sweep()`). The boards act as the bumper's
+  roller does on a real machine (`_along_the_boards()`): the machine's
+  footprint (`Zambelli.outline()`: the hull read off the voxel body at
+  wheel height, 1.9 m wide from the nose to the conditioner, and the
+  conditioner, the blade's width plus its side plates, so about 0.5 m
+  wider than the hull on the left; points every 0.4 m round both, no
+  margin, so it rides flush and the nose reaches into a corner) is
+  kept inside them, on the straights or round the corner arcs: a point
+  that would go past them is pushed back in, and the push also swings
+  the machine about that point toward the boards' line (a nose on them
+  stays put and the rear comes in, `BOARDS_TURN` rad per metre of
+  push), so it ends up sliding along them, losing a little speed to the
+  rub (a fifth a second brushing, about half a second leaning square on
+  them); only a run straight at them stops it. The
+  conditioner is 10 in wider on the operator's left and 2 in on the
+  right than the bought model (`Zambelli.COND_LEFT`, `COND_RIGHT`, the
+  blade from `BLADE_X0` to `BLADE_X1`, 2.61 m; the prop is stretched to
+  that width over the blade's middle), so the left edge reaches the
+  boards in a corner. Every column the blade or the pipe touched is on screen the
+  same frame (see the state textures above). The blade's level is carried along the
+  cut (`_follow()`): the handwheel's setting below the ice the
+  conditioner's runners ride, read 0.8 m ahead of the blade
+  (`IceSheet.mean_solid()` over that quad) and eased there at 1 mm a
+  metre, so a pass stepped at 60 Hz cuts one plane. A level taken from
+  each strip's own mean (the band's `cut_mm` mode) left a ridge across
+  the lane at every strip, a staircase that read as the blade skipping
+  through the film's gloss. The machine is also a
+  body the walker collides with (an `AnimatableBody3D` hull of two
+  boxes on the props layer, carried with it). The console's controls are props taken out of the bought
+  model (`tools/propgen/zambelli_lever.py` takes each out of the GLB
+  at 3 mm and clears its 17 mm blob off the body prop;
+  `framework/demo/zambelli_controls.gd` registers them on pivots from
+  the table in `zambelli.gd`): the row of four levers, the operator's
+  left to right the horizontal auger's, the conditioner's, the vertical
+  auger's and the bin's (the augers' alike, the other two alike), drive
+  select ahead on the left, the blade's handwheel lying on its column
+  at the rear, the flood and wash valves either side of it (a post with
+  a handle each), and the stalk with the ball beside the levers: the
+  vertical auger's plunger, which the operator pushes down to drive a
+  plate across the auger's mouth and break up packed snow (not a
+  mechanic yet). The levers' aim boxes are the width of a lever, so the
+  four select separately. The script then tidies the deck to smooth blue
+  sheet metal, the model's gauges and pads gone or painted blue, for
+  the diagrams to come later, and despeckles the body: floating dust
+  (components under 50 voxels off the body) and, in the cab above the
+  deck, every small or black component (the bar beside the seat, the
+  stubs and flakes the bought model left there) go. Look at a control and the HUD names it and its state;
+  E throws a lever (the augers' 30 degrees back for on, the
+  conditioner's and the bin's a push forward for up or back for down
+  that springs back to neutral, drive select through F, N and R), the
+  wheel turns the handwheel in sixteenths of a turn (a turn is 0.5 mm,
+  clockwise from above lowers the blade, +3.0 raised to -3.0 lowered,
+  0 flush with the conditioner's bottom, the prompt reads the turns and
+  the millimetres; wheel up is clockwise) and the valves in 5 % steps (the flood valve a
+  quarter turn anticlockwise to full, the wash valve clockwise; the
+  prompt reads the
+  percentage; the wash valve is readout only for now). In the seat the
+  seat's own aim box is looked through (`aim(from, dir, skip)`): it sits
+  between the eyes and the valves and caught every look down at them
+  (Sean). With the flood
+  valve open and the conditioner down, water sprays from the pipe along
+  the foot of the conditioner's back wall onto the ice in streams
+  2.5 inches apart, their thickness following the valve, for the rag
+  behind to smooth. The machine is the
+  Zambelli 552 (`framework/demo/zambelli.gd`, five hero props: the body,
+  the conditioner and a wheel come from a bought Zamboni model through
+  `tools/propgen/zambelli_glb.py`, which voxelises the GLB, splits the
+  wheels and the conditioner off by where they sit, maps the model's
+  navy to the Zambelli blue and stamps ZAMBELLI on the tank; the
+  horizontal and vertical augers are generated by `tools/propgen/zambelli.py`,
+  which also still holds the hand-built body and conditioner). The GLB is
+  not in the repository; the script prints the layout constants the node
+  uses. By default only the conditioner is drawn, with
+  the vertical auger standing in a clear tube and a clear tank above it,
+  so the snow's path is in view; B shows the whole machine, V puts you
+  beside it, whole. The snow is
+  simulated: `IceSheet.resurface()` reports the millimetres it shaved per
+  row (`shave_rows`), the demo bins those across the 2.46 m blade
+  (`Zambelli.BLADE_W`) and feeds
+  them to the machine as cubic metres of ice; they land in the trough in
+  front of the blade as snow (2.5 times the room, down to 1.3 with the
+  wash valve open: wet shavings are slush and pack down, so the trough,
+  the lift and the pile all carry less), drawn as a roll along
+  the auger whose cross-section holds each bin's volume; the horizontal
+  auger walks each half toward the middle at its flights' feed rate
+  (7 rad/s, 26 cm pitch); what reaches the middle piles at the vertical
+  auger's foot, which lifts up to 12 L/s into the tank (a 1 mm cut at
+  2 m/s keeps up, a deeper one grows the pile). The third readout line
+  shows the trough, the pile, the lift rate and the tank; when the
+  machine stands still with both augers running and they have cleared
+  the snow, the tank is dumped (the levers stay where the operator left
+  them: each auger's lever is its own, the two run together or apart).
+  The hull (the collider you bump into) is an AnimatableBody3D with
+  `sync_to_physics` off, so it travels with the machine (synced, it stayed
+  at the spawn). The demo opens full screen; `--windowed` keeps the window.
+  **The bay** (`framework/demo/zamboni_bay.gd`, `ZamboniBay`) is off the
+  +X end boards, centred on the sheet: a 9 x 8 m concrete pad level with
+  the ice under a roof, walled on three sides with its own lamp, and a
+  pair of board-height doors (3.6 m between the hinges) set in the end
+  boards that swing outward into the bay to 100 degrees in about two
+  seconds. Look at a leaf and E swings both (the prompt reads OPEN or
+  CLOSE); from the seat E only gets you out, so the doors are opened on
+  foot. The boards clamp that slides the machine along the boards knows
+  the doorway: with the doors open it is a throat from the sheet onto
+  the pad, and a machine on the sheet may be in the sheet or the throat
+  while one in the bay may be on the pad or in the throat, so the only
+  way between them is through the doors; shut, the leaves are boards
+  again. The leaves and the bay carry colliders for the walker. The bay
+  is where the edger lives and the fire hose hangs. `--view=bay` frames
+  the open doors with the machine half through them (`--closed`: shut,
+  the machine before them).
+  **The fire hose** (`framework/demo/fire_hose.gd`, `FireHose`): Sean's
+  uploaded reel model voxelised (art/props/fire_hose.vox, from
+  tools/propgen/glb2vox.py) hangs on the bay's side wall; its nozzle
+  (art/props/fire_nozzle.vox, the same model's nozzle cropped out) rides
+  in hand once E on the reel takes it, and E with nothing else under the
+  dot hangs it back. In hand LMB sprays `LPS` (8 L/s, a 1.5 in line) and
+  the wheel sets the pattern continuously from a fine mist cone (28
+  degrees, carrying 3.5 m, wetting a disc metres across with a fraction
+  of a millimetre: the way to flood a thin area wide and have it set in
+  a minute) to a straight jet (1.5 degrees, 20 m, a small disc). Water
+  that would carry past the pattern's reach lands at the reach. The
+  demo's `_spray()` does the pouring and the drops: a wide cone is
+  thousands of columns and every one poured is a column the sheet
+  rebuilds, so the cone is poured a strip a frame (`SPRAY_CELLS` at
+  most, each strip its share of the water, scanning down the disc;
+  `IceSheet.pour()` takes a clip rect), which took a mist frame from
+  100 ms to 10. The old built-in hose and its valve are gone. `--view=hose` is the reel on its wall,
+  `--view=spray --pattern=0..1` the hose at work.
+  **The edger** (`framework/demo/ice_edger.gd`, `IceEdger`): a
+  walk-behind machine (Sean's uploaded mower model's intact parts,
+  art/props/ice_edger.vox at 1 cm, scaled to a push edger and turned
+  square to its wheels: the model sits yawed 31 degrees in its scene,
+  which had it pushed crabwise until the bake squared it by the deck's
+  principal axis) with a 46 cm disc under its deck tilted 2.5 degrees
+  to the left, its rim just inside the machine's left side (`BLADE_X`),
+  and the crank (primitives) clamped to the right end of the handle's
+  grip; it parks in the bay. E on the
+  engine starts or stops it, and the blade only cuts with it running.
+  Look at the handle and E takes it: you stand square behind it
+  (`HANDLES`), your heading follows the machine as it turns and the
+  mouse looks only `EDGER_LOOK` off its line. W pushes (0.9 m/s with
+  the blade in the ice, a fifth quicker with it clear, `FREE`: the
+  blade's bite felt as drag), S pulls back, A and D turn it with your
+  weight (0.8 rad/s, 0.35 with the blade in), the wheel is the crank
+  (counter-clockwise lowers the blade, the opposite of the Zambelli's
+  handwheel, half a millimetre a notch, from 4 mm down to 4 mm up,
+  `LEVEL_MIN`..`LEVEL_MAX`), TAB lifts the blade clear or sets it back
+  to the crank's level, E lets go. The cut is `IceSheet.edge_sweep()`:
+  the rim sits at the crank's level (`level_mm`) against the lane's
+  mean solid surface and the tilted disc rises `SLOPE` (11.6 mm per
+  metre) across from there, so the lane is as wide as the setting is
+  deep (4 mm down reaches `CUT_W`, 34.5 cm, across; 1 mm down 8.6 cm)
+  and a raised blade only takes the high spots the rim meets; the lane
+  starts `EDGE_OVER` past the rim, so the last cells at the boards are
+  always cut, and round a corner as far as the arc, since the deck's
+  ends on the arc hold its middle 4 cm off it (`IceDemo._corner_gap()`
+  sets `edge_over` each push). Set against the boards and pushed, every
+  pass lowers the ice along them again (the level is against the mean,
+  which the pass just lowered). The striations are re-angled to circle
+  the disc, and every `ARC_STEP` (5 cm) of travel the rim rocks in and
+  leaves a sharp-edged arc one cell wide (`ARC_W`, a centimetre, the
+  sheet's cells being 2.5 cm) along the trailing left rim, as deep as
+  the blade is set (Sean: much finer, the depth from the setting), a
+  mark a light flood fills; the shavings fly off
+  the deck's right side as a spray of grains (`GPUParticles3D` from the
+  chute, thrown `THROW`, 1.2 m) and land as snow there
+  (`IceSheet.add_snow()`). Its corners are kept inside the boards like
+  the machine's, but with no margin and nothing lost to the rub: it rides
+  flush on the boards and slides along them, stopping only when pushed
+  straight into them. `--view=edger` is a lane cut along the side boards with
+  the edger's left side on them, `--view=push` the pusher's own view.
+  **The snow pusher** (`framework/demo/snow_pusher.gd`, `SnowPusher`;
+  art/props/snow_pusher.vox from tools/propgen/snow_pusher.py, Sean's
+  photo: a 3 ft by 1 ft white blade, yellow shaft, black D-grip) hangs
+  on the bay's +z wall across from the hose. E takes it: the blade rides
+  1.15 m ahead of your feet on the ice and walking pushes it, the snow
+  in its path swept into it (`IceSheet.scoop()` over the blade's sweep
+  each frame, `_shovel()`) up to `CAPACITY` (60 L, drawn as a roll in
+  the blade), the surplus rolling off the blade's ends as small mounds;
+  LMB sets the load down ahead as a mound a blade wide
+  (`IceSheet.mound()`), and so does pulling the blade back; RMB lifts
+  the blade to walk over snow without moving it; E hangs it up (setting
+  the load down first). Snow pushed into standing water is slush, which
+  sets as it always did. `--view=shovel` is a drift pushed through from
+  the pusher's eyes.
+  **Skating and practice, the game's own** (`framework/demo/demo_skater.gd`,
+  `DemoSkater`; `framework/demo/demo_rink_game.gd`, `DemoRinkGame`;
+  `framework/demo/skate_wear.gd`, `SkateWear`; `framework/demo/hockey_net.gd`,
+  `HockeyNet`): the skating and shooting are the game's (Sean,
+  2026-10-23). `DemoSkater` owns a real `Skater` (strides, edges, dashes,
+  stops, turn-arounds and the stick's arc from `PhysicsProfile`, an even
+  62 in every rating), the game's `Puck` on its blade through
+  `StickPuck`, and the keyboard + mouse scheme from `HumanController`
+  and `PlayerInput`: WASD skates relative to the view, Shift dashes,
+  Space is the hockey stop, R turns you round to skate backwards, the
+  mouse is the stick blade, LMB looks around (the centre dot aims), RMB
+  draws a shot pattern that fires on release (`ShotPatterns`: wrist,
+  snap, slap, toe drag; V cycles the guide), E passes (to no one: the
+  puck goes 12 m where you push). `DemoRinkGame` is what those ask of the
+  Game node (a puck, the skaters, a clock, a camera rig, a HUD; never
+  frozen, every shot at the +x net). The demo's walker rides the skater's
+  eyes (`DemoCameraRig`: the view turns with the heading, pitched down
+  to the blade, free look on top), and the whole body is on a layer the
+  camera skips, so only the stick and blade are in view (Sean: the hands
+  got in the way). A pair of skates and the puck wait in the bay; look
+  at the skates and E puts you on them at centre ice, Q takes them off.
+  One net stands on the east goal line where the game's puck physics has
+  it (`Rink.GOAL_X`; `NetPhysics` for the posts and mesh); it can still be
+  carried (E on it, E sets it down), the physics stays put. The game
+  would stand a second net on the west line; `DemoPuck` (`Puck` with the
+  net collision and goal test for the east side only) leaves that line
+  open ice (Sean: no fixed second net).
+  A goal is the puck over the goal line between the posts
+  (`Puck.goal_scored`): GOALS on the HUD, and the puck is back in play a
+  stride ahead of you a moment later. Sure hands (Sean): a loose puck
+  anywhere the stick can reach, forehand or backhand, is on the blade at
+  once, and a carried puck is never knocked or slipped off (a shot or a
+  pass still leaves). While you skate the mouse stays captured and RMB is
+  the shot pattern only, never the chisel. What skating does to the ice is
+  `SkateWear`, fed by the skater's `stride` and `stop_spray` signals and
+  its `turn_load`: a glide leaves a faint line per blade (`BLADE_GAP`,
+  24 cm apart, stronger with speed), a push-off chips the ice where the
+  back foot drives (`STRIDE_CHIP`, `STRIDE_MM`) with a puff of snow, a
+  turn pulling more than `GRIP_G` (4.5 m/s2) gouges the outside blade's
+  line, deeper the harder, and a stop scrapes across both blades and
+  throws the shavings `STOP_THROW` ahead as snow (`STOP_SNOW` per m/s of
+  speed by m/s2 of braking). Tests and views drive the controls by
+  script (`DemoSkater.script()`, `PlayerInput.scripted`; the demo's
+  `_skate(ticks, move, stop, dash)`). `--view=skate` is a run with a hard
+  turn and a stop from above, `--view=practice` the net by the goal line
+  from the slot on skates, the puck ahead.
+  **The rink kit** (`tools/propgen/rink_kit.py`; `framework/demo/rink_kit.gd`,
+  `RinkKit`): dasher board sections and glass panels as hero props at
+  2 cm (Sean, 2026-10-22). A board is a white panel 42 in tall with a
+  yellow kick plate along the foot, a blue cap rail lipped over both
+  faces and dark steel uprights behind: straight in 1, 2 and 4 m
+  (`board_1m`, `board_2m`, `board_4m`) and curved on the 8.5 m corner
+  radius, an eighth and a quarter of a corner (`board_curve_eighth`,
+  1.68 m chord; `board_curve_quarter`, 3.36 m). The manifest's `board`
+  gives the length, height, thickness and, curved, the radius and
+  angle. Glass is 4 ft wide, 6 ft or 8 ft tall (`glass_4x6`,
+  `glass_4x8`): the voxels are the frame (two aluminium posts and the
+  bottom channel), the pane is the manifest's `pane` (size and where it
+  sits), which `RinkKit.glass()` draws see-through over a box collider;
+  `RinkKit.board()` is a section with its collider. Every piece stands on
+  its bottom centre with the ice side facing -Z. The demo rink's boards
+  are these pieces (`_boards()`: 4 m sections down the sides and ends,
+  the remainder of a run closed with a 2 m or 1 m piece tucked a
+  centimetre behind its neighbour, four quarter curves round each
+  corner, `_rink_pieces` counts them) with the 6 ft glass on the cap all
+  the way round, as many 4 ft panels as a run takes, spread to its
+  length, flat facets round the corners; the collision stays the
+  analytic boxes the walker and the machine slide along. The set is also
+  on show in the bay (`_kit_display()`: the straights and the eighth
+  along the +z wall with the 6 ft glass on the 2 m board, the 4 m board
+  and 8 ft glass on the back wall, the quarter on the -z wall);
+  `--view=kit` frames it.
+  The readout lines and the key legend are off by default (Sean: hide
+  the data); F1 shows them. Prompts and toasts stay.
+  Footsteps leave the ice alone. `--screenshot=<png>`
+  frames the blue line; with `--view=cut` it stands on the ice looking down the sheet (the striations from afar); with `--view=pool` it gouges a trench and chips, pours between them and lets the water run into them; with `--view=wide` it floods four lanes and
+  frames the whole sheet from above one end; `--view=machine` frames the
+  conditioner nine seconds into a pass over a snowed-up sheet (`--body`
+  with the whole machine, `--side` from beside it, `--flood` the back wall
+  with the flood running, `--cut=<mm>` for the blade's depth);
+  `--view=console` stands at the controls (`--above` looks down on them,
+  `--lever` is close on the console from the operator's left);
+  `--view=drive` drives a curving flood pass from the seat and looks back
+  at the lane; `--view=track` looks down from behind the machine at
+  the lane it leaves (the dry strip behind the blade, the film behind
+  the pipe, against the conditioner's width); `--view=wet` runs the machine's flood pass stepped at
+  60 Hz as in play and stands on the lane looking at a lamp's
+  reflection in the film. In every demo Ctrl
+  crouches, F toggles noclip (Space up, Ctrl down) and holding Z zooms.
+
+## 14. What the port looks like
+
+Nothing is ported yet. The order, each step a PR that keeps CI green:
+
+1. **Props to assets.** The world-objects branch converts the kit to
+   `.vox` plus manifests; those files drop into `data/props/` and
+   `art/props/` and `ObjectCatalog` reads them. The coded fallback stays
+   until the last prop is converted.
+2. **Rooms place rows.** `VenueKit.prop()` adds a `PropRow` to the room's
+   `PropField` instead of baking into the merged mesh. The merged mesh
+   stays for architecture (walls, floors, stands).
+3. **Loose things.** `StickField`, `StickProp`, `LooseProp` and `PropGrab`
+   become `WorldObjects` rows, `Interactor.carry()` and `drop()`; the
+   venue walk keeps its own HUD and inventory, fed by `prompt()` and
+   `act("take")` into `ItemCatalog`.
+4. **The building streams.** Rooms become chunk scenes registered with a
+   `ChunkStreamer`; occluders are baked per chunk.
+5. **Lighting.** `LightmapGI` for the shell (an editor bake), the
+   `Quality` presets for the rest.
+6. **The match scene** moves last and mostly unchanged: the skaters, the
+   puck and the shot patterns do not touch any of this.
+
+## 15. Rules for building on it
+
+- A new prop is a `.vox` and a record, never code in the game. A coded
+  builder is a generator that writes a `.vox` (`VoxWriter`, or
+  `tools/propgen/` for hero props) and is then done.
+- Anything placed in the world is a `PropRow` in a `PropField`. Scene nodes
+  are for things that are unique and always live (doors, the Zamboni,
+  the walker).
+- One mesher: `VoxMesher`. One voxel reader: `VoxReader`.
+- Budgets are tests. A change that makes `test_framework_props.gd` slower
+  needs a number in the PR saying why.
+- Framework code is linted and formatted; `tools/lint.sh --fix` before
+  pushing.
+
+## 16. Merging into the game
+
+The demo branch (`claude/zealous-hamilton-r0xr9p`) stays separate until
+Sean says go. The order then is: the game's own upgrade to Godot 4.7.2
+(one PR, the engine pieces below and nothing else), then this branch,
+then PR #45 (world objects) reconciled on top so there is one prop
+pipeline. This section is the Build lane's checklist for that day.
+
+### Shared files this branch changes, and why
+
+Everything else the branch adds lives in `framework/`, `addons/`,
+`tests/unit/`, `data/props/`, `art/props/`, `scenes/dev/`,
+`tools/propgen/` and this document, which no game script reads.
+
+| File | Change | Why |
+| --- | --- | --- |
+| `project.godot` | `config/features` `4.3` → `4.7`; `physics/3d/physics_engine="Jolt Physics"`; `[editor_plugins] enabled` lists `addons/gdUnit4` and `addons/vox_import` | The engine pin, the body physics the props and walkers run on, the test panel and the `.vox` importer. The editor rewrites this file on open, which is the conflict a 4.3 editor hits on pull: install 4.7.2 first, discard the local copy, then pull. |
+| `.github/workflows/ci.yml` | `GODOT_VERSION` `4.3-stable` → `4.7.2-stable`; a `pip install "gdtoolkit==4.*"` step | CI runs the pinned engine and the lint. |
+| `tools/ci.sh` | step 0 `tools/lint.sh`; `--fixed-fps 120` for the two framework budget tests; step 3b runs the gdUnit4 suites in `tests/unit/` with `--remote-debug` to an unbound port | The gate gains the lint and unit suites (about ten checks, a few minutes longer). The remote-debug flag keeps a parse error from dropping into the interactive debugger and hanging the run. |
+| `tools/tests/game_tests.txt` | five lines: `studio`, `objects`, `render_bench`, `world_demo`, `ice_demo`, each with its `scenes/dev/` scene | The demos' headless checks. |
+| `tools/lint.sh`, `.gdlintrc` | new | gdlint and gdformat on the framework layer only; `scripts/` is not covered, so no existing script starts failing style checks. |
+| `.gitattributes` | new | LF line endings for Godot text formats. No LFS filter on purpose (section 1). |
+| `.gitignore` | `reports/` (gdUnit4), `__pycache__/`, `*.pyc` | Generated output. |
+| `README.md` | "Godot 4.3+" → "4.7+", a link to this document | |
+| `docs/ARCHITECTURE.md`, `docs/ART.md`, `assets/ui/STYLE.md` | a Framework row in the ownership table, the gate's new steps, the first-person overlay rules | Docs only. |
+| `scripts/venue/venue_walk.gd` | the HUD's build and toast code moved onto `WalkHud` (`framework/ui/walk_hud.gd`); 11 lines in, 49 out | One overlay for every first-person scene. The one game script with a real change: a branch that edited the walk's HUD section conflicts here, one that only changed its logic merges clean. |
+| `scripts/art/stick_prop.gd`, `scripts/art/loose_prop.gd` | `_calm = SETTLE_FRAMES` instead of `0` once a body has settled, three lines each | Jolt wakes a sleeping body that an awake one touches, so a pile only settles when every piece asks to sleep in the same step. Without this, piles of sticks never came to rest under Jolt. |
+| `assets/ui/fonts/**/*.import` | 4.6+ adds `modulate_color_glyphs=false` and `keep_rounding_remainders=true` | The engine rewrites these on import; committed so every editor agrees and git stays quiet. |
+| `*.gd.uid` beside every script, game scripts included | new one-line files | See the upgrade steps. Pure additions, never a conflict. |
+
+### Upgrading the game from 4.3 to 4.7.2
+
+What the move needed, and what did not break, from doing it on this
+branch (4.3 → 4.6 in `f3ae0ea`, 4.6 → 4.7.2 in `9d65346`):
+
+1. **Install 4.7.2 everywhere first**: the editor on each machine, the
+   `GODOT_VERSION` in the workflow, the download in any local gate
+   script. Export templates are per version too; a playtest build needs
+   the 4.7.2 templates installed (Editor → Manage Export Templates) or
+   the export fails with a missing-template error rather than a bad build.
+2. **Open the project once in the new editor and commit what it writes.**
+   The editor offers to convert the project; accept. It rewrites
+   `project.godot` (the feature tag), writes a `.gd.uid` file next to
+   every script and a `.uid` next to every shader, and rewrites the font
+   `.import` files. Commit all of it in the upgrade PR. Uncommitted
+   `.uid` files are why a later pull refuses with "untracked files would
+   be overwritten": anyone who opened the editor before pulling deletes
+   the stray `.uid` once and pulls again.
+3. **No script changed for the engine.** GDScript, the scenes, the
+   shaders and the on-ice sim ran unchanged on 4.6 and 4.7.2; the full
+   gate passed on both before the pin moved.
+4. **Jolt is a project-wide switch**, not per scene. The on-ice sim
+   (`Skater`, `Puck`, `Contact`) is its own impulse model and never
+   touched the engine's physics, so it is unaffected. Rigid bodies
+   behave differently in two ways seen so far: sleeping bodies wake when
+   an awake body touches them (the `_calm` fix above), and Godot's
+   physics time monitors report nonsense in headless runs under Jolt
+   (they hold the value of the one frame that built the bodies), so the
+   budget tests measure wall-clock per frame instead.
+5. **gdUnit4 is vendored without its own `test/` folder**: that folder
+   ships a `class_name Person` that collides with the game's `Person`.
+   Re-vendoring a newer gdUnit4 must drop it again.
+6. **Two editor plugins become visible to everyone**: the gdUnit4 panel at
+   the bottom of the editor, and the `.vox` importer, which makes the
+   first import after pulling take a minute or two. Both are harmless.
+7. **Merge with a merge commit, not a squash**, so the ice and object
+   history stays readable, then post one line to every lane: install
+   4.7.2, pull, discard your local `project.godot` if git refuses.
