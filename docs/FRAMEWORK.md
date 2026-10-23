@@ -969,39 +969,45 @@ display, and run as headless checks in CI (`--test=<name>`).
   the load down first). Snow pushed into standing water is slush, which
   sets as it always did. `--view=shovel` is a drift pushed through from
   the pusher's eyes.
-  **Skating and practice** (`framework/demo/demo_skater.gd`, `DemoSkater`;
+  **Skating and practice, the game's own** (`framework/demo/demo_skater.gd`,
+  `DemoSkater`; `framework/demo/demo_rink_game.gd`, `DemoRinkGame`;
   `framework/demo/skate_wear.gd`, `SkateWear`; `framework/demo/hockey_net.gd`,
-  `HockeyNet`): the game's net (`Models.net()`, 6 by 4 ft) starts in
-  the bay with a pair of skates (Sean's skate model) and a stick on the
-  floor beside it; no net is on the ice until you carry it there. Look at
-  the net and E picks it up (it rides ahead of you), E sets it down where
-  you stand, facing your way, and there it stays. Look at the skates and E
-  puts you on them at centre ice, driven by the skater: the mouse faces
-  you, W strides (a push-off every `STRIDE_S`, 0.55 s, building to `TOP`,
-  9 m/s), S is a hockey stop (`STOP_DEC`, 7.5 m/s2), nothing is a coast
-  (`COAST`); your velocity swings toward where you face as fast as the
-  edges hold (`GRIP`, 7 m/s2 of lateral pull), asking more slides. No
-  body and no hands (Sean: they got in the way), just the game's own
-  stick (`StickProps.stick_mesh()`, a team stick with a right curve)
-  held in the camera's frame: the knob by the hands at the bottom right
-  of the view, the shaft down at its lie to the heel ahead and to the
-  right, the blade flat on the ice; no balance game. The game's puck
-  (`Models.puck()`, `framework/demo/demo_puck.gd`, `DemoPuck`) waits by
-  the skates in the bay and is on the ice ahead of you when they go on:
-  it slides (`FRICTION`), bounces off the boards (`RESTITUTION`), is
-  cupped on the blade when the blade is on it (`CARRY_R`), LMB shoots it
-  off the blade where you face (`SHOT_V`, 16 m/s), and in the net
-  (`HockeyNet.holds()`) it stops and counts (GOALS on the HUD). E again
-  takes the skates off where you are, and the puck goes back to the bay. What skating does to the ice is
-  `SkateWear`: a glide leaves a faint line per blade (`BLADE_GAP`, 24 cm
-  apart, stronger with speed), a push-off chips the ice where the back
-  foot drives (`STRIDE_CHIP`, `STRIDE_MM`) with a puff of snow, a turn
-  pulling more than `GRIP_G` (4.5 m/s2) gouges the outside blade's line,
-  deeper the harder, and a stop scrapes across both blades and throws
-  the shavings `STOP_THROW` ahead as snow (`STOP_SNOW` per m/s of speed
-  by m/s2 of braking). `--view=skate` is a run with a hard turn and a
-  stop from above under the heatmap, `--view=practice` the net by the
-  goal line from the slot on skates, the puck ahead.
+  `HockeyNet`): the skating and shooting are the game's (Sean,
+  2026-10-23). `DemoSkater` owns a real `Skater` (strides, edges, dashes,
+  stops, turn-arounds and the stick's arc from `PhysicsProfile`, an even
+  62 in every rating), the game's `Puck` on its blade through
+  `StickPuck`, and the keyboard + mouse scheme from `HumanController`
+  and `PlayerInput`: WASD skates relative to the view, Shift dashes,
+  Space is the hockey stop, R turns you round to skate backwards, the
+  mouse is the stick blade, LMB looks around (the centre dot aims), RMB
+  draws a shot pattern that fires on release (`ShotPatterns`: wrist,
+  snap, slap, toe drag; V cycles the guide), E passes (to no one: the
+  puck goes 12 m where you push). `DemoRinkGame` is what those ask of the
+  Game node (a puck, the skaters, a clock, a camera rig, a HUD; never
+  frozen, every shot at the +x net). The demo's walker rides the skater's
+  eyes (`DemoCameraRig`: the view turns with the heading, pitched down
+  to the blade, free look on top), and the whole body is on a layer the
+  camera skips, so only the stick and blade are in view (Sean: the hands
+  got in the way). A pair of skates and the puck wait in the bay; look
+  at the skates and E puts you on them at centre ice, Q takes them off.
+  The nets stand on both goal lines where the game's puck physics has
+  them (`Rink.GOAL_X`; `NetPhysics` for the posts and mesh); the east one
+  can still be carried (E on it, E sets it down), the physics stays put.
+  A goal is the puck over the goal line between the posts
+  (`Puck.goal_scored`): GOALS on the HUD, and the puck is back in play a
+  stride ahead of you a moment later. What skating does to the ice is
+  `SkateWear`, fed by the skater's `stride` and `stop_spray` signals and
+  its `turn_load`: a glide leaves a faint line per blade (`BLADE_GAP`,
+  24 cm apart, stronger with speed), a push-off chips the ice where the
+  back foot drives (`STRIDE_CHIP`, `STRIDE_MM`) with a puff of snow, a
+  turn pulling more than `GRIP_G` (4.5 m/s2) gouges the outside blade's
+  line, deeper the harder, and a stop scrapes across both blades and
+  throws the shavings `STOP_THROW` ahead as snow (`STOP_SNOW` per m/s of
+  speed by m/s2 of braking). Tests and views drive the controls by
+  script (`DemoSkater.script()`, `PlayerInput.scripted`; the demo's
+  `_skate(ticks, move, stop, dash)`). `--view=skate` is a run with a hard
+  turn and a stop from above, `--view=practice` the net by the goal line
+  from the slot on skates, the puck ahead.
   **The rink kit** (`tools/propgen/rink_kit.py`; `framework/demo/rink_kit.gd`,
   `RinkKit`): dasher board sections and glass panels as hero props at
   2 cm (Sean, 2026-10-22). A board is a white panel 42 in tall with a

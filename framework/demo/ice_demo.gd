@@ -117,7 +117,9 @@ var _pusher: SnowPusher
 var _net: HockeyNet
 var _skater: DemoSkater
 var _skates: Node3D  # the skates and stick on the bay floor
-var _puck: DemoPuck
+var _puck: Puck  # the game's puck
+var _net2: HockeyNet  # the west goal's net (the east one, _net, can be carried)
+var _puck_reset := 0.0  # seconds until a scored puck is put back in play
 var _kit: Node3D  # the rink kit on show in the bay: board sections and glass
 var _rink_pieces := {}  # kit id -> how many the rink's boards and glass use
 var _edging := false  # at the edger's handles: the keys push it
@@ -191,22 +193,32 @@ func _ready() -> void:
 	# on the bay's +z wall, across from the hose, its blade's face to the bay
 	_pusher.build(Vector3(RINK.x / 2 + BOARD_T + 3.0, 0.45, ZamboniBay.BAY_W / 2 - 0.3), 0.0)
 	add_child(_pusher)
+	# the nets on their goal lines, where the game's puck physics has them
+	# (the east one can still be carried off; the physics stays put)
 	_net = HockeyNet.new()
 	_net.name = "Net"
-	_net.position = Vector3(RINK.x / 2 + BOARD_T + 7.0, 0.0, -2.4)
-	_net.rotation.y = PI / 2  # its mouth toward the doors
+	_net.position = Vector3(Rink.GOAL_X, 0.0, 0.0)
+	_net.rotation.y = PI / 2  # its mouth toward centre ice
+	_net2 = HockeyNet.new()
+	_net2.name = "NetWest"
+	_net2.position = Vector3(-Rink.GOAL_X, 0.0, 0.0)
+	_net2.rotation.y = -PI / 2
+	add_child(_net2)
 	add_child(_net)
 	_skates = _make_skates(Vector3(RINK.x / 2 + BOARD_T + 7.0, 0.0, -0.6))
 	add_child(_skates)
-	_puck = DemoPuck.new()
+	_puck = Puck.new()
 	_puck.name = "Puck"
-	_puck.position = _skates.position + Vector3(0.3, 0.0, 0.45)  # by the skates until you are on them
 	add_child(_puck)
+	_puck.reset_at(_skates.position + Vector3(0.3, 0.0, 0.45))  # by the skates until you are on them
+	_puck.frozen = true
+	_puck.goal_scored.connect(_on_goal)
 	_kit = _kit_display()
 	add_child(_kit)
 	_skater = DemoSkater.new()
 	_skater.name = "Skater"
 	add_child(_skater)
+	_skater.setup(_puck, func(text: String, _seconds: float) -> void: hud.toast(text))
 	field = PropField.new()
 	field.name = "Props"
 	add_child(field)
@@ -287,16 +299,11 @@ func _process(dt: float) -> void:
 	elif _edging:
 		_push(sdt)
 	elif _skater.active and walker:
-		_skater.step(
-			sdt,
-			walker,
-			ice,
-			_local,
-			_inside_the_sheet.bind(0.35),
-			Input.is_key_pressed(KEY_W),
-			Input.is_key_pressed(KEY_S)
-		)
-		_puck_step(sdt)
+		_skater.step(dt, ice, _local)
+		if _puck_reset > 0.0:
+			_puck_reset -= dt
+			if _puck_reset <= 0.0:
+				_puck_in_play()
 	if _pusher.held and walker:
 		_shovel()
 	if _aboard and walker:
@@ -367,7 +374,10 @@ func _process(dt: float) -> void:
 			elif _aimed < 0 and _net.aimed(cam.global_position, -cam.global_transform.basis.z):
 				hud.extra_prompt = _net.prompt()
 			elif _aimed < 0 and _skater.active:
-				hud.extra_prompt = "[W] STRIDE   [S] STOP   [MOUSE] STEER   [LMB] SHOOT   [E] SKATES OFF"
+				hud.extra_prompt = (
+					"[WASD] SKATE   [SHIFT] DASH   [SPACE] STOP   [R] TURN   [MOUSE] STICK   "
+					+ "[RMB] DRAW A SHOT   [LMB] LOOK   [E] PASS   [V] SHOT GUIDE   [Q] SKATES OFF"
+				)
 			elif _aimed < 0 and _skates_aimed(cam.global_position, -cam.global_transform.basis.z):
 				hud.extra_prompt = "[E] SKATE"
 
@@ -967,18 +977,14 @@ func _skates_on() -> void:
 	if _pusher.held:
 		_set_snow_down()
 		_pusher.hang()
-	walker.driven = true
-	walker.set_noclip(false)
 	# centre ice, a stride past the dot so the parked resurfacer is not in the way
 	walker.global_position = SKATE_START
 	walker.face(PI / 2)  # down the ice, toward the bay end
-	walker.camera.rotation.x = -0.15
 	_skater.start(walker)
 	# a puck ahead on the ice
-	_puck.live = true
-	_puck.vel = Vector2.ZERO
-	_puck.at = _local(SKATE_START) + Vector2(3.0, 0.3)
-	_place_puck()
+	_puck.reset_at(SKATE_START + Vector3(3.0, 0.0, 0.3))
+	_puck.frozen = false
+	_puck_reset = 0.0
 
 
 ## The data on screen (the three readout lines and the key legend) shown
@@ -993,45 +999,25 @@ func _show_data(on: bool) -> void:
 
 func _skates_off() -> void:
 	_skater.stop_skating()
-	walker.driven = false
 	# the puck goes back to the bay with the skates
-	_puck.live = false
-	_puck.vel = Vector2.ZERO
-	_puck.position = _skates.position + Vector3(0.3, 0.0, 0.45)
+	_puck.reset_at(_skates.position + Vector3(0.3, 0.0, 0.45))
+	_puck.frozen = true
+	_puck_reset = 0.0
 
 
-func _place_puck() -> void:
-	_puck.position = ice.global_position + Vector3(_puck.at.x, 0.0, _puck.at.y)
+## The game's puck crossed a goal line between the posts: a goal, and the
+## puck back in play ahead of you a moment later.
+func _on_goal(_side: int) -> void:
+	goals += 1
+	_puck_reset = 1.5
+	if hud:
+		hud.toast("GOAL! %d" % goals)
 
 
-## The puck on the ice this step: carried on the blade when it is under it,
-## sliding and bouncing off the boards otherwise, held in the net once in.
-func _puck_step(dt: float) -> void:
-	if not _puck.live:
-		return
-	var in_net := _net.holds(_puck.position)
-	if in_net:
-		_puck.vel = Vector2.ZERO
-	else:
-		_puck.carry(_local(_skater.blade_world()), _skater.vel)
-		_puck.step(dt, _inside_the_sheet.bind(DemoPuck.RADIUS))
-		_place_puck()
-		if _net.holds(_puck.position):
-			goals += 1
-			_puck.vel = Vector2.ZERO
-			if hud:
-				hud.toast("GOAL! %d" % goals)
-
-
-## LMB on the skates: the puck off the blade, hard, where you face.
-func _shoot() -> void:
-	if not _puck.live or _net.holds(_puck.position):
-		return
-	var yaw := walker.rotation.y
-	var face := Vector2(-sin(yaw), -cos(yaw))
-	if _puck.shoot(_local(_skater.blade_world()), face):
-		_puck.step(0.0, _inside_the_sheet.bind(DemoPuck.RADIUS))
-		_place_puck()
+## The puck a stride ahead of the skater, still.
+func _puck_in_play() -> void:
+	var sk := _skater.skater
+	_puck.reset_at(sk.global_position + sk.heading * 1.5)
 
 
 ## The snow pusher pushed: the blade's sweep since last frame scoops the
@@ -1081,6 +1067,20 @@ func _set_snow_down() -> void:
 
 
 ## Cells with a gouge in a square `size` across at `at` (tests).
+## The skater driven by script for `ticks` at 60 Hz: `move` in the
+## camera's frame (y forward), `stop` the hockey stop.
+func _skate(ticks: int, move: Vector2, stop := false, dash := false) -> void:
+	_skater.script(
+		func(f: PlayerInput.Frame, _dt: float) -> void:
+			f.move = move
+			f.stop = stop
+			f.dash = dash
+	)
+	for step in ticks:
+		_skater.step(1.0 / 60.0, ice, _local)
+	_skater.script(Callable())
+
+
 func _count_gouged(at: Vector2, size: float) -> int:
 	var c := ice.cell_at(at)
 	var r := int(size / 2 / ice.cell)
@@ -1254,6 +1254,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_machine.show_body = not _machine.show_body
 				hud.toast("MACHINE: %s" % ("WHOLE" if _machine.show_body else "CONDITIONER ONLY"))
 			KEY_V:
+				if _skater.active:
+					return  # V on the ice cycles the game's shot guide
 				# over to the machine, whole, from its left side
 				_aboard = false
 				walker.driven = false
@@ -1331,13 +1333,24 @@ func _unhandled_input(event: InputEvent) -> void:
 					_net.carry(walker)
 					hud.toast("CARRYING THE NET: [E] SETS IT DOWN")
 				elif _skater.active:
-					_skates_off()
-					hud.toast("SKATES OFF")
+					pass  # E on the ice is the game's pass
 				elif _skates_aimed(
 					walker.camera.global_position, -walker.camera.global_transform.basis.z
 				):
 					_skates_on()
-					hud.toast("ON THE ICE: [W] STRIDE  [S] STOP  [MOUSE] STEER  [E] SKATES OFF")
+					(
+						hud
+						. toast(
+							(
+								"ON THE ICE: [WASD] SKATE  [SHIFT] DASH  [SPACE] STOP  [R] TURN  "
+								+ "[MOUSE] STICK  [RMB] DRAW A SHOT  [LMB] LOOK  [E] PASS  [Q] SKATES OFF"
+							)
+						)
+					)
+			KEY_Q:
+				if _skater.active:
+					_skates_off()
+					hud.toast("SKATES OFF")
 			KEY_TAB:
 				if _edging:
 					_edger.toggle_blade()
@@ -1403,13 +1416,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			if _pusher.held:
 				_set_snow_down()
 			elif _skater.active:
-				_shoot()
+				pass  # LMB on the ice is the game's free look
 			else:
 				hosing = true
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			if _pusher.held:
 				_pusher.toggle_raise()
 				hud.toast("THE BLADE IS %s" % ("UP" if _pusher.raised else "ON THE ICE"))
+			elif _skater.active:
+				pass  # RMB on the ice draws the game's shot pattern
 			else:
 				chipping = true
 				_chip_t = 0.0
@@ -1885,16 +1900,10 @@ func _screenshot(path: String) -> void:
 		# the stop looking back along them (the pile, the scrape, the
 		# turn's gouge, the stride chips)
 		_skates_on()
-		for step in 150:
-			_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), true, false)
-		walker.face(walker.rotation.y + 1.3)
-		for step in 70:
-			_skater.step(
-				1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), false, false
-			)
-		var travel := Vector3(_skater.vel.x, 0.0, _skater.vel.y).normalized()
-		for step in 60:
-			_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), false, true)
+		_skate(150, Vector2(0.0, 1.0))
+		_skate(70, Vector2(1.0, 0.3))
+		var travel := _skater.skater.vel.normalized()
+		_skate(60, Vector2.ZERO, true)
 		var stop_at := walker.global_position
 		_skates_off()
 		walker.set_noclip(true)
@@ -1911,11 +1920,9 @@ func _screenshot(path: String) -> void:
 		_skates_on()
 		walker.global_position = Vector3(RINK.x / 2 - GOAL_LINE - 7.0, 0.05, 1.0)
 		walker.face(-PI / 2 + 0.15)
-		for step in 60:
-			_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), true, false)
-		_puck.at = _local(walker.global_position) + Vector2(3.2, -0.6)
-		_place_puck()
-		walker.camera.rotation.x = -0.2
+		_skater.start(walker)
+		_skate(60, Vector2(0.0, 1.0))
+		_puck.reset_at(walker.global_position + Vector3(3.2, 0.0, -0.6))
 	if args.has("--view=kit"):
 		# the rink kit on show in the bay, from inside the doors
 		_bay.want_open = true
@@ -3106,20 +3113,24 @@ func _self_test() -> void:
 		not _net.carried and _net.global_position.distance_to(Vector3(10.0, 0.0, 3.0 - 1.7)) < 0.05,
 		"E sets it down ahead of where you stand (%s)" % _net.global_position
 	)
-	# skating: out to centre ice, strides build speed and mark the ice, a
-	# hard turn gouges, a stop throws snow ahead
+	# skating, the game's own: out to centre ice, strides build speed and
+	# mark the ice, a hard turn gouges, a stop throws snow ahead
 	_skates_on()
 	check.call(
 		_skater.active and walker.global_position.distance_to(SKATE_START) < 0.1,
 		"E on the skates puts you at centre ice on them"
 	)
 	check.call(
-		walker.driven and _skater.stick.visible, "... driven by the skates, the stick in view"
+		(
+			walker.driven
+			and _skater.skater.visible
+			and (walker.camera.cull_mask & DemoSkater.SELF_LAYER) == 0
+		),
+		"... driven by the game's skater, its own head out of the view"
 	)
 	var sk0 := _local(walker.global_position)
-	for step in 240:
-		_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), true, false)
-	var sk_v := _skater.vel.length()
+	_skate(240, Vector2(0.0, 1.0))
+	var sk_v := _skater.skater.speed()
 	var sk1 := _local(walker.global_position)
 	check.call(
 		sk_v > 4.0 and _skater.stride_count >= 5 and sk1.distance_to(sk0) > 8.0,
@@ -3134,83 +3145,96 @@ func _self_test() -> void:
 		if ice.cut[ice.index(track.x, track.y + dz)] > 0.0:
 			lined += 1
 	check.call(lined > 0, "the glide leaves a blade line on the ice (%d cells)" % lined)
-	# a hard turn: face well off the travel at speed
-	walker.face(walker.rotation.y + 1.2)
+	# a hard turn: pushed hard across the travel at speed
 	var gouged_before := _count_gouged(sk1, 6.0)
-	for step in 90:
-		_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), false, false)
+	_skate(90, Vector2(1.0, 0.0))
 	var sk2 := _local(walker.global_position)
 	var gouged := _count_gouged(sk1.lerp(sk2, 0.5), 6.0) - gouged_before
 	check.call(
 		gouged > 0, "a hard turn at speed gouges the outside edge's line (%d cells)" % gouged
 	)
 	# a stop: snow thrown ahead, the speed gone
-	var stop_dir := _skater.vel.normalized()
+	var stop_dir := _skater.vel2().normalized()
 	var stop_at := _local(walker.global_position)
 	var snow_before := ice.snow_in(stop_at + stop_dir * 1.5, 2.0)
-	for step in 90:
-		_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), false, true)
+	_skate(90, Vector2.ZERO, true)
 	var snow_after := ice.snow_in(stop_at + stop_dir * 1.5, 2.0)
 	check.call(
-		_skater.vel.length() < 0.5 and snow_after > snow_before,
+		_skater.skater.speed() < 0.5 and snow_after > snow_before,
 		(
 			"a hockey stop kills the speed and throws snow ahead (%.2f -> %.2f L)"
 			% [snow_before * 1000.0, snow_after * 1000.0]
 		)
 	)
-	# the puck: the game's model, on the ice ahead when the skates go on;
-	# it rides the blade, a shot sends it off, the boards send it back,
-	# and it counts in the net
-	check.call(_puck.live and _puck.position.y < 0.01, "a puck is on the ice with you")
-	# back to centre ice, still, the puck put on the blade
-	walker.global_position = SKATE_START
-	walker.face(PI / 2)
-	_skater.vel = Vector2.ZERO
-	_puck.at = _local(_skater.blade_world())
-	_puck.vel = Vector2.ZERO
-	_place_puck()
-	var puck0 := _puck.at
-	walker.face(walker.rotation.y)
-	for step in 60:
-		_skater.step(1.0 / 60.0, walker, ice, _local, _inside_the_sheet.bind(0.35), true, false)
-		_puck_step(1.0 / 60.0)
+	# a dash and a turn-around, the game's
+	var v_before := _skater.skater.speed()
+	_skate(30, Vector2(0.0, 1.0), false, true)
+	check.call(
+		_skater.skater.speed() > v_before + 1.0,
+		"Shift dashes (%.1f -> %.1f m/s)" % [v_before, _skater.skater.speed()]
+	)
+	_skater.script(func(f: PlayerInput.Frame, _dt: float) -> void: f.turn_pressed = true)
+	_skater.step(1.0 / 60.0, ice, _local)
+	_skater.script(Callable())
+	check.call(_skater.skater.backwards, "R turns you round to skate backwards")
+	_skater.script(func(f: PlayerInput.Frame, _dt: float) -> void: f.turn_pressed = true)
+	_skater.step(1.0 / 60.0, ice, _local)
+	_skater.script(Callable())
+	# the puck: the game's, on the ice ahead when the skates go on; it rides
+	# the blade through StickPuck, a traced shot sends it off, the boards
+	# send it back, and it counts in the net
+	check.call(
+		not _puck.frozen and _puck.position.y < 0.01, "the game's puck is on the ice with you"
+	)
+	# back to centre ice, still, the puck on the blade
+	var sk := _skater.skater
+	sk.place(Vector2(SKATE_START.x, SKATE_START.z), Vector3(1.0, 0.0, 0.0))
+	_puck.reset_at(sk.puck_anchor())
+	_puck.controller = sk
+	var puck0 := _puck.position
+	_skate(60, Vector2(0.0, 1.0))
 	check.call(
 		(
-			_puck.at.distance_to(puck0) > 0.5
-			and _puck.at.distance_to(_local(_skater.blade_world())) < 0.6
+			_puck.position.distance_to(puck0) > 0.5
+			and _puck.position.distance_to(sk.blade_pos) < 0.6
+			and sk.has_puck()
 		),
 		(
-			"the puck under the blade goes with you (%.2f m, %.2f from the blade)"
-			% [_puck.at.distance_to(puck0), _puck.at.distance_to(_local(_skater.blade_world()))]
+			"the puck on the blade goes with you (%.2f m, %.2f from the blade)"
+			% [_puck.position.distance_to(puck0), _puck.position.distance_to(sk.blade_pos)]
 		)
 	)
-	_shoot()
-	var shot_v := _puck.vel.length()
-	for step in 240:
-		_puck.step(1.0 / 60.0, _inside_the_sheet.bind(DemoPuck.RADIUS))
-	var inside: Vector2 = _inside_the_sheet.bind(DemoPuck.RADIUS).call(_puck.at)
-	check.call(
-		shot_v > 10.0 and inside == _puck.at,
-		"LMB shoots it (%.1f m/s) and the boards keep it on the sheet" % shot_v
-	)
-	# into the net: the net set across the puck's path
-	_puck.vel = Vector2.ZERO
-	_puck.at = Vector2(20.0, 8.0)
-	_place_puck()
-	_net.global_position = ice.global_position + Vector3(24.0, 0.0, 8.0)
-	_net.global_rotation = Vector3(0.0, PI / 2, 0.0)  # mouth toward -x, the puck
+	# a traced wrist shot at the east net from the slot
+	sk.place(Vector2(Rink.GOAL_X - 8.0, 0.0), Vector3(1.0, 0.0, 0.0))
+	_skate(10, Vector2.ZERO)
+	_puck.reset_at(sk.puck_anchor())
+	_puck.controller = sk
 	var goals0 := goals
-	_puck.vel = Vector2(8.0, 0.0)
-	for step in 120:
-		_puck_step(1.0 / 60.0)
+	var fired := sk.shoot_traced(&"wrist_shot", 22.0, Vector3(Rink.GOAL_X, 0.3, 0.0))
+	var shot_v := _puck.vel.length()
+	_skate(90, Vector2.ZERO)
 	check.call(
-		goals == goals0 + 1 and _net.holds(_puck.position) and _puck.vel == Vector2.ZERO,
-		"a puck into the net counts a goal and stays (%d)" % (goals - goals0)
+		fired and shot_v > 12.0 and goals == goals0 + 1 and _puck.in_net_side == 1,
+		"a traced wrist shot fires (%.1f m/s) and counts in the net (%d)" % [shot_v, goals - goals0]
+	)
+	check.call(_puck_reset > 0.0, "...and the puck is set to come back into play")
+	_puck_in_play()
+	check.call(
+		_puck.in_net_side == 0 and _puck.position.distance_to(sk.global_position) < 2.5,
+		"...ahead of you a moment later"
+	)
+	# the boards keep a hard shot on the sheet
+	_puck.reset_at(Vector3(0.0, 0.0, 0.0))
+	_puck.vel = Vector3(0.0, 0.0, 30.0)
+	_skate(120, Vector2.ZERO)
+	check.call(
+		absf(_puck.position.z) < Rink.HALF_W and not _puck.out_of_play,
+		"a shot into the boards comes back on the sheet (%s)" % _puck.position
 	)
 	_skates_off()
-	check.call(not _skater.active and not walker.driven, "E again takes the skates off")
+	check.call(not _skater.active and not walker.driven, "Q takes the skates off")
 	check.call(
-		not _puck.live and _puck.position.distance_to(_skates.position) < 1.0,
+		_puck.frozen and _puck.position.distance_to(_skates.position) < 1.0,
 		"the puck is back in the bay"
 	)
 	# the rink kit: the board sections and glass panels from the generator
