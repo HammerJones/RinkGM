@@ -1005,7 +1005,29 @@ display, and run as headless checks in CI (`--test=<name>`).
   anywhere the stick can reach, forehand or backhand, is on the blade at
   once, and a carried puck is never knocked or slipped off (a shot or a
   pass still leaves). While you skate the mouse stays captured and RMB is
-  the shot pattern only, never the chisel. What skating does to the ice is
+  the shot pattern only, never the chisel. The ice acts on a loose puck
+  (`framework/ice/ice_touch.gd`, `IceTouch.apply` after each
+  `puck.integrate`): loose snow drags it 1.2 m/s2 per mm (capped at 4 mm)
+  and a pile (50 mm) stops it dead; a wet film is slick (0.7 of the
+  drag), a pool holds a slow puck (1.3) and lets a fast one skim (0.5);
+  slush (water on snow) drags like snow and wanders the heading (0.3
+  m/s2 sideways, drifting); a set crust is rough (1.5) and hops a fast
+  puck; and the surface's slope (ice, crust and snow up, gouge down, over
+  8 cm) is gravity, so a rut draws the puck to its floor and a ridge kicks
+  it. A puck out of snow carries a load for 2 s (0.4 of the drag, a faint
+  trail); a wet one leaves a streak. The HUD names the surface under a
+  loose puck. The mouse is read again as hands (`DemoHands`, on top of
+  the game's controls, nothing in `scripts/` changed): the hand's
+  velocity pushes the blade's target ahead by 80 ms of motion, so a flick
+  goes further and faster than a slow draw; the target rides a mass on a
+  6 Hz spring damped by the stick-handling rating (0.45 at 0, 1.0 at 100:
+  a weak player's stick overshoots and rings); the view leans up to 3
+  degrees into a hard sweep; and a shot drawn with RMB releases when the
+  swing stops (a stroke past 600 px/s, then the hand at rest for three
+  ticks), not only on RMB up. At a fast blade (1.5 to 4.5 m/s in the
+  hands) up to 0.4 of the game's cup pull is let go (`DemoSkater`
+  CUP_SOFT), so the puck lags a snap, gets ahead of a stop and rolls
+  along the face. What skating does to the ice is
   `SkateWear`, fed by the skater's `stride` and `stop_spray` signals and
   its `turn_load`: a glide leaves a faint line per blade (`BLADE_GAP`,
   24 cm apart, stronger with speed), a push-off chips the ice where the

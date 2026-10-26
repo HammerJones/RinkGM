@@ -14,6 +14,8 @@ const SELF_LAYER := CameraRig.SELF_LAYER
 const PUCK_SUBSTEPS := 4
 const TURN_G := 3.0  # m/s2 of lateral load under which a turn leaves no edge mark
 const SURE_REACH := Skater.REACH_ONE_HAND  # m from the body: a loose puck this close is yours
+const CUP_SOFT := 0.4  # share of the cup's pull let go at a fast blade: the puck rides the face
+const CUP_SOFT_V := Vector2(1.5, 4.5)  # m/s of blade: the softening comes in between these
 
 var active := false
 var stride_count := 0
@@ -21,6 +23,12 @@ var stride_count := 0
 ## or backhand, is picked up at once, and a carried puck is never lost
 ## (a shot or a pass still leaves the blade).
 var sure_hands := true
+## The ice on the puck (IceTouch): snow, water, slush, crust and ruts.
+var ice_feel := true
+## The mouse as hands (DemoHands): lead, weight, the swing's release.
+var hands_on := true
+var touch := IceTouch.new()
+var hands: DemoHands
 var game: DemoRinkGame
 var skater: Skater
 var controller: HumanController
@@ -54,6 +62,10 @@ func setup(puck: Puck, on_message: Callable) -> void:
 	controller.name = "Controller"
 	controller.game = game
 	add_child(controller)
+	hands = DemoHands.new()
+	hands.name = "Hands"
+	add_child(hands)
+	hands.on_swing_end = _release_swing
 	# no body in the view (Sean: the hands got in the way): the stick and
 	# its blade stay, everything else of you is on the layer the eyes skip
 	var rig := skater.rig
@@ -127,15 +139,32 @@ func step(dt: float, sheet: IceSheet, to_sheet: Callable) -> void:
 		controller.player_input.capture_mouse()
 	var a0: Vector2 = to_sheet.call(skater.global_position)
 	controller.update(dt)
+	if hands_on:
+		hands.shape(
+			skater.ctrl,
+			skater,
+			dt,
+			controller.player_input.mouse_sensitivity,
+			skater.skill("stick_handling"),
+			controller.player_input.frame.tracing
+		)
 	skater.physics_update(dt)
 	var puck := game.puck
 	var sdt := dt / PUCK_SUBSTEPS
 	for i in PUCK_SUBSTEPS:
+		var carried := puck.controller == skater
+		var p0 := puck.position
+		var v0 := puck.vel
 		StickPuck.step(game, puck, sdt, float(i + 1) / PUCK_SUBSTEPS)
+		if carried and hands_on and puck.controller == skater:
+			_soft_cup(puck, p0, v0, sdt)
 		puck.integrate(sdt)
+		if ice_feel and puck.controller == null:
+			touch.apply(puck, sheet, to_sheet, sdt)
 		if sure_hands:
 			_sure_hands()
 	game.time += dt
+	game.camera_rig.pull = hands.pull if hands_on else 0.0
 	game.camera_rig.ride(skater, _walker, dt)
 	# the ice under the blades
 	var v := skater.speed()
@@ -167,12 +196,35 @@ func _sure_hands() -> void:
 			and to.length() > 0.3
 		):
 			return
+	# yours: within the hands' feel the cup draws it onto the face from
+	# where it is (no jump); further out it is on the blade at once
 	puck.controller = skater
 	puck.last_touch = skater
-	var anchor := skater.puck_anchor()
-	puck.position = Vector3(anchor.x, 0.0, anchor.z)
-	puck.vel = skater.vel
+	if puck.position.distance_to(skater.blade_pos) > StickPuck.CARRY_REACH:
+		var anchor := skater.puck_anchor()
+		puck.position = Vector3(anchor.x, 0.0, anchor.z)
+		puck.vel = skater.vel
 	game.on_possession(skater)
+
+
+## The game's cup pulls a carried puck onto the blade's face at 25/s, so
+## nothing the hands do shows in the puck. At a fast blade part of that
+## pull is let go: the puck lags a snap, gets ahead of a stop and rolls
+## along the face, which is what stickhandling feels like.
+func _soft_cup(puck: Puck, p0: Vector3, v0: Vector3, dt: float) -> void:
+	var bv := skater.blade_lvel.length()  # the blade's speed in the hands, not the body's
+	var soft := CUP_SOFT * clampf((bv - CUP_SOFT_V.x) / (CUP_SOFT_V.y - CUP_SOFT_V.x), 0.0, 1.0)
+	if soft <= 0.0:
+		return
+	var free := p0 + v0 * dt
+	free.y = puck.position.y
+	puck.position = puck.position.lerp(free, soft)
+	puck.vel = puck.vel.lerp(v0, soft)
+
+
+## The swing ended (DemoHands): the shot goes now, as if RMB were let go.
+func _release_swing() -> void:
+	Input.action_release(&"shot_trace")
 
 
 func _on_stride(at: Vector3, speed: float, foot: int) -> void:
@@ -204,15 +256,16 @@ func vel2() -> Vector2:
 
 
 func state_text() -> String:
-	var puck_s := "ON THE BLADE" if skater.has_puck() else "LOOSE"
+	var puck_s := "ON THE BLADE" if skater.has_puck() else "LOOSE ON %s" % touch.surface
 	return (
-		"SKATING %.1f M/S%s%s   STRIDES %d   PUCK %s"
+		"SKATING %.1f M/S%s%s   STRIDES %d   PUCK %s   HANDS %.0f PX/S"
 		% [
 			skater.speed(),
 			"  STOPPING" if skater.braking else "",
 			"  BACKWARDS" if skater.backwards else "",
 			stride_count,
-			puck_s
+			puck_s,
+			hands.hand_speed
 		]
 	)
 

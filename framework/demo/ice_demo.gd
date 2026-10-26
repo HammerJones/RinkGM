@@ -1026,6 +1026,7 @@ func _on_goal(_side: int) -> void:
 func _puck_in_play() -> void:
 	var sk := _skater.skater
 	_puck.reset_at(sk.global_position + sk.heading * 1.5)
+	_skater.touch.clear()
 
 
 ## The snow pusher pushed: the blade's sweep since last frame scoops the
@@ -1087,6 +1088,19 @@ func _skate(ticks: int, move: Vector2, stop := false, dash := false) -> void:
 	for step in ticks:
 		_skater.step(1.0 / 60.0, ice, _local)
 	_skater.script(Callable())
+
+
+## A loose puck from `at` at `speed` m/s along +x, stepped until it passes
+## `until_x` or stops (300 ticks at most): its speed then.
+func _puck_run(at: Vector3, speed: float, until_x: float) -> float:
+	_puck.reset_at(at)
+	_skater.touch.clear()
+	_puck.vel = Vector3(speed, 0.0, 0.0)
+	for k in 300:
+		_skater.step(1.0 / 60.0, ice, _local)
+		if _puck.position.x >= until_x or _puck.vel.length() < 0.05:
+			break
+	return _puck.vel.length()
 
 
 func _count_gouged(at: Vector2, size: float) -> int:
@@ -3323,6 +3337,127 @@ func _self_test() -> void:
 	check.call(
 		goals == goals1 and _puck.in_net_side == 0 and _puck.position.x < -Rink.GOAL_X + 1.0,
 		"the west goal line is open ice: no net, no goal (x %.1f)" % _puck.position.x
+	)
+	# --- the ice on the puck (IceTouch): the skater parked far off, the
+	# puck fired along lanes near the +z boards, each surface made on its plane_
+	sk.place(Vector2(25.0, -10.0), Vector3(1.0, 0.0, 0.0))
+	_skate(5, Vector2.ZERO)
+	var lx0 := -24.0
+	var v_clean := _puck_run(Vector3(lx0, 0.0, 8.0), 8.0, lx0 + 4.0)
+	var plane_ := Vector3(lx0, 0.0, 8.6)
+	for k in 100:
+		ice.add_snow(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 1.0)
+	var v_snow := _puck_run(plane_, 8.0, lx0 + 4.0)
+	check.call(
+		v_clean > 7.0 and v_snow < v_clean - 1.5,
+		(
+			"a millimetre of snow drags the puck (%.1f -> %.1f m/s over 4 m, clean %.1f)"
+			% [8.0, v_snow, v_clean]
+		)
+	)
+	plane_ = Vector3(lx0, 0.0, 9.2)
+	for k in 100:
+		ice.pour(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 2.0)
+	var v_pool := _puck_run(plane_, 8.0, lx0 + 4.0)
+	check.call(
+		v_pool > v_clean + 0.1 and _skater.touch.wet_load > 0.0,
+		"a fast puck skims a pool (%.1f m/s, clean %.1f) and comes out wet" % [v_pool, v_clean]
+	)
+	plane_ = Vector3(lx0, 0.0, 9.8)
+	for k in 100:
+		ice.add_snow(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 1.0)
+		ice.pour(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 0.6)
+	_puck_run(plane_, 6.0, lx0 + 4.0)
+	var wander_m := absf(_puck.position.z - plane_.z)
+	check.call(
+		wander_m > 0.01 and _skater.touch.surface in ["SLUSH", "SNOW", "CLEAN", "WET"],
+		"slush wanders the puck (%.3f m off line)" % wander_m
+	)
+	plane_ = Vector3(lx0, 0.0, 10.4)
+	for k in 100:
+		var crc := ice.cell_at(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)))
+		for dz in range(-6, 7):
+			if ice.is_ice(crc.x, crc.y + dz):
+				ice.crust[ice.index(crc.x, crc.y + dz)] = 1.0
+	_puck.reset_at(plane_)
+	_puck.vel = Vector3(8.0, 0.0, 0.0)
+	var hop := 0.0
+	for k in 40:
+		_skater.step(1.0 / 60.0, ice, _local)
+		hop = maxf(hop, _puck.position.y)
+	check.call(hop > 0.0005, "a set crust hops a fast puck (%.1f mm)" % (hop * 1000.0))
+	plane_ = Vector3(lx0, 0.0, 11.0)
+	ice.add_snow(_local(plane_ + Vector3(2.0, 0.0, 0.0)), 0.6, 120.0)
+	_puck_run(plane_, 8.0, lx0 + 4.0)
+	check.call(
+		_skater.touch.surface == "PILE" and absf(_puck.position.x - (lx0 + 2.0)) < 0.5,
+		"a pile stops it dead (x %.2f, pile at %.2f)" % [_puck.position.x, lx0 + 2.0]
+	)
+	# a rut holds it: a trench along x, the puck started on its slope
+	plane_ = Vector3(lx0, 0.0, 6.5)
+	for k in 100:
+		ice.chip(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 3.0)
+	_puck.reset_at(plane_ + Vector3(0.0, 0.0, 0.1))
+	_puck.vel = Vector3(3.0, 0.0, 0.0)
+	for k in 60:
+		_skater.step(1.0 / 60.0, ice, _local)
+	check.call(
+		absf(_puck.position.z - plane_.z) < 0.08,
+		(
+			"a rut draws the puck to its floor (%.3f m off the centre line)"
+			% absf(_puck.position.z - plane_.z)
+		)
+	)
+	# --- the mouse as hands (DemoHands)
+	var hands := _skater.hands
+	_puck.reset_at(Vector3(20.0, 0.0, 5.0))  # out of the way
+	sk.place(Vector2(0.0, 0.0), Vector3(1.0, 0.0, 0.0))
+	_skate(10, Vector2.ZERO)
+	var lat0 := sk.blade_local.y
+	var peak_stick := 0.0
+	var peak_lat := lat0
+	var flick := func(f: PlayerInput.Frame, _dt: float) -> void: hands.feed(Vector2(33.0, 0.0))
+	_skater.script(flick)
+	for k in 3:
+		_skater.step(1.0 / 60.0, ice, _local)
+		peak_stick = maxf(peak_stick, hands.stick.x)
+	check.call(
+		absf(hands.hand_speed - 1980.0) < 60.0,
+		"the hand's speed is read (%.0f px/s)" % hands.hand_speed
+	)
+	var rest := func(f: PlayerInput.Frame, _dt: float) -> void: hands.feed(Vector2.ZERO)
+	_skater.script(rest)
+	for k in 12:
+		_skater.step(1.0 / 60.0, ice, _local)
+		peak_stick = maxf(peak_stick, hands.stick.x)
+		peak_lat = maxf(peak_lat, sk.blade_local.y)
+	check.call(
+		peak_stick > 0.3 and peak_lat > lat0 + 0.1,
+		(
+			"a flick leads the stick (%.2f) and the blade follows (%.2f -> %.2f m)"
+			% [peak_stick, lat0, peak_lat]
+		)
+	)
+	for k in 60:
+		_skater.step(1.0 / 60.0, ice, _local)
+	check.call(absf(hands.stick.x) < 0.05, "...and the hands settle back (%.2f)" % hands.stick.x)
+	_skater.script(Callable())
+	# a swing: the stroke climbs, the hand rests, the shot goes without RMB up
+	var swings0 := hands.swings
+	var stroke: Array = [5.0, 12.0, 25.0, 33.0, 33.0, 24.0, 10.0, 2.0, 1.0, 1.0, 1.0]
+	var sidx := [0]
+	_skater.script(
+		func(f: PlayerInput.Frame, _dt: float) -> void:
+			f.tracing = true
+			hands.feed(Vector2(0.0, stroke[mini(sidx[0], stroke.size() - 1)]))
+			sidx[0] += 1
+	)
+	for k in stroke.size():
+		_skater.step(1.0 / 60.0, ice, _local)
+	_skater.script(Callable())
+	check.call(
+		hands.swings == swings0 + 1,
+		"a swing releases at the end of the stroke (%d)" % (hands.swings - swings0)
 	)
 	# the boards keep a hard shot on the sheet
 	_puck.reset_at(Vector3(0.0, 0.0, 0.0))

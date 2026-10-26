@@ -23,6 +23,7 @@ class DemoCameraRig:
 	const RETURN_RATE := 3.5  # 1/s, easing back to the skating view
 	var yaw := 0.0
 	var pitch := PITCH
+	var pull := 0.0  # the hands' pull on the view (DemoHands), radians
 	var watch_t := 0.0
 	var watching: Puck
 
@@ -72,7 +73,7 @@ class DemoCameraRig:
 		if not looking:
 			look = look.lerp(Vector2.ZERO, 1.0 - exp(-10.0 * dt))
 		body.global_position = h.global_position
-		body.rotation.y = yaw + look.x
+		body.rotation.y = yaw + look.x + pull
 		cam.position.y = EYE
 		cam.rotation.x = clampf(pitch + look.y, -1.4, 1.4)
 
