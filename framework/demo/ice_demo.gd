@@ -3428,15 +3428,14 @@ func _self_test() -> void:
 				lost_ticks += 1
 			umax = maxf(umax, absf(_skater.bond_u))
 		_skater.script(Callable())
-		(
-			check
-			. call(
-				lost_ticks == 0 and _skater.losses.roll_off == 0,
-				(
-					"a %.0f Hz stickhandle at %.1f m/s on clean ice keeps the puck (lost %d/240 ticks, slides %.0f cm at most, caught %s)"
-					% [hz, sk.speed(), lost_ticks, umax * 100.0, _skater.losses]
-				)
-			)
+		var handle_msg := (
+			"%.0f Hz handle at %.1f m/s: lost %d/240 ticks, slid %.0f cm, caught %s"
+			% [hz, sk.speed(), lost_ticks, umax * 100.0, _skater.losses]
+		)
+		print("ice demo: " + handle_msg)
+		check.call(
+			lost_ticks == 0 and _skater.losses.roll_off == 0,
+			"a stickhandle on clean ice keeps the puck (" + handle_msg + ")"
 		)
 		check.call(
 			umax > 0.005 and umax < StickPuck.BLADE_HALF,
