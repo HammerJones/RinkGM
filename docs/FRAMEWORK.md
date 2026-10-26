@@ -1042,13 +1042,25 @@ display, and run as headless checks in CI (`--test=<name>`).
   the motion, most with it angled. Snow (2 mm takes 0.7 off) and water
   (1 mm takes 0.5 off) under the puck weaken the spring. Past the toe
   or the heel by 3 cm it rolls off, loose for 0.6 s before sure hands
-  may have it back. Retention 1..10 on the number keys (0 is 10): the
-  spring runs 15 to 250 /s2 and the pushes let through 1.0 to 0.3 of
-  themselves; 10 never lets go. The game's own slip (its stickhandling
-  rhythm) is overridden while bonded. The bond rests while the blade is
-  up (forehand to backhand: the puck runs on, the blade comes down
-  beyond it and the bond takes it where it meets the face), and the HUD
-  reads FOREHAND or BACKHAND and the puck's spot on the blade. The
+  may have it back, but only with the spring weakened under 0.75 (snow
+  past about 0.7 mm or water past 0.5 mm under the puck) or at a
+  retention under 5 (`BOND_LOOSE`, `BOND_WEAK_OFF`): on clean ice at
+  the default the puck rides the end of the blade and never leaves
+  (Sean, 2026-10-26: a solo skater on fresh ice does not drop the
+  puck; the difficulty is opponents, obstacles and the ice). Retention
+  1..10 on the number keys (0 is 10): the spring runs 20 to 400 /s2
+  and the pushes let through 0.5 to 0.08 of themselves (273 /s2 and
+  0.22 at the default 7, a few cm of slide on a hard handle); 10 never
+  lets go. The game's own slips (its stickhandling rhythm's random
+  release, its keep's reach) are taken straight back the same tick
+  (`_slipped`, `_retake`: the skater's last touch, slow against the
+  skater, within 1.2 m, and not let go); a shot, a flick pass or an
+  [E] pass flags the puck let go for 0.5 s (`let_go`, through
+  `DemoRinkGame.shot_hook` and `DemoController.pass_hook`) so nothing
+  takes it back. The bond rests while the blade is up (forehand to
+  backhand: the puck runs on, the blade comes down beyond it and the
+  bond takes it where it meets the face), and the HUD reads FOREHAND
+  or BACKHAND and the puck's spot on the blade. The
   hands' spring is 14 Hz, damped 0.7 to 1.0 by rating (tight: no rubber
   band). The shaft's knob (its top 2 voxels; the taped grip stays) is
   not drawn in the demo (`DemoSkater.KNOB_VOX`, `_without_top`): it sat

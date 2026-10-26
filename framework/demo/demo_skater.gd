@@ -21,10 +21,13 @@ const SURE_REACH := Skater.REACH_ONE_HAND  # m from the body: a loose puck this 
 # motion, most with it angled); snow and water under the puck weaken the
 # spring; past the toe or the heel it rolls off. Retention 1..10 sets the
 # spring and how much of those pushes the tape lets through; 10 never lets go.
-const BOND_K := Vector2(15.0, 250.0)  # spring, 1/s2, at retention 1 and 10
+const BOND_K := Vector2(20.0, 400.0)  # spring, 1/s2, at retention 1 and 10
 const BOND_ZETA := 0.8
-const BOND_SLIDE := Vector2(1.0, 0.3)  # share of the pushes that move the puck, at 1 and 10
+const BOND_SLIDE := Vector2(0.5, 0.08)  # share of the pushes that move the puck, at 1 and 10
 const BOND_OFF := 0.03  # m past the end of the blade: off
+const BOND_LOOSE := 5  # below this retention the puck may roll off on clean ice too
+const BOND_WEAK_OFF := 0.75  # the spring this weak (snow, water) lets the puck roll off
+const LET_GO_T := 0.5  # s after a shot or a pass that the puck is meant to be gone
 const BOND_SNOW := 2.0  # mm of snow that takes BOND_SNOW_K off the spring
 const BOND_SNOW_K := 0.7
 const BOND_WATER := 1.0  # mm of water that takes BOND_WATER_K off
@@ -51,10 +54,13 @@ var bond_u := 0.0
 var bond_v := 0.0
 var bonded := false
 var roll_offs := 0
+## How the carried puck was lost, by cause (tests, tuning).
+var losses := {"roll_off": 0, "game_slip": 0, "keep_drop": 0, "cross_drop": 0}
 var game: DemoRinkGame
 var skater: Skater
 var controller: HumanController
 var _off_t := 0.0
+var _let_go := 0.0
 var _blade_v0 := Vector2.ZERO
 var _walker: Node3D
 var _sheet: IceSheet
@@ -90,6 +96,8 @@ func setup(puck: Puck, on_message: Callable) -> void:
 	hands.name = "Hands"
 	add_child(hands)
 	hands.on_swing_end = _release_swing
+	game.shot_hook = let_go
+	controller.pass_hook = let_go
 	# no body in the view (Sean: the hands got in the way): the stick and
 	# its blade stay, everything else of you is on the layer the eyes skip
 	var rig := skater.rig
@@ -223,16 +231,33 @@ func step(dt: float, sheet: IceSheet, to_sheet: Callable) -> void:
 			skater.skill("stick_handling"),
 			controller.player_input.frame.tracing
 		)
-	skater.physics_update(dt)
 	var puck := game.puck
+	_let_go = maxf(0.0, _let_go - dt)
+	var had := puck.controller == skater
+	if had and skater.ctrl.pass_pressed:
+		let_go()
+	skater.physics_update(dt)
+	if had and _slipped(puck):
+		# the game's hands let it go (its stickhandling rhythm, a random
+		# slip past the rating's pace): not here. The puck is where the
+		# blade is, and it stays there (Sean: a solo skater on fresh ice
+		# does not drop the puck)
+		losses.game_slip += 1
+		_retake(puck)
 	var sdt := dt / PUCK_SUBSTEPS
 	for i in PUCK_SUBSTEPS:
 		var carried := puck.controller == skater
+		var was_crossing := skater.crossing or skater.lifting
 		StickPuck.step(game, puck, sdt, float(i + 1) / PUCK_SUBSTEPS)
-		if carried and puck.controller == null and puck.last_touch == skater and bonded:
-			# the game's hands let it slip (its stickhandling rhythm): the bond holds
-			puck.controller = skater
-			puck.ignore_briefly(skater, 0.0)
+		if carried and _slipped(puck):
+			# the game's keep (out of the blade's reach while the stick goes
+			# round the puck, or a reach the hands' lead took it past): the
+			# same, it is still on the blade
+			if was_crossing:
+				losses.cross_drop += 1
+			else:
+				losses.keep_drop += 1
+			_retake(puck)
 		_bond(puck, sheet, to_sheet, sdt, float(i + 1) / PUCK_SUBSTEPS)
 		puck.integrate(sdt)
 		if ice_feel and puck.controller == null:
@@ -261,19 +286,15 @@ func _sure_hands() -> void:
 		return
 	if _off_t > 0.0:
 		return  # it rolled off the blade: go and get it
-	if not puck.can_be_touched_by(skater) or puck.position.y > StickPuck.BLADE_TOP:
+	if puck.position.y > StickPuck.BLADE_TOP:
 		return
 	var to := puck.position - skater.global_position
 	to.y = 0.0
-	# slipped off the blade: yours again, but a pass or a shot (fast, or
-	# already away) is gone
-	var slipped := (
-		puck.controller == null
-		and puck.last_touch == skater
-		and to.length() < 1.2
-		and (puck.vel - skater.vel).length() < 4.0
-	)
-	if not slipped:
+	# slipped off the blade: yours again, but a pass or a shot (let go,
+	# fast, or already away) is gone
+	if not _slipped(puck):
+		if not puck.can_be_touched_by(skater):
+			return
 		if to.length() > SURE_REACH:
 			return
 		if (
@@ -353,9 +374,14 @@ func _bond(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float, f: float)
 	var cd := 2.0 * BOND_ZETA * sqrt(k)
 	bond_v += (push - k * bond_u - cd * bond_v) * dt
 	bond_u += bond_v * dt
-	if absf(bond_u) > StickPuck.BLADE_HALF + BOND_OFF and retention < 10:
-		# off the end of the blade: loose, and not yours again for a moment
+	var may_roll := retention < BOND_LOOSE or weak < BOND_WEAK_OFF
+	if absf(bond_u) > StickPuck.BLADE_HALF + BOND_OFF and may_roll and retention < 10:
+		# off the end of the blade: loose, and not yours again for a moment.
+		# On clean ice at the default retention it never does (Sean): the
+		# puck rides the end of the blade instead. Snow or water under it,
+		# or a low retention from the keys, lets it go
 		roll_offs += 1
+		losses.roll_off += 1
 		bonded = false
 		puck.controller = null
 		puck.last_touch = skater
@@ -367,6 +393,33 @@ func _bond(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float, f: float)
 	var at := c + ax * bond_u + n * skater.puck_side * StickPuck.gap()
 	puck.position = Vector3(at.x, 0.0, at.y)
 	puck.vel = Vector3(bv.x, 0.0, bv.y) + Vector3(ax.x, 0.0, ax.y) * bond_v
+
+
+## A shot or a pass is on its way (the game's shot, the flick pass, [E]):
+## the puck is meant to leave, and nothing takes it straight back.
+func let_go() -> void:
+	_let_go = LET_GO_T
+
+
+## A puck that just left the blade without being sent: still the skater's
+## last touch, within arm's reach, and not let go (a shot or a pass is;
+## the speed is only a backstop, a game slip can fling it at a fast sweep).
+func _slipped(puck: Puck) -> bool:
+	if puck.controller != null or _let_go > 0.0:
+		return false
+	if puck.last_touch != skater and puck.last_touch != null:
+		return false
+	var to := puck.position - skater.global_position
+	to.y = 0.0
+	var near := to.length() < 1.2 or puck.position.distance_to(skater.blade_pos) < 0.8
+	return near and (puck.vel - skater.vel).length() < 15.0
+
+
+## Back on the blade at once, no ignore timer (the game's slips set one).
+func _retake(puck: Puck) -> void:
+	puck.controller = skater
+	puck.last_touch = skater
+	puck.ignore_briefly(skater, 0.0)
 
 
 ## The swing ended (DemoHands): the shot goes now, as if RMB were let go.

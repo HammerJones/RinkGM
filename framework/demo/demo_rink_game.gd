@@ -97,6 +97,8 @@ var practice := true
 var stats := {"shots": 0, "checks": 0}
 var camera_rig: DemoCameraRig
 var hud: DemoHudBridge
+## Called with no arguments when a shot goes (the demo lets the puck go).
+var shot_hook := Callable()
 
 
 func _init() -> void:
@@ -113,6 +115,8 @@ func is_frozen() -> bool:
 func on_shot(_s: Skater, _slap: bool) -> void:
 	stats.shots += 1
 	camera_rig.watch(puck)
+	if shot_hook.is_valid():
+		shot_hook.call()
 
 
 func on_new_stick(_s: Skater) -> void:

@@ -3402,6 +3402,65 @@ func _self_test() -> void:
 		"at retention 2 on snow it rolls off the blade (%d times)" % (_skater.roll_offs - offs0)
 	)
 	_skater.retention = 7
+	# a hard stickhandle on clean ice at the default retention never loses
+	# the puck (Sean: a solo skater on fresh ice does not drop it): sweeps
+	# at 2, 3 and 4 Hz while skating, every tick on the blade
+	for hz in [2.0, 3.0, 4.0]:
+		sk.place(Vector2(-10.0, 4.0), Vector3(1.0, 0.0, 0.0))
+		_skate(5, Vector2(0.0, 1.0))
+		_puck.reset_at(sk.puck_anchor())
+		_puck.controller = sk
+		_puck.last_touch = sk
+		_skater.losses = {"roll_off": 0, "game_slip": 0, "keep_drop": 0, "cross_drop": 0}
+		var ht := [0.0]
+		var fhz: float = hz
+		_skater.script(
+			func(f: PlayerInput.Frame, dt: float) -> void:
+				ht[0] += dt
+				f.move = Vector2(0.0, 1.0)
+				f.stick = Vector2(0.9 * sin(ht[0] * TAU * fhz), 0.4)
+		)
+		var lost_ticks := 0
+		var umax := 0.0
+		for k in 240:
+			_skater.step(1.0 / 60.0, ice, _local)
+			if not sk.has_puck():
+				lost_ticks += 1
+			umax = maxf(umax, absf(_skater.bond_u))
+		_skater.script(Callable())
+		(
+			check
+			. call(
+				lost_ticks == 0 and _skater.losses.roll_off == 0,
+				(
+					"a %.0f Hz stickhandle at %.1f m/s on clean ice keeps the puck (lost %d/240 ticks, slides %.0f cm at most, caught %s)"
+					% [hz, sk.speed(), lost_ticks, umax * 100.0, _skater.losses]
+				)
+			)
+		)
+		check.call(
+			umax > 0.005 and umax < StickPuck.BLADE_HALF,
+			(
+				"...and the puck slides on the blade without reaching its end (%.1f cm)"
+				% (umax * 100.0)
+			)
+		)
+	# a shot is let go: sure hands does not take it straight back
+	sk.place(Vector2(-10.0, 4.0), Vector3(1.0, 0.0, 0.0))
+	_skate(5, Vector2(0.0, 1.0))
+	_puck.reset_at(sk.puck_anchor())
+	_puck.controller = sk
+	_skater.step(1.0 / 60.0, ice, _local)
+	_skater.let_go()
+	_puck.release(sk, Vector3(1.0, 0.0, 0.0) * 12.0 + sk.vel)
+	var gone_ticks := 0
+	for k in 30:
+		_skater.step(1.0 / 60.0, ice, _local)
+		if not sk.has_puck():
+			gone_ticks += 1
+	check.call(
+		gone_ticks == 30, "a shot that was let go stays gone (%d/30 ticks loose)" % gone_ticks
+	)
 	# the stick's knob is gone from the view (Sean): the shaft stops short of it
 	var shaft_h: float = sk.rig.stick.mesh.get_aabb().end.y
 	check.call(

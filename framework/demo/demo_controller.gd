@@ -13,6 +13,8 @@ const PASS_FAST := 18.0  # m/s at a full stroke
 
 ## The last flick pass: {ok, speed (m/s), dir (world XZ), px_s}.
 var last_pass := {}
+## Called with no arguments when a flick pass goes (the demo lets the puck go).
+var pass_hook := Callable()
 
 
 func _traced(human: Skater, f: PlayerInput.Frame) -> void:
@@ -32,6 +34,8 @@ func _traced(human: Skater, f: PlayerInput.Frame) -> void:
 		var full := lerpf(FULL_STROKE.x, FULL_STROKE.y, human.skill("shot_power"))
 		var power := clampf(px_s / full, 0.0, 1.0)
 		var speed := lerpf(PASS_SLOW, PASS_FAST, power)
+		if pass_hook.is_valid():
+			pass_hook.call()
 		human.pass_puck()
 		var puck: Puck = human.puck
 		var flat := Vector3(puck.vel.x, 0.0, puck.vel.z)
