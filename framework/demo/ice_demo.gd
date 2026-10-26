@@ -3339,15 +3339,15 @@ func _self_test() -> void:
 		"the west goal line is open ice: no net, no goal (x %.1f)" % _puck.position.x
 	)
 	# --- the ice on the puck (IceTouch): the skater parked far off, the
-	# puck fired along lanes near the +z boards, each surface made on its plane_
+	# puck fired along lanes near the +z boards, each surface made on its puck_lane
 	sk.place(Vector2(25.0, -10.0), Vector3(1.0, 0.0, 0.0))
 	_skate(5, Vector2.ZERO)
 	var lx0 := -24.0
 	var v_clean := _puck_run(Vector3(lx0, 0.0, 8.0), 8.0, lx0 + 4.0)
-	var plane_ := Vector3(lx0, 0.0, 8.6)
+	var puck_lane := Vector3(lx0, 0.0, 8.6)
 	for k in 100:
-		ice.add_snow(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 1.0)
-	var v_snow := _puck_run(plane_, 8.0, lx0 + 4.0)
+		ice.add_snow(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 1.0)
+	var v_snow := _puck_run(puck_lane, 8.0, lx0 + 4.0)
 	check.call(
 		v_clean > 7.0 and v_snow < v_clean - 1.5,
 		(
@@ -3355,57 +3355,57 @@ func _self_test() -> void:
 			% [8.0, v_snow, v_clean]
 		)
 	)
-	plane_ = Vector3(lx0, 0.0, 9.2)
+	puck_lane = Vector3(lx0, 0.0, 9.2)
 	for k in 100:
-		ice.pour(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 2.0)
-	var v_pool := _puck_run(plane_, 8.0, lx0 + 4.0)
+		ice.pour(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 2.0)
+	var v_pool := _puck_run(puck_lane, 8.0, lx0 + 4.0)
 	check.call(
 		v_pool > v_clean + 0.1 and _skater.touch.wet_load > 0.0,
 		"a fast puck skims a pool (%.1f m/s, clean %.1f) and comes out wet" % [v_pool, v_clean]
 	)
-	plane_ = Vector3(lx0, 0.0, 9.8)
+	puck_lane = Vector3(lx0, 0.0, 9.8)
 	for k in 100:
-		ice.add_snow(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 1.0)
-		ice.pour(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 0.6)
-	_puck_run(plane_, 6.0, lx0 + 4.0)
-	var wander_m := absf(_puck.position.z - plane_.z)
+		ice.add_snow(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 1.0)
+		ice.pour(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 0.6)
+	_puck_run(puck_lane, 6.0, lx0 + 4.0)
+	var wander_m := absf(_puck.position.z - puck_lane.z)
 	check.call(
 		wander_m > 0.01 and _skater.touch.surface in ["SLUSH", "SNOW", "CLEAN", "WET"],
 		"slush wanders the puck (%.3f m off line)" % wander_m
 	)
-	plane_ = Vector3(lx0, 0.0, 10.4)
+	puck_lane = Vector3(lx0, 0.0, 10.4)
 	for k in 100:
-		var crc := ice.cell_at(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)))
+		var crc := ice.cell_at(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)))
 		for dz in range(-6, 7):
 			if ice.is_ice(crc.x, crc.y + dz):
 				ice.crust[ice.index(crc.x, crc.y + dz)] = 1.0
-	_puck.reset_at(plane_)
+	_puck.reset_at(puck_lane)
 	_puck.vel = Vector3(8.0, 0.0, 0.0)
 	var hop := 0.0
 	for k in 40:
 		_skater.step(1.0 / 60.0, ice, _local)
 		hop = maxf(hop, _puck.position.y)
 	check.call(hop > 0.0005, "a set crust hops a fast puck (%.1f mm)" % (hop * 1000.0))
-	plane_ = Vector3(lx0, 0.0, 11.0)
-	ice.add_snow(_local(plane_ + Vector3(2.0, 0.0, 0.0)), 0.6, 120.0)
-	_puck_run(plane_, 8.0, lx0 + 4.0)
+	puck_lane = Vector3(lx0, 0.0, 11.0)
+	ice.add_snow(_local(puck_lane + Vector3(2.0, 0.0, 0.0)), 0.6, 120.0)
+	_puck_run(puck_lane, 8.0, lx0 + 4.0)
 	check.call(
 		_skater.touch.surface == "PILE" and absf(_puck.position.x - (lx0 + 2.0)) < 0.5,
 		"a pile stops it dead (x %.2f, pile at %.2f)" % [_puck.position.x, lx0 + 2.0]
 	)
 	# a rut holds it: a trench along x, the puck started on its slope
-	plane_ = Vector3(lx0, 0.0, 6.5)
+	puck_lane = Vector3(lx0, 0.0, 6.5)
 	for k in 100:
-		ice.chip(_local(plane_ + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 3.0)
-	_puck.reset_at(plane_ + Vector3(0.0, 0.0, 0.1))
+		ice.chip(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 3.0)
+	_puck.reset_at(puck_lane + Vector3(0.0, 0.0, 0.1))
 	_puck.vel = Vector3(3.0, 0.0, 0.0)
 	for k in 60:
 		_skater.step(1.0 / 60.0, ice, _local)
 	check.call(
-		absf(_puck.position.z - plane_.z) < 0.08,
+		absf(_puck.position.z - puck_lane.z) < 0.08,
 		(
 			"a rut draws the puck to its floor (%.3f m off the centre line)"
-			% absf(_puck.position.z - plane_.z)
+			% absf(_puck.position.z - puck_lane.z)
 		)
 	)
 	# --- the mouse as hands (DemoHands)
