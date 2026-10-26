@@ -1050,9 +1050,9 @@ display, and run as headless checks in CI (`--test=<name>`).
   beyond it and the bond takes it where it meets the face), and the HUD
   reads FOREHAND or BACKHAND and the puck's spot on the blade. The
   hands' spring is 14 Hz, damped 0.7 to 1.0 by rating (tight: no rubber
-  band). The shaft's top 12 voxels (knob and taped grip) are not drawn
-  in the demo (`DemoSkater.KNOB_VOX`, `_without_top`): they sat big in
-  the corner of the view. What skating does to the ice is
+  band). The shaft's knob (its top 2 voxels; the taped grip stays) is
+  not drawn in the demo (`DemoSkater.KNOB_VOX`, `_without_top`): it sat
+  big in the corner of the view. What skating does to the ice is
   `SkateWear`, fed by the skater's `stride` and `stop_spray` signals and
   its `turn_load`: a glide leaves a faint line per blade (`BLADE_GAP`,
   24 cm apart, stronger with speed), a push-off chips the ice where the

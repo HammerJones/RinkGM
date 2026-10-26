@@ -29,7 +29,7 @@ const BOND_SNOW := 2.0  # mm of snow that takes BOND_SNOW_K off the spring
 const BOND_SNOW_K := 0.7
 const BOND_WATER := 1.0  # mm of water that takes BOND_WATER_K off
 const BOND_WATER_K := 0.5
-const KNOB_VOX := 12  # voxels of the shaft's top (the knob and the taped grip) not drawn
+const KNOB_VOX := 2  # voxels of the shaft's top (the knob; the taped grip stays) not drawn
 const ROLL_OFF_T := 0.6  # s a rolled-off puck is loose before sure hands may have it back
 
 var active := false
@@ -102,8 +102,8 @@ func setup(puck: Puck, on_message: Callable) -> void:
 	):
 		if part:
 			part.layers = SELF_LAYER
-	# no knob or taped grip on the butt end (Sean: it sat big in the corner
-	# of the view, right by the eyes): the top 12 voxels of the shaft go
+	# no knob on the butt end (Sean: it sat big in the corner of the view,
+	# right by the eyes); the taped grip stays so the stick looks whole
 	if rig.stick and rig.stick.mesh:
 		rig.stick.mesh = _without_top(rig.stick.mesh, KNOB_VOX * Models.STICK_V + 0.002)
 		# (the rig rebuilds the shaft from its base mesh when the tuned size changes)
