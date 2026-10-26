@@ -58,7 +58,7 @@ func setup(puck: Puck, on_message: Callable) -> void:
 	skater.stride.connect(_on_stride)
 	skater.stop_spray.connect(_on_stop)
 	skater.visible = false
-	controller = HumanController.new()
+	controller = DemoController.new()
 	controller.name = "Controller"
 	controller.game = game
 	add_child(controller)
@@ -187,7 +187,14 @@ func _sure_hands() -> void:
 		return
 	var to := puck.position - skater.global_position
 	to.y = 0.0
-	var slipped := puck.controller == null and puck.last_touch == skater
+	# slipped off the blade: yours again, but a pass or a shot (fast, or
+	# already away) is gone
+	var slipped := (
+		puck.controller == null
+		and puck.last_touch == skater
+		and to.length() < 1.2
+		and (puck.vel - skater.vel).length() < 4.0
+	)
 	if not slipped:
 		if to.length() > SURE_REACH:
 			return

@@ -1027,7 +1027,12 @@ display, and run as headless checks in CI (`--test=<name>`).
   ticks), not only on RMB up. At a fast blade (1.5 to 4.5 m/s in the
   hands) up to 0.4 of the game's cup pull is let go (`DemoSkater`
   CUP_SOFT), so the puck lags a snap, gets ahead of a stop and rolls
-  along the face. What skating does to the ice is
+  along the face. A straight flick with RMB is a pass (Sean's sketch;
+  `DemoController`, the game's controller with `_traced` overridden):
+  along the ice with no lift, the way the flick points, 6 to 18 m/s by
+  its pace; any other shape is graded as a shot. Sure hands never
+  re-takes a pass or a shot it just released (a slipped puck is slow and
+  within 1.2 m). What skating does to the ice is
   `SkateWear`, fed by the skater's `stride` and `stop_spray` signals and
   its `turn_load`: a glide leaves a faint line per blade (`BLADE_GAP`,
   24 cm apart, stronger with speed), a push-off chips the ice where the

@@ -382,7 +382,7 @@ func _process(dt: float) -> void:
 			elif _aimed < 0 and _skater.active:
 				hud.extra_prompt = (
 					"[WASD] SKATE   [SHIFT] DASH   [SPACE] STOP   [R] TURN   [MOUSE] STICK   "
-					+ "[RMB] DRAW A SHOT   [LMB] LOOK   [E] PASS   [V] SHOT GUIDE   [Q] SKATES OFF"
+					+ "[RMB] DRAW A SHOT, FLICK TO PASS   [LMB] LOOK   [E] PASS   [V] SHOT GUIDE   [Q] SKATES OFF"
 				)
 			elif _aimed < 0 and _skates_aimed(cam.global_position, -cam.global_transform.basis.z):
 				hud.extra_prompt = "[E] SKATE"
@@ -1374,7 +1374,7 @@ func _unhandled_input(event: InputEvent) -> void:
 						. toast(
 							(
 								"ON THE ICE: [WASD] SKATE  [SHIFT] DASH  [SPACE] STOP  [R] TURN  "
-								+ "[MOUSE] STICK  [RMB] DRAW A SHOT  [LMB] LOOK  [E] PASS  [Q] SKATES OFF"
+								+ "[MOUSE] STICK  [RMB] DRAW A SHOT, FLICK TO PASS  [LMB] LOOK  [E] PASS  [Q] SKATES OFF"
 							)
 						)
 					)
@@ -3293,16 +3293,60 @@ func _self_test() -> void:
 	_skater.script(
 		func(f: PlayerInput.Frame, _dt: float) -> void:
 			f.trace_done = true
+			# a wrist shot's shape: a pull back, then straight forward (not a flick)
 			f.trace = [
 				Vector3(0.0, 0.0, 0.0),
-				Vector3(0.0, 40.0, 0.05),
-				Vector3(0.0, 80.0, 0.1),
+				Vector3(0.0, -30.0, 0.05),
+				Vector3(0.0, 20.0, 0.1),
 				Vector3(0.0, 120.0, 0.15)
 			]
 	)
 	_skater.step(1.0 / 60.0, ice, _local)
 	_skater.script(Callable())
 	check.call(_skater.controller.last_shot.has("ok"), "an RMB release grades the pattern drawn")
+	# a straight flick is a pass along the ice (Sean's sketch): the puck
+	# leaves flat, the way the flick points, at the flick's pace
+	_puck.reset_at(sk.puck_anchor())
+	_puck.controller = sk
+	_skater.step(1.0 / 60.0, ice, _local)
+	var dctl: DemoController = _skater.controller
+	check.call(
+		(
+			DemoController.is_flick([Vector3(0, 0, 0), Vector3(2, 60, 0.04), Vector3(1, 130, 0.08)])
+			and not DemoController.is_flick(
+				[Vector3(0, 0, 0), Vector3(-40, 20, 0.04), Vector3(0, 90, 0.08)]
+			)
+			and not DemoController.is_flick(
+				[Vector3(0, 0, 0), Vector3(2, 20, 0.04), Vector3(1, 40, 0.08)]
+			)
+		),
+		"a straight line is a flick, a hook or a dab is not"
+	)
+	var had_puck := sk.has_puck()
+	_skater.script(
+		func(f: PlayerInput.Frame, _dt: float) -> void:
+			f.trace_done = true
+			f.trace = [
+				Vector3(0.0, 0.0, 0.0),
+				Vector3(1.0, 50.0, 0.03),
+				Vector3(2.0, 100.0, 0.06),
+				Vector3(2.0, 150.0, 0.09)
+			]
+	)
+	_skater.step(1.0 / 60.0, ice, _local)
+	_skater.script(Callable())
+	var pv := _puck.vel
+	check.call(
+		had_puck and dctl.last_pass.get("ok", false) and pv.length() > 8.0 and absf(pv.y) < 0.01,
+		"a flick passes the puck along the ice (%.1f m/s, lift %.3f)" % [pv.length(), pv.y]
+	)
+	var along := Vector2(pv.x, pv.z).normalized().dot(Vector2(sk.heading.x, sk.heading.z))
+	check.call(along > 0.9, "...the way the flick pointed (%.2f along the heading)" % along)
+	for k in 30:
+		_skater.step(1.0 / 60.0, ice, _local)
+	check.call(
+		not sk.has_puck() or _puck.position.distance_to(sk.global_position) > 3.0, "...and it goes"
+	)
 	# a traced wrist shot at the east net from the slot
 	sk.place(Vector2(Rink.GOAL_X - 8.0, 0.0), Vector3(1.0, 0.0, 0.0))
 	_skate(10, Vector2.ZERO)
