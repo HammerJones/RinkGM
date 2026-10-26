@@ -17,9 +17,10 @@ extends Node
 ## felt in the eyes too.
 
 const LEAD_S := 0.08  # s of hand motion the blade's target leads by
-const SPRING_HZ := 6.0  # the hands' spring
-const DAMP_WEAK := 0.45  # damping ratio at stick handling 0
+const SPRING_HZ := 14.0  # the hands' spring: tight, the stick is in the hands (Sean: no rubber band)
+const DAMP_WEAK := 0.7  # damping ratio at stick handling 0
 const DAMP_GOOD := 1.0  # ... at 100 (no overshoot)
+const SPRING_SUBSTEPS := 8
 const SWING_MIN := 600.0  # px/s a stroke must reach to count as a swing
 const SWING_REST := 0.12  # share of the peak the hand slows to at the end of the swing
 const SWING_REST_TICKS := 3
@@ -82,9 +83,14 @@ func shape(
 	var k := pow(TAU * SPRING_HZ, 2.0)
 	var zeta := lerpf(DAMP_WEAK, DAMP_GOOD, clampf(skill, 0.0, 1.0))
 	var cdamp := 2.0 * zeta * sqrt(k)
-	_vel += (k * (want - stick) - cdamp * _vel) * dt
 	var prev := stick
-	stick = (stick + _vel * dt).limit_length(1.0)
+	var sdt := dt / SPRING_SUBSTEPS  # a stiff spring, stepped fine enough to stay stable
+	for i in SPRING_SUBSTEPS:
+		_vel += (k * (want - stick) - cdamp * _vel) * sdt
+		stick += _vel * sdt
+	if stick.length() > 1.0:
+		stick = stick.normalized()
+		_vel = Vector2.ZERO
 	var world := right * stick.x + fwd * stick.y
 	c.stick = world
 	var dw := stick - prev

@@ -1027,12 +1027,32 @@ display, and run as headless checks in CI (`--test=<name>`).
   ticks), not only on RMB up. At a fast blade (1.5 to 4.5 m/s in the
   hands) up to 0.4 of the game's cup pull is let go (`DemoSkater`
   CUP_SOFT), so the puck lags a snap, gets ahead of a stop and rolls
-  along the face. A straight flick with RMB is a pass (Sean's sketch;
+  along the face. [Superseded the same day by the bond, below.] A
+  straight flick with RMB is a pass (Sean's sketch;
   `DemoController`, the game's controller with `_traced` overridden):
   along the ice with no lift, the way the flick points, 6 to 18 m/s by
   its pace; any other shape is graded as a shot. Sure hands never
   re-takes a pass or a shot it just released (a slipped puck is slow and
-  within 1.2 m). What skating does to the ice is
+  within 1.2 m). The bond (Sean, 2026-10-26, "two solid objects"):
+  a carried puck is stuck to the blade's face and slides only along it,
+  heel to toe (`DemoSkater._bond`, `bond_u` metres from the middle),
+  centred by a spring. The slide is pushed by the blade's own
+  acceleration along its length (the puck's inertia) and by the ice's
+  drag on the puck along the blade: nothing with the blade square to
+  the motion, most with it angled. Snow (2 mm takes 0.7 off) and water
+  (1 mm takes 0.5 off) under the puck weaken the spring. Past the toe
+  or the heel by 3 cm it rolls off, loose for 0.6 s before sure hands
+  may have it back. Retention 1..10 on the number keys (0 is 10): the
+  spring runs 15 to 250 /s2 and the pushes let through 1.0 to 0.3 of
+  themselves; 10 never lets go. The game's own slip (its stickhandling
+  rhythm) is overridden while bonded. The bond rests while the blade is
+  up (forehand to backhand: the puck runs on, the blade comes down
+  beyond it and the bond takes it where it meets the face), and the HUD
+  reads FOREHAND or BACKHAND and the puck's spot on the blade. The
+  hands' spring is 14 Hz, damped 0.7 to 1.0 by rating (tight: no rubber
+  band). The shaft's top 12 voxels (knob and taped grip) are not drawn
+  in the demo (`DemoSkater.KNOB_VOX`, `_without_top`): they sat big in
+  the corner of the view. What skating does to the ice is
   `SkateWear`, fed by the skater's `stride` and `stop_spray` signals and
   its `turn_load`: a glide leaves a faint line per blade (`BLADE_GAP`,
   24 cm apart, stronger with speed), a push-off chips the ice where the

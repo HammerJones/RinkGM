@@ -14,8 +14,23 @@ const SELF_LAYER := CameraRig.SELF_LAYER
 const PUCK_SUBSTEPS := 4
 const TURN_G := 3.0  # m/s2 of lateral load under which a turn leaves no edge mark
 const SURE_REACH := Skater.REACH_ONE_HAND  # m from the body: a loose puck this close is yours
-const CUP_SOFT := 0.4  # share of the cup's pull let go at a fast blade: the puck rides the face
-const CUP_SOFT_V := Vector2(1.5, 4.5)  # m/s of blade: the softening comes in between these
+# The bond (Sean, 2026-10-26): a carried puck is stuck to the blade's face
+# and slides only along it, heel to toe, centred by a spring. The slide is
+# pushed by the blade's own acceleration along its length and by the ice's
+# drag on the puck along the blade (nothing with the blade square to the
+# motion, most with it angled); snow and water under the puck weaken the
+# spring; past the toe or the heel it rolls off. Retention 1..10 sets the
+# spring and how much of those pushes the tape lets through; 10 never lets go.
+const BOND_K := Vector2(15.0, 250.0)  # spring, 1/s2, at retention 1 and 10
+const BOND_ZETA := 0.8
+const BOND_SLIDE := Vector2(1.0, 0.3)  # share of the pushes that move the puck, at 1 and 10
+const BOND_OFF := 0.03  # m past the end of the blade: off
+const BOND_SNOW := 2.0  # mm of snow that takes BOND_SNOW_K off the spring
+const BOND_SNOW_K := 0.7
+const BOND_WATER := 1.0  # mm of water that takes BOND_WATER_K off
+const BOND_WATER_K := 0.5
+const KNOB_VOX := 12  # voxels of the shaft's top (the knob and the taped grip) not drawn
+const ROLL_OFF_T := 0.6  # s a rolled-off puck is loose before sure hands may have it back
 
 var active := false
 var stride_count := 0
@@ -29,9 +44,18 @@ var ice_feel := true
 var hands_on := true
 var touch := IceTouch.new()
 var hands: DemoHands
+## Puck retention 1 (loose) to 10 (never lets go): the number keys.
+var retention := 7
+## The bond's slide along the blade, m from its middle (+ toward the toe), and its rate.
+var bond_u := 0.0
+var bond_v := 0.0
+var bonded := false
+var roll_offs := 0
 var game: DemoRinkGame
 var skater: Skater
 var controller: HumanController
+var _off_t := 0.0
+var _blade_v0 := Vector2.ZERO
 var _walker: Node3D
 var _sheet: IceSheet
 var _to_sheet: Callable
@@ -78,6 +102,57 @@ func setup(puck: Puck, on_message: Callable) -> void:
 	):
 		if part:
 			part.layers = SELF_LAYER
+	# no knob or taped grip on the butt end (Sean: it sat big in the corner
+	# of the view, right by the eyes): the top 12 voxels of the shaft go
+	if rig.stick and rig.stick.mesh:
+		rig.stick.mesh = _without_top(rig.stick.mesh, KNOB_VOX * Models.STICK_V + 0.002)
+		# (the rig rebuilds the shaft from its base mesh when the tuned size changes)
+		if rig._shaft_base:
+			rig._shaft_base = _without_top(rig._shaft_base, KNOB_VOX * Models.STICK_V + 0.002)
+
+
+## `mesh` with every face in its top `cut` metres dropped (the stick's knob).
+static func _without_top(mesh: Mesh, cut: float) -> Mesh:
+	var y_cut := mesh.get_aabb().end.y - cut
+	var out := ArrayMesh.new()
+	for si in mesh.get_surface_count():
+		var arr := mesh.surface_get_arrays(si)
+		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		var idx_v: Variant = arr[Mesh.ARRAY_INDEX]
+		var idx: PackedInt32Array = idx_v if idx_v != null else PackedInt32Array()
+		if idx.is_empty():
+			idx.resize(verts.size())
+			for i in verts.size():
+				idx[i] = i
+		# the vertices of the faces kept, in order
+		var kept := PackedInt32Array()
+		for i in range(0, idx.size() - 2, 3):
+			if (
+				verts[idx[i]].y < y_cut
+				and verts[idx[i + 1]].y < y_cut
+				and verts[idx[i + 2]].y < y_cut
+			):
+				kept.append_array([idx[i], idx[i + 1], idx[i + 2]])
+		if kept.is_empty():
+			continue
+		var trimmed := []
+		trimmed.resize(Mesh.ARRAY_MAX)
+		for k in Mesh.ARRAY_MAX:
+			if k == Mesh.ARRAY_INDEX or arr[k] == null:
+				continue
+			var src: Variant = arr[k]
+			var dst: Variant = src.duplicate()
+			dst.resize(0)
+			var per := 1
+			if k == Mesh.ARRAY_TANGENT or k == Mesh.ARRAY_BONES or k == Mesh.ARRAY_WEIGHTS:
+				per = src.size() / verts.size()
+			for i in kept:
+				for j in per:
+					dst.append(src[i * per + j])
+			trimmed[k] = dst
+		out.add_surface_from_arrays(mesh.surface_get_primitive_type(si), trimmed)
+		out.surface_set_material(out.get_surface_count() - 1, mesh.surface_get_material(si))
+	return out
 
 
 ## On the skates: the skater stands where the walker stands, facing its
@@ -153,11 +228,12 @@ func step(dt: float, sheet: IceSheet, to_sheet: Callable) -> void:
 	var sdt := dt / PUCK_SUBSTEPS
 	for i in PUCK_SUBSTEPS:
 		var carried := puck.controller == skater
-		var p0 := puck.position
-		var v0 := puck.vel
 		StickPuck.step(game, puck, sdt, float(i + 1) / PUCK_SUBSTEPS)
-		if carried and hands_on and puck.controller == skater:
-			_soft_cup(puck, p0, v0, sdt)
+		if carried and puck.controller == null and puck.last_touch == skater and bonded:
+			# the game's hands let it slip (its stickhandling rhythm): the bond holds
+			puck.controller = skater
+			puck.ignore_briefly(skater, 0.0)
+		_bond(puck, sheet, to_sheet, sdt, float(i + 1) / PUCK_SUBSTEPS)
 		puck.integrate(sdt)
 		if ice_feel and puck.controller == null:
 			touch.apply(puck, sheet, to_sheet, sdt)
@@ -183,6 +259,8 @@ func _sure_hands() -> void:
 	var puck := game.puck
 	if puck.controller == skater or puck.frozen or puck.in_net_side != 0 or puck.out_of_play:
 		return
+	if _off_t > 0.0:
+		return  # it rolled off the blade: go and get it
 	if not puck.can_be_touched_by(skater) or puck.position.y > StickPuck.BLADE_TOP:
 		return
 	var to := puck.position - skater.global_position
@@ -214,19 +292,81 @@ func _sure_hands() -> void:
 	game.on_possession(skater)
 
 
-## The game's cup pulls a carried puck onto the blade's face at 25/s, so
-## nothing the hands do shows in the puck. At a fast blade part of that
-## pull is let go: the puck lags a snap, gets ahead of a stop and rolls
-## along the face, which is what stickhandling feels like.
-func _soft_cup(puck: Puck, p0: Vector3, v0: Vector3, dt: float) -> void:
-	var bv := skater.blade_lvel.length()  # the blade's speed in the hands, not the body's
-	var soft := CUP_SOFT * clampf((bv - CUP_SOFT_V.x) / (CUP_SOFT_V.y - CUP_SOFT_V.x), 0.0, 1.0)
-	if soft <= 0.0:
+## The carried puck on the blade's face, sliding along it on the bond's
+## spring (see the consts). The bond rests while the blade is up (going
+## round the puck, forehand to backhand): the puck runs on, the blade comes
+## down beyond it, and the bond takes it where it meets the face.
+func _bond(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float, f: float) -> void:
+	_off_t = maxf(0.0, _off_t - dt)
+	var bv := Vector2(skater.blade_vel.x, skater.blade_vel.z)
+	var blade_acc := (bv - _blade_v0) / maxf(dt, 0.0001)
+	_blade_v0 = bv
+	if puck.controller != skater or puck.frozen:
+		bonded = false
 		return
-	var free := p0 + v0 * dt
-	free.y = puck.position.y
-	puck.position = puck.position.lerp(free, soft)
-	puck.vel = puck.vel.lerp(v0, soft)
+	if (
+		skater.crossing
+		or skater.lifting
+		or skater.blade_height > StickPuck.BLADE_CLEAR + puck.position.y
+	):
+		bonded = false
+		return
+	if skater.winding or skater.move_id != &"":
+		bonded = false
+		return
+	var seg := StickPuck.blade_at(skater, f)
+	var c: Vector2 = seg[0]
+	var ax: Vector2 = seg[1]
+	var n: Vector2 = seg[2]
+	var p := Vector2(puck.position.x, puck.position.z)
+	if not bonded:
+		# taken where it meets the face
+		bonded = true
+		var side := signf((p - c).dot(n))
+		if side != 0.0:
+			skater.puck_side = side
+		elif skater.puck_side == 0.0:
+			skater.puck_side = 1.0
+		bond_u = clampf((p - c).dot(ax), -StickPuck.BLADE_HALF, StickPuck.BLADE_HALF)
+		bond_v = Vector2(puck.vel.x - bv.x, puck.vel.z - bv.y).dot(ax)
+	var t := clampf((retention - 1) / 9.0, 0.0, 1.0)
+	var k := lerpf(BOND_K.x, BOND_K.y, t)
+	var slide := lerpf(BOND_SLIDE.x, BOND_SLIDE.y, t)
+	# the ice under the puck: snow and water loosen the tape's hold
+	var a: Vector2 = to_sheet.call(puck.position)
+	var snow := sheet.snow_at(a)
+	var water := sheet.water_at(a)
+	var weak := (
+		1.0
+		- BOND_SNOW_K * minf(snow / BOND_SNOW, 1.0)
+		- BOND_WATER_K * minf(water / BOND_WATER, 1.0)
+	)
+	k *= maxf(weak, 0.1)
+	# the pushes along the blade: the blade's own acceleration (the puck's
+	# inertia) and the ice's drag on the puck (toward the trailing end)
+	var push := -blade_acc.dot(ax)
+	var sp := bv.length()
+	if sp > 0.05:
+		var drag := 0.12 + 0.035 * sp + IceTouch.SNOW_DRAG * minf(snow, IceTouch.SNOW_CAP)
+		push -= drag * (bv / sp).dot(ax)
+	push *= slide
+	var cd := 2.0 * BOND_ZETA * sqrt(k)
+	bond_v += (push - k * bond_u - cd * bond_v) * dt
+	bond_u += bond_v * dt
+	if absf(bond_u) > StickPuck.BLADE_HALF + BOND_OFF and retention < 10:
+		# off the end of the blade: loose, and not yours again for a moment
+		roll_offs += 1
+		bonded = false
+		puck.controller = null
+		puck.last_touch = skater
+		puck.ignore_briefly(skater, ROLL_OFF_T)
+		_off_t = ROLL_OFF_T
+		puck.vel = Vector3(bv.x, 0.0, bv.y) + Vector3(ax.x, 0.0, ax.y) * bond_v
+		return
+	bond_u = clampf(bond_u, -StickPuck.BLADE_HALF - BOND_OFF, StickPuck.BLADE_HALF + BOND_OFF)
+	var at := c + ax * bond_u + n * skater.puck_side * StickPuck.gap()
+	puck.position = Vector3(at.x, 0.0, at.y)
+	puck.vel = Vector3(bv.x, 0.0, bv.y) + Vector3(ax.x, 0.0, ax.y) * bond_v
 
 
 ## The swing ended (DemoHands): the shot goes now, as if RMB were let go.
@@ -263,15 +403,21 @@ func vel2() -> Vector2:
 
 
 func state_text() -> String:
-	var puck_s := "ON THE BLADE" if skater.has_puck() else "LOOSE ON %s" % touch.surface
+	var puck_s := "LOOSE ON %s" % touch.surface
+	if skater.has_puck():
+		puck_s = (
+			"ON THE %s %+.0f CM"
+			% ["FOREHAND" if skater.puck_side >= 0.0 else "BACKHAND", bond_u * 100.0]
+		)
 	return (
-		"SKATING %.1f M/S%s%s   STRIDES %d   PUCK %s   HANDS %.0f PX/S"
+		"SKATING %.1f M/S%s%s   STRIDES %d   PUCK %s   RETENTION %d   HANDS %.0f PX/S"
 		% [
 			skater.speed(),
 			"  STOPPING" if skater.braking else "",
 			"  BACKWARDS" if skater.backwards else "",
 			stride_count,
 			puck_s,
+			retention,
 			hands.hand_speed
 		]
 	)

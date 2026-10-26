@@ -1382,6 +1382,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				if _skater.active:
 					_skates_off()
 					hud.toast("SKATES OFF")
+			KEY_0, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9:
+				if _skater.active:
+					# puck retention 1..9, and 0 is 10 (Sean: a batch to try)
+					var level: int = event.keycode - KEY_0
+					_skater.retention = 10 if level == 0 else level
+					hud.toast("PUCK RETENTION %d / 10" % _skater.retention)
 			KEY_TAB:
 				if _edging:
 					_edger.toggle_blade()
@@ -3346,6 +3352,64 @@ func _self_test() -> void:
 		_skater.step(1.0 / 60.0, ice, _local)
 	check.call(
 		not sk.has_puck() or _puck.position.distance_to(sk.global_position) > 3.0, "...and it goes"
+	)
+	# --- the bond: the puck stuck to the face, sliding heel to toe
+	sk.place(Vector2(-10.0, -8.0), Vector3(1.0, 0.0, 0.0))
+	_skate(5, Vector2.ZERO)
+	_puck.reset_at(sk.puck_anchor())
+	_puck.controller = sk
+	_skater.retention = 10
+	var sweep_t := [0.0]
+	var sweep := func(f: PlayerInput.Frame, dt: float) -> void:
+		sweep_t[0] += dt
+		f.move = Vector2(0.0, 1.0)
+		f.stick = Vector2(0.8 * sin(sweep_t[0] * 6.0), 0.5)
+	_skater.script(sweep)
+	var held := true
+	var u_max := 0.0
+	for k in 150:
+		_skater.step(1.0 / 60.0, ice, _local)
+		held = held and sk.has_puck()
+		u_max = maxf(u_max, absf(_skater.bond_u))
+	_skater.script(Callable())
+	check.call(
+		held and _skater.bonded and u_max < StickPuck.BLADE_HALF,
+		(
+			"at retention 10 a swept, carried puck stays on the face (slid %.0f cm at most)"
+			% (u_max * 100.0)
+		)
+	)
+	check.call(
+		_puck.position.distance_to(sk.blade_pos) < 0.25 and absf(_puck.vel.y) < 0.001,
+		"...on the ice against the blade (%.2f m)" % _puck.position.distance_to(sk.blade_pos)
+	)
+	# on snow at retention 2 the spring is weak and the angled blade lets it roll off
+	sk.place(Vector2(-10.0, -8.0), Vector3(1.0, 0.0, 0.0))
+	_skate(5, Vector2.ZERO)
+	for k in 160:
+		ice.add_snow(_local(Vector3(-10.0 + k * 0.05, 0.0, -8.0)), 1.6, 2.0)
+	_puck.reset_at(sk.puck_anchor())
+	_puck.controller = sk
+	_skater.retention = 2
+	var offs0 := _skater.roll_offs
+	sweep_t[0] = 0.0
+	_skater.script(sweep)
+	for k in 150:
+		_skater.step(1.0 / 60.0, ice, _local)
+	_skater.script(Callable())
+	check.call(
+		_skater.roll_offs > offs0,
+		"at retention 2 on snow it rolls off the blade (%d times)" % (_skater.roll_offs - offs0)
+	)
+	_skater.retention = 7
+	# the stick's knob is gone from the view (Sean): the shaft stops short of it
+	var shaft_h: float = sk.rig.stick.mesh.get_aabb().end.y
+	check.call(
+		shaft_h < (Models.SHAFT_VOX + 2 - DemoSkater.KNOB_VOX) * Models.STICK_V + 0.001,
+		(
+			"the stick has no knob (shaft top %.3f m, knob would be %.3f)"
+			% [shaft_h, (Models.SHAFT_VOX + 2) * Models.STICK_V]
+		)
 	)
 	# a traced wrist shot at the east net from the slot
 	sk.place(Vector2(Rink.GOAL_X - 8.0, 0.0), Vector3(1.0, 0.0, 0.0))
