@@ -24,14 +24,14 @@ func _init() -> void:
 	left.add_child(lv)
 	_title = RinkOS.label("", RinkOS.TITLE)
 	lv.add_child(_title)
-	lv.add_child(RinkOS.label(RinkOS.rule("steps", 34), RinkOS.TERM_DIM))
+	lv.add_child(RinkOS.rule_label("steps", 34, RinkOS.TERM_DIM))
 	_steps = _rich(440)
 	lv.add_child(_steps)
 
 	_tool_panel = _panel(root, Vector2(-20, 20), Vector2(440, 0), true)
 	var rv := VBoxContainer.new()
 	_tool_panel.add_child(rv)
-	rv.add_child(RinkOS.label(RinkOS.rule("tool", 32), RinkOS.TERM_DIM))
+	rv.add_child(RinkOS.rule_label("tool", 32, RinkOS.TERM_DIM))
 	_tool = _rich(410)
 	rv.add_child(_tool)
 
@@ -49,7 +49,7 @@ func _init() -> void:
 	root.add_child(bottom)
 	var bv := VBoxContainer.new()
 	bottom.add_child(bv)
-	bv.add_child(RinkOS.label(RinkOS.rule("now", 62), RinkOS.TERM_DIM))
+	bv.add_child(RinkOS.rule_label("now", 62, RinkOS.TERM_DIM))
 	_prompt = RinkOS.label("")
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_prompt.custom_minimum_size = Vector2(920, 0)

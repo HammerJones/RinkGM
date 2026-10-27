@@ -198,7 +198,7 @@ func _build() -> void:
 	_panel.add_child(v)
 	_title = RinkOS.label("", RinkOS.TITLE)
 	v.add_child(_title)
-	v.add_child(RinkOS.label(RinkOS.rule("rink-os", 34), RinkOS.TERM_DIM))
+	v.add_child(RinkOS.rule_label("rink-os", 34, RinkOS.TERM_DIM))
 	_info = RichTextLabel.new()
 	_info.theme_type_variation = "TermText"
 	_info.bbcode_enabled = true

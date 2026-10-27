@@ -114,6 +114,12 @@ static func label(text := "", variation := "") -> Label:
 	return l
 
 
+## A section or page header: `rule()` as a label that stretches to fill its
+## row (see RuleLabel). Use this, not `label(rule(...))`, in layouts.
+static func rule_label(title := "", min_chars := 24, variation := TERM_DIM) -> Label:
+	return RuleLabel.new(title, min_chars, variation)
+
+
 static func button(text: String, primary := true) -> Button:
 	var b := Button.new()
 	b.text = caption(text)

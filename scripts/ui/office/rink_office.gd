@@ -8,7 +8,7 @@ extends Control
 ## time goes through it so the career's calendar keeps up, and it stops for
 ## the owner's own Beer League game), otherwise a demo sim at the start of M1
 ## played to Wednesday afternoon.
-## `-- --tab=grid|sched|log|pl|jobs|staff|board` opens a screen;
+## `-- --tab=cal|grid|sched|log|pl|jobs|staff|board` opens a screen;
 ## `-- --owner` starts a fresh owner career (unsaved) when none is running;
 ## `-- --screenshot=out.png` saves a frame and quits;
 ## `-- --test=office` runs tests/office_test.gd (keyboard menus, Esc).
@@ -17,7 +17,7 @@ extends Control
 ## (playtest #41); Esc leaves the computer (#2): back to the hub here, or back
 ## to walking when the venue walk opened it (the walk closes it).
 
-const TABS := [["grid", "Ice grid"], ["sched", "Schedule"], ["log", "Log book"], ["pl", "P&L"], ["jobs", "Jobs"], ["staff", "Staff"], ["board", "Corkboard"]]
+const TABS := [["cal", "Calendar"], ["grid", "Ice grid"], ["sched", "Schedule"], ["log", "Log book"], ["pl", "P&L"], ["jobs", "Jobs"], ["staff", "Staff"], ["board", "Corkboard"]]
 const NOTE := Color("f2d16b")   ## sticky note paper
 const CORK := Color("4a3424")   ## the corkboard
 const INK := Color("2a1d08")    ## Gus's pencil
@@ -27,9 +27,9 @@ signal leaving
 
 var sim: RinkSim
 var rink: RinkLink  ## null in the standalone demo
-var tab := "grid"
+var tab := "cal"
 var _hud: FootHud
-var _tabs: HBoxContainer
+var _tabs: HFlowContainer
 var _actions: HBoxContainer
 var _title: Label
 var _body: VBoxContainer
@@ -56,31 +56,33 @@ func _ready() -> void:
 	page.add_theme_constant_override("separation", 12)
 	margin.add_child(page)
 
-	page.add_child(RinkOS.label(RinkOS.rule("rink-os 3.0 // office // millbrook community arena", 120), RinkOS.TERM_DIM))
+	page.add_child(RinkOS.rule_label("rink-os 3.0 // office // millbrook community arena", 24, RinkOS.TERM_DIM))
+	# Title, the block's actions and the clock on one row; the tabs under it
+	# wrap onto a second line on a narrow screen rather than push it wider.
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 16)
 	page.add_child(top)
-	var left := VBoxContainer.new()
-	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left.add_theme_constant_override("separation", 10)
-	top.add_child(left)
 	_title = RinkOS.label("", RinkOS.TITLE)
-	left.add_child(_title)
-	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", 32)
-	left.add_child(bar)
-	_tabs = HBoxContainer.new()
-	_tabs.add_theme_constant_override("separation", 8)
-	bar.add_child(_tabs)
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_title.clip_text = true
+	top.add_child(_title)
 	_actions = HBoxContainer.new()
 	_actions.add_theme_constant_override("separation", 8)
-	bar.add_child(_actions)
+	_actions.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(_actions)
 	_hud = FootHud.new()
 	top.add_child(_hud)
+	_tabs = HFlowContainer.new()
+	_tabs.add_theme_constant_override("h_separation", 8)
+	_tabs.add_theme_constant_override("v_separation", 8)
+	page.add_child(_tabs)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# Screens are built to fit 1280 wide; a table that can't still scrolls
+	# rather than run off the edge.
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	page.add_child(scroll)
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -96,6 +98,8 @@ func _ready() -> void:
 
 
 func _find_sim() -> RinkSim:
+	if sim:
+		return sim  # handed in before _ready (the UI lab)
 	var args := OS.get_cmdline_user_args()
 	if CareerState.rink == null and ("--owner" in args or "--test=office" in args):
 		CareerState.rink = RinkLink.new_owner("Test", "Owner", "C", 7)
@@ -174,7 +178,8 @@ func _refresh() -> void:
 		"sched": _show_schedule()
 		"staff": _show_staff()
 		"board": _show_board()
-		_: _show_grid()
+		"grid": _show_grid()
+		_: _show_calendar()
 	_focus.call_deferred(keep[0], keep[1])
 
 
@@ -218,7 +223,7 @@ func _show_staff() -> void:
 	var hour := sim.minute / 60.0
 	var staff: Array = _cast.people.values().filter(func(p: Person) -> bool: return p.role == "staff")
 	staff.sort_custom(func(a: Person, b: Person) -> bool: return a.job < b.job if a.job != b.job else a.name < b.name)
-	var box := _section(_body, "on staff (%d)" % staff.size(), 110)
+	var box := _section(_body, "on staff (%d)" % staff.size())
 	for p: Person in staff:
 		var r := _row(box, 16)
 		var who := _cell(p.name, RinkOS.TEXT)
@@ -237,8 +242,178 @@ func _show_staff() -> void:
 		r.add_child(_cell(now, RinkOS.READOUT if now != "off" else RinkOS.DIM))
 		var week := _cell("    " + StaffRoster.week_text(p), RinkOS.DIM)
 		week.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		week.custom_minimum_size = Vector2(1100, 0)
 		box.add_child(week)
+
+
+# ------------------------------------------------------------------ calendar
+
+## The calendar page's state, kept across refreshes.
+var _cal_day := -1          ## sim day shown, -1 for today
+var _cal_job := ""          ## the job picked up to hand out
+var _cal_args := {}
+var _cal_msg := ""
+var _cal_cursor := Vector2i(1, -1)  ## lane, cell (-1: now)
+var _cal_view: DayBookView
+var _cal_lane_box: VBoxContainer
+var _cal_pick: OptionButton
+
+
+## One calendar for the day: the ice, everyone working and the jobs handed
+## to them. Pick up a job (a suggestion from the log book or any from the
+## list), then a time on a lit lane to hand it out.
+func _show_calendar() -> void:
+	if _cast == null:
+		_cast = Cast.load_region(1)
+	var d := sim.day if _cal_day < sim.day else _cal_day
+	_title.text = "Calendar // %s" % sim.date_text(d)
+	var days := _row(_body, 8)
+	for i in 7:
+		var dd := sim.day + i
+		var b := RinkOS.button("%s %d" % [RinkSim.DAY_NAMES[sim.weekday_of(dd)], int(sim.date_of(dd).dom)], dd == d)
+		b.pressed.connect(func():
+			_cal_day = dd
+			_cal_msg = ""
+			_refresh())
+		days.add_child(b)
+
+	var panel := PanelContainer.new()
+	_body.add_child(panel)
+	_cal_view = DayBookView.new()
+	_cal_view.armed = _cal_job
+	_cal_view.show_day(sim, d, _working(d))
+	if _cal_cursor.y < 0:
+		_cal_cursor.y = clampi((sim.minute - OfficeData.GRID_START_H * 60) / OfficeData.CELL_MIN, 0, OfficeData.GRID_CELLS - 1)
+	_cal_view.lane = clampi(_cal_cursor.x, 0, _cal_view.staff.size())
+	_cal_view.cell = _cal_cursor.y
+	_cal_view.picked.connect(_cal_picked.bind(d))
+	_cal_view.cursor_moved.connect(func(l: int, _m: int):
+		_cal_cursor = Vector2i(l, _cal_view.cell)
+		_cal_lane(d))
+	panel.add_child(_cal_view)
+
+	if _cal_msg != "":
+		var m := RinkOS.label("> " + _cal_msg, RinkOS.TERM)
+		m.add_theme_color_override("font_color", RinkOS.READOUT)
+		_body.add_child(m)
+
+	var row := _row(_body, 16)
+	var todo := _section(row, "to do")
+	todo.get_parent().size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if _cal_job != "":
+		var spec: Dictionary = RinkSim.JOBS[_cal_job]
+		var t := _term()
+		t.text = "%s %s\n%s" % [_c(RinkOS.ACTION, DayBookView.short_job(_cal_job)), _c(RinkOS.DIM, _job_cost(spec)),
+			_c(RinkOS.DIM, "Pick a time on a lit lane.")]
+		todo.add_child(t)
+		var down := _btn("Put it down", func():
+			_cal_job = ""
+			_cal_msg = ""
+			_refresh(), false)
+		down.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		todo.add_child(down)
+	else:
+		for sug: Dictionary in OfficeData.suggestions(sim):
+			var r := _row(todo, 8)
+			var l := RinkOS.label(sug.why, "")
+			l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			r.add_child(l)
+			r.add_child(_btn(OfficeData.job_name(sug.id), _cal_arm.bind(sug.id, sug.get("args", {}))))
+		var r := _row(todo, 8)
+		_cal_pick = OptionButton.new()
+		_cal_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		for j: Dictionary in OfficeData.job_menu():
+			_cal_pick.add_item(OfficeData.job_name(j.id).to_lower())
+			_cal_pick.set_item_metadata(_cal_pick.item_count - 1, j.id)
+		r.add_child(_cal_pick)
+		r.add_child(_btn("Pick up", func(): _cal_arm(str(_cal_pick.get_selected_metadata()), {}), false))
+	_cal_lane_box = _section(row, "lane")
+	_cal_lane_box.get_parent().size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cal_lane(d)
+
+
+## Everyone on staff with a shift on day `d`, earliest in first.
+func _working(d: int) -> Array:
+	var wd := sim.weekday_of(d)
+	var out: Array = []
+	for p: Person in _cast.people.values():
+		if p.role != "staff":
+			continue
+		var row: Dictionary = StaffRoster.week(p)[wd]
+		if not row.off:
+			out.append([float(row.shifts[0][0]), p])
+	out.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0] if a[0] != b[0] else a[1].name < b[1].name)
+	return out.map(func(x: Array) -> Person: return x[1])
+
+
+func _cal_arm(id: String, args: Dictionary) -> void:
+	_cal_job = id
+	_cal_args = args
+	_cal_msg = ""
+	_refresh()
+	if _cal_view:
+		_cal_view.grab_focus.call_deferred()
+
+
+func _cal_picked(lane: int, minute: int, d: int) -> void:
+	_cal_cursor = Vector2i(lane, _cal_view.cell)
+	if _cal_job == "" or lane == 0:
+		_cal_lane(d)
+		return
+	var r := WorkOrders.assign(sim, _cal_view.person(lane), _cal_job, d, minute, _cal_args)
+	_cal_msg = r.text
+	if r.ok:
+		_cal_job = ""
+		_cal_args = {}
+	_refresh()
+	_cal_view.grab_focus.call_deferred()
+
+
+## The panel beside the to-do list: what's on the lane under the cursor.
+func _cal_lane(d: int) -> void:
+	if _cal_lane_box == null or not is_instance_valid(_cal_lane_box):
+		return
+	for c in _cal_lane_box.get_children().slice(1):
+		c.queue_free()
+	var t := _term()
+	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var lines: Array = []
+	var p := _cal_view.person()
+	var at := DayBookView.minute_of(_cal_view.cell)
+	if p == null:
+		lines.append(_c(RinkOS.TEXT, "THE ICE") + "  " + _c(RinkOS.DIM, "%02d:%02d" % [at / 60 % 24, at % 60]))
+		for b: Dictionary in sim.sessions(d):
+			if at / 60.0 >= float(b.start) and at / 60.0 < float(b.start) + float(b.hours):
+				lines.append(RinkOS.dots("on", _c(IceGridView.use_color(str(b.use)), RinkContracts.org(b.org).get("name", str(b.get("name", b.org)))), 8))
+		for f: Dictionary in sim.floods(d):
+			lines.append(RinkOS.dots("flood", "%s  %s" % [_c(RinkOS.READOUT, "%02d:%02d" % [int(f.minute) / 60, int(f.minute) % 60]),
+				_c(RinkOS.ALERT, "nobody free") if str(f.crew) == "" else str(f.crew)], 8))
+		t.text = "\n".join(lines)
+		_cal_lane_box.add_child(t)
+		return
+	var wd := sim.weekday_of(d)
+	var trades := WorkOrders.trades_of(p)
+	lines.append(_c(RinkOS.TEXT, p.name) + "  " + _c(RinkOS.DIM, p.job.trim_suffix(", Millbrook Arena")))
+	var shifts: Array = StaffRoster.week(p)[wd].shifts
+	lines.append(RinkOS.dots("shift", ", ".join(shifts.map(func(s: Array) -> String: return "%s-%s" % [StaffRoster.clock(s[0]), StaffRoster.clock(s[1])])), 8))
+	lines.append(RinkOS.dots("does", _c(RinkOS.READOUT, ", ".join(trades)) if not trades.is_empty() else _c(RinkOS.DIM, "no jobs: not their line of work"), 8))
+	t.text = "\n".join(lines)
+	_cal_lane_box.add_child(t)
+	for o: Dictionary in WorkOrders.on_day(sim, d):
+		if str(o.who) != p.id:
+			continue
+		var r := _row(_cal_lane_box, 8)
+		var state := _c(RinkOS.ACTION, "to do")
+		if o.has("ok"):
+			state = _c(RinkOS.GOOD, "done") if o.ok else _c(RinkOS.ALERT, "didn't happen")
+		var l := _term()
+		l.text = "%s %s  %s" % [_c(RinkOS.READOUT, "%02d:%02d" % [int(o.minute) / 60, int(o.minute) % 60]), OfficeData.job_name(o.id).to_lower(), state]
+		r.add_child(l)
+		if not o.has("ok"):
+			r.add_child(_btn("Take back", func():
+				WorkOrders.cancel(sim, o)
+				_cal_msg = "Took the %s back from %s." % [OfficeData.job_name(o.id).to_lower(), o.by]
+				_refresh(), false))
 
 
 # ------------------------------------------------------------------ ice grid
@@ -252,7 +427,7 @@ func _show_grid() -> void:
 	panel.add_child(grid)
 
 	var row := _row(_body, 16)
-	var legend := _section(row, "key", 52)
+	var legend := _section(row, "key")
 	var k := _term()
 	k.text = "\n".join([
 		"%s hockey   %s public skate   %s figure" % [_swatch(RinkOS.READOUT), _swatch(RinkOS.GOOD), _swatch(RinkOS.TEXT)],
@@ -262,7 +437,7 @@ func _show_grid() -> void:
 	])
 	legend.add_child(k)
 	var s := OfficeData.grid_summary(sim)
-	var week := _section(row, "this week", 52)
+	var week := _section(row, "this week")
 	var t := _term()
 	var lines := []
 	for cls in ["prime", "shoulder", "dead"]:
@@ -305,10 +480,10 @@ func _show_schedule() -> void:
 	var row := _row(_body, 16)
 	var left := VBoxContainer.new()
 	left.add_theme_constant_override("separation", 12)
-	left.custom_minimum_size = Vector2(720, 0)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.size_flags_stretch_ratio = 1.8
 	row.add_child(left)
-	var booked := _section(left, "on the ice", 70)
+	var booked := _section(left, "on the ice")
 	var list := sch.bookings(sim, d)
 	if list.is_empty():
 		booked.add_child(_cell("nothing booked", RinkOS.DIM))
@@ -320,18 +495,18 @@ func _show_schedule() -> void:
 			what += "  (moved)"
 		var l := _cell(what, RinkOS.TEXT)
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		l.clip_text = true
 		r.add_child(l)
 		r.add_child(_cell("%s, nets %d+%d%s" % [need.board, need.nets[0], need.nets[1], ", scorer" if need.scorekeeper else ""], RinkOS.DIM))
 		for step in [-1.0, 1.0]:
 			r.add_child(_btn("-1h" if step < 0.0 else "+1h", _sched_do.bind(func(): return sch.move(sim, b.key, d, d, float(b.start) + step)), false))
 		r.add_child(_btn("Cancel", _sched_do.bind(func(): return sch.cancel(sim, b.key, d)), false))
 
-	var sell := _section(left, "open ice to sell", 70)
+	var sell := _section(left, "open ice to sell")
 	var wd := sim.weekday_of(d)
 	if not EventCatalog.is_weekend(wd):
 		var gap := RinkOS.label(RinkSchedule.gap_text(), RinkOS.TERM_DIM)
 		gap.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		gap.custom_minimum_size = Vector2(680, 0)
 		sell.add_child(gap)
 	var ideas := sch.suggestions(sim, d)
 	if ideas.is_empty():
@@ -346,10 +521,10 @@ func _show_schedule() -> void:
 
 	var right := VBoxContainer.new()
 	right.add_theme_constant_override("separation", 12)
-	right.custom_minimum_size = Vector2(500, 0)
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(right)
 	_show_ops(right)
-	var events := _section(right, "event list", 44)
+	var events := _section(right, "event list")
 	var t := _term()
 	var lines := []
 	for id in EventCatalog.KINDS:
@@ -365,14 +540,13 @@ func _show_schedule() -> void:
 		lines.append("%s %s" % [_c(RinkOS.ACTION if k.get("sell", false) else RinkOS.TEXT, str(k.name)), _c(RinkOS.DIM, "%s; %sh%s" % [", ".join(when), str(k.hours), ("; " + ", ".join(wants)) if not wants.is_empty() else ""])])
 	t.text = "\n".join(lines)
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	t.custom_minimum_size = Vector2(480, 0)
 	events.add_child(t)
 
 
 ## The between-session chores: setup, the scoreboard, the nets, the scorekeeper.
 func _show_ops(parent: Control) -> void:
 	var ops := sim.ops
-	var box := _section(parent, "between sessions", 44)
+	var box := _section(parent, "between sessions")
 	var t := _term()
 	var keeper := {"volunteer": "%s, volunteering" % RinkOps.SCOREKEEPER_NAME, "paid": "%s, $%d a game" % [RinkOps.SCOREKEEPER_NAME, int(RinkOps.SCOREKEEPER_PAY)],
 		"owner": "you keep score", "none": _c(RinkOS.ALERT, "nobody")}
@@ -383,9 +557,11 @@ func _show_ops(parent: Control) -> void:
 		RinkOS.dots("scorekeeper", keeper.get(ops.scorekeeper, ops.scorekeeper), 14),
 		RinkOS.dots("league rules", LeagueRules.describe(LeagueRules.BEER_LEAGUE).get_slice(":", 1).strip_edges(), 14)])
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	t.custom_minimum_size = Vector2(480, 0)
 	box.add_child(t)
-	var r := _row(box, 8)
+	var r := HFlowContainer.new()
+	r.add_theme_constant_override("h_separation", 8)
+	r.add_theme_constant_override("v_separation", 8)
+	box.add_child(r)
 	r.add_child(_btn("Setup: %s" % ("auto" if ops.auto else "by hand"), func():
 		ops.auto = not ops.auto
 		_refresh(), false))
@@ -414,7 +590,7 @@ static func _hhmm(h: float) -> String:
 func _show_log() -> void:
 	_title.text = "Plant log book"
 	var cols := OfficeData.log_columns(sim)
-	var box := _section(_body, "readings as written", 140)
+	var box := _section(_body, "readings as written")
 	var g := GridContainer.new()
 	g.columns = cols.size() + 1
 	g.add_theme_constant_override("h_separation", 24)
@@ -437,7 +613,7 @@ func _show_log() -> void:
 	var ccols := OfficeData.compressor_columns(sim)
 	var rounds: Array = recent.filter(func(e): return e.readings.has("oil_1"))
 	if not rounds.is_empty() and not ccols.is_empty():
-		box.add_child(RinkOS.label(RinkOS.rule("compressors", 60), RinkOS.TERM_DIM))
+		box.add_child(RinkOS.rule_label("compressors", 60, RinkOS.TERM_DIM))
 		var cg := GridContainer.new()
 		cg.columns = ccols.size() + 2
 		cg.add_theme_constant_override("h_separation", 24)
@@ -467,7 +643,7 @@ func _show_log() -> void:
 		OfficeData.plant_round(sim)
 		_refresh()))
 
-	var tools := _section(_body, "instruments", 140)
+	var tools := _section(_body, "instruments")
 	var lines := []
 	var buys := HFlowContainer.new()
 	buys.add_theme_constant_override("h_separation", 8)
@@ -515,12 +691,13 @@ func _show_pl() -> void:
 	var row := _row(_body, 16)
 	var left := VBoxContainer.new()
 	left.add_theme_constant_override("separation", 12)
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(left)
-	var money := _section(left, "money in", 60)
+	var money := _section(left, "money in")
 	money.add_child(_lines(pl.revenue, RinkOS.GOOD, "+"))
-	var out := _section(left, "money out", 60)
+	var out := _section(left, "money out")
 	out.add_child(_lines(pl.costs, RinkOS.ALERT, "-"))
-	var tot := _section(left, "week so far", 60)
+	var tot := _section(left, "week so far")
 	var net: float = pl.total_in - pl.total_out
 	var t := _term()
 	t.text = "\n".join([
@@ -536,7 +713,7 @@ func _show_pl() -> void:
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(right)
 	var bill := OfficeData.power_bill(sim)
-	var b := _section(right, "valley hydro // last month", 60)
+	var b := _section(right, "valley hydro // last month")
 	var big := RinkOS.label("$" + FootHud._money(bill.last), RinkOS.TERM_LARGE)
 	big.add_theme_color_override("font_color", RinkOS.ALERT)
 	b.add_child(big)
@@ -551,7 +728,7 @@ func _show_pl() -> void:
 	var note := _sticky("Ice is too thick. Earl likes it thick. Earl doesn't pay the bill.  -G", 360)
 	b.add_child(note)
 
-	var days := _section(right, "by day", 60)
+	var days := _section(right, "by day")
 	var g := GridContainer.new()
 	g.columns = 5
 	g.add_theme_constant_override("h_separation", 28)
@@ -585,10 +762,11 @@ func _show_jobs() -> void:
 	var row := _row(_body, 16)
 	var left := VBoxContainer.new()
 	left.add_theme_constant_override("separation", 12)
-	left.custom_minimum_size = Vector2(720, 0)
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.size_flags_stretch_ratio = 1.4
 	row.add_child(left)
 
-	var q := _section(left, "today", 64)
+	var q := _section(left, "today")
 	var queue := OfficeData.job_queue(sim)
 	var qh := OfficeData.queue_hours(sim)
 	var t := _term()
@@ -621,7 +799,7 @@ func _show_jobs() -> void:
 		l.add_theme_color_override("font_color", RinkOS.READOUT)
 		q.add_child(l)
 
-	var sug := _section(left, "the log book says", 64)
+	var sug := _section(left, "the log book says")
 	for s in OfficeData.suggestions(sim):
 		var r := _row(sug, 12)
 		var l := RinkOS.label(s.why, RinkOS.TERM)
@@ -629,7 +807,7 @@ func _show_jobs() -> void:
 		r.add_child(l)
 		r.add_child(_btn(OfficeData.job_name(s.id) + _which(s), _enqueue.bind(s.id, s.get("args", {}))))
 
-	var done := _section(left, "done today", 64)
+	var done := _section(left, "done today")
 	var dt := _term()
 	var dl := []
 	for e in sim.events:
@@ -638,7 +816,7 @@ func _show_jobs() -> void:
 	dt.text = "\n".join(dl.slice(maxi(dl.size() - 6, 0))) if not dl.is_empty() else _c(RinkOS.DIM, "nothing yet")
 	done.add_child(dt)
 
-	var menu := _section(row, "jobs", 56)
+	var menu := _section(row, "jobs")
 	for j in OfficeData.job_menu():
 		var r := _row(menu, 8)
 		var l := RinkOS.label(RinkOS.dots(j.name, "%sh %s" % [str(j.hours), ("$%d" % int(j.cost)) if j.cost > 0.0 else ""], 26), RinkOS.TERM)
@@ -677,18 +855,19 @@ func _show_board() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 20)
 	cork.add_child(v)
-	var head := RinkOS.label(RinkOS.rule("this week", 40), RinkOS.TERM)
+	var head := RinkOS.rule_label("this week", 12, RinkOS.TERM)
 	head.add_theme_color_override("font_color", NOTE)
 	v.add_child(head)
-	var notes := HBoxContainer.new()
-	notes.add_theme_constant_override("separation", 24)
+	var notes := HFlowContainer.new()
+	notes.add_theme_constant_override("h_separation", 24)
+	notes.add_theme_constant_override("v_separation", 20)
 	v.add_child(notes)
 	var i := 0
 	for g in OfficeData.goals(sim):
 		var col := VBoxContainer.new()
 		col.add_theme_constant_override("separation", 10)
 		notes.add_child(col)
-		var n := _sticky(g.text, 300, 150)
+		var n := _sticky(g.text, 260, 150)
 		col.add_child(n)
 		var status := RinkOS.label(("[x] " if g.done else "[ ] ") + g.status.to_upper(), RinkOS.TERM)
 		status.add_theme_color_override("font_color", RinkOS.GOOD if g.done else (RinkOS.ALERT if g.get("failed", false) else NOTE))
@@ -718,13 +897,16 @@ func _sticky(text: String, w := 300, h := 0) -> PanelContainer:
 
 # ------------------------------------------------------------------ helpers
 
-func _section(parent: Control, title: String, width := 44) -> VBoxContainer:
+## A panel with a "// TITLE ---" rule. It fills its row's width: the content,
+## not the rule, decides how narrow it can go.
+func _section(parent: Control, title: String) -> VBoxContainer:
 	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(panel)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
 	panel.add_child(v)
-	var head := RinkOS.label(RinkOS.rule(title, width), RinkOS.TERM)
+	var head := RinkOS.rule_label(title, 12, RinkOS.TERM)
 	head.add_theme_color_override("font_color", RinkOS.READOUT)
 	v.add_child(head)
 	return v

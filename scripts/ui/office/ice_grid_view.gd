@@ -7,7 +7,7 @@ extends Control
 ## A thin amber line marks now. Drawn cell by cell on whole pixels so it
 ## stays as crisp as the pixel type.
 
-const CELL_W := 18
+const MIN_CELL := 10  ## cells widen to fill the page, whole pixels each
 const ROW_H := 60
 const LABEL_W := 56
 const HEAD_H := 30
@@ -26,10 +26,11 @@ const CLASS_FILL := {
 var week: Array = []
 var today := -1       ## weekday of today, -1 for none
 var now_hour := -1.0  ## hours since midnight
+var _cw := MIN_CELL
 
 
 func _init() -> void:
-	custom_minimum_size = Vector2(LABEL_W + OfficeData.GRID_CELLS * CELL_W, HEAD_H + 7 * ROW_H)
+	custom_minimum_size = Vector2(LABEL_W + OfficeData.GRID_CELLS * MIN_CELL, HEAD_H + 7 * ROW_H)
 
 
 func show_sim(sim: RinkSim) -> void:
@@ -47,12 +48,13 @@ static func use_color(use: String) -> Color:
 
 
 func _draw() -> void:
+	_cw = maxi(MIN_CELL, int((size.x - LABEL_W) / OfficeData.GRID_CELLS))
 	var font := RinkOS.TERM_FONT
 	var fs := RinkOS.TERM_SIZE
 	var asc := int(font.get_ascent(fs))
 	# Hour ticks: 05 .. 00.
 	for h in 21:
-		var x := LABEL_W + h * 4 * CELL_W
+		var x := LABEL_W + h * 4 * _cw
 		draw_string(font, Vector2(x, asc), "%02d" % ((OfficeData.GRID_START_H + h) % 24), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, RinkOS.DIM)
 		draw_rect(Rect2(x, HEAD_H - 6, 2, 6), RinkOS.DIM)
 	for r in week.size():
@@ -64,25 +66,25 @@ func _draw() -> void:
 		var cells: Array = day.cells
 		for i in cells.size():
 			var c: Dictionary = cells[i]
-			var rect := Rect2(LABEL_W + i * CELL_W, y, CELL_W - 1, ROW_H - 8)
+			var rect := Rect2(LABEL_W + i * _cw, y, _cw - 1, ROW_H - 8)
 			match c.kind:
 				"free":
 					draw_rect(rect, CLASS_FILL[c["class"]])
 				"session":
 					var col := use_color(c.booking.use)
 					draw_rect(rect, col.darkened(0.72))
-					draw_rect(Rect2(rect.position, Vector2(CELL_W, 4)), col)
+					draw_rect(Rect2(rect.position, Vector2(_cw, 4)), col)
 				"flood":
 					var crew: String = c.crew
 					draw_rect(rect, RinkOS.ALERT.darkened(0.55) if crew == "" else RinkOS.BEZEL)
-					draw_rect(Rect2(rect.position, Vector2(CELL_W - 1, 4)), RinkOS.ALERT if crew == "" else RinkOS.DIM)
+					draw_rect(Rect2(rect.position, Vector2(_cw - 1, 4)), RinkOS.ALERT if crew == "" else RinkOS.DIM)
 					# Pixel ripples for the flood water; a red bar for nobody.
 					for k in 3:
 						var ry := rect.position.y + 14 + k * 12
 						if crew == "":
-							draw_rect(Rect2(rect.position.x + 7, ry, 4, 8), RinkOS.ALERT)
+							draw_rect(Rect2(rect.position.x + (_cw - 4) / 2, ry, 4, 8), RinkOS.ALERT)
 						else:
-							draw_rect(Rect2(rect.position.x + 3 + (k % 2) * 4, ry, 8, 2), RinkOS.TEXT)
+							draw_rect(Rect2(rect.position.x + 2 + (k % 2) * 3, ry, _cw - 7, 2), RinkOS.TEXT)
 		# Booking captions over their run of cells.
 		for i in cells.size():
 			var c: Dictionary = cells[i]
@@ -91,22 +93,22 @@ func _draw() -> void:
 				var n := 0
 				while i + n < cells.size() and cells[i + n].kind == "session":
 					n += 1
-				var x := LABEL_W + i * CELL_W + 4
-				var w := n * CELL_W - 6
+				var x := LABEL_W + i * _cw + 4
+				var w := n * _cw - 6
 				var col := use_color(b.use)
 				draw_string(font, Vector2(x, y + 6 + asc), SHORT.get(b.org, b.org.to_upper()), HORIZONTAL_ALIGNMENT_LEFT, w, fs, col)
 				var t := "%02d:%02d %sH" % [int(b.start) % 24, int(fmod(b.start, 1.0) * 60.0), str(b.hours)]
 				draw_string(font, Vector2(x, y + 26 + asc), t, HORIZONTAL_ALIGNMENT_LEFT, w, fs, RinkOS.DIM)
 		# Ice an organisation would bid on: an amber dashed outline.
 		for o in day.get("offers", []):
-			var c0 := LABEL_W + OfficeData._cell(o.start) * CELL_W
-			var ow := int(round(o.hours * 4.0)) * CELL_W - 1
+			var c0 := LABEL_W + OfficeData._cell(o.start) * _cw
+			var ow := int(round(o.hours * 4.0)) * _cw - 1
 			_dashed(Rect2(c0, y, ow, ROW_H - 8), RinkOS.ACTION)
 			draw_string(font, Vector2(c0 + 6, y + 6 + asc), "BID?", HORIZONTAL_ALIGNMENT_LEFT, ow - 8, fs, RinkOS.ACTION)
 			draw_string(font, Vector2(c0 + 6, y + 26 + asc), SHORT.get(o.org, o.org.to_upper()), HORIZONTAL_ALIGNMENT_LEFT, ow - 8, fs, RinkOS.ACTION)
 		if is_today and now_hour >= 0.0:
 			var h := now_hour if now_hour >= OfficeData.GRID_START_H else now_hour + 24.0
-			var nx := LABEL_W + int((h - OfficeData.GRID_START_H) * 4.0 * CELL_W)
+			var nx := LABEL_W + int((h - OfficeData.GRID_START_H) * 4.0 * _cw)
 			if nx >= LABEL_W and nx < size.x:
 				draw_rect(Rect2(nx - 1, y - 4, 2, ROW_H), RinkOS.ACTION)
 

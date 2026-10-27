@@ -27,7 +27,7 @@ func _ready() -> void:
 	page.add_theme_constant_override("separation", 16)
 	margin.add_child(page)
 
-	page.add_child(RinkOS.label(RinkOS.rule("rink-os 3.0  millbrook community arena", 96), RinkOS.TERM_DIM))
+	page.add_child(RinkOS.rule_label("rink-os 3.0  millbrook community arena", 24, RinkOS.TERM_DIM))
 	page.add_child(RinkOS.label("Player file", RinkOS.TITLE))
 
 	var cols := HBoxContainer.new()
@@ -60,7 +60,7 @@ func _player_card() -> PanelContainer:
 	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	var v := VBoxContainer.new()
 	card.add_child(v)
-	v.add_child(RinkOS.label(RinkOS.rule("player_file", 44), RinkOS.TERM_DIM))
+	v.add_child(RinkOS.rule_label("player_file", 44, RinkOS.TERM_DIM))
 	v.add_child(RinkOS.label("#17 Kowalski", RinkOS.TITLE))
 	v.add_child(RinkOS.label("Left wing · Tuesday Night Pucks · Game 7 of 14"))
 	var lines := PackedStringArray()

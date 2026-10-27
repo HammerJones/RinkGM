@@ -34,6 +34,19 @@ the palette, fonts and text helpers, and builds that theme. Run
    `assets/ui/frames/` (4 px notch, 2 px border). Canvas textures use nearest
    filtering project-wide so the frames stay sharp.
 
+8. **Fit 1280x720.** Every screen is laid out for a 1280x720 area and grows
+   to fill bigger ones. `UiScale` (an autoload) scales the 2D UI by whole
+   steps only (2x at 2560x1440, 3x at 4K), so the pixel faces stay sharp at
+   every window size; 3D still renders at full resolution. So: no fixed
+   pixel widths on panels or text, rules from `RinkOS.rule_label()` (they
+   stretch to fill, `RinkOS.rule()` counts characters and sets widths),
+   rows of buttons that may not fit go in an `HFlowContainer`, and long
+   text wraps.
+9. **Check it in the UI lab.** `scenes/ui/ui_lab.tscn` opens every RINK-OS
+   screen on a busy demo rink: F1-F4 switch the window between 1280x720,
+   1600x900, 1920x1080 and 2560x1440, F5/F6 step through the screens.
+   `-- --screen=office:cal --size=1280x720 --screenshot=x.png` saves one.
+
 ## Signs and screens in the world
 
 Rink signage, the arena scoreboard and any in-world screen use the same fonts,
@@ -52,7 +65,8 @@ filtering and no lighting, so signs line up with the voxel art.
 ## The rink office
 
 `scenes/ui/rink_office.tscn` (scripts/ui/office/) holds the management
-screens: the ice grid, the plant log book, the week's P&L, the job queue and
+screens: the calendar (one day: the ice, everyone working and the jobs
+handed to them, `DayBookView` over `WorkOrders`), the ice grid, the plant log book, the week's P&L, the job queue and
 Gus's corkboard. `FootHud` is the small clock, block and hours readout the
 owner carries on foot (`scenes/ui/foot_hud_demo.tscn` shows it over the
 venue walk). Screens read the sim only through `OfficeData`.

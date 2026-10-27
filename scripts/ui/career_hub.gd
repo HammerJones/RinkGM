@@ -62,7 +62,7 @@ func _show_slots() -> void:
 	_text("Pick a save. The demos are short playtest careers: they grow faster than a normal career so you can feel progression within a season or two.")
 	for slot in Career.SLOTS:
 		var info: Dictionary = Career.SLOTS[slot]
-		var box := _section(_root, RinkOS.key(info.label.replace(":", "")), 60)
+		var box := _section(_root, RinkOS.key(info.label.replace(":", "")))
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 12)
 		box.add_child(row)
@@ -84,7 +84,7 @@ func _show_slots() -> void:
 		row.add_child(sum)
 		if slot == "demo_low" and _root.get_child_count() > 0:
 			b.grab_focus()
-	var practice := _section(_root, "PRACTICE", 60)
+	var practice := _section(_root, "PRACTICE")
 	var prow := _row(practice)
 	prow.add_child(_button("Practice", CareerState.start_practice, false))
 	var pl := _label("Skate alone with a puck and the nets: no opponents, no clock, nothing recorded.")
@@ -115,7 +115,7 @@ func _show_new_career() -> void:
 		_text("%s You start as a regular in the %s. %s" % [Career.SLOTS[slot].desc, LeagueTiers.get_tier(t).name, LeagueTiers.get_tier(t).desc])
 	else:
 		_text("You start in the beginner beer league as one skater in one position. Play well, train, and earn tryouts with better teams. Every rating can grow, and every rating can slip.")
-	var form := _section(_root, "player_file", 48)
+	var form := _section(_root, "player_file")
 	form.get_parent().size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var grid := GridContainer.new()
 	grid.columns = 2
@@ -191,7 +191,8 @@ func _refresh() -> void:
 	_root.add_child(cols)
 	var left := VBoxContainer.new()
 	left.add_theme_constant_override("separation", 16)
-	left.custom_minimum_size = Vector2(640, 0)
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.size_flags_stretch_ratio = 1.2
 	cols.add_child(left)
 	var right := VBoxContainer.new()
 	right.add_theme_constant_override("separation", 16)
@@ -268,7 +269,9 @@ func _moves_table(parent: Control, u: PlayerProfile) -> void:
 			lines.append("%s %s" % [_c(RinkOS.GOOD, "[x]"), MoveUnlocks.LABELS[m].to_upper()])
 		else:
 			lines.append("%s %s  %s" % [_c(RinkOS.DIM, "[ ]"), _c(RinkOS.DIM, MoveUnlocks.LABELS[m].to_upper()), _c(RinkOS.DIM, MoveUnlocks.requirement_text(u, m))])
-	box.add_child(_term_text("\n".join(lines)))
+	var t := _term_text("\n".join(lines))
+	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART  # the requirements run long
+	box.add_child(t)
 
 
 func _actions(parent: Control) -> void:
@@ -445,7 +448,7 @@ func _season_line() -> String:
 func _clear() -> void:
 	for c in _root.get_children():
 		c.queue_free()
-	_root.add_child(RinkOS.label(RinkOS.rule("rink-os 3.0  //  career", 120), RinkOS.TERM_DIM))
+	_root.add_child(RinkOS.rule_label("rink-os 3.0  //  career", 24, RinkOS.TERM_DIM))
 
 
 func _title(t: String) -> void:
@@ -479,13 +482,14 @@ func _term_text(t: String) -> RichTextLabel:
 
 
 ## A framed panel headed by a `// TITLE ----` rule; returns its content box.
-func _section(parent: Control, title: String, width := 44) -> VBoxContainer:
+func _section(parent: Control, title: String) -> VBoxContainer:
 	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(panel)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
 	panel.add_child(v)
-	var head := RinkOS.label(RinkOS.rule(title, width), RinkOS.TERM)
+	var head := RinkOS.rule_label(title, 12, RinkOS.TERM)
 	head.add_theme_color_override("font_color", RinkOS.READOUT)
 	v.add_child(head)
 	return v

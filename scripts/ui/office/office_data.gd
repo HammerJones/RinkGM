@@ -510,11 +510,18 @@ static func _goal_status(sim: RinkSim) -> Array:
 
 # ------------------------------------------------------------------ demo
 
+## The clubs on a busy demo sim's ice.
+const BUSY_CLUBS := ["figure_club", "high_school", "minor_hockey", "learn_to_skate", "broomball", "lumber_kings", "dukes_practice"]
+
 ## A sim at the start of M1 (Monday 05:00, week 1) played forward to
 ## `weekday` and `minute`, with a plant round each morning and Doris
-## flooding before every booking. For screens and screenshots.
-static func demo_sim(weekday := 3, minute := 14 * 60, seed_ := 7) -> RinkSim:
+## flooding before every booking. For screens and screenshots. `busy` signs
+## the clubs a rink has by midwinter, so the grid and calendar are full.
+static func demo_sim(weekday := 3, minute := 14 * 60, seed_ := 7, busy := false) -> RinkSim:
 	var sim := RinkSim.create_m1(seed_)
+	if busy:
+		for org in BUSY_CLUBS:
+			sim.contracts[org] = {"weeks_left": 20, "satisfaction": 60.0}
 	sim.minute = 5 * 60
 	var target_day := sim.day + posmod(weekday - sim.weekday(), 7)
 	while sim.day < target_day or (sim.day == target_day and sim.minute < minute):

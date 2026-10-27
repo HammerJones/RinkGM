@@ -24,6 +24,8 @@ const STEP_MIN := 15
 ## The owner's day (docs 2.1): 14 hours, up to 4 more as overtime.
 const OWNER_HOURS := 14.0
 const OVERTIME_MAX := 4.0
+## How well a staff member does a job handed to them (0..1); the owner brings their own skill.
+const STAFF_QUALITY := 0.6
 const WAKE_MIN := 5 * 60         # the owner's day starts at 05:00
 const POWER_PRICE := 0.14       # $ per kWh
 const DAILY_FIXED := 158.34     # the sum of FIXED_LINES, kept for old callers
@@ -109,6 +111,7 @@ var owner_drives := false
 var owner_here_until := -1      # absolute minute the walk last vouched for
 var floods_waiting: Array = []  # [{"day", "minute", "for_org", "kind"}] owner floods not driven yet
 var plate_closures: Array = []  # [{"day", "spot"}] the ice shut while a depth plate freezes in
+var work_orders: Array = []   # [{"id", "args", "day", "minute", "by", "who", "hours"}] jobs handed to staff (WorkOrders)
 var orders: Array = []    # [{"model", "arrives_day", "balance"}] compressors on the way
 var delivered: Array = [] # models sitting in the parking lot, waiting to go in
 var installs: Array = []  # [{"compressor", "model", "done_day", "quality"}]
@@ -560,6 +563,7 @@ func _step() -> void:
 	_mid_sample()
 	if auto_resurface:
 		_auto_floods()
+	_run_work_orders()
 	var use: String = s.get("use", "hockey")
 	var skaters := 0.0
 	if not s.is_empty() and evacuated_day != day and not ice_closed(day):
@@ -688,6 +692,22 @@ func _auto_floods() -> void:
 		flood_log.append(entry)
 		if flood_log.size() > 300:
 			flood_log = flood_log.slice(flood_log.size() - 300)
+
+
+## Staff do the jobs handed to them on the calendar (WorkOrders) when their
+## time comes; each order keeps how it went. Orders older than a week drop off.
+func _run_work_orders() -> void:
+	for o: Dictionary in work_orders:
+		if o.has("ok") or int(o.day) != day or int(o.minute) >= minute + STEP_MIN or int(o.minute) < minute:
+			continue
+		var args: Dictionary = o.get("args", {}).duplicate()
+		args["by"] = str(o.by)
+		var r := job(str(o.id), args)
+		o["ok"] = bool(r.ok)
+		o["text"] = str(r.text)
+		if not r.ok:
+			_note("%s couldn't do the %s: %s" % [o.by, str(o.id).replace("_", " "), r.text], "job")
+	work_orders = work_orders.filter(func(o: Dictionary) -> bool: return int(o.day) >= day - 7)
 
 
 func _start_session(s: Dictionary) -> void:
@@ -1201,9 +1221,10 @@ func job(id: String, args := {}) -> Dictionary:
 	var hours: float = spec.hours
 	if id == "ice_check" and int(tools.get("ice_temp", 0)) >= 1:
 		hours = 0.05  # the IR gun
-	if hours > hours_left + 0.001:
+	var by := str(args.get("by", ""))  # a staff member's name: their time, not the owner's
+	if by == "" and hours > hours_left + 0.001:
 		return {"ok": false, "text": "Not enough hours left today."}
-	var q := _job_quality(args)
+	var q := _job_quality(args) if by == "" else clampf(float(args.get("quality", STAFF_QUALITY)), 0.0, 1.0)
 	var cost: float = spec.cost
 	var extra_hours := 0.0
 	var out := {"ok": true, "text": ""}
@@ -1455,11 +1476,14 @@ func job(id: String, args := {}) -> Dictionary:
 			cost = kg * price
 			plant.charge = 1.0
 			text = "Topped up %.0f kg of %s." % [kg, PlantCatalog.refrigerant(plant.refrigerant).name]
-	_charge_hours(hours + extra_hours)
+	if by == "":
+		_charge_hours(hours + extra_hours)
+		if id != "resurface":
+			skill.mechanic = minf(skill.mechanic + 0.004, 1.0)
+	else:
+		text = "%s: %s" % [by, text]
 	if cost > 0.0:
 		book(str(spec.get("cat", "parts and supplies")), -cost)
-	if id != "resurface":
-		skill.mechanic = minf(skill.mechanic + 0.004, 1.0)
 	out.text = text
 	out["hours"] = hours + extra_hours
 	out["cost"] = cost
@@ -1726,7 +1750,7 @@ const SAVE_VARS := ["mode", "day", "minute", "start_weekday", "start_doy", "mone
 	"auto_lights", "snow_pit", "pit_melt_per_h", "log_book", "session_log", "flood_log", "trips", "bills", "goals",
 	"bids", "binder", "weekly_reports", "cancelled_sessions", "lost_contracts", "compressor_1_decision",
 	"trip_script", "owner_pay_owed", "cia_weekly_pay", "owner_drives", "owner_here_until", "floods_waiting", "plate_closures",
-	"_kwh_today", "_hours_today", "_money_day_start", "_session_key", "_ratings_today", "_cur_session",
+	"work_orders", "_kwh_today", "_hours_today", "_money_day_start", "_session_key", "_ratings_today", "_cur_session",
 	"_floods_done", "_last_flood_abs", "_last_active_abs", "_woke_day", "_script", "_recovered_kwh"]
 ## Old save keys that map onto renamed members.
 const SAVE_ALIASES := {"kwh_today": "_kwh_today", "session_key": "_session_key", "ratings_today": "_ratings_today",
