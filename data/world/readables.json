@@ -1,0 +1,612 @@
+[
+  {
+    "id": "gus_binder",
+    "title": "The Binder (Plant, Doris, Ice and Everything Else)",
+    "author": "Gus Tremblay, arena manager 1977 to last spring",
+    "kind": "binder",
+    "location": "plant_room",
+    "unlock": null,
+    "excerpt": "TAB 1, MORNING. Every morning. Oil first. Number 1 drinks. Read suction, discharge, oil glass on both machines, glycol out and back. Write it in the log WITH THE PENCIL ON THE STRING. If you take the pencil the log takes you. Oil is in the blue drum. HALF the glass, not full. Full is for people who like cleaning chillers. TAB 4, GLYCOL. Test monthly (I know, I know, 2019). Float the hydrometer, read it, then use the chart on the next page because cold glycol lies. Want 35. 30 is the floor. Under 30 call Valley Refrigeration and then call me. TAB 7, THE BUILDING. Breaker 14 stays ON. Do not ask. TAB 9, PEOPLE. Earl likes the ice thick. Hélène likes it soft. Dale likes his binder. Bev likes nobody until she does. Be early for all of them.",
+    "hooks": [
+      "Tutorial for plant rounds and the log book",
+      "Oil to half the sight glass (mini game 4.2)",
+      "Glycol target 35%, floor 30%, hydrometer temperature chart (4.4)",
+      "Introduces Earl, Hélène, Dale and Bev",
+      "Breaker 14 mystery, paid off by Gus's postcards"
+    ]
+  },
+  {
+    "id": "gus_envelope",
+    "title": "The Envelope Under the Mat",
+    "author": "Gus Tremblay",
+    "kind": "note",
+    "location": "lobby",
+    "unlock": null,
+    "excerpt": "Front, in marker: WELCOME. DON'T TOUCH BREAKER 14. GUS. Inside, on the back of a 1998 Grizzly Gas calendar page: Keys. Big one is the front, brass one is the plant room, the one with the Z on it is Doris and she knows if you use the spare. The light switch for the lobby is behind the trophy case on the left, you'll find it with your shoulder. Coffee machine works if you hit it where the dent is. The town thinks I left a mess. I left a SYSTEM. Start with the binder on the plant room door. Good luck, and take Mondays. I never did. Look at me. G.",
+    "hooks": [
+      "First object of the game: walking, doors, the worn lobby",
+      "Points the player to the binder",
+      "Coffee machine dent (the most urgent repair in town)",
+      "Plants the 1998 calendar joke in the office"
+    ]
+  },
+  {
+    "id": "gus_postcards",
+    "title": "Postcards from Florida",
+    "author": "Gus Tremblay",
+    "kind": "postcard",
+    "location": "office",
+    "unlock": "Monthly from the start of month 2, pinned to the office corkboard by whoever gets the mail",
+    "excerpt": "Card 1 (a flamingo in sunglasses): Hot here. Ice is only in drinks. You haven't killed Doris, Earl says, which from Earl is a parade. It's October so check the relief valve dates on the receiver tag, the inspector comes in January and he reads tags like scripture. Card 4 (an alligator on a golf course): Fine, about breaker 14. It runs the freezer in the trophy case. The Double-Double cup from the night the Cup came is in there, frozen in the ice off the queue line. If it thaws the town will hold a meeting. Card 9 (a sunset): August is ice-in. Book the paint early or paint it yourself. Strings from centre, measure twice, the hockey man measures three times. G.",
+    "hooks": [
+      "Seasonal reminders: relief valve dates, ice-in, line painting (4.11)",
+      "Solves the breaker 14 mystery: the trophy case freezer",
+      "Story thread: Gus's retirement, ends with a visit if the rink hits Great"
+    ]
+  },
+  {
+    "id": "zambelli_525_manual",
+    "title": "Zambelli Model 525 Ice Resurfacer: Operator's and Service Manual (Fourth Printing, 1974)",
+    "author": "Zambelli Inc., Port Lucerne",
+    "kind": "manual",
+    "location": "zamboni_bay",
+    "unlock": null,
+    "excerpt": "IMPORTANT: The word ZAMBELLI is a registered trade mark of Zambelli Inc. and is properly used only as an adjective, as in \"Zambelli brand ice resurfacer.\" Section 6, The Pattern. Begin with two full circuits close to the boards. Then make long overlapping passes the length of the sheet, overlapping the previous pass by one tire width. Lower the conditioner at the start of each pass and lift it at the end. Do not open the flood water until the machine is moving. Section 9, The Blade. The edge is set 1.0 mm (0.040 in) below the runners, level end to end. One sixth turn of an adjusting screw moves it approximately 0.1 mm. Torque the seven blade bolts to 35 ft-lb, beginning at the centre. Section 11, Ignition. Gap spark plugs to 0.035 in. A Model 525 that will not start is, in our experience, almost always the plugs.",
+    "hooks": [
+      "Flood pattern: two laps, then overlapping passes",
+      "Blade change: 1.0 mm, 1/6 turn = 0.1 mm, 35 ft-lb centre out (4.7)",
+      "Spark plug gap 0.035 in (first-hour Doris fix, 4.8)",
+      "Running joke: Zambelli's trade mark letters"
+    ]
+  },
+  {
+    "id": "earl_notebook",
+    "title": "Earl's Notebook",
+    "author": "Earl Bratt, head icemaker since 1983",
+    "kind": "notebook",
+    "location": "zamboni_bay",
+    "unlock": "When Earl is hired (month 2, ice rating over 45 for two weeks)",
+    "excerpt": "Soft at the home blue line in March, that's the roof, not me. Doris pulls left when the snow tank's past half, steer like you mean it. Don't lay water on the last pass at the north end, the Millbrook bank lives there and if you build it up it stops being dead. I've told three managers and a Flatley salesman. Corner by the visitors' gate stays wet, the boards sweat, take that corner slow and dry. Hot water or don't bother. 55 at least. Cold water floods look nice and skate like a bag of marbles. Doris doesn't like being rushed, being cold, the Flatley man, or the new kid. She does like the radio on CKVL. So do I. Tally's on the wall. 9,412. Don't touch the wall.",
+    "hooks": [
+      "Ice soft spots and their causes (roof drip, sweating corner)",
+      "Protects the Millbrook bank: don't flood up the north end boards",
+      "Flood water at 55 C or hotter",
+      "Earl's tally wall: a keepsake in the resurfacer bay"
+    ]
+  },
+  {
+    "id": "nordale_manual",
+    "title": "Nordale RC-4 Ammonia Compressor: Installation, Operation and Maintenance",
+    "author": "Nordale Refrigeration Machinery Co., 1973",
+    "kind": "manual",
+    "location": "plant_room",
+    "unlock": null,
+    "excerpt": "Section 4.2. Lubrication. Use only ISO 68 naphthenic refrigeration oil. The correct level, with the machine running and warm, is one half of the sight glass. An overfilled crankcase carries oil into the system, where it collects in the chiller and reduces capacity. Section 5.1. Valve plates. Loss of capacity accompanied by a hot cylinder head and a light rhythmic tick indicates a broken or leaking suction or discharge valve. Before opening the machine, pump down to 2 psig. Do not pull a vacuum. Section 8. The operator who listens to the machine every day will know its trouble before any gauge. Pencilled in the margin: \"No. 1 ticks when it's cold. Doesn't mean anything. Probably. G.\" and, below, in red pen: \"It means something. M.L.\"",
+    "hooks": [
+      "Oil grade ISO 68 and the half-glass rule",
+      "Valve job symptoms: hot head, tick, lost capacity (4.3)",
+      "Pump down to 2 psig, never a vacuum",
+      "Gus and Marg argue in the margins"
+    ]
+  },
+  {
+    "id": "marg_red_pen",
+    "title": "The Plant Log, Annotated in Red",
+    "author": "Marg Lindqvist, plant operator",
+    "kind": "logbook",
+    "location": "plant_room",
+    "unlock": "When Marg is hired (reputation Fair or after the first compressor trip)",
+    "excerpt": "Tuesday 05:10, owner: Suction 15, discharge 160, oil fine. Red pen: FINE IS NOT A NUMBER. Tuesday 05:12, owner: Oil about half. Red pen: About is not a number either. Thursday 05:06, owner: No. 2 squealing at start. Red pen: That's the condenser fan belt on the roof, not No. 2. Check it at 07:00 when she loads up. Matched pair, B68, never pry them over the sheave. Friday, red pen only: Good log. Readings in, time in, initials in. The inspector will read this in January and he will be bored, which is what we want. Buy a refractometer. The hydrometer tells you 33 and means 30. M.L.",
+    "hooks": [
+      "Teaches what a good log entry looks like (ammonia inspection)",
+      "Belt squeal diagnosis on the roof (4.6)",
+      "Nudges the T2 refractometer upgrade",
+      "Marg's character: strict, kind under it"
+    ]
+  },
+  {
+    "id": "nro_journal_spring",
+    "title": "The Northern Rink Operator, Spring Issue: \"Put Down the Screwdriver\"",
+    "author": "Northern Rink Operators' Association",
+    "kind": "magazine",
+    "location": "office",
+    "unlock": null,
+    "excerpt": "We all learned it the same way: a screwdriver at the blue line, a push, a feeling. The screwdriver has served this industry for fifty years and it has never once told anyone a temperature. An infrared gun from the hardware store, about $89, reads the surface to half a degree. Hockey wants -5 to -7. Figure skaters want -3 to -4, and they will know if you miss. Point it straight down, hold it close, and read three places, because the corner by the gate is never the same as centre ice. While you are at it, drill a test hole and measure the thickness. If you are over 40 mm, you are paying to freeze ice nobody skates on. Also in this issue: our trade show floor plan for May in Duncannon, with the Zambelli and Flatley booths once again at opposite ends of the hall, at Zambelli's request, and Flatley's.",
+    "hooks": [
+      "Unlock tip: IR gun ($89, T1) replaces the screwdriver test",
+      "Ice temperature targets: hockey -5 to -7, figure -3 to -4",
+      "Thickness over 40 mm wastes power",
+      "Announces the May trade show (T3 tools)"
+    ]
+  },
+  {
+    "id": "nro_journal_autumn",
+    "title": "The Northern Rink Operator, Autumn Issue: \"Know Your Number\"",
+    "author": "Northern Rink Operators' Association",
+    "kind": "magazine",
+    "location": "office",
+    "unlock": "November of Year 1, in the office mail",
+    "excerpt": "Glycol for people who hate chemistry. Your brine loop is mostly water and some antifreeze, and the some matters. Target 35 percent, freeze point about -21 C. At 25 percent the mix freezes near -12 and your chiller's ammonia boils at -14, which is how a $40,000 tube bundle becomes a sculpture. A hydrometer ($35) gets you within about three points if you correct for temperature. A refractometer ($180) gets you within half a point with one drop. To top up, the formula is D = V x (target - now) / (100 - now). For a 9,000 litre loop at 28 percent, that is 875 litres of concentrate, and yes, that is the price of a used truck. Letters page: a reader in Snowden asks if a Polarix Glide can be taught to go around a mascot. Polarix declined to comment, and so did the mascot.",
+    "hooks": [
+      "Glycol concentration, freeze points and the top-up formula (4.4)",
+      "Hydrometer vs refractometer accuracy",
+      "Polarix Glide mascot joke"
+    ]
+  },
+  {
+    "id": "blue_line_magazine",
+    "title": "The Blue Line, February: \"A Really Good Week\"",
+    "author": "The Blue Line magazine, Kingsport",
+    "kind": "magazine",
+    "location": "lobby",
+    "unlock": null,
+    "excerpt": "Theo Lindgren-Baptiste has scored 401 goals in the GNHL and cannot tell you about any of them. \"They all felt about the same,\" he says, eating the same oatmeal he has eaten every morning since 2014. \"That's sort of the point.\" We ask about the Warlock advertisement, the one with the thunderstorm. He watches it on our phone for a long time. \"Is that me?\" Asked for his secret, he gives the most boring answer in sport: sleep, the same warm-up, short shifts. \"Forty-five seconds, then get off. Nobody is good at the end of a long shift. I'm not either. I just leave before I find out.\" Also inside: the Specters remind everyone they won the Cup, the Loons are still the Loons, and Moose's plaid jacket of the month (a heritage tartan, number 1,206, never repeated).",
+    "hooks": [
+      "GNHL lore and the modern superstar",
+      "Career hint: short shifts and routine help fatigue",
+      "Lobby waiting-area magazine stack, new issue monthly"
+    ]
+  },
+  {
+    "id": "gnhl_rulebook",
+    "title": "Official Rules of the Grand Northern Hockey League, 2026-27 Edition",
+    "author": "Grand Northern Hockey League, Kingsport",
+    "kind": "book",
+    "location": "ref_room",
+    "unlock": null,
+    "excerpt": "Rule 1.4. The puck shall be one inch thick and three inches in diameter, and shall be frozen before play where practical (Blizzard Charter, 1911). Rule 6.2. A player is offside when both skates are completely over the attacking blue line before the puck. The position of the stick shall not be considered. Rule 11.4. Players shall be the player they say they are. Rule 27.1. A goalkeeper may play the puck behind the goal line only within the trapezoid. The trapezoid's shape was determined by an engineer. Rule 41.7. No player shall touch, squeeze, or otherwise operate the opposing team's water bottles (see also 41.8, benches). Rule 68. Reserved. The ref room copy has a coffee ring on Rule 6.2 and a cruller crumb pressed flat at Rule 41.7.",
+    "hooks": [
+      "Real rules for the Coach path: offside, trapezoid, penalties",
+      "Lore: Rule 11.4 (the Wrong Twin), the Sokolov Rules",
+      "Rule 68 is 'The Third One', never published"
+    ]
+  },
+  {
+    "id": "vbl_bylaws",
+    "title": "The Binder: Constitution and Bylaws of the Valley Adult Recreational Hockey League",
+    "author": "Dale Huffman, Commissioner",
+    "kind": "binder",
+    "location": "lobby",
+    "unlock": null,
+    "excerpt": "Article 1. The League shall be known as the Valley Adult Recreational Hockey League and shall be called the Valley Beer League by everybody. Article 4. Dues are payable before the first game. Members who have not paid by the end of the grace period shall be politely asked, then less politely asked, then shall not play. Article 7. No slapshots in D Division. (Amended 2009: no slapshots in D Division that hit anybody.) Article 9. The home team supplies pucks. The visiting team supplies the referees' crullers. Article 12. The postgame is not an official League function, and the League accepts no responsibility for it, but attendance is noted. Article 15. The Binder shall live at the Millbrook Community Arena front desk. Whoever loses the Binder shall be Commissioner.",
+    "hooks": [
+      "League dues and the grace period (career dues gate)",
+      "Beer league rules flavour and Dale Huffman's binder contract",
+      "Losing the binder is a fail state for the vbl_d relationship"
+    ]
+  },
+  {
+    "id": "program_1979_final",
+    "title": "Aldous Cup Final, Game 6: Lumber Kings vs Kessler Millmen (Official Programme, 25 Cents)",
+    "author": "Millbrook Lumber Kings Hockey Club, April 1979",
+    "kind": "program",
+    "location": "lobby",
+    "unlock": null,
+    "excerpt": "Welcome to the Community Arena, the finest artificial ice between Harlow Falls and the lake! Tonight your Lumber Kings can win the Aldous Cup for the first time since 1956. Please do not throw objects on the ice. Please especially do not throw paper towel, as Kessler supporters have been warned. Coach's Corner: \"Dump it in, go get it, and stay out of the box.\" Tonight's ice is by Gus Tremblay, our arena manager since 1977, who asks that fans not lean on the glass at the north end, as it is \"temporary.\" Milk for tonight's victory party (we are confident) donated by Millbrook Dairy. Ads: Big Gord's Trucks (\"Big Gord Won't Let You Walk\"), Maple Tire & Muffler, Grizzly Gas & Go, and Bev's Edge & Tape, now open on Main Street.",
+    "hooks": [
+      "Lore: the 1979 Aldous Cup, Gus's early years, Bev's opening year",
+      "Shown in the trophy case, readable up close",
+      "The 'temporary' north end glass is still there at WORN"
+    ]
+  },
+  {
+    "id": "program_lumber_kings",
+    "title": "Lumber Kings Gameday",
+    "author": "Millbrook Lumber Kings Hockey Club (volunteer board)",
+    "kind": "program",
+    "location": "stands_box",
+    "unlock": "First Lumber Kings home game the player attends",
+    "excerpt": "From the Chair, Ray Duchesne: Friends, the rink has a new owner, and the new owner has a lot of work to do, and so do we. Come early, buy a coffee if the machine is working, and cheer like it's 1979. Tonight's lineup is on page 3. Old Pete's Corner: \"Somebody asked me why our jerseys are buffalo plaid. Because we're Lumber Kings. What did you want, a tie?\" Did You Know: the Lumber Kings have played at the Community Arena since opening night, 2 November 1974, when they lost 5-3 to Kessler. They have been trying to get that one back ever since. Ad space available in this programme: call the rink office. Sponsors this season: Grizzly Gas & Go (jersey), Maple Tire & Muffler, Puckhead Pizza, Haverkamp Family Dentistry.",
+    "hooks": [
+      "Lumber Kings contract and their probation (ice rep 60 by January)",
+      "Programme ad space is a small sponsor asset the GM can sell",
+      "Roster page refreshes each season from teams.json"
+    ]
+  },
+  {
+    "id": "clarion_sale",
+    "title": "Off the Boards: \"Town Sells Arena for a Dollar; Columnist Checks Couch for Change\"",
+    "author": "Midge Kaminski, The Millbrook Clarion",
+    "kind": "newspaper",
+    "location": "lobby",
+    "unlock": null,
+    "excerpt": "Council voted 4-1 on Tuesday to sell the Community Arena for one dollar, which is less than a coffee from the arena's own machine, when it works. The buyer, a beer leaguer with more optimism than sockets, takes on a 1974 ice plant, a roof that drips on the home blue line every March, and Doris. Earl Bratt, reached at the Legion, said, \"Good luck to them,\" and then something I can't print in a paper that runs the church bake sale on page 4. Gus Tremblay, reached in Florida, said, \"Tell them the binder's on the door.\" A word to the new owner: you can fix the roof. You can fix the seats. But if anybody touches the dead spot behind the north net, this town will find out where you live, and bring a casserole, and stay.",
+    "hooks": [
+      "Opening premise from the town's point of view",
+      "Introduces Midge Kaminski, the warm local columnist",
+      "Foreshadows the Millbrook bank keepsake"
+    ]
+  },
+  {
+    "id": "clarion_keepsakes",
+    "title": "Off the Boards: \"Leave the Clock Alone\"",
+    "author": "Midge Kaminski, The Millbrook Clarion",
+    "kind": "newspaper",
+    "location": "lobby",
+    "unlock": "The week the first room reaches RENOVATED",
+    "excerpt": "The lobby looks wonderful. I say this as someone who has spent forty years looking at it. New floor, new lights, and you can see the mural again, three-legged skater and all. But a word, as a friend. The Moosebrew clock above the snack bar ran seven minutes fast for thirty years so the Late Ice League would be on time for once. It was not broken. It was helping. Some things in that building are not fixtures, they are furniture of the heart: the clock, the tape ball, Earl's wall, the Mallards picture, the hook for number 14. Reframe them. Light them. Dust them. Leave them be. Letters to the editor this week: eleven, all about the clock.",
+    "hooks": [
+      "Teaches the keepsake rule: renovation keeps, restores, never removes",
+      "Lists the town's favourite objects (each is a keepsake prop)",
+      "Community reputation reacts to removing a keepsake"
+    ]
+  },
+  {
+    "id": "ledger_last_word",
+    "title": "The Last Word: \"A Night in Millbrook\"",
+    "author": "Merv Tolliver, The Duncannon Daily Ledger",
+    "kind": "newspaper",
+    "location": "community_hall",
+    "unlock": "Once the Lumber Kings host a Senior AAA game the Ledger covers (Senior AAA tier)",
+    "excerpt": "I drove forty minutes to Millbrook so you don't have to. The parking lot is a snowbank with ambitions. The coffee was hot, which surprised the woman who sold it to me. The seats are the colour of a 1974 kitchen and roughly as comfortable. The scoreboard works on one side, so half the building has to take the score on faith. And yet. The ice, I am annoyed to report, was good. The crowd knew every player's mother. When the Lumber Kings scored, an old man in the rafters end stood up and cried and nobody looked at him funny. The Frostbank Centre has a video board the size of a barn. It has never once made me feel anything. One and a half stars. I'll be back.",
+    "hooks": [
+      "Reputation feedback from the valley's harshest critic",
+      "Each review lists the rink's real weak points (scoreboard, seats, parking)",
+      "Reruns with new text as rooms are renovated"
+    ]
+  },
+  {
+    "id": "grand_and_northern",
+    "title": "Grand and Northern: The First Hundred Years of the GNHL",
+    "author": "Prof. Alistair Quenneville, Wendover College Press, 2011",
+    "kind": "book",
+    "location": "community_hall",
+    "unlock": null,
+    "excerpt": "Chapter 1. The Snowdrift. No sporting body was ever founded with less intention. Eight men set out to discuss the size of a puck and returned, three days later, with a league, a constitution written beneath the soup of the day, and a lasting grievance against the owner of the Port Hollis club, who had won eleven dollars from them at cards. Chapter 14. The Sandwich Clause. For forty-one days of the 2004-05 dispute, the future of professional hockey turned on the definition of \"light lunch.\" Historians have not been kind to either side. The caterers of the Hotel Lindell, who were asked to testify, were kinder. Appendix C lists the Cup's travels, including, for 1994, \"a dairy counter, Millbrook,\" and for 2005, \"a folding table, Millbrook (see Chapter 14, note 31).\"",
+    "hooks": [
+      "GNHL history trivia for the loading screens and broadcast",
+      "Ties the Puckworth Cup's 1994 and 2005 visits to Millbrook",
+      "Reading it in full unlocks the 'Rink Historian' lobby plaque text"
+    ]
+  },
+  {
+    "id": "moose_memoir",
+    "title": "Moose Knows: My Life Seventeen Minutes at a Time",
+    "author": "Moose Kowalczuk, with Doreen Ashby",
+    "kind": "book",
+    "location": "penalty_boxes",
+    "unlock": null,
+    "excerpt": "People ask what I thought about in the penalty box. Mostly the book. I'd get two for roughing and think, good, chapter nine. I read all of Dickens in the box in Bramford, a minute at a time, and half of a very long Russian one in Northgate. In 1984 we played an exhibition up the valley, a little rink in Millbrook, and I got seventeen minutes in the first period, which was a lot even for me. I finished a mystery in there. I left it on the bench for the next fella with a note: \"The butler didn't do it. Be good.\" I'm told they still keep books in that box. That's the nicest thing anyone ever did with something I left in a penalty box. Usually it was a tooth.",
+    "hooks": [
+      "Origin of the Millbrook penalty box lending library (a keepsake)",
+      "Lore: Moose's reading habit, softened legend",
+      "Hint: discipline, a penalty costs the team two minutes"
+    ]
+  },
+  {
+    "id": "haverstock_memoir",
+    "title": "Off the Dead Spot",
+    "author": "Ronnie Haverstock, as told to Midge Kaminski (Clarion Books, 1997)",
+    "kind": "book",
+    "location": "community_hall",
+    "unlock": null,
+    "excerpt": "Every board in a rink has a voice. Most of them say boing. The one behind the north net in Millbrook, about a stick length to the left of the post as you look at it from the slot, says nothing at all. I found it in 1977 because I missed a pass and the puck just sat there like a dog that wanted to come home. After that I'd chip it in soft, low on the kickplate, not hard, never hard, and go around the net and it would be waiting for me. Defencemen would go to the boards for the bounce and there was no bounce. In the big league they called it the Millbrook bank. In Millbrook we just called it the north end. If you go there today, somebody's painted a little milk bottle on that board. That wasn't me. I wish it had been.",
+    "hooks": [
+      "Teaches the Millbrook bank: soft chip, low, left of the north post",
+      "Explains the painted milk bottle keepsake on board panel N7",
+      "Ronnie as a mentor character (Thursday old-timers)"
+    ]
+  },
+  {
+    "id": "two_masks",
+    "title": "Two Masks: Goaltending for Young People",
+    "author": "Walter Brzezinski, Kingsport, 1979",
+    "kind": "book",
+    "location": "locker_home",
+    "unlock": null,
+    "excerpt": "Lesson One. Wear a mask. Wear two if they will let you. I did not wear one for twenty years and I have the teeth of a jack-o'-lantern, and I would trade every one of my seven Cups to have my nose back where my mother put it. Lesson Two. Come out to meet the shooter. The net is six feet wide, but it is only as big as the shooter can see. Take two steps toward him and it shrinks. Lesson Three. Stay square. Your chest should point at the puck the way a sunflower points at the sun. Lesson Four. After a goal, do not look at the net. It is not the net's fault. Look at the bench, nod at your coach, and get ready. Inscribed inside the cover: \"To the Millbrook goalies. One for you and one for me. W.B.\"",
+    "hooks": [
+      "Coach path: goalie angles, staying square, recovery after a goal",
+      "Lore: Brzezinski's mask regret and his two-mask rule",
+      "Signed copy is a keepsake in the home dressing room"
+    ]
+  },
+  {
+    "id": "teague_book",
+    "title": "I'll Do My Best: A Payroll Accountant's Puckworth Cup",
+    "author": "Morris Teague (self-published, Fairhaven, 2010)",
+    "kind": "book",
+    "location": "office",
+    "unlock": null,
+    "excerpt": "People want to know how it felt to stop fifty of fifty-three shots in a Puckworth Cup Final. Honestly, it felt like quarter-end. Everything comes at you at once and the only way through is one item at a time. Some practical advice, since this is the part of the book people skip. Keep every receipt. Know the difference between profit and cash: you can be winning on paper and still not make Friday's payroll if your customers pay in thirty days and your power bill lands on the fifteenth. Never let one customer be more than a third of your income. And always have a backup goalie. In hockey, in business, in life. I was somebody's backup goalie. Look how that turned out.",
+    "hooks": [
+      "GM tips: cash vs profit, net 30, the bill on the 15th (5.8)",
+      "Customer concentration risk for the ice grid",
+      "Lore: Emergency Mo Teague, the accountant who won the Cup"
+    ]
+  },
+  {
+    "id": "little_zambelli",
+    "title": "The Little Zambelli Brand Ice Resurfacer That Could",
+    "author": "Grade 3 of Kessler Elementary, 1982 (Kessler Public Library Press)",
+    "kind": "book",
+    "location": "community_hall",
+    "unlock": null,
+    "excerpt": "Once upon a time there was a little Zambelli brand ice resurfacer who lived in a cold, cold barn. Every night the skaters made the ice all scratchy and snowy. \"Oh no,\" said the ice. \"I am all scratchy.\" \"I think I can,\" said the little Zambelli brand ice resurfacer. \"I think I can, I think I can.\" Round and round it went, two laps by the boards and then up and down, up and down, and it made the ice as shiny as a spoon. \"Thank you,\" said the ice. \"You are welcome,\" said the little Zambelli brand ice resurfacer, \"but please remember that Zambelli is a registered trade mark.\" THE END. Copyright page: Title used with the reluctant permission of Zambelli Inc.",
+    "hooks": [
+      "Kids' corner book; read-aloud at Skate with Santa",
+      "Quietly teaches the flood pattern",
+      "Lore: the 1982 Kessler school play and Zambelli's lawyers"
+    ]
+  },
+  {
+    "id": "vmha_coach_manual",
+    "title": "Valley Minor Hockey Association Coach Level 1 Manual",
+    "author": "Valley Minor Hockey Association, foreword by Donna Pettigrew",
+    "kind": "manual",
+    "location": "community_hall",
+    "unlock": null,
+    "excerpt": "Foreword. Thank you for volunteering. You will not be paid, you will be shouted at by a parent, and some day a grown-up will tell you that you taught them to love the game. Section 3, The Practice Plan. Every hour of ice: 10 minutes warm-up and skating, 35 minutes of stations (no more than four kids in a line, ever), 10 minutes of small-area games, 5 minutes of something fun. Section 5, Line Changes. Short shifts. Change on the fly when the puck is deep in their end, never when it is in yours. Section 7, Reading the Other Bench. Every team has a habit. Some chase the puck, some sit back in the middle of the ice, some dump it in and go get it. Name the habit and you have half your plan.",
+    "hooks": [
+      "Coach path unlock: practice plan structure",
+      "Line change timing (change with the puck deep in their end)",
+      "Introduces team style tags: swarm, trap, dump and chase",
+      "Minor hockey relationship flavour (Donna Pettigrew)"
+    ]
+  },
+  {
+    "id": "hap_doyle_plans",
+    "title": "Practice Plans (DO NOT REMOVE FROM KESSLER)",
+    "author": "Hap Doyle, head coach, Kessler Millmen",
+    "kind": "notebook",
+    "location": "locker_away",
+    "unlock": "Left behind in the visitors' room after the first Kessler Millmen game at Millbrook (Senior AAA)",
+    "excerpt": "Mon. Battle drills. Nobody leaves the corner with the puck unless they've earned it. Tue. 1-2-2 in the neutral zone. F1 takes the puck carrier to the boards, F2 and F3 sit on the lanes, D stay up. Make them go wide. Make them go home. Wed. Off. Thu. Breakouts against pressure. The wall is your friend. The middle of your own zone is not your friend. Fri. Special teams. Power play shoots. Penalty kill blocks. Nobody smiles. On the back page, in different ink: Millbrook ice faster than last year. New owner? Find out. Also bring paper towel for the Port Ainsley game. The notebook has a coffee ring and a single pressed pine needle. Return it and Hap will nod at you, which is a lot.",
+    "hooks": [
+      "Coach path: the trap (1-2-2), battle drills, breakouts",
+      "Physical and trap styles from teams.json explained",
+      "Side quest: return the notebook for a Kessler relationship boost",
+      "Shows that rival coaches notice ice quality"
+    ]
+  },
+  {
+    "id": "valley_almanac",
+    "title": "Szabo's Valley Hockey Almanac",
+    "author": "Bernie Szabo, CKVL 1340 Valley Radio",
+    "kind": "almanac",
+    "location": "office",
+    "unlock": null,
+    "excerpt": "KESSLER (pronounced KESS-ler, KEZ-ler, or by me on a Friday, KESH-ler). Millmen. Founded 1921. Plays heavy, plays mean, plays at home in the Barn where the visitors' bench is right under the band. Coach Hap Doyle, who smiled once, in 1996, allegedly. Watch for: everything in the corners. HOW TO READ A BEER LEAGUE TEAM: if they arrive early, they're good. If they arrive with a cooler, they're the Ice Holes. If every player taps the goalie's pads before the game, they've got nothing else going for them and he's going to be brilliant. RINKS OF THE VALLEY: Millbrook, one sheet, dead spot north end. Harlow Falls, two sheets, a lot of rules. Port Ainsley, bring a toque, the pond game's in February. Duncannon, take out a loan for parking.",
+    "hooks": [
+      "Scouting guide: every club's style tag in plain words",
+      "Tips for reading goalie-dependent and swarm teams",
+      "Region hints for each town's rink and its quirks",
+      "New edition each season with last year's standings"
+    ]
+  },
+  {
+    "id": "cha_scouting_guide",
+    "title": "Reading a Player: The Continental Hockey Association Scouting Field Guide",
+    "author": "Continental Hockey Association Hockey Operations, foreword by Lorne Pettigrew",
+    "kind": "manual",
+    "location": "office",
+    "unlock": "Semi-Pro tier, mailed with the first CHA scout's business card",
+    "excerpt": "Foreword. I have kept a red telephone on my desk for many years and I have answered it for maybe a dozen players. This guide is about the other ten thousand. Part 2, What Doesn't Show on a Stat Sheet. Watch the player when the puck is not near him. Does he stop skating? Does he get back? Does he talk? Part 3, Speed Is Two Things. Top speed and first three strides. Beer league players often have the first and not the second. Part 5, The Rink Lies. Small sheets flatter slow skaters. Soft ice flatters nobody. Before you judge a player, judge the ice he played on: ask the operator for the surface temperature and a thickness, and if he doesn't know, add it to your report. L.P., Duncannon.",
+    "hooks": [
+      "GM almanac: what scouts look for (first strides, off-puck effort)",
+      "Hidden ratings become clearer with scouting",
+      "Ice quality affects how scouts judge your players (rink-career link)",
+      "Foreshadows the red phone"
+    ]
+  },
+  {
+    "id": "pamphlet_learn_to_skate",
+    "title": "Learn to Skate at Millbrook! (Every Age. Really.)",
+    "author": "Millbrook Community Arena",
+    "kind": "pamphlet",
+    "location": "lobby",
+    "unlock": null,
+    "excerpt": "Never skated? Neither had Gary Pruett, and now he stops at every opportunity, preferably in front of the bench. Adult Learn to Skate, one hour a week, eight weeks. Helmets required (yes, adults, yes, you). Rental skates sharpened weekly by Bev, who will tell you if they're not. What you will learn: how to stand up, how to fall down properly (knees bent, hands out, then laugh), how to glide, how to stop. Bonus week: the hockey stop, taught by a member of the Flood Crew, depending on who's sober. Public Skate times are on the board by the door: at least four hours a week, every week, by agreement with the Town of Millbrook. Hot chocolate $2.50 at the snack bar. Mittens left behind go to the mitten tree.",
+    "hooks": [
+      "Advertises the learn_to_skate contract and public skate hours",
+      "Community reputation flavour; pamphlet design improves at RENOVATED",
+      "Mentions the mitten tree (seasonal decor)"
+    ]
+  },
+  {
+    "id": "pamphlet_brokenbone",
+    "title": "Moose Knows: Your Head",
+    "author": "Brokenbone Mutual Insurance",
+    "kind": "pamphlet",
+    "location": "lobby",
+    "unlock": null,
+    "excerpt": "Hi, Moose here. I played 812 games and the first 600 without a helmet, and I'm here to tell you that was dumb. You only get one head. Mine's been dropped more than the Puckworth Cup. Wear a certified helmet that fits snug: two fingers above the eyebrows, chin strap one finger loose. Replace it after any big hit or every five years, whichever comes first. If you get your bell rung, sit out, and tell somebody. No one ever won a beer league game with a concussion. They just forgot it. Brokenbone Mutual (\"We've Seen Your Slapshot\") offers a discount to rinks that pass our annual survey with no notes. Rink operators: ask about our first aid and AED checklist. Moose knows.",
+    "hooks": [
+      "Gear hint: helmets and concussion protection (PROSHOP)",
+      "Insurance inspection: no-notes pass gives 10% off",
+      "First aid kit and AED needed for the minor hockey contract"
+    ]
+  },
+  {
+    "id": "pamphlet_ammonia",
+    "title": "That Smell: Ammonia Safety for Arena Users",
+    "author": "Provincial Boiler and Pressure Vessel Branch",
+    "kind": "pamphlet",
+    "location": "plant_room",
+    "unlock": null,
+    "excerpt": "Your arena may use ammonia to make its ice. Ammonia is an efficient refrigerant with a strong smell, which is good news: you will notice it long before it can hurt you. If you smell ammonia in the building, leave by the nearest exit and tell staff. FOR OPERATORS: the machine room must have a fixed detector that alarms at 25 ppm and starts emergency exhaust at 150 ppm, an emergency stop outside the door, a plumbed eyewash and shower, current relief valve tags, a certified operator, and a daily log. The inspector will ask to see the log. The inspector always asks to see the log. Taped to this copy, in Gus's hand: \"He asks for the log. Have the log.\"",
+    "hooks": [
+      "Plant room inspection checklist (5.10), in fiction",
+      "Detector thresholds 25 and 150 ppm; eyewash; relief valve tags",
+      "Renovating plant_room satisfies the list"
+    ]
+  },
+  {
+    "id": "pamphlet_flatley",
+    "title": "Flatley Ice Machines: Quiet. Clean. Electric.",
+    "author": "Flatley Ice Machines",
+    "kind": "pamphlet",
+    "location": "office",
+    "unlock": "Found in the office desk drawer; a newer edition arrives after the first air quality warning",
+    "excerpt": "Does your arena smell like 1974? Every Flatley resurfacer is fully electric: no carbon monoxide, no nitrogen dioxide, no tune-ups, no headaches (the kind you get from fumes, or the kind you get from gas engines). Our machines are a little smaller, a lot quieter, and painted Flatley green, which we are told is calming. Equipment financing at 6.9% over five years. Ask us about trade-in values for your old gas machine. (We are sure she has been very loyal.) Flatley Ice Machines: The First. Stapled to the front, a business card with a note: \"Gus, call me when the old girl finally goes. Walt Jr.\" Gus has written across it: \"Never.\" Earl has written below that: \"Never x2.\"",
+    "hooks": [
+      "Replacement option: Flatley electric ($145,000) ends CO problems",
+      "Air quality limits link (CO 25 ppm)",
+      "Earl will not drive a Flatley: staff morale hook"
+    ]
+  },
+  {
+    "id": "guestbook",
+    "title": "The Lobby Guestbook (Volume 3, 1991 to Now)",
+    "author": "Everybody",
+    "kind": "guestbook",
+    "location": "lobby",
+    "unlock": null,
+    "excerpt": "Aug 1994: Brought the Cup home. Thanks for the ice, Millbrook. Still can't stop on my backhand side. R.H. #14. Feb 1997: Visiting from Sunvale, first time on real ice, fell 31 times, best day of my life. Mar 2005: WE ASKED. The Mallards (all 11 of us) and Larry's mum. Mar 2005: Queued 3 hours, worth it, my feet are gone. Dec 2011: Skate with Santa, Santa fell, still a 10. Jan 2016: Lovely rink, coffee machine broken. Jan 2016 (different pen): It's always broken. Feb 2019: Sales visit, Zambelli field service. Doris is in remarkable condition for her age. So is Earl. Last spring: Thanks for 49 years, Millbrook. Be nice to the next one. Gus. Below that, a line left blank for the new owner.",
+    "hooks": [
+      "Lore across decades: Ronnie 1994, the Cup night 2005",
+      "The player can sign it; later visitors' entries react to the renovation",
+      "Visiting players and events add entries over the career"
+    ]
+  },
+  {
+    "id": "graffiti_home",
+    "title": "Home Dressing Room Graffiti",
+    "author": "Generations of Lumber Kings and beer leaguers",
+    "kind": "graffiti",
+    "location": "locker_home",
+    "unlock": null,
+    "excerpt": "Carved into the bench under stall 14: R.H. WAS HERE 1978 (and under it, smaller: NO HE WASN'T, HE WAS VISITORS THAT NIGHT). On the ceiling tile above the door, in marker: 1979 ALDOUS CUP, WE ALL SIGNED, DON'T PAINT IT, GUS. Gus didn't. Scratched into the paint by the showers: THE HOT TAP IS A LIE. Below the clock: LEAVE IT BETTER THAN YOU FOUND IT (stencilled, official), and below that, not official: OR AT LEAST LEAVE. On the door of the sharpening closet, a tally of Lumber Kings wins over Kessler since 1974 in pencil, with the losses on the other side of the door, where you can't see them when you walk out. The loss side is longer.",
+    "hooks": [
+      "Room history and in-jokes; the 1979 ceiling tile is a keepsake",
+      "Hints: the home room shower is cold (boiler / dressing room repair)",
+      "Kessler rivalry tally updates with real results"
+    ]
+  },
+  {
+    "id": "graffiti_visitor",
+    "title": "Visitors' Dressing Room Graffiti",
+    "author": "Every team that ever lost in Millbrook (and some that won)",
+    "kind": "graffiti",
+    "location": "locker_away",
+    "unlock": null,
+    "excerpt": "Above the hooks, from left to right, a history of being a guest: KESSLER 1979, WE'LL BE BACK. KESSLER 1980, WE CAME BACK. PORT AINSLEY WAS HERE (with a drawing of a pike). MOLARS, FLOSS. TOOTHBRUSH INCIDENT, NEVER FORGET (2024, in the Moose Knuckles' colours). WHY IS IT ALWAYS COLD IN HERE. On the back of the door, in neat capitals: THE VISITORS' SHOWER IS ON THE LEFT. IT IS ALSO ON THE RIGHT. NEITHER IS HOT. Someone has added an arrow to the corner by the floor drain: STAND HERE, IT'S WARMER. They are right: the boiler's return pipe runs under that tile. A newer line, in pencil: Nice ice tonight. Who's the new guy?",
+    "hooks": [
+      "Visitor room is the cold one: a facility complaint to fix",
+      "Hint: the warm tile shows where the boiler pipe runs",
+      "New lines appear as visiting teams react to ice and renovation"
+    ]
+  },
+  {
+    "id": "lost_and_found",
+    "title": "Lost and Found: Inventory (Clipboard at the Rental Window)",
+    "author": "Dylan Pruitt, rink rat, from week 2 (before that, nobody)",
+    "kind": "list",
+    "location": "pro_shop",
+    "unlock": null,
+    "excerpt": "1 mitten, left, red (CMC, has a woollen cuff, of course it does). 1 mitten, right, not red. 14 single socks. 3 mouthguards (Dr. Haverkamp says throw them out, he says it every week). 1 Honest Hockey glove, labelled \"IT IS A GLOVE.\" 1 Warlock Hexblade, snapped, signed \"never again.\" 1 retainer, upper, in a Puckhead napkin. 2 car keys, one with a Big Gord's fob (\"Big Gord Won't Let You Walk,\" and yet). 1 cassette, \"Doreen's Organ Hits Vol. 2.\" 1 trophy, small, \"MOST IMPROVED 1991,\" nobody claims it. 1 pair of figure skates, white, size 4, very loved. 1 binder, NOT THE BINDER, just a binder. Mittens over a month old go to the mitten tree.",
+    "hooks": [
+      "Daily flavour; items rotate with who used the ice",
+      "Some items return to their owner for small reputation boosts",
+      "The 'Most Improved 1991' trophy is a mini mystery"
+    ]
+  },
+  {
+    "id": "notice_board",
+    "title": "The Lobby Corkboard",
+    "author": "Whoever had a thumbtack",
+    "kind": "board",
+    "location": "lobby",
+    "unlock": null,
+    "excerpt": "Pinned, overlapping: PUBLIC SKATE SAT 1-3, SUN 2-4, ADULTS $6 KIDS $4 FAMILY $15. LOST: BLACK CAT, ANSWERS TO TOE DRAG, PROBABLY AT BEV'S (he is). FOR SALE: Kodiak Pioneers, 1988, size 9, my son has outgrown them, I have not outgrown being sad about it. MILLBROOK MINOR HOCKEY REGISTRATION, see Donna. PIANO LESSONS, upstairs hall, Tuesdays, Doreen Vachon. BEER LEAGUE: if you took the wrong bag home Thursday, the right bag would like its jock back. VALLEY ROCKS BONSPIEL, March, curlers notice everything (Agnes). And, in the corner, older than everything else, a yellowed index card: ARENA MANAGER ON DUTY: GUS. Someone has crossed out GUS and written, in pencil, a question mark.",
+    "hooks": [
+      "Live board: contracts, events and town life rotate here",
+      "The player can pin their own notices (public skate times, events)",
+      "The index card can be updated with the player's name: a small milestone"
+    ]
+  },
+  {
+    "id": "mallards_letters",
+    "title": "The Letter, and Twenty-One Follow-ups",
+    "author": "Larry Piche, captain, Millbrook Mallards",
+    "kind": "letter",
+    "location": "lobby",
+    "unlock": null,
+    "excerpt": "To the Trustees of the Puckworth Cup, 14 January 2005. Dear Sirs and Madams, We understand there will be no professional hockey this year. Sir Reginald's deed says the Cup goes to the finest hockey club in the Dominion, and does not say professional. We are not the finest, but we are a hockey club, and we would like to be considered. We play Tuesdays. Respectfully, the Millbrook Mallards (11 signatures). Follow-up, March 2006: Thank you again for sending the Cup last year. We wondered if the offer stands. Follow-up, March 2026: Still here. Still Tuesdays (and some Thursdays now). Hope you are all well. Larry. Each follow-up is in the same neat handwriting, in a ring binder hung on a chain below the photo. None has had a reply.",
+    "hooks": [
+      "Central lore keepsake: the 2005 letter beside the Cup photo",
+      "Each March a new follow-up is added to the binder",
+      "Year 5 payoff: the trustees reply (PATHS.md w_trustees_reply)"
+    ]
+  },
+  {
+    "id": "bev_chalkboard",
+    "title": "Bev's Chalkboard: Hollows and My Opinions of Them",
+    "author": "Bev Kowalchuk",
+    "kind": "sign",
+    "location": "bevs_shop",
+    "unlock": null,
+    "excerpt": "5/16: THE CAN OPENER. Turns on a dime. Slow in a straight line. Goalies who like to pounce. 3/8: For quick little forwards and people who think they are. 1/2: STANDARD. The way God and the 1979 manual intended. 5/8: Big strides, long glides. Defencemen, mostly. 3/4: Fast. Wide turns. Pray for an open lane. 1 INCH: THE BUTTER KNIFE. Don't try to stop. SKATE GUARDS: $12. Buy them. Concrete is not ice, I don't care what Kessler says. Under that, newer chalk: Rental skates done every Monday. And in the corner, smaller: The new arena owner owes me $8. (Erased later, if you pay it, and replaced with a small drawn heart, which Bev denies.)",
+    "hooks": [
+      "Sharpening hollows and their tradeoffs (PROSHOP section 3)",
+      "Skate guards add a game per sharpening",
+      "Relationship with Bev: pay the $8 to get a heart"
+    ]
+  },
+  {
+    "id": "ref_incident_book",
+    "title": "Referees' Incident Report Book",
+    "author": "Valley Beer League and NSHA officials",
+    "kind": "logbook",
+    "location": "ref_room",
+    "unlock": null,
+    "excerpt": "Game 114, VBL-D. Molars vs Moose Knuckles. Toothbrushes offered in the handshake line. Toothbrushes refused. No penalty, but noted. Game 131, VBL-C. Plungers centre left the ice mid-breakaway (pager). Ruled a line change. Game 140, VBL-C. Sin Bin Brewers D explained Rule 6.2 to me. He was right. Two minutes anyway, for the tone. Lumber Kings vs Harlow Falls. Ice good, home blue line soft (drip). Asked the operator. Operator says roof. Roof says nothing. General remark, every page: Crullers from the Night Owls, very good, please thank Shauna. And in different ink, the newest: Ref room smells of brooms. Could we have a hook?",
+    "hooks": [
+      "Refs report ice and facility problems (reliability, facility)",
+      "Discipline flavour per club, matching teams.json notables",
+      "Small request chain: a hook, a chair, a mirror, a heater for the ref room"
+    ]
+  },
+  {
+    "id": "dedication_plaque",
+    "title": "The Dedication Plaque",
+    "author": "Town of Millbrook, 1974 (with later additions)",
+    "kind": "sign",
+    "location": "lobby",
+    "unlock": null,
+    "excerpt": "Cast bronze, on the wall between the front doors: MILLBROOK COMMUNITY ARENA. Erected by the people of Millbrook with the help of the Millbrook Lumber Kings Hockey Club, Millbrook Dairy and the Millbrook Legion, Branch 112. Opened the second day of November, 1974, by Mayor Harold Penner. \"For the ones who learn to skate here, and the ones who never stop.\" Beneath it, a small brass strip screwed on later: ROOF REPAIRED 1991, 1998, 2004, 2011, 2017. WE'RE TRYING. And beneath that, a gap the exact size of another strip, left on purpose, Gus said, for whoever fixes it properly.",
+    "hooks": [
+      "Opening date and the town's founders of the rink",
+      "Renovating the roof adds the final brass strip: a visible reward",
+      "The plaque is a keepsake: polished at RENOVATED, never moved"
+    ]
+  },
+  {
+    "id": "note_door_oil",
+    "title": "Note on the plant room door",
+    "author": "Gus Tremblay",
+    "kind": "note",
+    "location": "plant_room",
+    "unlock": null,
+    "excerpt": "Oil's in the blue drum. Hand pump. HALF the glass, not full. Number 1 drinks, Number 2 sips. If the glass is empty you are already late.",
+    "hooks": [
+      "M1 day 1: the first taste of the oil service (RINK_SIM.md 2.x, mini game 4.2)",
+      "Hung on the door of notes (DECOR.md)"
+    ]
+  },
+  {
+    "id": "note_screwdriver",
+    "title": "Index card taped to the screwdriver",
+    "author": "Gus Tremblay",
+    "kind": "note",
+    "location": "plant_room",
+    "unlock": null,
+    "excerpt": "Push a screwdriver in at the blue line. If it goes in easy, the ice is soft. If it bounces, you've hit concrete and we have problems. Centre ice and both blue lines. Every morning. Wipe it after.",
+    "hooks": [
+      "The T0 ice check (job ice_check)",
+      "Hung on the door of notes (DECOR.md)"
+    ]
+  },
+  {
+    "id": "note_doris_dash",
+    "title": "Note on Doris's dash",
+    "author": "Gus Tremblay",
+    "kind": "note",
+    "location": "zamboni_bay",
+    "unlock": null,
+    "excerpt": "She won't start cold if Number 3 plug is fouled. Plugs are in the DORIS drawer, second from the top. Hand tight then a quarter. Do NOT cross-thread her, she remembers. Say good morning first. I mean it.",
+    "hooks": [
+      "M1 won't-start tutorial (job doris_plugs, mini game 4.8 slice)"
+    ]
+  }
+]

@@ -1,0 +1,441 @@
+{
+  "id": "moose_kowalczuk",
+  "barks": {
+    "idle": [
+      "A good book and a good rink. That's the whole secret. Moose knows.",
+      "I've got a mystery in my coat. No, I won't tell you who did it."
+    ],
+    "good_ice": [
+      "Look at that sheet. You could read by it.",
+      "Ice like that, the kids skate taller."
+    ],
+    "bad_ice": [
+      "That ice has seen some things. Bless it.",
+      "I spent a lot of time near ice like that. Mostly sitting down."
+    ],
+    "wet_ice": [
+      "A little wet. Like a paperback left out in the rain. Still readable."
+    ],
+    "cold": [
+      "The penalty box in 1984 was colder. I had a book. That helped."
+    ],
+    "hungry": [
+      "Is the canteen open? I'm a large man with a long drive."
+    ],
+    "long_line": [
+      "Lines are where you meet people. I've met half the valley in canteen lines."
+    ],
+    "bored": [
+      "Never bored with a book in your pocket. Moose knows."
+    ],
+    "goal": [
+      "Oh, what a goal! What a lovely goal!",
+      "That's going on the show. I'll make it go on the show."
+    ],
+    "greet_owner": [
+      "Hello, friend!",
+      "There's the person who keeps the lights on. Bless you."
+    ],
+    "leaving_happy": [
+      "What a day. I might cry in the car. I usually do."
+    ],
+    "leaving_angry": [
+      "I'll be kind about it on the show. I'm always kind. But I'll be thinking."
+    ],
+    "event_specific": {
+      "minor_hockey": [
+        "Head up, sweetheart! Head up! There you go!",
+        "No hitting from behind. Ever. Moose knows."
+      ],
+      "special": [
+        "Is it a retirement? I brought three handkerchiefs.",
+        "I'm not crying. I'm being moved. It's different."
+      ],
+      "senior_hockey": [
+        "Clean game, boys. Clean game."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_moose_kowalczuk"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "special"
+        }
+      ],
+      "node": "special"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "moose_kowalczuk",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "(A very large man in very loud plaid takes your hand in both of his.) Moose Kowalczuk. I spent seventeen minutes in your penalty box in 1984 and I left a book. Is it still there?",
+      "do": [
+        {
+          "set": "met_moose_kowalczuk"
+        }
+      ],
+      "options": [
+        {
+          "text": "It's the penalty box library now.",
+          "do": [
+            {
+              "rel": [
+                "moose_kowalczuk",
+                5
+              ]
+            }
+          ],
+          "to": "first_library"
+        },
+        {
+          "text": "Thanks for all the fights, Moose.",
+          "do": [
+            {
+              "rel": [
+                "moose_kowalczuk",
+                -3
+              ]
+            }
+          ],
+          "to": "first_fights"
+        },
+        {
+          "text": "Moose on the Loose! I watch every week.",
+          "do": [
+            {
+              "rel": [
+                "moose_kowalczuk",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_library": {
+      "say": "A library! Oh, that's done it. (He dabs his eyes with a plaid handkerchief.) The butler didn't do it, you know. I left a note.",
+      "options": [
+        {
+          "text": "The note's still there.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_fights": {
+      "say": "Oh, don't thank me for those, friend. I'm not proud of the fights. I'm proud I never hit a man from behind. Thank me for that, if you thank me for anything.",
+      "options": [
+        {
+          "text": "Fair enough. Thank you for that.",
+          "do": [
+            {
+              "rel": [
+                "moose_kowalczuk",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Moose. That's on me.",
+          "do": [
+            {
+              "rel": [
+                "moose_kowalczuk",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll fix it before the next visit.",
+          "to": "hub"
+        }
+      ]
+    },
+    "special": {
+      "say": [
+        "Is there going to be a speech? I brought three handkerchiefs. I've never needed fewer than two.",
+        "Oh, what a night. Look at all of them. Everybody's somebody's, at a night like this."
+      ],
+      "options": [
+        {
+          "text": "Enjoy it, Moose.",
+          "to": "end"
+        },
+        {
+          "text": "Got a minute?",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": "There's my friend! Sit, sit. I've got a new mystery. No spoilers, and that goes for both of us.",
+      "options": [
+        {
+          "text": "No spoilers.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What can Moose do for you?",
+        "Hello, friend. Sit down a minute.",
+        "Ask away. I've got time and a thermos."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What's it like, being on television?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love watching here?",
+          "to": "events"
+        },
+        {
+          "text": "You know Ronnie Haverstock?",
+          "to": "gossip"
+        },
+        {
+          "text": "Tell me about the penalty box library.",
+          "to": "library"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Tell me about your summer hockey school.",
+          "to": "school"
+        },
+        {
+          "text": "Would you interview me, if I ever make the GNHL?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "path_player"
+        },
+        {
+          "text": "Could I teach at your hockey school?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "path_coach"
+        },
+        {
+          "text": "Take care, Moose.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "I sit in a booth and tell the country about hockey players' mothers. It's the best job I ever had. Nobody punches you, and the coffee is free.",
+      "options": [
+        {
+          "text": "Sounds wonderful.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Minor hockey, always. Retirement ceremonies, because I cry and nobody minds. And any night the town turns out for something. A full rink is a good book.",
+      "options": [
+        {
+          "text": "I'll keep the handkerchiefs stocked.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Ronnie's the finest man to come out of this valley. Passed off a dead spot in your boards all the way to two Cups. And Bev sharpened my skates in 1984 and called me 'champ'. Nobody had called me champ. I was a deterrent.",
+      "options": [
+        {
+          "text": "Good company.",
+          "to": "hub"
+        }
+      ]
+    },
+    "library": {
+      "say": "I served seventeen minutes and finished a mystery. I left it on the shelf with a note. TAKE ONE FOR YOUR TWO MINUTES. Somebody added BRING IT BACK. I like that somebody.",
+      "options": [
+        {
+          "text": "I'll add a book of my own.",
+          "if": [
+            {
+              "not_flag": "moose_book_left"
+            }
+          ],
+          "do": [
+            {
+              "set": "moose_book_left"
+            },
+            {
+              "rel": [
+                "moose_kowalczuk",
+                4
+              ]
+            },
+            {
+              "note": "You left a paperback in the penalty box library for Moose."
+            }
+          ],
+          "to": "library_yes"
+        },
+        {
+          "text": "It's a lovely tradition.",
+          "to": "hub"
+        }
+      ]
+    },
+    "library_yes": {
+      "say": "Oh, you lovely person. Put a note in it. Not a spoiler. Just your name and something kind. Here, take my bookmark. It's got a moose on it. Of course it does.",
+      "options": [
+        {
+          "text": "Thank you, Moose.",
+          "do": [
+            {
+              "item": [
+                "moose_bookmark",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "school": {
+      "say": "Four weeks in August, kids from the whole valley, and an old enforcer telling them to keep their heads up. I need ice by the tenth of August. Not the eleventh. The kids have been waiting since June.",
+      "options": [
+        {
+          "text": "Could {rink} host it?",
+          "to": "school_host"
+        },
+        {
+          "text": "Sounds like a great camp.",
+          "to": "hub"
+        }
+      ]
+    },
+    "school_host": {
+      "say": "If the ice is in by the tenth, my agent will call. He's a nice man. He speaks very fast. Pretend you understood him and then call me.",
+      "options": [
+        {
+          "text": "Deal.",
+          "do": [
+            {
+              "rel": [
+                "moose_kowalczuk",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The penalty box is the same box. I could cry. The rest of it has seen better decades.",
+      "options": [
+        {
+          "text": "It's looking better now, though.",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'm working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "Look at this place! New paint, and you kept the box. That's taste. That's knowing what matters. I'll say so on the show.",
+      "options": [
+        {
+          "text": "Thank you, Moose.",
+          "to": "hub"
+        }
+      ]
+    },
+    "path_player": {
+      "say": "Score your first GNHL goal and I'll be the first one at your locker. I'll ask about your mother. I always ask about the mother. Moose knows.",
+      "options": [
+        {
+          "text": "I'll hold you to it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "path_coach": {
+      "say": "Oh, I'd love that. I teach the kids to keep their heads up and their sticks down. You teach them the rest. Bring a whistle and a hanky.",
+      "options": [
+        {
+          "text": "I'll be there.",
+          "do": [
+            {
+              "rel": [
+                "moose_kowalczuk",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Take care, friend. Keep a book in the box.",
+        "Bless you. Moose knows."
+      ],
+      "options": []
+    }
+  }
+}

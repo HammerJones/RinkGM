@@ -1,0 +1,40 @@
+{
+  "collision_cell": 8,
+  "id": "record_player",
+  "inspect": "Belt drive, lid open, a 45 still on the platter.",
+  "mass_kg": 6.0,
+  "mesh": "merged",
+  "name": "Record player",
+  "pivot": [
+    95.0,
+    0,
+    88.5
+  ],
+  "shape": [],
+  "size_m": [
+    0.456,
+    0.4608,
+    0.4248
+  ],
+  "sound": "wood",
+  "source": "third party, see art/props/THIRD_PARTY.md",
+  "tags": [
+    "office",
+    "lounge",
+    "electronics"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "inspect",
+    "push",
+    "use",
+    "open"
+  ],
+  "vox": "art/props/record_player.vox",
+  "voxel_m": 0.0024,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

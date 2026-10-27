@@ -1,0 +1,192 @@
+{
+ "id": "dale_bylaw_fourteen",
+ "giver": "dale_huffman",
+ "quest": "dale_bylaw_fourteen",
+ "nodes": {
+  "offer": {
+   "say": "Page fourteen. Bylaw Fourteen. Ties in the Final. It's gone, {owner}. The binder has never lost a page. Well. It lost a page in 2019, which I now know, because it's gone. If the Last Call Cup final ends tied I'll have to make it up. I don't make things up. I refer to the binder.",
+   "options": [
+    {
+     "text": "I'll find your page.",
+     "do": [
+      {
+       "quest_start": "dale_bylaw_fourteen"
+      },
+      {
+       "rel": [
+        "dale_huffman",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "What does Bylaw Fourteen say?",
+     "to": "why"
+    },
+    {
+     "text": "Can't you just flip a coin?",
+     "do": [
+      {
+       "rel": [
+        "dale_huffman",
+        -1
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "I'm sure it'll turn up.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "If I remembered what it said I wouldn't need the page. That's the point of a binder. I remember it ends with 'and the pitcher'. I don't remember the rest.",
+   "options": [
+    {
+     "text": "Leave it with me.",
+     "do": [
+      {
+       "quest_start": "dale_bylaw_fourteen"
+      },
+      {
+       "rel": [
+        "dale_huffman",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "A coin. A coin is not a bylaw. A coin is chaos with a face on it. Bylaw Six forbids coins, actually. I know Bylaw Six.",
+   "options": [
+    {
+     "text": "Sorry, Dale. I'll find the page.",
+     "do": [
+      {
+       "quest_start": "dale_bylaw_fourteen"
+      },
+      {
+       "rel": [
+        "dale_huffman",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Things don't turn up. Things are filed. Somebody unfiled it.",
+   "do": [
+    {
+     "rel": [
+      "dale_huffman",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Gus borrowed the binder in March 2019 to check the rate for the Ice Holes' ice. That's all I know. Gus filed things in places only Gus understood.",
+   "options": []
+  },
+  "progress": {
+   "say": "Page fourteen?",
+   "options": [
+    {
+     "text": "Checking the office now.",
+     "if": [
+      {
+       "step": [
+        "dale_bylaw_fourteen",
+        "office"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Gus left a clue. The plant room.",
+     "if": [
+      {
+       "step": [
+        "dale_bylaw_fourteen",
+        "plant"
+       ]
+      }
+     ],
+     "to": "p_plant"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_plant": {
+   "say": "The glycol tab? He filed my bylaw with the glycol? That's like filing a man's will with his recipes.",
+   "options": []
+  },
+  "complete": {
+   "say": "Bylaw Fourteen. Oh. Oh, there it is. A coffee ring. Gus. Shall I read it?",
+   "options": [
+    {
+     "text": "Please read it.",
+     "do": [
+      {
+       "rel": [
+        "dale_huffman",
+        3
+       ]
+      }
+     ],
+     "to": "c_read"
+    },
+    {
+     "text": "Just tell me the end.",
+     "to": "c_end"
+    },
+    {
+     "text": "Can I have a tab in the binder too?",
+     "do": [
+      {
+       "set": "owner_tab_in_binder"
+      },
+      {
+       "rel": [
+        "dale_huffman",
+        2
+       ]
+      }
+     ],
+     "to": "c_tab"
+    }
+   ]
+  },
+  "c_read": {
+   "say": "'Bylaw Fourteen. In the event of a tie at the end of overtime in the final of the D Division, the Last Call Cup shall be shared, each team keeping it for half the year, the handover to take place at the Wobbly Pop, and the team receiving it shall buy the pitcher.' And the pitcher! I knew it. I knew it ended with the pitcher.",
+   "options": []
+  },
+  "c_end": {
+   "say": "'And the team receiving it shall buy the pitcher.' The rest is commas. Beautiful commas.",
+   "options": []
+  },
+  "c_tab": {
+   "say": "A tab. For the rink owner. I've never... yes. A blue one. Blue is for people who return things. I'll label it in pen. Not pencil. Pen.",
+   "options": []
+  },
+  "done": {
+   "say": "The binder is whole. The league is whole. I'm going to sit down.",
+   "options": []
+  }
+ }
+}

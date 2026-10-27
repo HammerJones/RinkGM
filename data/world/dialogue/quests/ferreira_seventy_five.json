@@ -1,0 +1,192 @@
+{
+ "id": "ferreira_seventy_five",
+ "giver": "bob_ferreira",
+ "quest": "ferreira_seventy_five",
+ "nodes": {
+  "offer": {
+   "say": "Thirty years dispatching freight at Carrick Junction. Never late. Eleven years chairing this tournament. Never on time. Games every seventy-five minutes, a flood between each. It's a timetable, {owner}. A timetable is a promise.",
+   "options": [
+    {
+     "text": "Then let's keep the promise.",
+     "do": [
+      {
+       "quest_start": "ferreira_seventy_five"
+      },
+      {
+       "rel": [
+        "bob_ferreira",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why is it always late?",
+     "to": "why"
+    },
+    {
+     "text": "Seventy-five minutes is tight. Can we do sixty, no flood?",
+     "to": "sixty"
+    },
+    {
+     "text": "Tournaments run late. That's tournaments.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Overtime. A kid with a bloody nose. A parent who wants to talk to the ref. And the floods, if nobody's on the machine. The floods are the one thing we can control. So I'd like to control them.",
+   "options": [
+    {
+     "text": "I'll have someone on Doris all weekend.",
+     "do": [
+      {
+       "quest_start": "ferreira_seventy_five"
+      },
+      {
+       "rel": [
+        "bob_ferreira",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "sixty": {
+   "say": "Sixty with no flood is cheaper ice and worse ice. The last game Sunday will be played on porridge. The parents of the last game Sunday will remember. They'll remember at registration.",
+   "options": [
+    {
+     "text": "Seventy-five with floods, then.",
+     "do": [
+      {
+       "quest_start": "ferreira_seventy_five"
+      },
+      {
+       "rel": [
+        "bob_ferreira",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "That's what Harlow Falls said. We'll see who the families come back to.",
+   "do": [
+    {
+     "rel": [
+      "bob_ferreira",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "I'll put you on the board in green. Green means on time. I don't use green often.",
+   "options": []
+  },
+  "progress": {
+   "say": "Timetable check.",
+   "options": [
+    {
+     "text": "Edging before the weekend.",
+     "if": [
+      {
+       "step": [
+        "ferreira_seventy_five",
+        "prep"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "How are we doing on the floods?",
+     "if": [
+      {
+       "step": [
+        "ferreira_seventy_five",
+        "floods"
+       ]
+      }
+     ],
+     "to": "p_floods"
+    },
+    {
+     "text": "Floods are done. Just the finals now.",
+     "if": [
+      {
+       "step": [
+        "ferreira_seventy_five",
+        "weekend"
+       ]
+      }
+     ],
+     "to": "p_weekend"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_floods": {
+   "say": "Game four went to overtime. We're six minutes down. Six minutes is recoverable. Six minutes is a fast flood and a firm word with the Kessler Atom A coach.",
+   "options": []
+  },
+  "p_weekend": {
+   "say": "If the final starts on time I'll cry. I'll do it in the office. Discreetly.",
+   "options": []
+  },
+  "complete": {
+   "say": "Last game, Sunday, started at 4:15. It was scheduled for 4:15. Do you understand what you've done? The committee wants you to have this. And the pin. Host pin. Everybody wants the host pin.",
+   "options": [
+    {
+     "text": "What did the committee say?",
+     "to": "c_committee"
+    },
+    {
+     "text": "Same time next year?",
+     "do": [
+      {
+       "rel": [
+        "bob_ferreira",
+        2
+       ]
+      },
+      {
+       "set": "tournament_returns_lead"
+      }
+     ],
+     "to": "c_next"
+    },
+    {
+     "text": "I was sure we'd be late.",
+     "to": "c_late"
+    }
+   ]
+  },
+  "c_committee": {
+   "say": "They said 'Bob, sit down.' I sat down. First time in eleven years I sat down at a tournament.",
+   "options": []
+  },
+  "c_next": {
+   "say": "I'll pencil it in. No. I'll pen it in. Green pen.",
+   "options": []
+  },
+  "c_late": {
+   "say": "So was I. I had a speech ready about it. I'll save it for Harlow Falls.",
+   "options": []
+  },
+  "done": {
+   "say": "On time. I'll be telling people about this at the Legion until I die.",
+   "options": []
+  }
+ }
+}

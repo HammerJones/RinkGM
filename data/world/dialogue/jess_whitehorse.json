@@ -1,0 +1,395 @@
+{
+  "id": "jess_whitehorse",
+  "barks": {
+    "idle": [
+      "Birdie is going to say hi. Birdie is not going to lick the glass.",
+      "We're on fall number forty. She's pacing herself."
+    ],
+    "good_ice": [
+      "Dry ice, dry snowsuit. This is a good day.",
+      "Look at that. She glided. For about a foot. I'm telling her dad."
+    ],
+    "bad_ice": [
+      "Birdie is falling into a rut. On purpose, but still.",
+      "Ice is a bit lumpy for someone her height."
+    ],
+    "wet_ice": [
+      "The snowsuit is now a sponge.",
+      "Birdie is going to get wet. Birdie has gotten wet. Birdie is thrilled."
+    ],
+    "cold": [
+      "Her cheeks are pink. Mine are purple.",
+      "Snack, mitten, hat, other mitten. Where's the other mitten."
+    ],
+    "hungry": [
+      "Birdie wants popcorn. Birdie always wants popcorn."
+    ],
+    "long_line": [
+      "Fifteen minutes in line with a three-year-old is a geological age."
+    ],
+    "bored": [
+      "Is it quiet time yet? It's never quiet time."
+    ],
+    "greet_owner": [
+      "Hi! Birdie, wave at the owner. Other hand. Okay, both.",
+      "Hey. We survived another Friday."
+    ],
+    "leaving_happy": [
+      "Out cold before we hit the highway. Perfect day."
+    ],
+    "leaving_angry": [
+      "We'll try the pond. At least it doesn't charge for wet."
+    ],
+    "event_specific": {
+      "public_skate": [
+        "Teenagers in the toddler zone. Again.",
+        "Irene's on. Birdie, go find your waltz partner."
+      ],
+      "learn_to_skate": [
+        "Birdie is going to keep the helmet on. Birdie has taken the helmet off."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_jess_whitehorse"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "jess_table_promised"
+        },
+        {
+          "rooms_gte": 40
+        }
+      ],
+      "node": "table_thanks"
+    },
+    {
+      "if": [
+        {
+          "event_now": "public_skate"
+        }
+      ],
+      "node": "public"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hi! Sorry, one sec. Birdie is going to stop eating snow. Birdie is going to stop. Okay. Hi. I'm Jess. That's Birdie. She's in charge.",
+      "do": [
+        {
+          "set": "met_jess_whitehorse"
+        }
+      ],
+      "options": [
+        {
+          "text": "Hi Jess. Hi Birdie.",
+          "do": [
+            {
+              "rel": [
+                "jess_whitehorse",
+                3
+              ]
+            }
+          ],
+          "to": "first_hi"
+        },
+        {
+          "text": "Is she always this busy?",
+          "do": [
+            {
+              "rel": [
+                "jess_whitehorse",
+                1
+              ]
+            }
+          ],
+          "to": "first_busy"
+        },
+        {
+          "text": "Please keep her off the boards.",
+          "do": [
+            {
+              "rel": [
+                "jess_whitehorse",
+                -3
+              ]
+            }
+          ],
+          "to": "first_rules"
+        }
+      ]
+    },
+    "first_hi": {
+      "say": "She's waving. That's a wave. It's also a fist. With her it's both.",
+      "options": [
+        {
+          "text": "Good to meet you both.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_busy": {
+      "say": "She falls down every four seconds. Half of them are on purpose. She won't say which half.",
+      "options": [
+        {
+          "text": "A professional.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_rules": {
+      "say": "Oh. Sure. She's three, so I'll pass that on and she'll ignore it. Same as me with the snowsuit rules.",
+      "options": [
+        {
+          "text": "Sorry, that came out wrong.",
+          "do": [
+            {
+              "rel": [
+                "jess_whitehorse",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Thanks.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry. That's not the rink I want.",
+          "do": [
+            {
+              "rel": [
+                "jess_whitehorse",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll sort it out.",
+          "to": "hub"
+        }
+      ]
+    },
+    "public": {
+      "say": [
+        "It's Friday. It's quiet. Birdie is not quiet, but the rink is.",
+        "We're on the ice. Well, Birdie is on the ice. Mostly near it."
+      ],
+      "options": [
+        {
+          "text": "Got a minute?",
+          "to": "hub"
+        }
+      ]
+    },
+    "table_thanks": {
+      "say": "There's a changing table. In the washroom. With a strap. Birdie is going to say thank you. Birdie is screaming. That's thank you.",
+      "options": [
+        {
+          "text": "You're welcome, Birdie.",
+          "do": [
+            {
+              "rel": [
+                "jess_whitehorse",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What's up? Birdie, not the glass.",
+        "Hey. Quick, before she escapes.",
+        "Hi. We're fine. We're always fine. Mostly."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What do you do when you're not here?",
+          "to": "job"
+        },
+        {
+          "text": "Why public skate on Fridays?",
+          "to": "events"
+        },
+        {
+          "text": "Who are your rink friends?",
+          "to": "gossip"
+        },
+        {
+          "text": "How's the rink for little kids?",
+          "to": "rink"
+        },
+        {
+          "text": "Anything that would make it easier with Birdie?",
+          "if": [
+            {
+              "not_flag": "jess_table_promised"
+            }
+          ],
+          "to": "table"
+        },
+        {
+          "text": "Have fun, you two.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Vet tech, three days a week. Yesterday I held a beagle who ate a sock. Today it's Birdie. Honestly, similar skills.",
+      "options": [
+        {
+          "text": "Sounds exhausting.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Fridays are quiet. I grew up on the lake at Port Ainsley and I want her to have the same winters. Learn-to-skate when she'll keep a helmet on. Broomball if anyone babysits.",
+      "options": [
+        {
+          "text": "The lake sounds lovely.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Irene's our favourite. She waltzes with Birdie like it's a ballroom. And Earl waves at her from the Zambelli. He pretends he doesn't. He does.",
+      "options": [
+        {
+          "text": "Earl waves? Earl?",
+          "to": "gossip_earl"
+        },
+        {
+          "text": "That's sweet.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip_earl": {
+      "say": "Tiny wave. Two fingers off the wheel. If you tell him I told you, I'll deny it and so will Birdie. Loudly.",
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "do": [
+            {
+              "rel": [
+                "jess_whitehorse",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Honestly? Lovely ice when it's dry, and teens racing through the toddler zone. And no changing table. I change her on the bench like it's 1974.",
+      "options": [
+        {
+          "text": "Better lately?",
+          "if": [
+            {
+              "ice_gte": 60
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "The ice is dry most Fridays now. That's a whole snowsuit saved. You have no idea what a dry snowsuit is worth.",
+      "options": [
+        {
+          "text": "I'm learning.",
+          "to": "hub"
+        }
+      ]
+    },
+    "table": {
+      "say": "A changing table. In the washroom. One with a strap. She's three, she's strong, and she does not consent to being changed.",
+      "options": [
+        {
+          "text": "I'll get one put in. Promise.",
+          "do": [
+            {
+              "set": "jess_table_promised"
+            },
+            {
+              "rel": [
+                "jess_whitehorse",
+                4
+              ]
+            },
+            {
+              "note": "Promised Jess Whitehorse a changing table in the washroom."
+            }
+          ],
+          "to": "table_yes"
+        },
+        {
+          "text": "Not in the budget, sorry.",
+          "do": [
+            {
+              "rel": [
+                "jess_whitehorse",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "table_yes": {
+      "say": "Really? Birdie is going to thank you when it happens. Birdie will not remember. I will.",
+      "options": [
+        {
+          "text": "Hold me to it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Bye! Birdie, say bye. She's saying bye to the wall. Close enough.",
+        "See you Friday."
+      ],
+      "options": []
+    }
+  }
+}

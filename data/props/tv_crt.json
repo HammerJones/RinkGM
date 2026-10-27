@@ -1,0 +1,39 @@
+{
+  "collision_cell": 8,
+  "id": "tv_crt",
+  "inspect": "A 19-inch set with a dial tuner. Warms up for a full minute, then hums.",
+  "mass_kg": 18.0,
+  "mesh": "merged",
+  "name": "CRT television",
+  "pivot": [
+    48.5,
+    0,
+    43.0
+  ],
+  "shape": [],
+  "size_m": [
+    0.4462,
+    0.4416,
+    0.3956
+  ],
+  "sound": "plastic",
+  "source": "third party, see art/props/THIRD_PARTY.md",
+  "tags": [
+    "lounge",
+    "office",
+    "electronics"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "inspect",
+    "push",
+    "use"
+  ],
+  "vox": "art/props/tv_crt.vox",
+  "voxel_m": 0.0046,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

@@ -1,0 +1,193 @@
+{
+ "id": "nell_one_hook",
+ "giver": "nell_haraldsen",
+ "quest": "nell_one_hook",
+ "nodes": {
+  "offer": {
+   "say": "Nell Haraldsen, I ref your beer league. Four nights a week I hang my coat on the floor of a room that smells of brooms, because there's one hook and Gord the linesman got there first. It's in the book. I've been writing it in the book.",
+   "options": [
+    {
+     "text": "Two more hooks, coming up.",
+     "do": [
+      {
+       "quest_start": "nell_one_hook"
+      },
+      {
+       "rel": [
+        "nell_haraldsen",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Does anybody read the book?",
+     "to": "book"
+    },
+    {
+     "text": "Have you considered a smaller coat?",
+     "to": "cheek"
+    },
+    {
+     "text": "Hooks are low on my list right now.",
+     "to": "decline"
+    }
+   ]
+  },
+  "book": {
+   "say": "You do now. Gus did. Gus read it every Monday and fixed one thing a month. Hook, chair, mirror, heater. In that order. He died. No, sorry. He moved to Florida. Same thing, for a ref room.",
+   "options": [
+    {
+     "text": "Then I'll start with the hook.",
+     "do": [
+      {
+       "quest_start": "nell_one_hook"
+      },
+      {
+       "rel": [
+        "nell_haraldsen",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "I've considered a smaller job. Then I remember how much I love calling icing on the Ice Holes.",
+   "options": [
+    {
+     "text": "Fair. Hooks it is.",
+     "do": [
+      {
+       "quest_start": "nell_one_hook"
+      },
+      {
+       "rel": [
+        "nell_haraldsen",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Understood. The floor's not going anywhere. Neither's my coat.",
+   "do": [
+    {
+     "rel": [
+      "nell_haraldsen",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "You're a gentleman and a scholar. Or a lady. I've only seen you on skates, I can't tell from the stands.",
+   "options": []
+  },
+  "progress": {
+   "say": "Hook report?",
+   "options": [
+    {
+     "text": "I'll ask Earl about spares.",
+     "if": [
+      {
+       "step": [
+        "nell_one_hook",
+        "earl"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Got the hooks. Putting them up.",
+     "if": [
+      {
+       "step": [
+        "nell_one_hook",
+        "mount"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "They're up. Try them tonight.",
+     "if": [
+      {
+       "step": [
+        "nell_one_hook",
+        "game"
+       ]
+      }
+     ],
+     "to": "p_game"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_game": {
+   "say": "I'm going to hang my coat with great ceremony. I might hang it twice.",
+   "options": []
+  },
+  "complete": {
+   "say": "Three officials, three coats, zero on the floor. I wrote it in the book. I underlined 'grateful'. I've never underlined anything in that book that wasn't a penalty.",
+   "options": [
+    {
+     "text": "Next is the chair, right?",
+     "do": [
+      {
+       "rel": [
+        "nell_haraldsen",
+        2
+       ]
+      }
+     ],
+     "to": "c_chair"
+    },
+    {
+     "text": "Don't call icing on my team, then.",
+     "do": [
+      {
+       "rel": [
+        "nell_haraldsen",
+        -1
+       ]
+      }
+     ],
+     "to": "c_cheek"
+    },
+    {
+     "text": "Glad I could help.",
+     "to": "c_glad"
+    }
+   ]
+  },
+  "c_chair": {
+   "say": "Hook, chair, mirror, heater. Gus's order. You've done the hook. I'm not asking for the chair. I'm just saying it's next.",
+   "options": []
+  },
+  "c_cheek": {
+   "say": "Oh, I'll call it twice now. Out of affection.",
+   "options": []
+  },
+  "c_glad": {
+   "say": "You did. And I'll remember it the next time your D leaves the zone early.",
+   "options": []
+  },
+  "done": {
+   "say": "Coat's on a hook. Life is good.",
+   "options": []
+  }
+ }
+}

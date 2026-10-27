@@ -1,0 +1,392 @@
+{
+  "id": "birdie_whitehorse",
+  "barks": {
+    "idle": [
+      "BIRD!",
+      "Again!",
+      "Fall down!"
+    ],
+    "good_ice": [
+      "WHEEE!",
+      "Fast!"
+    ],
+    "bad_ice": [
+      "Bumpy!",
+      "Uh oh."
+    ],
+    "wet_ice": [
+      "Wet! Wet! WET!",
+      "Splash!"
+    ],
+    "cold": [
+      "Cold nose!",
+      "Mitten. MITTEN."
+    ],
+    "hungry": [
+      "Popcorn!",
+      "Popcorn! Now!"
+    ],
+    "long_line": [
+      "Down! DOWN!"
+    ],
+    "bored": [
+      "Go! Go now!",
+      "Snowbank!"
+    ],
+    "goal": [
+      "YAY!",
+      "Again!"
+    ],
+    "greet_owner": [
+      "Hi! HI!",
+      "You!"
+    ],
+    "leaving_happy": [
+      "Bye bye ice!",
+      "DOWIS bye!"
+    ],
+    "leaving_angry": [
+      "No! NO snowsuit!"
+    ],
+    "event_specific": {
+      "public_skate": [
+        "Fall down! Again!",
+        "Waltz!"
+      ],
+      "learn_to_skate": [
+        "No hat!",
+        "Chair! My chair!"
+      ],
+      "special": [
+        "Music!",
+        "DOWIS!"
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_birdie_whitehorse"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "birdie_dowis_friend"
+        }
+      ],
+      "node": "dowis_friend"
+    },
+    {
+      "if": [
+        {
+          "event_now": "public_skate"
+        }
+      ],
+      "node": "public"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "BIRD! (Jess: \"That's you. You're a bird now. Sorry. She does that.\")",
+      "do": [
+        {
+          "set": "met_birdie_whitehorse"
+        }
+      ],
+      "options": [
+        {
+          "text": "Hi, Birdie!",
+          "do": [
+            {
+              "rel": [
+                "birdie_whitehorse",
+                3
+              ]
+            }
+          ],
+          "to": "first_hi"
+        },
+        {
+          "text": "(Wave.)",
+          "do": [
+            {
+              "rel": [
+                "birdie_whitehorse",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Hello, Jess.",
+          "to": "first_jess"
+        }
+      ]
+    },
+    "first_hi": {
+      "say": "HI! HI! HI! (Jess: \"That's three. She likes you. Four would be marriage.\")",
+      "options": [
+        {
+          "text": "Hi number four?",
+          "do": [
+            {
+              "rel": [
+                "birdie_whitehorse",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Nice to meet you.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_jess": {
+      "say": "NO. ME. (Jess: \"She'd like you to talk to her. She's the boss. I'm the driver.\")",
+      "options": [
+        {
+          "text": "Sorry, Birdie. Hi.",
+          "do": [
+            {
+              "rel": [
+                "birdie_whitehorse",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "NO. (Jess: \"Birdie had a wet bench and a wet snowsuit and she would like to speak to the manager. That's you.\")",
+      "options": [
+        {
+          "text": "Sorry, Birdie. I'll fix it.",
+          "do": [
+            {
+              "rel": [
+                "birdie_whitehorse",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Want some popcorn?",
+          "to": "popcorn"
+        }
+      ]
+    },
+    "public": {
+      "say": [
+        "Fall down! (She falls down.) Again! (She falls down again.)",
+        "ICE! (Jess: \"She'd like you to know the ice is here.\")"
+      ],
+      "options": [
+        {
+          "text": "Nice fall!",
+          "do": [
+            {
+              "rel": [
+                "birdie_whitehorse",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Careful, Birdie.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dowis_friend": {
+      "say": "DOWIS FRIEND! (Jess: \"You're the Doris friend now. There's no going back.\")",
+      "options": [
+        {
+          "text": "Hi, Birdie!",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "DOWIS?",
+        "Bird!",
+        "(Birdie points at you, then at the ice, then at you.) Ice!"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What are you doing today, Birdie?",
+          "to": "job"
+        },
+        {
+          "text": "Do you like skating?",
+          "to": "events"
+        },
+        {
+          "text": "Who's your friend?",
+          "to": "gossip"
+        },
+        {
+          "text": "Do you like the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Want to see Doris?",
+          "if": [
+            {
+              "not_flag": "birdie_dowis_friend"
+            }
+          ],
+          "to": "dowis"
+        },
+        {
+          "text": "Want some popcorn?",
+          "to": "popcorn"
+        },
+        {
+          "text": "Bye, Birdie!",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "FALL DOWN. (Jess: \"She's a professional faller. Half of them are on purpose.\")",
+      "options": [
+        {
+          "text": "Good job.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Skate! Fall! Again! (Jess: \"Public skate, Fridays. Learn-to-skate with Colette once she keeps the helmet on.\")",
+      "options": [
+        {
+          "text": "Sounds fun.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "EARL! (Jess: \"Earl waves at her from the Zambelli. He pretends he doesn't.\") Rene! (Jess: \"Irene. They waltz.\")",
+      "options": [
+        {
+          "text": "Good friends.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "COLD. (Jess: \"She means the bench. She also means everything. She's three.\")",
+      "options": [
+        {
+          "text": "Is the rink nicer now?",
+          "if": [
+            {
+              "rooms_gte": 35
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll warm it up.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "WARM! (Birdie hugs the nearest radiator.) (Jess: \"She's never hugged a radiator before. That's a review.\")",
+      "options": [
+        {
+          "text": "Five stars from Birdie.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dowis": {
+      "say": "DOWIS!!! (Jess: \"Oh no. You said the word. Now we're going to stand at the glass until she comes out.\")",
+      "options": [
+        {
+          "text": "Let's go watch for her.",
+          "do": [
+            {
+              "set": "birdie_dowis_friend"
+            },
+            {
+              "rel": [
+                "birdie_whitehorse",
+                5
+              ]
+            }
+          ],
+          "to": "dowis_glass"
+        }
+      ]
+    },
+    "dowis_glass": {
+      "say": "(Doris rumbles out of the bay. Birdie presses both hands and her face on the glass.) DOWIS! HI DOWIS! (Earl lifts two fingers off the wheel.)",
+      "options": [
+        {
+          "text": "Earl waved!",
+          "to": "hub"
+        }
+      ]
+    },
+    "popcorn": {
+      "say": "POPCORN! (Jess: \"That's two dollars of popcorn and one dollar of floor. Thank you.\")",
+      "options": [
+        {
+          "text": "(Buy her a small bag.)",
+          "do": [
+            {
+              "money": -2
+            },
+            {
+              "rel": [
+                "birdie_whitehorse",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Maybe after.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "BYE! BYE! BYE! (Jess: \"She'll keep going until you're in the parking lot.\")",
+        "Bye bye! (She waves at the wrong person. Then you. Then the wall.)"
+      ],
+      "options": []
+    }
+  }
+}

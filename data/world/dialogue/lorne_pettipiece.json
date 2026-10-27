@@ -1,0 +1,378 @@
+{
+  "id": "lorne_pettipiece",
+  "barks": {
+    "idle": [
+      "Measure twice. Talk once.",
+      "(He runs a thumb along a broken shaft.) Good grain on this one."
+    ],
+    "good_ice": [
+      "Ice is like a good tabletop. Flat, and you notice when it isn't."
+    ],
+    "bad_ice": [
+      "That ice needs a plane."
+    ],
+    "wet_ice": [
+      "Wet. Like glue that's in a hurry."
+    ],
+    "cold": [
+      "Cold's fine. Wood likes it steady."
+    ],
+    "hungry": [
+      "Bev usually has a coffee going. I'll go see."
+    ],
+    "long_line": [
+      "I'll wait. Glue waits. So can I."
+    ],
+    "bored": [
+      "(He measures the armrest of his seat with his fingers.)"
+    ],
+    "goal": [
+      "Broke his stick on that one. I'll take it."
+    ],
+    "greet_owner": [
+      "Afternoon.",
+      "Afternoon. Barrel's filling up, I hear."
+    ],
+    "leaving_happy": [
+      "Good night. Got three Kodiaks for the truck."
+    ],
+    "leaving_angry": [
+      "I'll go back to my shop. It doesn't leak."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "There goes another stick. Wood, I hope.",
+        "Composite. Shame. They don't plane."
+      ],
+      "senior_hockey": [
+        "That's a Warlock he just broke. Forty-two."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_lorne_pettipiece"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "game"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Lorne Pettipiece. Woodworks, outside Harlow Falls. I buy Bev's broken sticks. Three dollars for wood, a dollar for composite, and I'm overpaying for the composite.",
+      "do": [
+        {
+          "set": "met_lorne_pettipiece"
+        }
+      ],
+      "options": [
+        {
+          "text": "What do you make with them?",
+          "do": [
+            {
+              "rel": [
+                "lorne_pettipiece",
+                2
+              ]
+            }
+          ],
+          "to": "first_make"
+        },
+        {
+          "text": "(Sit on the bench by the front doors.)",
+          "do": [
+            {
+              "rel": [
+                "lorne_pettipiece",
+                -2
+              ]
+            }
+          ],
+          "to": "first_sit"
+        },
+        {
+          "text": "Nice to meet you, Lorne.",
+          "do": [
+            {
+              "rel": [
+                "lorne_pettipiece",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_make": {
+      "say": "Coat racks. Benches. The odd Adirondack chair. That bench by your front doors is forty-one broken Warlocks.",
+      "options": [
+        {
+          "text": "I've seen it. It's beautiful.",
+          "do": [
+            {
+              "rel": [
+                "lorne_pettipiece",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_sit": {
+      "say": "It's dry. Good. (A pause.) The new one in the truck isn't. I'll tell you when.",
+      "options": [
+        {
+          "text": "Sorry.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Lorne.",
+          "do": [
+            {
+              "rel": [
+                "lorne_pettipiece",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll set it right.",
+          "to": "hub"
+        }
+      ]
+    },
+    "game": {
+      "say": [
+        "Watching for broken sticks. Professionally.",
+        "(He nods at the ice.) Number nine's stick won't last the period. Wood. Good."
+      ],
+      "options": [
+        {
+          "text": "Enjoy the game.",
+          "to": "end"
+        },
+        {
+          "text": "Got a minute?",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Afternoon.",
+        "(He nods.) Go on.",
+        "Mm. What can I do for you?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the workshop?",
+          "to": "job"
+        },
+        {
+          "text": "What brings you to the rink?",
+          "to": "events"
+        },
+        {
+          "text": "How do you know Bev?",
+          "to": "gossip"
+        },
+        {
+          "text": "Tell me about the Warlock bench.",
+          "to": "bench"
+        },
+        {
+          "text": "What do you make of the building?",
+          "to": "rink"
+        },
+        {
+          "text": "Could you take the stick barrel regularly?",
+          "if": [
+            {
+              "not_flag": "lorne_standing_order"
+            }
+          ],
+          "to": "order"
+        },
+        {
+          "text": "See you, Lorne.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "A workshop with a house attached. Most days it's me, a plane and the radio. The radio does most of the talking.",
+      "options": [
+        {
+          "text": "Sounds peaceful.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Beer league, for the broken sticks. Lumber Kings, for the broken sticks and the hockey. A good dovetail and a good power play are the same thing. Everything fits.",
+      "options": [
+        {
+          "text": "Never thought of it that way.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Bev and I go back. She keeps the barrel, I keep her honest about composites. She says the bench is sturdier than the sticks ever were. She's right. She usually is.",
+      "options": [
+        {
+          "text": "And Penny Marchetti?",
+          "to": "gossip_penny"
+        },
+        {
+          "text": "Good friend.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip_penny": {
+      "say": "Wants skate aids for grown-ups out of broken sticks. Good idea. Six out of Honests is a Tuesday.",
+      "options": [
+        {
+          "text": "She'll be thrilled.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bench": {
+      "say": "Forty-one Warlocks, two winters of glue-ups and one argument with Bev about which way the grain runs. I won. She says she let me.",
+      "options": [
+        {
+          "text": "Could you make one for the stands someday?",
+          "do": [
+            {
+              "rel": [
+                "lorne_pettipiece",
+                1
+              ]
+            }
+          ],
+          "to": "bench_stands"
+        },
+        {
+          "text": "It's a great bench.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bench_stands": {
+      "say": "Maybe. When the barrel's full. Wood doesn't rush and neither do I.",
+      "options": [
+        {
+          "text": "Whenever you're ready.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Good bones. The old dressing room benches are real maple, which nobody builds with any more. The seats are a different story.",
+      "options": [
+        {
+          "text": "We've done some work since.",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'm working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "Somebody's been careful in here. The joins are clean. I notice joins.",
+      "options": [
+        {
+          "text": "Thank you, Lorne.",
+          "to": "hub"
+        }
+      ]
+    },
+    "order": {
+      "say": "Every two weeks, I'll come for the barrel. Three a wooden shaft, a dollar a composite. Bev keeps the count. There's about twenty dollars in it today.",
+      "options": [
+        {
+          "text": "Deal. Standing order.",
+          "do": [
+            {
+              "set": "lorne_standing_order"
+            },
+            {
+              "money": 20
+            },
+            {
+              "rel": [
+                "lorne_pettipiece",
+                3
+              ]
+            },
+            {
+              "note": "Lorne Pettipiece will take the broken-stick barrel every two weeks: $3 a wooden shaft, $1 a composite."
+            }
+          ],
+          "to": "order_yes"
+        },
+        {
+          "text": "Let me think about it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "order_yes": {
+      "say": "Good. (He shakes your hand, once, firmly. It feels like a contract signed in oak.)",
+      "options": [
+        {
+          "text": "Pleasure doing business.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Afternoon.",
+        "(He nods and goes to look at the barrel.)"
+      ],
+      "options": []
+    }
+  }
+}

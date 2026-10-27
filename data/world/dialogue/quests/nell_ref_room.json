@@ -1,0 +1,223 @@
+{
+ "id": "nell_ref_room",
+ "giver": "nell_haraldsen",
+ "quest": "nell_ref_room",
+ "nodes": {
+  "offer": {
+   "say": "I wasn't going to ask. I'm asking. Chair, mirror, heater. Gus did one a month. You've got a better building than Gus had. Well. A building. Same building. You know what I mean.",
+   "options": [
+    {
+     "text": "Chair, mirror, heater. Let's finish it.",
+     "do": [
+      {
+       "quest_start": "nell_ref_room"
+      },
+      {
+       "rel": [
+        "nell_haraldsen",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why a mirror? Refs don't need to look good.",
+     "to": "mirror"
+    },
+    {
+     "text": "One thing at a time, Nell.",
+     "to": "decline"
+    }
+   ]
+  },
+  "mirror": {
+   "say": "Refs need to check their collar before they walk out in front of six hundred people at a Lumber Kings game. A crooked collar and the rafters end eat you alive. Stan Szymanski once shouted 'TIE' at me. I wasn't wearing a tie.",
+   "options": [
+    {
+     "text": "Fair. All three, then.",
+     "do": [
+      {
+       "quest_start": "nell_ref_room"
+      },
+      {
+       "rel": [
+        "nell_haraldsen",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "One thing at a time is how Gus did it. Fine. I'll be here. On my hook.",
+   "do": [
+    {
+     "rel": [
+      "nell_haraldsen",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Lorne's the chair man. Bev says he made her a bench out of Warlocks. I'd sit on a Warlock bench. I wouldn't shoot with one.",
+   "options": []
+  },
+  "progress": {
+   "say": "The ref room, part two.",
+   "options": [
+    {
+     "text": "Lorne's next, for the chair.",
+     "if": [
+      {
+       "step": [
+        "nell_ref_room",
+        "chair"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Chair's done. About the mirror.",
+     "if": [
+      {
+       "step": [
+        "nell_ref_room",
+        "mirror"
+       ]
+      }
+     ],
+     "to": "p_mirror"
+    },
+    {
+     "text": "Working on a heater circuit.",
+     "if": [
+      {
+       "step": [
+        "nell_ref_room",
+        "rooms"
+       ]
+      }
+     ],
+     "to": "p_rooms"
+    },
+    {
+     "text": "All in. Try it for a few games.",
+     "if": [
+      {
+       "step": [
+        "nell_ref_room",
+        "games"
+       ]
+      }
+     ],
+     "to": "p_games"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_mirror": {
+   "say": "Any mirror. I'm not fussy. Well, I'm a ref. I'm a little fussy.",
+   "options": [
+    {
+     "text": "A new one from Penner Hardware.",
+     "do": [
+      {
+       "set": "ref_mirror_new"
+      },
+      {
+       "set": "ref_mirror_chosen"
+      },
+      {
+       "money": -40
+      }
+     ],
+     "to": "p_new"
+    },
+    {
+     "text": "The cracked valley mirror from the washroom. With a label.",
+     "do": [
+      {
+       "set": "valley_mirror_ref_room"
+      },
+      {
+       "set": "ref_mirror_chosen"
+      },
+      {
+       "rel": [
+        "nell_haraldsen",
+        3
+       ]
+      }
+     ],
+     "to": "p_valley"
+    }
+   ]
+  },
+  "p_new": {
+   "say": "Clean, flat, no cracks. I'll look like a real official. It'll be a shock to everyone.",
+   "options": []
+  },
+  "p_valley": {
+   "say": "The one with the five towns on it? You'd give the ref room the map of the valley? I can check my collar and the road to Kessler at once. That's the nicest thing anyone's done for an official since Shauna's crullers.",
+   "options": []
+  },
+  "p_rooms": {
+   "say": "Breaker 9 is the space heater in Gus's office. Breaker 14 is a secret. Breaker 9 is just bad.",
+   "options": []
+  },
+  "p_games": {
+   "say": "I sat down at the second intermission. Sat down! On a chair! I nearly called a penalty on myself for comfort.",
+   "options": []
+  },
+  "complete": {
+   "say": "Hook, chair, mirror, heater. Gus's list, done. We wrote you a page in the book. Not a line. A page. Gord drew a picture of you. It's not very good. It's very sincere.",
+   "options": [
+    {
+     "text": "Can I read it?",
+     "do": [
+      {
+       "rel": [
+        "nell_haraldsen",
+        2
+       ]
+      }
+     ],
+     "to": "c_read"
+    },
+    {
+     "text": "Does this mean you'll call my games kinder?",
+     "to": "c_kind"
+    },
+    {
+     "text": "Thank Gus. It was his list.",
+     "to": "c_gus"
+    }
+   ]
+  },
+  "c_read": {
+   "say": "'The ice at Millbrook is good. The room is warm. The owner listens. If the D Division would stop explaining Rule 6.2 to us, it would be the best rink in the valley.' And then Gord's picture. You have a lot of hair in it.",
+   "options": []
+  },
+  "c_kind": {
+   "say": "Kinder, no. Fairer, yes. A warm ref is a fair ref. That's not in the rulebook. It should be.",
+   "options": []
+  },
+  "c_gus": {
+   "say": "I'll send him a postcard. Refs and Gus go way back. He used to bring us coffee and stand outside the door saying 'WE CAN'T HEAR YOU'. We could.",
+   "options": []
+  },
+  "done": {
+   "say": "Best ref room in the valley. Harlow Falls has a bench and a bucket.",
+   "options": []
+  }
+ }
+}

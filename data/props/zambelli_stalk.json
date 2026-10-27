@@ -1,0 +1,35 @@
+{
+  "collision_cell": 8,
+  "id": "zambelli_stalk",
+  "inspect": "A tall stalk with a ball on top, beside the levers.",
+  "mass_kg": 1.2,
+  "mesh": "merged",
+  "name": "Console stalk",
+  "pivot": [
+    13.5,
+    0,
+    14.0
+  ],
+  "size_m": [
+    0.081,
+    0.438,
+    0.084
+  ],
+  "sound": "metal",
+  "source": "tools/propgen/zambelli_glb.py",
+  "tags": [
+    "machine",
+    "resurfacer"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/zambelli_stalk.vox",
+  "voxel_m": 0.003,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}

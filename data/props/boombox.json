@@ -1,0 +1,41 @@
+{
+  "collision_cell": 8,
+  "id": "boombox",
+  "inspect": "A two-speaker portable from the year the rink opened. The tape door only closes if you hold it.",
+  "mass_kg": 4.5,
+  "mesh": "merged",
+  "name": "Boombox",
+  "pivot": [
+    93.5,
+    0,
+    21.5
+  ],
+  "shape": [],
+  "size_m": [
+    0.561,
+    0.24,
+    0.129
+  ],
+  "sound": "plastic",
+  "source": "tools/propgen/library.py",
+  "tags": [
+    "dressing_room",
+    "lounge",
+    "electronics",
+    "handheld"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "take",
+    "inspect",
+    "push",
+    "use"
+  ],
+  "vox": "art/props/boombox.vox",
+  "voxel_m": 0.003,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.1",
+    "worn": "tint:8a7a60:0.25"
+  }
+}

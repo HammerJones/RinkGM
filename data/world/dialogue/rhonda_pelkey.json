@@ -1,0 +1,359 @@
+{
+  "id": "rhonda_pelkey",
+  "barks": {
+    "idle": [
+      "Hey, Skates! Yeah, you. That's your name now.",
+      "Broomball is hockey for people with jobs."
+    ],
+    "good_ice": [
+      "Ice is grippy! Somebody tell Earl he did good. Don't tell him I said it."
+    ],
+    "bad_ice": [
+      "This ice ate a sneaker. I want it back."
+    ],
+    "wet_ice": [
+      "WHO FLOODED? Earl. It was Earl. It's always Earl.",
+      "Wet ice before broomball is a crime in three provinces."
+    ],
+    "cold": [
+      "Cold? I'm in shorts. Grow up."
+    ],
+    "hungry": [
+      "Fries! For the goalie! Goalies eat first!"
+    ],
+    "long_line": [
+      "Move it along, folks, the goalie's starving!"
+    ],
+    "bored": [
+      "Somebody chirp me. I'm getting rusty."
+    ],
+    "goal": [
+      "THAT'S A GOAL! Not on me, obviously.",
+      "Lucky! Lucky!"
+    ],
+    "greet_owner": [
+      "Boss! Big Boss! How's the empire?",
+      "There's the landlord! Is my flood on time?"
+    ],
+    "leaving_happy": [
+      "Good night! Nobody curled! Nobody curled at all!"
+    ],
+    "leaving_angry": [
+      "The Golden Boot's staying on my porch. Forever."
+    ],
+    "event_specific": {
+      "broomball": [
+        "Grip tape, people! Grip tape!",
+        "It is NOT curling with a ball!"
+      ],
+      "special": [
+        "Carnival night! Where's my Golden Boot?"
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_rhonda_pelkey"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "rhonda_calls_you_curling"
+        }
+      ],
+      "node": "curling_greet"
+    },
+    {
+      "if": [
+        {
+          "event_now": "broomball"
+        }
+      ],
+      "node": "game"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "You're the owner? Rhonda Pelkey. Harlow Falls Broomball Club, in goal. I name everybody in the first minute. Give me something to work with.",
+      "do": [
+        {
+          "set": "met_rhonda_pelkey"
+        }
+      ],
+      "options": [
+        {
+          "text": "Broomball? Isn't that curling with a ball?",
+          "do": [
+            {
+              "rel": [
+                "rhonda_pelkey",
+                -2
+              ]
+            },
+            {
+              "set": "rhonda_calls_you_curling"
+            }
+          ],
+          "to": "first_curling"
+        },
+        {
+          "text": "I'm the one who decides when the flood happens.",
+          "do": [
+            {
+              "rel": [
+                "rhonda_pelkey",
+                3
+              ]
+            }
+          ],
+          "to": "first_flood"
+        },
+        {
+          "text": "Nice to meet you, Rhonda.",
+          "do": [
+            {
+              "rel": [
+                "rhonda_pelkey",
+                1
+              ]
+            }
+          ],
+          "to": "first_nice"
+        }
+      ]
+    },
+    "first_curling": {
+      "say": "Oh, you did NOT. Okay. Your name is Curling now. That's on you. That's permanent. Well, almost permanent.",
+      "options": [
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_flood": {
+      "say": "Ohhh. Then you're Big Boss. And you and me are going to have a lot of talks about Wednesday nights.",
+      "options": [
+        {
+          "text": "Looking forward to it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_nice": {
+      "say": "Polite! Okay. You're Manners. Don't worry, it'll change. Everyone gets a better one eventually.",
+      "options": [
+        {
+          "text": "I'll earn it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "Sorry, Rhonda. That's on me.",
+          "do": [
+            {
+              "rel": [
+                "rhonda_pelkey",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "curling_greet": {
+      "say": "Well if it isn't Curling. Still think it's curling with a ball?",
+      "options": [
+        {
+          "text": "I take it back. Broomball is real.",
+          "do": [
+            {
+              "clear": "rhonda_calls_you_curling"
+            },
+            {
+              "rel": [
+                "rhonda_pelkey",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Absolutely.",
+          "do": [
+            {
+              "rel": [
+                "rhonda_pelkey",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "game": {
+      "say": [
+        "Game night! Shorts on, sneakers taped, crease defended. Hi, Boss.",
+        "Hold on, hold on. (She blocks a ball with her face.) OKAY. Hi."
+      ],
+      "options": [
+        {
+          "text": "Go get 'em, Rhonda.",
+          "to": "end"
+        },
+        {
+          "text": "Quick word?",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Talk to me, Boss.",
+        "What's up? Make it fast, I've got a crease to defend.",
+        "Yo! What?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What's hydro dispatch like?",
+          "to": "job"
+        },
+        {
+          "text": "Sell me on broomball.",
+          "to": "events"
+        },
+        {
+          "text": "Tell me about the Golden Boot.",
+          "to": "boot"
+        },
+        {
+          "text": "Who's on your team?",
+          "to": "gossip"
+        },
+        {
+          "text": "What's the ice like for you?",
+          "to": "rink"
+        },
+        {
+          "text": "See you, Rhonda.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Hydro dispatch. Storm comes in, forty trucks, ten thousand people with no power, and me, calm as a lake. Then I go stand in front of a ball at eighty kilometres an hour. It's relaxing.",
+      "options": [
+        {
+          "text": "Sounds intense.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Sneakers, brooms, a ball and no mercy. No skates, no excuses. And the Winter Carnival final, where we play for the Golden Boot. Biggest night of the year. Bigger than Christmas.",
+      "options": [
+        {
+          "text": "I'm sold.",
+          "to": "hub"
+        }
+      ]
+    },
+    "boot": {
+      "say": "A rubber boot. Painted gold. The Carnival trophy since forever, and it lives on my porch because nobody gave it a better home. The mailman salutes it.",
+      "options": [
+        {
+          "text": "Maybe it should live here someday.",
+          "do": [
+            {
+              "rel": [
+                "rhonda_pelkey",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Kev Szabo runs the club and has never forgiven anyone for saying 'curling'. He's my hero. Don't tell him. Dwayne Kuzyk plays like a shopping cart with one bad wheel. Love him. And Earl. Me and Earl have a thing.",
+      "options": [
+        {
+          "text": "A thing?",
+          "to": "gossip_earl"
+        },
+        {
+          "text": "Great team.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip_earl": {
+      "say": "Every Wednesday he floods right before broomball and every Wednesday I tell him. He calls me 'the broom lady'. I call him 'the wet man'. It's healthy.",
+      "options": [
+        {
+          "text": "Very healthy.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Ice is {ice_word}. A late flood eats sneakers. The corners catch the brooms. And the dressing room smells like a hockey bag had a hockey bag.",
+      "options": [
+        {
+          "text": "Better these days?",
+          "if": [
+            {
+              "ice_gte": 60
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll talk to Earl.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "Grippy ice, no flood before we play, corners edged. Big Boss, I could kiss you. I won't. But I could.",
+      "options": [
+        {
+          "text": "I'll take it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Later, Boss!",
+        "See ya! Grip tape!"
+      ],
+      "options": []
+    }
+  }
+}

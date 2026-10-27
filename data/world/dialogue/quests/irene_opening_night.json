@@ -1,0 +1,220 @@
+{
+ "id": "irene_opening_night",
+ "giver": "irene_dubois",
+ "quest": "irene_opening_night",
+ "nodes": {
+  "offer": {
+   "say": "I was here the night Mayor Penner cut the ribbon, dear. Kessler won, and my Albert said the ice was too hard, and it was. I've skated here every week since. Fifty-two years in November. Do you think Doreen's little organ could play the Skaters' Waltz for one lap?",
+   "options": [
+    {
+     "text": "I'll ask her. You'll have your waltz.",
+     "do": [
+      {
+       "quest_start": "irene_opening_night"
+      },
+      {
+       "rel": [
+        "irene_dubois",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Every week since 1974? Really?",
+     "to": "why"
+    },
+    {
+     "text": "Only if I get the next dance.",
+     "do": [
+      {
+       "rel": [
+        "irene_dubois",
+        2
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "The music's not really up to me.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Except two winters. One was my hip and one was Albert's. He's gone now, so I skate his laps too. It's not sad, dear. It's arithmetic.",
+   "options": [
+    {
+     "text": "Then let's make this lap a good one.",
+     "do": [
+      {
+       "quest_start": "irene_opening_night"
+      },
+      {
+       "rel": [
+        "irene_dubois",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "I'll see what I can do.",
+     "to": "end"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "Oh, you'll have to get in line behind Harold Penner's ghost. He still owes me a dance from the opening. Ask Doreen, would you?",
+   "options": [
+    {
+     "text": "Consider it asked.",
+     "do": [
+      {
+       "quest_start": "irene_opening_night"
+      },
+      {
+       "rel": [
+        "irene_dubois",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "No, I suppose it's not. Never mind. The waltz is in my head anyway. It's been there since Eisenhower.",
+   "do": [
+    {
+     "rel": [
+      "irene_dubois",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Lovely. Make sure the ice is nice. I don't fall any more. I've decided not to.",
+   "options": []
+  },
+  "progress": {
+   "say": "Hello, dear. Is it the waltz?",
+   "options": [
+    {
+     "text": "I still have to ask Doreen.",
+     "if": [
+      {
+       "step": [
+        "irene_opening_night",
+        "doreen"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Doreen's in. I'm getting the ice right first.",
+     "if": [
+      {
+       "step": [
+        "irene_opening_night",
+        "ice"
+       ]
+      }
+     ],
+     "to": "p_ice"
+    },
+    {
+     "text": "Everything's ready. Come Saturday.",
+     "if": [
+      {
+       "step": [
+        "irene_opening_night",
+        "lap"
+       ]
+      }
+     ],
+     "to": "p_lap"
+    },
+    {
+     "text": "Just saying hello.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_ice": {
+   "say": "Good. In 1974 it was like skating on a dinner plate. Albert said so in the car. Twice.",
+   "options": []
+  },
+  "p_lap": {
+   "say": "I'll wear the blue scarf. Albert liked the blue one.",
+   "options": []
+  },
+  "complete": {
+   "say": "Everybody stopped and let me have the ice. Even the teenagers. One of them clapped and then pretended he hadn't. Here, dear. My ticket from opening night. Fifty cents. I've kept it in my purse for fifty-two years and I'd like it to live here now.",
+   "options": [
+    {
+     "text": "On the empty hook in the trophy case. Gus kept it for something worth keeping.",
+     "do": [
+      {
+       "set": "ticket_on_empty_hook"
+      },
+      {
+       "rel": [
+        "irene_dubois",
+        3
+       ]
+      }
+     ],
+     "to": "c_hook"
+    },
+    {
+     "text": "On the notice board, where everyone can see it.",
+     "do": [
+      {
+       "set": "ticket_on_notice_board"
+      }
+     ],
+     "to": "c_board"
+    },
+    {
+     "text": "In Gus's binder, under People.",
+     "do": [
+      {
+       "set": "ticket_in_binder"
+      },
+      {
+       "rel": [
+        "irene_dubois",
+        1
+       ]
+      }
+     ],
+     "to": "c_binder"
+    }
+   ]
+  },
+  "c_hook": {
+   "say": "The empty hook. Oh, that's too much. No it isn't. It's exactly enough.",
+   "options": []
+  },
+  "c_board": {
+   "say": "Next to the piano lessons. Doreen will like that. She'll say it's crooked.",
+   "options": []
+  },
+  "c_binder": {
+   "say": "Under People. That's right. That's where it goes.",
+   "options": []
+  },
+  "done": {
+   "say": "Same time next week, dear. I'm not done.",
+   "options": []
+  }
+ }
+}

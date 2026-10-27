@@ -1,0 +1,431 @@
+{
+  "id": "carol_thibodeau",
+  "barks": {
+    "idle": [
+      "The coffee machine says NOT WORKING. It has said that for years.",
+      "Josée's last score was 31.47. Not 31.5. 31.47.",
+      "What's the surface temperature today? Roughly."
+    ],
+    "good_ice": [
+      "Ice looks within tolerance. Good."
+    ],
+    "bad_ice": [
+      "That surface wouldn't pass a dispensing check."
+    ],
+    "wet_ice": [
+      "Wet ice. Take two runs and call me in the morning."
+    ],
+    "goal": [
+      "Was that a hockey goal? Fine. Good. Fine."
+    ],
+    "cold": [
+      "The heaters. Two of six. I counted again."
+    ],
+    "hungry": [
+      "Coffee. Just coffee. At seven, apparently."
+    ],
+    "long_line": [
+      "I'll come back after seven. With a thermos."
+    ],
+    "bored": [
+      "I'm reviewing the competition calendar. Again."
+    ],
+    "greet_owner": [
+      "Good morning, {owner}. Is the ice at minus three?",
+      "Hello. Is the coffee machine still NOT WORKING?"
+    ],
+    "leaving_happy": [
+      "A clean session. Josée was pleased. I could tell. She said nothing."
+    ],
+    "leaving_angry": [
+      "She lost a jump to that rut. A whole jump."
+    ],
+    "event_specific": {
+      "figure_practice": [
+        "Knees, Josée. Knees. She can't hear me. Knees.",
+        "Paolo is in my spot again."
+      ],
+      "figure_show": [
+        "Every song in the program, memorised. I hate that I know them.",
+        "Breathe, sweetheart. Breathe."
+      ],
+      "public_skate": [
+        "I'll do one lap. I'm not good. Don't watch."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_carol_thibodeau"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            5.5,
+            7.0
+          ]
+        }
+      ],
+      "node": "dawn"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "carol_thibodeau",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Carol Thibodeau. Josée's mother. Millbrook Drugs, pharmacist. Eight years on the six a.m. bench. What's the ice temperature, approximately?",
+      "do": [
+        {
+          "set": "met_carol_thibodeau"
+        }
+      ],
+      "options": [
+        {
+          "text": "About minus three and a half.",
+          "do": [
+            {
+              "rel": [
+                "carol_thibodeau",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll find out and let you know.",
+          "do": [
+            {
+              "rel": [
+                "carol_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "It's cold, I know that much.",
+          "do": [
+            {
+              "rel": [
+                "carol_thibodeau",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll correct that. Precisely.",
+          "do": [
+            {
+              "rel": [
+                "carol_thibodeau",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Coffee's on me at seven.",
+          "do": [
+            {
+              "money": -2
+            },
+            {
+              "rel": [
+                "carol_thibodeau",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "dawn": {
+      "say": [
+        "Good morning. Coffee? No. Not until seven. Of course.",
+        "Six a.m. Two heaters. One thermos. A normal Tuesday."
+      ],
+      "options": [
+        {
+          "text": "Sit under the good heater. I'll bring a coffee at seven.",
+          "do": [
+            {
+              "rel": [
+                "carol_thibodeau",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Morning, Carol.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}. I brought you a thermos. Don't tell the others.",
+        "Good morning. The ice was within tolerance today. Thank you."
+      ],
+      "options": [
+        {
+          "text": "Thanks, Carol.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Yes? I have about four minutes before her run-through.",
+        "Good morning. Or evening. It's always morning for me.",
+        "Hello, {owner}. Ice temperature?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the pharmacy?",
+          "to": "job"
+        },
+        {
+          "text": "How's Josée's skating?",
+          "to": "josee"
+        },
+        {
+          "text": "What's the deal with you and Paolo?",
+          "to": "paolo"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "See you, Carol.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "I count pills to the unit all day and then I count jumps to the rotation all morning. My husband refs. He counts penalties. We're a counting family.",
+      "options": [
+        {
+          "text": "A very precise household.",
+          "do": [
+            {
+              "rel": [
+                "carol_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "josee": {
+      "say": "Senior Bronze freeskate. Her double axel lands sixty-two percent of the time at practice. At tests, less. I don't say nerves. She hates nerves.",
+      "options": [
+        {
+          "text": "She'll be ready.",
+          "do": [
+            {
+              "rel": [
+                "carol_thibodeau",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Have you tried filming less?",
+          "do": [
+            {
+              "rel": [
+                "carol_thibodeau",
+                -2
+              ]
+            },
+            {
+              "rel": [
+                "josee_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "paolo": {
+      "say": "He takes the best spot on the glass. With a tripod. Since September. I'm not angry. I'm precise. That spot is mine on Tuesdays and Thursdays by right of eight years.",
+      "options": [
+        {
+          "text": "New rule: you get Tuesdays, Paolo gets Thursdays.",
+          "if": [
+            {
+              "not_flag": "filming_spot_decided"
+            }
+          ],
+          "do": [
+            {
+              "set": "filming_spot_split"
+            },
+            {
+              "set": "filming_spot_decided"
+            },
+            {
+              "rel": [
+                "carol_thibodeau",
+                2
+              ]
+            },
+            {
+              "rel": [
+                "paolo_marchetti",
+                1
+              ]
+            },
+            {
+              "note": "The filming spot on the glass is split: Carol Tuesdays, Paolo Thursdays."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "First come, first served.",
+          "if": [
+            {
+              "not_flag": "filming_spot_decided"
+            }
+          ],
+          "do": [
+            {
+              "set": "filming_spot_first_come"
+            },
+            {
+              "set": "filming_spot_decided"
+            },
+            {
+              "rel": [
+                "carol_thibodeau",
+                -2
+              ]
+            },
+            {
+              "rel": [
+                "paolo_marchetti",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "How's the filming spot arrangement?",
+          "if": [
+            {
+              "flag": "filming_spot_decided"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The heaters work two of six. The coffee machine doesn't work at all. The ice, some mornings, is excellent. Some mornings it costs her a jump.",
+      "options": [
+        {
+          "text": "The ice is better now, isn't it?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "We fixed the coffee machine and the heaters.",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "carol_thibodeau",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'm working on all of it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Consistently minus three. She hasn't lost a jump to the ice in a month. I wrote it down. Of course I wrote it down.",
+      "options": [
+        {
+          "text": "Of course.",
+          "do": [
+            {
+              "rel": [
+                "carol_thibodeau",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

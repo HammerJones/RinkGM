@@ -1,0 +1,240 @@
+{
+ "id": "dylan_binder_ghost",
+ "giver": "dylan_pruitt",
+ "quest": "dylan_binder_ghost",
+ "nodes": {
+  "offer": {
+   "say": "Okay, don't laugh. The binder's haunted. There's new notes. In Gus's writing. WET notes. Gus is in Florida! He sent a postcard with a flamingo! Flamingos can't write! Will you come look? Not alone. Together. In daylight.",
+   "options": [
+    {
+     "text": "Let's go look. In daylight.",
+     "do": [
+      {
+       "quest_start": "dylan_binder_ghost"
+      },
+      {
+       "rel": [
+        "dylan_pruitt",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Maybe Gus mailed them.",
+     "to": "mail"
+    },
+    {
+     "text": "Boo.",
+     "do": [
+      {
+       "rel": [
+        "dylan_pruitt",
+        1
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "There's no such thing as ghosts, Dylan.",
+     "to": "decline"
+    }
+   ]
+  },
+  "mail": {
+   "say": "The ink is WET. Do you know how long mail takes from Florida? A week! Ink dries in like a minute! I tested it! With my own marker!",
+   "options": [
+    {
+     "text": "Okay. Let's investigate.",
+     "do": [
+      {
+       "quest_start": "dylan_binder_ghost"
+      },
+      {
+       "rel": [
+        "dylan_pruitt",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "NOT FUNNY. Okay a bit funny. But not in the plant room. Number 1 can hear you.",
+   "options": [
+    {
+     "text": "Sorry. Let's go look.",
+     "do": [
+      {
+       "quest_start": "dylan_binder_ghost"
+      },
+      {
+       "rel": [
+        "dylan_pruitt",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "That's what a ghost would want you to think.",
+   "do": [
+    {
+     "rel": [
+      "dylan_pruitt",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "The newest one's about me and the squeegee. Which, fair. But still. Haunted.",
+   "options": []
+  },
+  "progress": {
+   "say": "Ghost update?",
+   "options": [
+    {
+     "text": "Going to look at the binder.",
+     "if": [
+      {
+       "step": [
+        "dylan_binder_ghost",
+        "binder"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "I'm watching on my morning rounds.",
+     "if": [
+      {
+       "step": [
+        "dylan_binder_ghost",
+        "rounds"
+       ]
+      }
+     ],
+     "to": "p_rounds"
+    },
+    {
+     "text": "I've got a lead in the bay.",
+     "if": [
+      {
+       "step": [
+        "dylan_binder_ghost",
+        "bay"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "I need to ask someone something.",
+     "if": [
+      {
+       "step": [
+        "dylan_binder_ghost",
+        "earl"
+       ]
+      }
+     ],
+     "to": "p_earl"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_rounds": {
+   "say": "I'm not doing rounds alone till this is solved. I'm doing them with the radio on. CKVL. Ghosts hate CKVL. Probably.",
+   "options": []
+  },
+  "p_earl": {
+   "say": "Who? Is it someone alive? Please say it's someone alive.",
+   "options": []
+  },
+  "complete": {
+   "say": "Well? Is it a ghost? Be honest. No. Don't be honest. Yes. Be honest.",
+   "options": [
+    {
+     "text": "It's Earl. He writes in Gus's hand. It's how he tells us things.",
+     "do": [
+      {
+       "set": "binder_ghost_truth"
+      },
+      {
+       "rel": [
+        "dylan_pruitt",
+        2
+       ]
+      }
+     ],
+     "to": "c_truth"
+    },
+    {
+     "text": "It's a ghost. A friendly one. Do what the notes say.",
+     "do": [
+      {
+       "set": "binder_ghost_kept"
+      },
+      {
+       "rel": [
+        "earl_bratt",
+        2
+       ]
+      }
+     ],
+     "to": "c_ghost"
+    },
+    {
+     "text": "It's somebody who cares whether you do the squeegee right.",
+     "do": [
+      {
+       "set": "binder_ghost_kept"
+      },
+      {
+       "rel": [
+        "dylan_pruitt",
+        1
+       ]
+      },
+      {
+       "rel": [
+        "earl_bratt",
+        1
+       ]
+      }
+     ],
+     "to": "c_cares"
+    }
+   ]
+  },
+  "c_truth": {
+   "say": "EARL? Earl writes notes to ME? Earl said 'the squeegee' to me through a ghost? That's... that's the nicest thing Earl's ever done. I'm going to do the squeegee perfectly forever.",
+   "options": []
+  },
+  "c_ghost": {
+   "say": "A friendly ghost. Okay. Okay. I can live with a friendly ghost. I'll do the squeegee. I'm doing it out of respect. And fear.",
+   "options": []
+  },
+  "c_cares": {
+   "say": "Somebody cares about my squeegee. Huh. I'll do it right, then. For them. Whoever them is.",
+   "options": []
+  },
+  "done": {
+   "say": "New note today: GOOD SQUEEGEE. G. I'm framing it.",
+   "options": []
+  }
+ }
+}

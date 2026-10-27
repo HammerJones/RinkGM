@@ -1,0 +1,35 @@
+{
+  "collision_cell": 8,
+  "id": "zambelli_lever_cond",
+  "inspect": "A sprung lever on the resurfacer's console: push it and it comes back.",
+  "mass_kg": 1.2,
+  "mesh": "merged",
+  "name": "Lift lever",
+  "pivot": [
+    6.0,
+    0,
+    16.5
+  ],
+  "size_m": [
+    0.036,
+    0.234,
+    0.099
+  ],
+  "sound": "metal",
+  "source": "tools/propgen/zambelli_glb.py",
+  "tags": [
+    "machine",
+    "resurfacer"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/zambelli_lever_cond.vox",
+  "voxel_m": 0.003,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}

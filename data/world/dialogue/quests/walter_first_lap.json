@@ -1,0 +1,212 @@
+{
+ "id": "walter_first_lap",
+ "giver": "walter_oduya",
+ "quest": "walter_first_lap",
+ "nodes": {
+  "offer": {
+   "say": "Thirty-five years I wired a paper mill. Never once stood on skates. Now my granddaughter is six and she asked me, very kindly, if grandpas are allowed on ice. I would like the answer to be yes by Christmas.",
+   "options": [
+    {
+     "text": "Then let's get you skating.",
+     "do": [
+      {
+       "quest_start": "walter_first_lap"
+      },
+      {
+       "rel": [
+        "walter_oduya",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why now, Walter?",
+     "to": "why"
+    },
+    {
+     "text": "Grandpas are allowed. Grandpas who fall are a different contract.",
+     "do": [
+      {
+       "rel": [
+        "walter_oduya",
+        2
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "Lessons are full this term, I'm afraid.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Because she's six and in two years she'll be eight, and eight-year-olds don't ask. They decide. I'd like to be decided about kindly.",
+   "options": [
+    {
+     "text": "One lap with Zuri. I'll help.",
+     "do": [
+      {
+       "quest_start": "walter_first_lap"
+      },
+      {
+       "rel": [
+        "walter_oduya",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "Ha. I have insurance through the union. Brokenbone. They've seen my slapshot. I don't have a slapshot.",
+   "options": [
+    {
+     "text": "Then you're covered. Let's go.",
+     "do": [
+      {
+       "quest_start": "walter_first_lap"
+      },
+      {
+       "rel": [
+        "walter_oduya",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Then next term. I'm patient. I waited forty minutes for a breaker once. Not here. Here I'd still be waiting.",
+   "do": [
+    {
+     "rel": [
+      "walter_oduya",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "The pamphlet says knees bent, hands out, then laugh. I can do the laughing now. The rest I'll learn.",
+   "options": []
+  },
+  "progress": {
+   "say": "Still upright. Mostly.",
+   "options": [
+    {
+     "text": "I'm getting the rentals sharpened.",
+     "if": [
+      {
+       "step": [
+        "walter_first_lap",
+        "skates"
+       ]
+      }
+     ],
+     "to": "p_skates"
+    },
+    {
+     "text": "How are the lessons going?",
+     "if": [
+      {
+       "step": [
+        "walter_first_lap",
+        "lessons"
+       ]
+      }
+     ],
+     "to": "p_lessons"
+    },
+    {
+     "text": "Ready for public skate with Zuri?",
+     "if": [
+      {
+       "step": [
+        "walter_first_lap",
+        "lap"
+       ]
+      }
+     ],
+     "to": "p_lap"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_skates": {
+   "say": "The rental pair I had felt like butter knives. The sign says Bev says sharpen me. I agree with the sign.",
+   "options": []
+  },
+  "p_lessons": {
+   "say": "I can glide. I cannot stop. Penny says the stop comes in week six. I've told my knees.",
+   "options": []
+  },
+  "p_lap": {
+   "say": "Saturday. She's wearing her helmet already. She wears it at dinner.",
+   "options": []
+  },
+  "complete": {
+   "say": "One lap. She held my hand and then she let go and skated ahead and looked back to check I was still up. I was. I was still up. She made you this. It's Doris. She gave her eyelashes.",
+   "options": [
+    {
+     "text": "It's going on the office corkboard, right in the middle.",
+     "do": [
+      {
+       "set": "zuri_drawing_on_corkboard"
+      },
+      {
+       "rel": [
+        "walter_oduya",
+        2
+       ]
+      }
+     ],
+     "to": "c_board"
+    },
+    {
+     "text": "Doris has never looked better. Don't tell Earl.",
+     "to": "c_earl"
+    },
+    {
+     "text": "Same time next week?",
+     "do": [
+      {
+       "rel": [
+        "walter_oduya",
+        2
+       ]
+      }
+     ],
+     "to": "c_again"
+    }
+   ]
+  },
+  "c_board": {
+   "say": "Next to the postcards from Florida. She'll want to visit it. Oh, and that space heater that trips breaker 9? I'll look at it. Electricians don't retire. We just stop getting paid.",
+   "options": []
+  },
+  "c_earl": {
+   "say": "Earl saw it. He said 'eyelashes' and walked away. I think he's going to put it in the bay.",
+   "options": []
+  },
+  "c_again": {
+   "say": "Every week. And when she's eight, she can decide about me kindly.",
+   "options": []
+  },
+  "done": {
+   "say": "Week six. I stopped. On purpose. Penny wrote it down.",
+   "options": []
+  }
+ }
+}

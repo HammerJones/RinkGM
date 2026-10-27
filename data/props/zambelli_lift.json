@@ -1,0 +1,36 @@
+{
+  "collision_cell": 8,
+  "id": "zambelli_lift",
+  "inspect": "The vertical auger. It takes the snow from the middle of the conditioner up into the tank.",
+  "mass_kg": 40.0,
+  "mesh": "merged",
+  "name": "Vertical auger",
+  "pivot": [
+    60.0,
+    0,
+    20.0
+  ],
+  "shape": [],
+  "size_m": [
+    1.2,
+    0.4,
+    0.4
+  ],
+  "sound": "metal",
+  "source": "tools/propgen/zambelli.py",
+  "tags": [
+    "machine",
+    "resurfacer"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/zambelli_lift.vox",
+  "voxel_m": 0.01,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}

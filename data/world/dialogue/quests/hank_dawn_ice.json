@@ -1,0 +1,190 @@
+{
+ "id": "hank_dawn_ice",
+ "giver": "hank_lavoie",
+ "quest": "hank_dawn_ice",
+ "nodes": {
+  "offer": {
+   "say": "Twelve hours on the paper machine. Then I drive here and sit in the lot looking at the building. If I could shoot pucks for an hour before bed I'd sleep like a baby. A big baby with a mortgage.",
+   "options": [
+    {
+     "text": "Dawn stick and puck. I'll set it up.",
+     "do": [
+      {
+       "quest_start": "hank_dawn_ice"
+      },
+      {
+       "rel": [
+        "hank_lavoie",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Doesn't shooting pucks wake you up?",
+     "to": "why"
+    },
+    {
+     "text": "Six a.m. is figure club's time.",
+     "to": "figure"
+    },
+    {
+     "text": "I can't staff the building that early yet.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Nope. It empties you out. Thwack, thwack, thwack, and then the mill noise is gone and it's just the puck. My wife says it's cheaper than a therapist. I said therapists don't need flooding.",
+   "options": [
+    {
+     "text": "Then you'll get your hour.",
+     "do": [
+      {
+       "quest_start": "hank_dawn_ice"
+      },
+      {
+       "rel": [
+        "hank_lavoie",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "figure": {
+   "say": "Tuesdays and Thursdays, sure. What about Wednesdays and Fridays? I've seen your grid. There's nothing on it at six on a Wednesday but Linesman the pigeon.",
+   "options": [
+    {
+     "text": "Wednesdays and Fridays then.",
+     "do": [
+      {
+       "quest_start": "hank_dawn_ice"
+      },
+      {
+       "rel": [
+        "hank_lavoie",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "No problem. I'll keep looking at the building. It's a nice building to look at. Sort of.",
+   "do": [
+    {
+     "rel": [
+      "hank_lavoie",
+      -1
+     ]
+    },
+    {
+     "mood": -0.03
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "I'll bring the pucks. I'll bring the coffee. You bring the ice.",
+   "options": []
+  },
+  "progress": {
+   "say": "Morning. Or night. Whatever this is.",
+   "options": [
+    {
+     "text": "Ice is coming. I'll flood it first.",
+     "if": [
+      {
+       "step": [
+        "hank_dawn_ice",
+        "flood"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "How's the hour treating you?",
+     "if": [
+      {
+       "step": [
+        "hank_dawn_ice",
+        "dawn"
+       ]
+      }
+     ],
+     "to": "p_dawn"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_dawn": {
+   "say": "Slept seven hours yesterday. Seven. The wife thought I'd died. Pleasantly.",
+   "options": []
+  },
+  "complete": {
+   "say": "Two mornings, two good sleeps. Look, the boys on my shift put this together. Forty bucks in the mill's coffee fund coins. They want in too. Is that okay? There's four of them. They're quiet. Mostly.",
+   "options": [
+    {
+     "text": "The more the merrier. Make it a standing session.",
+     "do": [
+      {
+       "rel": [
+        "hank_lavoie",
+        3
+       ]
+      },
+      {
+       "set": "mill_shift_shinny"
+      }
+     ],
+     "to": "c_more"
+    },
+    {
+     "text": "Keep the coins. Buy the coffee.",
+     "do": [
+      {
+       "money": -40
+      },
+      {
+       "rel": [
+        "hank_lavoie",
+        4
+       ]
+      }
+     ],
+     "to": "c_coins"
+    },
+    {
+     "text": "Just you for now, Hank.",
+     "to": "c_just"
+    }
+   ]
+  },
+  "c_more": {
+   "say": "They'll be thrilled. Well. They'll nod. Mill guys nod. That's thrilled.",
+   "options": []
+  },
+  "c_coins": {
+   "say": "You're a good one. I'll tell the boys. They'll nod about you.",
+   "options": []
+  },
+  "c_just": {
+   "say": "Fair enough. More pucks for me.",
+   "options": []
+  },
+  "done": {
+   "say": "Thwack, thwack, sleep.",
+   "options": []
+  }
+ }
+}

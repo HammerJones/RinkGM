@@ -1,0 +1,205 @@
+{
+ "id": "rejean_ir_gun",
+ "giver": "rejean_paquette",
+ "quest": "rejean_ir_gun",
+ "nodes": {
+  "offer": {
+   "say": "Réjean Paquette, Dukes. Equipment. I measure the ice before my players skate. Always. Not because I don't trust you. Because I don't trust anybody. My gun says minus four point eight. What does your log say?",
+   "options": [
+    {
+     "text": "I'll make sure we agree. Two clean practices.",
+     "do": [
+      {
+       "quest_start": "rejean_ir_gun"
+      },
+      {
+       "rel": [
+        "rejean_paquette",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why bring your own thermometer?",
+     "to": "why"
+    },
+    {
+     "text": "My log says it's none of your business.",
+     "do": [
+      {
+       "rel": [
+        "rejean_paquette",
+        -1
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "Our numbers are what they are.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "In 2011 a rink told us minus six. It was minus three. We lost a winger to a groin for six weeks. I have measured every sheet since. I have measured my kitchen floor. It is fine.",
+   "options": [
+    {
+     "text": "Then measure mine. It'll hold up.",
+     "do": [
+      {
+       "quest_start": "rejean_ir_gun"
+      },
+      {
+       "rel": [
+        "rejean_paquette",
+        5
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "Ha. Good. A rink owner with teeth. Will you make the numbers agree, or will I write 'teeth' in my report?",
+   "options": [
+    {
+     "text": "They'll agree.",
+     "do": [
+      {
+       "quest_start": "rejean_ir_gun"
+      },
+      {
+       "rel": [
+        "rejean_paquette",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Then I will write what they are. The front office reads my notes. They read them twice.",
+   "do": [
+    {
+     "rel": [
+      "rejean_paquette",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Minus five, minus five and a half for my boys. Hard and fast. And the log. Pencil is fine. Pencil on a string is better.",
+   "options": []
+  },
+  "progress": {
+   "say": "The numbers.",
+   "options": [
+    {
+     "text": "Getting the ice to where you want it.",
+     "if": [
+      {
+       "step": [
+        "rejean_ir_gun",
+        "rating"
+       ]
+      }
+     ],
+     "to": "p_rating"
+    },
+    {
+     "text": "How were the practices?",
+     "if": [
+      {
+       "step": [
+        "rejean_ir_gun",
+        "practices"
+       ]
+      }
+     ],
+     "to": "p_practices"
+    },
+    {
+     "text": "Writing up the log.",
+     "if": [
+      {
+       "step": [
+        "rejean_ir_gun",
+        "log"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_rating": {
+   "say": "Close. The north end is warm. You know why? The roof. Every old rink, the roof.",
+   "options": []
+  },
+  "p_practices": {
+   "say": "Coach Rourke said nothing about the ice. From Coach Rourke, nothing is a parade.",
+   "options": []
+  },
+  "complete": {
+   "say": "Your log says minus five point one. My gun says minus five point two. A tenth. I can live with a tenth. I will tell the front office: Millbrook ice is honest. That is the best word I have. Here. A practice puck. Signed by nobody. The best kind.",
+   "options": [
+    {
+     "text": "Signed by nobody?",
+     "to": "c_nobody"
+    },
+    {
+     "text": "Can I borrow the gun sometime?",
+     "do": [
+      {
+       "rel": [
+        "rejean_paquette",
+        2
+       ]
+      }
+     ],
+     "to": "c_gun"
+    },
+    {
+     "text": "Honest. I'll take it.",
+     "do": [
+      {
+       "rel": [
+        "rejean_paquette",
+        1
+       ]
+      }
+     ],
+     "to": "c_honest"
+    }
+   ]
+  },
+  "c_nobody": {
+   "say": "A signed puck is for a shelf. An unsigned puck is for the ice. Shoot it. Then you will know what pro ice feels like from the blade up.",
+   "options": []
+  },
+  "c_gun": {
+   "say": "No. But I will tell you what to buy. The cheap ones lie. Like rinks.",
+   "options": []
+  },
+  "c_honest": {
+   "say": "Good. Most people want 'great'. 'Great' is for programmes. 'Honest' is for equipment managers.",
+   "options": []
+  },
+  "done": {
+   "say": "Minus five point one. I wrote it in ink.",
+   "options": []
+  }
+ }
+}

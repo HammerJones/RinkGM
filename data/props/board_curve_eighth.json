@@ -1,0 +1,43 @@
+{
+  "board": {
+    "angle_deg": 11.25,
+    "height_m": 1.11,
+    "length_m": 1.6859,
+    "radius_m": 8.5,
+    "thickness_m": 0.1
+  },
+  "collision_cell": 8,
+  "id": "board_curve_eighth",
+  "inspect": "Dasher board, corner 11.25 deg.",
+  "mass_kg": 30.3,
+  "mesh": "merged",
+  "name": "Dasher board, corner 11.25 deg",
+  "pivot": [
+    42.0,
+    0,
+    4.5
+  ],
+  "shape": [],
+  "size_m": [
+    1.68,
+    1.12,
+    0.18
+  ],
+  "sound": "wood",
+  "source": "tools/propgen/rink_kit.py",
+  "tags": [
+    "rink",
+    "kit"
+  ],
+  "tri_cap": 60000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/board_curve_eighth.vox",
+  "voxel_m": 0.02,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.05",
+    "worn": "tint:8a7a60:0.12"
+  }
+}

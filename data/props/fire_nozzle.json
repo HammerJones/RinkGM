@@ -1,0 +1,35 @@
+{
+  "collision_cell": 8,
+  "id": "fire_nozzle",
+  "inspect": "A brass fog nozzle on the end of the fire hose.",
+  "mass_kg": 1.5,
+  "mesh": "merged",
+  "name": "Fire hose nozzle",
+  "pivot": [
+    5.5,
+    0,
+    12.0
+  ],
+  "size_m": [
+    0.0556,
+    0.2222,
+    0.1212
+  ],
+  "sound": "metal",
+  "source": "scratch nozzle.py over tools/propgen/glb2vox.py (hose.glb, part 02 cropped)",
+  "tags": [
+    "imported",
+    "tool"
+  ],
+  "tri_cap": 200000,
+  "verbs": [
+    "inspect"
+  ],
+  "vox": "art/props/fire_nozzle.vox",
+  "voxel_m": 0.00505,
+  "wear": {
+    "renovated": "none",
+    "repaired": "tint:8a7a60:0.08",
+    "worn": "tint:8a7a60:0.2"
+  }
+}

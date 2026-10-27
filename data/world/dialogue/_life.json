@@ -1,0 +1,405 @@
+{
+  "id": "_life",
+  "_doc": "Lines everybody shares, picked by what they're doing and why they came (Conversation.life_line, RinkPeople small talk). Tokens on top of PEOPLE.md 6: {for} (who they came for), {they} {them} {their} (that person's pronouns), {kin} (\"my son\", \"my granddaughter\", \"my friend\"), {until} (\"7\", \"7:30\"), {doing}, {job}, {employer}, {boss}, {place}. A line whose token can't be filled is skipped.",
+  "why": {
+    "parent": [
+      "I'm here for {for}. {they_cap}'s in there till {until}, and then we have to find the other glove.",
+      "That's {kin} out there. Number something. I'll know when {they} score.",
+      "{for}'s got practice till {until}. I drive, I watch, I hold the coffee. That's the job.",
+      "Watching {for}. Well, watching the clock and then {for}.",
+      "{kin_cap} wanted to come early. Always wants to come early. Then it's forty minutes to tie the skates."
+    ],
+    "sibling": [
+      "{for}'s playing. Mom said I had to come.",
+      "I'm waiting for {for}. It's taking forever.",
+      "My {kin_bare} is out there. Don't tell {them} I watched."
+    ],
+    "grandparent": [
+      "I drove in to see {for}. {they_cap} doesn't know I'm here yet. I like to surprise {them}.",
+      "That's {kin} out there. I taught {their} father to skate on this ice, so you could say it runs in the family.",
+      "I never miss {for}. Well, I missed one in 2019. We don't talk about it."
+    ],
+    "friend": [
+      "I'm waiting for {for}, {they}'s in there till {until}.",
+      "{for}'s my ride. So I'm here till {until}, apparently.",
+      "Here for {for}. We're getting fries after. If {they} ever come out.",
+      "Watching {for} practise. Somebody has to tell {them} the truth about that backhand."
+    ],
+    "partner": [
+      "{for} plays. I watch. Then I hear about it all the way home.",
+      "I'm here for {for}. Moral support, mostly. And the canteen.",
+      "{for} said this one matters. They all matter, apparently."
+    ],
+    "date": [
+      "We're on a date. Don't make it weird.",
+      "{for} talked me into skating. I talked {them} into the fries after.",
+      "First time on skates in ten years. {for} says it's like riding a bike. It is not like riding a bike."
+    ],
+    "scout": [
+      "Just watching. Nice rink. Cold coffee.",
+      "I'm here to look at a couple of kids. Can't say which. Can say the number 14's skating is honest.",
+      "Professional interest. That's all I'm allowed to say, and I'm already saying too much."
+    ],
+    "next_student": [
+      "I've got my lesson with Coach Arsenault right after this. I'm warming up my nerves.",
+      "I'm next. I'm not nervous. I'm a little nervous.",
+      "My lesson's at {until}. I'm watching the big girls do their axels so I can feel bad."
+    ],
+    "zamboni": [
+      "I'm here to see the Zambelli. When does she come out? Is it now? Is it now?",
+      "I want to drive Doris when I'm big. Or now. Now is good.",
+      "Mom says the ice machine comes after. I'm waiting for it."
+    ],
+    "autograph": [
+      "I'm hoping to catch {for} on the way out. Got a Sharpie and a clean card.",
+      "Waiting on {for}. They always sign if you ask nice and don't block the door."
+    ],
+    "fan": [
+      "I just like watching. Better than television, and the fries are right there.",
+      "I come for {event} most weeks. Somebody has to sit in the stands.",
+      "Nobody in particular. I like a good skate. I like a bad one too, frankly."
+    ],
+    "drop_in": [
+      "Just {doing}. It's warmer than the house and there's always something on.",
+      "I'm not here for anything. I'm just here. That's allowed, isn't it?",
+      "Came in for {doing}. Stayed for the gossip."
+    ],
+    "work": [
+      "On shift till {until}. Then home and feet up.",
+      "Working. You'd know, you sign the cheques. Or you will.",
+      "Somebody has to keep this place running. Today it's me till {until}."
+    ],
+    "player": [
+      "I'm out there at {start}. Just got to find my other skate.",
+      "Playing tonight. Wish me luck. Actually wish my legs luck.",
+      "Getting dressed. The room smells like 1994."
+    ],
+    "child": [
+      "That's {for} out there. {they_cap} says {they}'s the fast one. {they_cap} is not the fast one.",
+      "I'm watching {for}. {they_cap} promised fries if {they} scored. I'm keeping score.",
+      "{for} plays. I come for the hot chocolate and to yell."
+    ],
+    "grandchild": [
+      "That's {kin}, {for}. {they_cap}'s old, but sneaky.",
+      "I'm here to watch {for}. {they_cap} skated here when it was all outdoor. Apparently."
+    ]
+  },
+  "barks": {
+    "encourage": [
+      "Go, {for}! Skate!",
+      "Move your feet, {for}!",
+      "Head up, {for}! Head up!",
+      "That's it, {for}! That's it!",
+      "Shoot it, {for}!",
+      "Nice, {for}! Good hustle!"
+    ],
+    "goal_mine": [
+      "THAT'S {kin_upper}! THAT'S {for_upper}!",
+      "YES, {for_upper}! I filmed it! Did I film it? I didn't film it.",
+      "{for}! {for}! That's {kin}!"
+    ],
+    "fall_mine": [
+      "You're okay, {for}! Up you get!",
+      "Shake it off, {for}!",
+      "Is {they} okay? {they_cap}'s okay. {they_cap}'s up.",
+      "Oof. Get up, bud. You're fine."
+    ],
+    "fall": [
+      "Ooh.",
+      "That'll leave a mark.",
+      "Everybody falls. Some of us twice a lap."
+    ],
+    "waiting": [
+      "Come on, {for}. Some of us have work in the morning.",
+      "How long does it take to take off skates? Forty minutes. The answer is forty minutes.",
+      "{for}'s always last out of the room. Always.",
+      "I'll wait in the lobby. Tell {for} I'm by the trophy case."
+    ],
+    "zamboni": [
+      "HERE SHE COMES! DORIS!",
+      "Look look look look look, the ice machine!",
+      "She's so slow. I love her."
+    ],
+    "arrive_car": [
+      "Found a spot by the door. Miracle.",
+      "Somebody's parked across two stalls again."
+    ],
+    "arrive_foot": [
+      "Walked over. It's cold enough to see your breath and that's just the lobby.",
+      "Ten minutes on foot. My ears are still on the sidewalk."
+    ],
+    "leave_together": [
+      "There you are. Got everything? Both gloves? Both skates?",
+      "Finally. Come on, the car's warming up.",
+      "Good skate, bud. Fries? Fries."
+    ]
+  },
+  "small_talk": [
+    {
+      "who": "adult",
+      "lines": [
+        "Cold enough for you?",
+        "It's always cold enough. That's the whole building."
+      ]
+    },
+    {
+      "who": "adult",
+      "lines": [
+        "Ice looks {ice_word} today.",
+        "New owner's trying, I'll give them that."
+      ]
+    },
+    {
+      "who": "adult",
+      "lines": [
+        "You hear the Kings are thinking about a new goalie?",
+        "They've been thinking about a new goalie since 1996."
+      ]
+    },
+    {
+      "who": "adult",
+      "lines": [
+        "How's work?",
+        "Work's work. This is the good part of the week."
+      ]
+    },
+    {
+      "who": "adult",
+      "lines": [
+        "Did Doris start this morning?",
+        "Second try, I heard. That's a good day."
+      ]
+    },
+    {
+      "who": "adult",
+      "lines": [
+        "Fries any good tonight?",
+        "Lorraine's on, so yes."
+      ]
+    },
+    {
+      "who": "adult",
+      "lines": [
+        "They ever fix the heater over section C?",
+        "They fixed it in 2003. It's been retired since."
+      ]
+    },
+    {
+      "who": "adult",
+      "lines": [
+        "Is that the new owner?",
+        "Looks tired. That's how you know it's the owner."
+      ]
+    },
+    {
+      "who": "adult",
+      "lines": [
+        "Your shift change go through?",
+        "Had to promise Dougie my Saturday. Worth it."
+      ]
+    },
+    {
+      "who": "adult",
+      "lines": [
+        "You see Ronnie at the old-timers?",
+        "Still the best hands in the valley. Still the worst knees."
+      ]
+    },
+    {
+      "who": "adult",
+      "lines": [
+        "Snow's coming Thursday.",
+        "Snow's always coming Thursday."
+      ]
+    },
+    {
+      "who": "adult",
+      "lines": [
+        "Did you sign up for the 50/50?",
+        "Bud got me at the door. Bud always gets me at the door."
+      ]
+    },
+    {
+      "who": "parent",
+      "lines": [
+        "Who's got carpool Saturday?",
+        "Not me. Please not me. I did the 6 a.m. last week."
+      ]
+    },
+    {
+      "who": "parent",
+      "lines": [
+        "Did yours eat before?",
+        "A granola bar and a juice box. Dinner of champions."
+      ]
+    },
+    {
+      "who": "parent",
+      "lines": [
+        "Is that your kid with the purple laces?",
+        "Unfortunately. We lost a bet."
+      ]
+    },
+    {
+      "who": "parent",
+      "lines": [
+        "Coach moved Hazel to defence.",
+        "Defence builds character. That's what they said to me in 1991, anyway."
+      ]
+    },
+    {
+      "who": "parent",
+      "lines": [
+        "How much was the tournament fee this year?",
+        "Don't. I'm still recovering."
+      ]
+    },
+    {
+      "who": "parent",
+      "lines": [
+        "Whose turn is it for oranges?",
+        "Oranges? We're doing oranges again?"
+      ]
+    },
+    {
+      "who": "parent",
+      "lines": [
+        "Mine wants to quit and take up figure skating.",
+        "Mine wants to quit figure skating and take up hockey. Let's just swap."
+      ]
+    },
+    {
+      "who": "parent",
+      "lines": [
+        "The test day's in three weeks.",
+        "She's landed the axel twice. Once on purpose."
+      ]
+    },
+    {
+      "who": "teen",
+      "lines": [
+        "He's taking forever.",
+        "He's doing his hair. For the walk to the car."
+      ]
+    },
+    {
+      "who": "teen",
+      "lines": [
+        "Are we getting fries after?",
+        "If he scores. If he doesn't, we're getting fries anyway."
+      ]
+    },
+    {
+      "who": "teen",
+      "lines": [
+        "Did you do the chem homework?",
+        "Define 'do.'"
+      ]
+    },
+    {
+      "who": "teen",
+      "lines": [
+        "The vending machine ate my toonie again.",
+        "You have to kick it on the left. Everyone knows that."
+      ]
+    },
+    {
+      "who": "teen",
+      "lines": [
+        "Is that Dylan driving the Zambelli?",
+        "Earl lets him do one lap if nobody's looking."
+      ]
+    },
+    {
+      "who": "teen",
+      "lines": [
+        "My mom says I have to be home by nine.",
+        "It's 8:40. Run."
+      ]
+    },
+    {
+      "who": "kid",
+      "lines": [
+        "When's the ice machine coming?",
+        "After. It's always after."
+      ]
+    },
+    {
+      "who": "kid",
+      "lines": [
+        "I can skate backwards now.",
+        "Prove it. Also no you can't."
+      ]
+    },
+    {
+      "who": "kid",
+      "lines": [
+        "Do you have a toonie?",
+        "I have a quarter and a button."
+      ]
+    },
+    {
+      "who": "kid",
+      "lines": [
+        "I found a puck under the bleachers.",
+        "Finders keepers. That's the law."
+      ]
+    },
+    {
+      "who": "elder",
+      "lines": [
+        "Ice was better in '74.",
+        "Everything was better in '74. Except the knees."
+      ]
+    },
+    {
+      "who": "elder",
+      "lines": [
+        "Bev still sharpening by hand?",
+        "Says the machine doesn't love the blade."
+      ]
+    },
+    {
+      "who": "elder",
+      "lines": [
+        "You remember when the Cup came in '05?",
+        "I touched it. I'm not supposed to say that."
+      ]
+    },
+    {
+      "who": "elder",
+      "lines": [
+        "Gus would have had the lights on by now.",
+        "Gus would have had the lights on in 1987."
+      ]
+    },
+    {
+      "who": "elder",
+      "lines": [
+        "How's the hip?",
+        "Which one?"
+      ]
+    },
+    {
+      "who": "any",
+      "lines": [
+        "Busy tonight.",
+        "Busier than last week. Good for the place."
+      ]
+    },
+    {
+      "who": "any",
+      "lines": [
+        "Hot chocolate's back on.",
+        "Finally. Civilisation."
+      ]
+    },
+    {
+      "who": "any",
+      "lines": [
+        "Somebody left a glove on the bench.",
+        "There's always one glove. Never two."
+      ]
+    }
+  ]
+}

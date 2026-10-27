@@ -1,0 +1,723 @@
+extends Node
+## Headless physics bench: drives skaters with scripted controls on empty ice
+## and prints what each rating actually produces (speeds, stops, turns, puck
+## retention, shots, passes, hits) as Markdown tables.
+##
+##   godot --headless --path . res://tools/bench/bench.tscn [-- --out=bench.md]
+##
+## It stands in for Game (the methods Skater and StickPuck call), so the
+## numbers come from exactly the code the game runs.
+
+const DT := 1.0 / 120.0
+const SUBSTEPS := 4
+const RATINGS := [1, 25, 50, 75, 100]
+const CUT := 85.0
+
+var puck: Puck
+var skaters: Array[Skater] = []
+var stats := {"checks": 0}
+var _out := PackedStringArray()
+var _possessions := 0
+
+
+# ---------------------------------------------------------------- Game stand-in
+
+func is_frozen() -> bool:
+	return false
+
+
+func attack_side(team: int) -> int:
+	return 1 if team == 0 else -1
+
+
+func teammates(s: Skater) -> Array:
+	return skaters.filter(func(x): return x.team == s.team and x != s)
+
+
+func on_possession(_s: Skater) -> void:
+	_possessions += 1
+
+
+var _last_shot := ""
+
+
+func on_shot(_s: Skater, slap: bool) -> void:
+	_last_shot = "%s %.0f mph" % ["slapshot" if slap else "wrist shot", puck.horizontal_speed() / PhysicsProfile.MPH]
+
+
+func on_stick_lift(_by: Skater, _victim: Skater) -> void:
+	pass
+
+
+func on_stick_broken(_s: Skater, _cause: StringName) -> void:
+	pass
+
+
+func on_new_stick(_s: Skater) -> void:
+	pass
+
+
+func bench_spot(_team: int) -> Vector2:
+	return Vector2(0, -12.0)
+
+
+var time := 0.0
+var _goalie_ai: TierAI
+var _saved := 0
+
+
+func ai_for(_team: int) -> TierAI:
+	return _goalie_ai
+
+
+func on_save(_g: Goalie, _frozen: bool) -> void:
+	_saved += 1
+
+
+func nearest_opponent_distance_to(_team: int, _p: Vector2) -> float:
+	return 99.0
+
+
+# ---------------------------------------------------------------- harness
+
+func _ready() -> void:
+	seed(12345)
+	puck = Puck.new()
+	add_child(puck)
+	Tuning.set_mode("HYBRID")
+	_line("# RinkGM physics bench")
+	_line("")
+	_line("Mode HYBRID unless noted. Ratings not named in a table are 50. 1 m/s = 2.24 mph.")
+	# `-- --only=carry,pickup` runs just those sections
+	var only := []
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--only="):
+			only = Array(arg.trim_prefix("--only=").split(","))
+	for sec in ["gestures", "skating", "stop", "turn", "carry", "stickhandle", "moves", "shots", "passes", "pickup", "hits", "goalie"]:
+		if only.is_empty() or sec in only:
+			call("_bench_" + sec)
+	var text := "\n".join(_out)
+	print(text)
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--out="):
+			var f := FileAccess.open(arg.trim_prefix("--out="), FileAccess.WRITE)
+			f.store_string(text + "\n")
+	get_tree().quit()
+
+
+func _line(s: String) -> void:
+	_out.append(s)
+
+
+func _stats(over: Dictionary) -> Skills:
+	var st := Skills.new()
+	for k in Skills.SKATER_KEYS:
+		st.values[k] = float(over.get(k, 50))
+	return st
+
+
+func _skater(st: Skills, team := 0) -> Skater:
+	var s := Skater.new()
+	add_child(s)
+	s.setup(self, team, skaters.size(), {}, st)
+	skaters.append(s)
+	s.place(Vector2.ZERO, Vector3(1, 0, 0))
+	return s
+
+
+func _clear() -> void:
+	for s in skaters:
+		s.queue_free()
+		remove_child(s)
+	skaters.clear()
+	puck.reset_at(Vector3(0, 0, 0))
+	puck.position = Vector3(100, 0, 100)
+
+
+func _step() -> void:
+	for s in skaters:
+		s.physics_update(DT)
+	var sdt := DT / SUBSTEPS
+	for i in SUBSTEPS:
+		StickPuck.step(self, puck, sdt, float(i + 1) / SUBSTEPS)
+		puck.integrate(sdt)
+
+
+## Keeps a straight-line test away from the boards by sliding everything back.
+func _recentre(s: Skater) -> void:
+	if absf(s.position.x) > 18.0 or absf(s.position.z) > 8.0:
+		var shift := Vector3(s.position.x, 0, s.position.z)
+		s.position -= shift
+		s.blade_pos -= shift
+		s.blade_from -= shift
+		if puck.controller == s:
+			puck.position -= shift
+
+
+func _give_puck(s: Skater) -> void:
+	puck.reset_at(s.puck_anchor())
+	puck.vel = s.vel
+	puck.controller = s
+
+
+func _mph(v: float) -> String:
+	return "%.1f mph" % (v / PhysicsProfile.MPH)
+
+
+# ---------------------------------------------------------------- gestures
+
+## Feeds a right-stick sequence [[stick, lift, frames], ...] to a puck carrier
+## and returns what shot (if any) came off.
+func _gesture(seq: Array) -> String:
+	_clear()
+	var s := _skater(_stats({}))
+	_give_puck(s)
+	_last_shot = "none"
+	for k in 20:
+		_step()
+	for part in seq:
+		for f in part[2]:
+			s.ctrl.reset()
+			s.ctrl.stick = part[0]
+			s.ctrl.lift = part[1]
+			_step()
+	return _last_shot
+
+
+func _bench_gestures() -> void:
+	_line("")
+	_line("## Right-stick gestures (skater facing +x, all ratings 50)")
+	_line("")
+	_line("| gesture | result |")
+	_line("|---|---|")
+	var fwd := Vector2(1, 0)
+	var back := Vector2(-1, 0)
+	var side := Vector2(0.7, 0.7)
+	_line("| flick forward from neutral | %s |" % _gesture([[Vector2.ZERO, false, 10], [fwd, false, 3]]))
+	_line("| slow push forward (stickhandling) | %s |" % _gesture([[Vector2.ZERO, false, 10], [fwd * 0.5, false, 15], [fwd, false, 15]]))
+	_line("| sweep side to side | %s |" % _gesture([[side, false, 30], [Vector2(0.7, -0.7), false, 30], [side, false, 30]]))
+	_line("| pull back 0.1 s, push forward | %s |" % _gesture([[back, false, 12], [fwd, false, 5]]))
+	_line("| pull back 1 s, push forward | %s |" % _gesture([[back, false, 120], [fwd, false, 5]]))
+	_line("| hold lift, pull back 1 s, push forward | %s |" % _gesture([[back, true, 120], [fwd, false, 5]]))
+	_line("| pull back, then let go (cancel) | %s |" % _gesture([[back, false, 60], [Vector2.ZERO, false, 60]]))
+	# deke: blade on the right, lift it over to the far left, set it down, pull
+	_gesture([[Vector2(0.7, 0.6), false, 40], [Vector2(0.7, 0.0), true, 25], [Vector2(0.6, -0.8), false, 40]])
+	_line("| deke: lift over to the far side, set down, pull | %s |" % ("kept the puck" if puck.controller == skaters[0] else "lost the puck"))
+
+
+# ---------------------------------------------------------------- skating
+
+func _bench_skating() -> void:
+	_line("")
+	_line("## Skating from a standstill (full stick forward)")
+	_line("")
+	_line("| speed | top speed | after 1 s | 0 to 90% | 0 to 90% dashing | peak while dashing |")
+	_line("|---|---|---|---|---|---|")
+	for r in RATINGS:
+		var res := []
+		for use_dash in [false, true]:
+			_clear()
+			var s := _skater(_stats({"speed": r}))
+			var t := 0.0
+			var t90 := -1.0
+			var at1 := 0.0
+			var peak := 0.0
+			while t < 8.0:
+				s.ctrl.reset()
+				s.ctrl.move = Vector2(1, 0)
+				s.ctrl.dash = use_dash
+				_step()
+				_recentre(s)
+				t += DT
+				peak = maxf(peak, s.speed())
+				if absf(t - 1.0) < DT * 0.5:
+					at1 = s.speed()
+				if t90 < 0.0 and s.speed() >= s.profile.max_speed * 0.9:
+					t90 = t
+			res.append([s.profile.max_speed, at1, t90, peak])
+		_line("| %d | %s | %s | %.2f s | %.2f s | %s |" % [r, _mph(res[0][0]), _mph(res[0][1]), res[0][2], res[1][2], _mph(res[1][3])])
+
+
+func _bench_stop() -> void:
+	_line("")
+	_line("## Hockey stop from top speed (speed 100)")
+	_line("")
+	_line("| agility | stopping distance | time |")
+	_line("|---|---|---|")
+	for r in RATINGS:
+		_clear()
+		var s := _skater(_stats({"speed": 100, "agility": r}))
+		s.vel = Vector3(s.profile.max_speed, 0, 0)
+		var t := 0.0
+		var x0 := s.position.x
+		while s.speed() > 0.3 and t < 5.0:
+			s.ctrl.reset()
+			s.ctrl.stop = true
+			_step()
+			t += DT
+		_line("| %d | %.1f m | %.2f s |" % [r, s.position.x - x0, t])
+
+
+func _bench_turn() -> void:
+	_line("")
+	_line("## Full-speed turn (speed 75, stick swung 90 degrees, then 180)")
+	_line("")
+	_line("| agility | 90 degree turn: time | 90 degree turn: radius | speed kept | 180 degree reversal: time |")
+	_line("|---|---|---|---|---|")
+	for r in RATINGS:
+		_clear()
+		var s := _skater(_stats({"speed": 75, "agility": r}))
+		s.vel = Vector3(s.profile.max_speed, 0, 0)
+		var t := 0.0
+		var start := s.position
+		var v0 := s.speed()
+		# 90: velocity direction reaches 80 degrees
+		while t < 4.0:
+			s.ctrl.reset()
+			s.ctrl.move = Vector2(0, 1)
+			_step()
+			t += DT
+			if atan2(s.vel.z, s.vel.x) > deg_to_rad(80.0):
+				break
+		var radius := (s.position - start).z
+		var kept := s.speed() / v0
+		var t90 := t
+		_clear()
+		s = _skater(_stats({"speed": 75, "agility": r}))
+		s.vel = Vector3(s.profile.max_speed, 0, 0)
+		t = 0.0
+		while t < 5.0 and s.vel.x > -1.0:
+			s.ctrl.reset()
+			s.ctrl.move = Vector2(-1, 0.05)
+			_step()
+			_recentre(s)
+			t += DT
+		_line("| %d | %.2f s | %.1f m | %d%% | %.2f s |" % [r, t90, radius, kept * 100.0, t])
+
+
+# ---------------------------------------------------------------- puck
+
+## Sharp cuts with the puck: the stick swings 70 degrees left/right of the
+## skating line every 0.5 s at full speed. Counts how often the puck slides off.
+func _carry_losses(sh: int, agi: int, mode: String, period: float) -> float:
+	Tuning.set_mode(mode)
+	var losses := 0
+	var trials := 4
+	for trial in trials:
+		_clear()
+		var s := _skater(_stats({"stick_handling": sh, "agility": agi, "speed": 75}))
+		s.vel = Vector3(s.profile.max_speed * 0.9, 0, 0)
+		_give_puck(s)
+		var t := 0.0
+		while t < 8.0:
+			var side := 1.0 if fmod(t, period * 2.0) < period else -1.0
+			s.ctrl.reset()
+			s.ctrl.move = Vector2(cos(deg_to_rad(CUT)), side * sin(deg_to_rad(CUT)))
+			_step()
+			_recentre(s)
+			t += DT
+			if puck.controller != s:
+				losses += 1
+				_give_puck(s)
+	Tuning.set_mode("HYBRID")
+	return losses / float(trials) / 8.0 * 10.0
+
+
+func _bench_carry() -> void:
+	_line("")
+	_line("## Carrying through hard cuts (speed 75, 85 degree cuts every 0.4 s)")
+	_line("")
+	_line("Pucks lost per 10 s of cutting. Agility turns you faster, which is harder to hold.")
+	_line("")
+	_line("| stick handling | agility 1 | agility 50 | agility 100 |")
+	_line("|---|---|---|---|")
+	for r in RATINGS:
+		_line("| %d | %.1f | %.1f | %.1f |" % [r,
+			_carry_losses(r, 1, "HYBRID", 0.4), _carry_losses(r, 50, "HYBRID", 0.4), _carry_losses(r, 100, "HYBRID", 0.4)])
+	_line("")
+	_line("Same test with both ratings equal, by physics mode:")
+	_line("")
+	_line("| rating | SIM | HYBRID | ARCADE |")
+	_line("|---|---|---|---|")
+	for r in RATINGS:
+		_line("| %d | %.1f | %.1f | %.1f |" % [r,
+			_carry_losses(r, r, "SIM", 0.4), _carry_losses(r, r, "HYBRID", 0.4), _carry_losses(r, r, "ARCADE", 0.4)])
+
+
+func _bench_stickhandle() -> void:
+	_line("")
+	_line("## Stickhandling in place")
+	_line("")
+	_line("Right stick swept edge to edge of the front 90 degrees (two hands). The last two columns compare the same 40 degree sweep at 2 sweeps/s with two hands (-20 to 20 degrees) and one hand (50 to 90 degrees).")
+	_line("")
+	_line("| stick handling | crossing time | losses / 10 s at 1 sweep/s | at 1.5 sweeps/s | at 2 sweeps/s | 40 degrees, two hands | 40 degrees, one hand |")
+	_line("|---|---|---|---|---|---|---|")
+	for r in RATINGS:
+		var cells := []
+		# crossing time: blade from one edge of the two-hand zone to the other
+		_clear()
+		var s := _skater(_stats({"stick_handling": r}))
+		var left := Vector2(cos(-Skater.TWO_HAND_HALF), sin(-Skater.TWO_HAND_HALF))
+		for i in 120:
+			s.ctrl.reset()
+			s.ctrl.stick = left
+			_step()
+		var t := 0.0
+		while t < 2.0:
+			s.ctrl.reset()
+			s.ctrl.stick = Vector2(left.x, -left.y)
+			_step()
+			t += DT
+			if s.blade_ang > Skater.TWO_HAND_HALF * 0.9:
+				break
+		cells.append("%.2f s" % t)
+		var a45 := Skater.TWO_HAND_HALF
+		for c in [[-a45, a45, 1.0], [-a45, a45, 1.5], [-a45, a45, 2.0],
+				[deg_to_rad(-20.0), deg_to_rad(20.0), 2.0], [deg_to_rad(50.0), deg_to_rad(90.0), 2.0]]:
+			var hz: float = c[2]
+			var losses := 0
+			_clear()
+			s = _skater(_stats({"stick_handling": r}))
+			_give_puck(s)
+			t = 0.0
+			while t < 10.0:
+				var ang: float = c[0] if fmod(t * hz, 1.0) < 0.5 else c[1]
+				s.ctrl.reset()
+				s.ctrl.stick = Vector2(cos(ang), sin(ang))
+				_step()
+				t += DT
+				if puck.controller != s:
+					losses += 1
+					_give_puck(s)
+			cells.append(str(losses))
+		_line("| %d | %s | %s | %s | %s | %s | %s |" % ([r] + cells))
+
+
+## Runs a stick move `n` times from a standstill and returns
+## [share that kept the puck or got a shot off, mean time, mean shot speed, share on net].
+## A cradling move (lacrosse) is thrown with a push forward once it's up.
+func _move_trials(id: StringName, rating: int, n: int) -> Array:
+	var kept := 0
+	var time := 0.0
+	var shot_speed := 0.0
+	var shots := 0
+	var on := 0
+	var spec: Dictionary = MovePhysics.MOVES[id]
+	var has_shot: bool = spec.has("cradle") or spec.has("shot")
+	for i in n:
+		_clear()
+		var s := _skater(_stats({"stick_handling": rating, "shot_power": rating, "shot_accuracy": rating, "shot_release": rating}))
+		s.place(Vector2(Rink.GOAL_X - 10.0, 0.0), Vector3(1, 0, 0))
+		_give_puck(s)
+		for k in 30:
+			_step()
+		var aim := Vector3(Rink.GOAL_X, 0, 0.55 * (1.0 if i % 2 == 0 else -1.0))
+		s.ctrl.reset()
+		s.ctrl.move_id = id
+		var t := 0.0
+		var fired := false
+		while t < 2.5:
+			_step()
+			s.ctrl.reset()
+			s.ctrl.aim_point = aim
+			s.ctrl.tilt = 1.0
+			if s.move_id == id and s.move_time >= MovePhysics.duration(id):
+				s.ctrl.stick = Vector2(1, 0)
+			t += DT
+			if has_shot and puck.controller == null and puck.horizontal_speed() > 5.0 and not fired:
+				fired = true
+				shots += 1
+				shot_speed += puck.horizontal_speed()
+				var v := puck.vel
+				var tt := (Rink.GOAL_X - puck.position.x) / maxf(v.x, 0.1)
+				var z := puck.position.z + v.z * tt
+				var y := puck.position.y + v.y * tt - 0.5 * Puck.GRAVITY * tt * tt
+				if absf(z) < Rink.NET_HALF_W - Puck.RADIUS and y < Rink.NET_H - Puck.RADIUS and y > -0.5:
+					on += 1
+			if s.move_id == &"":
+				break
+		time += t
+		if (has_shot and fired) or (not has_shot and puck.controller == s):
+			kept += 1
+	return [kept / float(n), time / n, shot_speed / maxf(shots, 1), on / maxf(shots, 1.0)]
+
+
+func _bench_moves() -> void:
+	_line("")
+	_line("## Stick moves (MovePhysics), from a standstill 10 m out")
+	_line("")
+	_line("Stick handling and shooting ratings set to the column's rating. Dekes: share that kept the puck. Shots (and the lacrosse throw): share that got the shot off, speed, share on net.")
+	_line("")
+	_line("| move | rating 25 | rating 50 | rating 90 |")
+	_line("|---|---|---|---|")
+	for id in MovePhysics.MOVES:
+		var cells := []
+		for r in [25, 50, 90]:
+			var res := _move_trials(id, r, 40)
+			if MovePhysics.MOVES[id].has("cradle") or MovePhysics.MOVES[id].has("shot"):
+				cells.append("%d%%, %.2f s, %s, %d%% on net" % [int(res[0] * 100.0), res[1], _mph(res[2]), int(res[3] * 100.0)])
+			else:
+				cells.append("%d%% kept, %.2f s" % [int(res[0] * 100.0), res[1]])
+		_line("| %s | %s | %s | %s |" % [Moves.display_name(id), cells[0], cells[1], cells[2]])
+	_line("")
+	_line("## Shot kinds, 10 m out, ratings at the column's value: speed, share on net")
+	_line("")
+	_line("| shot | rating 25 | rating 50 | rating 90 |")
+	_line("|---|---|---|---|")
+	var kinds := [[&"quick_shot", 0.0, false], [&"wrist_shot", 0.6, false], [&"backhand", 0.6, false],
+		[&"slapshot", 0.9, true]]
+	for k in kinds:
+		var cells := []
+		for r in [25, 50, 90]:
+			var res := _shots(_stats({"shot_power": r, "shot_accuracy": r, "shot_release": r}), k[1], k[2], 60, k[0])
+			cells.append("%s, %d%%" % [_mph(res[0]), int(res[1] * 100.0)])
+		_line("| %s | %s | %s | %s |" % [Moves.display_name(k[0]), cells[0], cells[1], cells[2]])
+
+
+## Fires `n` shots from the top of the slot (10 m out, centred) and returns
+## [mean speed, share on net]. On-net is the straight-line crossing at the goal
+## line inside the posts and under the bar; goalies aren't involved.
+func _shots(st: Skills, held: float, slap: bool, n: int, kind := &"wrist_shot") -> Array:
+	_clear()
+	var s := _skater(st)
+	var spot := Vector2(Rink.GOAL_X - 10.0, 0.0)
+	var total := 0.0
+	var on := 0
+	for i in n:
+		s.place(spot, Vector3(1, 0, 0))
+		s.ctrl.reset()
+		s.ctrl.aim_point = Vector3(Rink.GOAL_X, 0, 0.55 * (1.0 if i % 2 == 0 else -1.0))
+		_give_puck(s)
+		puck.position.y = 0.0
+		s.shot_kind = kind
+		s._clock = i * 0.731  # a different moment of the hands' tremor each time
+		s.shoot(held, slap)
+		var v := puck.vel
+		var from := puck.position
+		total += Vector2(v.x, v.z).length()
+		var tt := (Rink.GOAL_X - from.x) / v.x
+		var z := from.z + v.z * tt
+		var y := from.y + v.y * tt - 0.5 * Puck.GRAVITY * tt * tt
+		if absf(z) < Rink.NET_HALF_W - Puck.RADIUS and y < Rink.NET_H - Puck.RADIUS:
+			on += 1
+	return [total / n, on / float(n)]
+
+
+func _bench_shots() -> void:
+	_line("")
+	_line("## Shots from the top of the slot, 10 m out, aimed just inside a post")
+	_line("")
+	_line("Speed and share of shots on net. Shot power, accuracy and release all set to the rating.")
+	_line("")
+	_line("| rating | instant shot | wrist, 0.3 s wind-up | wrist, full wind-up | slapshot, full wind-up |")
+	_line("|---|---|---|---|---|")
+	for r in RATINGS:
+		var st := _stats({"shot_power": r, "shot_accuracy": r, "shot_release": r})
+		var cells := []
+		for c in [[0.0, false], [0.3, false], [1.0, false], [1.4, true]]:
+			var res := _shots(st, c[0], c[1], 300)
+			cells.append("%s, %d%%" % [_mph(res[0]), int(res[1] * 100.0)])
+		_line("| %d | %s | %s | %s | %s |" % ([r] + cells))
+	_line("")
+	_line("Release on its own (power and accuracy 50):")
+	_line("")
+	_line("| shot release | instant shot | time to full wind-up |")
+	_line("|---|---|---|")
+	for r in RATINGS:
+		var st := _stats({"shot_release": r})
+		var res := _shots(st, 0.0, false, 300)
+		_line("| %d | %s, %d%% | %.2f s |" % [r, _mph(res[0]), int(res[1] * 100.0), PhysicsProfile.from_skills(st).charge_time])
+
+
+func _bench_passes() -> void:
+	_line("")
+	_line("## Passes to a standing teammate")
+	_line("")
+	_line("Share of passes the receiver traps cleanly (under control within 0.3 s of touching the blade). Passer and receiver have the same pass quality.")
+	_line("")
+	_line("| pass quality | 8 m | 15 m | 22 m |")
+	_line("|---|---|---|---|")
+	for r in [1, 25, 40, 60, 80, 100]:
+		var cells := []
+		for dist in [8.0, 15.0, 22.0]:
+			var ok := 0
+			var n := 60
+			for i in n:
+				_clear()
+				var a := _skater(_stats({"pass_quality": r}))
+				var b := _skater(_stats({"pass_quality": r}))
+				a.place(Vector2(-dist * 0.5, 0), Vector3(1, 0, 0))
+				b.place(Vector2(dist * 0.5, 0), Vector3(-1, 0, 0))
+				_give_puck(a)
+				for k in 30:
+					_step()
+				a.ctrl.reset()
+				a.ctrl.pass_pressed = true
+				a.ctrl.pass_hint = b
+				a._clock = i * 0.731  # a different moment of the hands' tremor each time
+				b._clock = i * 0.913
+				_step()
+				# clean: under control within 0.3 s of first touching the blade,
+				# not bobbled and chased down
+				var t := 0.0
+				var touched := -1.0
+				while t < 3.0 and not b.has_puck() and (touched < 0.0 or t - touched < 0.3):
+					_step()
+					t += DT
+					if touched < 0.0 and puck.last_touch == b:
+						touched = t
+				if b.has_puck() and t - touched <= 0.3:
+					ok += 1
+			cells.append("%d%%" % int(ok * 100.0 / n))
+		_line("| %d | %s | %s | %s |" % [r, cells[0], cells[1], cells[2]])
+
+
+## A loose puck with the right stick left alone, as a player skating onto it
+## would: `side` m to the right of the skating line (- = left), either lying
+## 4 m ahead while skating at half speed, or sliding in at `incoming` m/s
+## toward a skater standing still. Returns the share picked up within 1.5 s.
+func _pickup_rate(sh: int, side: float, incoming: float) -> float:
+	var ok := 0
+	var n := 40
+	for i in n:
+		_clear()
+		var s := _skater(_stats({"stick_handling": sh}))
+		var off := side + randf_range(-0.1, 0.1)
+		if incoming > 0.0:
+			puck.reset_at(Vector3(9.0, 0, off))
+			puck.vel = Vector3(-incoming, 0, 0)
+		else:
+			s.vel = Vector3(s.profile.max_speed * 0.5, 0, 0)
+			puck.reset_at(Vector3(4.0, 0, off))
+			puck.vel = Vector3(randf_range(-1.0, 1.0), 0, randf_range(-1.0, 1.0))
+		var t := 0.0
+		while t < 1.5 and not s.has_puck():
+			s.ctrl.reset()
+			s.ctrl.move = Vector2(0.5, 0) if incoming <= 0.0 else Vector2.ZERO
+			_step()
+			t += DT
+		if s.has_puck():
+			ok += 1
+	return float(ok) / n
+
+
+func _bench_pickup() -> void:
+	_line("")
+	_line("## Loose puck pickup, right stick left alone")
+	_line("")
+	_line("Share picked up within 1.5 s. Skating onto a puck lying 4 m ahead at half speed, or standing while it slides in. Offsets are from the skating line, + = forehand side.")
+	_line("")
+	_line("| stick handling | skate onto, +0.3 m | skate onto, +0.9 m | skate onto, -0.6 m | slides in 8 m/s, +0.5 m | slides in 13 m/s, +0.5 m |")
+	_line("|---|---|---|---|---|---|")
+	for r in RATINGS:
+		_line("| %d | %d%% | %d%% | %d%% | %d%% | %d%% |" % [r, int(100 * _pickup_rate(r, 0.3, 0.0)), int(100 * _pickup_rate(r, 0.9, 0.0)),
+			int(100 * _pickup_rate(r, -0.6, 0.0)), int(100 * _pickup_rate(r, 0.5, 8.0)), int(100 * _pickup_rate(r, 0.5, 13.0))])
+
+
+func _bench_hits() -> void:
+	_line("")
+	_line("## Body checks (shoulder check, 6 m/s closing speed, victim skating straight)")
+	_line("")
+	_line("The victim's jolt (speed change from the collision plus the hitter's leg drive) over their balance. Above 1.0 knocks them down.")
+	_line("")
+	_line("| hitting \\ toughness | 1 | 50 | 100 |")
+	_line("|---|---|---|---|")
+	for h in [1, 50, 100]:
+		var hp := PhysicsProfile.from_skills(_stats({"hitting": h}))
+		var cells := []
+		for tg in [1, 50, 100]:
+			var vp := PhysicsProfile.from_skills(_stats({"toughness": tg}))
+			var impulse: float = (1.0 + Contact.BODY_E) * 6.0 * Contact.reduced_mass(Skater.MASS, Skater.MASS) + hp.leg_drive * Contact.CHECK_TIME
+			cells.append("%.2f" % (impulse / Skater.MASS / vp.balance))
+		_line("| %d | %s | %s | %s |" % [h, cells[0], cells[1], cells[2]])
+
+
+
+## One shooter against one goalie: the shooter winds up (the goalie reads it)
+## and shoots at a corner from `spot`; returns the share that go in.
+func _goalie_trials(skill: float, level: float, spot: Vector2, n: int) -> float:
+	_clear()
+	_goalie_ai = TierAI.for_level(level)
+	var g := Goalie.new()
+	add_child(g)
+	g.game = self
+	g.team = 1
+	g.side = 1
+	g.skill = skill
+	var s := _skater(_stats({"shot_power": 75, "shot_accuracy": 75, "shot_release": 75}))
+	var goals := 0
+	for i in n:
+		time = i * 1.37
+		g.reset()
+		var dir := Vector3(Rink.GOAL_X - spot.x, 0, -spot.y).normalized()
+		s.place(spot, dir)
+		s.ctrl.reset()
+		var corner := i % 4
+		s.ctrl.aim_point = Vector3(Rink.GOAL_X, 0, 0.8 * (1.0 if corner % 2 == 0 else -1.0))
+		s._clock = i * 0.731
+		s.ctrl.tilt = _tilt_for(s, 0.95) if corner < 2 else 0.0
+		_give_puck(s)
+		puck.position.y = 0.0
+		# the goalie settles on the angle, then sees the wind-up
+		for k in 120:
+			g.physics_update(DT)
+		s.winding = true
+		for k in 48:
+			time += DT
+			g.physics_update(DT)
+		s.winding = false
+		s.shoot(0.4, false)
+		for k in 120:
+			time += DT
+			g.physics_update(DT)
+			var sdt := DT / SUBSTEPS
+			for j in SUBSTEPS:
+				var prev := puck.position
+				puck.integrate(sdt)
+				g.check_save(puck, prev)
+			if puck.in_net_side != 0:
+				goals += 1
+				break
+			if puck.frozen or puck.vel.x < 0.0:
+				break
+	g.queue_free()
+	remove_child(g)
+	return goals / float(n)
+
+
+## The blade tilt that puts this shot (same hands, same moment) under the
+## bar at about `height` m on the goal line, as a shooter picking a top
+## corner would.
+func _tilt_for(s: Skater, height: float) -> float:
+	var best := 0.0
+	var best_err := INF
+	for k in 11:
+		var tilt := k / 10.0
+		s.ctrl.tilt = tilt
+		_give_puck(s)
+		puck.position.y = 0.0
+		s.shoot(0.4, false)
+		s.stick_health = 1.0
+		var v := puck.vel
+		var tt := (Rink.GOAL_X - puck.position.x) / v.x
+		var y := puck.position.y + v.y * tt - 0.5 * Puck.GRAVITY * tt * tt
+		if absf(y - height) < best_err:
+			best_err = absf(y - height)
+			best = tilt
+	return best
+
+
+func _bench_goalie() -> void:
+	_line("")
+	_line("## A lone shooter against the goalie")
+	_line("")
+	_line("Share of shots that go in. The shooter (shot ratings 75) winds up for 0.4 s, which the goalie reads, then shoots at a corner (high, tilted to cross the goal line 0.95 m up, and low, glove and blocker side, in turn). Goalie skill 0..1 with its tier's reaction and positioning (level 0 Beer League, 3 the default).")
+	_line("")
+	_line("| goalie | slot 6 m | slot 10 m | 30 degrees, 8 m | point, 18 m |")
+	_line("|---|---|---|---|---|")
+	var spots := [Vector2(Rink.GOAL_X - 6.0, 0), Vector2(Rink.GOAL_X - 10.0, 0), Vector2(Rink.GOAL_X - 6.9, 4.0), Vector2(Rink.GOAL_X - 18.0, 6.0)]
+	for gs in [[0.4, 0.0], [0.68, 3.0], [0.9, 4.0]]:
+		var cells := []
+		for sp in spots:
+			cells.append("%d%%" % int(_goalie_trials(gs[0], gs[1], sp, 40) * 100.0))
+		_line("| skill %.2f, level %d | %s |" % [gs[0], int(gs[1]), " | ".join(cells)])
