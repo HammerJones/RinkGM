@@ -1,0 +1,219 @@
+{
+ "id": "tyler_green_balloon",
+ "giver": "tyler_kowalchuk",
+ "quest": "tyler_green_balloon",
+ "nodes": {
+  "offer": {
+   "say": "Okay, so, every year, 12 March, one green balloon on the Mallards photo. Nobody knows who. My great-aunt says she knows and won't say. That means she knows. I want to solve it. Are you in? Say you're in.",
+   "options": [
+    {
+     "text": "I'm in.",
+     "do": [
+      {
+       "quest_start": "tyler_green_balloon"
+      },
+      {
+       "rel": [
+        "tyler_kowalchuk",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why does it matter who?",
+     "to": "why"
+    },
+    {
+     "text": "Maybe some mysteries should stay mysteries.",
+     "to": "mystery"
+    },
+    {
+     "text": "I'm too busy for detective work, Tyler.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Because somebody's done a nice thing for twenty years and nobody's ever said thank you. Also because Aunt Bev knows and I don't and that's unbearable.",
+   "options": [
+    {
+     "text": "Fair. Let's find out.",
+     "do": [
+      {
+       "quest_start": "tyler_green_balloon"
+      },
+      {
+       "rel": [
+        "tyler_kowalchuk",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "mystery": {
+   "say": "That's what Aunt Bev said! Word for word! Are you two in on it? Are you a team?",
+   "options": [
+    {
+     "text": "We're not a team. I'll help you look.",
+     "do": [
+      {
+       "quest_start": "tyler_green_balloon"
+      },
+      {
+       "rel": [
+        "tyler_kowalchuk",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Okay. I'll do it alone. Like a real detective. With a notebook. I have a notebook.",
+   "do": [
+    {
+     "rel": [
+      "tyler_kowalchuk",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Start at the photo. Look at the knot. Detectives always look at the knot.",
+   "options": []
+  },
+  "progress": {
+   "say": "Any leads?",
+   "options": [
+    {
+     "text": "Going to look at the photo.",
+     "if": [
+      {
+       "step": [
+        "tyler_green_balloon",
+        "lobby"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Asking Larry first.",
+     "if": [
+      {
+       "step": [
+        "tyler_green_balloon",
+        "larry"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "I'll ask Bev.",
+     "if": [
+      {
+       "step": [
+        "tyler_green_balloon",
+        "bev"
+       ]
+      }
+     ],
+     "to": "p_bev"
+    },
+    {
+     "text": "I've got a hunch about the bay.",
+     "if": [
+      {
+       "step": [
+        "tyler_green_balloon",
+        "bay"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_bev": {
+   "say": "She'll say something mysterious. She always says something mysterious. Write it down, it'll be a clue.",
+   "options": []
+  },
+  "complete": {
+   "say": "Well? Who is it? You've got a face. You've got a found-it face.",
+   "options": [
+    {
+     "text": "It's Earl. Every year, before anyone's in.",
+     "do": [
+      {
+       "set": "balloon_mystery_told"
+      },
+      {
+       "rel": [
+        "tyler_kowalchuk",
+        3
+       ]
+      },
+      {
+       "note": "The Clarion, page 3: 'Mystery of the Green Balloon Solved; Icemaker Says Only Hm.'"
+      }
+     ],
+     "to": "c_tell"
+    },
+    {
+     "text": "I didn't find anything worth telling.",
+     "do": [
+      {
+       "set": "balloon_secret_kept"
+      }
+     ],
+     "to": "c_keep"
+    },
+    {
+     "text": "It's somebody who loves this rink. That's enough.",
+     "do": [
+      {
+       "set": "balloon_secret_kept"
+      },
+      {
+       "rel": [
+        "tyler_kowalchuk",
+        1
+       ]
+      }
+     ],
+     "to": "c_vague"
+    }
+   ]
+  },
+  "c_tell": {
+   "say": "EARL? Earl ties balloons? Earl! I'm telling Midge. I'm telling everyone. I'm going to say thank you to him. He's going to say 'hm'. Best 'hm' of my life.",
+   "options": []
+  },
+  "c_keep": {
+   "say": "Nothing? Huh. Okay. Maybe it's a ghost. Maybe it's Gus's ghost. Gus isn't dead. A living ghost. From Florida. I'll keep looking next year.",
+   "options": []
+  },
+  "c_vague": {
+   "say": "That's what Aunt Bev said too. You two are definitely a team.",
+   "options": []
+  },
+  "done": {
+   "say": "Next mystery: who painted the milk bottle on board N7.",
+   "options": []
+  }
+ }
+}

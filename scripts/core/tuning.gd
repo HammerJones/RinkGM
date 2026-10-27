@@ -1,6 +1,8 @@
 extends Node
-## Global feel settings. `blend` slides every physics system between pure
-## simulation (0.0) and arcade assistance (1.0). See README for what it affects.
+## Global feel settings. `blend` slides the skating and stick controls
+## between pure simulation (0.0, the default) and arcade assistance (1.0):
+## more turn and grip, direct thrust, a quicker blade. It never changes how
+## contacts come out (shots, passes, traps, saves, hits). See README.
 
 signal mode_changed(mode_name: String)
 
@@ -10,8 +12,8 @@ const MODES := [
 	{"name": "ARCADE", "blend": 1.0},
 ]
 
-var mode_index := 1
-var blend := 0.5
+var mode_index := 0  # SIM: nothing added on top of the physics
+var blend := 0.0
 
 
 func _ready() -> void:

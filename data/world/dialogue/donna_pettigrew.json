@@ -1,0 +1,489 @@
+{
+  "id": "donna_pettigrew",
+  "barks": {
+    "idle": [
+      "We need cones at the far end. We means you.",
+      "Sixty volunteers and a freezer of squares. We're fine."
+    ],
+    "good_ice": [
+      "That's ice I'd put a six-year-old on."
+    ],
+    "bad_ice": [
+      "A rut at the blue line. I've seen it. I've written it down.",
+      "Not on my kids' ice."
+    ],
+    "goal": [
+      "Good hustle! Good, good.",
+      "That's my U9s!"
+    ],
+    "cold": [
+      "Cold. Somebody find the heater for the parents."
+    ],
+    "long_line": [
+      "Four teams in two dressing rooms. We'll make it work. You'll make it work."
+    ],
+    "greet_owner": [
+      "{owner}. Walk with me.",
+      "We need to talk. Briefly."
+    ],
+    "leaving_happy": [
+      "Good morning on the ice. Thank the driver, kids!"
+    ],
+    "leaving_angry": [
+      "I'll be in touch. In writing."
+    ],
+    "event_specific": {
+      "minor_hockey": [
+        "Keep your stick on the ice, Owen!",
+        "Who's coaching from the glass? Rick. It's always Rick."
+      ],
+      "tournament": [
+        "Five towns, eighty families, one canteen. Brace yourselves."
+      ],
+      "learn_to_skate": [
+        "Look at that. She let go of the boards. Don't cry, Donna."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_donna_pettigrew"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "minor_hockey"
+        }
+      ],
+      "node": "practice"
+    },
+    {
+      "if": [
+        {
+          "event_now": "tournament"
+        }
+      ],
+      "node": "tourney"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "donna_pettigrew",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Donna Pettigrew, Minor Hockey. I moved half our ice to Harlow Falls last spring. I'd like to move it back. Convince me.",
+      "do": [
+        {
+          "set": "met_donna_pettigrew"
+        }
+      ],
+      "options": [
+        {
+          "text": "What do you need?",
+          "do": [
+            {
+              "rel": [
+                "donna_pettigrew",
+                3
+              ]
+            }
+          ],
+          "to": "first_need"
+        },
+        {
+          "text": "The ice is getting better, I promise.",
+          "to": "first_promise"
+        },
+        {
+          "text": "Harlow Falls can keep it.",
+          "do": [
+            {
+              "rel": [
+                "donna_pettigrew",
+                -8
+              ]
+            }
+          ],
+          "to": "first_rude"
+        }
+      ]
+    },
+    "first_need": {
+      "say": "Safe ice. Two dressing rooms that lock. An AED on the wall. Saturday mornings at the capped rate. We'll start there.",
+      "options": [
+        {
+          "text": "Understood.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_promise": {
+      "say": "Promises don't hold up a six-year-old. Ice does.",
+      "options": [
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_rude": {
+      "say": "Noted. Under 'owner, attitude'. We'll revisit.",
+      "options": [
+        {
+          "text": "...",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "A rut at the blue line on Saturday. A seven-year-old went down. He's fine. I'm not."
+      ],
+      "options": [
+        {
+          "text": "I'm sorry. It won't happen again.",
+          "do": [
+            {
+              "rel": [
+                "donna_pettigrew",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Kids fall, Donna.",
+          "do": [
+            {
+              "rel": [
+                "donna_pettigrew",
+                -5
+              ]
+            }
+          ],
+          "to": "grumpy_bad"
+        }
+      ]
+    },
+    "grumpy_bad": {
+      "say": "Kids fall on good ice. On bad ice they get hurt. Write that on your wall.",
+      "options": [
+        {
+          "text": "Understood.",
+          "to": "hub"
+        }
+      ]
+    },
+    "practice": {
+      "say": "Look at them. Thirty mittens and one puck. We need cones at the far end, {owner}.",
+      "options": [
+        {
+          "text": "On it.",
+          "do": [
+            {
+              "rel": [
+                "donna_pettigrew",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Is that a parent coaching from the glass?",
+          "to": "rick"
+        }
+      ]
+    },
+    "rick": {
+      "say": "Rick Saucier. Every week. I've drafted a letter. Then a second letter about the first letter.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "tourney": {
+      "say": "Valley Peewee weekend. Five towns, eighty families, one canteen. We're going to need Lorraine at full power.",
+      "options": [
+        {
+          "text": "I'll tell her.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}. The squares are in the office. Lemon. Don't tell the U9 parents.",
+        "There you are. We have a list. You'll like it. You won't."
+      ],
+      "options": [
+        {
+          "text": "Hi, Donna.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "Donna Pettigrew. I have four minutes.",
+        "We need to talk. Briefly.",
+        "{owner}. Walk with me."
+      ],
+      "options": [
+        {
+          "text": "How's Minor Hockey doing?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love watching?",
+          "to": "events"
+        },
+        {
+          "text": "What do you think of Priya?",
+          "to": "priya"
+        },
+        {
+          "text": "You and Hélène...",
+          "to": "helene"
+        },
+        {
+          "text": "How's the ice for the kids?",
+          "to": "rink"
+        },
+        {
+          "text": "Any notes on my team, boss?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "Your ice rate and my club. Two hats.",
+          "if": [
+            {
+              "path": "gm"
+            },
+            {
+              "not_flag": "donna_two_hats_kept"
+            },
+            {
+              "not_flag": "donna_two_hats_bent"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "I'll let you go.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Two hundred kids, sixty volunteers, one bake sale freezer. We run on squares and stubbornness.",
+      "options": [
+        {
+          "text": "How much ice did you move to Harlow Falls?",
+          "to": "hf"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hf": {
+      "say": "Half. They have a 'Pathway to Excellence' poster. Our pathway has a bake sale. Give me a reason to bring it home.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Minor hockey, obviously. The tournament. And learn to skate, when a kid lets go of the boards for the first time. Don't tell anyone that's my favourite.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "priya": {
+      "say": "Priya answers on the second ring and sends invoices on the first. I'd hire her if I could afford her.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "helene": {
+      "say": "She wants 06:00. I want 06:00. One of us coaches figure skating. We're civil.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Good enough to bring the kids home?",
+          "if": [
+            {
+              "ice_gte": 62
+            },
+            {
+              "not_flag": "donna_bringing_back"
+            }
+          ],
+          "to": "rink_home"
+        },
+        {
+          "text": "And the dressing rooms?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "What else do we need?",
+          "to": "rink_need"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_home": {
+      "say": "Close. I'm bringing the U11s back in January. Don't make me regret it.",
+      "do": [
+        {
+          "set": "donna_bringing_back"
+        },
+        {
+          "rel": [
+            "donna_pettigrew",
+            3
+          ]
+        },
+        {
+          "note": "Donna Pettigrew is bringing the U11s back from Harlow Falls in January."
+        }
+      ],
+      "options": [
+        {
+          "text": "You won't.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "Two rooms that lock and a drain that works. The parents noticed. Parents notice everything except their own kids' mouthguards.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_need": {
+      "say": "An AED by the door, ice without ruts, and nobody cancelling Saturday six a.m. by text.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "Your kids pass. Your bench doesn't. And thank the Zambelli driver after practice. Every time.",
+      "options": [
+        {
+          "text": "Every time.",
+          "do": [
+            {
+              "rel": [
+                "donna_pettigrew",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "If you give your own club my Saturday, I'll know. Everybody will know. Wear both hats where we can see them.",
+      "options": [
+        {
+          "text": "Minor hockey keeps Saturday.",
+          "do": [
+            {
+              "set": "donna_two_hats_kept"
+            },
+            {
+              "rel": [
+                "donna_pettigrew",
+                5
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Business is business.",
+          "do": [
+            {
+              "set": "donna_two_hats_bent"
+            },
+            {
+              "rel": [
+                "donna_pettigrew",
+                -6
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

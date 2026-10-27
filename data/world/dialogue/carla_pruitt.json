@@ -1,0 +1,467 @@
+{
+  "id": "carla_pruitt",
+  "barks": {
+    "idle": [
+      "It's fine. It'll do the job.",
+      "Two of these six heaters work. I sit under the two.",
+      "I've been up since four. I'm fine."
+    ],
+    "good_ice": [
+      "Ice looks good. Nobody's going to cry on it. Well. Less."
+    ],
+    "bad_ice": [
+      "My kid's falling enough without the ice helping.",
+      "That surface wouldn't pass inspection at the Dairy."
+    ],
+    "wet_ice": [
+      "Wet ice and wet mittens. Love that for us."
+    ],
+    "goal": [
+      "Good. Somebody scored. Can we go home?",
+      "Yay. Sorry. Yay!"
+    ],
+    "cold": [
+      "Is this heater decorative?",
+      "I work in a dairy cooler and this is colder."
+    ],
+    "hungry": [
+      "One coffee and whatever Maddie doesn't finish."
+    ],
+    "long_line": [
+      "I supervise forty people. I could fix this line in a minute."
+    ],
+    "bored": [
+      "I'll just check Dylan's grades online. No. I won't."
+    ],
+    "greet_owner": [
+      "{owner}. Is my son working or pretending?",
+      "Hi. Don't ask me if I'm related to Gary."
+    ],
+    "leaving_happy": [
+      "She let go. I'm not crying. It's the cold."
+    ],
+    "leaving_angry": [
+      "I paid for a lesson, not a demolition derby."
+    ],
+    "event_specific": {
+      "learn_to_skate": [
+        "Come on, baby. Knees soft. I'm not looking. I'm looking.",
+        "That chair has done more for her than any coach I've paid."
+      ],
+      "high_school": [
+        "Josie's on D tonight. Dylan will be watching. Not the game."
+      ],
+      "minor_hockey": [
+        "Rick Saucier is yelling again. Of course he is."
+      ],
+      "public_skate": [
+        "I'll take one lap. One. I'm wearing my grandmother's skates, so be nice."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_carla_pruitt"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "learn_to_skate"
+        }
+      ],
+      "node": "lts_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "carla_pruitt",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "You're the owner. I'm Carla. Pruitt with an i. Dylan's mother, Maddie's mother, Dorothy Pruitt's granddaughter. No relation to Gary.",
+      "do": [
+        {
+          "set": "met_carla_pruitt"
+        }
+      ],
+      "options": [
+        {
+          "text": "Dylan's a big help around here.",
+          "do": [
+            {
+              "rel": [
+                "carla_pruitt",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Pruitt like Honest Hockey?",
+          "do": [
+            {
+              "rel": [
+                "carla_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "first_hh"
+        },
+        {
+          "text": "Wait. Not even a little related to Gary?",
+          "do": [
+            {
+              "rel": [
+                "carla_pruitt",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_hh": {
+      "say": "Grandma Dorothy started it because she watched my dad outgrow his skates by Easter. Plain gear, fair price. These are her skates. They're fine.",
+      "options": [
+        {
+          "text": "They look good for another fifty years.",
+          "do": [
+            {
+              "rel": [
+                "carla_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "The east bench heaters again? I'll get them looked at.",
+          "do": [
+            {
+              "rel": [
+                "carla_pruitt",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            },
+            {
+              "note": "Carla Pruitt asked for the east bench heaters to be fixed."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Have a coffee on the house.",
+          "do": [
+            {
+              "money": -2
+            },
+            {
+              "rel": [
+                "carla_pruitt",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I hear you, Carla.",
+          "to": "hub"
+        }
+      ]
+    },
+    "lts_now": {
+      "say": [
+        "Don't talk to me, I'm watching her not let go of that chair.",
+        "She's up. She's up. She's... okay, she's down. She's up."
+      ],
+      "options": [
+        {
+          "text": "She's getting there, Carla.",
+          "do": [
+            {
+              "rel": [
+                "carla_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll leave you to it.",
+          "to": "end"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}. Sit. The good heater's on.",
+        "Hey. Thanks for keeping an eye on both of mine."
+      ],
+      "options": [
+        {
+          "text": "Thanks, Carla.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "It's fine. What do you need?",
+        "I've got twenty minutes before the bus. Go.",
+        "Hi. Dylan says you're 'basically his boss'. Are you?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the Dairy?",
+          "to": "job"
+        },
+        {
+          "text": "What do you like watching here?",
+          "to": "events"
+        },
+        {
+          "text": "How's Dylan doing, really?",
+          "to": "dylan"
+        },
+        {
+          "text": "You know Donna Pettigrew?",
+          "to": "donna"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Take care, Carla.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Shift supervisor. Four a.m. starts, forty people, one forklift that only I can reverse. I sleep under the heaters at learn-to-skate. Sitting up.",
+      "options": [
+        {
+          "text": "Sounds a lot like running a rink.",
+          "do": [
+            {
+              "rel": [
+                "carla_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Learn-to-skate, because I'm a mother. High school, because Dylan watches Josie, so I watch Dylan. Minor hockey if Rick Saucier isn't at the glass.",
+      "options": [
+        {
+          "text": "What's learn-to-skate like from the bench?",
+          "to": "events_lts"
+        },
+        {
+          "text": "Somebody should talk to Rick.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events_lts": {
+      "say": "Like watching someone defuse a bomb, and the bomb is your kid. Colette is a saint. That girl could teach a fridge to glide.",
+      "options": [
+        {
+          "text": "I'll tell her you said so.",
+          "do": [
+            {
+              "rel": [
+                "colette_beaulieu",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "dylan": {
+      "say": "He's happy here. Happier than at school. If he's going to work here, I need to know his homework happens somewhere.",
+      "options": [
+        {
+          "text": "Homework at the counter before any shift. My rule.",
+          "if": [
+            {
+              "not_flag": "dylan_homework_rule"
+            }
+          ],
+          "do": [
+            {
+              "set": "dylan_homework_rule"
+            },
+            {
+              "rel": [
+                "carla_pruitt",
+                5
+              ]
+            }
+          ],
+          "to": "dylan_rule"
+        },
+        {
+          "text": "He's a hard worker, Carla. He'll figure it out.",
+          "if": [
+            {
+              "not_flag": "dylan_homework_rule"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "carla_pruitt",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Is the homework rule working?",
+          "if": [
+            {
+              "flag": "dylan_homework_rule"
+            }
+          ],
+          "to": "dylan_after"
+        }
+      ]
+    },
+    "dylan_rule": {
+      "say": "Thank you. I mean it. He'll grumble, and then he'll do it, because it's you saying it and not me.",
+      "options": [
+        {
+          "text": "That's how it works.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dylan_after": {
+      "say": "His math teacher called me. To say something nice. I had to sit down.",
+      "options": [
+        {
+          "text": "That's a win.",
+          "do": [
+            {
+              "rel": [
+                "carla_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "donna": {
+      "say": "Donna's the only person in this valley more tired than me who still gets more done. I'd follow her into a blizzard. I have, actually. Bake sale.",
+      "options": [
+        {
+          "text": "I hear her bake sales are serious.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Heaters. That's my review. Two of six on the east benches. Grandma would've written a letter.",
+      "options": [
+        {
+          "text": "And now the ice is better?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "We fixed up the rooms. Better?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "carla_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll get to the heaters.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Maddie falls less. I worry less. That's a good trade for both of us.",
+      "options": [
+        {
+          "text": "Glad to hear it.",
+          "do": [
+            {
+              "rel": [
+                "carla_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,384 @@
+{
+  "id": "archetype_rink_rat",
+  "start": [
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "rel_lt": [
+            "self",
+            -15
+          ]
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "pro_practice"
+        }
+      ],
+      "node": "event"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            20,
+            24
+          ]
+        }
+      ],
+      "node": "time"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "self",
+            30
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "grumpy": {
+      "say": [
+        "I'm not mad. I'm just... the ice was bad and nobody let me help.",
+        "Don't talk to me. I'm sulking. It's a whole thing.",
+        "@how_are_things"
+      ],
+      "options": [
+        {
+          "text": "I'm sorry. What would make it better?",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            },
+            {
+              "mood": 0.03
+            }
+          ],
+          "to": "better"
+        },
+        {
+          "text": "It's an old building. Bear with us.",
+          "to": "hub"
+        },
+        {
+          "text": "Rinks are hard. Take it or leave it.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                -3
+              ]
+            },
+            {
+              "mood": -0.03
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "event": {
+      "say": [
+        "The Dukes are HERE. Like right there. I can see the tape on their sticks.",
+        "Did you see that? Wrist shot, top shelf, didn't even look. I'm going to be sick.",
+        "Pro practice! I've got a puck and a pen. That's all a person needs."
+      ],
+      "options": [
+        {
+          "text": "Who's your favourite?",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "love"
+        },
+        {
+          "text": "Don't lean on the glass too hard.",
+          "to": "hub"
+        }
+      ]
+    },
+    "time": {
+      "say": [
+        "Is it late? It doesn't feel late. My mum says ten, so it's not late until ten.",
+        "I'm just waiting for the last flood. I like the last flood. It's the best one."
+      ],
+      "options": [
+        {
+          "text": "Good to see you anyway.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! Need anything? I'll do it. I'll do anything. Not the washrooms. Okay, the washrooms.",
+        "Hey boss! Not boss. Unless you want to be my boss. Do you?"
+      ],
+      "options": [
+        {
+          "text": "Good to see you too, {known_as}.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "@how_are_things",
+        "What's up? I've been here since school got out.",
+        "Hi! I know where everything is. Except my other mitten."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What do you like best here?",
+          "to": "love"
+        },
+        {
+          "text": "What brings you to the rink?",
+          "to": "why"
+        },
+        {
+          "text": "What do you make of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Know any good gossip?",
+          "to": "gossip"
+        },
+        {
+          "text": "What would make this place better for you?",
+          "to": "better"
+        },
+        {
+          "text": "Take care.",
+          "to": "bye"
+        }
+      ]
+    },
+    "love": {
+      "say": [
+        "The Dukes practice. They let me grab the pucks once. Once! I still have the tape.",
+        "Watching Doris do a flood from the bench. It's like a magic trick but wet.",
+        "Lumber Kings games. I know every number. I know the numbers on the old jerseys."
+      ],
+      "options": [
+        {
+          "text": "You really know this place.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "why": {
+      "say": "@why_here",
+      "options": [
+        {
+          "text": "Tell me a bit about yourself.",
+          "to": "about"
+        },
+        {
+          "text": "Glad you come.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "about": {
+      "say": "@about",
+      "options": [
+        {
+          "text": "Good to know you, {known_as}.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": [
+        "The dead board by the gate goes clunk. Ronnie passes off it on purpose. I've seen him.",
+        "There's a leak over the visitors' bench. I put a bucket under it. You're welcome.",
+        "@ice"
+      ],
+      "options": [
+        {
+          "text": "The ice has been better lately, hasn't it?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "ice_up"
+        },
+        {
+          "text": "Noticed the work on the building?",
+          "if": [
+            {
+              "rooms_gte": 45
+            }
+          ],
+          "to": "rooms_up"
+        },
+        {
+          "text": "Fair enough. We're working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "ice_up": {
+      "say": [
+        "The ice is SO fast now. I timed a puck. I don't have a timer. It was fast.",
+        "No cracks by the faceoff dot! I named that crack. I miss it a little."
+      ],
+      "options": [
+        {
+          "text": "Glad it shows.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rooms_up": {
+      "say": [
+        "The lobby's way nicer. I'm here even more now. My mum says that's not possible.",
+        "The dressing rooms don't smell like 1974 any more. Just like 1990."
+      ],
+      "options": [
+        {
+          "text": "That's the idea.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": [
+        "Dylan Pruitt says he's going to drive Doris one day. He talks about it more than girls. A lot more.",
+        "Tommy Bellweather runs the crest-trading table like a bank. He charged me interest. On a crest."
+      ],
+      "options": [
+        {
+          "text": "Ha. Good to know.",
+          "to": "hub"
+        }
+      ]
+    },
+    "better": {
+      "say": [
+        "More stick and puck after school. Like every day. Every single day.",
+        "Open ice after school! Just an hour. I'd bring my own pucks. I have forty-one."
+      ],
+      "options": [
+        {
+          "text": "I'll see what I can do.",
+          "if": [
+            {
+              "not_flag": "heard_wants_open_ice_after_school"
+            }
+          ],
+          "do": [
+            {
+              "set": "heard_wants_open_ice_after_school"
+            },
+            {
+              "rel": [
+                "self",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Can't promise anything, but noted.",
+          "if": [
+            {
+              "not_flag": "heard_wants_open_ice_after_school"
+            }
+          ],
+          "do": [
+            {
+              "set": "heard_wants_open_ice_after_school"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "You're not the first to say it. It's on the list.",
+          "if": [
+            {
+              "flag": "heard_wants_open_ice_after_school"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Okay bye! I'll be here. I'm always here.",
+        "See ya! I have to go watch the flood. It's important."
+      ]
+    }
+  }
+}

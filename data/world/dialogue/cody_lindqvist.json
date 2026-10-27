@@ -1,0 +1,350 @@
+{
+  "id": "cody_lindqvist",
+  "barks": {
+    "idle": [
+      "Technically...",
+      "Rule 6.2. Look it up. I'll wait."
+    ],
+    "good_ice": [
+      "Good ice. No excuses. Technically I never use excuses. I use rules."
+    ],
+    "bad_ice": [
+      "That rut is a hazard under the spirit of the rulebook, if not the letter."
+    ],
+    "wet_ice": [
+      "Wet ice is technically a delay of game. Not mine."
+    ],
+    "cold": [
+      "Cold enough for a lager. Not that I'd drink one."
+    ],
+    "hungry": [
+      "Wings after. Always wings after."
+    ],
+    "long_line": [
+      "There should be a rule about canteen lines. I'm drafting one."
+    ],
+    "bored": [
+      "I could explain Rule 6.2 to someone."
+    ],
+    "goal": [
+      "Clean goal. I checked."
+    ],
+    "greet_owner": [
+      "Owner! Technically my favourite person in the building.",
+      "Hey! Sin Bin Brewers say hi."
+    ],
+    "leaving_happy": [
+      "Only four minutes in the box tonight. Personal best."
+    ],
+    "leaving_angry": [
+      "I'll be writing a letter. With citations."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Technically, that's not a penalty.",
+        "Two minutes for the TONE? There's no rule for tone!"
+      ],
+      "senior_hockey": [
+        "That was a 6.2 and nobody called it. Nobody."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_cody_lindqvist"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "cody_62_ally"
+        },
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "ally"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "game"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Cody Lindqvist. Brewmaster, Sin Bin Brewpub, and defence for the Brewers. Every beer on our tap list is named after a penalty. We've earned all of them.",
+      "do": [
+        {
+          "set": "met_cody_lindqvist"
+        }
+      ],
+      "options": [
+        {
+          "text": "What's your best seller?",
+          "do": [
+            {
+              "rel": [
+                "cody_lindqvist",
+                3
+              ]
+            }
+          ],
+          "to": "first_beer"
+        },
+        {
+          "text": "You're the Rule 6.2 guy.",
+          "do": [
+            {
+              "rel": [
+                "cody_lindqvist",
+                1
+              ]
+            }
+          ],
+          "to": "first_rule"
+        }
+      ]
+    },
+    "first_beer": {
+      "say": "Too Many Men. It's a hazy IPA. Then Delay of Game, which is a stout, because it takes ages. And Unsportsmanlike, which is just a lager I'm ashamed of.",
+      "options": [
+        {
+          "text": "I'll try one.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_rule": {
+      "say": "I'm the guy who knows Rule 6.2. Which, technically, everyone should be. It's in the book. There's a coffee ring on it, which I think is telling.",
+      "options": [
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "Sorry, Cody. I'll fix it.",
+          "do": [
+            {
+              "rel": [
+                "cody_lindqvist",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "game": {
+      "say": [
+        "Pregame. I'm reviewing the rulebook. Marcel's reffing, so I'm reviewing it twice.",
+        "Tonight's the night I don't take a penalty. Technically, every night is."
+      ],
+      "options": [
+        {
+          "text": "Good luck, Cody.",
+          "to": "end"
+        },
+        {
+          "text": "Got a minute?",
+          "to": "hub"
+        }
+      ]
+    },
+    "ally": {
+      "say": "My ally! The only person in the valley who gets Rule 6.2. I named a beer after you. Okay, I named it Owner's Interference. It's a sour.",
+      "options": [
+        {
+          "text": "Honoured.",
+          "do": [
+            {
+              "rel": [
+                "cody_lindqvist",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Technically, you have my attention.",
+        "Hey! What's up?",
+        "Ask away. I'll cite my sources."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the brewpub?",
+          "to": "job"
+        },
+        {
+          "text": "What do you love about beer league?",
+          "to": "events"
+        },
+        {
+          "text": "How's your mum?",
+          "to": "gossip"
+        },
+        {
+          "text": "What is Rule 6.2, actually?",
+          "to": "rule"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "See you, Cody.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Brewing's like defence. Patience, timing, and knowing exactly where the line is. I'm great at the first two.",
+      "options": [
+        {
+          "text": "Ha.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Beer league, obviously. Specials if there's a tap. Lumber Kings, to see what real penalties look like. I take notes.",
+      "options": [
+        {
+          "text": "Very thorough.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Mum reads the penalty sheet every week. In red pen. She annotates. Last week she wrote 'TONE?' next to my name and underlined it twice. And Marcel and I have a professional disagreement.",
+      "options": [
+        {
+          "text": "Your mum sounds great.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rule": {
+      "say": "Rule 6.2 is perfectly clear if you read it in the right order, which nobody does. (He talks for some time. You understand less at the end than at the start.)",
+      "options": [
+        {
+          "text": "You're right. It's perfectly clear.",
+          "if": [
+            {
+              "not_flag": "cody_62_ally"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "cody_lindqvist",
+                4
+              ]
+            },
+            {
+              "set": "cody_62_ally"
+            }
+          ],
+          "to": "rule_agree"
+        },
+        {
+          "text": "I think the ref has a point.",
+          "do": [
+            {
+              "rel": [
+                "cody_lindqvist",
+                -2
+              ]
+            }
+          ],
+          "to": "rule_disagree"
+        },
+        {
+          "text": "Let's leave it there.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rule_agree": {
+      "say": "Finally! Someone gets it. You're my ally now. That means something at the Sin Bin. Mostly a discount.",
+      "options": [
+        {
+          "text": "I'll take the discount.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rule_disagree": {
+      "say": "You sound like Marcel. That's not a compliment. It's also not an insult. Technically, it's neutral.",
+      "options": [
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The ice is {ice_word}. The penalty box door sticks, which costs me about ten seconds a night. Over a season, that's a whole shift.",
+      "options": [
+        {
+          "text": "Better now?",
+          "if": [
+            {
+              "ice_gte": 60
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll look at the door.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "Ice is great. Door still sticks. Honestly I'd miss it. It's the only thing in the building that takes longer to get out of than me.",
+      "options": [
+        {
+          "text": "Ha.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Technically this is goodbye.",
+        "See you at the Sin Bin."
+      ],
+      "options": []
+    }
+  }
+}

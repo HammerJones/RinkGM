@@ -1,0 +1,1837 @@
+{
+ "version": 1,
+ "canon": "GNHL team ids in gnhl_parent come from world-assets/lore/canon.json teams[].id. bri (Bramford Iron) and rsr (Redstone Rockets) have no CHA affiliate.",
+ "note": "RinkGM club and league canon. Clubs are listed in league order: per tier, the first N non-expansion clubs fill LeagueTiers.TIERS[tier].teams.",
+ "leagues": [
+  {
+   "tier": 0,
+   "name": "Valley Beer League, D Division",
+   "short": "VBL-D",
+   "nickname": "the Late Ice League",
+   "official": "Valley Adult Recreational Hockey League",
+   "sponsor": "Moosebrew Lager",
+   "trophy": "The Last Call Cup",
+   "trophy_desc": "A dented pewter beer stein bolted to a hockey puck. The engraving plate ran out in 2011, so winners now write their names on masking tape.",
+   "divisions": [
+    "Early Ice",
+    "Late Ice"
+   ],
+   "division_note": "Named for the 9:30 pm and 11:15 pm ice slots. Purely for the standings page.",
+   "teams": 7
+  },
+  {
+   "tier": 1,
+   "name": "Valley Beer League, C Division",
+   "short": "VBL-C",
+   "nickname": "the Scorekeepers",
+   "official": "Valley Adult Recreational Hockey League",
+   "sponsor": "Moosebrew Lager",
+   "trophy": "The Moosebrew Mug",
+   "trophy_desc": "A two-litre glass mug etched with a moose. Filled once by the winners, emptied quickly, returned sticky.",
+   "divisions": [
+    "Tuesday",
+    "Thursday"
+   ],
+   "division_note": "Named for the nights the teams usually play.",
+   "teams": 7
+  },
+  {
+   "tier": 2,
+   "name": "Valley Beer League, A Division",
+   "short": "VBL-A",
+   "nickname": "the Grudge League",
+   "official": "Valley Adult Recreational Hockey League",
+   "sponsor": "Frostbank",
+   "trophy": "The Frostbank Valley Championship (the Gord)",
+   "trophy_desc": "Officially the Frostbank Valley Championship. Everyone calls it the Gord, after the bronze bust of Big Gord Halvorsen he donated in 1998 without being asked.",
+   "divisions": [
+    "Pad 1",
+    "Pad 2"
+   ],
+   "division_note": "Named for the two sheets at Harlow Falls Municipal.",
+   "teams": 8
+  },
+  {
+   "tier": 3,
+   "name": "Northern Senior Hockey Association",
+   "short": "NSHA",
+   "nickname": "Senior",
+   "official": "Northern Senior Hockey Association",
+   "sponsor": "Brokenbone Mutual Insurance",
+   "trophy": "The Aldous Cup",
+   "trophy_desc": "A real silver cup from 1922, donated by Kessler mill owner Thaddeus Aldous. It has been dropped through the ice of Port Ainsley lake once (1962) and recovered by a man in waders.",
+   "divisions": [
+    "Mill Division",
+    "Lake Division"
+   ],
+   "division_note": "Valley-road towns against the lakeside and up-the-pass towns.",
+   "teams": 8
+  },
+  {
+   "tier": 4,
+   "name": "Interlake Hockey League",
+   "short": "ILHL",
+   "nickname": "the Gas Money League",
+   "official": "Interlake Hockey League, presented by Rink Rage",
+   "sponsor": "Rink Rage energy drink",
+   "trophy": "The Pembrook Trophy (the Gas Can)",
+   "trophy_desc": "The original 1979 trophy was a chrome jerry can on a walnut base, because the founder ran a gas station. The new one is nicer. Nobody calls it anything but the Gas Can.",
+   "divisions": [
+    "Lakeshore Division",
+    "Rail Division"
+   ],
+   "division_note": "Lake and port towns against the inland rail and mining cities.",
+   "teams": 9
+  },
+  {
+   "tier": 5,
+   "name": "Continental Hockey Association",
+   "short": "CHA",
+   "nickname": "the Minors",
+   "official": "Continental Hockey Association, official development league of the GNHL",
+   "sponsor": "Frostbank",
+   "trophy": "The Callahan Shield",
+   "trophy_desc": "A heavy oak shield with a silver maple leaf for every champion since 1951. Two trainers carry it; it does not get skated around.",
+   "divisions": [
+    "Timber Division",
+    "Iron Division"
+   ],
+   "division_note": "Northern and forestry cities against the steel and port cities.",
+   "teams": 9
+  }
+ ],
+ "styles": {
+  "swarm": {
+   "desc": "Everyone chases the puck. Beer league classic.",
+   "ai_delta": {
+    "discipline": -0.1,
+    "anticipation": -0.05,
+    "dash_use": 0.1
+   }
+  },
+  "run_and_gun": {
+   "desc": "Fly the zone, trade chances, forget defence.",
+   "ai_delta": {
+    "dash_use": 0.15,
+    "shot_selection": -0.05,
+    "discipline": -0.1,
+    "decide_max": -0.05
+   }
+  },
+  "physical": {
+   "desc": "Finish every check, lift every stick.",
+   "ai_delta": {
+    "aggression": 0.15,
+    "discipline": -0.05
+   }
+  },
+  "trap": {
+   "desc": "Clog the neutral zone, sit on leads.",
+   "ai_delta": {
+    "discipline": 0.12,
+    "anticipation": 0.08,
+    "dash_use": -0.1,
+    "aggression": -0.05
+   }
+  },
+  "possession": {
+   "desc": "Keep the puck, make the extra pass, wait for a lane.",
+   "ai_delta": {
+    "vision": 0.12,
+    "shot_selection": 0.1,
+    "decide_min": 0.05
+   }
+  },
+  "dump_and_chase": {
+   "desc": "Chip it deep, go get it, grind the corners.",
+   "ai_delta": {
+    "vision": -0.08,
+    "aggression": 0.08,
+    "dash_use": 0.08
+   }
+  },
+  "shoot_everything": {
+   "desc": "Any angle, any distance, right now.",
+   "ai_delta": {
+    "shot_selection": -0.15,
+    "decide_max": -0.1
+   }
+  },
+  "goalie_dependent": {
+   "desc": "A great goalie behind a so-so team.",
+   "ai_delta": {
+    "goalie_reaction": -0.12,
+    "goalie_positioning": 0.12,
+    "discipline": -0.05
+   }
+  }
+ },
+ "rinks": [
+  {
+   "id": "millbrook_community_arena",
+   "name": "Millbrook Community Arena",
+   "town": "Millbrook",
+   "off_map": false
+  },
+  {
+   "id": "harlow_falls_municipal",
+   "name": "Harlow Falls Municipal Twin Pad",
+   "town": "Harlow Falls",
+   "off_map": false
+  },
+  {
+   "id": "kessler_barn",
+   "name": "Kessler Memorial Arena (the Barn)",
+   "town": "Kessler",
+   "off_map": false
+  },
+  {
+   "id": "port_ainsley_lakeside",
+   "name": "Port Ainsley Lakeside Arena",
+   "town": "Port Ainsley",
+   "off_map": false
+  },
+  {
+   "id": "duncannon_frostbank_centre",
+   "name": "Frostbank Centre",
+   "town": "Duncannon",
+   "off_map": false
+  },
+  {
+   "id": "duncannon_memorial_gardens",
+   "name": "Duncannon Memorial Gardens",
+   "town": "Duncannon",
+   "off_map": false
+  },
+  {
+   "id": "tollbridge_coliseum",
+   "name": "Tollbridge Coliseum",
+   "town": "Tollbridge",
+   "off_map": true
+  },
+  {
+   "id": "sainte_odile_arena",
+   "name": "Arena Sainte-Odile",
+   "town": "Sainte-Odile",
+   "off_map": true
+  },
+  {
+   "id": "carvers_gap_rink",
+   "name": "The Gap Rink",
+   "town": "Carver's Gap",
+   "off_map": true
+  },
+  {
+   "id": "carrick_union_yard",
+   "name": "Union Yard Arena",
+   "town": "Carrick Junction",
+   "off_map": true
+  },
+  {
+   "id": "ellery_smelter_pit",
+   "name": "Ellery Civic Centre (the Pit)",
+   "town": "Ellery",
+   "off_map": true
+  },
+  {
+   "id": "cold_harbour_arena",
+   "name": "Cold Harbour Waterfront Arena",
+   "town": "Cold Harbour",
+   "off_map": true
+  },
+  {
+   "id": "wexford_kibble_king",
+   "name": "Kibble King Pet Foods Arena",
+   "town": "Wexford",
+   "off_map": true
+  },
+  {
+   "id": "wendover_pond",
+   "name": "Wendover College Arena (the Pond)",
+   "town": "Wendover",
+   "off_map": true
+  },
+  {
+   "id": "fort_kinnear_kennel",
+   "name": "Fort Kinnear Forestry Arena (the Kennel)",
+   "town": "Fort Kinnear",
+   "off_map": true
+  },
+  {
+   "id": "snowden_dome",
+   "name": "Snowden Dome",
+   "town": "Snowden",
+   "off_map": true
+  },
+  {
+   "id": "galloway_arena",
+   "name": "Honest Abe's Auto Plaza Arena",
+   "town": "Galloway",
+   "off_map": true
+  },
+  {
+   "id": "halverton_arena",
+   "name": "Halverton Coliseum",
+   "town": "Halverton",
+   "off_map": true
+  },
+  {
+   "id": "ravensport_arena",
+   "name": "Harbourfront Centre",
+   "town": "Ravensport",
+   "off_map": true
+  },
+  {
+   "id": "marchmont_arena",
+   "name": "Marchmont Portage Arena",
+   "town": "Marchmont",
+   "off_map": true
+  },
+  {
+   "id": "tamarack_arena",
+   "name": "Tamarack Credit Union Place",
+   "town": "Tamarack",
+   "off_map": true
+  },
+  {
+   "id": "ashcombe_arena",
+   "name": "Ashcombe Antler Arena",
+   "town": "Ashcombe",
+   "off_map": true
+  },
+  {
+   "id": "fenwick_arena",
+   "name": "Fenwick Rink Rage Arena",
+   "town": "Fenwick",
+   "off_map": true
+  },
+  {
+   "id": "st_brendan_arena",
+   "name": "The Abbey",
+   "town": "St. Brendan",
+   "off_map": true
+  },
+  {
+   "id": "belle_rive_arena",
+   "name": "Belle Rive Splash Centre",
+   "town": "Belle Rive",
+   "off_map": true
+  }
+ ],
+ "clubs": [
+  {
+   "id": "vbld_wobbly_pops",
+   "name": "Wobbly Pops",
+   "short": "WOB",
+   "tier": 0,
+   "town": "Millbrook",
+   "home_rink": "millbrook_community_arena",
+   "division": "Early Ice",
+   "colors": [
+    "d98a1c",
+    "2b2b2b",
+    "f2e6c8"
+   ],
+   "founded": 2019,
+   "sponsor": "The Wobbly Pop Tap & Grill, Millbrook Main Street",
+   "identity": "Dads who learned to skate the same winter their kids did, and refuse to be outdone by a nine-year-old.",
+   "notable": {
+    "name": "Gary Pruett",
+    "role": "Captain, centre",
+    "note": "Learned to stop last February and now does it at every opportunity, preferably in front of the bench."
+   },
+   "style": "swarm",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbld_molars",
+   "name": "Millbrook Molars",
+   "short": "MOL",
+   "tier": 0,
+   "town": "Millbrook",
+   "home_rink": "millbrook_community_arena",
+   "division": "Early Ice",
+   "colors": [
+    "f4f4f4",
+    "3fa7d6",
+    "e8452c"
+   ],
+   "founded": 2015,
+   "sponsor": "Haverkamp Family Dentistry",
+   "identity": "Four dentists, a hygienist and two patients who could not say no. They hand out toothbrushes in the handshake line.",
+   "notable": {
+    "name": "Dr. Lyle Haverkamp",
+    "role": "Owner, defence",
+    "note": "Lectures everyone about mouthguards and has never once worn one."
+   },
+   "style": "possession",
+   "style_note": "They pass constantly because nobody wants to get hit in the hands.",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbld_moose_knuckles",
+   "name": "Moose Knuckles",
+   "short": "MKN",
+   "tier": 0,
+   "town": "Millbrook",
+   "home_rink": "millbrook_community_arena",
+   "division": "Late Ice",
+   "colors": [
+    "7a4a26",
+    "f2d16b"
+   ],
+   "founded": 2024,
+   "sponsor": "Millbrook Legion Hall, Branch 112",
+   "identity": "The 1994 Millbrook Midget AA team, back together for one more run. They were very good in 1994.",
+   "notable": {
+    "name": "Rick 'Sauce' Saucier",
+    "role": "Right wing",
+    "note": "Scored 61 goals in 1994 and has told 61 stories about it since. Gassed by the second period."
+   },
+   "style": "run_and_gun",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbld_ice_holes",
+   "name": "Ice Holes",
+   "short": "ICE",
+   "tier": 0,
+   "town": "Millbrook",
+   "home_rink": "millbrook_community_arena",
+   "division": "Late Ice",
+   "colors": [
+    "a4161a",
+    "f2f2f2",
+    "1b1b1b"
+   ],
+   "founded": 2008,
+   "sponsor": "Hat Trick Tavern",
+   "identity": "They play for the postgame. The pitcher is pre-ordered for 10:45 and the hockey is in the way.",
+   "notable": {
+    "name": "Dwayne Kuzyk",
+    "role": "Left wing, social convenor",
+    "note": "Has never missed a postgame and has missed eleven games."
+   },
+   "style": "shoot_everything",
+   "style_note": "Every shot is one step closer to the bar.",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbld_pallbearers",
+   "name": "Pallbearers",
+   "short": "PAL",
+   "tier": 0,
+   "town": "Harlow Falls",
+   "home_rink": "millbrook_community_arena",
+   "division": "Early Ice",
+   "colors": [
+    "1b1b1b",
+    "7b3fa0",
+    "c0c0c0"
+   ],
+   "founded": 2012,
+   "sponsor": "Gilchrist & Sons Funeral Home (\"We'll be the last to let you down\")",
+   "identity": "Quiet, punctual, unfailingly polite. They arrive in the second hearse.",
+   "notable": {
+    "name": "Morley Gilchrist III",
+    "role": "Goalie",
+    "note": "The steadiest hands in the valley, which he says comes with the job. Nobody asks which part."
+   },
+   "style": "goalie_dependent",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbld_flood_crew",
+   "name": "Flood Crew",
+   "short": "FLD",
+   "tier": 0,
+   "town": "Millbrook",
+   "home_rink": "millbrook_community_arena",
+   "division": "Late Ice",
+   "colors": [
+    "3c8d4e",
+    "f2f2e9"
+   ],
+   "founded": 1983,
+   "sponsor": "Millbrook Parks & Recreation (owner of the rink)",
+   "identity": "The rink staff, on their own ice after hours. They know every soft spot and every dead board.",
+   "notable": {
+    "name": "Earl Bratt",
+    "role": "Head icemaker since 1983, defence",
+    "note": "Drives Doris, the 1974 Zambelli, and will not hear a word against her. Uses the Millbrook bank, the dead spot behind the net that Ronnie Haverstock made famous, better than anyone alive except Ronnie."
+   },
+   "style": "dump_and_chase",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbld_frozen_assets",
+   "name": "Frozen Assets",
+   "short": "FRA",
+   "tier": 0,
+   "town": "Millbrook",
+   "home_rink": "millbrook_community_arena",
+   "division": "Late Ice",
+   "colors": [
+    "7fb3d5",
+    "0b2545",
+    "b0b7bf"
+   ],
+   "founded": 2017,
+   "sponsor": "Frostbank, Millbrook branch (\"Banking With a Cool Head\")",
+   "identity": "Tellers, a loans officer and the branch manager. They protect a one-goal lead like an overdraft.",
+   "notable": {
+    "name": "Colin Nolan",
+    "role": "Branch manager, coach",
+    "note": "Changes lines with a laminated spreadsheet and charges a late fee for missed shifts."
+   },
+   "style": "trap",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vblc_sin_bin_brewers",
+   "name": "Sin Bin Brewers",
+   "short": "SBB",
+   "tier": 1,
+   "town": "Harlow Falls",
+   "home_rink": "millbrook_community_arena",
+   "division": "Tuesday",
+   "colors": [
+    "7a3e1d",
+    "f0e0c0"
+   ],
+   "founded": 2016,
+   "sponsor": "Sin Bin Brewpub, Harlow Falls",
+   "identity": "Craft beer people. Every beer on the tap list is named after a penalty, and they have earned all of them.",
+   "notable": {
+    "name": "Cody Lindqvist",
+    "role": "Brewmaster, defence",
+    "note": "Leads the division in penalty minutes, almost all of them for explaining the rulebook to referees."
+   },
+   "style": "physical",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vblc_big_gords",
+   "name": "Big Gord's Haulers",
+   "short": "BGH",
+   "tier": 1,
+   "town": "Kessler",
+   "home_rink": "millbrook_community_arena",
+   "division": "Thursday",
+   "colors": [
+    "c0c4c8",
+    "d7261e",
+    "1b1b1b"
+   ],
+   "founded": 1991,
+   "sponsor": "Big Gord's Trucks (\"Big Gord Won't Let You Walk\")",
+   "identity": "Big Gord owns the team, picks the lines and plays defence. The roster is whoever is on the lot that week.",
+   "notable": {
+    "name": "Gordon 'Big Gord' Halvorsen",
+    "role": "Owner, defence, age 71",
+    "note": "Has sold trucks from the same lot outside Kessler since 1977 and stars in every advert, shouting from a truck bed. Insists on being on the ice for every power play, and shouts from there too."
+   },
+   "style": "dump_and_chase",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vblc_plungers",
+   "name": "Plungers",
+   "short": "PLU",
+   "tier": 1,
+   "town": "Millbrook",
+   "home_rink": "millbrook_community_arena",
+   "division": "Tuesday",
+   "colors": [
+    "d7263d",
+    "2b6cb0",
+    "ffffff"
+   ],
+   "founded": 2004,
+   "sponsor": "Duffy Bros. Plumbing & Heating (\"Number one in the number two business\")",
+   "identity": "Hot-and-cold split jerseys, like the taps. The best-organised team in C, until someone gets an emergency call mid-game.",
+   "notable": {
+    "name": "Terry Duffy",
+    "role": "Centre",
+    "note": "Still carries a pager. It goes off about once a game, usually on a breakaway."
+   },
+   "style": "trap",
+   "style_note": "They know a thing or two about clogs.",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vblc_millbrook_mallards",
+   "name": "Millbrook Mallards",
+   "short": "MAL",
+   "tier": 1,
+   "town": "Millbrook",
+   "home_rink": "millbrook_community_arena",
+   "division": "Thursday",
+   "colors": [
+    "2e7d4f",
+    "ffffff",
+    "c9a227"
+   ],
+   "founded": 1989,
+   "sponsor": "Millbrook Dairy (Ronnie Haverstock's old employer)",
+   "identity": "The most famous beer league team in hockey. During the 2005 lockout they wrote to the Puckworth Cup trustees asking to be considered, and the Cup came to Millbrook for a night. The photo hangs in the lobby; the players have aged, the handwriting has not.",
+   "notable": {
+    "name": "Larry Piche",
+    "role": "Snowplough driver, captain",
+    "note": "Wrote the 2005 letter in his neat handwriting and has sent the trustees a polite follow-up every March since. Has never received a reply and considers this encouraging."
+   },
+   "style": "possession",
+   "style_note": "Twenty years together. They know where everyone will be, which helps, because nobody can get there quickly.",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vblc_cold_ones",
+   "name": "Cold Ones",
+   "short": "CLD",
+   "tier": 1,
+   "town": "Millbrook",
+   "home_rink": "millbrook_community_arena",
+   "division": "Thursday",
+   "expansion": true,
+   "colors": [
+    "1f4d2b",
+    "e0a526",
+    "ffffff"
+   ],
+   "founded": 2021,
+   "sponsor": "Moosebrew Lager",
+   "identity": "Twentysomethings who are sure they are one call away from Senior. They warm up with music on a speaker.",
+   "notable": {
+    "name": "Tyler Brandt",
+    "role": "Captain, right wing",
+    "note": "Played half a season of Junior B in 2017 and brings it up in every handshake line."
+   },
+   "style": "shoot_everything",
+   "style_note": "Every rush ends with a slapshot from the blue line, because Tyler saw it on TV.",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false
+  },
+  {
+   "id": "vblc_adjusters",
+   "name": "Brokenbone Adjusters",
+   "short": "ADJ",
+   "tier": 1,
+   "town": "Harlow Falls",
+   "home_rink": "millbrook_community_arena",
+   "division": "Tuesday",
+   "colors": [
+    "1c4e80",
+    "f2f2f2",
+    "6c4f8c"
+   ],
+   "founded": 2010,
+   "sponsor": "Brokenbone Mutual Insurance (\"We've Seen Your Slapshot\")",
+   "identity": "Insurance adjusters who know exactly what every injury costs and play accordingly. They file incident reports on hits.",
+   "notable": {
+    "name": "Doug Peterson",
+    "role": "Claims manager, defence",
+    "note": "Has denied two of his own teammates' claims, citing pre-existing conditions (being in the beer league)."
+   },
+   "style": "possession",
+   "style_note": "Risk-averse. Never makes a pass that is not fully covered.",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vblc_night_owls",
+   "name": "Night Owls",
+   "short": "OWL",
+   "tier": 1,
+   "town": "Harlow Falls",
+   "home_rink": "millbrook_community_arena",
+   "division": "Thursday",
+   "colors": [
+    "f28db2",
+    "6f3b1f",
+    "fff4e0"
+   ],
+   "founded": 2013,
+   "sponsor": "Double-Double Donuts, Harlow Falls (open 24 hours)",
+   "identity": "Overnight bakers, two night nurses and a hospital porter. At 11:15 pm they are wide awake and everyone else is not.",
+   "notable": {
+    "name": "Shauna Reid",
+    "role": "Night nurse, centre",
+    "note": "The fastest skater in the division. Plays every shift like it is a code blue and brings day-old crullers for the refs."
+   },
+   "style": "run_and_gun",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vblc_retreads",
+   "name": "Maple Tire Retreads",
+   "short": "RTR",
+   "tier": 1,
+   "town": "Port Ainsley",
+   "home_rink": "millbrook_community_arena",
+   "division": "Tuesday",
+   "colors": [
+    "222222",
+    "ffffff",
+    "b22222"
+   ],
+   "founded": 1996,
+   "sponsor": "Maple Tire & Muffler, Port Ainsley branch (\"We Fix What Winter Breaks\")",
+   "identity": "Nobody under 45. Every knee has been rebuilt at least once, and the goalie is the reason they still win.",
+   "notable": {
+    "name": "Wally Dumont",
+    "role": "Goalie, age 58",
+    "note": "Played two games of Senior for Kessler in 1989. Has stopped everything since and still has the Kessler socks."
+   },
+   "style": "goalie_dependent",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbla_slapshot_saloon",
+   "name": "Slapshot Saloon",
+   "short": "SLS",
+   "tier": 2,
+   "town": "Harlow Falls",
+   "home_rink": "harlow_falls_municipal",
+   "division": "Pad 1",
+   "colors": [
+    "4a2c1a",
+    "f5deb3",
+    "8b0000"
+   ],
+   "founded": 2002,
+   "sponsor": "Slapshot Saloon, Harlow Falls",
+   "identity": "The best bar team in the valley. They recruit ex-college players with the promise of free wings for life.",
+   "notable": {
+    "name": "Brett Kowalski",
+    "role": "Centre",
+    "note": "Played four years of small-college hockey and mentions it before, during and after every game."
+   },
+   "style": "possession",
+   "home_rink_name": "Harlow Falls Municipal Twin Pad",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbla_hydro_linemen",
+   "name": "Hydro Linemen",
+   "short": "HYD",
+   "tier": 2,
+   "town": "Harlow Falls",
+   "home_rink": "harlow_falls_municipal",
+   "division": "Pad 2",
+   "colors": [
+    "ffd23f",
+    "174a7c"
+   ],
+   "founded": 1979,
+   "sponsor": "Harlow Falls Hydro, Local 6 social committee",
+   "identity": "Power linemen who climb poles in January blizzards. A bodycheck is a nice break for them.",
+   "notable": {
+    "name": "Dale 'Transformer' Hughes",
+    "role": "Defence",
+    "note": "Six foot five, kind to animals, has knocked two opponents through the old Pad 2 gate."
+   },
+   "style": "physical",
+   "home_rink_name": "Harlow Falls Municipal Twin Pad",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbla_rink_rage_bombers",
+   "name": "Rink Rage Bombers",
+   "short": "RRB",
+   "tier": 2,
+   "town": "Harlow Falls",
+   "home_rink": "harlow_falls_municipal",
+   "division": "Pad 1",
+   "colors": [
+    "a4e000",
+    "0d0d0d",
+    "1e90ff"
+   ],
+   "founded": 2020,
+   "sponsor": "Rink Rage energy drink (\"Taste the Penalty\")",
+   "identity": "The sponsorship is a cooler of a drink nobody over thirty should touch. They are very, very fast for exactly forty minutes.",
+   "notable": {
+    "name": "Jordan 'Jolt' Pelletier",
+    "role": "Left wing",
+    "note": "Has had a can between every period since 2021. Has not, as far as anyone knows, slept."
+   },
+   "style": "run_and_gun",
+   "home_rink_name": "Harlow Falls Municipal Twin Pad",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbla_splinter_group",
+   "name": "Splinter Group",
+   "short": "SPL",
+   "tier": 2,
+   "town": "Harlow Falls",
+   "home_rink": "harlow_falls_municipal",
+   "division": "Pad 2",
+   "colors": [
+    "4b2e83",
+    "e5c75e"
+   ],
+   "founded": 2017,
+   "sponsor": "Lou's Second Pint, directly across the street from the Slapshot Saloon",
+   "identity": "Formed when half the Slapshot Saloon roster quit over who paid for a pitcher. They have been angry for eight years.",
+   "notable": {
+    "name": "Mike Barrett",
+    "role": "Captain, right wing",
+    "note": "Is still owed $14.50 and keeps the receipt in his helmet."
+   },
+   "style": "shoot_everything",
+   "home_rink_name": "Harlow Falls Municipal Twin Pad",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbla_backcrackers",
+   "name": "Backcrackers",
+   "short": "BCK",
+   "tier": 2,
+   "town": "Harlow Falls",
+   "home_rink": "harlow_falls_municipal",
+   "division": "Pad 1",
+   "colors": [
+    "0e6b6b",
+    "f2f2f2"
+   ],
+   "founded": 2011,
+   "sponsor": "Kerr Family Chiropractic",
+   "identity": "Run by a chiropractor whose business plan is to fix opponents' backs after the game, for a fee.",
+   "notable": {
+    "name": "Dr. Shane Kerr",
+    "role": "Defence",
+    "note": "Adjusts his own neck on the bench between shifts. The sound carries."
+   },
+   "style": "trap",
+   "home_rink_name": "Harlow Falls Municipal Twin Pad",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbla_smoke_eaters",
+   "name": "Smoke Eaters",
+   "short": "SMK",
+   "tier": 2,
+   "town": "Kessler",
+   "home_rink": "harlow_falls_municipal",
+   "division": "Pad 2",
+   "colors": [
+    "c8102e",
+    "f2f2f2",
+    "1b1b1b"
+   ],
+   "founded": 1988,
+   "sponsor": "Kessler Volunteer Fire Department; jersey sponsor Hearthstone Furnaces (\"Warm Homes. Cold Ice.\")",
+   "identity": "Volunteer firefighters. Famous for the postgame chili, and for leaving mid-period when the pagers go off.",
+   "notable": {
+    "name": "Captain Doug Ellis",
+    "role": "Fire chief, centre",
+    "note": "Once took a faceoff in full turnout gear after a call. Won it."
+   },
+   "style": "dump_and_chase",
+   "home_rink_name": "Harlow Falls Municipal Twin Pad",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbla_walleyes",
+   "name": "Walleyes",
+   "short": "WAL",
+   "tier": 2,
+   "town": "Port Ainsley",
+   "home_rink": "harlow_falls_municipal",
+   "division": "Pad 1",
+   "colors": [
+    "5a7d2a",
+    "f2c75c"
+   ],
+   "founded": 2009,
+   "sponsor": "Lakeside Bait & Tackle, Port Ainsley",
+   "identity": "Ice fishermen and lake guides. The bus smells of minnows and the goalie is unbeatable on a good day.",
+   "notable": {
+    "name": "Anton Ruutu",
+    "role": "Goalie, owns the bait shop",
+    "note": "Came from Finland for one exchange semester in 2009 and never left. Says the valley reminds him of home, but with worse coffee."
+   },
+   "style": "goalie_dependent",
+   "home_rink_name": "Harlow Falls Municipal Twin Pad",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "vbla_rusty_blades",
+   "name": "Rusty Blades",
+   "short": "RUS",
+   "tier": 2,
+   "town": "Harlow Falls",
+   "home_rink": "harlow_falls_municipal",
+   "division": "Pad 2",
+   "colors": [
+    "a6542b",
+    "2b2b2b",
+    "d9d9d9"
+   ],
+   "founded": 1999,
+   "sponsor": "The Rusty Blade Pub, Harlow Falls",
+   "identity": "The dynasty. Five straight A Division titles, a roster of ex-junior players and a trophy case in the pub's washroom hallway.",
+   "notable": {
+    "name": "Dale Fraser",
+    "role": "Playing coach",
+    "note": "Still wears his 1992 Junior C ring under his glove. Treats the A Division like the Olympics."
+   },
+   "style": "possession",
+   "home_rink_name": "Harlow Falls Municipal Twin Pad",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "nsha_kessler_millmen",
+   "name": "Kessler Millmen",
+   "short": "KES",
+   "tier": 3,
+   "town": "Kessler",
+   "home_rink": "kessler_barn",
+   "division": "Mill Division",
+   "colors": [
+    "143d29",
+    "f0e6d0",
+    "c0c0c0"
+   ],
+   "founded": 1921,
+   "sponsor": "Community-owned; jersey sponsor Kessler Pulp & Paper",
+   "identity": "The oldest club in the north and the loudest building. Eleven Aldous Cups, wooden trusses, standing room, and the smell of the mill when the wind is wrong.",
+   "notable": {
+    "name": "Hap Doyle",
+    "role": "Head coach since 1988",
+    "note": "Seventy-one years old. Has been photographed smiling once, in 1996, and denies it."
+   },
+   "style": "physical",
+   "rivals": [
+    "nsha_port_ainsley_lakers"
+   ],
+   "home_rink_name": "Kessler Memorial Arena (the Barn)",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "nsha_millbrook_lumber_kings",
+   "name": "Millbrook Lumber Kings",
+   "short": "MLK",
+   "tier": 3,
+   "town": "Millbrook",
+   "home_rink": "millbrook_community_arena",
+   "division": "Mill Division",
+   "colors": [
+    "b22222",
+    "1b1b1b",
+    "f2f2f2"
+   ],
+   "founded": 1952,
+   "sponsor": "Volunteer board; jersey sponsor Grizzly Gas & Go",
+   "identity": "Your home town's senior club, in buffalo-plaid jerseys. Last Aldous Cup in 1979. Crowds rise and fall with the state of the Community Arena.",
+   "notable": {
+    "name": "Old Pete Vachon",
+    "role": "Equipment manager and club historian",
+    "note": "Has sharpened every Lumber King's skates since 1971 and keeps the 1979 Cup photo in the skate sharpener's drawer."
+   },
+   "style": "dump_and_chase",
+   "lore_hook": "When the user renovates Millbrook Community Arena, the Lumber Kings' attendance and morale can rise with it.",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "nsha_harlow_falls_huskies",
+   "name": "Harlow Falls Huskies",
+   "short": "HFH",
+   "tier": 3,
+   "town": "Harlow Falls",
+   "home_rink": "harlow_falls_municipal",
+   "division": "Mill Division",
+   "colors": [
+    "7a8288",
+    "ffffff",
+    "1b2a4a"
+   ],
+   "founded": 1964,
+   "sponsor": "Frostbank",
+   "identity": "Tidy, well-run and slightly smug. The best minor hockey system in the valley feeds them, and they will tell you so in their newsletter.",
+   "notable": {
+    "name": "Brendan Quinn",
+    "role": "General manager",
+    "note": "Wears a tie behind the bench. Has a five-year plan, laminated."
+   },
+   "style": "possession",
+   "home_rink_name": "Harlow Falls Municipal Twin Pad",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "nsha_port_ainsley_lakers",
+   "name": "Port Ainsley Lakers",
+   "short": "PAK",
+   "tier": 3,
+   "town": "Port Ainsley",
+   "home_rink": "port_ainsley_lakeside",
+   "division": "Lake Division",
+   "colors": [
+    "1c5fa8",
+    "ffffff"
+   ],
+   "founded": 1930,
+   "sponsor": "Port Ainsley Marina & Boat Storage",
+   "identity": "Fishing-town club. Every February they play one home game outdoors on the frozen lake, and the fans throw a frozen pike after the first goal.",
+   "notable": {
+    "name": "Big Nils Olsen",
+    "role": "Captain, defence",
+    "note": "Six foot six ice fisherman. Hauls his own ice hut to the Pond Classic and sells coffee out of it at intermission."
+   },
+   "style": "run_and_gun",
+   "rivals": [
+    "nsha_kessler_millmen"
+   ],
+   "home_rink_name": "Port Ainsley Lakeside Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "nsha_duncannon_foundry",
+   "name": "Duncannon Foundry",
+   "short": "DFO",
+   "tier": 3,
+   "town": "Duncannon",
+   "home_rink": "duncannon_memorial_gardens",
+   "division": "Mill Division",
+   "colors": [
+    "8c3b1a",
+    "1b1b1b"
+   ],
+   "founded": 1946,
+   "sponsor": "Duncannon Iron Works retirees' association",
+   "identity": "The city's original team, in the 1949 downtown Gardens the council keeps trying to demolish. The pro Dukes shared the building until 2009, then left for the Frostbank Centre, and the Foundry have not forgiven them.",
+   "notable": {
+    "name": "Marc Leclerc",
+    "role": "Goalie and city councillor",
+    "note": "Has filibustered the Gardens demolition vote three times. Plays the same way."
+   },
+   "style": "trap",
+   "rivals": [
+    "cha_duncannon_dukes"
+   ],
+   "home_rink_name": "Duncannon Memorial Gardens",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "nsha_tollbridge_coal_kings",
+   "name": "Tollbridge Coal Kings",
+   "short": "TCK",
+   "tier": 3,
+   "town": "Tollbridge",
+   "home_rink": "tollbridge_coliseum",
+   "division": "Lake Division",
+   "colors": [
+    "1b1b1b",
+    "e0a526"
+   ],
+   "founded": 1934,
+   "sponsor": "Tollbridge Rail & Coal",
+   "identity": "A rail junction town past the east end of the valley. The Coliseum seats 1,100 and they have sold it out for every playoff game since 1971.",
+   "notable": {
+    "name": "Wade 'The Toll' Tkachuk",
+    "role": "Enforcer, left wing",
+    "note": "Collects the toll from anyone who crosses the crease. Works as a crossing guard on weekdays and is lovely with children."
+   },
+   "style": "physical",
+   "home_rink_name": "Tollbridge Coliseum",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "nsha_sainte_odile_castors",
+   "name": "Sainte-Odile Castors",
+   "short": "STO",
+   "tier": 3,
+   "town": "Sainte-Odile",
+   "home_rink": "sainte_odile_arena",
+   "division": "Lake Division",
+   "colors": [
+    "0e6b6b",
+    "f2f2f2",
+    "c8a24a"
+   ],
+   "founded": 1928,
+   "sponsor": "Caisse populaire de Sainte-Odile",
+   "identity": "A French-speaking lake village with the most skilled team in Senior. They pass the puck like it belongs to them and sing on the bench.",
+   "notable": {
+    "name": "Father Marc Gagnon",
+    "role": "Head coach and parish priest",
+    "note": "Blesses the sticks before every game. Has received three bench minors for language, which he says were in Latin."
+   },
+   "style": "possession",
+   "home_rink_name": "Arena Sainte-Odile",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "nsha_carvers_gap_ravens",
+   "name": "Carver's Gap Ravens",
+   "short": "CGR",
+   "tier": 3,
+   "town": "Carver's Gap",
+   "home_rink": "carvers_gap_rink",
+   "division": "Lake Division",
+   "colors": [
+    "4b2e83",
+    "e5c75e"
+   ],
+   "founded": 1959,
+   "sponsor": "Gap Pass Ski Hill",
+   "identity": "Up the mountain pass, two hours by bus when the road is open. The rink is a Quonset hut and visiting teams swear the air is thinner.",
+   "notable": {
+    "name": "Petr Novak",
+    "role": "Goalie, age 39",
+    "note": "Came for a ski instructor job in 2004. Still the best goalie in Senior, and the only reason the Ravens make the playoffs."
+   },
+   "style": "goalie_dependent",
+   "home_rink_name": "The Gap Rink",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "ilhl_port_ainsley_sturgeon",
+   "name": "Port Ainsley Sturgeon",
+   "short": "PAS",
+   "tier": 4,
+   "town": "Port Ainsley",
+   "home_rink": "port_ainsley_lakeside",
+   "division": "Lakeshore Division",
+   "colors": [
+    "00205b",
+    "a2aaad"
+   ],
+   "founded": 1979,
+   "sponsor": "Owned by Marlene Fisk, Fisk Marine & Outboard",
+   "mascot": "Sturgie, a seven-foot fish with unsettling eyes",
+   "identity": "The lake's own pro-ish team, sharing the Lakeside Arena with the senior Lakers and playing a careful, grinding game in front of 2,200 people in toques. Their 1983 goalie delivered pizzas between games and founded Puckhead Pizza.",
+   "notable": {
+    "name": "Coach Dmitri Volkov",
+    "role": "Head coach",
+    "note": "Former minor pro defenceman who settled here for the fishing. Preaches structure in a voice that never goes above a murmur."
+   },
+   "style": "trap",
+   "rivals": [
+    "cha_duncannon_dukes"
+   ],
+   "home_rink_name": "Port Ainsley Lakeside Arena",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "ilhl_carrick_rail_barons",
+   "name": "Carrick Junction Rail Barons",
+   "short": "CJR",
+   "tier": 4,
+   "town": "Carrick Junction",
+   "home_rink": "carrick_union_yard",
+   "division": "Rail Division",
+   "colors": [
+    "e04e39",
+    "1b1b1b",
+    "f2f2f2"
+   ],
+   "founded": 1979,
+   "sponsor": "Founding member; owned by the Carrick Junction Railway Heritage Society",
+   "mascot": "Conductor Cal, who blows a train whistle after every goal and most icings",
+   "identity": "A railway city that founded the league. Their rink is a converted locomotive shed, and the goal horn is an actual train horn.",
+   "notable": {
+    "name": "Kyle Sullivan",
+    "role": "Captain, centre",
+    "note": "Drives a freight train four days a week. Has never been late to a game, which he credits to timetables."
+   },
+   "style": "dump_and_chase",
+   "home_rink_name": "Union Yard Arena",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "ilhl_ellery_smelters",
+   "name": "Ellery Smelters",
+   "short": "ELS",
+   "tier": 4,
+   "town": "Ellery",
+   "home_rink": "ellery_smelter_pit",
+   "division": "Rail Division",
+   "colors": [
+    "8b0000",
+    "a5acaf"
+   ],
+   "founded": 1990,
+   "sponsor": "Ellery Nickel Refinery",
+   "mascot": "Slag, a soot-covered furnace worker in a hard hat",
+   "identity": "A mining and smelting city that likes its hockey the way it likes its work: hot, heavy and loud. The Pit is the most hostile building in the league.",
+   "notable": {
+    "name": "Derek 'Anvil' Morrow",
+    "role": "Defence",
+    "note": "Leads the league in hits and has never apologised for one. Runs a very popular knitting circle in the off-season."
+   },
+   "style": "physical",
+   "home_rink_name": "Ellery Civic Centre (the Pit)",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "ilhl_cold_harbour_stingrays",
+   "name": "Cold Harbour Stingrays",
+   "short": "CHS",
+   "tier": 4,
+   "town": "Cold Harbour",
+   "home_rink": "cold_harbour_arena",
+   "division": "Lakeshore Division",
+   "colors": [
+    "00718f",
+    "f3c300"
+   ],
+   "founded": 2003,
+   "sponsor": "Owned by the Cold Harbour Aquarium",
+   "mascot": "Ray Charge, a stingray in a lifeguard whistle",
+   "identity": "A port city named by people who were honest about the weather, with a team named after a warm-water fish by a marketing committee.",
+   "notable": {
+    "name": "Felix Dubois",
+    "role": "Right wing",
+    "note": "League scoring leader two years running. Signs autographs at the aquarium's touch tank on Sundays."
+   },
+   "style": "run_and_gun",
+   "home_rink_name": "Cold Harbour Waterfront Arena",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "ilhl_wexford_ice_dogs",
+   "name": "Wexford Ice Dogs",
+   "short": "WID",
+   "tier": 4,
+   "town": "Wexford",
+   "home_rink": "wexford_kibble_king",
+   "division": "Rail Division",
+   "colors": [
+    "1c1c1c",
+    "9bd0ff"
+   ],
+   "founded": 2008,
+   "sponsor": "Owned by Kibble King Pet Foods",
+   "mascot": "Biscuit, a husky in a goalie mask",
+   "identity": "Owned by a dog-food company, so every promotion night is a dog night. Dogs welcome in section 104. Section 104 is never quiet.",
+   "notable": {
+    "name": "Riley Campbell",
+    "role": "Centre",
+    "note": "Shoots from anywhere because the owner pays a bonus per shot on goal. The owner has not reconsidered."
+   },
+   "style": "shoot_everything",
+   "home_rink_name": "Kibble King Pet Foods Arena",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "ilhl_wendover_scholars",
+   "name": "Wendover Scholars",
+   "short": "WEN",
+   "tier": 4,
+   "town": "Wendover",
+   "home_rink": "wendover_pond",
+   "division": "Lakeshore Division",
+   "colors": [
+    "1d4f2b",
+    "f2c75c"
+   ],
+   "founded": 1994,
+   "sponsor": "Operated with Wendover College",
+   "mascot": "Professor Puck, an owl in a mortarboard",
+   "identity": "A college town team stocked with grad students and former varsity players. Smart, patient and slightly insufferable.",
+   "notable": {
+    "name": "Evan Lindqvist",
+    "role": "Defence, PhD candidate",
+    "note": "Writing a thesis on the physics of the wrist shot. Corrects the play-by-play announcer on his own time."
+   },
+   "style": "possession",
+   "home_rink_name": "Wendover College Arena (the Pond)",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "ilhl_fort_kinnear_timberwolves",
+   "name": "Fort Kinnear Timberwolves",
+   "short": "FKT",
+   "tier": 4,
+   "town": "Fort Kinnear",
+   "home_rink": "fort_kinnear_kennel",
+   "division": "Rail Division",
+   "colors": [
+    "6d6f73",
+    "f2f2f2",
+    "1b1b1b"
+   ],
+   "founded": 1992,
+   "sponsor": "Kinnear Forest Products",
+   "mascot": "Lobo, a grey wolf with a lumberjack's axe (foam)",
+   "identity": "Forestry town at the end of the rail line. The skaters are honest and slow; the goalie is a local legend.",
+   "notable": {
+    "name": "Jean-Paul 'Le Mur' Roy",
+    "role": "Goalie, age 36",
+    "note": "Turned down two minor pro contracts to stay near his trapline. The Kennel chants 'MUR' after every save."
+   },
+   "style": "goalie_dependent",
+   "home_rink_name": "Fort Kinnear Forestry Arena (the Kennel)",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "ilhl_snowden_blizzard",
+   "name": "Snowden Blizzard",
+   "short": "SNB",
+   "tier": 4,
+   "town": "Snowden",
+   "home_rink": "snowden_dome",
+   "division": "Lakeshore Division",
+   "colors": [
+    "6caddf",
+    "ffffff"
+   ],
+   "founded": 2001,
+   "sponsor": "Owned by the City of Snowden tourism board",
+   "mascot": "Flurry, a snowman with a hockey stick for an arm",
+   "identity": "The snowiest city in the north, according to a sign at the city limit. Their arena is a dome that leaks snowmelt onto the visitors' bench.",
+   "notable": {
+    "name": "Sasha Ivanov",
+    "role": "Left wing",
+    "note": "Fastest skater in the league. Once beat the team bus home on cross-country skis."
+   },
+   "style": "run_and_gun",
+   "home_rink_name": "Snowden Dome",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "ilhl_galloway_outlaws",
+   "name": "Galloway Outlaws",
+   "short": "GAL",
+   "tier": 4,
+   "town": "Galloway",
+   "home_rink": "galloway_arena",
+   "division": "Rail Division",
+   "colors": [
+    "3d2817",
+    "d4a017",
+    "f2e6c8"
+   ],
+   "founded": 2011,
+   "sponsor": "Owned by 'Honest' Abe Larsen, Honest Abe's Auto Plaza",
+   "mascot": "Sheriff Deals, a cowboy with a foam megaphone",
+   "identity": "Owned by a used-car dealer who appears on the video board between every period. They play like they have something to sell.",
+   "notable": {
+    "name": "Honest Abe Larsen",
+    "role": "Owner",
+    "note": "Has traded players for cars, twice. One of the cars was better."
+   },
+   "style": "physical",
+   "home_rink_name": "Honest Abe's Auto Plaza Arena",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "cha_duncannon_dukes",
+   "name": "Duncannon Dukes",
+   "short": "DUN",
+   "tier": 5,
+   "town": "Duncannon",
+   "home_rink": "duncannon_frostbank_centre",
+   "division": "Iron Division",
+   "colors": [
+    "4b2a7b",
+    "e3b23c",
+    "f4f1e8"
+   ],
+   "founded": 1972,
+   "sponsor": "Owned by Frostbank Sports & Entertainment",
+   "mascot": "His Grace, a moose in a velvet cape and a small crown (the big crown is Kingsport's)",
+   "identity": "The valley's top club and the Kingsport Monarchs' affiliate: one step below monarchs, which is where Kingsport thinks everyone belongs. 5,000 seats since the 2009 move out of the old Gardens, a TeleNorth video board, and a 50/50 draw that once paid for a house. Every renovation you plan is measured against this building.",
+   "notable": {
+    "name": "Lorne Pettigrew",
+    "role": "General manager",
+    "note": "Keeper of the red rotary phone on his desk, which rings only when Kingsport wants a player. Nobody else in Duncannon is allowed to touch it. Barry 'Suitcase' Pomeroy's seven stints here are on the wall behind it."
+   },
+   "style": "possession",
+   "gnhl_parent": "kgm",
+   "rivals": [
+    "nsha_duncannon_foundry",
+    "ilhl_port_ainsley_sturgeon"
+   ],
+   "home_rink_name": "Frostbank Centre",
+   "home_rink_off_map": false,
+   "expansion": false
+  },
+  {
+   "id": "cha_halverton_northmen",
+   "name": "Halverton Northmen",
+   "short": "HAL",
+   "tier": 5,
+   "town": "Halverton",
+   "home_rink": "halverton_arena",
+   "division": "Timber Division",
+   "colors": [
+    "0038a8",
+    "ffffff",
+    "c8102e"
+   ],
+   "founded": 1951,
+   "gnhl_parent": "fhs",
+   "sponsor": "Owned by the Halverton Sports Commission",
+   "mascot": "Big Olaf, a bearded giant with a foam axe",
+   "identity": "A founding member with seven Callahan Shields and a building full of banners. They expect to win and get grumpy when they do not.",
+   "notable": {
+    "name": "Coach Bruce Walsh",
+    "role": "Head coach",
+    "note": "Coached in the GNHL for eleven games in 2014. It ended badly. He would like to go back."
+   },
+   "style": "trap",
+   "home_rink_name": "Halverton Coliseum",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "cha_ravensport_breakers",
+   "name": "Ravensport Breakers",
+   "short": "RAV",
+   "tier": 5,
+   "town": "Ravensport",
+   "home_rink": "ravensport_arena",
+   "division": "Iron Division",
+   "colors": [
+    "f2f2f2",
+    "006d75",
+    "ff6a13"
+   ],
+   "founded": 1977,
+   "gnhl_parent": "mbg",
+   "sponsor": "Owned by the Ravensport Port Authority",
+   "mascot": "Bosun, a seagull in a sou'wester",
+   "identity": "A big port city that comes alive for hockey. The waterfront arena shakes when the ships blow their horns.",
+   "notable": {
+    "name": "Connor Murphy",
+    "role": "Defence",
+    "note": "Twenty-year-old prospect with the hardest shot in the league. The GNHL scouts sit in row F."
+   },
+   "style": "run_and_gun",
+   "home_rink_name": "Harbourfront Centre",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "cha_marchmont_voyageurs",
+   "name": "Marchmont Voyageurs",
+   "short": "MAR",
+   "tier": 5,
+   "town": "Marchmont",
+   "home_rink": "marchmont_arena",
+   "division": "Timber Division",
+   "colors": [
+    "2e6b3a",
+    "e8d5a8",
+    "7a1f1f"
+   ],
+   "founded": 1956,
+   "gnhl_parent": "scc",
+   "sponsor": "Owned by a fan co-operative of 4,000 shareholders",
+   "mascot": "Pierre le Pagayeur, a voyageur with a canoe paddle",
+   "identity": "The fan-owned club. Shareholder meetings are louder than the games, and the games are very loud.",
+   "notable": {
+    "name": "Nick Savard",
+    "role": "Left wing, fan-voted captain",
+    "note": "Elected captain by 4,000 shareholders after a campaign that included lawn signs."
+   },
+   "style": "dump_and_chase",
+   "home_rink_name": "Marchmont Portage Arena",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "cha_tamarack_kodiaks",
+   "name": "Tamarack Kodiaks",
+   "short": "TAM",
+   "tier": 5,
+   "town": "Tamarack",
+   "home_rink": "tamarack_arena",
+   "division": "Timber Division",
+   "colors": [
+    "4f2c1d",
+    "f4a900"
+   ],
+   "founded": 1983,
+   "sponsor": "Owned by Tamarack Credit Union",
+   "mascot": "Cubby, a bear who has been in the same suit since 1983",
+   "gnhl_parent": "ngf",
+   "identity": "A northern forestry city that builds big, heavy, slow-to-anger teams, like their parent club in Northgate. Kodiak, the skate maker, has sent a cease-and-desist letter every year since 1983; the club replies with season tickets.",
+   "notable": {
+    "name": "Josh Kerr",
+    "role": "Right wing, enforcer",
+    "note": "Six foot four, a lumber grader by trade. Reads to schoolchildren every Tuesday and fights someone every Saturday."
+   },
+   "style": "physical",
+   "home_rink_name": "Tamarack Credit Union Place",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "cha_ashcombe_elk",
+   "name": "Ashcombe Elk",
+   "short": "ASH",
+   "tier": 5,
+   "town": "Ashcombe",
+   "home_rink": "ashcombe_arena",
+   "division": "Timber Division",
+   "colors": [
+    "041e42",
+    "b9975b"
+   ],
+   "founded": 1962,
+   "gnhl_parent": "gcs",
+   "sponsor": "Owned by the Ashcombe Hunting & Angling Club",
+   "mascot": "Bugle, an elk whose antlers do not fit through the tunnel",
+   "identity": "A quiet, rich town that plays a quiet, careful game. Their goalie steals games they have no business winning.",
+   "notable": {
+    "name": "Mats Holmstrom",
+    "role": "Goalie",
+    "note": "Thirty-four, Swedish, studies opposing shooters on a tablet between periods. Says very little and stops a lot."
+   },
+   "style": "goalie_dependent",
+   "home_rink_name": "Ashcombe Antler Arena",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "cha_fenwick_firebirds",
+   "name": "Fenwick Firebirds",
+   "short": "FEN",
+   "tier": 5,
+   "town": "Fenwick",
+   "home_rink": "fenwick_arena",
+   "division": "Iron Division",
+   "colors": [
+    "f74902",
+    "1b1b1b"
+   ],
+   "founded": 1999,
+   "gnhl_parent": "sil",
+   "sponsor": "Owned by Rink Rage Beverage Co. since 2011",
+   "mascot": "Phoenix Phil, who is set on (fake) fire during introductions",
+   "identity": "The energy drink's flagship team. Pyrotechnics, a DJ, and a playing style best described as caffeinated.",
+   "notable": {
+    "name": "Jake Brodeur",
+    "role": "Centre",
+    "note": "Has the league's best hands and worst haircut, both paid for by the sponsor."
+   },
+   "style": "shoot_everything",
+   "home_rink_name": "Fenwick Rink Rage Arena",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "cha_st_brendan_friars",
+   "name": "St. Brendan Friars",
+   "short": "SBF",
+   "tier": 5,
+   "town": "St. Brendan",
+   "home_rink": "st_brendan_arena",
+   "division": "Iron Division",
+   "colors": [
+    "1b1b1b",
+    "ffffff",
+    "c8102e"
+   ],
+   "founded": 1938,
+   "gnhl_parent": "ost",
+   "sponsor": "Owned by the St. Brendan Abbey Brewery",
+   "mascot": "Brother Puck, a monk in a helmet",
+   "identity": "Born from a monastery's brewery team. The arena is called the Abbey, the organ plays hymns at faceoffs, and the system is pure discipline. The monks also pray, nightly, for their cursed parent club in Lake Ostrander.",
+   "notable": {
+    "name": "Brother Anselm",
+    "role": "Assistant coach, actual monk",
+    "note": "Runs the penalty kill. Has taken a vow of silence that he breaks only to yell at linesmen."
+   },
+   "style": "trap",
+   "home_rink_name": "The Abbey",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "cha_belle_rive_riptide",
+   "name": "Belle Rive Riptide",
+   "short": "BRR",
+   "tier": 5,
+   "town": "Belle Rive",
+   "home_rink": "belle_rive_arena",
+   "division": "Iron Division",
+   "colors": [
+    "2ec4b6",
+    "5b2a86"
+   ],
+   "founded": 1996,
+   "gnhl_parent": "sun",
+   "sponsor": "Owned by the Belle Rive Waterpark Group",
+   "mascot": "Splash, a wave with sunglasses",
+   "identity": "A 1996 expansion team, signed up three years after its desert parent club in Sunvale, that has never changed its teal-and-purple jerseys, and never will. Their arena has a lazy river behind section 12.",
+   "notable": {
+    "name": "Ilya Petrov",
+    "role": "Right wing",
+    "note": "Former GNHL first-round pick on his third comeback. Absurdly talented on the nights he is interested."
+   },
+   "style": "run_and_gun",
+   "home_rink_name": "Belle Rive Splash Centre",
+   "home_rink_off_map": true,
+   "expansion": false
+  },
+  {
+   "id": "vbld_puckheads",
+   "name": "Puckheads",
+   "short": "PZA",
+   "tier": 0,
+   "town": "Millbrook",
+   "home_rink": "millbrook_community_arena",
+   "division": "Early Ice",
+   "colors": [
+    "c1272d",
+    "f7c548",
+    "8b5a2b"
+   ],
+   "founded": 2026,
+   "sponsor": "Puckhead Pizza, Millbrook (\"Delivered in Under Two Periods\")",
+   "expansion": true,
+   "identity": "Brand new: the delivery drivers from the Millbrook Puckhead, who signed up on a dare. Half of them borrowed their skates.",
+   "notable": {
+    "name": "Gino Russo Jr.",
+    "role": "Goalie, night manager",
+    "note": "Plays in a mask painted like a pepperoni puck. Has delivered to the rink between periods, which the league has asked him to stop."
+   },
+   "style": "swarm",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false
+  },
+  {
+   "id": "vblc_overdues",
+   "name": "Kessler Overdues",
+   "short": "OVD",
+   "tier": 1,
+   "town": "Kessler",
+   "home_rink": "millbrook_community_arena",
+   "division": "Thursday",
+   "colors": [
+    "6a1b2a",
+    "e8dcc0"
+   ],
+   "founded": 2026,
+   "sponsor": "Friends of the Kessler Public Library",
+   "expansion": true,
+   "identity": "Librarians. Polite off the ice and the dirtiest team in the valley on it. Shhh.",
+   "notable": {
+    "name": "Marion Fischer",
+    "role": "Head librarian, defence",
+    "note": "Has never issued a fine she did not collect, on or off the ice."
+   },
+   "style": "physical",
+   "home_rink_name": "Millbrook Community Arena",
+   "home_rink_off_map": false
+  }
+ ],
+ "rivalries": [
+  {
+   "id": "pike_game",
+   "name": "The Mill and the Lake",
+   "clubs": [
+    "nsha_kessler_millmen",
+    "nsha_port_ainsley_lakers"
+   ],
+   "tiers": [
+    3
+   ],
+   "since": 1931,
+   "story": "The oldest feud in the north. In the 1962 final at the Pond Classic a Kessler defenceman fell through soft ice by the boards, the Aldous Cup went in after him, and Port Ainsley won the replay. Kessler says the Lakers cut the ice. Port Ainsley fans have thrown a frozen pike onto the ice after the first goal of every meeting since, and Kessler fans throw back a roll of paper towel."
+  },
+  {
+   "id": "the_pitcher",
+   "name": "The $14.50 Feud",
+   "clubs": [
+    "vbla_slapshot_saloon",
+    "vbla_splinter_group"
+   ],
+   "tiers": [
+    2
+   ],
+   "since": 2017,
+   "story": "Two bars across the street from each other. Half the Saloon's roster walked out over an unpaid pitcher and founded the Splinter Group at Lou's Second Pint. The $14.50 has never been repaid; the receipt is in Mike Barrett's helmet. Both bars run a drink special on game night named after the other team's captain."
+  },
+  {
+   "id": "gardens_grudge",
+   "name": "The Gardens Grudge",
+   "clubs": [
+    "nsha_duncannon_foundry",
+    "cha_duncannon_dukes"
+   ],
+   "tiers": [
+    3,
+    5
+   ],
+   "since": 2009,
+   "story": "When the Frostbank Centre opened, the Dukes walked out of the Memorial Gardens they had shared with the Foundry since 1972, and took the Saturday nights, half the crowd and the city's attention with them. The Foundry were left alone in a half-empty 1949 barn the council keeps trying to knock down. They never play each other, so the rivalry runs through council meetings, letters to the Duncannon Daily Ledger and a charity alumni game every March that the Foundry treats as a cup final."
+  },
+  {
+   "id": "valley_cup",
+   "name": "The Valley Cup",
+   "clubs": [
+    "ilhl_port_ainsley_sturgeon",
+    "cha_duncannon_dukes"
+   ],
+   "tiers": [
+    4,
+    5
+   ],
+   "since": 2010,
+   "story": "A September preseason exhibition between the two biggest clubs in the valley. The Dukes treat it as a practice. The Sturgeon treat it as their Puckworth Cup final, and have won it three times, which the Port Ainsley paper has never stopped printing."
+  },
+  {
+   "id": "billboard_war",
+   "name": "The Billboard War",
+   "clubs": [
+    "vblc_big_gords",
+    "vblc_retreads"
+   ],
+   "tiers": [
+    1
+   ],
+   "since": 1996,
+   "story": "Big Gord's Trucks and Maple Tire & Muffler have fought over the same valley billboards for thirty years. The bosses settle it on the ice twice a season, and the loser has to run the winner's ad on their own sign for a month."
+  },
+  {
+   "id": "toothbrush_incident",
+   "name": "The Toothbrush Incident",
+   "clubs": [
+    "vbld_molars",
+    "vbld_moose_knuckles"
+   ],
+   "tiers": [
+    0
+   ],
+   "since": 2024,
+   "story": "In the Moose Knuckles' first comeback game, Rick Saucier lost a front tooth to a Molars stick. Dr. Haverkamp fixed it the next morning and sent the bill. Saucier has not paid it, the Molars bring it to every game, and the Moose Knuckles now refuse the toothbrushes in the handshake line."
+  }
+ ],
+ "promotion": {
+  "newspapers": [
+   {
+    "name": "The Millbrook Clarion",
+    "town": "Millbrook",
+    "note": "Weekly, eight pages, beer league scores printed next to the church bake sale."
+   },
+   {
+    "name": "The Harlow Falls Herald",
+    "town": "Harlow Falls",
+    "note": "Twice weekly. Very proud of its A Division standings box."
+   },
+   {
+    "name": "The Kessler Courier",
+    "town": "Kessler",
+    "note": "Has covered the Millmen since 1921 and has never once been neutral."
+   },
+   {
+    "name": "The Port Ainsley Lakesider",
+    "town": "Port Ainsley",
+    "note": "Fishing reports, ice thickness, and the Sturgeon."
+   },
+   {
+    "name": "The Duncannon Daily Ledger",
+    "town": "Duncannon",
+    "note": "The valley's only daily, with a real sports section and a columnist who hates everything."
+   }
+  ],
+  "radio": {
+   "name": "CKVL 1340 Valley Radio",
+   "note": "Carries Lumber Kings and Millmen games. Play-by-play by Bernie Szabo, who has called every Kessler home game since 1985 and still pronounces it three different ways."
+  },
+  "ladder": [
+   {
+    "from": 0,
+    "to": 1,
+    "scout": "Nobody. The C Division captain who saw you at late ice asks if you are free Thursdays.",
+    "travel": "Your own car. The heater works if you hit the dash.",
+    "headline": "Clarion, page 7: 'Local Skater Moves Up to C; Mother Says She Always Knew'"
+   },
+   {
+    "from": 1,
+    "to": 2,
+    "scout": "The Rusty Blades' playing coach, watching from behind the glass with a coffee and a notebook.",
+    "travel": "Carpool to Harlow Falls, the first real away rink.",
+    "headline": "Harlow Falls Herald: 'Millbrook Newcomer Heads to A Division, Grudges Await'"
+   },
+   {
+    "from": 2,
+    "to": 3,
+    "scout": "Hap Doyle's nephew, in a Millmen jacket, who never takes notes and never needs to. A letter arrives on Kessler letterhead.",
+    "travel": "The rented yellow school bus, which has a Senior team on it and smells like it.",
+    "headline": "Kessler Courier: 'Beer Leaguer Invited to Millmen Camp; Doyle: \"We'll See\"'"
+   },
+   {
+    "from": 3,
+    "to": 4,
+    "scout": "A man in an ILHL windbreaker with a clipboard and a stopwatch, who drives four hours to see one shift.",
+    "travel": "A coach bus nicknamed the Gas Can Express. You get gas money and a meal per diem of $11.",
+    "headline": "Port Ainsley Lakesider: 'Senior Standout Signs Semi-Pro Deal (Gas Money Included)'"
+   },
+   {
+    "from": 4,
+    "to": 5,
+    "scout": "A CHA scout with a laminated lanyard and a GNHL parent club logo on his tablet. In the valley it might be Ronnie Haverstock himself, who hands you the Dukes' phone number after the Thursday old-timers' game.",
+    "travel": "Charter coach with wifi that never works, hotel rooms with a roommate.",
+    "headline": "Duncannon Daily Ledger, front of sports: 'From Late Ice to the Dukes: Valley's Own Gets the Call'"
+   },
+   {
+    "from": 5,
+    "to": 6,
+    "scout": "The phone call. In Duncannon it is the red rotary phone on Lorne Pettigrew's desk, ringing for Kingsport at 6:40 am.",
+    "travel": "A plane. Your first one with a team logo on the tail.",
+    "headline": "Every paper in the valley, front page: 'One of Ours in the Show'"
+   }
+  ],
+  "relegation": "Getting cut at a tryout or released is handled kindly by the world: your old team welcomes you back, the Clarion runs 'Back Where He Belongs', and the postgame pitcher is on the house."
+ }
+}

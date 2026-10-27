@@ -1,0 +1,533 @@
+{
+  "id": "bev_kowalchuk",
+  "barks": {
+    "idle": [
+      "Edges don't sharpen themselves, champ.",
+      "Bertha's warm. Line up.",
+      "Laces, tape, truth. Truth's free."
+    ],
+    "good_ice": [
+      "Ice is holding an edge. So are the skates. Coincidence? No."
+    ],
+    "bad_ice": [
+      "Ice looks like a gravel pit today.",
+      "I'll be busy tomorrow. Ruts make work."
+    ],
+    "wet_ice": [
+      "Wet ice dulls a blade faster than a parking lot."
+    ],
+    "goal": [
+      "About time.",
+      "Half-inch hollow. I'm taking that one."
+    ],
+    "cold": [
+      "Cold out. Good for edges."
+    ],
+    "long_line": [
+      "Line's long, champ. Bertha doesn't rush. Neither do I."
+    ],
+    "bored": [
+      "Toe Drag's asleep on the receipts again."
+    ],
+    "greet_owner": [
+      "Champ.",
+      "There's the owner. Skates on the counter.",
+      "Champ. Kettle's on."
+    ],
+    "leaving_happy": [
+      "Good day. Nobody brought me a Warlock."
+    ],
+    "leaving_angry": [
+      "Three rutted blades, one rude man. Night, champ."
+    ],
+    "event_specific": {
+      "figure_show": [
+        "Watch her knee. Lower than the hip. There."
+      ],
+      "figure_practice": [
+        "Six in the morning and those girls have better edges than the Kings."
+      ],
+      "senior_hockey": [
+        "Did all twenty pairs. Pete did them again. We don't talk about it."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_bev_kowalchuk"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_show"
+        }
+      ],
+      "node": "figure"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_practice"
+        }
+      ],
+      "node": "figure"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "bev_kowalchuk",
+            50
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "You must be the new one. Sit. Give me those skates. No, I'm not asking.",
+      "do": [
+        {
+          "set": "met_bev_kowalchuk"
+        }
+      ],
+      "options": [
+        {
+          "text": "Yes ma'am.",
+          "do": [
+            {
+              "rel": [
+                "bev_kowalchuk",
+                4
+              ]
+            }
+          ],
+          "to": "first_sit"
+        },
+        {
+          "text": "I can sharpen my own.",
+          "do": [
+            {
+              "rel": [
+                "bev_kowalchuk",
+                -5
+              ]
+            }
+          ],
+          "to": "first_own"
+        },
+        {
+          "text": "How much?",
+          "to": "first_price"
+        }
+      ]
+    },
+    "first_sit": {
+      "say": "These aren't edges, they're suggestions. Half inch. The way God and the 1979 instruction manual intended.",
+      "options": [
+        {
+          "text": "Thanks, Bev.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_own": {
+      "say": "Sure you can, champ. And I can do my own dentistry. Come back when you're bleeding.",
+      "options": [
+        {
+          "text": "Fair.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_price": {
+      "say": "Eight dollars. Which reminds me. Read the chalkboard on your way out.",
+      "options": [
+        {
+          "text": "I will.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": [
+        "@how_are_things",
+        "People keep coming in with chewed-up edges, champ. Off your ice. I can sharpen all day. I can't sharpen ruts."
+      ],
+      "options": [
+        {
+          "text": "I'll fix the ice.",
+          "do": [
+            {
+              "rel": [
+                "bev_kowalchuk",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "That's more business for you.",
+          "do": [
+            {
+              "rel": [
+                "bev_kowalchuk",
+                -3
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "figure": {
+      "say": "Shh. The Thibodeau girl's going for the double. Watch her left edge.",
+      "options": [
+        {
+          "text": "Were you ever a skater, Bev?",
+          "to": "mural"
+        },
+        {
+          "text": "I'll let you watch.",
+          "to": "end"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Champ. Kettle's on.",
+        "There's my favourite customer. Don't tell the others. There are no others."
+      ],
+      "options": [
+        {
+          "text": "Hi, Bev.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "hub": true,
+      "say": [
+        "What do you need, champ.",
+        "Edges or advice? The advice is free.",
+        "Champ. Make it quick, Bertha's warm."
+      ],
+      "options": [
+        {
+          "text": "How's business?",
+          "to": "shop"
+        },
+        {
+          "text": "Tell me about Old Bertha.",
+          "to": "bertha"
+        },
+        {
+          "text": "Is that you in the lobby mural?",
+          "to": "mural"
+        },
+        {
+          "text": "You and Earl go way back.",
+          "to": "earl"
+        },
+        {
+          "text": "And Tyler, at the till?",
+          "to": "tyler"
+        },
+        {
+          "text": "Tyler was fiddling with Old Bertha.",
+          "if": [
+            {
+              "flag": "tyler_bertha_told"
+            }
+          ],
+          "to": "tyler_told"
+        },
+        {
+          "text": "How's the rink look, from the shop?",
+          "to": "rink"
+        },
+        {
+          "text": "I've got a big game. Do my edges?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "player"
+        },
+        {
+          "text": "Would you do my team's skates before the final?",
+          "if": [
+            {
+              "path": "coach"
+            },
+            {
+              "not_flag": "bev_team_skates"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "Warlock is offering a stick deal. Thoughts?",
+          "if": [
+            {
+              "path": "gm"
+            },
+            {
+              "not_flag": "bev_warned_warlock"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "See you, Bev.",
+          "to": "end"
+        }
+      ]
+    },
+    "shop": {
+      "say": "Laces, tape, edges and the truth. Truth's the one nobody buys.",
+      "options": [
+        {
+          "text": "What about composite sticks?",
+          "to": "composite"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "composite": {
+      "say": "I'll heat it. I don't promise it. Composites remember what they were. Like my ex-husband.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bertha": {
+      "say": "Floor-standing. The maker went under in 1983, so I machine her parts myself. She's older than your mortgage and better maintained.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "mural": {
+      "say": "That's not me.",
+      "options": [
+        {
+          "text": "The girl in the red toque. Doing a sit spin.",
+          "to": "mural2"
+        },
+        {
+          "text": "Okay.",
+          "to": "hub"
+        }
+      ]
+    },
+    "mural2": {
+      "say": "Lots of girls had red toques in 1976, champ. ... Knee lower than the hip. That's all I'll say.",
+      "do": [
+        {
+          "set": "bev_mural_hint"
+        }
+      ],
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "do": [
+            {
+              "rel": [
+                "bev_kowalchuk",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "earl": {
+      "say": "Earl and I have been fighting about hollows since 1983. He's wrong. He's a good man. Both things.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "tyler": {
+      "say": "My grand-nephew. Good boy. Talks to the cat more than the customers. Doesn't touch Bertha. Nobody touches Bertha.",
+      "options": [
+        {
+          "text": "He wants to know about the green balloon.",
+          "to": "tyler2"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "tyler2": {
+      "say": "Every 12 March. I know who. I'm not telling him. Let the boy detect.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "tyler_told": {
+      "say": "I know. He dusts her when he thinks I'm upstairs. I let him think I don't know. Now you've ruined it, champ.",
+      "do": [
+        {
+          "clear": "tyler_bertha_told"
+        }
+      ],
+      "options": [
+        {
+          "text": "Sorry, Bev.",
+          "do": [
+            {
+              "rel": [
+                "bev_kowalchuk",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "@ice",
+      "options": [
+        {
+          "text": "Better?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "What about the lobby?",
+          "if": [
+            {
+              "rooms_gte": 50
+            }
+          ],
+          "to": "rink_rooms"
+        },
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "Three days without a rut in anybody's blade. Don't let it go to your head. Let it go to your edges.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_rooms": {
+      "say": "Lobby smells like a lobby now. Not like 1974. I miss it a little. Don't tell anybody.",
+      "options": [
+        {
+          "text": "Something else.",
+          "to": "hub"
+        }
+      ]
+    },
+    "player": {
+      "say": "Day before, not the day of. Leave them with me tonight. I'll put a half inch on them and a little sense in you.",
+      "options": [
+        {
+          "text": "Thanks, Bev.",
+          "do": [
+            {
+              "rel": [
+                "bev_kowalchuk",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "Once. Before the Peewee final. Every skate, free. Tell nobody, or everybody will want it.",
+      "do": [
+        {
+          "set": "bev_team_skates"
+        },
+        {
+          "rel": [
+            "bev_kowalchuk",
+            2
+          ]
+        },
+        {
+          "note": "Bev will sharpen your whole team's skates for free before the Peewee final. Once."
+        }
+      ],
+      "options": [
+        {
+          "text": "Not a word.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "Warlock wants to sell you sticks cheap because they break. That's not a deal, champ. That's a subscription.",
+      "do": [
+        {
+          "set": "bev_warned_warlock"
+        }
+      ],
+      "options": [
+        {
+          "text": "Noted.",
+          "do": [
+            {
+              "rel": [
+                "bev_kowalchuk",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

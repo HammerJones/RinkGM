@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "_doc": "On-ice events (docs/world/ON_ICE.md): which controller runs each event kind, who skates, the pee-wee groups, public skate demand, the skate rental counter and the venue spots the events use. Read by OnIceData.",
+
+  "controllers": {
+    "public_skate": "public_skate", "special": "public_skate", "learn_to_skate": "figure_class",
+    "figure_practice": "figure", "figure_show": "figure_show",
+    "broomball": "broomball",
+    "minor_hockey": "peewee_practice", "high_school": "team_practice", "pro_practice": "team_practice",
+    "stick_and_puck": "stick_and_puck",
+    "beer_league": "game", "senior_hockey": "game", "tournament": "game"
+  },
+
+  "rosters": {
+    "public_skate":    {"skaters": [8, 260], "rental_staff": [1, 3], "mix": {"beginner": 0.22, "kid": 0.28, "couple": 0.16, "speedy_teen": 0.05, "regular": 0.29}},
+    "figure":          {"skaters": [4, 8], "coaches": [2, 3], "ages": [11, 20]},
+    "figure_class":    {"skaters": [10, 24], "coaches": [3, 3], "ages": [4, 14]},
+    "figure_show":     {"skaters": [6, 12], "coaches": [1, 2], "ages": [8, 20]},
+    "broomball":       {"players": [10, 10], "goalies": [2, 2], "refs": [1, 1], "ages": [18, 40], "per_side": 5},
+    "peewee_practice": {"coaches_per_group": [2, 4]},
+    "team_practice":   {"players": [18, 22], "goalies": [2, 2], "coaches": [2, 3], "ages": [14, 18]},
+    "stick_and_puck":  {"players": [6, 18], "ages": [10, 60]},
+    "game":            {"players": [24, 24], "goalies": [4, 4], "refs": [2, 2], "per_side": 5}
+  },
+
+  "peewee": {
+    "_doc": "Three sub-groups share the ice, split into 3 zones by black divider pads. Zone 0 is the -X end, zone 2 the Zamboni (+X) end. Nets come from the rink's 4 full-size and 8 mini nets.",
+    "pads_x": [-10.16, 10.16],
+    "pad_length": 4.3,
+    "groups": [
+      {"id": "toddlers", "nickname": "the Puck Pups", "ages": [5, 7], "zone": 0, "count": [10, 16],
+       "nets": {"full": 0, "mini": 4}, "puck": "blue", "stations": 4,
+       "drills": ["red_light_green_light", "sharks_and_minnows", "tight_turns", "puck_handling_slalom", "stops_and_starts", "give_and_go"]},
+      {"id": "children", "nickname": "the Sawdust Squirts", "ages": [8, 11], "zone": 1, "count": [12, 18],
+       "nets": {"full": 1, "mini": 4}, "puck": "mix", "stations": 3,
+       "drills": ["edge_work", "mohawks", "figure_eights", "pivots", "shooting_gallery", "small_area_game", "circle_crossovers", "backward_skating"]},
+      {"id": "teens", "nickname": "the Lumber Cubs", "ages": [12, 14], "zone": 2, "count": [12, 18],
+       "nets": {"full": 2, "mini": 0}, "puck": "black", "stations": 1,
+       "drills": ["battle_drill", "cycling", "oklahoma", "horseshoe", "net_drive", "small_area_game"]}
+    ]
+  },
+
+  "team_practice": {
+    "_doc": "Full-ice practices run one team drill at a time in this order. A drill with 4 nets borrows the other two full-size nets.",
+    "plan": ["goalie_warmup", "circle_crossovers", "three_man_weave", "two_on_one", "hartford", "russian_circles", "overspeed", "cross_ice_four_nets", "breakouts", "three_on_two", "shooting_gallery", "stops_and_starts"],
+    "drill_minutes": 6.0,
+    "teams": [
+      {"id": "mallards", "name": "Millbrook High Mallards", "in_house": true, "colors": ["2e7d4f", "c9a227"]},
+      {"id": "harlow_hawks", "name": "Harlow Falls Hawks", "in_house": false, "colors": ["8a2f2f", "e8dcb0"]},
+      {"id": "st_brendans", "name": "St. Brendan's Saints", "in_house": false, "colors": ["1f4f9a", "eeeeea"]}
+    ]
+  },
+
+  "game": {
+    "_doc": "Ambient hockey for games the player isn't in, seen from the stands. PLACEHOLDER clock until Mechanics' league rules API exists.",
+    "warmup_minutes": 5.0,
+    "period_minutes": 20.0,
+    "periods": 3,
+    "intermission_minutes": 2.0,
+    "shift_seconds": 45.0
+  },
+
+  "equipment": {
+    "_doc": "Racks by the Zamboni doors (+X end, on the deck between the end boards and the bay wall). Venue space metres, [x, z].",
+    "zamboni_gate": [30.9, 0.0],
+    "rack_gear": [32.7, -3.4],
+    "rack_pads": [32.7, 3.4],
+    "net_park": [[32.4, -5.4], [32.4, 5.4]],
+    "bench_gates": [[-3.0, -12.95], [3.0, -12.95]],
+    "benches": [[-7.0, -14.0], [7.0, -14.0]],
+    "full_nets": 4,
+    "mini_nets": 8,
+    "pucks_per_bucket": 50
+  },
+
+  "figure": {
+    "_doc": "Figure skaters like warmer, softer ice: a heavy flood about 04:45 for the 05:00 session.",
+    "flood_minute": 285,
+    "flood_kind": "heavy",
+    "ideal_temp_c": -3.5,
+    "ideal_thickness_mm": [36.0, 50.0],
+    "morning_until_hour": 9.0,
+    "class_levels": [
+      {"id": "snowflakes", "name": "Snowflakes (pre-skate)", "skill": [0.05, 0.25], "elements": ["march", "two_foot_glide", "dip", "fall_and_get_up"]},
+      {"id": "stage_2", "name": "Stage 2", "skill": [0.25, 0.5], "elements": ["swizzles", "one_foot_glide", "backward_wiggles", "two_foot_spin"]},
+      {"id": "star_1", "name": "STAR 1", "skill": [0.5, 0.75], "elements": ["crossovers", "spiral", "waltz_jump", "scratch_spin"]}
+    ],
+    "routine": ["footwork", "jump", "spin", "spiral", "jump", "footwork", "spin"],
+    "elements": {
+      "spin": {"seconds": [3.0, 7.0]},
+      "jump": {"air": [0.45, 0.75]},
+      "spiral": {"seconds": [4.0, 7.0]},
+      "footwork": {"seconds": [8.0, 14.0]}
+    }
+  },
+
+  "broomball": {
+    "_doc": "Shoes on ice, brooms and a ball. The ice needs to be snowed up (a game or a skate on it, no fresh flood) or people go down.",
+    "grip_snow": 0.25,
+    "run_speed": 3.4,
+    "slip_per_second_bare": 0.05
+  },
+
+  "public_skate": {
+    "capacity": 260,
+    "price_ref": 4.0,
+    "price_elasticity": 0.9,
+    "rental_share": 0.45,
+    "stay_minutes": [35, 110],
+    "lace_seconds": [40, 90],
+    "demand": {
+      "_doc": "Expected skaters = base(weekday, hour) x season(month) x holiday x weather x price x reputation x line, capped at capacity. See docs/world/ON_ICE.md.",
+      "weekday_hour": {
+        "school_day": [[5, 4], [7, 6], [9, 10], [11, 18], [13, 22], [15, 34], [17, 40], [19, 46], [21, 26], [23, 6]],
+        "friday":     [[5, 4], [7, 6], [9, 10], [11, 18], [13, 24], [15, 40], [17, 60], [19, 90], [21, 70], [23, 20]],
+        "weekend":    [[5, 6], [7, 14], [9, 50], [11, 95], [13, 150], [15, 165], [17, 110], [19, 95], [21, 55], [23, 15]]
+      },
+      "season_by_month": [1.35, 1.2, 1.05, 0.7, 0.45, 0.3, 0.3, 0.35, 0.6, 0.85, 1.0, 1.3],
+      "holidays": [
+        {"id": "christmas", "from": [12, 23], "to": [12, 27], "mult": 6.0, "at_capacity": true},
+        {"id": "new_years", "from": [12, 31], "to": [1, 1], "mult": 4.0, "at_capacity": true},
+        {"id": "christmas_break", "from": [12, 20], "to": [1, 3], "mult": 2.4, "schedule_cleared": true},
+        {"id": "march_break", "from": [3, 14], "to": [3, 22], "mult": 1.6},
+        {"id": "family_day", "from": [2, 16], "to": [2, 16], "mult": 1.8},
+        {"id": "thanksgiving", "from": [10, 12], "to": [10, 12], "mult": 1.4},
+        {"id": "pa_day", "from": [11, 21], "to": [11, 21], "mult": 1.3}
+      ],
+      "weather": {"cold_snap_c": -15.0, "cold_snap": 1.15, "rain": 1.2, "snowing": 1.1, "blizzard": 0.35, "warm_c": 15.0, "warm": 0.75, "outdoor_rinks_open": 0.85}
+    }
+  },
+
+  "rental": {
+    "_doc": "The skate window at the ticket booth (Venue.places() 'skate_rental'). Kids sizes Y8-Y13 then adult 1-13. Cubbies on the booth's back and side walls.",
+    "inventory": {"Y8": 4, "Y9": 4, "Y10": 6, "Y11": 6, "Y12": 6, "Y13": 6, "A1": 6, "A2": 5, "A3": 5, "A4": 5, "A5": 6, "A6": 6, "A7": 8, "A8": 8, "A9": 8, "A10": 7, "A11": 5, "A12": 3, "A13": 2},
+    "window": [-34.3, -14.7],
+    "_window_doc": "Fallback only: SkateRental reads Venue.places() 'skate_rental' (the customer's spot at the ticket booth window). into: from the customer into the booth; along: the way the line runs.",
+    "into": [-1.0, 0.0],
+    "along": [0.0, 1.0],
+    "counter_depth": 0.9,
+    "booth_depth": 4.3,
+    "along_min": -1.9,
+    "along_max": 0.7,
+    "exit": [-34.6, -8.5],
+    "walk_speed": 1.25,
+    "ask_seconds": 3.0,
+    "grab_seconds": 1.6,
+    "hand_seconds": 2.0,
+    "put_away_seconds": 1.4,
+    "rental_price": 3.0,
+    "sharpness_per_use": 0.04,
+    "clean_per_use": 0.05
+  }
+}

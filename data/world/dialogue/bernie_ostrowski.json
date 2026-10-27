@@ -1,0 +1,490 @@
+{
+  "id": "bernie_ostrowski",
+  "barks": {
+    "idle": [
+      "2009, {owner}. Valley champions. Look at that banner.",
+      "Backcheck! That's all I'm asking from a teenager!",
+      "No phones on my bench. Not in 2009, not now."
+    ],
+    "good_ice": [
+      "Ice like this, it's 2009 all over again!"
+    ],
+    "bad_ice": [
+      "Rough ice builds character. We had rough ice in 2009. Look how that turned out!"
+    ],
+    "wet_ice": [
+      "Wet ice? We'll call it a learning surface."
+    ],
+    "goal": [
+      "THAT'S A MALLARD GOAL! Just like 2009!",
+      "Who backchecked on that? Beautiful."
+    ],
+    "cold": [
+      "Cold? Run a lap! That's what I tell my phys ed class."
+    ],
+    "hungry": [
+      "Fries for the team. I'll pay soon. Soon!"
+    ],
+    "long_line": [
+      "Line drill! Everybody stay in your lane!"
+    ],
+    "bored": [
+      "Have I told you about the 2009 semi?"
+    ],
+    "greet_owner": [
+      "{owner}! Champ! Pal! Friend of the Mallards!",
+      "Hey hey, the landlord! Don't say invoice."
+    ],
+    "leaving_happy": [
+      "Great hustle out there! 2009 hustle!"
+    ],
+    "leaving_angry": [
+      "That's not Mallards hockey. That's not 2009 hockey."
+    ],
+    "event_specific": {
+      "high_school": [
+        "MALLARDS! BACKCHECK! Phones away!",
+        "Noah, you're flying! Hockey, Noah! Hockey!"
+      ],
+      "senior_hockey": [
+        "Some of those Kings were Mallards. My Mallards."
+      ],
+      "minor_hockey": [
+        "Scouting the future Mallards. Look at that kid backcheck."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_bernie_ostrowski"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "high_school"
+        }
+      ],
+      "node": "hs_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "bernie_ostrowski",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Bernie Ostrowski! Coach Bernie! Millbrook High Mallards. Valley champions, 2009. Not the radio Bernie. I get his mail. He gets mine.",
+      "do": [
+        {
+          "set": "met_bernie_ostrowski"
+        }
+      ],
+      "options": [
+        {
+          "text": "2009! Tell me about it.",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                4
+              ]
+            }
+          ],
+          "to": "y2009"
+        },
+        {
+          "text": "You're the team that pays sixty days late?",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                -2
+              ]
+            }
+          ],
+          "to": "money"
+        },
+        {
+          "text": "Nice to meet you, Coach.",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll fix it, Coach. Team effort.",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Maybe tell your players that's character-building.",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hs_now": {
+      "say": [
+        "Game day! Phones in the bucket, everybody!",
+        "Look at Noah fly! Fourth line, my foot. That kid's a rocket."
+      ],
+      "options": [
+        {
+          "text": "Go Mallards!",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                2
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "How's the team this year?",
+          "to": "team"
+        }
+      ]
+    },
+    "team": {
+      "say": "Hungry! Young! They backcheck about forty percent of the time, which is up from thirty. Josie Bautista on D, she'd have made the 2009 team. Easy.",
+      "options": [
+        {
+          "text": "Sounds like a contender.",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! My favourite landlord! My only landlord!",
+        "Champ! Good to see you. Don't check the ledger."
+      ],
+      "options": [
+        {
+          "text": "Hey, Coach.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "What can Coach Bernie do for you?",
+        "Hey, champ! Got a minute for 2009?",
+        "Big season coming. I can feel it. Like 2009."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's teaching?",
+          "to": "job"
+        },
+        {
+          "text": "Tell me about 2009.",
+          "to": "y2009"
+        },
+        {
+          "text": "About the ice bill, Bernie...",
+          "to": "money"
+        },
+        {
+          "text": "What's the story with Noah Delisle?",
+          "to": "noah"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Any names for the territorial list?",
+          "if": [
+            {
+              "path": "gm"
+            }
+          ],
+          "to": "gm"
+        },
+        {
+          "text": "See you, Coach.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Phys ed! Dodgeball in the morning, hockey at night. I tell every kid the same thing: backcheck. In dodgeball too. It works there too.",
+      "options": [
+        {
+          "text": "Backcheck in dodgeball?",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "y2009": {
+      "say": "Valley final. Down two, third period. I took my phone out of my pocket and threw it in the snow tank. Message received. We scored three. Never found the phone.",
+      "options": [
+        {
+          "text": "Great story, Coach.",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Is that why you hate phones on the bench?",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "money": {
+      "say": "The bill! The bill, the bill. Listen, {owner}. Champions pay. Champions always pay. What champions also do is believe. Do you believe?",
+      "options": [
+        {
+          "text": "I believe. In sixty days.",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I believe in thirty, Bernie.",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                -1
+              ]
+            },
+            {
+              "note": "Asked Coach Bernie to pay the Mallards' ice in thirty days. He gave a pep talk."
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Priya will be calling.",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "noah": {
+      "say": "Fastest skater on my team. Also a figure skater. Hélène wants him for the club, I want him for the Mallards. He says he doesn't want to choose. Help me out, {owner}.",
+      "options": [
+        {
+          "text": "Hockey's lucky to have him. I'll tell him.",
+          "if": [
+            {
+              "not_flag": "owner_backed_hockey_for_noah"
+            },
+            {
+              "not_flag": "owner_backed_noah_choice"
+            }
+          ],
+          "do": [
+            {
+              "set": "owner_backed_hockey_for_noah"
+            },
+            {
+              "rel": [
+                "bernie_ostrowski",
+                4
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "That's Noah's call, not ours.",
+          "if": [
+            {
+              "not_flag": "owner_backed_hockey_for_noah"
+            },
+            {
+              "not_flag": "owner_backed_noah_choice"
+            }
+          ],
+          "do": [
+            {
+              "set": "owner_backed_noah_choice"
+            },
+            {
+              "rel": [
+                "bernie_ostrowski",
+                -1
+              ]
+            },
+            {
+              "rel": [
+                "noah_delisle",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Still campaigning, Coach?",
+          "if": [
+            {
+              "flag": "owner_backed_hockey_for_noah"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Still Noah's call, Bernie.",
+          "if": [
+            {
+              "flag": "owner_backed_noah_choice"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Same rink we won in. 2009. The banner's still there. A bit faded. Like my hairline. Ha!",
+      "options": [
+        {
+          "text": "And now that the ice is better?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "The banner could use a clean.",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "This ice? We'd have won 2009 by six on this. And we won by one! One!",
+      "options": [
+        {
+          "text": "Ha. Glad you like it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gm": {
+      "say": "The territorial list! Every one of my Mallards should be on it. Noah. Josie. Little Sauce in a few years. Write them in pen, {owner}!",
+      "options": [
+        {
+          "text": "Pencil for now, Coach.",
+          "do": [
+            {
+              "rel": [
+                "bernie_ostrowski",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

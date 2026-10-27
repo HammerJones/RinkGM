@@ -1,0 +1,175 @@
+{
+  "league": {
+    "id": "gnhl",
+    "name": "Grand Northern Hockey League",
+    "short": "GNHL",
+    "founded": 1911,
+    "founding": "The Blizzard Charter: eight club owners snowbound for three days in the Hotel Lindell wrote the constitution on the back of a dinner menu.",
+    "trophy": {
+      "name": "Puckworth Cup",
+      "donor": "Sir Reginald Puckworth, lumber baron, 1912; a silver punch bowl refused by the Kingsport Curling Club",
+      "deed": "Awarded each year to the finest hockey club in the Dominion, and nobody may drink out of it."
+    },
+    "semifinal_trophy": "Hollingsworth Platter",
+    "sportsmanship_award": "Harrowgate Trophy",
+    "broadcast": "Saturday Night Hockey",
+    "season_games": 78,
+    "affiliate_in_valley": {"team": "Duncannon Dukes", "tier": "Minor League Pro", "parent": "kgm"},
+    "defunct": [
+      {"city": "Port Hollis", "name": "Pioneers", "years": "1911-1934", "cups": 9},
+      {"city": "Ottershaw", "name": "Millers", "years": "1911-1944", "cups": 6}
+    ],
+    "eras": [
+      {"name": "Frontier Era", "years": "1911-1928", "note": "Seven-man hockey, outdoor ice, no forward pass; 1919 Cup not awarded (the Great Thaw)."},
+      {"name": "Wool Era", "years": "1929-1945", "note": "Forward pass legalised 1929; Port Hollis and Ottershaw fold."},
+      {"name": "Six Era", "years": "1946-1966", "note": "Six clubs, Kingsport dynasty, maskless goalies."},
+      {"name": "Great Expansion", "years": "1967-1979", "note": "Granite City 1967; Trans-Prairie Hockey Association merger 1972 brings Redstone; the Lumber Years."},
+      {"name": "Run-and-Gun Era", "years": "1980-1996", "note": "Varga and Haverstock; Sunvale expansion 1993."},
+      {"name": "Clutch Years", "years": "1997-2004", "note": "Hooking and holding; Lake Ostrander joins 2001."},
+      {"name": "Lost Winter", "years": "2004-2005", "note": "Lockout, season cancelled; the Sandwich Clause; the Cup visits Millbrook for one night."},
+      {"name": "Modern Era", "years": "2005-present", "note": "Salary cap, shootout, trapezoid; Silverton expansion 2018."}
+    ],
+    "lockout": {"name": "The Lost Winter", "season": "2004-05", "cup_engraving": "SEASON NOT PLAYED / MILLBROOK ASKED"},
+    "rivalries": [
+      {"name": "The Hundred Years' Grudge", "teams": ["kgm", "scc"]},
+      {"name": "The Highway 9 War", "teams": ["bri", "ngf"], "note": "1977 brawl spilled into the parking lot"},
+      {"name": "The Phantom Goal", "teams": ["gcs", "bri"], "note": "1971 Final, Game 7"},
+      {"name": "The Trade", "teams": ["gcs", "sun"], "note": "Teddy Varga, 1989"},
+      {"name": "The Mask Debate", "teams": ["kgm"], "note": "1958"}
+    ],
+    "traditions": ["Frozen herring on the ice in Marrow Bay", "Mittens thrown for hat tricks in Fairhaven", "Playoff beards", "The Kingsport organ", "The handshake line", "Never touch the Hollingsworth Platter"]
+  },
+  "teams": [
+    {"id": "kgm", "city": "Kingsport", "name": "Monarchs", "short": "KGM", "colors": ["#4B2A7B", "#E3B23C", "#F4F1E8"], "since": 1911, "cups": 27, "identity": "Old money, the most Cups, the most insufferable fans, and an organist."},
+    {"id": "bri", "city": "Bramford", "name": "Iron", "short": "BRI", "colors": ["#3E4249", "#E8692C", "#C9CDD2"], "since": 1911, "cups": 12, "identity": "A steel town club that wins ugly and is proud of it."},
+    {"id": "scc", "city": "Ste-Colette", "name": "Coureurs", "short": "SCC", "colors": ["#B3202A", "#1F3A93", "#FFFFFF"], "since": 1911, "cups": 22, "identity": "Flair, speed and the oldest grudge in hockey."},
+    {"id": "ngf", "city": "Northgate", "name": "Foresters", "short": "NGF", "colors": ["#1E5631", "#111111", "#D8D2C4"], "since": 1911, "cups": 9, "identity": "Big, slow-to-anger lumber town team; they forget nothing."},
+    {"id": "mbg", "city": "Marrow Bay", "name": "Gulls", "short": "MBG", "colors": ["#0E7C86", "#F2F2F2", "#F5A623"], "since": 1911, "cups": 10, "identity": "Fishing port, frozen herring, the smartest front office in the league."},
+    {"id": "fhs", "city": "Fairhaven", "name": "Squalls", "short": "FHS", "colors": ["#6EC1E4", "#102A43", "#FFFFFF"], "since": 1911, "cups": 7, "identity": "Coldest city, warmest fans, the mitten throw."},
+    {"id": "gcs", "city": "Granite City", "name": "Stonecutters", "short": "GCS", "colors": ["#6B4423", "#D9A441", "#2B2B2B"], "since": 1967, "cups": 5, "identity": "First expansion team, chip on the shoulder carved in granite."},
+    {"id": "rsr", "city": "Redstone", "name": "Rockets", "short": "RSR", "colors": ["#8C2F1C", "#B8BEC6", "#F7D046"], "since": 1972, "cups": 3, "identity": "Surviving rebels of the Trans-Prairie league; chrome helmets."},
+    {"id": "sun", "city": "Sunvale", "name": "Scorpions", "short": "SUN", "colors": ["#2EC4B6", "#F4A259", "#1B1B3A"], "since": 1993, "cups": 2, "identity": "Desert hockey; fans who learned the rules in 1994 and argue them best."},
+    {"id": "ost", "city": "Lake Ostrander", "name": "Loons", "short": "OST", "colors": ["#0B0B0B", "#FFFFFF", "#C1121F"], "since": 2001, "cups": 0, "identity": "Lovable, cursed, abbreviated LOL by accident; still waiting."},
+    {"id": "sil", "city": "Silverton", "name": "Specters", "short": "SIL", "colors": ["#A7A9AC", "#0A0A0A", "#39FF14"], "since": 2018, "cups": 1, "identity": "Casino-town expansion team that won in year two and never stopped mentioning it."}
+  ],
+  "players": [
+    {"name": "Aurele Fontaine", "nickname": "The Ghost", "pos": "C", "years": "1912-1928", "teams": ["scc"], "stats": {"gp": 312, "g": 241, "a": 98, "pts": 339, "pim": 140}, "cups": 4, "reputation": "The first superstar; the fastest skater of the outdoor age."},
+    {"name": "Hector MacInnes", "nickname": "Old Lumber", "pos": "D", "years": "1924-1943", "teams": ["bri"], "stats": {"gp": 701, "g": 88, "a": 203, "pts": 291, "pim": 1022}, "cups": 3, "reputation": "The immovable defenceman; one Shorewood stick, one career (allegedly)."},
+    {"name": "Walter Brzezinski", "nickname": "The Wall", "pos": "G", "years": "1946-1966", "teams": ["kgm"], "stats": {"gp": 962, "w": 487, "gaa": 2.31, "sv_pct": 0.918}, "cups": 7, "reputation": "The greatest goalie of the Six Era; famously, foolishly maskless."},
+    {"name": "Jim Harrowgate", "nickname": "Gentleman Jim", "pos": "RW", "years": "1951-1970", "teams": ["kgm"], "stats": {"gp": 1180, "g": 512, "a": 601, "pts": 1113, "pim": 34}, "cups": 6, "reputation": "The cleanest great player who ever lived; still hated in Ste-Colette."},
+    {"name": "Denis Bellerose", "nickname": "Le Docteur", "pos": "LW", "years": "1968-1984", "teams": ["scc"], "stats": {"gp": 1050, "g": 560, "a": 588, "pts": 1148, "pim": 290}, "cups": 5, "reputation": "The most stylish player of the seventies; the hair, the shot."},
+    {"name": "Moose Kowalczuk", "nickname": "The Mayor of the Penalty Box", "pos": "D", "years": "1974-1987", "teams": ["bri", "ngf", "rsr"], "stats": {"gp": 812, "g": 41, "a": 77, "pts": 118, "pim": 3644}, "cups": 1, "reputation": "All-time penalty minutes leader; now the most beloved man on television and the face of Brokenbone Mutual."},
+    {"name": "Ronnie Haverstock", "nickname": "The Milkman", "pos": "C", "years": "1979-1996", "teams": ["gcs", "kgm"], "stats": {"gp": 1244, "g": 503, "a": 822, "pts": 1325, "pim": 410}, "cups": 2, "reputation": "The valley's own: Millbrook milk-truck driver turned star; invented the Millbrook bank pass; number 14 hangs in the Millbrook Community Arena.", "hometown": "Millbrook"},
+    {"name": "Teddy Varga", "nickname": "Wonderboy", "pos": "C", "years": "1982-2001", "teams": ["gcs", "sun"], "stats": {"gp": 1460, "g": 742, "a": 1311, "pts": 2053, "pim": 512}, "cups": 4, "reputation": "The best there ever was; the subject of The Trade."},
+    {"name": "Barry Pomeroy", "nickname": "Suitcase", "pos": "D", "years": "1985-2004", "teams": ["kgm", "bri", "scc", "ngf", "mbg", "fhs", "gcs", "rsr", "sun"], "stats": {"gp": 1022, "g": 47, "a": 211, "pts": 258, "pim": 1188}, "cups": 1, "reputation": "The most beloved journeyman in hockey; seven stints with the Duncannon Dukes; won his only Cup in his last game."},
+    {"name": "Ricky Delorme", "nickname": "Slick", "pos": "RW", "years": "1990-1998", "teams": ["sun", "rsr"], "stats": {"gp": 540, "g": 201, "a": 189, "pts": 390, "pim": 602}, "cups": 0, "reputation": "The Wrong Twin scandal: his twin Donnie played 11 games for him in 1996; suspended a season.", "note": "Totals include 11 games and 6 goals by Donnie Delorme, with an asterisk."},
+    {"name": "Patrice Gendron", "nickname": "The Octopus", "pos": "G", "years": "1993-2012", "teams": ["scc", "mbg"], "stats": {"gp": 1012, "w": 541, "gaa": 2.41, "sv_pct": 0.914}, "cups": 3, "reputation": "The butterfly master; talks to his goalposts; octopus mask."},
+    {"name": "Viktor Sokolov", "nickname": "The Ice Weasel", "pos": "C", "years": "2001-2016", "teams": ["rsr", "ngf", "ost"], "stats": {"gp": 1003, "g": 278, "a": 344, "pts": 622, "pim": 1490}, "cups": 1, "reputation": "Most hated agitator of his generation; three rules named after him; now a children's TV presenter."},
+    {"name": "Morris Teague", "nickname": "Emergency Mo", "pos": "G", "years": "2009", "teams": ["fhs"], "stats": {"gp": 3, "w": 3, "gaa": 1.67, "sv_pct": 0.944}, "cups": 1, "reputation": "The payroll accountant and Harlow Falls beer leaguer who won the Cup as emergency backup."},
+    {"name": "Theo Lindgren-Baptiste", "nickname": "The Metronome", "pos": "C", "years": "2014-present", "teams": ["mbg"], "stats": {"gp": 862, "g": 401, "a": 611, "pts": 1012, "pim": 88}, "cups": 2, "reputation": "The modern superstar; never misses a shift; the analytics department's favourite person."}
+  ],
+  "brands": [
+    {"id": "kodiak", "name": "Kodiak", "category": "Heritage premium skates and sticks", "founded": 1898, "slogan": "Built Like Weather.", "colors": ["#5B3A1E", "#E8DCC0", "#A3262A"], "logo": "A brown bear's head inside a shield with EST. 1898 across the bottom.",
+      "lines": [
+        {"name": "Grizzly Pro", "type": "skate"},
+        {"name": "Heritage 1898", "type": "skate"},
+        {"name": "Cub", "type": "skate", "note": "youth"},
+        {"name": "Timberline", "type": "stick", "flex": [75, 85, 95], "kick": "mid"},
+        {"name": "Summit", "type": "stick", "flex": [70, 85, 100], "kick": "low"},
+        {"name": "Old Growth", "type": "gloves"}
+      ]},
+    {"id": "cmc", "name": "CMC, the Canadian Mitten Company", "category": "Helmets, gloves, pads", "founded": 1921, "slogan": "We've Always Made Gloves.", "colors": ["#C8102E", "#FFFFFF", "#8A8D8F"], "logo": "A rounded red crest the company calls the Shield; it is a mitten.",
+      "lines": [
+        {"name": "Tundra", "type": "helmet"},
+        {"name": "Frostline", "type": "gloves"},
+        {"name": "Bulwark", "type": "shin and elbow pads"},
+        {"name": "Hearthguard", "type": "shoulder pads"},
+        {"name": "Not Mittens", "type": "gloves", "note": "youth"}
+      ]},
+    {"id": "warlock", "name": "Warlock Hockey", "category": "Composite sticks, skates, gloves", "founded": 2003, "slogan": "Unleash the Dark.", "colors": ["#121212", "#6A1B9A", "#9BE22D"], "logo": "A jagged five-pointed star in a circle, officially a puck viewed from an aggressive angle.",
+      "lines": [
+        {"name": "Hexblade", "type": "stick", "flex": [65, 75, 85, 95, 102], "kick": "low"},
+        {"name": "Grimoire", "type": "stick", "flex": [75, 85, 95], "kick": "mid"},
+        {"name": "Curse", "type": "stick", "flex": [55, 65, 75], "kick": "low"},
+        {"name": "Ritual", "type": "skate"},
+        {"name": "Summoner", "type": "gloves"}
+      ]},
+    {"id": "honest", "name": "Honest Hockey Co.", "category": "Value gear", "founded": 1988, "slogan": "It's Fine. It'll Do the Job.", "colors": ["#C9A66B", "#1D2B4F", "#F5F1E6"], "logo": "HONEST HOCKEY CO. in plain capitals inside a plain rectangle.",
+      "lines": [
+        {"name": "The Adequate", "type": "skate"},
+        {"name": "The Better One", "type": "skate"},
+        {"name": "The Stick", "type": "stick", "flex": [70, 85], "note": "labelled Bendier and Less Bendy"},
+        {"name": "The Glove", "type": "gloves"},
+        {"name": "The Pads", "type": "shin and elbow pads"}
+      ]},
+    {"id": "shorewood", "name": "Shorewood", "category": "Wooden sticks", "founded": 1894, "slogan": "Real Wood. Real Hockey. Real Splinters.", "colors": ["#D9B98A", "#7B4A26", "#2F5D50"], "logo": "Crossed wooden sticks over a lake-and-pine woodcut in an oval.",
+      "lines": [
+        {"name": "Classic 5030", "type": "stick", "flex": [85], "note": "ash, rated Honest"},
+        {"name": "Old Hickory", "type": "stick", "flex": [100], "note": "rated Stubborn"},
+        {"name": "Lumberman's Special", "type": "stick", "flex": [75], "note": "fibreglass-wrapped wood, rated Soft"},
+        {"name": "Goalie Paddle", "type": "goalie stick"},
+        {"name": "The MacInnes", "type": "stick", "flex": [85], "note": "signature replica"}
+      ]},
+    {"id": "grafton", "name": "Grafton Blades", "category": "Premium skates, holders, steel", "founded": 1962, "slogan": "You Wouldn't Understand.", "colors": ["#D6D9DC", "#2E3133", "#2457A6"], "logo": "A thin silver blade underlining GRAFTON in narrow capitals.",
+      "lines": [
+        {"name": "Apex Sabre", "type": "skate"},
+        {"name": "Meridian", "type": "skate"},
+        {"name": "Edge 9", "type": "steel"},
+        {"name": "Atelier", "type": "holder"},
+        {"name": "Aperture", "type": "custom fitting"}
+      ]},
+    {"id": "ironside", "name": "Ironside Goalie Co.", "category": "Goalie gear", "founded": 1958, "slogan": "Stand in Front of Things.", "colors": ["#5E6A71", "#F28C28", "#FFFFFF"], "logo": "An upright goalie pad drawn like a castle tower.",
+      "lines": [
+        {"name": "Bastion", "type": "goalie pads"},
+        {"name": "Rampart", "type": "blocker"},
+        {"name": "Keep", "type": "catcher"},
+        {"name": "Portcullis", "type": "goalie mask"},
+        {"name": "Sofa Classic", "type": "goalie pads", "note": "retro tan leather"}
+      ]},
+    {"id": "gripley", "name": "Gripley's Tape", "category": "Tape and wax", "founded": 1949, "slogan": "Holds Sticks Together. Also Mufflers, Marriages and Most Hockey Bags.", "colors": ["#1A1A1A", "#F4F4F0", "#F2C230"], "logo": "A tape roll seen side on: thick black ring, white centre, yellow wordmark.",
+      "lines": [
+        {"name": "Gripley Cloth", "type": "stick tape"},
+        {"name": "Gripley Clear", "type": "shin tape"},
+        {"name": "Gripley Wax", "type": "blade wax"},
+        {"name": "Gripley Grip", "type": "handle tape"}
+      ]}
+  ],
+  "resurfacers": [
+    {"id": "zambelli", "name": "Zambelli Inc.", "category": "Ice resurfacers", "founded": 1949, "founder": "Frank Zambelli, Port Lucerne", "slogan": "It Is a Zambelli Brand Ice Resurfacer.", "colors": ["#EDE3C8", "#3D6FB0", "#2B4F86"], "logo": "A chrome Z on a blue badge panel.",
+      "lines": [
+        {"name": "Model A", "years": "1949", "type": "prototype on a war-surplus tractor"},
+        {"name": "Model 525", "years": "1965-1989", "type": "gas", "note": "The classic boxy machine: cream snow tank with blue band and pinstripe, chrome Z badge, twin headlamps, driver perched high on the left, engine cowl at the back, about 1.9 x 3.6 x 2 m, top speed about 14 km/h. Millbrook's 1974 unit is named Doris."},
+        {"name": "Model 700", "type": "propane"},
+        {"name": "Model 800e", "type": "electric"}
+      ]},
+    {"id": "flatley", "name": "Flatley Ice Machines", "category": "Ice resurfacers", "founded": 1952, "founder": "Walt Flatley, Zambelli's ex-partner and brother-in-law", "slogan": "The First. (Legally.)", "colors": ["#3E8E41", "#F2F2F2", "#2A2A2A"], "logo": "A green flat line with a towel drape under the word FLATLEY.",
+      "lines": [
+        {"name": "Model 7", "type": "gas", "note": "drove in the 1966 Kingsport parade race"},
+        {"name": "Flatliner F-9", "years": "1971", "type": "battery electric", "note": "died at centre ice in the 1972 Final: the Intermission That Lasted Forty Minutes"},
+        {"name": "Flatliner E-Series", "type": "electric"}
+      ]},
+    {"id": "polarix", "name": "Polarix Ice Systems", "category": "Autonomous ice preparation platforms", "founded": 2009, "slogan": "Ice, Reimagined.", "colors": ["#00B4D8", "#F8F9FA", "#495057"], "logo": "A white hexagon with a cyan laser line cutting across it.",
+      "lines": [
+        {"name": "Polarix Glide", "type": "autonomous electric", "note": "refused to leave the ice for the Sunvale mascot in 2015"}
+      ]}
+  ],
+  "resurfacer_saga": {
+    "wet_towel_patent": "Filed by both Zambelli and Flatley in 1953; granted 1956, appealed 1957, overturned 1961, reinstated 1966, settled 1984 after it expired. Neither may claim to be the original; both advertise as the first.",
+    "parade_incident": "1966 Kingsport Cup parade: Frank Zambelli and Walt Flatley raced side by side for six blocks at 14 km/h and ended in the Victoria Square fountain, with the Cup briefly in it too.",
+    "genericide": "Everyone calls every resurfacer a zambelli; Zambelli's lawyers write letters to dictionaries, broadcasters and a Kessler primary school (1982)."
+  },
+  "sponsors": [
+    {"id": "double_double", "name": "Double-Double Donuts", "category": "Coffee and donuts", "slogan": "Have Another One.", "colors": ["#6F3B1F", "#F28DB2", "#FFF4E0"], "logo": "Two overlapping donuts forming an infinity sign.", "history": "Founded 1964 by Bramford defenceman Lionel Double Dube, who took two penalties a shift."},
+    {"id": "moosebrew", "name": "Moosebrew Lager", "category": "Beer", "slogan": "Brewed Cold. Served Colder.", "colors": ["#E0A526", "#1F4D2B", "#FFFFFF"], "logo": "A moose head whose antlers are crossed sticks, on a label oval.", "history": "Brewed in Northgate since 1931; official GNHL beer since 1956."},
+    {"id": "brokenbone", "name": "Brokenbone Mutual Insurance", "category": "Insurance", "slogan": "We've Seen Your Slapshot.", "colors": ["#1C4E80", "#F2F2F2", "#6C4F8C"], "logo": "A white bone in a cast forming a check mark on a blue square.", "history": "Founded 1912 by a Kingsport doctor; Moose Kowalczuk's 'Moose knows' ads for thirty years."},
+    {"id": "big_gords", "name": "Big Gord's Trucks", "category": "Truck dealership", "slogan": "Big Gord Won't Let You Walk.", "colors": ["#D7261E", "#C0C4C8", "#1B1B1B"], "logo": "Big Gord grinning in a cowboy hat over a truck grille, in a red badge.", "history": "Same lot outside Kessler since 1977; Gord stars in every ad."},
+    {"id": "maple_tire", "name": "Maple Tire & Muffler", "category": "Auto repair", "slogan": "We Fix What Winter Breaks.", "colors": ["#B22222", "#222222", "#FFFFFF"], "logo": "A red maple leaf with a tire as its centre.", "history": "Family garage chain from Harlow Falls, 1959; hockey cards by every till."},
+    {"id": "rink_rage", "name": "Rink Rage", "category": "Energy drink", "slogan": "Taste the Penalty.", "colors": ["#1E90FF", "#A4E000", "#0D0D0D"], "logo": "A cracked puck shooting lightning inside a jagged can shape.", "history": "Launched 2006 by Warlock's founders before their falling-out over the colour black."},
+    {"id": "frostbank", "name": "Frostbank", "category": "Bank", "slogan": "Banking With a Cool Head.", "colors": ["#7FB3D5", "#0B2545", "#B0B7BF"], "logo": "A six-pointed snowflake inside a coin.", "history": "Born from a 1968 merger; children's accounts pay interest in hockey cards."},
+    {"id": "puckhead", "name": "Puckhead Pizza", "category": "Pizza delivery", "slogan": "Delivered in Under Two Periods.", "colors": ["#C1272D", "#F7C548", "#8B5A2B"], "logo": "A pizza with a pepperoni puck and a missing slice like an open net.", "history": "Started in Port Ainsley in 1983 by a semi-pro goalie delivering between games."},
+    {"id": "northwind", "name": "Northwind Air", "category": "Airline", "slogan": "We Fly Teams. Some of Them Win.", "colors": ["#3A86C8", "#6B6E70", "#FFFFFF"], "logo": "A stylised goose in flight over a horizon line.", "history": "Bush airline flying GNHL teams since 1962; once landed the Rockets on a frozen lake."},
+    {"id": "grizzly_gas", "name": "Grizzly Gas & Go", "category": "Gas stations", "slogan": "Fill Up Between Periods.", "colors": ["#2E8B57", "#F2B705", "#333333"], "logo": "A bear paw print with one toe shaped like a fuel drop.", "history": "The valley's gas chain since 1970; a Haverstock cut-out in Millbrook since 1992."},
+    {"id": "telenorth", "name": "TeleNorth", "category": "Phone and internet", "slogan": "Clear Signal. Unlike the Refs.", "colors": ["#FF7A1A", "#3C4650", "#FFFFFF"], "logo": "Three radio arcs above a lowercase t.", "history": "Sponsors the replay review segment; referees have complained about the slogan four times."},
+    {"id": "hearthstone", "name": "Hearthstone Furnaces", "category": "Home heating", "slogan": "Warm Homes. Cold Ice.", "colors": ["#E25822", "#7A2E1E", "#EDEAE4"], "logo": "A flame inside a house outline.", "history": "Kessler furnace maker since 1946; sponsors rink warming rooms and the Hot Seat giveaway."}
+  ]
+}

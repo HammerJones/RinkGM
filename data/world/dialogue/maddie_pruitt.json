@@ -1,0 +1,848 @@
+{
+  "id": "maddie_pruitt",
+  "barks": {
+    "idle": [
+      "Chair number 3 is the good one. It doesn't wobble.",
+      "If I stand really still I don't fall. That's science.",
+      "Dylan's keys go jingle jingle. That means he's close."
+    ],
+    "good_ice": [
+      "The ice is smooth today. Smooth is good for not falling. I think.",
+      "It's shiny. I can see my skates in it."
+    ],
+    "bad_ice": [
+      "There's bumps. Bumps are how you fall.",
+      "The ice has scratches. Does it hurt the ice?"
+    ],
+    "wet_ice": [
+      "It's wet. Wet ice is the slipperiest. I read that.",
+      "Why is there a puddle on top of the ice? Ice is supposed to be dry."
+    ],
+    "goal": [
+      "Too loud. Way too loud.",
+      "I'm covering my ears until the horn stops."
+    ],
+    "cold": [
+      "My nose is cold. My toes are colder.",
+      "Mum, can I have my other mittens?"
+    ],
+    "hungry": [
+      "Can we get fries? Small ones?",
+      "My tummy is louder than the Zamboni."
+    ],
+    "long_line": [
+      "The line is so long. I'm counting people. Fourteen.",
+      "I'm going to be ten by the time we get fries."
+    ],
+    "bored": [
+      "Is it over yet?",
+      "I'm making a snowflake out of my napkin."
+    ],
+    "greet_owner": [
+      "Hi, {owner}. I didn't fall today. Yet.",
+      "Hi. Did you know ice floats? It's weird."
+    ],
+    "leaving_happy": [
+      "I let go for three whole seconds!",
+      "Bye! I'm going to tell Dylan everything."
+    ],
+    "leaving_angry": [
+      "The big kids zoomed. I didn't like it.",
+      "I fell and somebody said it was fine. It wasn't fine."
+    ],
+    "event_specific": {
+      "learn_to_skate": [
+        "I'm going to fall. Okay. Maybe not.",
+        "Coach Colette has a sticker for me. I can see it."
+      ],
+      "public_skate": [
+        "The big kids go so fast. Why do they go so fast?",
+        "I'm staying by the boards. The boards are my friend."
+      ],
+      "figure_show": [
+        "Their dresses sparkle when they spin.",
+        "How do they not get dizzy?"
+      ],
+      "minor_hockey": [
+        "Owen's on the ice. He's not my cousin.",
+        "Hockey is skating plus a stick. That's a lot."
+      ],
+      "special": [
+        "There's so many people. Can I hold your sleeve?"
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_maddie_pruitt"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "sad"
+    },
+    {
+      "if": [
+        {
+          "event_now": "learn_to_skate"
+        }
+      ],
+      "node": "lts_now"
+    },
+    {
+      "if": [
+        {
+          "event_now": "public_skate"
+        }
+      ],
+      "node": "ps_now"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_show"
+        }
+      ],
+      "node": "show_now"
+    },
+    {
+      "if": [
+        {
+          "path": "player"
+        },
+        {
+          "day_gte": 1095
+        },
+        {
+          "not_flag": "signed_maddie_autograph"
+        }
+      ],
+      "node": "autograph"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "maddie_pruitt",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hi. I'm Maddie. I'm going to fall. Not right now. Probably later.",
+      "do": [
+        {
+          "set": "met_maddie_pruitt"
+        }
+      ],
+      "options": [
+        {
+          "text": "Everybody falls. Even me.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                3
+              ]
+            }
+          ],
+          "to": "first_fall"
+        },
+        {
+          "text": "You won't fall. It's fine.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                -1
+              ]
+            }
+          ],
+          "to": "first_fine"
+        },
+        {
+          "text": "Nice to meet you, Maddie. I'm {owner}.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_fall": {
+      "say": "Really? You own the whole rink and you still fall?",
+      "options": [
+        {
+          "text": "All the time. Then I get up.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                3
+              ]
+            },
+            {
+              "set": "maddie_trusts_owner"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Okay, not all the time.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_fine": {
+      "say": "You don't know that. Nobody knows that. Mum says it's fine and then it isn't.",
+      "options": [
+        {
+          "text": "You're right. You might fall. Then you get up.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                3
+              ]
+            },
+            {
+              "set": "maddie_trusts_owner"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Fair enough.",
+          "to": "hub"
+        }
+      ]
+    },
+    "sad": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "Somebody said it was fine and it wasn't?",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'm sorry, Maddie. I'll keep the big kids slower.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Let's go see Lorraine about a hot chocolate.",
+          "do": [
+            {
+              "money": -3
+            },
+            {
+              "rel": [
+                "maddie_pruitt",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "lts_now": {
+      "say": [
+        "I'm holding the chair. Chair number 3. It's the good one.",
+        "Coach Colette says knees soft. My knees are very soft. They're shaking."
+      ],
+      "options": [
+        {
+          "text": "Want to try one push without the chair? I'll tell you the truth if you fall.",
+          "if": [
+            {
+              "flag": "maddie_trusts_owner"
+            }
+          ],
+          "to": "lts_pushed"
+        },
+        {
+          "text": "You're doing great.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll let you concentrate.",
+          "to": "end"
+        }
+      ]
+    },
+    "lts_pushed": {
+      "say": "I did it! I went like a whole metre! Then I grabbed the chair again. That still counts, right?",
+      "options": [
+        {
+          "text": "That counts. That's a whole metre.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                3
+              ]
+            },
+            {
+              "note": "Maddie Pruitt pushed off without the chair for a whole metre."
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "ps_now": {
+      "say": [
+        "I'm staying by the boards. The big kids go zoom.",
+        "Public skate is louder than learn-to-skate. Why is everybody screaming?"
+      ],
+      "options": [
+        {
+          "text": "Want me to skate a lap on the outside? I'll be the wall.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Have fun, Maddie.",
+          "to": "end"
+        }
+      ]
+    },
+    "show_now": {
+      "say": [
+        "Everybody's wearing sparkles. My snowflake has sparkles too. I made it.",
+        "I'm going to let go of the chair in front of everyone. Maybe. Don't tell Mum."
+      ],
+      "options": [
+        {
+          "text": "You can do it. And if you fall, you get up.",
+          "if": [
+            {
+              "flag": "maddie_trusts_owner"
+            }
+          ],
+          "to": "show_brave"
+        },
+        {
+          "text": "No pressure, Maddie. Just skate.",
+          "to": "show_brave"
+        },
+        {
+          "text": "Good luck out there.",
+          "to": "end"
+        }
+      ]
+    },
+    "show_brave": {
+      "say": "Okay. Okay okay okay. Hold my snowflake. Don't bend it.",
+      "options": [
+        {
+          "text": "I'll guard it with my life.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                2
+              ]
+            },
+            {
+              "set": "held_maddie_snowflake"
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "autograph": {
+      "say": "Um. Can I have your autograph? You're on the radio now. Dylan says I'm too old to ask. I'm not.",
+      "options": [
+        {
+          "text": "Of course. To Maddie, who got up every time.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                6
+              ]
+            },
+            {
+              "set": "signed_maddie_autograph"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Only if I get yours. In cursive.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                5
+              ]
+            },
+            {
+              "set": "signed_maddie_autograph"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}! I fell two times today and got up two times. That's even.",
+        "Hi {owner}. I made you a snowflake. It's a bit squished."
+      ],
+      "options": [
+        {
+          "text": "Even is good. What's new?",
+          "to": "hub"
+        },
+        {
+          "text": "Is it as good as the one I held at the showcase?",
+          "if": [
+            {
+              "flag": "held_maddie_snowflake"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hi. I'm doing a thinking.",
+        "Hi {owner}. Ask me something. Not about falling.",
+        "I'm here. Dylan's here too, somewhere. Jingle jingle."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "Why do you always pick chair number 3?",
+          "to": "chair"
+        },
+        {
+          "text": "Got any questions for me?",
+          "to": "why"
+        },
+        {
+          "text": "What's your favourite thing at the rink?",
+          "to": "events"
+        },
+        {
+          "text": "How's your brother doing?",
+          "to": "dylan"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Ready for practice, Maddie?",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "See you later, Maddie.",
+          "to": "end"
+        }
+      ]
+    },
+    "chair": {
+      "say": "Number 1 squeaks and number 2 has gum. Number 3 doesn't wobble. It needs a name, though. Can you name it?",
+      "options": [
+        {
+          "text": "Steady Eddie.",
+          "if": [
+            {
+              "not_flag": "chair_named"
+            }
+          ],
+          "do": [
+            {
+              "set": "chair_steady_eddie"
+            },
+            {
+              "set": "chair_named"
+            },
+            {
+              "rel": [
+                "maddie_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "chair_named"
+        },
+        {
+          "text": "Doris Junior.",
+          "if": [
+            {
+              "not_flag": "chair_named"
+            }
+          ],
+          "do": [
+            {
+              "set": "chair_doris_junior"
+            },
+            {
+              "set": "chair_named"
+            },
+            {
+              "rel": [
+                "maddie_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "chair_named"
+        },
+        {
+          "text": "Gus. It held this place up for fifty years.",
+          "if": [
+            {
+              "not_flag": "chair_named"
+            }
+          ],
+          "do": [
+            {
+              "set": "chair_gus"
+            },
+            {
+              "set": "chair_named"
+            },
+            {
+              "rel": [
+                "maddie_pruitt",
+                3
+              ]
+            }
+          ],
+          "to": "chair_named"
+        },
+        {
+          "text": "How's the chair doing these days?",
+          "if": [
+            {
+              "flag": "chair_named"
+            }
+          ],
+          "to": "chair_after"
+        }
+      ]
+    },
+    "chair_named": {
+      "say": "Okay. I'm writing it on the tape on the leg. Now it's official. You can't change it. That's the rule.",
+      "options": [
+        {
+          "text": "Very official.",
+          "to": "hub"
+        }
+      ]
+    },
+    "chair_after": {
+      "say": "Good. I only hold it with one hand now. Sometimes zero. Don't tell it, it'll be sad.",
+      "options": [
+        {
+          "text": "Your secret's safe.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "why": {
+      "say": "Why is ice slippery? Dylan says it's magic. Dylan says that about everything.",
+      "options": [
+        {
+          "text": "There's a thin layer of water on top. Your blade slides on it.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "why_water"
+        },
+        {
+          "text": "Ask Earl. He's known ice since 1983.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "why_water": {
+      "say": "So I'm skating on water? On top of ice? That's two kinds at once. That's why I fall. It's not my fault, it's water.",
+      "options": [
+        {
+          "text": "Exactly. Science is on your side.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Learn-to-skate. Because of Coach Colette and the stickers. Lily shows me how to fall. Knees bent, hands out, then laugh. I can do the first two.",
+      "options": [
+        {
+          "text": "What do the stickers get you?",
+          "to": "events_stickers"
+        },
+        {
+          "text": "And hockey games?",
+          "to": "events_horn"
+        }
+      ]
+    },
+    "events_stickers": {
+      "say": "Ten stickers and you get a snowflake on the chart. I have six. One is a penguin. The penguin was for not crying.",
+      "options": [
+        {
+          "text": "The penguin is the best one.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "events_horn": {
+      "say": "I like watching Owen. He's not my cousin. I don't like the horn. Why does it have to be SO loud? Who is it for?",
+      "options": [
+        {
+          "text": "The back row, I think. I'll ask Doreen to go easy.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "It's for the goal. Goals are loud.",
+          "to": "hub"
+        }
+      ]
+    },
+    "dylan": {
+      "say": "He wants to drive Doris more than he wants to graduate. Mum says that a lot. Then she sighs. And he says Josie's name and goes red. I don't know why.",
+      "options": [
+        {
+          "text": "No idea either.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "He's a good brother.",
+          "do": [
+            {
+              "rel": [
+                "dylan_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The ice is better when it's smooth. The bathroom is scary. The light flickers.",
+      "options": [
+        {
+          "text": "And now the ice is smoother?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "We fixed up the rooms. Less scary?",
+          "if": [
+            {
+              "rooms_gte": 40
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll work on the scary bathroom.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "I fall less now. Mum says that's me getting better. I think it's half me and half the ice.",
+      "options": [
+        {
+          "text": "Half and half sounds right.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": [
+        "I'm the slowest. But I listen. Coach Colette says listening is a skill. Is it?",
+        "I did the pylon drill in my head forty times. Can I do it on the ice now?"
+      ],
+      "options": [
+        {
+          "text": "Listening is the most important skill there is.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                3
+              ]
+            }
+          ],
+          "to": "coach_listen"
+        },
+        {
+          "text": "You won't be the slowest forever.",
+          "do": [
+            {
+              "rel": [
+                "maddie_pruitt",
+                1
+              ]
+            }
+          ],
+          "to": "coach_listen"
+        }
+      ]
+    },
+    "coach_listen": {
+      "say": "Grandma Dorothy was slow too and she started a whole company. So slow is fine. Really fine, not fake fine.",
+      "options": [
+        {
+          "text": "Really fine. Let's go.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

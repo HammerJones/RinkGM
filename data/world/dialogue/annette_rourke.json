@@ -1,0 +1,353 @@
+{
+  "id": "annette_rourke",
+  "barks": {
+    "idle": [
+      "(Crunch.) Same every night.",
+      "Don't need you to be good. Need you to be the same."
+    ],
+    "good_ice": [
+      "Good sheet. I'll measure it anyway."
+    ],
+    "bad_ice": [
+      "That's not ice. That's an excuse.",
+      "I don't practise on that."
+    ],
+    "wet_ice": [
+      "Late flood. Unacceptable."
+    ],
+    "cold": [
+      "Cold is fine. Cold is honest."
+    ],
+    "hungry": [
+      "Cup of ice. That's lunch."
+    ],
+    "long_line": [
+      "Fix your line. Fix your rink."
+    ],
+    "bored": [
+      "Bored is consistent. I'll allow it."
+    ],
+    "goal": [
+      "Fine. Now do it again."
+    ],
+    "greet_owner": [
+      "Owner. What's the number?",
+      "Morning. Ice temperature?"
+    ],
+    "leaving_happy": [
+      "Same next week. Exactly the same."
+    ],
+    "leaving_angry": [
+      "The Frostbank's concerts end Friday. We'll be there."
+    ],
+    "event_specific": {
+      "pro_practice": [
+        "Again. Same speed. Same.",
+        "Stop being a highlight. Be a defenceman."
+      ],
+      "senior_hockey": [
+        "Watching the Kings. Two of them could be Dukes. One knows it."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_annette_rourke"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "pro_practice"
+        }
+      ],
+      "node": "practice"
+    },
+    {
+      "if": [
+        {
+          "flag": "rourke_measured"
+        },
+        {
+          "rel_gte": [
+            "annette_rourke",
+            15
+          ]
+        }
+      ],
+      "node": "measured"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Rourke. Dukes. I book practice ice when the Frostbank has a concert, and only at 85 or better. What's your surface temperature?",
+      "do": [
+        {
+          "set": "met_annette_rourke"
+        }
+      ],
+      "options": [
+        {
+          "text": "Minus five point one, as of the last plant round.",
+          "do": [
+            {
+              "rel": [
+                "annette_rourke",
+                5
+              ]
+            },
+            {
+              "set": "rourke_measured"
+            }
+          ],
+          "to": "first_number"
+        },
+        {
+          "text": "Good vibes, mostly.",
+          "do": [
+            {
+              "rel": [
+                "annette_rourke",
+                -5
+              ]
+            }
+          ],
+          "to": "first_vibes"
+        },
+        {
+          "text": "I'm not sure.",
+          "do": [
+            {
+              "rel": [
+                "annette_rourke",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_number": {
+      "say": "(She nods once and chews an ice cube.) Good. A number. We'll get along.",
+      "options": [
+        {
+          "text": "Glad to hear it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_vibes": {
+      "say": "Don't say that word to me again. Measure it. Call me when you have a number.",
+      "options": [
+        {
+          "text": "Understood.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "Understood. It'll be fixed.",
+          "do": [
+            {
+              "rel": [
+                "annette_rourke",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "practice": {
+      "say": [
+        "Practice. Talk fast.",
+        "(Crunch.) Ice is {ice_word}. I measured. Talk fast."
+      ],
+      "options": [
+        {
+          "text": "I'll leave you to it.",
+          "to": "end"
+        },
+        {
+          "text": "Thirty seconds.",
+          "to": "hub"
+        }
+      ]
+    },
+    "measured": {
+      "say": "Owner. You give numbers. Rare. What do you need?",
+      "options": [
+        {
+          "text": "Just checking in.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Go.",
+        "Rourke. Go ahead.",
+        "(Crunch.) Yes?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "What's coaching the Dukes like?",
+          "to": "job"
+        },
+        {
+          "text": "What makes a good practice?",
+          "to": "events"
+        },
+        {
+          "text": "You know Suitcase Pomeroy?",
+          "to": "gossip"
+        },
+        {
+          "text": "What does the rink need for the Dukes?",
+          "to": "rink"
+        },
+        {
+          "text": "What would you tell a player like me?",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "to": "path_player"
+        },
+        {
+          "text": "Good practice, Coach.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Development. I get them one year, maybe two, before Kingsport calls. I don't need them to be good. I need them to be the same every night.",
+      "options": [
+        {
+          "text": "Understood.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "Fifty minutes, drills that start on time, a flood that finishes on time. Ice I can measure. No highlights.",
+      "options": [
+        {
+          "text": "Got it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Suitcase is the only man I know who got traded at an airport and sent a thank-you note. And Rejean trusts his thermometer more than me. He's right to.",
+      "options": [
+        {
+          "text": "And Hap Doyle?",
+          "to": "gossip_hap"
+        },
+        {
+          "text": "Good people.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip_hap": {
+      "say": "Doyle's the same every night. Thirty-eight years of it. I respect that. Don't tell him.",
+      "options": [
+        {
+          "text": "He said the same about you.",
+          "do": [
+            {
+              "rel": [
+                "annette_rourke",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "Eighty-five or better. Floods on time. A dressing room that's dry. That's the list.",
+      "options": [
+        {
+          "text": "We're at eighty-five now.",
+          "if": [
+            {
+              "ice_gte": 85
+            }
+          ],
+          "to": "rink_good"
+        },
+        {
+          "text": "I'm working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_good": {
+      "say": "I measured. You are. (Crunch.) Book us Monday and Wednesday.",
+      "options": [
+        {
+          "text": "Done.",
+          "do": [
+            {
+              "rel": [
+                "annette_rourke",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "path_player": {
+      "say": "I don't need you to be good. I need you to be the same every night. Can you do that?",
+      "options": [
+        {
+          "text": "Yes, Coach.",
+          "do": [
+            {
+              "rel": [
+                "annette_rourke",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "(Crunch.) Fine.",
+        "Same time next week."
+      ],
+      "options": []
+    }
+  }
+}

@@ -14,11 +14,24 @@ config/features=PackedStringArray("4.3", "Forward Plus")
 
 Tuning="*res://scripts/core/tuning.gd"
 InputSetup="*res://scripts/core/input_setup.gd"
+CareerState="*res://scripts/career/career_state.gd"
+DevMenu="*res://scripts/dev/dev_menu.gd"
+PauseMenu="*res://scripts/game/pause_menu.gd"
+PlaytestNotes="*res://scripts/dev/playtest_notes.gd"
+UiScale="*res://scripts/ui/ui_scale.gd"
 
 [display]
 
-window/size/viewport_width=1600
-window/size/viewport_height=900
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/window_width_override=1600
+window/size/window_height_override=900
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[gui]
+
+theme/custom="res://assets/ui/rinkos_theme.tres"
 
 [physics]
 
@@ -26,4 +39,6 @@ common/physics_ticks_per_second=120
 
 [rendering]
 
+occlusion_culling/use_occlusion_culling=true
+textures/canvas_textures/default_texture_filter=0
 anti_aliasing/quality/msaa_3d=2

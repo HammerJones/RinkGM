@@ -1,0 +1,197 @@
+{
+ "id": "lorraine_coffee_machine",
+ "giver": "lorraine_duffy",
+ "quest": "lorraine_coffee_machine",
+ "nodes": {
+  "offer": {
+   "say": "Twenty-two years I've hit that machine where the dent is. Twenty-two years it's worked. This week I hit it and it looked at me. Machines shouldn't look at you, {owner}. The whole town's drinking hot chocolate. They're getting sticky. They're getting sweet. It's unnatural.",
+   "options": [
+    {
+     "text": "I'll get it fixed.",
+     "do": [
+      {
+       "quest_start": "lorraine_coffee_machine"
+      },
+      {
+       "rel": [
+        "lorraine_duffy",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why not just buy a new machine?",
+     "to": "new"
+    },
+    {
+     "text": "Have you tried hitting it somewhere else?",
+     "to": "cheek"
+    },
+    {
+     "text": "Tea's good too, isn't it?",
+     "to": "decline"
+    }
+   ]
+  },
+  "new": {
+   "say": "The Double-Double people want to put their machine in with their sign. And their cups. And their opinions. This one's ours. It just needs a hose and a prayer.",
+   "options": [
+    {
+     "text": "Ours it is. I'll fix it.",
+     "do": [
+      {
+       "quest_start": "lorraine_coffee_machine"
+      },
+      {
+       "rel": [
+        "lorraine_duffy",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "There's only one dent. That's the dent. A second dent would be chaos. Gus tried a second dent in 2016. Look what happened. Guestbook entry. Twice.",
+   "options": [
+    {
+     "text": "Fine, one dent. I'll find a fix.",
+     "do": [
+      {
+       "quest_start": "lorraine_coffee_machine"
+      },
+      {
+       "rel": [
+        "lorraine_duffy",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Tea is for the Legion. This is a hockey rink.",
+   "do": [
+    {
+     "rel": [
+      "lorraine_duffy",
+      -2
+     ]
+    },
+    {
+     "mood": -0.03
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Try the dent first. Just to be sure. Then call Terry. He's my nephew. He's a plumber. His pager goes off a lot.",
+   "options": []
+  },
+  "progress": {
+   "say": "Machine news?",
+   "options": [
+    {
+     "text": "I'll try the dent myself.",
+     "if": [
+      {
+       "step": [
+        "lorraine_coffee_machine",
+        "dent"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Calling Terry.",
+     "if": [
+      {
+       "step": [
+        "lorraine_coffee_machine",
+        "terry"
+       ]
+      }
+     ],
+     "to": "p_terry"
+    },
+    {
+     "text": "It's working. Just tidying up.",
+     "if": [
+      {
+       "step": [
+        "lorraine_coffee_machine",
+        "clean"
+       ]
+      }
+     ],
+     "to": "p_clean"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_terry": {
+   "say": "He'll be at the Plungers game Thursday. Catch him before the pager. After the pager he's gone till Friday.",
+   "options": []
+  },
+  "p_clean": {
+   "say": "A working machine on a sticky counter. That's like a new jersey on Big Gord. Clean it up.",
+   "options": []
+  },
+  "complete": {
+   "say": "First cup's yours. Look at that. Brown. Hot. Bitter. Perfect. I flipped the sign myself. Three people clapped. One of them was Earl. He'll deny it.",
+   "options": [
+    {
+     "text": "Best coffee in the valley.",
+     "do": [
+      {
+       "rel": [
+        "lorraine_duffy",
+        2
+       ]
+      }
+     ],
+     "to": "c_best"
+    },
+    {
+     "text": "Earl clapped?",
+     "to": "c_earl"
+    },
+    {
+     "text": "Can I hit it where the dent is? Just once?",
+     "do": [
+      {
+       "set": "owner_hit_the_dent"
+      }
+     ],
+     "to": "c_dent"
+    }
+   ]
+  },
+  "c_best": {
+   "say": "It isn't. It's the most loved, though. That's better.",
+   "options": []
+  },
+  "c_earl": {
+   "say": "Twice. Small claps. Like a man applauding a funeral he approves of.",
+   "options": []
+  },
+  "c_dent": {
+   "say": "Go on. Gently. There. Now you're staff.",
+   "options": []
+  },
+  "done": {
+   "say": "Coffee's on. Coffee's always on now.",
+   "options": []
+  }
+ }
+}

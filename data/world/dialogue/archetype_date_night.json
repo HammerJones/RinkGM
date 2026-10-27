@@ -1,0 +1,392 @@
+{
+  "id": "archetype_date_night",
+  "start": [
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "rel_lt": [
+            "self",
+            -15
+          ]
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "public_skate"
+        }
+      ],
+      "node": "event"
+    },
+    {
+      "if": [
+        {
+          "event_now": "special"
+        }
+      ],
+      "node": "event"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            19,
+            23
+          ]
+        }
+      ],
+      "node": "time"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "self",
+            30
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "grumpy": {
+      "say": [
+        "Tonight was supposed to be romantic. It's been mostly cold and a bit wet.",
+        "Not the night I planned, {owner}. Not the night I planned at all.",
+        "@how_are_things"
+      ],
+      "options": [
+        {
+          "text": "I'm sorry. What would make it better?",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            },
+            {
+              "mood": 0.03
+            }
+          ],
+          "to": "better"
+        },
+        {
+          "text": "It's an old building. Bear with us.",
+          "to": "hub"
+        },
+        {
+          "text": "Rinks are hard. Take it or leave it.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                -3
+              ]
+            },
+            {
+              "mood": -0.03
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "event": {
+      "say": [
+        "We're here for {event}! I'm going to hold the boards and look casual.",
+        "This is our second date. Or third. I'm counting this one twice if I don't fall.",
+        "Okay. I can skate. Mostly forwards. Is backwards a requirement?"
+      ],
+      "options": [
+        {
+          "text": "You'll do great. Just keep moving.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "love"
+        },
+        {
+          "text": "Have fun out there.",
+          "to": "hub"
+        }
+      ]
+    },
+    "time": {
+      "say": [
+        "Night skate! The lights, the music, the cold. Very romantic. Very cold.",
+        "We came late so fewer people could see us fall. It's a strategy."
+      ],
+      "options": [
+        {
+          "text": "Good to see you anyway.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Hey {owner}! Remember us? We're still together. The rink gets some credit.",
+        "{owner}! We told everybody about this place. Well, our friends. Well, two friends."
+      ],
+      "options": [
+        {
+          "text": "Good to see you too, {known_as}.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "@how_are_things",
+        "Hi! Sorry, I'm still warming up my hands. And my courage.",
+        "Oh, hi. Is this a good time? It's always a good time. Unless I'm falling."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "So what do you love about public skate?",
+          "to": "love"
+        },
+        {
+          "text": "What brings you to the rink?",
+          "to": "why"
+        },
+        {
+          "text": "What do you make of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Have you met anyone nice here?",
+          "to": "gossip"
+        },
+        {
+          "text": "What would make this place better for you?",
+          "to": "better"
+        },
+        {
+          "text": "Take care.",
+          "to": "bye"
+        }
+      ]
+    },
+    "love": {
+      "say": [
+        "You go round and round and talk and nobody can leave. It's the perfect date.",
+        "It's cheap, it's cozy and you have an excuse to hold hands. For balance. Mostly.",
+        "The music's always ten years old. It's very comforting."
+      ],
+      "options": [
+        {
+          "text": "Sounds like a good night out.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "why": {
+      "say": "@why_here",
+      "options": [
+        {
+          "text": "Tell me a bit about yourself.",
+          "to": "about"
+        },
+        {
+          "text": "Glad you come.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "about": {
+      "say": "@about",
+      "options": [
+        {
+          "text": "Good to know you, {known_as}.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": [
+        "It's sweet in here. Old, but sweet. Like a grandparent's basement with ice.",
+        "The rental skates are... a choice. I can't feel my left foot.",
+        "@ice"
+      ],
+      "options": [
+        {
+          "text": "The ice has been better lately, hasn't it?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "ice_up"
+        },
+        {
+          "text": "Noticed the work on the building?",
+          "if": [
+            {
+              "rooms_gte": 45
+            }
+          ],
+          "to": "rooms_up"
+        },
+        {
+          "text": "Fair enough. We're working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "ice_up": {
+      "say": [
+        "The ice is so smooth now! I only fell once and it was a choice.",
+        "Good ice. We actually glided. Like people in a movie."
+      ],
+      "options": [
+        {
+          "text": "Glad it shows.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rooms_up": {
+      "say": [
+        "The lobby's actually nice now. We sat and had hot chocolate. Like a cafe. A cold cafe.",
+        "The washrooms are lovely now. I'm not saying that's romantic. But it helps."
+      ],
+      "options": [
+        {
+          "text": "That's the idea.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": [
+        "There's an older lady, Irene, who's been skating here since 1974. She waved at us. We felt blessed.",
+        "Doreen on the organ played a slow song for us. I think. Or it was a dirge for a missed call."
+      ],
+      "options": [
+        {
+          "text": "Ha. Good to know.",
+          "to": "hub"
+        }
+      ]
+    },
+    "better": {
+      "say": [
+        "A couples skate. Dim lights, slow songs, maybe a little disco ball. Just a little one.",
+        "Make Saturday night special. Lights down, music up. We'd come every week."
+      ],
+      "options": [
+        {
+          "text": "I'll see what I can do.",
+          "if": [
+            {
+              "not_flag": "heard_wants_couples_skate"
+            }
+          ],
+          "do": [
+            {
+              "set": "heard_wants_couples_skate"
+            },
+            {
+              "rel": [
+                "self",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Can't promise anything, but noted.",
+          "if": [
+            {
+              "not_flag": "heard_wants_couples_skate"
+            }
+          ],
+          "do": [
+            {
+              "set": "heard_wants_couples_skate"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "You're not the first to say it. It's on the list.",
+          "if": [
+            {
+              "flag": "heard_wants_couples_skate"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Okay. We're going back out. Wish us luck. Mostly me.",
+        "Good night, {owner}! We'll be back. If we're still a we."
+      ]
+    }
+  }
+}

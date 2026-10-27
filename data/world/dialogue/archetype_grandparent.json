@@ -1,0 +1,408 @@
+{
+  "id": "archetype_grandparent",
+  "start": [
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "rel_lt": [
+            "self",
+            -15
+          ]
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "minor_hockey"
+        }
+      ],
+      "node": "event"
+    },
+    {
+      "if": [
+        {
+          "event_now": "figure_show"
+        }
+      ],
+      "node": "event"
+    },
+    {
+      "if": [
+        {
+          "event_now": "learn_to_skate"
+        }
+      ],
+      "node": "event"
+    },
+    {
+      "if": [
+        {
+          "event_now": "tournament"
+        }
+      ],
+      "node": "event"
+    },
+    {
+      "if": [
+        {
+          "hour_between": [
+            6,
+            9
+          ]
+        }
+      ],
+      "node": "time"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "self",
+            30
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "grumpy": {
+      "say": [
+        "I don't like to complain, dear. But the stands were awful cold for the little ones.",
+        "My knees and I have had a hard week in this building.",
+        "@how_are_things"
+      ],
+      "options": [
+        {
+          "text": "I'm sorry. What would make it better?",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            },
+            {
+              "mood": 0.03
+            }
+          ],
+          "to": "better"
+        },
+        {
+          "text": "It's an old building. Bear with us.",
+          "to": "hub"
+        },
+        {
+          "text": "Rinks are hard. Take it or leave it.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                -3
+              ]
+            },
+            {
+              "mood": -0.03
+            }
+          ],
+          "to": "end"
+        }
+      ]
+    },
+    "event": {
+      "say": [
+        "That's my grandchild out there! At {event}! The one in the red. No, the other red.",
+        "I knitted a toque for the occasion. It has a pom-pom. For luck.",
+        "{event}! Isn't it wonderful? I'll cry. I always cry."
+      ],
+      "options": [
+        {
+          "text": "Which one's yours?",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "love"
+        },
+        {
+          "text": "They're lucky to have you here.",
+          "to": "hub"
+        }
+      ]
+    },
+    "time": {
+      "say": [
+        "Good morning, dear. I always come early. I like a good seat and a good chat.",
+        "Oh, it's early. I've been up since five. I do that now."
+      ],
+      "options": [
+        {
+          "text": "Good to see you anyway.",
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Hello, sweetheart. I brought lemon squares. One's for you. Two, if nobody's looking.",
+        "There's my favourite owner. You look tired. Are you eating?"
+      ],
+      "options": [
+        {
+          "text": "Good to see you too, {known_as}.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "@how_are_things",
+        "Hello, dear. What can I do for you?",
+        "Oh, it's you. Sit with me a moment."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "Tell me about your grandkids.",
+          "to": "love"
+        },
+        {
+          "text": "What brings you to the rink?",
+          "to": "why"
+        },
+        {
+          "text": "What do you make of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Any news on the bench?",
+          "to": "gossip"
+        },
+        {
+          "text": "What would make this place better for you?",
+          "to": "better"
+        },
+        {
+          "text": "Take care.",
+          "to": "bye"
+        }
+      ]
+    },
+    "love": {
+      "say": [
+        "My grandson's in minor hockey. His father played here too. Same dressing room. Same drip.",
+        "My granddaughter skates figure. She spins so fast I have to look away.",
+        "I've got three grandchildren in three different programs. I live here now, I think."
+      ],
+      "options": [
+        {
+          "text": "They sound wonderful.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "why": {
+      "say": "@why_here",
+      "options": [
+        {
+          "text": "Tell me a bit about yourself.",
+          "to": "about"
+        },
+        {
+          "text": "Glad you come.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "about": {
+      "say": "@about",
+      "options": [
+        {
+          "text": "Good to know you, {known_as}.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": [
+        "It's a bit cold up in the stands, dear. My blanket is earning its keep.",
+        "The roof still drips. When their father played here it dripped too. Lovely, really.",
+        "@ice"
+      ],
+      "options": [
+        {
+          "text": "The ice has been better lately, hasn't it?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "ice_up"
+        },
+        {
+          "text": "Noticed the work on the building?",
+          "if": [
+            {
+              "rooms_gte": 45
+            }
+          ],
+          "to": "rooms_up"
+        },
+        {
+          "text": "Fair enough. We're working on it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "ice_up": {
+      "say": [
+        "The ice looks lovely and smooth. Nobody's taking a nasty spill.",
+        "Good ice! The children are skating so nicely. Well done, dear."
+      ],
+      "options": [
+        {
+          "text": "Glad it shows.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rooms_up": {
+      "say": [
+        "The stands are warmer now. I only needed one blanket today.",
+        "The washrooms are lovely now. I won't say more. But lovely."
+      ],
+      "options": [
+        {
+          "text": "That's the idea.",
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": [
+        "Lisa Cormier bakes muffins before every game. Blueberry. I told her she should sell them.",
+        "Lorraine at the Hot Stove makes Earl's gravy and lets him take the credit. Don't tell anyone, dear."
+      ],
+      "options": [
+        {
+          "text": "Ha. Good to know.",
+          "to": "hub"
+        }
+      ]
+    },
+    "better": {
+      "say": [
+        "Warmer stands, dear. A little heat for the grandparents. We're not getting younger.",
+        "Some heaters in the stands. Or blankets. I'd knit them if you asked."
+      ],
+      "options": [
+        {
+          "text": "I'll see what I can do.",
+          "if": [
+            {
+              "not_flag": "heard_wants_warmer_stands"
+            }
+          ],
+          "do": [
+            {
+              "set": "heard_wants_warmer_stands"
+            },
+            {
+              "rel": [
+                "self",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Can't promise anything, but noted.",
+          "if": [
+            {
+              "not_flag": "heard_wants_warmer_stands"
+            }
+          ],
+          "do": [
+            {
+              "set": "heard_wants_warmer_stands"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "You're not the first to say it. It's on the list.",
+          "if": [
+            {
+              "flag": "heard_wants_warmer_stands"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "self",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Off you go, dear. Mind the ice.",
+        "Goodbye, sweetheart. Come see me next game."
+      ]
+    }
+  }
+}

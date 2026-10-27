@@ -1,0 +1,231 @@
+{
+ "id": "marg_forty_one_days",
+ "giver": "marguerite_lindqvist",
+ "quest": "marg_forty_one_days",
+ "nodes": {
+  "offer": {
+   "say": "Forty-one days. 1996. Gus painted it in red because he was proud, and then No. 1 tripped on day forty-two and he never got near it again. I'd like to paint a new number. I have the paint. I've had the paint since my first week.",
+   "options": [
+    {
+     "text": "Let's beat 1996.",
+     "do": [
+      {
+       "quest_start": "marg_forty_one_days"
+      },
+      {
+       "rel": [
+        "marguerite_lindqvist",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "What does it take?",
+     "to": "why"
+    },
+    {
+     "text": "It's a compressor, Marg, not a racehorse.",
+     "to": "cheek"
+    },
+    {
+     "text": "Not this season. The plant's still a mystery to me.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Rounds every morning. Write them down. Oil when it needs oil, which with No. 1 is always. Descale the condenser before it gets warm. No gaps in the log. Gaps are where machines hide.",
+   "options": [
+    {
+     "text": "No gaps. Let's go.",
+     "do": [
+      {
+       "quest_start": "marg_forty_one_days"
+      },
+      {
+       "rel": [
+        "marguerite_lindqvist",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "A racehorse would have tripped less. And a racehorse doesn't have a five-year relief valve date. Will you do it or not?",
+   "options": [
+    {
+     "text": "I'll do it.",
+     "do": [
+      {
+       "quest_start": "marg_forty_one_days"
+      },
+      {
+       "rel": [
+        "marguerite_lindqvist",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Then it's a mystery that drinks. I'll be here. With the paint.",
+   "do": [
+    {
+     "rel": [
+      "marguerite_lindqvist",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Pencil on the string. Never pen. Pen is for corrections.",
+   "options": []
+  },
+  "progress": {
+   "say": "The log.",
+   "options": [
+    {
+     "text": "How's my handwriting?",
+     "if": [
+      {
+       "step": [
+        "marg_forty_one_days",
+        "rounds_a"
+       ]
+      }
+     ],
+     "to": "p_rounds"
+    },
+    {
+     "text": "No. 1's oil next.",
+     "if": [
+      {
+       "step": [
+        "marg_forty_one_days",
+        "oil"
+       ]
+      }
+     ],
+     "to": "p_oil"
+    },
+    {
+     "text": "The condenser's on the list.",
+     "if": [
+      {
+       "step": [
+        "marg_forty_one_days",
+        "descale"
+       ]
+      }
+     ],
+     "to": "p_descale"
+    },
+    {
+     "text": "The last stretch.",
+     "if": [
+      {
+       "step": [
+        "marg_forty_one_days",
+        "rounds_b"
+       ]
+      }
+     ],
+     "to": "p_last"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_rounds": {
+   "say": "Your sevens look like ones. I've corrected them. In red. You're welcome.",
+   "options": []
+  },
+  "p_oil": {
+   "say": "Half the glass. If you fill it I'll know. Everyone will know. It foams.",
+   "options": []
+  },
+  "p_descale": {
+   "say": "Scale's like plaque. Ask Dr Haverkamp. Actually don't, he'll talk about mouthguards.",
+   "options": []
+  },
+  "p_last": {
+   "say": "Day thirty-something. Don't say the number out loud. Gus said it out loud in 1997.",
+   "options": []
+  },
+  "complete": {
+   "say": "Forty-one rounds with no gaps and No. 1 is purring. Well. Grumbling evenly. I'm painting the number. You can hold the tin.",
+   "options": [
+    {
+     "text": "Paint it in red, under Gus's.",
+     "do": [
+      {
+       "set": "record_painted_under"
+      },
+      {
+       "rel": [
+        "marguerite_lindqvist",
+        2
+       ]
+      }
+     ],
+     "to": "c_under"
+    },
+    {
+     "text": "Paint over 1996. Fresh start.",
+     "do": [
+      {
+       "set": "record_painted_over"
+      },
+      {
+       "rel": [
+        "marguerite_lindqvist",
+        -2
+       ]
+      }
+     ],
+     "to": "c_over"
+    },
+    {
+     "text": "Let's keep going. Paint it when it's fifty.",
+     "do": [
+      {
+       "rel": [
+        "marguerite_lindqvist",
+        3
+       ]
+      }
+     ],
+     "to": "c_fifty"
+    }
+   ]
+  },
+  "c_under": {
+   "say": "Under Gus's. Both numbers. History is a column, not a replacement. I'll send him a photo. He'll pretend he doesn't mind.",
+   "options": []
+  },
+  "c_over": {
+   "say": "Over it. Hm. It's your sign. I'll do it neatly. Gus will mind.",
+   "options": []
+  },
+  "c_fifty": {
+   "say": "Fifty. Now you're thinking like a plant operator. Nobody else will ever notice this sign. That's why it matters.",
+   "options": []
+  },
+  "done": {
+   "say": "No. 1 drinks. But less.",
+   "options": []
+  }
+ }
+}

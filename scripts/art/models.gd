@@ -42,6 +42,22 @@ static func palette(team: int) -> Dictionary:
 	}
 
 
+## A full palette from two club colours (career teams).
+static func team_palette(team_name: String, primary: Color, secondary: Color) -> Dictionary:
+	var dark := primary.darkened(0.25)
+	var trim := Color("19191c") if secondary.get_luminance() > 0.5 else Color("ece7dc")
+	return {
+		"name": team_name, "ui": primary.lightened(0.15),
+		"jersey": primary, "jersey_dark": dark,
+		"stripe": secondary, "stripe2": trim,
+		"crest": secondary, "crest_inner": trim,
+		"pants": primary.darkened(0.6), "helmet": primary.darkened(0.45),
+		"sock": primary, "sock_stripe": secondary, "sock_stripe2": trim,
+		"shaft": Color("1b1b1e"), "band": primary, "band2": secondary,
+		"pad": Color("ece6da"), "pad_band": primary, "glove": primary.darkened(0.5),
+	}
+
+
 ## Leg from hip joint (pivot) down to the skate blade. Goalies get pads.
 static func leg(p: Dictionary, goalie: bool) -> VoxelModel:
 	var m := VoxelModel.new(V)
@@ -64,6 +80,72 @@ static func leg(p: Dictionary, goalie: bool) -> VoxelModel:
 		m.box(0, 7, 0, 3, 1, 4, p.sock_stripe)
 		m.box(0, 9, 0, 3, 3, 4, p.pants)
 		m.set_pivot(1.5, 12, 2)
+	return m
+
+
+## Body proportions (agreed with Animations, 2026-10-18), in voxels: a
+## 1.85 m adult is 28 V on skates and 27 V in shoes. Limbs hang down their
+## local -Y from the joint pivot, as SkaterRig expects.
+const THIGH_V := 6.5
+const SHIN_V := 6.0
+const SKATE_V := 1.5
+const SHOE_V := 0.5
+const UPPER_ARM_V := 5.0
+const FOREARM_V := 5.5     # forearm plus hand
+const SHOULDERS_V := 11.0
+const HIP_SKATE_V := THIGH_V + SHIN_V + SKATE_V   # 14
+const HIP_SHOE_V := THIGH_V + SHIN_V + SHOE_V     # 13
+
+
+## Skater thigh: pants leg and the top of the sock, hip joint to knee.
+static func thigh(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	m.box(0, 0, 0, 3, 2, 4, p.sock)
+	m.box(0, 1, 0, 3, 1, 4, p.sock_stripe2)
+	m.box(0, 2, 0, 3, 5, 4, p.pants)
+	m.set_pivot(1.5, THIGH_V, 2)
+	return m
+
+
+## Skater shin and skate, knee down to the blade. The blade runs along z.
+static func shin(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	m.box(1, 0, -2, 1, 1, 6, STEEL)
+	m.box(0, 1, -2, 3, 2, 5, BOOT)
+	m.box(0, 3, 0, 3, 5, 4, p.sock)
+	m.box(0, 5, 0, 3, 1, 4, p.sock_stripe)
+	m.box(0, 7, 0, 3, 1, 4, p.sock_stripe)  # knee
+	m.set_pivot(1.5, SHIN_V + SKATE_V, 2)
+	return m
+
+
+## The same shin in shoes, for people on foot: knee pivot, 6 V + a 0.5 V
+## sole. `p.trousers` and `p.shoe` colour it when given.
+static func shin_shoe(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	var shoe: Color = p.get("shoe", BOOT)
+	var leg: Color = p.get("trousers", p.pants)
+	m.box(0, 0, -2, 3, 1, 5, shoe)
+	m.box(0, 1, 0, 3, 6, 3, leg)
+	m.set_pivot(1.5, SHIN_V + SHOE_V, 1.5)
+	return m
+
+
+## Skater upper arm (shoulder to elbow) and forearm with glove (elbow to hand).
+static func upper_arm(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	m.box(0, 0, 0, 3, 5, 3, p.jersey)
+	m.box(0, 0, 0, 3, 1, 3, p.stripe)
+	m.set_pivot(1.5, UPPER_ARM_V, 1.5)
+	return m
+
+
+static func forearm(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(V)
+	m.box(0, 3, 0, 3, 3, 3, p.jersey_dark)
+	m.box(0, 0, 0, 3, 3, 3, GLOVE)
+	m.box(0, 3, 0, 3, 1, 3, p.jersey_dark.darkened(0.4))  # cuff
+	m.set_pivot(1.5, FOREARM_V, 1.5)
 	return m
 
 
@@ -96,14 +178,14 @@ static func torso(p: Dictionary, goalie: bool) -> VoxelModel:
 		m.box(5, 4, 5, 2, 3, 1, p.crest)
 		m.set_pivot(6, 0, 3)
 	else:
-		m.box(1, 0, 0, 8, 7, 5, p.jersey)
-		m.box(0, 7, 0, 10, 2, 5, p.jersey)
-		m.box(1, 1, 0, 8, 2, 5, p.stripe)
-		m.box(0, 8, 0, 10, 1, 5, p.jersey_dark)
-		m.box(3, 3, 0, 4, 4, 1, p.crest)
-		m.box(4, 4, 0, 2, 2, 1, p.crest_inner)
-		m.box(4, 3, 4, 2, 3, 1, p.crest)
-		m.set_pivot(5, 0, 2.5)
+		m.box(1, 0, 0, 9, 7, 5, p.jersey)
+		m.box(0, 7, 0, 11, 2, 5, p.jersey)
+		m.box(1, 1, 0, 9, 2, 5, p.stripe)
+		m.box(0, 8, 0, 11, 1, 5, p.jersey_dark)
+		m.box(3, 3, 0, 5, 4, 1, p.crest)
+		m.box(4, 4, 0, 3, 2, 1, p.crest_inner)
+		m.box(4, 3, 4, 3, 3, 1, p.crest)
+		m.set_pivot(SHOULDERS_V * 0.5, 0, 2.5)
 	return m
 
 
@@ -175,11 +257,103 @@ static func stick(p: Dictionary, goalie: bool) -> VoxelModel:
 	return m
 
 
+## Skater stick, two parts on a finer grid so it reads as a real stick: the
+## shaft (heel at the pivot, butt end up +Y) and the blade.
+const STICK_V := 0.0175
+const SHAFT_VOX := 84
+
+
+static func shaft(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(STICK_V)
+	m.jitter = 0.03
+	var top := SHAFT_VOX
+	m.box(0, 0, 0, 2, top, 2, p.shaft)
+	# tapered hosel down into the blade
+	m.box(0, 0, 0, 2, 4, 2, p.shaft.darkened(0.15))
+	# team graphics on the upper shaft
+	m.box(0, top - 30, 0, 2, 3, 2, p.band)
+	m.box(0, top - 27, 0, 2, 1, 2, p.band2)
+	m.box(0, top - 26, 0, 2, 3, 2, p.band)
+	# taped grip and knob at the butt end
+	for y in range(top - 10, top):
+		m.box(0, y, 0, 2, 1, 2, TAPE if y % 2 == 0 else TAPE_DARK)
+	m.box(-1, top, -1, 4, 2, 4, TAPE)
+	m.set_pivot(1, 0, 1)
+	return m
+
+
+## Blade lying along +X from heel to toe, +Z is the forehand face; the toe
+## curves towards the forehand. Pivot is the middle of the blade on the ice,
+## where the puck sits. The heel is a smooth curve up into a hosel at the
+## stick's lie (an obtuse heel, about 133°), and the shaft starts where the
+## hosel ends (`blade_heel`).
+const BLADE_LIE_DEG := 47.0  # hosel angle off the ice
+const BLADE_PIVOT := Vector3(8.5, 0, 0.5)
+static var blade_heel := _heel_sweep(null, {})  # shaft joint, metres from the blade pivot
+
+
+static func blade(p: Dictionary) -> VoxelModel:
+	var m := VoxelModel.new(STICK_V)
+	m.jitter = 0.03
+	var length := 17
+	for x in range(3, length):
+		var bend := 0 if x < 10 else (1 if x < 14 else 2)
+		var h := 4 if x < length - 2 else (3 if x == length - 2 else 2)
+		for y in h:
+			var c: Color = p.shaft
+			if x < length - 1:
+				c = TAPE if (x + y) % 2 == 0 else TAPE_DARK
+			m.set_voxel(x, y, bend, c)
+	_heel_sweep(m, p)
+	m.set_pivot(BLADE_PIVOT.x, BLADE_PIVOT.y, BLADE_PIVOT.z)
+	return m
+
+
+## Sweeps the heel from the blade's back end round a curve and up the hosel,
+## tapering from the blade's 4 x 1 section to the shaft's 2 x 2. Adds the
+## pieces to `m` when given; returns the hosel's top in metres from the pivot.
+static func _heel_sweep(m: VoxelModel, p: Dictionary) -> Vector3:
+	const STEP := 0.25
+	const RADIUS := 3.0
+	const HOSEL := 4.5
+	var lie := deg_to_rad(BLADE_LIE_DEG)
+	var arc := RADIUS * lie
+	var total := 0.75 + arc + HOSEL
+	var pos := Vector2(2.75, 2.0)  # mid-height, just behind the blade's grid voxels
+	var s := 0.0
+	while s <= total:
+		var turn := clampf((s - 0.75) / arc, 0.0, 1.0) * lie
+		var dir := Vector2(-cos(turn), sin(turn))
+		var k := clampf(s / total, 0.0, 1.0)
+		if m:
+			var h := lerpf(4.0, 2.0, k)
+			var t := lerpf(1.0, 2.0, k)
+			var tangent := Vector3(dir.x, dir.y, 0)
+			var basis := Basis(tangent, Vector3.BACK.cross(tangent), Vector3.BACK)
+			m.add_oriented(Vector3(pos.x, pos.y, 0.5), basis, Vector3(STEP * 2.0, h, t), p.shaft)
+		pos += dir * STEP
+		s += STEP
+	return (Vector3(pos.x, pos.y, 0.5) - BLADE_PIVOT) * STICK_V
+
+
+## The puck: drawn at twice regulation size (15.2 x 5.1 cm) so it reads at
+## game camera distances (Sean, P13). Physics keeps the regulation 3 in x 1 in
+## (Puck.RADIUS). Inch voxels, rounded. Pivot at the centre of its bottom face.
+const PUCK_DIAMETER := 0.1524
+const PUCK_HEIGHT := 0.0508
+const _PUCK_V := 0.0254
+
+
 static func puck() -> VoxelModel:
-	var m := VoxelModel.new(0.05)
+	var m := VoxelModel.new(_PUCK_V)
 	m.jitter = 0.0
-	m.box(0, 0, 0, 3, 2, 3, PUCK)
-	return m.set_pivot(1.5, 0, 1.5)
+	for x in 6:
+		for z in 6:
+			if (x == 0 or x == 5) and (z == 0 or z == 5):
+				continue  # corners off: round enough at this size
+			for y in 2:
+				m.set_voxel(x, y, z, PUCK)
+	return m.set_pivot(3.0, 0, 3.0)
 
 
 ## Goal net, opening at z=0 facing -Z and depth going +Z. Pivot at the

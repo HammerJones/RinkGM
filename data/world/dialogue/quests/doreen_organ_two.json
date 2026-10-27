@@ -1,0 +1,215 @@
+{
+ "id": "doreen_organ_two",
+ "giver": "doreen_vachon",
+ "quest": "doreen_organ_two",
+ "nodes": {
+  "offer": {
+   "say": "Three songs and the dirge, dear. That's all I ask of it. But the batteries give up in the third and the dirge comes out like a sad cow. The referee thinks I'm being extra passive-aggressive. I'm being exactly as passive-aggressive as usual.",
+   "options": [
+    {
+     "text": "I'll find you a power adapter.",
+     "do": [
+      {
+       "quest_start": "doreen_organ_two"
+      },
+      {
+       "rel": [
+        "doreen_vachon",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why not just buy a new keyboard?",
+     "to": "new"
+    },
+    {
+     "text": "Maybe the sad cow is working.",
+     "do": [
+      {
+       "rel": [
+        "doreen_vachon",
+        1
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "Bring spare batteries?",
+     "to": "decline"
+    }
+   ]
+  },
+  "new": {
+   "say": "A new one wouldn't know the songs. Organ 2 has been learning them since 1991. It's not a keyboard, it's a colleague.",
+   "options": [
+    {
+     "text": "A colleague needs power. I'll sort it.",
+     "do": [
+      {
+       "quest_start": "doreen_organ_two"
+      },
+      {
+       "rel": [
+        "doreen_vachon",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "Ha! Well, the Kessler bench did look upset. But I like to choose when I upset Kessler. It's my one hobby, besides piano.",
+   "options": [
+    {
+     "text": "Let's get you choosing again.",
+     "do": [
+      {
+       "quest_start": "doreen_organ_two"
+      },
+      {
+       "rel": [
+        "doreen_vachon",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "I bring eight. Pete buys them in bulk at Penner's. The keyboard eats them like crullers.",
+   "do": [
+    {
+     "rel": [
+      "doreen_vachon",
+      -1
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Try Bev. Bev keeps everything that isn't hers in a drawer. She says it's so people can come and get it. Nobody comes and gets it.",
+   "options": []
+  },
+  "progress": {
+   "say": "Organ 2 report?",
+   "options": [
+    {
+     "text": "Checking Bev's drawer.",
+     "if": [
+      {
+       "step": [
+        "doreen_organ_two",
+        "shop"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Got one. Plugging it in.",
+     "if": [
+      {
+       "step": [
+        "doreen_organ_two",
+        "box"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "All set. Next game.",
+     "if": [
+      {
+       "step": [
+        "doreen_organ_two",
+        "game"
+       ]
+      }
+     ],
+     "to": "p_game"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_game": {
+   "say": "If the referee misses an offside I'll be at full volume. He's been warned.",
+   "options": []
+  },
+  "complete": {
+   "say": "Full power, all three periods. The dirge was crisp. The ref looked right at me. I smiled. Now, you've earned a request. What shall Organ 2 play next game?",
+   "options": [
+    {
+     "text": "The Skaters' Waltz, during the intermission flood.",
+     "do": [
+      {
+       "set": "organ_waltz_flood"
+      },
+      {
+       "rel": [
+        "earl_bratt",
+        2
+       ]
+      }
+     ],
+     "to": "c_waltz"
+    },
+    {
+     "text": "The dirge, for Kessler, every time they ice it.",
+     "do": [
+      {
+       "set": "organ_dirge_icings"
+      },
+      {
+       "rel": [
+        "doreen_vachon",
+        2
+       ]
+      }
+     ],
+     "to": "c_dirge"
+    },
+    {
+     "text": "Surprise me.",
+     "do": [
+      {
+       "rel": [
+        "doreen_vachon",
+        1
+       ]
+      }
+     ],
+     "to": "c_surprise"
+    }
+   ]
+  },
+  "c_waltz": {
+   "say": "For Doris. Earl will pretend not to like it. He'll slow down for the last chorus. He always does.",
+   "options": []
+  },
+  "c_dirge": {
+   "say": "Every icing! Oh, I like you. Pete says I'm not to encourage you. I'm going to encourage you.",
+   "options": []
+  },
+  "c_surprise": {
+   "say": "Organ 2 has a cha-cha setting nobody's heard since 1998. Brace yourself.",
+   "options": []
+  },
+  "done": {
+   "say": "Full power, dear. Full power.",
+   "options": []
+  }
+ }
+}

@@ -1,0 +1,448 @@
+{
+  "id": "colin_nolan",
+  "barks": {
+    "idle": [
+      "A one-goal lead is a fixed-rate asset. Protect it.",
+      "Missed shifts carry a late fee. It's in the spreadsheet.",
+      "Banking With a Cool Head. And coaching with one."
+    ],
+    "good_ice": [
+      "Predictable ice. Low volatility. Excellent."
+    ],
+    "bad_ice": [
+      "This surface is a high-risk environment."
+    ],
+    "wet_ice": [
+      "Wet ice adds variance. I dislike variance."
+    ],
+    "goal": [
+      "A return on investment.",
+      "That goal was well collateralised."
+    ],
+    "cold": [
+      "Cold, like a good savings rate. Low."
+    ],
+    "hungry": [
+      "A modest snack. Within budget."
+    ],
+    "long_line": [
+      "This queue would benefit from a second teller."
+    ],
+    "bored": [
+      "I'm reviewing the line changes. Again."
+    ],
+    "greet_owner": [
+      "{owner}. Good evening. Not here to talk about the line of credit.",
+      "Hello. Your shifts are on time, I hope."
+    ],
+    "leaving_happy": [
+      "Won by one. Exactly as projected."
+    ],
+    "leaving_angry": [
+      "Overtime. Unacceptable exposure."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Line two, you're up in forty seconds. It's laminated.",
+        "That shift was an unsecured loan. Off!"
+      ],
+      "minor_hockey": [
+        "Look at those changes. Chaos. Beautiful, uninsured chaos."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_colin_nolan"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "bl_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "colin_nolan",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Colin Nolan. Frostbank Millbrook, branch manager. Frozen Assets, coach. Before you ask, I can't discuss the line of credit at the rink.",
+      "do": [
+        {
+          "set": "met_colin_nolan"
+        }
+      ],
+      "options": [
+        {
+          "text": "Wouldn't dream of it.",
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Just a quick question about the line of credit...",
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                -2
+              ]
+            }
+          ],
+          "to": "credit"
+        },
+        {
+          "text": "Frozen Assets? Great name.",
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll address it, Colin. On a schedule.",
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Consider it a short-term loss.",
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bl_now": {
+      "say": [
+        "Line two in forty seconds. Line three in eighty. It's all on the sheet.",
+        "We're up one. Now we protect the asset."
+      ],
+      "options": [
+        {
+          "text": "Good luck, Coach.",
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                1
+              ]
+            }
+          ],
+          "to": "end"
+        },
+        {
+          "text": "Can I see the spreadsheet?",
+          "to": "sheet"
+        }
+      ]
+    },
+    "sheet": {
+      "say": "Shifts in forty-second blocks, colour-coded by risk. Late fee of two dollars per missed change. The tellers have never been more punctual.",
+      "options": [
+        {
+          "text": "That's terrifying. And impressive.",
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "{owner}. Good to see you. Off the record, your account looks tidy.",
+        "Ah, a friend of the Frozen Assets."
+      ],
+      "options": [
+        {
+          "text": "Thanks, Colin.",
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "How can I help? Within reason.",
+        "Colin Nolan. At your service, off the clock.",
+        "Good evening. Please keep this conversation under forty seconds."
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the bank?",
+          "to": "job"
+        },
+        {
+          "text": "How do you coach a bench of tellers?",
+          "to": "sheet"
+        },
+        {
+          "text": "What's your problem with Dwayne?",
+          "to": "dwayne"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Your spreadsheet beat me again.",
+          "if": [
+            {
+              "path": "coach"
+            }
+          ],
+          "to": "coach"
+        },
+        {
+          "text": "All right, about the line of credit.",
+          "to": "credit"
+        },
+        {
+          "text": "Good night, Colin.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Quiet branch. Dale banks with us. He brings the binder to deposits. We have an understanding.",
+      "options": [
+        {
+          "text": "Dale with a binder at the bank. Of course.",
+          "do": [
+            {
+              "rel": [
+                "dale_huffman",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "dwayne": {
+      "say": "Dwayne runs a postgame tab like an unsecured loan. Nobody knows the balance. Nobody knows the terms. It frightens me.",
+      "options": [
+        {
+          "text": "It's a pitcher, Colin. Not a mortgage.",
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll keep the canteen on cash.",
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "From a lending perspective? An ageing asset with sentimental value. From a coaching perspective, the clock is fast and I can't trust it.",
+      "options": [
+        {
+          "text": "And now the ice is better?",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "Duly noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Better ice lowers my risk profile. Fewer falls, fewer missed changes. I'd upgrade your rating. Unofficially.",
+      "options": [
+        {
+          "text": "Unofficially accepted.",
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "credit": {
+      "say": "Branch hours, {owner}. But since you ask: on time is all I need. On time is everything.",
+      "options": [
+        {
+          "text": "I'm good for it.",
+          "if": [
+            {
+              "money_gte": 5000
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "It's been a tight month.",
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "coach": {
+      "say": "It does that. Forty-second shifts, no exceptions. You'll get there. In fact, here. Have the template. It's very good.",
+      "options": [
+        {
+          "text": "Thanks, Colin. Really.",
+          "if": [
+            {
+              "rel_gte": [
+                "colin_nolan",
+                30
+              ]
+            },
+            {
+              "not_flag": "got_colin_spreadsheet"
+            }
+          ],
+          "do": [
+            {
+              "item": [
+                "line_change_spreadsheet",
+                1
+              ]
+            },
+            {
+              "set": "got_colin_spreadsheet"
+            },
+            {
+              "rel": [
+                "colin_nolan",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "I'll beat it on my own, thanks.",
+          "if": [
+            {
+              "not_flag": "got_colin_spreadsheet"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "colin_nolan",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "The template's working. Thanks again.",
+          "if": [
+            {
+              "flag": "got_colin_spreadsheet"
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

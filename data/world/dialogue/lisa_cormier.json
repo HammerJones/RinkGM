@@ -1,0 +1,372 @@
+{
+  "id": "lisa_cormier",
+  "barks": {
+    "idle": [
+      "Fifteen kids, thirty mittens, one of me. Muffin?",
+      "Skates, helmets, mouthguards, snacks, tissues. Where are the tissues."
+    ],
+    "good_ice": [
+      "Good ice! Nobody's crying! Okay, one, but he's tired."
+    ],
+    "bad_ice": [
+      "Bumpy ice and five-year-olds. Everybody's going to fall. Muffin?"
+    ],
+    "wet_ice": [
+      "Wet ice means wet mittens means wet everything. I brought spares. I always bring spares."
+    ],
+    "cold": [
+      "My fingers are frozen. How do you do up skates with frozen fingers? You don't."
+    ],
+    "hungry": [
+      "I panic-baked. There's three dozen. Take two."
+    ],
+    "long_line": [
+      "A line! Okay, I'll make a list while I wait."
+    ],
+    "bored": [
+      "I'm never bored. I'm sometimes sitting. That's different."
+    ],
+    "goal": [
+      "GOAL! Wrong net! Doesn't matter! GOAL!"
+    ],
+    "greet_owner": [
+      "Hi! Muffin?",
+      "Hi! Okay. Three things. No, four. Muffin first."
+    ],
+    "leaving_happy": [
+      "All mittens accounted for. That's a win."
+    ],
+    "leaving_angry": [
+      "We're trying the Harlow Falls rink next Saturday. Maybe. Probably not. Maybe."
+    ],
+    "event_specific": {
+      "minor_hockey": [
+        "Tighter! Tighter! Okay, that's too tight.",
+        "Who belongs to this mitten? Anyone? Anyone?"
+      ],
+      "learn_to_skate": [
+        "Look at them! Little marshmallows on skates!"
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_lisa_cormier"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "flag": "novice_room_warm"
+        }
+      ],
+      "node": "warm_room"
+    },
+    {
+      "if": [
+        {
+          "event_now": "minor_hockey"
+        }
+      ],
+      "node": "saturday"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Hi! Lisa Cormier. I manage the U7 novices. Fifteen five-year-olds, thirty mittens, one of me. Muffin? Blueberry. I panic-bake.",
+      "do": [
+        {
+          "set": "met_lisa_cormier"
+        }
+      ],
+      "options": [
+        {
+          "text": "I'd love a muffin.",
+          "do": [
+            {
+              "rel": [
+                "lisa_cormier",
+                4
+              ]
+            },
+            {
+              "item": [
+                "blueberry_muffin",
+                1
+              ]
+            }
+          ],
+          "to": "first_muffin"
+        },
+        {
+          "text": "No thanks, I'm fine.",
+          "do": [
+            {
+              "rel": [
+                "lisa_cormier",
+                -1
+              ]
+            }
+          ],
+          "to": "first_no"
+        }
+      ]
+    },
+    "first_muffin": {
+      "say": "Yay! Okay. Good. Someone eats them. Otherwise the kids do and then they're sticky and then it's a whole thing.",
+      "options": [
+        {
+          "text": "It's delicious.",
+          "to": "hub"
+        }
+      ]
+    },
+    "first_no": {
+      "say": "Oh, okay! That's fine! I'll just. Hold it. For later. In case.",
+      "options": [
+        {
+          "text": "Actually, I'll take one.",
+          "do": [
+            {
+              "rel": [
+                "lisa_cormier",
+                2
+              ]
+            },
+            {
+              "item": [
+                "blueberry_muffin",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Thanks anyway.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'm sorry, Lisa. I'll fix it.",
+          "do": [
+            {
+              "rel": [
+                "lisa_cormier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "saturday": {
+      "say": [
+        "Eight a.m. Saturday. Fifteen kids. I've done up nine skates. Six to go. Muffin?",
+        "Who's missing a mitten? It's Jaxon. It's always Jaxon."
+      ],
+      "options": [
+        {
+          "text": "Good luck, Lisa.",
+          "to": "end"
+        },
+        {
+          "text": "Got a second?",
+          "to": "hub"
+        }
+      ]
+    },
+    "warm_room": {
+      "say": "The visitors' room is WARM! The hot water works! Nobody stood on the one warm tile! I made you a muffin. It's a celebration muffin. It's the same muffin.",
+      "options": [
+        {
+          "text": "Thanks, Lisa.",
+          "do": [
+            {
+              "item": [
+                "blueberry_muffin",
+                1
+              ]
+            },
+            {
+              "rel": [
+                "lisa_cormier",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Hi! Okay, quickly. Go.",
+        "Yes? Sorry. Yes?",
+        "Hi! Muffin? No? Okay. What's up?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "Tell me about your day job.",
+          "to": "job"
+        },
+        {
+          "text": "What do you love about minor hockey?",
+          "to": "events"
+        },
+        {
+          "text": "Who helps you out?",
+          "to": "gossip"
+        },
+        {
+          "text": "What's the rink like for the little ones?",
+          "to": "rink"
+        },
+        {
+          "text": "Tell me about the mittens.",
+          "to": "mittens"
+        },
+        {
+          "text": "Good luck with the novices.",
+          "to": "bye"
+        }
+      ]
+    },
+    "job": {
+      "say": "Dental hygienist at Dr. Haverkamp's. I'm the only person who's ever got him into a mouthguard. Once. For one shift. He still talks about it.",
+      "options": [
+        {
+          "text": "Impressive.",
+          "to": "hub"
+        }
+      ]
+    },
+    "events": {
+      "say": "The U7 jamboree. Tiny skates done up tight. Public skate with the whole team after. And learn-to-skate, because it's where they all start. Little marshmallows.",
+      "options": [
+        {
+          "text": "That sounds lovely.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip": {
+      "say": "Donna Pettigrew is a saint and also terrifying. Colette is great with the little ones. And the parents who leave before the skates are off. I have a list. It's not a nice list.",
+      "options": [
+        {
+          "text": "A list?",
+          "to": "gossip_list"
+        },
+        {
+          "text": "Good people.",
+          "to": "hub"
+        }
+      ]
+    },
+    "gossip_list": {
+      "say": "It has names. I won't say them. One rhymes with Bick Baucier.",
+      "options": [
+        {
+          "text": "Got it.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "The visitors' room at eight on a Saturday is a freezer. There's a sign that says STAND HERE IT'S WARMER, pointing at one tile. Twelve kids don't fit on one tile.",
+      "options": [
+        {
+          "text": "It's warmer now, isn't it?",
+          "if": [
+            {
+              "rooms_gte": 30
+            }
+          ],
+          "to": "rink_better"
+        },
+        {
+          "text": "I'll take a look.",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_better": {
+      "say": "Warm room, hot water, and nobody's fingers are frozen! I timed it. Skates done up in twenty-two minutes. That's a record.",
+      "options": [
+        {
+          "text": "Great!",
+          "to": "hub"
+        }
+      ]
+    },
+    "mittens": {
+      "say": "Thirty mittens. Fifteen pairs. In theory. In practice, twenty-three mittens, four of them Jaxon's, and one that belongs to nobody and has been in the bag since 2023.",
+      "options": [
+        {
+          "text": "Want a lost-and-found bin by the door?",
+          "if": [
+            {
+              "not_flag": "lisa_mitten_bin"
+            }
+          ],
+          "do": [
+            {
+              "set": "lisa_mitten_bin"
+            },
+            {
+              "rel": [
+                "lisa_cormier",
+                3
+              ]
+            },
+            {
+              "note": "Promised Lisa Cormier a lost-and-found mitten bin by the dressing room door."
+            }
+          ],
+          "to": "mittens_bin"
+        },
+        {
+          "text": "That's a lot of mittens.",
+          "to": "hub"
+        }
+      ]
+    },
+    "mittens_bin": {
+      "say": "A BIN. A mitten bin. Oh, you have no idea. I'm making you a muffin. Another one.",
+      "options": [
+        {
+          "text": "I already have one.",
+          "to": "hub"
+        }
+      ]
+    },
+    "bye": {
+      "say": [
+        "Bye! Take a muffin for the road!",
+        "Bye! Six skates to go!"
+      ],
+      "options": []
+    }
+  }
+}

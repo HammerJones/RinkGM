@@ -1,0 +1,493 @@
+{
+  "id": "lyle_haverkamp",
+  "barks": {
+    "idle": [
+      "Open wide! Ha. Habit.",
+      "Have you flossed today? Don't answer. Your gums will tell me.",
+      "Mouthguards save teeth. I have excellent teeth. I'm careful."
+    ],
+    "good_ice": [
+      "Clean ice. Fewer falls. Fewer incisors on the ice. Wonderful."
+    ],
+    "bad_ice": [
+      "Ruts like that cause face-plants. Face-plants are my busiest season."
+    ],
+    "wet_ice": [
+      "Slush. The sort of ice that loosens a molar."
+    ],
+    "goal": [
+      "Lovely goal. Was anyone wearing a mouthguard? No? Tsk."
+    ],
+    "cold": [
+      "Cold air on sensitive teeth. Mention it at your next cleaning."
+    ],
+    "hungry": [
+      "I'll just have a chocolate bar. I'll brush after. I always brush after."
+    ],
+    "long_line": [
+      "A queue for sugar. My future patients, all in a row."
+    ],
+    "bored": [
+      "I could do a quick check while we wait. I have a mirror in my bag."
+    ],
+    "greet_owner": [
+      "Open wide! Kidding. Hello, {owner}.",
+      "{owner}! Molars are here. Please keep all teeth inside the rink."
+    ],
+    "leaving_happy": [
+      "Lovely game. Rinse!"
+    ],
+    "leaving_angry": [
+      "That ice is a hazard to dental health. I'm writing a pamphlet."
+    ],
+    "event_specific": {
+      "beer_league": [
+        "Pass it! Pass it! Nobody wants to take a hit in the hands!",
+        "Toothbrushes are in the bag for the handshake line."
+      ],
+      "senior_hockey": [
+        "Look at those mouthguards. Lovely. Mostly lovely."
+      ],
+      "minor_hockey": [
+        "Is that child wearing a mouthguard? Good. Good child."
+      ]
+    }
+  },
+  "start": [
+    {
+      "if": [
+        {
+          "not_flag": "met_lyle_haverkamp"
+        }
+      ],
+      "node": "first"
+    },
+    {
+      "if": [
+        {
+          "mood_lt": 0.4
+        }
+      ],
+      "node": "grumpy"
+    },
+    {
+      "if": [
+        {
+          "event_now": "beer_league"
+        }
+      ],
+      "node": "bl_now"
+    },
+    {
+      "if": [
+        {
+          "rel_gte": [
+            "lyle_haverkamp",
+            40
+          ]
+        }
+      ],
+      "node": "friend"
+    },
+    {
+      "node": "hub"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "say": "Open wide! Ha. Dr. Lyle Haverkamp, Haverkamp Family Dentistry, Millbrook Molars, defence. Have you flossed today?",
+      "do": [
+        {
+          "set": "met_lyle_haverkamp"
+        }
+      ],
+      "options": [
+        {
+          "text": "This morning, actually.",
+          "do": [
+            {
+              "rel": [
+                "lyle_haverkamp",
+                3
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Honestly? No.",
+          "do": [
+            {
+              "rel": [
+                "lyle_haverkamp",
+                1
+              ]
+            }
+          ],
+          "to": "first_floss"
+        },
+        {
+          "text": "Do you wear a mouthguard, Doctor?",
+          "do": [
+            {
+              "rel": [
+                "lyle_haverkamp",
+                -1
+              ]
+            }
+          ],
+          "to": "first_guard"
+        }
+      ]
+    },
+    "first_floss": {
+      "say": "Honesty! The first step toward healthy gums. Here. Sample pack. Mint. Don't tell the other dentists I give these away.",
+      "options": [
+        {
+          "text": "Thanks, Doctor.",
+          "do": [
+            {
+              "item": [
+                "dental_floss",
+                1
+              ]
+            },
+            {
+              "rel": [
+                "lyle_haverkamp",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "first_guard": {
+      "say": "That is a personal question. Moving on. I'll say this: passing is a defensive strategy. Nobody wants to get hit in the hands.",
+      "options": [
+        {
+          "text": "Noted.",
+          "to": "hub"
+        }
+      ]
+    },
+    "grumpy": {
+      "say": "@how_are_things",
+      "options": [
+        {
+          "text": "I'll fix it, Doctor.",
+          "do": [
+            {
+              "rel": [
+                "lyle_haverkamp",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Have a coffee. No sugar.",
+          "do": [
+            {
+              "money": -2
+            },
+            {
+              "rel": [
+                "lyle_haverkamp",
+                2
+              ]
+            },
+            {
+              "mood": 0.05
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "bl_now": {
+      "say": [
+        "Molars tonight. We pass. Constantly. It's a health decision.",
+        "I've brought toothbrushes for the other team. Soft bristle tonight. A gesture."
+      ],
+      "options": [
+        {
+          "text": "Good luck. Keep your teeth in.",
+          "do": [
+            {
+              "rel": [
+                "lyle_haverkamp",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Is it the Moose Knuckles?",
+          "to": "lyle_rick"
+        }
+      ]
+    },
+    "friend": {
+      "say": [
+        "Open wide, {owner}! Ha. Good to see you.",
+        "My favourite rink owner, with the second-best gums in Millbrook."
+      ],
+      "options": [
+        {
+          "text": "Who's got the best?",
+          "do": [
+            {
+              "rel": [
+                "lyle_haverkamp",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "hub": {
+      "say": [
+        "Open wide! What can I do for you?",
+        "Hello, {owner}. Gums healthy? Splendid.",
+        "Ah, the owner. Did you know the canteen sells eleven kinds of sugar?"
+      ],
+      "hub": true,
+      "options": [
+        {
+          "text": "How's the practice going?",
+          "to": "job"
+        },
+        {
+          "text": "Should I be wearing a mouthguard?",
+          "to": "guard"
+        },
+        {
+          "text": "What's the story with Sauce?",
+          "to": "lyle_rick"
+        },
+        {
+          "text": "How's Gary doing?",
+          "to": "gary"
+        },
+        {
+          "text": "What do you think of the rink?",
+          "to": "rink"
+        },
+        {
+          "text": "Rinse, Doctor.",
+          "to": "end"
+        }
+      ]
+    },
+    "job": {
+      "say": "Busy. Hockey season is my harvest. Every Monday a beer leaguer walks in holding a tooth in a napkin. Milk, people! Put it in milk!",
+      "options": [
+        {
+          "text": "Milk. Good tip.",
+          "do": [
+            {
+              "rel": [
+                "lyle_haverkamp",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "guard": {
+      "say": "Yes. Absolutely. Everyone should. Here, a Molars mouthguard, boil-and-bite. I fit the whole team. Well. Not myself. But the principle stands.",
+      "options": [
+        {
+          "text": "I'll wear it. Every game.",
+          "if": [
+            {
+              "not_flag": "owner_mouthguard"
+            }
+          ],
+          "do": [
+            {
+              "item": [
+                "molars_mouthguard",
+                1
+              ]
+            },
+            {
+              "set": "owner_mouthguard"
+            },
+            {
+              "rel": [
+                "lyle_haverkamp",
+                4
+              ]
+            }
+          ],
+          "to": "guard_yes"
+        },
+        {
+          "text": "Maybe when you wear yours.",
+          "if": [
+            {
+              "not_flag": "owner_mouthguard"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "lyle_haverkamp",
+                -1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Still wearing it, Doctor.",
+          "if": [
+            {
+              "flag": "owner_mouthguard"
+            }
+          ],
+          "to": "guard_after"
+        }
+      ]
+    },
+    "guard_yes": {
+      "say": "Wonderful! The Molars will notice, you know. We notice teeth. It's all we notice.",
+      "options": [
+        {
+          "text": "Good to know.",
+          "to": "hub"
+        }
+      ]
+    },
+    "guard_after": {
+      "say": "Excellent. A whole season of mouthguard. You've made a dentist very happy. Frighteningly happy.",
+      "options": [
+        {
+          "text": "Glad to help.",
+          "if": [
+            {
+              "path": "player"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "lyle_haverkamp",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "Your turn now, Doctor.",
+          "to": "hub"
+        }
+      ]
+    },
+    "lyle_rick": {
+      "say": "Rick Saucier. 2024. One incisor, one crown, one Saturday I'd planned to spend fishing. A hundred and eighty dollars. Unpaid. He refuses the toothbrush.",
+      "options": [
+        {
+          "text": "Maybe let it go, Doctor?",
+          "if": [
+            {
+              "not_flag": "toothbrush_settled"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "lyle_haverkamp",
+                -2
+              ]
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "He's a proud man.",
+          "if": [
+            {
+              "not_flag": "toothbrush_settled"
+            }
+          ],
+          "to": "hub"
+        },
+        {
+          "text": "He took the toothbrush in the end.",
+          "if": [
+            {
+              "flag": "toothbrush_settled"
+            }
+          ],
+          "do": [
+            {
+              "rel": [
+                "lyle_haverkamp",
+                2
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "gary": {
+      "say": "Gary is a lovely man and a model patient. Flosses twice a day. He stopped in front of my bench and I applauded. Stopping is good for the teeth. Fewer collisions.",
+      "options": [
+        {
+          "text": "Gary would love to hear that.",
+          "do": [
+            {
+              "rel": [
+                "gary_pruett",
+                1
+              ]
+            }
+          ],
+          "to": "hub"
+        }
+      ]
+    },
+    "rink": {
+      "say": "I like the rink. The Hot Stove I worry about. I buy a bar there every game. I brush in the car. I keep a toothbrush in the glovebox.",
+      "options": [
+        {
+          "text": "And the ice? It's better now.",
+          "if": [
+            {
+              "ice_gte": 62
+            }
+          ],
+          "to": "rink_ice"
+        },
+        {
+          "text": "You keep a toothbrush in the car?",
+          "to": "hub"
+        }
+      ]
+    },
+    "rink_ice": {
+      "say": "Much smoother. No face-plants last month. My Mondays are almost quiet. I miss them a little.",
+      "options": [
+        {
+          "text": "Ha. Sorry, Doctor.",
+          "to": "hub"
+        }
+      ]
+    }
+  }
+}

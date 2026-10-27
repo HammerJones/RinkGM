@@ -1,0 +1,226 @@
+{
+ "id": "dylan_mitten_tree",
+ "giver": "dylan_pruitt",
+ "quest": "dylan_mitten_tree",
+ "nodes": {
+  "offer": {
+   "say": "Okay so the mitten tree. Every mitten over a month old goes on a real tree in the lobby, then the school gets them in January. Gus did it every year. I want ours to be better than Gus's. Is that disrespectful? It feels disrespectful. I still want it.",
+   "options": [
+    {
+     "text": "Let's beat Gus. Respectfully.",
+     "do": [
+      {
+       "quest_start": "dylan_mitten_tree"
+      },
+      {
+       "rel": [
+        "dylan_pruitt",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Why mittens? Why not sell them?",
+     "to": "why"
+    },
+    {
+     "text": "Can we put Doris's antlers on the tree?",
+     "do": [
+      {
+       "rel": [
+        "dylan_pruitt",
+        2
+       ]
+      }
+     ],
+     "to": "cheek"
+    },
+    {
+     "text": "December's busy. Maybe next year.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Sell them? To who? The mittens have, like, a destiny. Last year a kid found his own mitten on the tree and cried. I almost cried. Earl actually cried, but he says it was the cold.",
+   "options": [
+    {
+     "text": "You've convinced me. Let's do it.",
+     "do": [
+      {
+       "quest_start": "dylan_mitten_tree"
+      },
+      {
+       "rel": [
+        "dylan_pruitt",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "Earl allows the antlers on Doris. He does not allow the antlers off Doris. Those are her antlers now. But yes, it'd look amazing.",
+   "options": [
+    {
+     "text": "Fine, no antlers. Let's do it anyway.",
+     "do": [
+      {
+       "quest_start": "dylan_mitten_tree"
+      },
+      {
+       "rel": [
+        "dylan_pruitt",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "Next year Gus wins again. From Florida. He'll know. He'll send a postcard with a flamingo looking smug.",
+   "do": [
+    {
+     "rel": [
+      "dylan_pruitt",
+      -2
+     ]
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "Yes! First the crate. Wear gloves. There's a retainer in there and it's been there since I started.",
+   "options": []
+  },
+  "progress": {
+   "say": "Tree update?",
+   "options": [
+    {
+     "text": "I'll sort the crate.",
+     "if": [
+      {
+       "step": [
+        "dylan_mitten_tree",
+        "sort"
+       ]
+      }
+     ],
+     "to": "p_sort"
+    },
+    {
+     "text": "The lobby's too sticky for a tree right now.",
+     "if": [
+      {
+       "step": [
+        "dylan_mitten_tree",
+        "clean"
+       ]
+      }
+     ],
+     "to": "p_clean"
+    },
+    {
+     "text": "Tree's up. Just waiting for the Christmas skate.",
+     "if": [
+      {
+       "step": [
+        "dylan_mitten_tree",
+        "skate"
+       ]
+      }
+     ],
+     "to": "p_skate"
+    },
+    {
+     "text": "Just checking.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_sort": {
+   "say": "The socks aren't mittens. I know. I want to put them on anyway. Foot mittens.",
+   "options": []
+  },
+  "p_clean": {
+   "say": "It's the Haverstock. Fourteen marshmallows a cup means the floor is basically candy.",
+   "options": []
+  },
+  "p_skate": {
+   "say": "Big Gord's doing Santa. He's going to shout his slogan at the tree. Every year. Every tree.",
+   "options": []
+  },
+  "complete": {
+   "say": "Best tree in the valley. Harlow Falls has a plastic one. HARLOW FALLS HAS A PLASTIC ONE. A kid found her mitten and her mum took a photo. Okay. Last thing. Which mitten goes on top?",
+   "options": [
+    {
+     "text": "The red CMC with the woollen cuff. It's the fanciest.",
+     "do": [
+      {
+       "set": "mitten_top_red"
+      },
+      {
+       "rel": [
+        "dylan_pruitt",
+        1
+       ]
+      }
+     ],
+     "to": "c_red"
+    },
+    {
+     "text": "The one from truss 3, if you can reach it.",
+     "do": [
+      {
+       "set": "mitten_top_truss"
+      },
+      {
+       "rel": [
+        "dylan_pruitt",
+        2
+       ]
+      }
+     ],
+     "to": "c_truss"
+    },
+    {
+     "text": "A sock. For chaos.",
+     "do": [
+      {
+       "set": "mitten_top_sock"
+      },
+      {
+       "rel": [
+        "dylan_pruitt",
+        3
+       ]
+      }
+     ],
+     "to": "c_sock"
+    }
+   ]
+  },
+  "c_red": {
+   "say": "Classic. CMC would want this. CMC would apologise for how much it wants this.",
+   "options": []
+  },
+  "c_truss": {
+   "say": "The 1999 hat trick mitten? Nobody can reach it. That's the point, isn't it. A star you can't reach. Oh, that's deep. I'll leave a gap at the top.",
+   "options": []
+  },
+  "c_sock": {
+   "say": "YES. Foot mitten on top. Earl's going to hate it. Earl's going to love it. He'll never say which.",
+   "options": []
+  },
+  "done": {
+   "say": "Next year I'm doing two trees. Don't stop me.",
+   "options": []
+  }
+ }
+}

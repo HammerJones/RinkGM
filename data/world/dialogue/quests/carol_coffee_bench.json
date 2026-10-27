@@ -1,0 +1,207 @@
+{
+ "id": "carol_coffee_bench",
+ "giver": "carol_thibodeau",
+ "quest": "carol_coffee_bench",
+ "nodes": {
+  "offer": {
+   "say": "I'm not complaining. I'm reporting. Pillar four's heater works. Pillar five's has worked twice since Labour Day. The Hot Stove opens at seven and we've been here since quarter to six. We are the coffee bench, {owner}, and the coffee bench has no coffee.",
+   "options": [
+    {
+     "text": "Warm stands and early coffee. I'll sort it.",
+     "do": [
+      {
+       "quest_start": "carol_coffee_bench"
+      },
+      {
+       "rel": [
+        "carol_thibodeau",
+        3
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "The coffee bench?",
+     "to": "why"
+    },
+    {
+     "text": "Have you tried pushing the button twice?",
+     "to": "cheek"
+    },
+    {
+     "text": "Six in the morning is a lot to ask of anybody.",
+     "to": "decline"
+    }
+   ]
+  },
+  "why": {
+   "say": "Five of us. Same seats, eight years. We've seen every fall and every axel. We know who's moving to Harlow Falls before their own husbands do. We're the most loyal customers you've got and we're losing feeling in our toes.",
+   "options": [
+    {
+     "text": "Then the bench gets coffee. Leave it with me.",
+     "do": [
+      {
+       "quest_start": "carol_coffee_bench"
+      },
+      {
+       "rel": [
+        "carol_thibodeau",
+        4
+       ]
+      }
+     ],
+     "to": "accepted"
+    },
+    {
+     "text": "Let me look at the heaters first.",
+     "to": "end"
+    }
+   ]
+  },
+  "cheek": {
+   "say": "Push again, nothing happens, it's a timer. I've read the sign. I could recite the sign. I have recited the sign, to Donna, at a bake sale.",
+   "options": [
+    {
+     "text": "Fair enough. I'll fix them properly.",
+     "do": [
+      {
+       "quest_start": "carol_coffee_bench"
+      },
+      {
+       "rel": [
+        "carol_thibodeau",
+        2
+       ]
+      }
+     ],
+     "to": "accepted"
+    }
+   ]
+  },
+  "decline": {
+   "say": "It is. We do it anyway. That's the whole sport, really.",
+   "do": [
+    {
+     "rel": [
+      "carol_thibodeau",
+      -2
+     ]
+    },
+    {
+     "mood": -0.03
+    }
+   ],
+   "options": []
+  },
+  "accepted": {
+   "say": "If there's coffee at quarter to six I will personally tell the whole club you're a saint. I will tell Hélène. She will say nothing, which means she agrees.",
+   "options": []
+  },
+  "progress": {
+   "say": "The bench is waiting.",
+   "options": [
+    {
+     "text": "Still working on the heaters.",
+     "if": [
+      {
+       "step": [
+        "carol_coffee_bench",
+        "heat"
+       ]
+      }
+     ],
+     "to": "p_heat"
+    },
+    {
+     "text": "I'll talk to Lorraine.",
+     "if": [
+      {
+       "step": [
+        "carol_coffee_bench",
+        "coffee"
+       ]
+      }
+     ],
+     "to": "end"
+    },
+    {
+     "text": "Is it any better?",
+     "if": [
+      {
+       "step": [
+        "carol_coffee_bench",
+        "mornings"
+       ]
+      }
+     ],
+     "to": "p_mornings"
+    },
+    {
+     "text": "Just checking in.",
+     "to": "end"
+    }
+   ]
+  },
+  "p_heat": {
+   "say": "Pillar five made a noise yesterday. Not heat. A noise. We gave it a round of applause anyway.",
+   "options": []
+  },
+  "p_mornings": {
+   "say": "Two words: hot hands. We had hot hands this morning. Brenda took her mitts off to clap.",
+   "options": []
+  },
+  "complete": {
+   "say": "Coffee at quarter to six, heat on every pillar, and Brenda says she can feel her feet for the first time since 2019. Here. A spare thermos. It has a skate sticker. Don't let the hockey parents see it, they'll want one.",
+   "options": [
+    {
+     "text": "I'll guard it with my life.",
+     "do": [
+      {
+       "rel": [
+        "carol_thibodeau",
+        2
+       ]
+      }
+     ],
+     "to": "c_guard"
+    },
+    {
+     "text": "Can I sit on the bench sometime?",
+     "do": [
+      {
+       "rel": [
+        "carol_thibodeau",
+        3
+       ]
+      },
+      {
+       "set": "owner_on_coffee_bench"
+      }
+     ],
+     "to": "c_sit"
+    },
+    {
+     "text": "You've earned it more than me.",
+     "to": "c_earned"
+    }
+   ]
+  },
+  "c_guard": {
+   "say": "Good. Thermos theft is the number one crime at six a.m. figure ice. Number two is cutting the line at the Hot Stove.",
+   "options": []
+  },
+  "c_sit": {
+   "say": "Tuesdays. Bring a cushion. You'll hear things. You must never repeat them.",
+   "options": []
+  },
+  "c_earned": {
+   "say": "Probably. Take it anyway. We have four more.",
+   "options": []
+  },
+  "done": {
+   "say": "The bench thanks you. The bench is warm.",
+   "options": []
+  }
+ }
+}
