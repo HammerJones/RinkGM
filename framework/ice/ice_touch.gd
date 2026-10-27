@@ -2,7 +2,8 @@ class_name IceTouch
 extends RefCounted
 ## What the sheet does to a loose puck (Sean's ask, 2026-10-26): the game's
 ## `Puck.integrate` slides on one drag for clean ice; this reads the column
-## under the puck each substep and adds the rest. Loose snow drags it hard
+## under the puck each substep and adds the rest: ice itself a little more
+## than the game's (ICE_DRAG; Sean: it slid too freely). Loose snow drags it hard
 ## and a pile stops it. Water grabs it (Sean: it makes the puck stick to
 ## the ice): a wet film drags, a pool takes it to a stop in a stride or
 ## two, no skimming. Slush (water on snow) drags like snow and wanders
@@ -18,15 +19,19 @@ extends RefCounted
 ##   touch.apply(puck, sheet, to_sheet, dt)  # after puck.integrate(dt)
 ##   touch.surface  # "CLEAN", "WET", "POOL", "SNOW", "SLUSH", "CRUST", "PILE"
 
+const ICE_DRAG := 0.5  # m/s2 on any ice, on top of the game's own 0.12 + 0.035 v (Sean: it slid too freely)
+const ICE_DRAG_V := 0.03  # ... per m/s
 const SNOW_DRAG := 3.0  # m/s2 per mm of loose snow (Sean: it slows it substantially)
 const SNOW_CAP := 5.0  # mm of snow past which it drags no harder (it rides on top)
 const PILE := 50.0  # mm of snow that is a pile: the puck buries itself and stops
 const WATER_DRAG := 2.5  # m/s2 per mm of water: the wet grabs the puck
 const WATER_CAP := 3.0  # mm of water past which it grabs no harder
 const POOL_GRAB := 2.0  # drag share on top in a pool (the game's own drag, doubled again)
-const RIDGE_MM := 1.5  # a break in the surface this sharp across the puck knocks it (a slope does not)
+# a step in the hard surface this high across the puck (8 cm) knocks it: a
+# frozen ridge, a rut's wall; not a smooth slope, not a skate's thin cut
+const RIDGE_MM := 3.0
 const RIDGE_SPEED := 2.0  # m/s under which a step only rattles it
-const KNOCK_V := 1.4  # m/s upward from a 3 mm step at 6 m/s (clears a blade from 0.8)
+const KNOCK_V := 1.4  # m/s upward from a 4 mm break at 6 m/s (clears a blade from 0.8)
 const SLUSH_KICK := 0.8  # m/s2 sideways, wandering (which way is luck, and it drifts)
 const CRUST_DRAG := 1.5  # drag share on a set crust
 const CRUST_MIN := 0.2  # mm of crust that counts
@@ -89,7 +94,7 @@ func apply(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float) -> void:
 	var v2 := Vector2(puck.vel.x, puck.vel.z)
 	var s := v2.length()
 	var base := 0.12 + 0.035 * s  # the game's own drag, already taken this step
-	var extra := 0.0
+	var extra := ICE_DRAG + ICE_DRAG_V * s
 	var slush := water > 0.1 and snow > 0.3
 	surface = "CLEAN"
 	if snow >= PILE:
@@ -171,16 +176,13 @@ func apply(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float) -> void:
 static func knock(sheet: IceSheet, to_sheet: Callable, at: Vector3, speed: float) -> float:
 	if speed < RIDGE_SPEED:
 		return 0.0
-	# the break: how far the middle is off the line of the two sides (a
-	# smooth slope, a rut's wall, is zero; a ridge or an edge is not)
-	var h := _hard(sheet, to_sheet.call(at))
+	# the step: the two sides of the puck at different heights (a thin cut
+	# under its middle has both sides level; a smooth slope stays under RIDGE_MM)
 	var hx := _hard(sheet, to_sheet.call(at + Vector3(SLOPE_R, 0.0, 0.0)))
 	var hx0 := _hard(sheet, to_sheet.call(at - Vector3(SLOPE_R, 0.0, 0.0)))
 	var hz := _hard(sheet, to_sheet.call(at + Vector3(0.0, 0.0, SLOPE_R)))
 	var hz0 := _hard(sheet, to_sheet.call(at - Vector3(0.0, 0.0, SLOPE_R)))
-	var bx := absf(hx + hx0 - 2.0 * h)
-	var bz := absf(hz + hz0 - 2.0 * h)
-	return _knock_from(maxf(bx, bz), speed)
+	return _knock_from(maxf(absf(hx - hx0), absf(hz - hz0)), speed)
 
 
 ## The hard surface (mm) at sheet point `p`: ice and crust up, gouge down.
@@ -195,7 +197,7 @@ static func _hard(sheet: IceSheet, p: Vector2) -> float:
 static func _knock_from(step_mm: float, speed: float) -> float:
 	if step_mm < RIDGE_MM or speed < RIDGE_SPEED:
 		return 0.0
-	return KNOCK_V * clampf(step_mm / 3.0, 0.0, 1.0) * clampf(speed / 6.0, 0.3, 1.0)
+	return KNOCK_V * clampf(step_mm / 4.0, 0.0, 1.0) * clampf(speed / 6.0, 0.3, 1.0)
 
 
 ## The surface height (mm) of the column at sheet point `p`: ice, crust and

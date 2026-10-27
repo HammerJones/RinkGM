@@ -3474,9 +3474,12 @@ func _self_test() -> void:
 		gone_ticks == 30, "a shot that was let go stays gone (%d/30 ticks loose)" % gone_ticks
 	)
 	# a frozen ridge under a carried puck at speed knocks it over the blade
+	# at level 1; at level 10 it hops on the blade and all but never costs
+	# it (Sean: the skate ruts' kick stays, the loss of control fades by level)
+	_skater.set_level(1.0)
 	sk.place(Vector2(-10.0, 4.0), Vector3(1.0, 0.0, 0.0))
 	_skate(5, Vector2(0.0, 1.0))
-	_ridge(Vector3(sk.global_position.x + 4.0, 0.0, 4.0), 3.0)
+	_ridge(Vector3(sk.global_position.x + 4.0, 0.0, 4.0), 4.0)
 	_puck.reset_at(sk.puck_anchor())
 	_puck.controller = sk
 	_puck.last_touch = sk
@@ -3494,10 +3497,63 @@ func _self_test() -> void:
 	check.call(
 		_skater.losses.knock > knocks0 and knocked_y > 0.03,
 		(
-			"a ridge under a carried puck knocks it loose (%d, up %.0f mm)"
+			"level 1: a ridge under a carried puck knocks it loose (%d, up %.0f mm)"
 			% [_skater.losses.knock - knocks0, knocked_y * 1000.0]
 		)
 	)
+	_skater.set_level(10.0)
+	sk.place(Vector2(-20.0, -4.0), Vector3(1.0, 0.0, 0.0))
+	_skate(5, Vector2(0.0, 1.0))
+	for r in 8:
+		_ridge(Vector3(sk.global_position.x + 4.0 + 2.5 * r, 0.0, -4.0), 4.0)
+	_puck.reset_at(sk.puck_anchor())
+	_puck.controller = sk
+	_puck.last_touch = sk
+	knocks0 = _skater.losses.knock
+	_skater.script(
+		func(f: PlayerInput.Frame, _dt: float) -> void:
+			f.move = Vector2(0.0, 1.0)
+			f.stick = Vector2(0.0, 0.5)
+	)
+	var hop_y := 0.0
+	var hop_on := 0
+	for k in 300:
+		_skater.step(1.0 / 60.0, ice, _local)
+		if sk.has_puck() and _puck.position.y > 0.005:
+			hop_on += 1
+			hop_y = maxf(hop_y, _puck.position.y)
+		if not sk.has_puck():
+			_puck.reset_at(sk.puck_anchor())
+			_puck.controller = sk
+			_puck.last_touch = sk
+	_skater.script(Callable())
+	check.call(
+		_skater.losses.knock - knocks0 <= 1 and hop_on >= 3 and hop_y > 0.01,
+		(
+			"level 10: 8 ridges hop the puck on the blade (%d ticks, up %.0f mm), lost %d"
+			% [hop_on, hop_y * 1000.0, _skater.losses.knock - knocks0]
+		)
+	)
+	check.call(
+		(
+			absf(_skater.knock_chance(DemoSkater.KNOCK_LOSE_ON) - 0.03) < 0.001
+			and absf(_skater.knock_chance(DemoSkater.KNOCK_LOSE_UP) - 0.3) < 0.001
+		),
+		"level 10: a hard knock costs the puck 3%% blade down, 30%% blade up"
+	)
+	_skater.set_level(5.0)
+	var mid_on := _skater.knock_chance(DemoSkater.KNOCK_LOSE_ON)
+	var mid_up := _skater.knock_chance(DemoSkater.KNOCK_LOSE_UP)
+	check.call(
+		mid_on > 0.3 and mid_on < 0.5 and mid_up > mid_on,
+		"level 5: %.0f%% blade down, %.0f%% blade up" % [mid_on * 100.0, mid_up * 100.0]
+	)
+	_skater.set_level(2.0)
+	check.call(
+		_skater.knock_chance(DemoSkater.KNOCK_LOSE_ON) == 1.0,
+		"levels 1 and 2: every hard knock costs the puck"
+	)
+	_skater.set_level(7.0)
 	# the stick skill: handles with the puck pay XP at once (Sean's progression)
 	check.call(
 		(
@@ -3512,13 +3568,16 @@ func _self_test() -> void:
 	check.call(
 		absf(ss.level() - 4.5) < 0.001, "a level set is the level read back (%.3f)" % ss.level()
 	)
-	sk.place(Vector2(-10.0, 4.0), Vector3(1.0, 0.0, 0.0))
+	# (a lane of its own: the ridge left at x -5 in the z 4 lane would
+	# knock a level-1 puck loose, as it should)
+	sk.place(Vector2(-10.0, 8.0), Vector3(1.0, 0.0, 0.0))
 	_skate(5, Vector2(0.0, 1.0))
 	_skate(90, Vector2(0.0, 0.3))  # settled at a cruise first
 	_puck.reset_at(sk.puck_anchor())
 	_puck.controller = sk
 	_puck.last_touch = sk
 	_skater.set_level(1.0)
+	_skater.losses = {"roll_off": 0, "game_slip": 0, "keep_drop": 0, "cross_drop": 0, "knock": 0}
 	var handles0: int = _skater.skill.handles
 	var hs_t := [0.0]
 	var handling := func(f: PlayerInput.Frame, dt: float) -> void:
@@ -3545,8 +3604,8 @@ func _self_test() -> void:
 				and _skater.retention < 2.0
 			),
 			(
-				"4 s of easy handles at level 1 keep the puck and pay: %d handles, level 1 -> %.2f (puck on %d/240)"
-				% [made, _skater.retention, with_puck]
+				"4 s of easy handles at level 1 keep the puck and pay: %d handles, level 1 -> %.2f (puck on %d/240, %s)"
+				% [made, _skater.retention, with_puck, _skater.losses]
 			)
 		)
 	)
@@ -3613,6 +3672,86 @@ func _self_test() -> void:
 		back_ticks < 30 and fast_vel < 12.0,
 		"...and comes back in %d ticks, at most %.1f reach/s (no snap)" % [back_ticks, fast_vel]
 	)
+	# a left shot (Sean): the blade rests on the left, its curve goes the
+	# other way, the reach is the mirror of the right shot's, and the puck's
+	# natural face is the one the game calls backhand
+	check.call(_skater.shoots_left, "the demo's skater shoots left")
+	check.call(
+		(
+			absf(Skater.reach_limit(deg_to_rad(60.0)) - Skater.reach_limit(deg_to_rad(-60.0))) > 0.1
+			and Skater.reach_limit(deg_to_rad(60.0)) > Skater.reach_limit(deg_to_rad(-60.0))
+		),
+		(
+			"the reach is a left shot's: further to the right (%.2f m) than the left (%.2f)"
+			% [Skater.reach_limit(deg_to_rad(60.0)), Skater.reach_limit(deg_to_rad(-60.0))]
+		)
+	)
+	var blade_box: AABB = sk.rig.blade.mesh.get_aabb()
+	check.call(
+		blade_box.position.z < -0.06 and blade_box.end.z < 0.04,
+		"the blade's curve goes to -z (z %.3f .. %.3f)" % [blade_box.position.z, blade_box.end.z]
+	)
+	sk.place(Vector2(-10.0, 4.0), Vector3(1.0, 0.0, 0.0))
+	_skate(30, Vector2.ZERO)
+	_puck.reset_at(Vector3(20.0, 0.0, -8.0))
+	sk.puck_side = 0.0
+	_puck.reset_at(sk.blade_pos + Vector3(0.0, 0.0, 0.0))
+	_skater.step(1.0 / 60.0, ice, _local)
+	check.call(
+		sk.has_puck() and sk.puck_side < 0.0 and _skater.state_text().contains("FOREHAND"),
+		"a puck taken onto the blade sits on the left shot's forehand (side %+.0f)" % sk.puck_side
+	)
+	var left_ctl := _skater.controller as DemoController
+	check.call(left_ctl.mirror_trace, "the shot patterns are read mirrored for the left shot")
+	# at level 10 a hard turn at speed, handling all the while, and a turn
+	# let go of dead keep the puck (Sean: a turn, and stopping one, lost it)
+	_skater.set_level(10.0)
+	sk.place(Vector2(-20.0, 0.0), Vector3(1.0, 0.0, 0.0))
+	_skate(120, Vector2(0.0, 1.0))
+	_puck.reset_at(sk.puck_anchor())
+	_puck.controller = sk
+	_puck.last_touch = sk
+	var pt := [0.0]
+	for turn_x in [0.6, 1.0, -2.0]:
+		var tx: float = turn_x
+		pt[0] = 0.0
+		_skater.losses = {
+			"roll_off": 0, "game_slip": 0, "keep_drop": 0, "cross_drop": 0, "knock": 0
+		}
+		_skater.script(
+			func(f: PlayerInput.Frame, dt: float) -> void:
+				pt[0] += dt
+				# -2: a hard turn for a second, then let go of it dead
+				var hard := tx > -1.5
+				f.move = (
+					Vector2(tx, 1.0)
+					if hard
+					else (Vector2(1.0, 1.0) if pt[0] < 1.0 else Vector2(0.0, 1.0))
+				)
+				f.stick = Vector2(0.9 * sin(pt[0] * TAU * 3.0), 0.4) if hard else Vector2(0.0, 0.5)
+		)
+		var plost := 0
+		var pyaw := 0.0
+		for k in 180:
+			_skater.step(1.0 / 60.0, ice, _local)
+			pyaw = maxf(pyaw, absf(sk.yaw_rate))
+			if not sk.has_puck():
+				plost += 1
+		_skater.script(Callable())
+		(
+			check
+			. call(
+				plost == 0,
+				(
+					"level 10, turn input %.1f at %.1f m/s (yaw up to %.1f rad/s): kept the puck (lost %d/180, %s)"
+					% [tx, sk.speed(), pyaw, plost, _skater.losses]
+				)
+			)
+		)
+		_puck.reset_at(sk.puck_anchor())
+		_puck.controller = sk
+		_puck.last_touch = sk
+	_skater.set_level(7.0)
 	# the shaft sits lower in the view and its butt end is capped with the brand
 	var cap_y: float = _skater._cap.position.y if _skater._cap else 0.0
 	check.call(
@@ -3701,7 +3840,7 @@ func _self_test() -> void:
 	)
 	# a frozen ridge across the lane knocks a fast loose puck up
 	puck_lane = Vector3(lx0, 0.0, 12.8)
-	_ridge(puck_lane + Vector3(2.0, 0.0, 0.0), 3.0)
+	_ridge(puck_lane + Vector3(2.0, 0.0, 0.0), 4.0)
 	_puck.reset_at(puck_lane)
 	_skater.touch.clear()
 	_puck.vel = Vector3(6.0, 0.0, 0.0)
@@ -3709,7 +3848,7 @@ func _self_test() -> void:
 	for k in 60:
 		_skater.step(1.0 / 60.0, ice, _local)
 		knock_y = maxf(knock_y, _puck.position.y)
-	check.call(knock_y > 0.03, "a 3 mm ridge knocks a loose puck up (%.0f mm)" % (knock_y * 1000.0))
+	check.call(knock_y > 0.03, "a 4 mm ridge knocks a loose puck up (%.0f mm)" % (knock_y * 1000.0))
 	puck_lane = Vector3(lx0, 0.0, 9.8)
 	for k in 100:
 		# (a thin slush: the snow lane above piles up to 5 mm, this one to 1.5)
@@ -3807,6 +3946,34 @@ func _self_test() -> void:
 	check.call(
 		hands.swings == swings0 + 1,
 		"a swing releases at the end of the stroke (%d)" % (hands.swings - swings0)
+	)
+	# a wrist shot's windup, a fast pull back that rests, is not the swing
+	# (Sean: the windup was read as a pass); the forward stroke after it is
+	swings0 = hands.swings
+	var windup: Array = [-5.0, -12.0, -25.0, -33.0, -24.0, -10.0, -2.0, -1.0, -1.0, -1.0, -1.0]
+	sidx[0] = 0
+	_skater.script(
+		func(f: PlayerInput.Frame, _dt: float) -> void:
+			f.tracing = true
+			hands.feed(Vector2(0.0, windup[mini(sidx[0], windup.size() - 1)]))
+			sidx[0] += 1
+	)
+	for k in windup.size():
+		_skater.step(1.0 / 60.0, ice, _local)
+	check.call(hands.swings == swings0, "a pull back that rests is a windup, not the swing")
+	sidx[0] = 0
+	_skater.script(
+		func(f: PlayerInput.Frame, _dt: float) -> void:
+			f.tracing = true
+			hands.feed(Vector2(0.0, stroke[mini(sidx[0], stroke.size() - 1)]))
+			sidx[0] += 1
+	)
+	for k in stroke.size():
+		_skater.step(1.0 / 60.0, ice, _local)
+	_skater.script(Callable())
+	check.call(
+		hands.swings == swings0 + 1,
+		"...and the forward stroke after it is (%d)" % (hands.swings - swings0)
 	)
 	# the boards keep a hard shot on the sheet
 	_puck.reset_at(Vector3(0.0, 0.0, 0.0))

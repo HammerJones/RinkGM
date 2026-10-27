@@ -4,9 +4,38 @@ extends Puck
 ## goal lines, but the demo has only the east one (Sean: the fixed west
 ## net had to go), so the west goal line is open ice to shoot across.
 ## Everything else (ice, boards, glass, the east net's posts, bar, frame
-## and mesh, and the goal there) is the game's own.
+## and mesh, and the goal there) is the game's own, except the boards'
+## grazing touch: a puck running along the boards or round a corner at a
+## shallow angle glides along them (Sean, 2026-10-27: the corners caught
+## the puck), losing only a little; a square hit bounces as the game's.
 
 const SIDE := 1  # the east net, the one the demo stands on the ice
+const GLIDE_ANGLE := deg_to_rad(25.0)  # into the boards shallower than this: a glide, not a bounce
+const GLIDE_KEEP := 0.985  # share of the speed kept per touch while gliding
+const BOUNCE_E := 0.6  # the game's restitution off the boards
+const BOUNCE_KEEP := 0.92
+
+
+func _collide_boards() -> void:
+	var r := Rink.confine(position, RADIUS)
+	var n: Vector2 = r[1]
+	if n == Vector2.ZERO:
+		return
+	position = r[0]
+	var n3 := Vector3(n.x, 0.0, n.y)
+	var vn := vel.dot(n3)
+	if vn <= 0.0:
+		return
+	var flat := Vector2(vel.x, vel.z)
+	var into := asin(clampf(vn / maxf(flat.length(), 0.001), 0.0, 1.0))
+	boards_hit.emit(position, vn)
+	if into < GLIDE_ANGLE:
+		# along the boards: the normal part goes, the rest runs on
+		vel -= n3 * vn
+		vel *= GLIDE_KEEP
+		return
+	vel -= n3 * vn * (1.0 + BOUNCE_E)
+	vel *= BOUNCE_KEEP
 
 
 func _collide_nets(prev: Vector3) -> void:

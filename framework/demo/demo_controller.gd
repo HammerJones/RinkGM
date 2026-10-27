@@ -15,6 +15,8 @@ const PASS_FAST := 18.0  # m/s at a full stroke
 var last_pass := {}
 ## Called with no arguments when a flick pass goes (the demo lets the puck go).
 var pass_hook := Callable()
+## A left shot: the traced patterns (drawn for a right shot) are read mirrored.
+var mirror_trace := false
 
 
 func _traced(human: Skater, f: PlayerInput.Frame) -> void:
@@ -47,6 +49,18 @@ func _traced(human: Skater, f: PlayerInput.Frame) -> void:
 		game.hud.show_message("PASS  %.0f M/S" % speed, 0.8)
 		return
 	super._traced(human, f)
+
+
+## The game's grading, on the trace mirrored left to right for a left shot
+## (a wrist shot's pull back to the forehand goes the other way).
+func grade(human: Skater, trace: Array, target: Vector3) -> Dictionary:
+	if not mirror_trace or trace.is_empty():
+		return super.grade(human, trace, target)
+	var x0: float = trace[0].x
+	var m := []
+	for p in trace:
+		m.append(Vector3(2.0 * x0 - p.x, p.y, p.z))
+	return super.grade(human, m, target)
 
 
 ## A straight line long enough to mean it: every point within

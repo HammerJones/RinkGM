@@ -27,6 +27,7 @@ const SPRING_SUBSTEPS := 8
 const SWING_MIN := 600.0  # px/s a stroke must reach to count as a swing
 const SWING_REST := 0.12  # share of the peak the hand slows to at the end of the swing
 const SWING_REST_TICKS := 3
+const SWING_FORWARD := 0.5  # share of the peak speed that must be forward: a pull back is a windup
 const PULL_RAD := deg_to_rad(3.0)  # the view's pull at PULL_PX px/s
 const PULL_PX := 2000.0
 const PULL_DECAY := 8.0  # 1/s
@@ -48,6 +49,7 @@ var _vel := Vector2.ZERO
 var _accum := Vector2.ZERO
 var _scripted := false
 var _peak := 0.0
+var _peak_fwd := 0.0  # the hand's forward speed at the peak
 var _rest_ticks := 0
 var _tracing := false
 
@@ -104,7 +106,7 @@ func shape(
 	# the view leans into a hard sweep
 	var side := hand_px.x / maxf(dt, 0.0001)
 	pull = lerpf(pull, -clampf(side / PULL_PX, -1.0, 1.0) * PULL_RAD, 1.0 - exp(-PULL_DECAY * dt))
-	_watch_swing(tracing)
+	_watch_swing(tracing, dt)
 
 
 ## The reach's edge and the arc's: the stick stops there and keeps the
@@ -140,7 +142,10 @@ static func in_front(p: Vector2) -> Vector2:
 
 
 ## A swing: the stroke's speed climbs past SWING_MIN, then the hand rests.
-func _watch_swing(tracing: bool) -> void:
+## Only a forward stroke is the swing: a fast pull back that rests is the
+## windup of a wrist or a snap shot (Sean: it was read as a pass), and the
+## trace goes on to the stroke that follows.
+func _watch_swing(tracing: bool, dt: float) -> void:
 	if not tracing:
 		_tracing = false
 		_peak = 0.0
@@ -150,14 +155,18 @@ func _watch_swing(tracing: bool) -> void:
 		_tracing = true
 		_peak = 0.0
 		_rest_ticks = 0
-	_peak = maxf(_peak, hand_speed)
+	if hand_speed > _peak:
+		_peak = hand_speed
+		_peak_fwd = hand_px.y / maxf(dt, 0.0001)
 	if _peak >= SWING_MIN and hand_speed < _peak * SWING_REST:
 		_rest_ticks += 1
 		if _rest_ticks >= SWING_REST_TICKS:
-			swings += 1
+			var forward := _peak_fwd > _peak * SWING_FORWARD
 			_peak = 0.0
 			_rest_ticks = 0
-			if on_swing_end.is_valid():
-				on_swing_end.call()
+			if forward:
+				swings += 1
+				if on_swing_end.is_valid():
+					on_swing_end.call()
 	else:
 		_rest_ticks = 0

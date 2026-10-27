@@ -1019,7 +1019,13 @@ display, and run as headless checks in CI (`--test=<name>`).
   floor and a ridge kicks it; and a break in the hard surface (a frozen
   ridge, a rut's edge, not loose snow and not a smooth slope) knocks a
   puck moving 2 m/s or more up to 1.4 m/s upward (`IceTouch.knock`;
-  the same knock takes a carried puck off the blade, see the bond). A
+  the same knock takes a carried puck off the blade, see the bond). All
+  ice drags a loose puck 0.5 m/s2 plus 0.03 per m/s on top of the
+  game's own (`ICE_DRAG`; Sean, 2026-10-27: it slid too freely). The
+  demo's puck (`DemoPuck`) glides along the boards: meeting them under
+  25 degrees it keeps its speed along them (0.985) with no bounce, so
+  the corners carry it round (Sean: the corners must not catch it);
+  steeper it bounces as in the game. A
   puck out of snow carries a load for 2 s (0.25 of the drag, a faint
   trail); a wet one leaves a streak. The HUD names the surface under a
   loose puck. The mouse is read again as hands (`DemoHands`, on top of
@@ -1029,8 +1035,11 @@ display, and run as headless checks in CI (`--test=<name>`).
   6 Hz spring damped by the stick-handling rating (0.45 at 0, 1.0 at 100:
   a weak player's stick overshoots and rings); the view leans up to 3
   degrees into a hard sweep; and a shot drawn with RMB releases when the
-  swing stops (a stroke past 600 px/s, then the hand at rest for three
-  ticks), not only on RMB up. At a fast blade (1.5 to 4.5 m/s in the
+  swing stops (a forward stroke past 600 px/s, then the hand at rest for
+  three ticks), not only on RMB up. A fast pull back that rests is a
+  windup (a wrist or a snap shot's), not the swing (`SWING_FORWARD`:
+  the hand's speed at the peak must be half forward; Sean, 2026-10-27:
+  the windup was released as a pass). At a fast blade (1.5 to 4.5 m/s in the
   hands) up to 0.4 of the game's cup pull is let go (`DemoSkater`
   CUP_SOFT), so the puck lags a snap, gets ahead of a stop and rolls
   along the face. [Superseded the same day by the bond, below.] A
@@ -1054,19 +1063,31 @@ display, and run as headless checks in CI (`--test=<name>`).
   the default the puck rides the end of the blade and never leaves
   (Sean, 2026-10-26: a solo skater on fresh ice does not drop the
   puck; the difficulty is opponents, obstacles and the ice). Retention
-  1..10 on the number keys (0 is 10): the spring runs 20 to 400 /s2
-  and the pushes let through 0.5 to 0.08 of themselves (273 /s2 and
-  0.22 at the default 7, a few cm of slide on a hard handle); 10 never
-  lets go. The game's own slips (its stickhandling rhythm's random
+  1..10 on the number keys (0 is 10): the spring runs 100 to 300 /s2
+  and the pushes let through 0.5 to 0.02 of themselves, falling steeply
+  (`BOND_SLIDE_POW` 1.5: 0.14 at the default 7, 5 to 7 cm of slide on a
+  hard handle; Sean, 2026-10-27: a higher level is not a stronger spring
+  but one less affected by outside forces); 10 never lets go. The game's own slips (its stickhandling rhythm's random
   release, its keep's reach) are taken straight back the same tick
   (`_slipped`, `_retake`: the skater's last touch, slow against the
-  skater, within 1.2 m, and not let go); a shot, a flick pass or an
+  skater, within 1.5 m, and not let go); a shot, a flick pass or an
   [E] pass flags the puck let go for 0.5 s (`let_go`, through
   `DemoRinkGame.shot_hook` and `DemoController.pass_hook`) so nothing
   takes it back. The bond rests while the blade is up (forehand to
-  backhand: the puck runs on, the blade comes down beyond it and the
-  bond takes it where it meets the face), and the HUD reads FOREHAND
-  or BACKHAND and the puck's spot on the blade. Retention is the stick
+  backhand: the puck runs on with you, taking the body's velocity at
+  12 /s (`CROSS_FOLLOW`) so it turns as you turn, the blade comes down
+  beyond it and the bond takes it where it meets the face), and the
+  HUD reads FOREHAND or BACKHAND and the puck's spot on the blade. In a
+  turn the blade curls in on its own (Sean, 2026-10-27: realistic, the
+  face more square to the force on the puck): `_curl_into_turn` turns
+  the blade's yaw and the rig's toe 2 degrees per m/s2 of turn load,
+  up to 35, settling at 8 /s, whichever way brings the puck's face
+  toward the inside of the turn. Before that, a turn at level 10 lost
+  the puck two ways, neither a force spike at the turn's end: a
+  handle crossing mid-turn ran the puck straight while the body turned
+  (the cross follow above), and the skater's own turn gouge, cut a
+  tick earlier under the puck, read as a ridge (the knock now needs a
+  3 mm step). Retention is the stick
   skill's level (Sean, 2026-10-26, "a good way to quantify stick
   handling"): `StickSkill` (framework/demo/stick_skill.gd), one
   continuous level 1.0..10.0 earned by handles, each paying XP at once.
@@ -1083,11 +1104,31 @@ display, and run as headless checks in CI (`--test=<name>`).
   and the game's own stick_handling rating 62 to 92 (its blade speed,
   acceleration and grip), so the stick has its base inertia to 5 and
   less from there; `DemoSkater.set_level` (the number keys) puts the XP
-  at a level. Loss by a knock: a break in the hard surface under a
-  carried puck (a frozen ridge, a rut's edge: `IceTouch.knock`, the
-  middle 1.5 mm or more off the line of the sides 4 cm away) at speed
-  knocks it up (1.4 m/s from a 3 mm break at 6 m/s), and 0.8 m/s or
-  more takes it over the blade and loose for 0.4 s (`KNOCK_LOOSE`).
+  at a level. Loss by a knock: a step in the hard surface under a
+  carried puck (a frozen ridge, a rut's or a skate cut's edge:
+  `IceTouch.knock`, the hard surface 3 mm or more different between
+  the sides 4 cm away, `RIDGE_MM`) at speed knocks it up (1.4 m/s from
+  a 4 mm step at 6 m/s), at most one knock each 0.2 s. The puck hops on
+  the blade (half the knock: a kick you see, Sean's "awesome emergent
+  effect" of the skate ruts) and stays; a hard knock (0.8 m/s or more,
+  `KNOCK_LOOSE`) takes it over the blade and loose for 0.4 s by a
+  chance that falls with the level (`knock_chance`, seeded
+  `_rng`): every one at levels 1 and 2, about 40% at 5, 3% at 10 with
+  the blade down; more with the blade up for a stickhandle (`_knock_lifted`,
+  every one at 2, about 55% at 5, 30% at 10), when the knock also sends
+  the puck off sideways (0.6 of it) so the blade comes down where the
+  puck is not (Sean, 2026-10-27: the loss should come from when the
+  knock happens, the stick off the ice, more than from the hop).
+  The shooter is a left shot (Sean, 2026-10-27; `DemoSkater.shoots_left`,
+  `_mirror_to_left`): the game only knows a right shot, so the demo
+  mirrors what makes one: the blade's rest is on the left
+  (`DEFAULT_BLADE` with its side flipped), the body's reach table is
+  reversed, the blade mesh is mirrored across the stick's plane so its
+  curve goes the other way, the forehand is the left side (`hand()`,
+  -1; an unknown puck side defaults to it, where the game would say a
+  right shot's), and the traced shot patterns are graded on the trace
+  mirrored left to right (`DemoController.mirror_trace`), so a wrist
+  shot's pull back to the forehand goes the other way.
   The hands' stick stays inside a 100 degree arc either side of
   straight ahead and inside its reach, keeping the hand's speed along
   either edge (`DemoHands._edges`; before, the stick went behind the

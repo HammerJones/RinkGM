@@ -21,9 +21,17 @@ const SURE_REACH := Skater.REACH_ONE_HAND  # m from the body: a loose puck this 
 # motion, most with it angled); snow and water under the puck weaken the
 # spring; past the toe or the heel it rolls off. Retention 1..10 sets the
 # spring and how much of those pushes the tape lets through; 10 never lets go.
-const BOND_K := Vector2(100.0, 600.0)  # spring, 1/s2, at retention 1 and 10
+# (Sean, 2026-10-27: a higher level is not a stronger spring but one less
+# affected by outside forces: the spring barely climbs, the slide share falls)
+const BOND_K := Vector2(100.0, 300.0)  # spring, 1/s2, at retention 1 and 10
 const BOND_ZETA := 0.8
-const BOND_SLIDE := Vector2(0.4, 0.04)  # share of the pushes that move the puck, at 1 and 10
+const BOND_SLIDE := Vector2(0.5, 0.02)  # share of the pushes that move the puck, at 1 and 10
+const BOND_SLIDE_POW := 1.5  # the share falls this steeply with the level
+# the blade curls into a turn (Sean: as a player does), its face turned
+# toward the turn's centre so the puck's inertia presses into it
+const CURL_PER_G := deg_to_rad(2.0)  # rad per m/s2 of lateral load
+const CURL_MAX := deg_to_rad(35.0)
+const CURL_RATE := 8.0  # 1/s
 const BOND_OFF := 0.03  # m past the end of the blade: off
 const BOND_LOOSE := 5  # below this retention the puck may roll off on clean ice too
 const BOND_WEAK_OFF := 0.75  # the spring this weak (snow, water) lets the puck roll off
@@ -40,13 +48,28 @@ const CAP_W := 0.035  # m, the shaft's width (2 voxels)
 const HANDLE_MIN := 0.12  # stick travel across (unit circle) that counts as a handle
 const RESPONSE_FROM := 5.0  # level past which the stick answers the hands faster
 const RATING_AT := Vector2(62.0, 92.0)  # the game's stick_handling rating at level 5 and 10
-# a rut or a frozen ridge under a carried puck knocks it up (Sean): hard
-# enough and it hops over the blade and is loose
-const KNOCK_LOOSE := 0.8  # m/s upward past which the knock takes it off the blade
+# a rut or a frozen ridge under a carried puck knocks it up (Sean): it hops
+# on the blade, and costs you the puck by a chance that falls with the
+# level (every hard knock at 1 and 2, almost none at 10), more often while
+# the stick is up for a stickhandle: the puck is somewhere else when the
+# blade comes down
+const KNOCK_LOOSE := 0.8  # m/s upward under which a knock only rattles the puck
 const KNOCK_T := 0.4  # s loose before sure hands may have it back
+const KNOCK_EVERY := 0.2  # s between knocks (a ridge is one knock, not one a substep)
+const KNOCK_HOP := 0.5  # of the knock a puck on the blade shows as a hop
+const KNOCK_LOSE_FROM := 2.0  # level up to which every hard knock loses the puck
+const KNOCK_LOSE_ON := Vector2(1.0, 0.03)  # chance of a loss, blade down: levels 2 and 10
+const KNOCK_LOSE_UP := Vector2(1.0, 0.3)  # ... with the blade up for a stickhandle
+const KNOCK_SIDE := 0.6  # of the knock sideways when it costs the puck, blade up
+const CROSS_FOLLOW := 12.0  # 1/s, how quickly a puck under a lifted blade takes the body's motion
 
 var active := false
 var stride_count := 0
+## A left shot (Sean, 2026-10-27): the game only knows a right shot, so the
+## demo mirrors what makes one: the blade's rest on the left, the blade's
+## curve the other way, the body's reach table flipped, the shot patterns
+## read mirrored, and the puck's "forehand" being the other face.
+var shoots_left := true
 ## Sure hands (Sean): a loose puck anywhere the stick can reach, forehand
 ## or backhand, is picked up at once, and a carried puck is never lost
 ## (a shot or a pass still leaves the blade).
@@ -84,11 +107,17 @@ var _hx_prev := 0.0
 var _hx_dir := 0.0
 var _hx_from := 0.0
 var _hx_had := false
+var _curl := 0.0
+var _hop_y := 0.0  # a knocked puck's hop on the blade
+var _hop_v := 0.0
+var _knock_t := 0.0
+var _rng := RandomNumberGenerator.new()  # the knocks' chance (seeded: tests replay)
 
 
 ## The skater on `puck` with an even 62 in every rating; `on_message`
 ## (text, seconds) takes the controller's shot and pass messages.
 func setup(puck: Puck, on_message: Callable) -> void:
+	_rng.seed = 7
 	game = DemoRinkGame.new()
 	game.name = "Game"
 	game.puck = puck
@@ -136,6 +165,8 @@ func setup(puck: Puck, on_message: Callable) -> void:
 			rig._shaft_base = _without_top(rig._shaft_base, KNOB_VOX * Models.STICK_V + 0.002)
 		_cap = _make_cap()
 		rig.stick.add_child(_cap)
+	if shoots_left:
+		_mirror_to_left()
 	set_level(7.0)
 
 
@@ -257,7 +288,12 @@ func step(dt: float, sheet: IceSheet, to_sheet: Callable) -> void:
 	var had := puck.controller == skater
 	if had and skater.ctrl.pass_pressed:
 		let_go()
+	if not had and skater.puck_side == 0.0:
+		# the game's "forehand if unknown" is a right shot's: ours
+		skater.puck_side = hand()
+	skater.blade_yaw -= _curl  # the game's own yaw back, before it updates it
 	skater.physics_update(dt)
+	_curl_into_turn(dt)
 	_pose_shaft()
 	if had and _slipped(puck):
 		# the game's hands let it go (its stickhandling rhythm, a random
@@ -329,6 +365,8 @@ func _sure_hands() -> void:
 	puck.controller = skater
 	puck.last_touch = skater
 	if puck.position.distance_to(skater.blade_pos) > StickPuck.CARRY_REACH:
+		if skater.puck_side == 0.0:
+			skater.puck_side = hand()  # the game's anchor would put it on a right shot's forehand
 		var anchor := skater.puck_anchor()
 		puck.position = Vector3(anchor.x, 0.0, anchor.z)
 		puck.vel = skater.vel
@@ -341,6 +379,7 @@ func _sure_hands() -> void:
 ## down beyond it, and the bond takes it where it meets the face.
 func _bond(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float, f: float) -> void:
 	_off_t = maxf(0.0, _off_t - dt)
+	_knock_t = maxf(0.0, _knock_t - dt)
 	var bv := Vector2(skater.blade_vel.x, skater.blade_vel.z)
 	var blade_acc := (bv - _blade_v0) / maxf(dt, 0.0001)
 	_blade_v0 = bv
@@ -352,7 +391,19 @@ func _bond(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float, f: float)
 		or skater.lifting
 		or skater.blade_height > StickPuck.BLADE_CLEAR + puck.position.y
 	):
+		# the blade is up and going round the puck: the puck runs on with
+		# you, turning as you turn (in a turn it used to run straight and
+		# the blade came down a metre from it: Sean, a turn lost the puck)
 		bonded = false
+		if _hop_y > 0.0:
+			# mid-hop as the blade went up: the hop goes on, the puck's own
+			puck.position.y = _hop_y
+			puck.vel.y = _hop_v
+			_hop_y = 0.0
+			_hop_v = 0.0
+		var want := Vector3(skater.vel.x, puck.vel.y, skater.vel.z)
+		puck.vel = puck.vel.lerp(want, 1.0 - exp(-CROSS_FOLLOW * dt))
+		_knock_lifted(puck, sheet, to_sheet)
 		return
 	if skater.winding or skater.move_id != &"":
 		bonded = false
@@ -369,12 +420,12 @@ func _bond(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float, f: float)
 		if side != 0.0:
 			skater.puck_side = side
 		elif skater.puck_side == 0.0:
-			skater.puck_side = 1.0
+			skater.puck_side = hand()
 		bond_u = clampf((p - c).dot(ax), -StickPuck.BLADE_HALF, StickPuck.BLADE_HALF)
 		bond_v = Vector2(puck.vel.x - bv.x, puck.vel.z - bv.y).dot(ax)
 	var t := clampf((retention - 1) / 9.0, 0.0, 1.0)
 	var k := lerpf(BOND_K.x, BOND_K.y, t)
-	var slide := lerpf(BOND_SLIDE.x, BOND_SLIDE.y, t)
+	var slide := BOND_SLIDE.y + (BOND_SLIDE.x - BOND_SLIDE.y) * pow(1.0 - t, BOND_SLIDE_POW)
 	# the ice under the puck: snow and water loosen the tape's hold
 	var a: Vector2 = to_sheet.call(puck.position)
 	var snow := sheet.snow_at(a)
@@ -397,19 +448,31 @@ func _bond(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float, f: float)
 			+ IceTouch.WATER_DRAG * minf(water, IceTouch.WATER_CAP)
 		)
 		push -= drag * (bv / sp).dot(ax)
-	# a rut's edge or a frozen ridge under the puck: a knock upward, and a
-	# hard one takes it over the blade
-	var knock := IceTouch.knock(sheet, to_sheet, puck.position, sp)
-	if knock >= KNOCK_LOOSE:
-		losses.knock += 1
-		bonded = false
-		puck.controller = null
-		puck.last_touch = skater
-		puck.ignore_briefly(skater, KNOCK_T)
-		_off_t = KNOCK_T
-		puck.position.y = 0.002
-		puck.vel = Vector3(bv.x, knock, bv.y) + Vector3(ax.x, 0.0, ax.y) * bond_v
-		return
+	# a rut's edge or a frozen ridge under the puck: a knock upward. The
+	# puck hops on the blade; a hard one, by the level's chance, takes it
+	# over the blade
+	if _knock_t <= 0.0:
+		var knock := IceTouch.knock(sheet, to_sheet, puck.position, sp)
+		if knock > 0.0:
+			_knock_t = KNOCK_EVERY
+			if knock >= KNOCK_LOOSE and _rng.randf() < knock_chance(KNOCK_LOSE_ON):
+				losses.knock += 1
+				bonded = false
+				_hop_y = 0.0
+				_hop_v = 0.0
+				puck.controller = null
+				puck.last_touch = skater
+				puck.ignore_briefly(skater, KNOCK_T)
+				_off_t = KNOCK_T
+				puck.position.y = 0.002
+				puck.vel = Vector3(bv.x, knock, bv.y) + Vector3(ax.x, 0.0, ax.y) * bond_v
+				return
+			_hop_v = maxf(_hop_v, knock * KNOCK_HOP)
+	if _hop_y > 0.0 or _hop_v > 0.0:
+		_hop_v -= 9.81 * dt
+		_hop_y = maxf(0.0, _hop_y + _hop_v * dt)
+		if _hop_y == 0.0:
+			_hop_v = 0.0
 	push *= slide
 	var cd := 2.0 * BOND_ZETA * sqrt(k)
 	bond_v += (push - k * bond_u - cd * bond_v) * dt
@@ -431,8 +494,108 @@ func _bond(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float, f: float)
 		return
 	bond_u = clampf(bond_u, -StickPuck.BLADE_HALF - BOND_OFF, StickPuck.BLADE_HALF + BOND_OFF)
 	var at := c + ax * bond_u + n * skater.puck_side * StickPuck.gap()
-	puck.position = Vector3(at.x, 0.0, at.y)
+	puck.position = Vector3(at.x, _hop_y, at.y)
 	puck.vel = Vector3(bv.x, 0.0, bv.y) + Vector3(ax.x, 0.0, ax.y) * bond_v
+
+
+## The chance a hard knock costs you the puck at this level: `at` is the
+## chance at level KNOCK_LOSE_FROM and at 10 (every one below that level).
+func knock_chance(at: Vector2) -> float:
+	var t := clampf((retention - KNOCK_LOSE_FROM) / (10.0 - KNOCK_LOSE_FROM), 0.0, 1.0)
+	return lerpf(at.x, at.y, sqrt(t))
+
+
+## A ridge under the puck while the blade is up for a stickhandle: the
+## puck hops, and by the level's chance (higher than with the blade down)
+## goes off sideways, so the blade comes down where it is not.
+func _knock_lifted(puck: Puck, sheet: IceSheet, to_sheet: Callable) -> void:
+	if _knock_t > 0.0:
+		return
+	var sp := Vector2(puck.vel.x, puck.vel.z).length()
+	var knock := IceTouch.knock(sheet, to_sheet, puck.position, sp)
+	if knock <= 0.0:
+		return
+	_knock_t = KNOCK_EVERY
+	puck.position.y = maxf(puck.position.y, 0.002)
+	puck.vel.y = maxf(puck.vel.y, knock)
+	if knock < KNOCK_LOOSE or _rng.randf() >= knock_chance(KNOCK_LOSE_UP):
+		return
+	losses.knock += 1
+	var side := Vector2(-puck.vel.z, puck.vel.x).normalized()
+	if _rng.randf() < 0.5:
+		side = -side
+	puck.vel += Vector3(side.x, 0.0, side.y) * knock * KNOCK_SIDE
+	puck.controller = null
+	puck.last_touch = skater
+	puck.ignore_briefly(skater, KNOCK_T)
+	_off_t = KNOCK_T
+
+
+## +1 for a right shot, -1 for a left: the blade's forehand face in the
+## game's terms (its normal is always left of the toe, a right shot's forehand).
+func hand() -> float:
+	return -1.0 if shoots_left else 1.0
+
+
+## A left shot out of the game's right one: the blade rests on the left
+## (DEFAULT_BLADE mirrored), the body's reach table is flipped (it is the
+## rig's right-shot stance, static on Skater), the blade's curve goes the
+## other way (its mesh mirrored across the stick's plane) and the traced
+## shot patterns are read in the mirror (DemoController.mirror_trace).
+func _mirror_to_left() -> void:
+	skater._set_blade(Vector2(Skater.DEFAULT_BLADE.x, -Skater.DEFAULT_BLADE.y))
+	Skater.refresh_reach()
+	Skater._reach_table.reverse()
+	var rig := skater.rig
+	if rig and rig.blade and rig.blade.mesh:
+		rig.blade.mesh = _mirrored_z(rig.blade.mesh)
+		if rig._blade_base:
+			rig._blade_base = _mirrored_z(rig._blade_base)
+	if controller is DemoController:
+		(controller as DemoController).mirror_trace = true
+
+
+## `mesh` mirrored across z = 0 (the blade's curve to the other side), the
+## faces turned over to keep them facing out.
+static func _mirrored_z(mesh: Mesh) -> Mesh:
+	var out := ArrayMesh.new()
+	for si in mesh.get_surface_count():
+		var arr := mesh.surface_get_arrays(si)
+		var idx_v: Variant = arr[Mesh.ARRAY_INDEX]
+		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		var idx: PackedInt32Array = idx_v if idx_v != null else PackedInt32Array()
+		if idx.is_empty():
+			idx.resize(verts.size())
+			for i in verts.size():
+				idx[i] = i
+		# every face's vertices, in the turned-over order
+		var order := PackedInt32Array()
+		for i in range(0, idx.size() - 2, 3):
+			order.append_array([idx[i], idx[i + 2], idx[i + 1]])
+		var flipped := []
+		flipped.resize(Mesh.ARRAY_MAX)
+		for k in Mesh.ARRAY_MAX:
+			if k == Mesh.ARRAY_INDEX or k == Mesh.ARRAY_TANGENT or arr[k] == null:
+				continue
+			var src: Variant = arr[k]
+			var dst: Variant = src.duplicate()
+			dst.resize(0)
+			for o in order:
+				var v: Variant = src[o]
+				if k == Mesh.ARRAY_VERTEX or k == Mesh.ARRAY_NORMAL:
+					v = Vector3(v.x, v.y, -v.z)
+				dst.append(v)
+			flipped[k] = dst
+		if arr[Mesh.ARRAY_TANGENT] != null:
+			# tangents are 4 floats a vertex: mirror their z too
+			var t: PackedFloat32Array = arr[Mesh.ARRAY_TANGENT]
+			var dt := PackedFloat32Array()
+			for o in order:
+				dt.append_array([t[o * 4], t[o * 4 + 1], -t[o * 4 + 2], t[o * 4 + 3]])
+			flipped[Mesh.ARRAY_TANGENT] = dt
+		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, flipped)
+		out.surface_set_material(si, mesh.surface_get_material(si))
+	return out
 
 
 ## The stick skill's level set outright (the number keys, tests): its XP
@@ -477,6 +640,30 @@ func _count_handles() -> void:
 		_hx_from = hx
 		_hx_had = has
 	_hx_dir = dir
+
+
+## The blade curled into a turn: its yaw turned so the face points toward
+## the turn's centre by the lateral load (CURL_PER_G), smoothly. The game
+## sets blade_yaw each update (it faces a puck coming in), so the curl is
+## added after and taken off before; the rig draws it through blade_turn.
+func _curl_into_turn(dt: float) -> void:
+	var want := 0.0
+	if skater.has_puck() and skater.puck_side != 0.0:
+		var load := skater.yaw_rate * skater.speed()
+		if absf(load) > 0.5:
+			var seg := StickPuck.blade_at(skater, 1.0)
+			var n: Vector2 = seg[2] * skater.puck_side  # the face, toward the puck
+			var h := Vector2(skater.heading.x, skater.heading.z)
+			var inward := h.rotated(-PI / 2.0 * signf(skater.yaw_rate))
+			# which way round brings the face toward the centre
+			var amount := clampf(absf(load) * CURL_PER_G, 0.0, CURL_MAX)
+			var plus := n.rotated(amount).dot(inward)
+			var minus := n.rotated(-amount).dot(inward)
+			want = amount if plus > minus else -amount
+	_curl = lerpf(_curl, want, 1.0 - exp(-CURL_RATE * dt))
+	skater.blade_yaw += _curl
+	if skater.rig:
+		skater.rig.blade_turn = -_curl  # (the rig turns the toe the other way round)
 
 
 ## The shaft tipped SHAFT_DOWN lower about the heel after the rig has posed
@@ -547,7 +734,8 @@ func _slipped(puck: Puck) -> bool:
 		return false
 	var to := puck.position - skater.global_position
 	to.y = 0.0
-	var near := to.length() < 1.2 or puck.position.distance_to(skater.blade_pos) < 0.8
+	# (the game's keep lets go at 1.2 m from a lifted blade, mid-crossing)
+	var near := to.length() < 1.5 or puck.position.distance_to(skater.blade_pos) < 1.5
 	return near and (puck.vel - skater.vel).length() < 15.0
 
 
@@ -596,7 +784,7 @@ func state_text() -> String:
 	if skater.has_puck():
 		puck_s = (
 			"ON THE %s %+.0f CM"
-			% ["FOREHAND" if skater.puck_side >= 0.0 else "BACKHAND", bond_u * 100.0]
+			% ["FOREHAND" if skater.puck_side * hand() >= 0.0 else "BACKHAND", bond_u * 100.0]
 		)
 	return (
 		"SKATING %.1f M/S%s%s   STRIDES %d   PUCK %s   STICK LVL %.2f (%d HANDLES)   HANDS %.0f PX/S"
