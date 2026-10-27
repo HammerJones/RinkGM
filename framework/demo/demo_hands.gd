@@ -18,6 +18,9 @@ extends Node
 
 const LEAD_S := 0.08  # s of hand motion the blade's target leads by
 const SPRING_HZ := 14.0  # the hands' spring: tight, the stick is in the hands (Sean: no rubber band)
+const SPRING_HZ_FAST := 24.0  # ... at response 1 (stick level 10): less inertia, faster
+const ARC := deg_to_rad(100.0)  # the stick stays in front of you: past this it was behind and stuck (Sean)
+const SPEED_CAP := Vector2(8.0, 14.0)  # reach/s the stick target may move, at response 0 and 1
 const DAMP_WEAK := 0.7  # damping ratio at stick handling 0
 const DAMP_GOOD := 1.0  # ... at 100 (no overshoot)
 const SPRING_SUBSTEPS := 8
@@ -36,6 +39,8 @@ var hand_speed := 0.0
 var stick := Vector2.ZERO
 ## The view's pull (radians about the up axis) this tick.
 var pull := 0.0
+## 0..1, how much quicker than the base spring the stick answers (the skill's level past 5).
+var response := 0.0
 ## Fires when a swing ends: Callable() with no arguments (the demo releases the shot).
 var on_swing_end := Callable()
 var swings := 0  # swings released so far (tests)
@@ -79,18 +84,19 @@ func shape(
 	var want := raw
 	if not tracing:
 		want = (raw + hand_px / maxf(dt, 0.0001) * sens * LEAD_S).limit_length(1.0)
+	want = in_front(want)
 	# the weight: a mass on a spring to the target
-	var k := pow(TAU * SPRING_HZ, 2.0)
+	var k := pow(TAU * lerpf(SPRING_HZ, SPRING_HZ_FAST, clampf(response, 0.0, 1.0)), 2.0)
 	var zeta := lerpf(DAMP_WEAK, DAMP_GOOD, clampf(skill, 0.0, 1.0))
 	var cdamp := 2.0 * zeta * sqrt(k)
 	var prev := stick
 	var sdt := dt / SPRING_SUBSTEPS  # a stiff spring, stepped fine enough to stay stable
+	var cap := lerpf(SPEED_CAP.x, SPEED_CAP.y, clampf(response, 0.0, 1.0))
 	for i in SPRING_SUBSTEPS:
 		_vel += (k * (want - stick) - cdamp * _vel) * sdt
+		_vel = _vel.limit_length(cap)  # the hands have a top speed: no snap across the body
 		stick += _vel * sdt
-	if stick.length() > 1.0:
-		stick = stick.normalized()
-		_vel = Vector2.ZERO
+		_edges()
 	var world := right * stick.x + fwd * stick.y
 	c.stick = world
 	var dw := stick - prev
@@ -99,6 +105,38 @@ func shape(
 	var side := hand_px.x / maxf(dt, 0.0001)
 	pull = lerpf(pull, -clampf(side / PULL_PX, -1.0, 1.0) * PULL_RAD, 1.0 - exp(-PULL_DECAY * dt))
 	_watch_swing(tracing)
+
+
+## The reach's edge and the arc's: the stick stops there and keeps the
+## hand's speed along the edge, no wall to push into and no snap back.
+func _edges() -> void:
+	if stick.length() > 1.0:
+		var n := stick.normalized()
+		stick = n
+		var out := _vel.dot(n)
+		if out > 0.0:
+			_vel -= n * out
+	if stick.length() < 0.05:
+		return
+	var a := atan2(stick.x, stick.y)  # from straight ahead, + to the right
+	if absf(a) > ARC:
+		var lim := signf(a) * ARC
+		stick = Vector2(sin(lim), cos(lim)) * stick.length()
+		var round_dir := Vector2(cos(lim), -sin(lim)) * signf(a)  # further round
+		var into := _vel.dot(round_dir)
+		if into > 0.0:
+			_vel -= round_dir * into
+
+
+## `p` brought inside the ARC (its length kept).
+static func in_front(p: Vector2) -> Vector2:
+	if p.length() < 0.05:
+		return p
+	var a := atan2(p.x, p.y)
+	if absf(a) <= ARC:
+		return p
+	var lim := signf(a) * ARC
+	return Vector2(sin(lim), cos(lim)) * p.length()
 
 
 ## A swing: the stroke's speed climbs past SWING_MIN, then the hand rests.

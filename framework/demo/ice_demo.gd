@@ -1103,6 +1103,17 @@ func _puck_run(at: Vector3, speed: float, until_x: float) -> float:
 	return _puck.vel.length()
 
 
+## A frozen ridge across the lane at `at` (world): `mm` of ice over a
+## 2-cell band across x, 2 m long in z.
+func _ridge(at: Vector3, mm: float) -> void:
+	var c := ice.cell_at(_local(at))
+	var half := int(1.0 / ice.cell)
+	for dz in range(-half, half + 1):
+		for dx in 2:
+			if ice.in_bounds(c.x + dx, c.y + dz):
+				ice.ice[ice.index(c.x + dx, c.y + dz)] += mm
+
+
 func _count_gouged(at: Vector2, size: float) -> int:
 	var c := ice.cell_at(at)
 	var r := int(size / 2 / ice.cell)
@@ -1384,10 +1395,10 @@ func _unhandled_input(event: InputEvent) -> void:
 					hud.toast("SKATES OFF")
 			KEY_0, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9:
 				if _skater.active:
-					# puck retention 1..9, and 0 is 10 (Sean: a batch to try)
+					# the stick skill's level 1..9, and 0 is 10 (Sean: a batch to try)
 					var level: int = event.keycode - KEY_0
-					_skater.retention = 10 if level == 0 else level
-					hud.toast("PUCK RETENTION %d / 10" % _skater.retention)
+					_skater.set_level(10.0 if level == 0 else float(level))
+					hud.toast("STICK LEVEL %d / 10" % int(round(_skater.retention)))
 			KEY_TAB:
 				if _edging:
 					_edger.toggle_blade()
@@ -3358,7 +3369,7 @@ func _self_test() -> void:
 	_skate(5, Vector2.ZERO)
 	_puck.reset_at(sk.puck_anchor())
 	_puck.controller = sk
-	_skater.retention = 10
+	_skater.set_level(10.0)
 	var sweep_t := [0.0]
 	var sweep := func(f: PlayerInput.Frame, dt: float) -> void:
 		sweep_t[0] += dt
@@ -3390,7 +3401,7 @@ func _self_test() -> void:
 		ice.add_snow(_local(Vector3(-10.0 + k * 0.05, 0.0, -8.0)), 1.6, 2.0)
 	_puck.reset_at(sk.puck_anchor())
 	_puck.controller = sk
-	_skater.retention = 2
+	_skater.set_level(2.0)
 	var offs0 := _skater.roll_offs
 	sweep_t[0] = 0.0
 	_skater.script(sweep)
@@ -3401,7 +3412,7 @@ func _self_test() -> void:
 		_skater.roll_offs > offs0,
 		"at retention 2 on snow it rolls off the blade (%d times)" % (_skater.roll_offs - offs0)
 	)
-	_skater.retention = 7
+	_skater.set_level(7.0)
 	# a hard stickhandle on clean ice at the default retention never loses
 	# the puck (Sean: a solo skater on fresh ice does not drop it): sweeps
 	# at 2, 3 and 4 Hz while skating, every tick on the blade
@@ -3411,7 +3422,9 @@ func _self_test() -> void:
 		_puck.reset_at(sk.puck_anchor())
 		_puck.controller = sk
 		_puck.last_touch = sk
-		_skater.losses = {"roll_off": 0, "game_slip": 0, "keep_drop": 0, "cross_drop": 0}
+		_skater.losses = {
+			"roll_off": 0, "game_slip": 0, "keep_drop": 0, "cross_drop": 0, "knock": 0
+		}
 		var ht := [0.0]
 		var fhz: float = hz
 		_skater.script(
@@ -3459,6 +3472,152 @@ func _self_test() -> void:
 			gone_ticks += 1
 	check.call(
 		gone_ticks == 30, "a shot that was let go stays gone (%d/30 ticks loose)" % gone_ticks
+	)
+	# a frozen ridge under a carried puck at speed knocks it over the blade
+	sk.place(Vector2(-10.0, 4.0), Vector3(1.0, 0.0, 0.0))
+	_skate(5, Vector2(0.0, 1.0))
+	_ridge(Vector3(sk.global_position.x + 4.0, 0.0, 4.0), 3.0)
+	_puck.reset_at(sk.puck_anchor())
+	_puck.controller = sk
+	_puck.last_touch = sk
+	var knocks0: int = _skater.losses.knock
+	_skater.script(
+		func(f: PlayerInput.Frame, _dt: float) -> void:
+			f.move = Vector2(0.0, 1.0)
+			f.stick = Vector2(0.0, 0.5)
+	)
+	var knocked_y := 0.0
+	for k in 120:
+		_skater.step(1.0 / 60.0, ice, _local)
+		knocked_y = maxf(knocked_y, _puck.position.y)
+	_skater.script(Callable())
+	check.call(
+		_skater.losses.knock > knocks0 and knocked_y > 0.03,
+		(
+			"a ridge under a carried puck knocks it loose (%d, up %.0f mm)"
+			% [_skater.losses.knock - knocks0, knocked_y * 1000.0]
+		)
+	)
+	# the stick skill: handles with the puck pay XP at once (Sean's progression)
+	check.call(
+		(
+			absf(StickSkill.cost_between(1.0, 3.0) - 70.0) < 0.01
+			and absf(StickSkill.cost_between(3.0, 5.0) - 600.0) < 0.01
+			and absf(StickSkill.cost_between(9.0, 10.0) - 20000.0) < 0.01
+		),
+		"the scale: 70 handles to level 3, 600 more to level 5, 20000 for the last"
+	)
+	var ss := StickSkill.new()
+	ss.set_level(4.5)
+	check.call(
+		absf(ss.level() - 4.5) < 0.001, "a level set is the level read back (%.3f)" % ss.level()
+	)
+	sk.place(Vector2(-10.0, 4.0), Vector3(1.0, 0.0, 0.0))
+	_skate(5, Vector2(0.0, 1.0))
+	_skate(90, Vector2(0.0, 0.3))  # settled at a cruise first
+	_puck.reset_at(sk.puck_anchor())
+	_puck.controller = sk
+	_puck.last_touch = sk
+	_skater.set_level(1.0)
+	var handles0: int = _skater.skill.handles
+	var hs_t := [0.0]
+	var handling := func(f: PlayerInput.Frame, dt: float) -> void:
+		hs_t[0] += dt
+		# the tutorial's handles: easy ones, at a cruise
+		f.move = Vector2(0.0, 0.3)
+		f.stick = Vector2(0.25 * sin(hs_t[0] * TAU * 1.0), 0.4)
+	_skater.script(handling)
+	var with_puck := 0
+	for k in 240:
+		_skater.step(1.0 / 60.0, ice, _local)
+		if sk.has_puck():
+			with_puck += 1
+	_skater.script(Callable())
+	var made: int = _skater.skill.handles - handles0
+	(
+		check
+		. call(
+			(
+				made >= 6
+				and made <= 10
+				and with_puck > 200
+				and _skater.retention > 1.1
+				and _skater.retention < 2.0
+			),
+			(
+				"4 s of easy handles at level 1 keep the puck and pay: %d handles, level 1 -> %.2f (puck on %d/240)"
+				% [made, _skater.retention, with_puck]
+			)
+		)
+	)
+	check.call(
+		absf(_skater.retention - _skater.skill.level()) < 0.0001,
+		"...and the bond's retention is the level (%.2f)" % _skater.retention
+	)
+	_puck.reset_at(Vector3(20.0, 0.0, -8.0))
+	handles0 = _skater.skill.handles
+	hs_t[0] = 0.0
+	_skater.script(handling)
+	for k in 120:
+		_skater.step(1.0 / 60.0, ice, _local)
+	_skater.script(Callable())
+	check.call(
+		_skater.skill.handles - handles0 <= 1,
+		(
+			"handles without the puck pay nothing (%d: at most the one that lost it)"
+			% (_skater.skill.handles - handles0)
+		)
+	)
+	_skater.set_level(10.0)
+	check.call(
+		_skater.hands.response > 0.99 and absf(sk.skills.values["stick_handling"] - 92.0) < 0.01,
+		(
+			"at level 10 the hands answer fastest and the rating is 92 (%.0f)"
+			% sk.skills.values["stick_handling"]
+		)
+	)
+	_skater.set_level(5.0)
+	check.call(
+		_skater.hands.response < 0.01 and absf(sk.skills.values["stick_handling"] - 62.0) < 0.01,
+		(
+			"at level 5 and under the stick has its base inertia (rating %.0f)"
+			% sk.skills.values["stick_handling"]
+		)
+	)
+	_skater.set_level(7.0)
+	# the hands' stick stays in front: pushed hard to the side and back it
+	# stops at the arc, and comes back without a snap
+	var hd := _skater.hands
+	for k in 60:
+		hd.feed(Vector2(40.0, -20.0))
+		_skater.step(1.0 / 60.0, ice, _local)
+	var arc_a := absf(atan2(hd.stick.x, hd.stick.y))
+	check.call(
+		arc_a <= DemoHands.ARC + 0.01 and hd.stick.length() > 0.9,
+		(
+			"the stick stops at the arc, not behind you (%.0f deg, reach %.2f)"
+			% [rad_to_deg(arc_a), hd.stick.length()]
+		)
+	)
+	var back_ticks := 0
+	var fast_vel := 0.0
+	for k in 60:
+		hd.feed(Vector2(-25.0, 10.0))
+		var before := hd.stick
+		_skater.step(1.0 / 60.0, ice, _local)
+		fast_vel = maxf(fast_vel, (hd.stick - before).length() * 60.0)
+		back_ticks += 1
+		if absf(atan2(hd.stick.x, hd.stick.y)) < deg_to_rad(45.0):
+			break
+	check.call(
+		back_ticks < 30 and fast_vel < 12.0,
+		"...and comes back in %d ticks, at most %.1f reach/s (no snap)" % [back_ticks, fast_vel]
+	)
+	# the shaft sits lower in the view and its butt end is capped with the brand
+	var cap_y: float = _skater._cap.position.y if _skater._cap else 0.0
+	check.call(
+		_skater._cap != null and _skater._cap.get_parent() == sk.rig.stick and cap_y > 1.0,
+		"the butt end is capped at the shaft's top (%.2f m)" % cap_y
 	)
 	# the stick's knob is gone from the view (Sean): the shaft stops short of it
 	var shaft_h: float = sk.rig.stick.mesh.get_aabb().end.y
@@ -3515,7 +3674,7 @@ func _self_test() -> void:
 		ice.add_snow(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 1.0)
 	var v_snow := _puck_run(puck_lane, 8.0, lx0 + 4.0)
 	check.call(
-		v_clean > 7.0 and v_snow < v_clean - 1.5,
+		v_clean > 7.0 and v_snow < v_clean - 2.5,
 		(
 			"a millimetre of snow drags the puck (%.1f -> %.1f m/s over 4 m, clean %.1f)"
 			% [8.0, v_snow, v_clean]
@@ -3526,12 +3685,35 @@ func _self_test() -> void:
 		ice.pour(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 2.0)
 	var v_pool := _puck_run(puck_lane, 8.0, lx0 + 4.0)
 	check.call(
-		v_pool > v_clean + 0.1 and _skater.touch.wet_load > 0.0,
-		"a fast puck skims a pool (%.1f m/s, clean %.1f) and comes out wet" % [v_pool, v_clean]
+		v_pool < v_clean - 4.0 and _skater.touch.wet_load > 0.0,
+		(
+			"a pool grabs a fast puck (%.1f m/s over 4 m, clean %.1f) and it comes out wet"
+			% [v_pool, v_clean]
+		)
 	)
+	puck_lane = Vector3(lx0, 0.0, 12.2)
+	for k in 100:
+		ice.pour(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 0.3)
+	var v_film := _puck_run(puck_lane, 8.0, lx0 + 4.0)
+	check.call(
+		v_film < v_clean - 0.5 and v_film > v_pool,
+		"a wet film drags the puck too, less than a pool (%.1f m/s)" % v_film
+	)
+	# a frozen ridge across the lane knocks a fast loose puck up
+	puck_lane = Vector3(lx0, 0.0, 12.8)
+	_ridge(puck_lane + Vector3(2.0, 0.0, 0.0), 3.0)
+	_puck.reset_at(puck_lane)
+	_skater.touch.clear()
+	_puck.vel = Vector3(6.0, 0.0, 0.0)
+	var knock_y := 0.0
+	for k in 60:
+		_skater.step(1.0 / 60.0, ice, _local)
+		knock_y = maxf(knock_y, _puck.position.y)
+	check.call(knock_y > 0.03, "a 3 mm ridge knocks a loose puck up (%.0f mm)" % (knock_y * 1000.0))
 	puck_lane = Vector3(lx0, 0.0, 9.8)
 	for k in 100:
-		ice.add_snow(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 1.0)
+		# (a thin slush: the snow lane above piles up to 5 mm, this one to 1.5)
+		ice.add_snow(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 0.3)
 		ice.pour(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 0.6)
 	_puck_run(puck_lane, 6.0, lx0 + 4.0)
 	var wander_m := absf(_puck.position.z - puck_lane.z)
@@ -3564,6 +3746,7 @@ func _self_test() -> void:
 	for k in 100:
 		ice.chip(_local(puck_lane + Vector3(k * 0.05, 0.0, 0.0)), 0.3, 3.0)
 	_puck.reset_at(puck_lane + Vector3(0.0, 0.0, 0.1))
+	_skater.touch.clear()
 	_puck.vel = Vector3(3.0, 0.0, 0.0)
 	for k in 60:
 		_skater.step(1.0 / 60.0, ice, _local)

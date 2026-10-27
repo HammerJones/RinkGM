@@ -1007,14 +1007,20 @@ display, and run as headless checks in CI (`--test=<name>`).
   pass still leaves). While you skate the mouse stays captured and RMB is
   the shot pattern only, never the chisel. The ice acts on a loose puck
   (`framework/ice/ice_touch.gd`, `IceTouch.apply` after each
-  `puck.integrate`): loose snow drags it 1.2 m/s2 per mm (capped at 4 mm)
-  and a pile (50 mm) stops it dead; a wet film is slick (0.7 of the
-  drag), a pool holds a slow puck (1.3) and lets a fast one skim (0.5);
-  slush (water on snow) drags like snow and wanders the heading (0.3
-  m/s2 sideways, drifting); a set crust is rough (1.5) and hops a fast
-  puck; and the surface's slope (ice, crust and snow up, gouge down, over
-  8 cm) is gravity, so a rut draws the puck to its floor and a ridge kicks
-  it. A puck out of snow carries a load for 2 s (0.4 of the drag, a faint
+  `puck.integrate`): loose snow drags it 3 m/s2 per mm (capped at 5 mm;
+  Sean, 2026-10-26: it slows the puck substantially) and a pile (50 mm)
+  stops it dead; water grabs it (Sean: it makes the puck stick to the
+  ice), 2.5 m/s2 per mm of film (capped at 3 mm) and a pool (1 mm or
+  more) doubles the game's own drag on top, no skimming; slush (water
+  on snow) drags as snow and water both and wanders the heading (0.8
+  m/s2 sideways, which way is luck and it drifts); a set crust is rough
+  (1.5) and hops a fast puck; the surface's slope (ice, crust and snow
+  up, gouge down, over 8 cm) is gravity, so a rut draws the puck to its
+  floor and a ridge kicks it; and a break in the hard surface (a frozen
+  ridge, a rut's edge, not loose snow and not a smooth slope) knocks a
+  puck moving 2 m/s or more up to 1.4 m/s upward (`IceTouch.knock`;
+  the same knock takes a carried puck off the blade, see the bond). A
+  puck out of snow carries a load for 2 s (0.25 of the drag, a faint
   trail); a wet one leaves a streak. The HUD names the surface under a
   loose puck. The mouse is read again as hands (`DemoHands`, on top of
   the game's controls, nothing in `scripts/` changed): the hand's
@@ -1060,7 +1066,35 @@ display, and run as headless checks in CI (`--test=<name>`).
   takes it back. The bond rests while the blade is up (forehand to
   backhand: the puck runs on, the blade comes down beyond it and the
   bond takes it where it meets the face), and the HUD reads FOREHAND
-  or BACKHAND and the puck's spot on the blade. The
+  or BACKHAND and the puck's spot on the blade. Retention is the stick
+  skill's level (Sean, 2026-10-26, "a good way to quantify stick
+  handling"): `StickSkill` (framework/demo/stick_skill.gd), one
+  continuous level 1.0..10.0 earned by handles, each paying XP at once.
+  A handle is the hands' stick turning back across the body after
+  0.12 or more of its travel with the puck on the blade
+  (`DemoSkater._count_handles`); a full-width handle (0.5 of the
+  travel) pays 1, narrower less (down to 0.25), one that lost the puck
+  on the way 0.25. The scale, in handles per level: 30, 40 (level 3 by
+  the end of a tutorial, 70 handles), 250, 350 (level 5 after two or
+  three games of 200 to 300 handles), then the plateau 1250, 2500,
+  5000, 10000, 20000 (five, ten, twenty, forty, eighty games). Past 5
+  the level also drives the stick's response (`DemoHands.response`:
+  the hands' spring 14 to 24 Hz and their top speed 8 to 14 reach/s)
+  and the game's own stick_handling rating 62 to 92 (its blade speed,
+  acceleration and grip), so the stick has its base inertia to 5 and
+  less from there; `DemoSkater.set_level` (the number keys) puts the XP
+  at a level. Loss by a knock: a break in the hard surface under a
+  carried puck (a frozen ridge, a rut's edge: `IceTouch.knock`, the
+  middle 1.5 mm or more off the line of the sides 4 cm away) at speed
+  knocks it up (1.4 m/s from a 3 mm break at 6 m/s), and 0.8 m/s or
+  more takes it over the blade and loose for 0.4 s (`KNOCK_LOOSE`).
+  The hands' stick stays inside a 100 degree arc either side of
+  straight ahead and inside its reach, keeping the hand's speed along
+  either edge (`DemoHands._edges`; before, the stick went behind the
+  skater and stuck there, then snapped back). In the view the shaft is
+  tipped 9 degrees lower about the heel after the rig poses it (the
+  hands are not drawn, `_pose_shaft`) and its cut butt end wears a cap
+  with the Warlock logo (`_make_cap`, art/logos/warlock.png). The
   hands' spring is 14 Hz, damped 0.7 to 1.0 by rating (tight: no rubber
   band). The shaft's knob (its top 2 voxels; the taped grip stays) is
   not drawn in the demo (`DemoSkater.KNOB_VOX`, `_without_top`): it sat

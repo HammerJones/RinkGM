@@ -21,9 +21,9 @@ const SURE_REACH := Skater.REACH_ONE_HAND  # m from the body: a loose puck this 
 # motion, most with it angled); snow and water under the puck weaken the
 # spring; past the toe or the heel it rolls off. Retention 1..10 sets the
 # spring and how much of those pushes the tape lets through; 10 never lets go.
-const BOND_K := Vector2(20.0, 400.0)  # spring, 1/s2, at retention 1 and 10
+const BOND_K := Vector2(100.0, 600.0)  # spring, 1/s2, at retention 1 and 10
 const BOND_ZETA := 0.8
-const BOND_SLIDE := Vector2(0.5, 0.08)  # share of the pushes that move the puck, at 1 and 10
+const BOND_SLIDE := Vector2(0.4, 0.04)  # share of the pushes that move the puck, at 1 and 10
 const BOND_OFF := 0.03  # m past the end of the blade: off
 const BOND_LOOSE := 5  # below this retention the puck may roll off on clean ice too
 const BOND_WEAK_OFF := 0.75  # the spring this weak (snow, water) lets the puck roll off
@@ -34,6 +34,16 @@ const BOND_WATER := 1.0  # mm of water that takes BOND_WATER_K off
 const BOND_WATER_K := 0.5
 const KNOB_VOX := 2  # voxels of the shaft's top (the knob; the taped grip stays) not drawn
 const ROLL_OFF_T := 0.6  # s a rolled-off puck is loose before sure hands may have it back
+const SHAFT_DOWN := deg_to_rad(9.0)  # the shaft tipped this much lower in the view (Sean: more shaft)
+const CAP_LOGO := "res://art/logos/warlock.png"  # the brand on the butt end
+const CAP_W := 0.035  # m, the shaft's width (2 voxels)
+const HANDLE_MIN := 0.12  # stick travel across (unit circle) that counts as a handle
+const RESPONSE_FROM := 5.0  # level past which the stick answers the hands faster
+const RATING_AT := Vector2(62.0, 92.0)  # the game's stick_handling rating at level 5 and 10
+# a rut or a frozen ridge under a carried puck knocks it up (Sean): hard
+# enough and it hops over the blade and is loose
+const KNOCK_LOOSE := 0.8  # m/s upward past which the knock takes it off the blade
+const KNOCK_T := 0.4  # s loose before sure hands may have it back
 
 var active := false
 var stride_count := 0
@@ -47,15 +57,17 @@ var ice_feel := true
 var hands_on := true
 var touch := IceTouch.new()
 var hands: DemoHands
-## Puck retention 1 (loose) to 10 (never lets go): the number keys.
-var retention := 7
+## Puck retention 1 (loose) to 10 (never lets go): the stick skill's level,
+## continuous, earned by stickhandling (StickSkill); the number keys set it.
+var retention := 7.0
+var skill := StickSkill.new()
 ## The bond's slide along the blade, m from its middle (+ toward the toe), and its rate.
 var bond_u := 0.0
 var bond_v := 0.0
 var bonded := false
 var roll_offs := 0
 ## How the carried puck was lost, by cause (tests, tuning).
-var losses := {"roll_off": 0, "game_slip": 0, "keep_drop": 0, "cross_drop": 0}
+var losses := {"roll_off": 0, "game_slip": 0, "keep_drop": 0, "cross_drop": 0, "knock": 0}
 var game: DemoRinkGame
 var skater: Skater
 var controller: HumanController
@@ -67,6 +79,11 @@ var _sheet: IceSheet
 var _to_sheet: Callable
 var _cull := 0xFFFFF
 var _pitch := 0.0
+var _cap: MeshInstance3D
+var _hx_prev := 0.0
+var _hx_dir := 0.0
+var _hx_from := 0.0
+var _hx_had := false
 
 
 ## The skater on `puck` with an even 62 in every rating; `on_message`
@@ -117,6 +134,9 @@ func setup(puck: Puck, on_message: Callable) -> void:
 		# (the rig rebuilds the shaft from its base mesh when the tuned size changes)
 		if rig._shaft_base:
 			rig._shaft_base = _without_top(rig._shaft_base, KNOB_VOX * Models.STICK_V + 0.002)
+		_cap = _make_cap()
+		rig.stick.add_child(_cap)
+	set_level(7.0)
 
 
 ## `mesh` with every face in its top `cut` metres dropped (the stick's knob).
@@ -231,12 +251,14 @@ func step(dt: float, sheet: IceSheet, to_sheet: Callable) -> void:
 			skater.skill("stick_handling"),
 			controller.player_input.frame.tracing
 		)
+		_count_handles()
 	var puck := game.puck
 	_let_go = maxf(0.0, _let_go - dt)
 	var had := puck.controller == skater
 	if had and skater.ctrl.pass_pressed:
 		let_go()
 	skater.physics_update(dt)
+	_pose_shaft()
 	if had and _slipped(puck):
 		# the game's hands let it go (its stickhandling rhythm, a random
 		# slip past the rating's pace): not here. The puck is where the
@@ -368,8 +390,26 @@ func _bond(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float, f: float)
 	var push := -blade_acc.dot(ax)
 	var sp := bv.length()
 	if sp > 0.05:
-		var drag := 0.12 + 0.035 * sp + IceTouch.SNOW_DRAG * minf(snow, IceTouch.SNOW_CAP)
+		var drag := (
+			0.12
+			+ 0.035 * sp
+			+ IceTouch.SNOW_DRAG * minf(snow, IceTouch.SNOW_CAP)
+			+ IceTouch.WATER_DRAG * minf(water, IceTouch.WATER_CAP)
+		)
 		push -= drag * (bv / sp).dot(ax)
+	# a rut's edge or a frozen ridge under the puck: a knock upward, and a
+	# hard one takes it over the blade
+	var knock := IceTouch.knock(sheet, to_sheet, puck.position, sp)
+	if knock >= KNOCK_LOOSE:
+		losses.knock += 1
+		bonded = false
+		puck.controller = null
+		puck.last_touch = skater
+		puck.ignore_briefly(skater, KNOCK_T)
+		_off_t = KNOCK_T
+		puck.position.y = 0.002
+		puck.vel = Vector3(bv.x, knock, bv.y) + Vector3(ax.x, 0.0, ax.y) * bond_v
+		return
 	push *= slide
 	var cd := 2.0 * BOND_ZETA * sqrt(k)
 	bond_v += (push - k * bond_u - cd * bond_v) * dt
@@ -393,6 +433,102 @@ func _bond(puck: Puck, sheet: IceSheet, to_sheet: Callable, dt: float, f: float)
 	var at := c + ax * bond_u + n * skater.puck_side * StickPuck.gap()
 	puck.position = Vector3(at.x, 0.0, at.y)
 	puck.vel = Vector3(bv.x, 0.0, bv.y) + Vector3(ax.x, 0.0, ax.y) * bond_v
+
+
+## The stick skill's level set outright (the number keys, tests): its XP
+## is put there and everything that reads it follows.
+func set_level(l: float) -> void:
+	skill.set_level(l)
+	_apply_level()
+
+
+## The level into the things it drives: the bond's retention, the hands'
+## response past RESPONSE_FROM, and the game's own stick_handling rating
+## (its blade speed, acceleration and grip) over the same stretch.
+func _apply_level() -> void:
+	retention = skill.level()
+	var r := clampf((retention - RESPONSE_FROM) / (10.0 - RESPONSE_FROM), 0.0, 1.0)
+	if hands:
+		hands.response = r
+	if skater and skater.skills:
+		var want := lerpf(RATING_AT.x, RATING_AT.y, r)
+		if absf(skater.skills.values.get("stick_handling", 0.0) - want) > 0.01:
+			skater.skills.values["stick_handling"] = want
+			skater.set_skills(skater.skills)
+
+
+## A handle: the hands' stick turning back across the body after a wide
+## enough travel, with the puck on the blade. Each one pays the skill.
+func _count_handles() -> void:
+	var hx := hands.stick.x
+	var dx := hx - _hx_prev
+	_hx_prev = hx
+	if absf(dx) < 0.002:
+		return
+	var dir := signf(dx)
+	var has := skater.has_puck()
+	if dir != _hx_dir:
+		if _hx_dir != 0.0:
+			var width := absf(hx - _hx_from)
+			if width >= HANDLE_MIN and (has or _hx_had):
+				# a handle that lost the puck on the way pays a quarter
+				skill.handle(width, has)
+				_apply_level()
+		_hx_from = hx
+		_hx_had = has
+	_hx_dir = dir
+
+
+## The shaft tipped SHAFT_DOWN lower about the heel after the rig has posed
+## it (Sean: see more of the shaft), and the cap kept on its end. The
+## hands are not drawn, so the shaft is free to sit where it looks right.
+func _pose_shaft() -> void:
+	var rig := skater.rig
+	if rig == null or rig.stick == null:
+		return
+	var b := rig.stick.transform.basis
+	var y := b.y.normalized()
+	var axis := Vector3.UP.cross(y)
+	if axis.length() > 0.01:
+		axis = axis.normalized()
+		var nb := Basis(axis, SHAFT_DOWN) * b
+		if nb.y.normalized().y > y.y:
+			nb = Basis(axis, -SHAFT_DOWN) * b
+		rig.stick.transform.basis = nb
+	if _cap and rig.stick.mesh:
+		_cap.position.y = rig.stick.mesh.get_aabb().end.y + 0.0005
+
+
+## The butt end: a cap the shaft's width with the brand's logo on it (the
+## cut shaft had no top face: you could see down into it).
+func _make_cap() -> MeshInstance3D:
+	var cap := MeshInstance3D.new()
+	cap.name = "Cap"
+	var quad := QuadMesh.new()
+	quad.size = Vector2(CAP_W, CAP_W)
+	var base := StandardMaterial3D.new()
+	base.albedo_color = Color("2b2d33")
+	base.cull_mode = BaseMaterial3D.CULL_DISABLED
+	quad.material = base
+	cap.mesh = quad
+	cap.rotation_degrees.x = -90.0  # the quad faces +Z: turned to face up the shaft
+	var logo := MeshInstance3D.new()
+	logo.name = "Logo"
+	var lq := QuadMesh.new()
+	var tex: Texture2D = load(CAP_LOGO) if ResourceLoader.exists(CAP_LOGO) else null
+	var aspect := 1.0
+	if tex:
+		aspect = float(tex.get_width()) / maxf(float(tex.get_height()), 1.0)
+	lq.size = Vector2(CAP_W * 0.9, CAP_W * 0.9 / maxf(aspect, 1.0))
+	var lm := StandardMaterial3D.new()
+	lm.albedo_texture = tex
+	lm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	lm.cull_mode = BaseMaterial3D.CULL_DISABLED
+	lq.material = lm
+	logo.mesh = lq
+	logo.position.z = 0.0005  # a hair above the cap, along the quad's normal
+	cap.add_child(logo)
+	return cap
 
 
 ## A shot or a pass is on its way (the game's shot, the flick pass, [E]):
@@ -463,7 +599,7 @@ func state_text() -> String:
 			% ["FOREHAND" if skater.puck_side >= 0.0 else "BACKHAND", bond_u * 100.0]
 		)
 	return (
-		"SKATING %.1f M/S%s%s   STRIDES %d   PUCK %s   RETENTION %d   HANDS %.0f PX/S"
+		"SKATING %.1f M/S%s%s   STRIDES %d   PUCK %s   STICK LVL %.2f (%d HANDLES)   HANDS %.0f PX/S"
 		% [
 			skater.speed(),
 			"  STOPPING" if skater.braking else "",
@@ -471,6 +607,7 @@ func state_text() -> String:
 			stride_count,
 			puck_s,
 			retention,
+			skill.handles,
 			hands.hand_speed
 		]
 	)
